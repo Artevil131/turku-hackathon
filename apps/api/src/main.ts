@@ -386,6 +386,14 @@ export const server = createServer(async (req, res) => {
   }
 });
 
+// Stop promptly on SIGTERM and SIGINT: in a container Node runs as PID 1, which ignores signals it has no handler for.
+for (const signal of ["SIGTERM", "SIGINT"] as const)
+  process.on(signal, () => {
+    server.closeAllConnections();
+    server.close();
+    process.exit(0);
+  });
+
 server.listen(config.port, () => {
   console.log(`[aei-api] ${state.records.length} isolates, ${datasetStart} to ${datasetEnd}; replay at ${clock.state().asOf}`);
   console.log(`[aei-api] ${state.moves.length} unit moves, ${state.trails.length} carrier trails, ${state.alerts.size} alerts`);
