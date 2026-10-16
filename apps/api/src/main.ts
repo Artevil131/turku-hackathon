@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { resolve } from "node:path";
 import { buildAlerts, sortAlerts } from "@aei/alerts";
@@ -9,8 +9,11 @@ import {
   type IsolateQuery,
   type LiveEvent,
   type Meta,
+  type RegionalData,
+  type RegionalQuery,
   type RelationsResponse,
   ROUTES,
+  regionalUpTo,
 } from "@aei/contract";
 import { type CoverageResult, coverage, suggest, suggestCombinations } from "@aei/coverage";
 import { type Dataset, joinIsolates, loadDataset } from "@aei/dataset";
@@ -47,6 +50,8 @@ const config = {
   // A JSON file of the site's own codes (see @aei/ingest CodeMaps), merged over the defaults.
   codeMapFile: env.AEI_CODE_MAP,
   guideline: env.AEI_GUIDELINE ?? "",
+  // THL county series and signals, written by scripts/fetch_thl_ttr.py (D-037); read on each request, so a re-fetch shows at once.
+  regionalFile: resolve(env.AEI_REGIONAL ?? "../../data/external/thl/regional.json"),
 };
 const codeMaps: CodeMaps = config.codeMapFile
   ? extendCodeMaps(JSON.parse(readFileSync(resolve(config.codeMapFile), "utf8")) as Partial<CodeMaps>)
@@ -307,6 +312,13 @@ export const server = createServer(async (req, res) => {
     if (url.pathname === ROUTES.ingest && req.method === "POST") {
       const out = ingestPayload(await readText(req), req.headers["content-type"] ?? "");
       return send(res, out.status, out.body);
+    }
+    if (url.pathname === ROUTES.regional) {
+      if (!existsSync(config.regionalFile))
+        return send(res, 404, { error: "No regional data; run `uv run python scripts/fetch_thl_ttr.py`" });
+      const data = JSON.parse(readFileSync(config.regionalFile, "utf8")) as RegionalData;
+      const query: RegionalQuery = { group: url.searchParams.get("group") ?? "", region: url.searchParams.get("region") ?? "" };
+      return send(res, 200, regionalUpTo(data, clock.state().asOf, query));
     }
     if (url.pathname === ROUTES.meta) return send(res, 200, meta);
     if (url.pathname === ROUTES.clock && req.method === "GET") return send(res, 200, clock.state());

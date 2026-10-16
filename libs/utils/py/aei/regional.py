@@ -1,6 +1,7 @@
 """Monthly outbreak signals in regional notification counts (experiments/0008), a simplified Farrington test.
 
     signals = regional_signals(series, first_target="2024-01")   # series: group_sid, group, region, month, cases
+    view = regional_view(thl, fetched="2026-10-16")               # the server's /api/regional data (D-037)
 
 For each series and target month t: a Poisson GLM with log link on months t-36 to t-1 (intercept, linear time, one
 annual harmonic), quasi-Poisson dispersion phi = max(1, Pearson chi2 / df); the month signals when P(X >= observed)
@@ -64,3 +65,47 @@ def regional_signals(
             if p < alpha:
                 rows.append({"group": group, "region": region, "month": m, "cases": observed, "expected": mu, "dispersion": phi, "p": p})
     return pd.DataFrame(rows, columns=SIGNAL_COLUMNS).sort_values("p") if rows else pd.DataFrame(columns=SIGNAL_COLUMNS)
+
+
+NATIONAL = "Finland (all counties)"
+# The settings of experiments/0008.
+VIEW_SETTINGS = {"from_month": "2021-01", "first_target": "2024-01", "baseline": 36, "alpha": 1e-3, "min_cases": 5}
+
+
+def regional_view(thl: pd.DataFrame, *, fetched: str) -> dict:
+    """County series and their signals for the network view, as JSON-ready data (D-037). `thl` is
+    `aei.thl.fetch_ttr_monthly()`'s table; the month of `fetched` is left out, being incomplete. The national total is
+    added as one more region. Series run from VIEW_SETTINGS["from_month"]; signals are tested from "first_target"."""
+    cfg = VIEW_SETTINGS
+    last = (pd.Period(fetched[:7], "M") - 1).strftime("%Y-%m")
+    thl = thl[(thl["month"] >= cfg["from_month"]) & (thl["month"] <= last)]
+    national = thl.groupby(["group_sid", "group", "month"], as_index=False)["cases"].sum().assign(region=NATIONAL)
+    series = pd.concat([thl[["group_sid", "group", "region", "month", "cases", "incidence_per_100k"]], national], ignore_index=True)
+    months = sorted(series["month"].unique())
+    out_series = []
+    for (group, region), s in series.groupby(["group", "region"], sort=True):
+        s = s.set_index("month").reindex(months)
+        incidence = [None if pd.isna(v) else round(float(v), 3) for v in s["incidence_per_100k"]]
+        out_series.append({
+            "group": group,
+            "region": region,
+            "cases": [int(v) for v in s["cases"].fillna(0)],
+            "incidencePer100k": incidence if region != NATIONAL else None,
+        })
+    signals = regional_signals(
+        series, first_target=cfg["first_target"], baseline=cfg["baseline"], alpha=cfg["alpha"], min_cases=cfg["min_cases"]
+    )
+    return {
+        "source": "THL communicable disease register (tartuntatautirekisteri), CC BY 4.0 (c) THL",
+        "fetched": fetched,
+        "settings": {"firstTarget": cfg["first_target"], "baseline": cfg["baseline"], "alpha": cfg["alpha"], "minCases": cfg["min_cases"]},
+        "months": months,
+        "groups": sorted(series["group"].unique()),
+        "regions": sorted(r for r in series["region"].unique() if r != NATIONAL) + [NATIONAL],
+        "series": out_series,
+        "signals": [
+            {"group": r.group, "region": r.region, "month": r.month, "cases": int(r.cases),
+             "expected": round(float(r.expected), 3), "dispersion": round(float(r.dispersion), 3), "p": float(f"{r.p:.3g}")}
+            for r in signals.itertuples()
+        ],
+    }

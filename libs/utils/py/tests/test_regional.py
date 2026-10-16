@@ -5,7 +5,7 @@ from __future__ import annotations
 import pandas as pd
 from scipy import stats
 
-from aei.regional import regional_signals, upper_tail
+from aei.regional import NATIONAL, regional_signals, regional_view, upper_tail
 
 
 def series(counts: list[int]) -> pd.DataFrame:
@@ -26,3 +26,15 @@ def test_spike_signals_and_steady_series_does_not():
     found = regional_signals(series(spike), first_target=first_target)
     assert list(found["month"]) == ["2024-03"]
     assert int(found["cases"].iloc[0]) == 15
+
+
+def test_view_drops_the_fetch_month_and_adds_the_national_total():
+    steady = [3, 4, 2, 3, 5, 3, 4, 3, 2, 4] * 4
+    spike = steady[:38] + [15] + steady[39:]
+    thl = series(spike).assign(incidence_per_100k=1.0)
+    view = regional_view(thl, fetched="2024-04-16")  # months 2021-01 .. 2024-03
+    assert view["months"][0] == "2021-01" and view["months"][-1] == "2024-03"
+    assert view["regions"] == ["Varsinais-Suomi", NATIONAL]
+    assert [s["region"] for s in view["series"]] == [NATIONAL, "Varsinais-Suomi"]
+    assert view["series"][0]["incidencePer100k"] is None
+    assert {(g["region"], g["month"], g["cases"]) for g in view["signals"]} == {("Varsinais-Suomi", "2024-03", 15), (NATIONAL, "2024-03", 15)}

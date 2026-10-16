@@ -40,7 +40,8 @@ the experiments use and the live tool does not; and
 - `aei.logistic`: `fit_logistic`, `predict` (experiments/0005).
 - `aei.inject`: experiments/0007's injected clusters and sampling gaps.
 - `aei.regional`: the monthly regional outbreak test of experiments/0008
-  (`regional_signals`, `expected_month`, `upper_tail`).
+  (`regional_signals`, `expected_month`, `upper_tail`) and the server's
+  regional file (`regional_view`, D-037).
 - `aei.thl`: THL's register cube (D-025), `fetch_ttr_monthly()`, used by
   `scripts/fetch_thl_ttr.py`.
 - `aei.kanta`: THL's microbe and antimicrobial code lists from the Kanta

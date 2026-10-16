@@ -120,3 +120,10 @@ is identical up to 2026-09.
   re-fetch can change results.
 - The Varsinais-Suomi CPE *E. coli* claim checks out: 1, 3, 1, 8, 3
   cases for June to October 2025.
+
+## Served to the app (2026-10-16, after close)
+
+`scripts/fetch_thl_ttr.py` now also writes `data/external/thl/regional.json`
+with this test's settings (`aei.regional.regional_view`), and the server
+serves it at `GET /api/regional`, cut at the replay clock (D-037). The
+fetch of 2026-10-16 gives the same 10 signals as the Result above.
