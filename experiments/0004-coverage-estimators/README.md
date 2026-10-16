@@ -5,7 +5,9 @@ data: [synthetic_microbiology_dataset, seed 2026, 2023-10-02 to 2026-09-27, as r
 parent:
 ---
 
-# 0003 Which estimate of a ward's antibiotic coverage predicts the next four weeks best?
+# 0004 Which estimate of a ward's antibiotic coverage predicts the next four weeks best?
+
+Numbering: planned and first committed as 0003 (commit a9dfb81); renumbered to 0004 because `0003-small-llm-bakeoff` on ui/web-app took 0003 first.
 
 ## Goal
 
@@ -59,14 +61,14 @@ baseline.
   95 % interval from 1,000 bootstrap resamples of target windows (seed
   2026).
 - Code: `backtest.ts` here, using `@aei/dataset`, `@aei/counting`,
-  `@aei/eucast`. `node experiments/0003-coverage-estimators/backtest.ts`.
+  `@aei/eucast`. `node experiments/0004-coverage-estimators/backtest.ts`.
   Output: Markdown tables in `out/`. Budget: under a minute on a laptop.
 - Known confounder: the planted Urology outbreak (June–July 2025, 0001)
   sits in the target period; results are also reported without Urology.
 
 ## Result
 
-`node experiments/0003-coverage-estimators/backtest.ts` (about 11 s on a
+`node experiments/0004-coverage-estimators/backtest.ts` (about 11 s on a
 laptop) writes `out/results.md`. 26 target windows, 163,666 predictions
 (first isolate × antibiotic). The unit's 28-day cell was empty for 0.2 %
 of predictions (raw estimator 1 then used the baseline). All computed;

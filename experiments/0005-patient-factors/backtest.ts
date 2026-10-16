@@ -1,6 +1,6 @@
-// 0004: do patient factors predict coverage better than the hospital's last
+// 0005: do patient factors predict coverage better than the hospital's last
 // year? (README.md). Run from the repository root:
-//   node experiments/0004-patient-factors/backtest.ts
+//   node experiments/0005-patient-factors/backtest.ts
 
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -12,7 +12,7 @@ import { fitLogistic, type LogisticModel, predict } from "../../libs/utils/logis
 import { addDays, daysBetween } from "../../libs/utils/replay/src/index.ts";
 
 const DATA = "data/synthetic_microbiology_dataset";
-const OUT = "experiments/0004-patient-factors/out";
+const OUT = "experiments/0005-patient-factors/out";
 const FIRST_TARGET = "2024-09-30";
 const LAST_DAY = "2026-09-27";
 const PERIOD = 28;
@@ -24,7 +24,7 @@ const data = await loadDataset(DATA);
 const records = joinIsolates(data);
 const wardType = new Map(data.cultures.map((c) => [c.cultureId, c.wardType]));
 
-// Outcome per isolate and antibiotic (as in 0003).
+// Outcome per isolate and antibiotic (as in 0004).
 const outcome = new Map<string, Partial<Record<AntibioticCode, 0 | 1>>>();
 for (const r of records) {
   const o: Partial<Record<AntibioticCode, 0 | 1>> = {};
@@ -197,7 +197,7 @@ for (const [key, e] of finalFits) {
 }
 
 const n = perWindow.reduce((s, w) => s + w.n, 0);
-let md = `# 0004 results\n\nTarget windows: ${perWindow.length}; predictions: ${n}; model fits: ${fits}, not converged: ${unconverged}. Lower is better; difference to the baseline with a 95 % interval from ${BOOTSTRAPS} bootstrap resamples of target windows (seed 2026). All computed.\n\n`;
+let md = `# 0005 results\n\nTarget windows: ${perWindow.length}; predictions: ${n}; model fits: ${fits}, not converged: ${unconverged}. Lower is better; difference to the baseline with a 95 % interval from ${BOOTSTRAPS} bootstrap resamples of target windows (seed 2026). All computed.\n\n`;
 md += `### Brier score\n\n${table(["model", "mean", "minus baseline", "95 % interval"], summarise("brier"))}\n\n`;
 md += `### Log loss\n\n${table(["model", "mean", "minus baseline", "95 % interval"], summarise("logloss"))}\n\n`;
 md += `### Odds ratios for NOT being covered, model A, fitted on the last ${TRAIN_PERIODS * PERIOD} days (penalised, so shrunk toward 1)\n\n`;

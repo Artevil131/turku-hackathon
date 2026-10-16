@@ -1,5 +1,5 @@
-// 0003: backtest coverage estimators on the next 28 days (README.md).
-// Run from the repository root: node experiments/0003-coverage-estimators/backtest.ts
+// 0004: backtest coverage estimators on the next 28 days (README.md).
+// Run from the repository root: node experiments/0004-coverage-estimators/backtest.ts
 
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -10,7 +10,7 @@ import { effectiveResult, suitsSpecimen } from "../../libs/utils/eucast/src/inde
 import { addDays } from "../../libs/utils/replay/src/index.ts";
 
 const DATA = "data/synthetic_microbiology_dataset";
-const OUT = "experiments/0003-coverage-estimators/out";
+const OUT = "experiments/0004-coverage-estimators/out";
 const FIRST_TARGET = "2024-09-30";
 const LAST_DAY = "2026-09-27";
 const SHRINK_YEAR = 20;
@@ -160,7 +160,7 @@ function table(head: string[], rows: (string | number)[][]): string {
   return [`| ${head.join(" | ")} |`, `|${head.map(() => "---").join("|")}|`, ...rows.map((r) => `| ${r.join(" | ")} |`)].join("\n");
 }
 
-let md = "# 0003 results\n\nLower is better. Difference to the baseline (estimator 3) with a 95 % interval from 1,000 bootstrap resamples of target windows (seed 2026). All computed.\n\n";
+let md = "# 0004 results\n\nLower is better. Difference to the baseline (estimator 3) with a 95 % interval from 1,000 bootstrap resamples of target windows (seed 2026). All computed.\n\n";
 md += `Target windows: ${perWindow.length}; predictions (first isolate × antibiotic): ${predictions}. Unit 28-day cell empty (raw estimator 1 fell back to the baseline): ${((100 * fallbacks1) / predictions).toFixed(1)} %; unit 365-day cell empty: ${((100 * fallbacks2) / predictions).toFixed(1)} %.\n\n`;
 for (const subset of SUBSETS) {
   const n = perWindow.reduce((s, w) => s + w[subset].n, 0);
