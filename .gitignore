@@ -20,6 +20,8 @@ __pycache__/
 node_modules/
 # build output (vite build in apps/web)
 dist/
+# smoke-test screenshots and report (apps/web/scripts/smoke.mjs)
+apps/web/smoke-out/
 
 # xcode
 DerivedData/
