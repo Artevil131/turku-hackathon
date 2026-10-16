@@ -1,0 +1,48 @@
+# AEI in two containers: the API and the web app (nginx). From the repository root:
+#   podman compose -f deploy/container/compose.yaml up --build     # or: docker compose ...
+# Then open http://localhost:8080. See deploy/README.md for the variables.
+name: aei
+
+services:
+  api:
+    build:
+      context: ../..
+      dockerfile: deploy/container/Containerfile.api
+    image: localhost/aei-api:dev
+    environment:
+      AEI_REPLAY_START: ${AEI_REPLAY_START:-2025-05-12}
+      AEI_LOAD_UNTIL: ${AEI_LOAD_UNTIL:-}
+      AEI_TICK_MS: ${AEI_TICK_MS:-2000}
+      AEI_DAYS_PER_TICK: ${AEI_DAYS_PER_TICK:-1}
+      AEI_GUIDELINE: ${AEI_GUIDELINE:-}
+      # A site's own code map, mounted under /config: AEI_CODE_MAP=/config/codes.json
+      AEI_CODE_MAP: ${AEI_CODE_MAP:-}
+      # Optional language model for Ask and AI wording (off when unset).
+      AEI_LLM_URL: ${AEI_LLM_URL:-}
+      AEI_LLM_MODEL: ${AEI_LLM_MODEL:-}
+      AEI_LLM_KEY: ${AEI_LLM_KEY:-}
+      AEI_LLM_ACCESS_ID: ${AEI_LLM_ACCESS_ID:-}
+      AEI_LLM_ACCESS_SECRET: ${AEI_LLM_ACCESS_SECRET:-}
+    volumes:
+      # The organisers' dataset, read-only (z: relabel for SELinux hosts).
+      - ${AEI_DATASET:-../../data/synthetic_microbiology_dataset}:/data:ro,z
+      # THL county data from scripts/fetch_thl_ttr.py; without it /api/regional answers 404.
+      - ${AEI_THL_DIR:-../../data/external/thl}:/regional:ro,z
+      - ${AEI_CONFIG_DIR:-./config}:/config:ro,z
+    ports:
+      # Published on the host's loopback only, for scripts/send_lab_results.py.
+      - "127.0.0.1:${AEI_API_PORT:-8787}:8787"
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ../..
+      dockerfile: deploy/container/Containerfile.web
+    image: localhost/aei-web:dev
+    environment:
+      AEI_API_UPSTREAM: api:8787
+    ports:
+      - "${AEI_WEB_PORT:-8080}:8080"
+    depends_on:
+      - api
+    restart: unless-stopped
