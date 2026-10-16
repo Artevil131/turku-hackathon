@@ -1,7 +1,7 @@
 import type { Alert } from "@aei/contract";
 import { type Phenotype, WARDS } from "@aei/domain";
 import { formatDate, phenotypeName, t, wardName } from "@aei/i18n";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AsOf } from "../AsOf.tsx";
 import { type FeedProps, KINDS, type SignalKind } from "./board.ts";
 import { Check, Chevron, KindGlyph } from "./feed/glyphs.tsx";
@@ -54,6 +54,19 @@ export function SignalFeed(props: FeedProps) {
   const phenotypes = [...new Set<Phenotype>([...phenoCounts.keys(), ...(state.phenotype ? [state.phenotype] : [])])].sort();
   const filtered = state.unit !== null || state.kinds.length > 0 || state.phenotype !== null;
 
+  // After a filter change keep the open incident in view (its list position moves).
+  const rootRef = useRef<HTMLElement>(null);
+  const filterKey = `${state.unit}|${state.kinds.join(",")}|${state.phenotype}`;
+  const lastFilterKey = useRef(filterKey);
+  useEffect(() => {
+    if (lastFilterKey.current === filterKey) return;
+    lastFilterKey.current = filterKey;
+    const id = requestAnimationFrame(() =>
+      rootRef.current?.querySelector<HTMLElement>('.feed-card[data-open="true"]')?.scrollIntoView({ block: "nearest", behavior: "smooth" }),
+    );
+    return () => cancelAnimationFrame(id);
+  }, [filterKey]);
+
   const toggleKind = (k: SignalKind) =>
     onChange({ kinds: state.kinds.includes(k) ? state.kinds.filter((x) => x !== k) : [...state.kinds, k] });
   const card = (i: Incident) => (
@@ -72,7 +85,7 @@ export function SignalFeed(props: FeedProps) {
   );
 
   return (
-    <section className="feed" aria-labelledby="feed-title" aria-busy={load.status === "loading"}>
+    <section ref={rootRef} className="feed" aria-labelledby="feed-title" aria-busy={load.status === "loading"}>
       <header className="feed-header">
         <div className="feed-headline">
           <h2 id="feed-title">{t(locale, "feedTitle")}</h2>
@@ -80,7 +93,9 @@ export function SignalFeed(props: FeedProps) {
             <AsOf locale={locale} date={readyAsOf} pending={asOf !== null && asOf !== readyAsOf} clockDate={asOf ?? undefined} />
           ) : null}
         </div>
-        {readyAsOf ? <p className="feed-count">{t(locale, "feedWindow", { n: incidents.length })}</p> : null}
+        {readyAsOf ? (
+          <p className="feed-count">{t(locale, incidents.length === 1 ? "feedWindowOne" : "feedWindow", { n: incidents.length })}</p>
+        ) : null}
         <div className="feed-filters" role="group" aria-label={t(locale, "feedFilters")}>
           {readyAsOf ? (
             <>

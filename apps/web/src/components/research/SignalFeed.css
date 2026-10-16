@@ -56,6 +56,10 @@
   font-weight: 600;
 }
 
+.feed-chiprow > .feed-chips {
+  flex: 1 1 0;
+}
+
 .feed-chips {
   display: flex;
   flex-wrap: wrap;
@@ -64,6 +68,7 @@
 }
 
 .feed-chip {
+  max-width: 100%;
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -172,6 +177,7 @@ button.feed-chip:hover {
 }
 
 .feed-card {
+  scroll-margin-top: 96px;
   border: 1px solid var(--line);
   border-radius: var(--radius-control);
   background: var(--glass-3);
@@ -327,12 +333,51 @@ button.feed-chip:hover {
   color: var(--ink-2);
 }
 
-.mono {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+.feed-title,
+.feed-base,
+.feed-meta,
+.feed-body {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
-.feed-sr {
-  letter-spacing: 0.08em;
+.feed-res {
+  font-size: var(--step--1);
+}
+
+.feed-res summary {
+  cursor: pointer;
+  color: var(--ink-2);
+  padding: 2px 0;
+}
+
+.feed-res summary:focus-visible {
+  outline: 2px solid var(--live);
+  outline-offset: 2px;
+}
+
+.feed-profile {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 2px 14px;
+  margin: 4px 0 6px;
+  padding: 0;
+  list-style: none;
+}
+
+.feed-profile li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px dotted var(--line);
+}
+
+.feed-profile li[data-result="none"] {
+  color: var(--ink-3);
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 .feed-actions {
@@ -433,9 +478,7 @@ button.feed-chip:hover {
     padding: 0;
   }
   .feed-chips {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding-bottom: 2px;
+    flex-wrap: wrap;
   }
   .feed-chip,
   .feed-btn,

@@ -45,6 +45,11 @@
   box-shadow: var(--glass-shadow);
 }
 
+.board-feed,
+.board-main {
+  min-width: 0;
+}
+
 .board-feed {
   grid-column: 1;
   grid-row: 1 / span 2;

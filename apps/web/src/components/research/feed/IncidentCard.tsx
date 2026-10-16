@@ -6,7 +6,7 @@ import type { Finding } from "../../../live.ts";
 import { AlertExplanation } from "../../AlertExplanation.tsx";
 import type { BoardState, SignalKind } from "../board.ts";
 import { Chevron, KindGlyph } from "./glyphs.tsx";
-import { formatP, type Incident, isolatesBehind, resultString, stayDay, windowOf } from "./model.ts";
+import { formatP, type Incident, isolatesBehind, oneDecimal, stayDay, windowOf } from "./model.ts";
 
 const KIND_LABEL = {
   sentinel: "feedKindSentinel",
@@ -26,8 +26,6 @@ const FIRST_STEP = {
 
 export const kindLabel = (locale: Locale, kind: SignalKind) => t(locale, KIND_LABEL[kind]);
 
-const one = (n: number) => (Math.round(n * 10) / 10).toFixed(1);
-
 export function unitLabel(locale: Locale, ward: string | null): string {
   return ward ? wardName(locale, ward as never) : t(locale, "hospitalWide");
 }
@@ -43,7 +41,7 @@ export function incidentTitle(locale: Locale, a: Alert): string {
       return unit;
     case "detector": {
       if (a.detector === "sampling-drop" || a.detector === "empty-run")
-        return t(locale, "feedDataTitle", { unit, observed: a.observed, expected: one(a.expected ?? 0) });
+        return t(locale, "feedDataTitle", { unit, observed: a.observed, expected: oneDecimal(locale, a.expected ?? 0) });
       if (a.detector === "rising-trend")
         return t(locale, "feedTrendTitle", {
           antibiotic: a.antibiotic ? antibioticName(locale, a.antibiotic) : "",
@@ -54,7 +52,7 @@ export function incidentTitle(locale: Locale, a: Alert): string {
         what: a.phenotype ? phenotypeName(a.phenotype) : (a.organism ?? ""),
         unit,
         observed: a.observed,
-        expected: one(a.expected ?? 0),
+        expected: oneDecimal(locale, a.expected ?? 0),
       });
     }
   }
@@ -72,9 +70,9 @@ function baselineLine(locale: Locale, a: Alert): string {
     if (a.expected !== undefined) parts.push(t(locale, "feedExpected", { n: `${Math.round(a.expected * 100)} %` }));
   } else {
     parts.push(t(locale, "feedObserved", { n: a.observed }));
-    if (a.expected !== undefined) parts.push(t(locale, "feedExpected", { n: one(a.expected) }));
+    if (a.expected !== undefined) parts.push(t(locale, "feedExpected", { n: oneDecimal(locale, a.expected) }));
   }
-  if (a.p !== undefined) parts.push(t(locale, "feedP", { p: formatP(a.p) }));
+  if (a.p !== undefined) parts.push(t(locale, "feedP", { p: formatP(locale, a.p) }));
   if (a.profile) parts.push(t(locale, "feedProfile", { profile: a.profile }));
   return parts.join(" · ");
 }
@@ -161,6 +159,33 @@ export function IncidentCard({ client, locale, incident: inc, open, findings, on
   );
 }
 
+/** The resistant drugs by name; the full profile sits in a disclosure, in words, never colour alone. */
+function ResistanceLine({ locale, record: r }: { locale: Locale; record: IsolateRecord }) {
+  const resistant = ANTIBIOTICS.filter((a) => r.results[a.code] === "R");
+  const word = (code: (typeof ANTIBIOTICS)[number]["code"]) =>
+    r.results[code] === "R" ? t(locale, "feedResR") : r.results[code] === "S" ? t(locale, "feedResS") : t(locale, "feedResNone");
+  return (
+    <details className="feed-res">
+      <summary>
+        <span className="feed-res-line">
+          {resistant.length > 0
+            ? t(locale, "feedResistantTo", { names: resistant.map((a) => antibioticName(locale, a.code)).join(", ") })
+            : t(locale, "feedResistantNone")}
+        </span>
+      </summary>
+      <p className="feed-note">{t(locale, "feedFullProfile")}</p>
+      <ul className="feed-profile">
+        {ANTIBIOTICS.map((a) => (
+          <li key={a.code} data-result={r.results[a.code] ?? "none"}>
+            <span>{antibioticName(locale, a.code)}</span>
+            <b>{word(a.code)}</b>
+          </li>
+        ))}
+      </ul>
+    </details>
+  );
+}
+
 type Load = { status: "loading" } | { status: "error" } | { status: "ready"; records: IsolateRecord[] };
 
 function IncidentBody({
@@ -237,7 +262,7 @@ function IncidentBody({
         <p className="feed-note">
           {t(locale, "feedNoIsolatesData", {
             observed: lead.kind === "detector" ? lead.observed : 0,
-            expected: lead.kind === "detector" ? one(lead.expected ?? 0) : "0",
+            expected: lead.kind === "detector" ? oneDecimal(locale, lead.expected ?? 0) : "0",
           })}
         </p>
       ) : load.status === "loading" ? (
@@ -256,7 +281,7 @@ function IncidentBody({
       ) : (
         <>
           <p className="feed-note">
-            {t(locale, "feedIsolatesCount", {
+            {t(locale, matched.length === 1 ? "feedIsolatesCountOne" : "feedIsolatesCount", {
               n: matched.length,
               from: formatDate(locale, win.from),
               to: formatDate(locale, win.to),
@@ -280,15 +305,12 @@ function IncidentBody({
                       {day === null ? t(locale, "outpatient") : t(locale, "feedStayDay", { n: day })}
                     </span>
                     <span title={t(locale, "feedColPhenotypes")}>{r.phenotypes.map(phenotypeName).join(", ") || "–"}</span>
-                    <span className="mono feed-sr" title={ANTIBIOTICS.map((a) => `${a.code} ${r.results[a.code] ?? "."}`).join(" ")}>
-                      {t(locale, "feedColResults")} {resultString(r)}
-                    </span>
                   </span>
+                  <ResistanceLine locale={locale} record={r} />
                 </li>
               );
             })}
           </ul>
-          <p className="feed-note feed-legend">{t(locale, "feedResultsOrder", { codes: ANTIBIOTICS.map((a) => a.code).join(" ") })}</p>
         </>
       )}
 

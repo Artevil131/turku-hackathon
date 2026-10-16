@@ -1,5 +1,6 @@
 import type { Alert } from "@aei/contract";
 import { ANTIBIOTICS, type IsolateRecord, type Phenotype, type WardCode } from "@aei/domain";
+import type { Locale } from "@aei/i18n";
 import { kindOf, type SignalKind } from "../board.ts";
 
 // Pure helpers of the signal feed: grouping alerts into incidents, filtering,
@@ -114,8 +115,14 @@ export function stayDay(r: IsolateRecord): number | null {
   return r.admissionDate ? daysBetween(r.admissionDate, r.sampleDate) + 1 : null;
 }
 
-/** "p < 0.001", else three significant figures. */
-export function formatP(p: number): string {
-  if (p < 0.001) return "< 0.001";
-  return `= ${Number(p.toPrecision(3))}`;
+/** "< 0,001" under a thousandth, else three significant figures in plain decimal, in the locale's separator. */
+export function formatP(locale: Locale, p: number): string {
+  if (p < 0.001) return `< ${numberFormat(locale, { minimumFractionDigits: 3 }).format(0.001)}`;
+  return `= ${numberFormat(locale, { maximumSignificantDigits: 3 }).format(p)}`;
 }
+
+const numberFormat = (locale: Locale, o: Intl.NumberFormatOptions) => new Intl.NumberFormat(locale === "fi" ? "fi-FI" : "en-GB", o);
+
+/** One decimal, with the locale's decimal sign. */
+export const oneDecimal = (locale: Locale, n: number): string =>
+  numberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(n);
