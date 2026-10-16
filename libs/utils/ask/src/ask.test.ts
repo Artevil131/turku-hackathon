@@ -9,6 +9,7 @@ import {
   llmConfigFromEnv,
   NUMBER_WORDS,
   parseQuestion,
+  reslot,
   type Vocabulary,
 } from "./index.ts";
 
@@ -170,7 +171,8 @@ describe("question parsing", () => {
     const body = JSON.parse(fetch.mock.calls[0]?.[1]?.body as string);
     expect(body.messages[0].content).toContain("Teho-osasto");
     expect(body.messages[0].content).toContain("Intensive care");
-    expect(body.messages[0].content).toContain("iäkäs/vanhus means older");
+    expect(body.messages[0].content).toContain("(iäkäs, iäkkäät, vanhus) = older");
+    expect(body.messages[0].content).toContain("Geriatrics alone does not mean older");
     expect(body.messages[1].content).toBe(text);
     const schema = body.response_format.json_schema.schema;
     expect(schema.required.sort()).toEqual(Object.keys(empty).sort());
@@ -221,11 +223,14 @@ describe("safe explanations", () => {
     }
   });
 
-  it("accepts grounded model text and supplies named fact values to the prompt", async () => {
+  it("accepts grounded model text and gives the prompt fact names, hiding values with digits", async () => {
     const { llm, fetch } = mockLlm({ text: "{count} carriers in {ward} on {date}." });
     expect(await explainAlert(llm, explanation)).toEqual({ text: "1,234 carriers in ICU on 2025-06-15.", source: "model" });
     const body = JSON.parse(fetch.mock.calls[0]?.[1]?.body as string);
-    expect(body.messages[0].content).toContain(JSON.stringify(explanation.facts));
+    expect(body.messages[1]).toMatchObject({ role: "user" });
+    expect(body.messages[1].content).toContain('"count":"{count}"');
+    expect(body.messages[1].content).toContain('"date":"{date}"');
+    expect(body.messages[1].content).toContain('"ward":"ICU"');
     expect(body.messages[0].content).toContain("English");
   });
 
@@ -263,5 +268,31 @@ describe("review additions", () => {
     expect(checkSlots("Löydös viittaa siihen, että tartunta voi levitä osastolle {ward}.", ["ward"])).toBe(true);
     expect(checkSlots("Viittä potilasta seurataan.", [])).toBe(false);
     expect(checkSlots("Tuhannen näytteen joukossa.", [])).toBe(false);
+  });
+});
+
+describe("hidden numeric facts", () => {
+  const facts = { date: "2025-06-10", ward: "Urology", patientId: "P001234", observed: 9 };
+
+  it("shows the model only placeholders for values with digits", async () => {
+    const { llm, fetch } = mockLlm({ text: "On {date}, patient {patientId} in Urology." });
+    const result = await explainAlert(llm, { lang: "en", kind: "cpe", summary: "s", facts, fallback: "f" });
+    expect(result).toEqual({ text: "On 2025-06-10, patient P001234 in Urology.", source: "model" });
+    const prompt = JSON.parse(String(fetch.mock.calls[0]?.[1]?.body)).messages[1].content as string;
+    expect(prompt).not.toContain("2025-06-10");
+    expect(prompt).not.toContain("P001234");
+    expect(prompt).toContain('"ward":"Urology"');
+  });
+
+  it("re-slots verbatim copies of a fact value but still rejects reformatted or invented numbers", async () => {
+    expect(reslot("Patient P001234 on 2025-06-10, 9 cases.", facts)).toBe("Patient {patientId} on {date}, {observed} cases.");
+    const reformatted = await explainAlert(mockLlm({ text: "On 10.6.2025 in Urology." }).llm, {
+      lang: "fi",
+      kind: "cpe",
+      summary: "s",
+      facts,
+      fallback: "pohja {ward}",
+    });
+    expect(reformatted).toEqual({ text: "pohja Urology", source: "template" });
   });
 });
