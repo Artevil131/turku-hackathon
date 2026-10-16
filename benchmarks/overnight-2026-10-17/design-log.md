@@ -31,3 +31,6 @@ Screenshots come from headless Chrome through
 | 01:20 | orchestrator (Opus 5.5) | Clock parked at 2025-06-23 for wave 1. Wave 1 started, four builders (Sonnet 5.5): doctor's list, signal feed, unit grid, regional map. Hospital network and pitch intro wait for wave 2 |
 | 01:24 | builder (Sonnet 5.5) | Finished unit grid (counts per unit-week, quality weeks hatched grey, cluster rings, roving focus) and regional map (THL incidence choropleth, count-certainty view, signals strong/weak, Tyks, local month slider) |
 | 01:24 | orchestrator (Opus 5.5) | Verified both in the browser at 1280; board now follows hash changes. An agent restarted the API at 01:23 (clock back to 2025-05-12); re-parked at 2025-06-23. Committed 4f38435, checked clean in a separate checkout |
+| 01:25 | orchestrator (Opus 5.5) | #intro route mount point (full screen, no chrome). Started (Sonnet 5.5): hospital network panel; pitch intro (terraced contour surface) |
+| 01:26 | builder (Sonnet 5.5) | Finished signal feed: incidents grouped, sentinels pinned, unit/kind/phenotype chips with counts in the URL, one-click card shows the isolates behind the alert (U2 = 1), first step as a labelled template |
+| 01:26 | orchestrator (Opus 5.5) | Verified feed at 1280 in the browser. The API was restarted by an agent again at 01:25; the agents' park date is now the default 2025-05-12 |

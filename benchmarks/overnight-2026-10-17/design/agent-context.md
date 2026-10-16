@@ -11,7 +11,7 @@ main checkout `/Users/artevil/turku-hackathon`; read it first.
 - **Running app.** API on http://localhost:8788, web (Vite dev, hot reload)
   on http://localhost:5174, already running from the worktree. Do not
   start or stop servers. The replay clock is shared by everyone: do not
-  leave it playing, and do not move it at all during wave 1 (it is parked at 2025-06-23, after the Urology outbreak).
+  leave it playing, and do not move it, and never restart the API (it resets the clock for everyone) (it sits at the default start, 2025-05-12).
 - **Screenshots.** `benchmarks/overnight-2026-10-17/design/shoot.sh
   http://localhost:5174 <label> <surface...>` writes
   `<surface>-<label>-phone.png` and `-laptop.png` (390 and 1280 wide) with
