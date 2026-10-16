@@ -143,3 +143,15 @@ of `@aei/counting` and `@aei/eucast` and the same mulberry32 generator
 It reproduces `out/results.md` byte for byte (about 27 s on the laptop). The
 parity tests (`uv run pytest libs/utils/py/tests`) check the Python mirrors
 in `libs/utils/py/aei` against the TypeScript gears on the full dataset.
+
+## Note from review round 2 (2026-10-16, after close)
+
+The coverage list as shipped (D-023, D-033: the unit's year if it has 30
+isolates, else ward type, else hospital) was not itself backtested here;
+this experiment found the unit's raw year 0.0004 Brier worse than the
+hospital's (interval 0.0002–0.0005). The fair reading is that the
+differences are too small to matter on this data; a backtest of
+`coverage()` as shipped would settle it. Coverage is also counted per
+isolate, not per infection episode (15 % of wound and 10 % of urine
+cultures grow two organisms), and the Wilson interval assumes
+independent isolates.

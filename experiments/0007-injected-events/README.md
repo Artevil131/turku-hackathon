@@ -127,3 +127,14 @@ tests (`uv run pytest libs/utils/py/tests`) check the Python mirrors in
 tests also run the original trial code (copied into
 `libs/utils/py/tests/ts_dump.ts`) and the Python trials on seeds 1, 7 and
 2026 and require the same units, first signal dates and delays.
+
+## Notes from review round 2 (2026-10-16, after close)
+
+- What "an outbreak of 4 patients" means here: 4 identical copies of one
+  rare ESBL or MRSA isolate (same organism, specimen and full S/R
+  profile) within 14 days; clones differing in even one result were not
+  tested. Quote it as "4 patients sharing one ESBL or MRSA strain within
+  2 weeks: 38/40 (83–99 %)".
+- Units were drawn uniformly, so small units are overrepresented (15 of
+  40 trials against about 9 by isolate volume). In large units: 8 of 9
+  for 4 patients, 5 of 14 for 3.
