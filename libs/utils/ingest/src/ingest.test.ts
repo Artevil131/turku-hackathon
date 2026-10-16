@@ -1,5 +1,7 @@
+import { ANTIBIOTICS, ORGANISMS } from "@aei/domain";
 import { describe, expect, it } from "vitest";
 import {
+  DEFAULT_CODE_MAPS,
   detectFormat,
   extendCodeMaps,
   FINNISH_SYSTEMS,
@@ -20,13 +22,13 @@ const HL7 = [
   "PV1|1|I|URO^^^TYKS|||||||||||||||||||||||||||||||||||||||||20250529",
   "OBR|1|PL123|C2025-0042|4851^U -BaktVi^1.2.246.537.6.3|||20250604081500|||||||||||||||20250605100000||MB|F",
   "SPM|1|||UR^Urine^HL70487||||||||||||||20250604081500",
-  "OBX|1|CWE|4851^U -BaktVi^1.2.246.537.6.3|1|E_COLI^Escherichia coli^1.2.246.537.6.241||||||F",
+  "OBX|1|CWE|4851^U -BaktVi^1.2.246.537.6.3|1|7640-22^Escherichia coli^1.2.246.537.6.241||||||F",
   "OBX|2|CWE|ESBL^ESBL^L|1|POS^Positive^L||||||F",
   "OBR|2|PL123|C2025-0042-1|4851^U -BaktVi^1.2.246.537.6.3|||20250604081500||||G|||||||||||20250605100000||MB|F|4851&U -BaktVi&1.2.246.537.6.3^1^Escherichia coli|||PL123&C2025-0042",
-  "OBX|1|SN|AMP^Ampicillin [Susceptibility]^1.2.246.537.6.249|1|>^8|mg/L||R|||F",
-  "OBX|2|SN|CXM^Cefuroxime^1.2.246.537.6.249|1|>^8|mg/L||R|||F",
-  "OBX|3|SN|MEC^Mecillinam^1.2.246.537.6.249|1|<=^2|mg/L||S|||F",
-  "OBX|4|SN|NIT^Nitrofurantoin^1.2.246.537.6.249|1|<=^16|mg/L||I|||F",
+  "OBX|1|SN|2^Ampisilliini^1.2.246.537.6.249|1|>^8|mg/L||R|||F",
+  "OBX|2|SN|13^Kefuroksiimi^1.2.246.537.6.249|1|>^8|mg/L||R|||F",
+  "OBX|3|SN|17^Mesillinaami^1.2.246.537.6.249|1|<=^2|mg/L||S|||F",
+  "OBX|4|SN|21^Nitrofurantoiini^1.2.246.537.6.249|1|<=^16|mg/L||I|||F",
 ].join("\r");
 
 describe("HL7 v2 ORU^R01", () => {
@@ -60,10 +62,24 @@ describe("HL7 v2 ORU^R01", () => {
     expect(r.warnings.join(" ")).toMatch(/PV1-3 location "KARDIO" maps to no unit/);
   });
 
+  it("reads THL's national codes without display text", () => {
+    const bare = HL7.replace("7640-22^Escherichia coli^", "7640-22^^")
+      .replace("13^Kefuroksiimi^", "12^^")
+      .replace("17^Mesillinaami^", "MER^^");
+    const r = parseHl7Message(bare);
+    expect(r.warnings).toEqual([]);
+    expect(r.isolates[0]?.organism).toBe("Escherichia coli");
+    expect(r.susceptibility.map((s) => s.antibiotic)).toEqual(["AMP", "CRO", "MEM", "NIT"]);
+  });
+
   it("maps a site's own codes through the configuration", () => {
     const maps = extendCodeMaps({ wards: { KARDIO: "MED-A" }, organisms: { [`${FINNISH_SYSTEMS.microbes}|E_COLI`]: "Escherichia coli" } });
-    const r = parseHl7Message(HL7.replace("PV1|1|I|URO^", "PV1|1|I|KARDIO^").replace("^Escherichia coli^1.2", "^?^1.2"), { maps });
+    const r = parseHl7Message(
+      HL7.replace("PV1|1|I|URO^", "PV1|1|I|KARDIO^").replace("7640-22^Escherichia coli^1.2", "E_COLI^?^urn:oid:1.2"),
+      { maps },
+    );
     expect(r.cultures[0]?.ward).toBe("MED-A");
+    expect(r.isolates[0]?.organism).toBe("Escherichia coli");
   });
 
   it("reads 'no growth' as a negative culture", () => {
@@ -203,6 +219,22 @@ describe("helpers", () => {
     expect(interpretation("I")).toBe("S");
     expect(interpretation("R")).toBe("R");
     expect(ingest(HL7, "hl7v2").cultures).toHaveLength(1);
+  });
+
+  it("has a THL code for every organism and antibiotic in the dataset", () => {
+    const m = DEFAULT_CODE_MAPS;
+    const organisms = new Set(
+      Object.entries(m.organisms)
+        .filter(([k]) => k.startsWith(`${FINNISH_SYSTEMS.microbes}|`))
+        .map(([, v]) => v),
+    );
+    const antibiotics = new Set(
+      Object.entries(m.antibiotics)
+        .filter(([k]) => k.startsWith(`${FINNISH_SYSTEMS.antimicrobials}|`))
+        .map(([, v]) => v),
+    );
+    expect([...organisms].sort()).toEqual([...ORGANISMS].sort());
+    expect([...antibiotics].sort()).toEqual(ANTIBIOTICS.map((a) => a.code).sort());
   });
 
   it("computes ISO weeks like the dataset", () => {

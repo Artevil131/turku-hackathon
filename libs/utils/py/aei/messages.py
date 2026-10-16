@@ -5,37 +5,30 @@ test against @aei/ingest.
     reports = lab_reports("data/synthetic_microbiology_dataset", "2025-06-01", "2025-06-07")
     to_hl7(reports[0]);  to_fhir(reports);  to_csv(reports)
 
-Codes follow what the ingest maps by default: organisms and antibiotics by name (with the THL code system OIDs
-as their coding systems, the codes left to a site's map), specimens by HL7 table 0487, wards by unit code.
+Codes follow what the ingest maps by default: organisms and antibiotics in THL's national codes with their Finnish
+names (libs/utils/ingest/src/thl-codes.json, D-036), specimens by HL7 table 0487, wards by unit code.
 """
 
 from __future__ import annotations
 
 import csv
 import io
+import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
-THL_MICROBES = "1.2.246.537.6.241"
-THL_ANTIMICROBIALS = "1.2.246.537.6.249"
+from aei.domain import ANTIBIOTICS, PHENOTYPES
+
+THL_CODES = json.loads((Path(__file__).resolve().parents[2] / "ingest/src/thl-codes.json").read_text())
+THL_MICROBES = THL_CODES["microbes"]["system"]
+THL_ANTIMICROBIALS = THL_CODES["antimicrobials"]["system"]
+# The dataset's organisms and antibiotics to THL (code, name); the first THL code listed for an antibiotic wins.
+ORGANISM_CODES: dict[str, tuple[str, str]] = {c["aei"]: (k, c["name"]) for k, c in THL_CODES["microbes"]["codes"].items()}
+ANTIBIOTIC_CODES: dict[str, tuple[str, str]] = {}
+for _k, _c in THL_CODES["antimicrobials"]["codes"].items():
+    ANTIBIOTIC_CODES.setdefault(_c["aei"], (_k, _c["name"]))
 SPECIMEN_0487 = {"urine": ("UR", "Urine"), "blood": ("BLDC", "Blood culture"), "wound": ("WND", "Wound")}
 SPECIMEN_SNOMED = {"urine": ("122575003", "Urine specimen"), "blood": ("119297000", "Blood specimen"), "wound": ("258530009", "Wound swab")}
-ANTIBIOTIC_NAMES = {
-    "AMP": "Ampicillin",
-    "MEC": "Mecillinam",
-    "TZP": "Piperacillin-tazobactam",
-    "FOX": "Cefoxitin screen",
-    "CXM": "Cefuroxime",
-    "CRO": "Ceftriaxone",
-    "CAZ": "Ceftazidime",
-    "MEM": "Meropenem",
-    "CIP": "Ciprofloxacin",
-    "TMP": "Trimethoprim",
-    "NIT": "Nitrofurantoin",
-    "VAN": "Vancomycin",
-    "CLI": "Clindamycin",
-}
-PHENOTYPES = ("esbl", "mrsa", "vre", "cpe")
 
 
 @dataclass
@@ -133,7 +126,8 @@ def to_hl7(r: LabReport, message_id: str | None = None) -> str:
     n = 0
     for iso in r.isolates:
         n += 1
-        segments.append(f"OBX|{n}|CWE|BAKTVI^Bakteeriviljely^L|{iso.number}|^{iso.organism}^{THL_MICROBES}||||||F")
+        code, name = ORGANISM_CODES[iso.organism]
+        segments.append(f"OBX|{n}|CWE|BAKTVI^Bakteeriviljely^L|{iso.number}|{code}^{name}^{THL_MICROBES}||||||F")
         for ph in iso.phenotypes:
             n += 1
             segments.append(f"OBX|{n}|CWE|{ph.upper()}^{ph.upper()}^L|{iso.number}|POS^Positive^L||||||F")
@@ -145,8 +139,9 @@ def to_hl7(r: LabReport, message_id: str | None = None) -> str:
         child[26] = f"BAKTVI&Bakteeriviljely&L^{iso.number}^{iso.organism}"
         child[29] = f"PL-{r.culture_id}&{r.culture_id}"
         segments.append("|".join(child))
-        for k, (code, sr) in enumerate(iso.results.items(), start=1):
-            segments.append(f"OBX|{k}|ST|{code}^{ANTIBIOTIC_NAMES[code]}^{THL_ANTIMICROBIALS}|{iso.number}||||{sr}|||F")
+        for k, (ab, sr) in enumerate(iso.results.items(), start=1):
+            code, name = ANTIBIOTIC_CODES[ab]
+            segments.append(f"OBX|{k}|ST|{code}^{name}^{THL_ANTIMICROBIALS}|{iso.number}||||{sr}|||F")
     return "\r".join(segments)
 
 
@@ -195,7 +190,7 @@ def to_fhir(reports: list[LabReport]) -> dict:
                     "resourceType": "Observation",
                     "id": f"{sid}-{ab}",
                     "status": "final",
-                    "code": {"coding": [{"system": f"urn:oid:{THL_ANTIMICROBIALS}", "code": ab, "display": ANTIBIOTIC_NAMES[ab]}]},
+                    "code": {"coding": [{"system": f"urn:oid:{THL_ANTIMICROBIALS}", "code": ANTIBIOTIC_CODES[ab][0], "display": ANTIBIOTIC_CODES[ab][1]}]},
                     "interpretation": [{"coding": [{"system": "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation", "code": sr}]}],
                 })
                 for ab, sr in iso.results.items()
@@ -216,7 +211,10 @@ def to_fhir(reports: list[LabReport]) -> dict:
                 "id": sid,
                 "status": "final",
                 "code": {"coding": [{"system": "http://loinc.org", "code": "634-6", "display": "Bacteria identified"}]},
-                "valueCodeableConcept": {"coding": [{"system": f"urn:oid:{THL_MICROBES}", "display": iso.organism}], "text": iso.organism},
+                "valueCodeableConcept": {
+                    "coding": [{"system": f"urn:oid:{THL_MICROBES}", "code": ORGANISM_CODES[iso.organism][0], "display": iso.organism}],
+                    "text": iso.organism,
+                },
                 "hasMember": [{"reference": u} for u in [panel, *phenos]],
             }))
         if not r.isolates:
@@ -241,7 +239,7 @@ def to_fhir(reports: list[LabReport]) -> dict:
 def to_csv(reports: list[LabReport]) -> str:
     """One row per isolate (a culture with none gets one row with no organism), antibiotics as WHONET columns."""
     cols = ["patient_id", "sex", "birth_year", "specimen_number", "spec_date", "ward", "admission_date", "spec_type", "organism",
-            *PHENOTYPES, *ANTIBIOTIC_NAMES]
+            *PHENOTYPES, *ANTIBIOTICS]
     buf = io.StringIO()
     w = csv.writer(buf, lineterminator="\n")
     w.writerow(cols)
@@ -249,8 +247,8 @@ def to_csv(reports: list[LabReport]) -> str:
         base = [r.patient_id, r.sex, r.birth_year, r.culture_id, r.sample_date, r.ward, r.admission_date or "", r.specimen]
         for iso in r.isolates or [None]:
             if iso is None:
-                w.writerow([*base, "", *[""] * len(PHENOTYPES), *[""] * len(ANTIBIOTIC_NAMES)])
+                w.writerow([*base, "", *[""] * len(PHENOTYPES), *[""] * len(ANTIBIOTICS)])
             else:
                 w.writerow([*base, iso.organism, *["1" if p in iso.phenotypes else "0" for p in PHENOTYPES],
-                            *[iso.results.get(a, "") for a in ANTIBIOTIC_NAMES]])
+                            *[iso.results.get(a, "") for a in ANTIBIOTICS]])
     return buf.getvalue()

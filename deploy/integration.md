@@ -32,9 +32,12 @@ ingest itself is built and tested (`libs/utils/ingest`, D-035).
 2. **Codes:** organisms, antibiotics and S/I/R come in THL's national code
    systems (Mikrobinimikkeistö 1.2.246.537.6.241, Mikrobilääkkeet
    1.2.246.537.6.249, Mikrobin herkkyys 1.2.246.537.6.253), the test in
-   Kuntaliitto's Laboratoriotutkimusnimikkeistö (1.2.246.537.6.3). The
-   site's mapping is one JSON file (`AEI_CODE_MAP`), not code. EUCAST's
-   "I" means susceptible at increased exposure and counts as susceptible.
+   Kuntaliitto's Laboratoriotutkimusnimikkeistö (1.2.246.537.6.3). AEI
+   reads THL's codes for its organisms and antibiotics out of the box
+   (fetched from the Kanta code server, D-036; e.g. `7640-22` E. coli,
+   `12` keftriaksoni); any other local code is one JSON file
+   (`AEI_CODE_MAP`), not code. EUCAST's "I" means susceptible at
+   increased exposure and counts as susceptible.
 3. **Clinicians:** open AEI from OMNI360 with the ward as context, by
    SMART App Launch if CGI supports it, otherwise a signed link carrying
    the ward code. The doctor types nothing.
@@ -80,7 +83,7 @@ when the 4 June results arrive.
 - CGI at FHIR Demo 2025: https://fhir.fi/en/demo2025/cgi/ ; Finnish SMART IG: https://hl7.fi/fhir/finnish-smart/
 - Kanta lab CDA v5.0: https://www.kanta.fi/jarjestelmakehittajat/laboratorion-cda-r2-merkinnat ; FHIR in Kanta: https://www.kanta.fi/en/professionals/fhir-technology-and-kanta
 - FI Base 2.0.0 and terminology: https://hl7.fi/fhir/finnish-base-profiles/terminology.html
-- THL code systems on the Kanta code server: https://koodistopalvelu.kanta.fi/ (Mikrobinimikkeistö, Mikrobilääkkeet, Mikrobin herkkyys)
+- THL code systems on the Kanta code server: https://koodistopalvelu.kanta.fi/ (Mikrobinimikkeistö, Mikrobilääkkeet, Mikrobin herkkyys); REST API https://koodistopalvelu.kanta.fi/codeserver/resources/apidocs/v8/openapi.yaml
 - HL7 Europe Laboratory Report 2.1.0: https://hl7.eu/fhir/laboratory/notes.html
 - HL7 v2.5.1 table 0078 (OBX-8 S/I/R): https://hl7.eu/HL7v2x/v251/hl7v251tab0078.htm
 - EUCAST I in Finnish labs: https://fimlab.fi/ajankohtaista/kanta-hame-keski-suomi-pirkanmaa-paijat-hame-muutoksia-mikrobilaakeherkkyyksien-tulkinnoissa-1-2-2023-alkaen/

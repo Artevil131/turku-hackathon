@@ -43,8 +43,11 @@ the experiments use and the live tool does not; and
   (`regional_signals`, `expected_month`, `upper_tail`).
 - `aei.thl`: THL's register cube (D-025), `fetch_ttr_monthly()`, used by
   `scripts/fetch_thl_ttr.py`.
+- `aei.kanta`: THL's microbe and antimicrobial code lists from the Kanta
+  code server, matched to the dataset (D-036), `thl_code_map()`, used by
+  `scripts/fetch_thl_codes.py`.
 - `aei.messages`: dataset cultures as HL7 v2 ORU^R01 messages, FHIR
-  Bundles or a flat export (D-035), for `scripts/send_lab_results.py` and
+  Bundles or a flat export in THL codes (D-035, D-036), for `scripts/send_lab_results.py` and
   the ingest round-trip test.
 
 - `aei.jscompat`: JavaScript's `toFixed`, `toPrecision`,

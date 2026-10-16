@@ -10,6 +10,7 @@ import {
   WARDS,
   type WardCode,
 } from "@aei/domain";
+import THL_CODES from "./thl-codes.json" with { type: "json" };
 
 // Mapping incoming codes to the dataset's vocabulary (D-035). Every lab has
 // its own local codes, so the maps are configuration: built-in defaults cover
@@ -61,8 +62,9 @@ const SNOMED = "http://snomed.info/sct";
 
 /**
  * Finnish national code systems on the Kanta code server (koodistopalvelu.kanta.fi),
- * as FHIR system URIs; a site maps their codes with `extendCodeMaps`, e.g.
- * `{ organisms: { "urn:oid:1.2.246.537.6.241|<code>": "Escherichia coli" } }`.
+ * as FHIR system URIs. THL's microbe and antimicrobial codes for the dataset's
+ * organisms and antibiotics are built in (thl-codes.json, D-036); a site maps
+ * others with `extendCodeMaps`, e.g. `{ organisms: { "urn:oid:1.2.246.537.6.241|<code>": "Escherichia coli" } }`.
  */
 export const FINNISH_SYSTEMS = {
   labTests: "urn:oid:1.2.246.537.6.3", // Kuntaliitto, Laboratoriotutkimusnimikkeistö
@@ -70,6 +72,17 @@ export const FINNISH_SYSTEMS = {
   antimicrobials: "urn:oid:1.2.246.537.6.249", // THL, Mikrobilääkkeet
   susceptibility: "urn:oid:1.2.246.537.6.253", // THL, Mikrobin herkkyys (S / I / R)
 } as const;
+
+/** "system|code" keys for a THL code list, under both the bare OID (HL7 v2) and the urn:oid: URI (FHIR), by code and by THL abbreviation. */
+function thlKeys<T>(list: { system: string; codes: Record<string, { abbreviation: string; aei: string }> }): Record<string, T> {
+  const out: Record<string, T> = {};
+  for (const [code, c] of Object.entries(list.codes))
+    for (const system of [list.system, `urn:oid:${list.system}`]) {
+      out[`${system}|${code}`] = c.aei as T;
+      out[`${system}|${c.abbreviation}`] = c.aei as T;
+    }
+  return out;
+}
 
 function defaults(): CodeMaps {
   const organisms: Record<string, Organism> = {};
@@ -86,6 +99,7 @@ function defaults(): CodeMaps {
     "3092008": "Staphylococcus aureus",
   };
   for (const [code, o] of Object.entries(snomedOrganisms)) organisms[`${SNOMED}|${code}`] = o;
+  Object.assign(organisms, thlKeys<Organism>(THL_CODES.microbes));
   // Short forms seen in lab systems.
   Object.assign(organisms, {
     "e coli": "Escherichia coli",
@@ -117,6 +131,7 @@ function defaults(): CodeMaps {
     "cefoxitin screen": "FOX",
     kefoksitiini: "FOX",
   });
+  Object.assign(antibiotics, thlKeys<AntibioticCode>(THL_CODES.antimicrobials));
 
   const specimens: Record<string, Specimen> = {};
   for (const s of SPECIMENS) {

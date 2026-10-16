@@ -17,14 +17,17 @@ detectors, alerts and coverage list work on live data unchanged (D-035).
 | FHIR R4 Bundle | DiagnosticReport (identifier, subject, specimen, encounter, result); Patient (identifier, gender, birthDate); Specimen (type, collection); Encounter (location, period.start); organism Observation with hasMember, opening susceptibility panels (LOINC 29576-6); interpretation S/I/R |
 | Flat export | patient_id, sex, birth_year or birth_date, culture_id or specimen_number, sample_date or spec_date, ward, admission_date, specimen or spec_type, organism, esbl/mrsa/vre/cpe, one column per antibiotic (WHONET code or name) |
 
-Codes go through `CodeMaps`: defaults cover SNOMED CT organisms and
+Codes go through `CodeMaps`: defaults cover THL's national organism and
+antibiotic codes (`src/thl-codes.json`, fetched from the Kanta code server
+by `scripts/fetch_thl_codes.py`, D-036), SNOMED CT organisms and
 specimens, HL7 table 0487, WHONET antibiotic codes and names in English,
-Finnish and Latin; `FINNISH_SYSTEMS` names the THL and Kuntaliitto code
-systems for a site's map. Anything unmapped is a warning, not a guess.
+Finnish and Latin. `FINNISH_SYSTEMS` names the THL and Kuntaliitto code
+systems for a site's own additions. Anything unmapped is a warning, not a
+guess.
 EUCAST "I" (susceptible, increased exposure) counts as S.
 
 Tested in `src/ingest.test.ts`; `libs/utils/py/tests/test_ingest_roundtrip.py`
 sends two weeks of the dataset through all three formats (built by
 `aei.messages`) and requires the same rows back.
 
-Relies on: D-004, D-035.
+Relies on: D-004, D-035, D-036.
