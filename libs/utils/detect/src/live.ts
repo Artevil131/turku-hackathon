@@ -47,10 +47,24 @@ export const LIVE_SETTINGS = {
  * cluster alerts, not also a hospital-wide trend.
  */
 export function liveSignals(records: readonly IsolateRecord[], cultures: readonly Culture[]): Signal[] {
-  const clusters = [
+  const clusters = clusterSignals(records);
+  return [
+    ...clusters,
+    ...samplingDrop(cultures, LIVE_SETTINGS.samplingDrop),
+    ...risingTrend(records, SURVEILLANCE_PAIRS, { ...LIVE_SETTINGS.risingTrend, exclude: inDetectedCluster(clusters) }),
+  ];
+}
+
+/** Profile and phenotype excess signals of the live set. */
+export function clusterSignals(records: readonly IsolateRecord[]): Signal[] {
+  return [
     ...profileExcess(records, LIVE_SETTINGS.profileExcess),
     ...phenotypeExcess(records, ["esbl", "mrsa", "vre", "cpe"], LIVE_SETTINGS.phenotypeExcess),
   ];
+}
+
+/** True for an isolate inside a cluster episode already detected by `asOf`: its unit, organism or phenotype, and dates. */
+export function inDetectedCluster(clusters: readonly Signal[]): (r: IsolateRecord, asOf: IsoDate) => boolean {
   const spans = episodes(clusters).map((e) => ({
     detected: e.first.date,
     from: addDays(e.first.date, 1 - LIVE_SETTINGS.profileExcess.windowDays),
@@ -59,7 +73,7 @@ export function liveSignals(records: readonly IsolateRecord[], cultures: readonl
     organism: e.first.organism,
     phenotype: e.first.phenotype,
   }));
-  const inDetectedCluster = (r: IsolateRecord, asOf: IsoDate) =>
+  return (r: IsolateRecord, asOf: IsoDate) =>
     spans.some(
       (s) =>
         s.detected <= asOf &&
@@ -68,9 +82,4 @@ export function liveSignals(records: readonly IsolateRecord[], cultures: readonl
         r.sampleDate <= s.to &&
         (s.organism ? r.organism === s.organism : s.phenotype ? r.phenotypes.includes(s.phenotype) : false),
     );
-  return [
-    ...clusters,
-    ...samplingDrop(cultures, LIVE_SETTINGS.samplingDrop),
-    ...risingTrend(records, SURVEILLANCE_PAIRS, { ...LIVE_SETTINGS.risingTrend, exclude: inDetectedCluster }),
-  ];
 }

@@ -1,4 +1,13 @@
-import type { AntibioticCode, Culture, IsoDate, IsolateRecord, Organism, Phenotype, WardCode } from "@aei/domain";
+import {
+  type AntibioticCode,
+  type Culture,
+  type IsoDate,
+  type IsolateRecord,
+  type Organism,
+  type Phenotype,
+  WARDS,
+  type WardCode,
+} from "@aei/domain";
 import { isIntrinsic } from "@aei/eucast";
 import { addDays, daysBetween } from "@aei/replay";
 import { cochranArmitageRising, fisherMidPGreater, poissonLower, poissonUpper } from "./stats.ts";
@@ -273,7 +282,23 @@ export interface Pair {
   organism: Organism;
   antibiotic: AntibioticCode;
   specimen?: IsolateRecord["specimen"];
+  /** Only inpatient units ("in") or only the emergency department and health centres ("out"). */
+  setting?: "in" | "out";
 }
+
+const WARD_TYPE = new Map(WARDS.map((w) => [w.code, w.type]));
+
+/** The isolates a pair covers that have a result for its antibiotic. */
+function inPair(r: IsolateRecord, pair: Pair): boolean {
+  return (
+    r.organism === pair.organism &&
+    (!pair.specimen || r.specimen === pair.specimen) &&
+    (!pair.setting || WARD_TYPE.get(r.ward) === pair.setting) &&
+    r.results[pair.antibiotic] !== undefined
+  );
+}
+
+const pairKey = (pair: Pair) => `${pair.organism}|${pair.antibiotic}|${pair.specimen ?? "all"}${pair.setting ? `|${pair.setting}` : ""}`;
 
 export interface ShiftOptions {
   windowDays: number;
@@ -291,9 +316,7 @@ export function resistanceShift(records: readonly IsolateRecord[], pairs: readon
   const end = (sorted.at(-1) as IsolateRecord).sampleDate;
   const signals: Signal[] = [];
   for (const pair of pairs) {
-    const tested = sorted.filter(
-      (r) => r.organism === pair.organism && (!pair.specimen || r.specimen === pair.specimen) && r.results[pair.antibiotic] !== undefined,
-    );
+    const tested = sorted.filter((r) => inPair(r, pair));
     for (const [ward, list] of groupBy(tested, (r) => r.ward)) {
       const dates = list.map((r) => r.sampleDate);
       for (let t = addDays(start, o.windowDays + o.baselineDays - 1); t <= end; t = addDays(t, o.stepDays)) {
@@ -307,7 +330,7 @@ export function resistanceShift(records: readonly IsolateRecord[], pairs: readon
         if (p < o.alpha) {
           signals.push({
             detector: "resistance-shift",
-            key: `${ward}|${pair.organism}|${pair.antibiotic}|${pair.specimen ?? "all"}`,
+            key: `${ward}|${pairKey(pair)}`,
             date: t,
             ward: ward as WardCode,
             organism: pair.organism,
@@ -346,9 +369,7 @@ export function risingTrend(records: readonly IsolateRecord[], pairs: readonly P
   const nBins = Math.floor((daysBetween(start, end) + 1) / o.binDays);
   const signals: Signal[] = [];
   for (const pair of pairs) {
-    const tested = sorted.filter(
-      (r) => r.organism === pair.organism && (!pair.specimen || r.specimen === pair.specimen) && r.results[pair.antibiotic],
-    );
+    const tested = sorted.filter((r) => inPair(r, pair));
     const binsAsOf = (asOf: IsoDate) => {
       const bins = Array.from({ length: nBins }, () => ({ events: 0, n: 0 }));
       for (const r of tested) {
@@ -368,7 +389,7 @@ export function risingTrend(records: readonly IsolateRecord[], pairs: readonly P
         const last = bins[k - 1] as { events: number; n: number };
         signals.push({
           detector: "rising-trend",
-          key: `${pair.organism}|${pair.antibiotic}|${pair.specimen ?? "all"}`,
+          key: pairKey(pair),
           date: addDays(start, k * o.binDays - 1),
           ward: null,
           organism: pair.organism,
