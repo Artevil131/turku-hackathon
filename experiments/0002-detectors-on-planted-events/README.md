@@ -142,3 +142,28 @@ records them in DECISIONS.md); the server runs them causally as the
 replay clock moves and pushes their signals as alerts (D-014 extended).
 A follow-up could plant synthetic events of known size into the data to
 measure detection without tuning on the same events.
+
+## Hand check of the leftover episodes (after close, 2026-10-16)
+
+Not part of the planned experiment; counts measured by hand from the CSVs.
+
+1. **Internal medicine A, week 2025-05-12 to 05-18:** 9 cultures against
+   26 to 36 in each of the ten weeks around it, with four days of no
+   samples at all (05-14, 05-15, 05-17, 05-18; the unit has 32 such days
+   in three years). Other units that week are normal. Likely a second,
+   smaller planted data gap.
+2. **Internal medicine A, *E. coli* resistant to ampicillin and
+   trimethoprim, September 2025:** 8 isolates in the month against 0 to 4
+   in every other month, while the unit's urinary *E. coli* volume is
+   normal (33); 6 of the 10 patients from 2025-08-30 to 09-28 were on day
+   3+ of their stay. The profile is common (4.6 % of *E. coli*), so this
+   is a possible small planted cluster, not a certain one.
+3. **Health centre South, *E. coli* resistant only to
+   piperacillin-tazobactam, November 2023:** 6 patients from 11-06 to
+   11-12 (5 within three days), mostly aged 71 to 77; the profile itself is
+   odd (piperacillin-tazobactam R with ampicillin S). It falls in the
+   first two months of data, where the baseline is short. Unclear.
+4. **Health centre South, ESBL, August 2024:** 12 ESBL isolates in five
+   weeks against about 3 a month, but in 8 different profiles across
+   *E. coli* and *K. pneumoniae*: not one clone. Most likely chance among
+   the many tests run.
