@@ -3,6 +3,7 @@
 The doctor's empirical coverage list (D-023, provisional).
 
     coverage(records, { asOf, ward, specimen, sex?, windowDays = 365, minTested = 30 })
+    wilson(k, n)   // the 95 % Wilson interval it uses, cross-checked by scripts/crosscheck-stats
 
 For each antibiotic that suits the specimen: the share of first isolates
 it covered over the window, at the unit if it has at least `minTested`

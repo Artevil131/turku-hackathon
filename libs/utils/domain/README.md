@@ -6,6 +6,6 @@ specimens, organisms, phenotypes, and the row types of the four CSV files plus
 Facts of the data only; no counting rules or statistics.
 
 Interface: `WARDS`, `ANTIBIOTICS`, `SPECIMENS`, `ORGANISMS`, `PHENOTYPES`,
-`shortOrganism()`, `isWardCode()`, `isAntibioticCode()`, and the types.
+`HOME_AREAS`, `shortOrganism()`, `isWardCode()`, `isAntibioticCode()`, and the types.
 
 Relies on: D-003, D-004.
