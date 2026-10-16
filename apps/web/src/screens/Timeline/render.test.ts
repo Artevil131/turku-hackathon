@@ -103,10 +103,28 @@ describe("Timeline screen", () => {
           asOf: "2024-02-28",
           clock,
           signals,
+          quality: {
+            data: {
+              checked: { patients: 2, cultures: 3, isolates: 3, results: 6 },
+              summary: [
+                {
+                  check: "intrinsic-susceptible",
+                  severity: "suspect",
+                  count: 1,
+                  examples: [{ check: "intrinsic-susceptible", severity: "suspect", id: "i9", message: "isolate i9: reported S" }],
+                },
+              ],
+            },
+            failed: false,
+            key: "1:0",
+          },
           onSeek: () => {},
           onOpenSignal: () => {},
         }),
       );
+      // The data checks, with the one finding listed.
+      expect(html).toContain(locale === "en" ? "1 finding" : "1 havainto");
+      expect(html).toContain("isolate i9: reported S");
       expect(html).toContain(locale === "en" ? "Ward one" : "Osasto yksi");
       expect(html).toContain("timeline-now");
       expect(html).toContain("timeline-future");

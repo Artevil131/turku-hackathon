@@ -9,10 +9,13 @@ import { signalKindLabel, unitName } from "../../ui/defaults.ts";
 import { EmptyState } from "../../ui/EmptyState.tsx";
 import { useIsDesktop } from "../../ui/hooks.ts";
 import { Icon } from "../../ui/Icon.tsx";
+import { QualityCard } from "../../ui/Quality.tsx";
 import { MIN_ISOLATES } from "../../ui/ShareBar.tsx";
+import type { QualityState } from "../../ui/useQuality.ts";
 import { byMonth, type DailyStore, laneOrder, updateStore, visibleSignals, weekly } from "./aggregate.ts";
 import { TimelineChart } from "./Chart.tsx";
 import { KindGlyph } from "./Glyph.tsx";
+import { RegionalCard } from "./Regional.tsx";
 import { flagLabel, Summary, signalTitle, signalWhen, signalWhere, summaryText } from "./words.tsx";
 import "./Timeline.css";
 
@@ -32,6 +35,8 @@ export function TimelineScreen(p: {
   asOf: IsoDate;
   clock: FeedClock;
   signals: readonly Signal[];
+  /** The server's data checks (D-038). */
+  quality: QualityState;
   onSeek: (date: IsoDate) => void;
   onOpenSignal: (id: string) => void;
 }) {
@@ -309,6 +314,7 @@ export function TimelineScreen(p: {
               ))}
             </ul>
           </Card>
+          <QualityCard locale={locale} quality={p.quality} />
           <Card title={t(locale, "timeline.about.title")} level={2} tone="inset">
             <ul className="timeline-about u-small u-soft">
               <li>{t(locale, "timeline.about.future", { date: formatDate(locale, asOf, "long") })}</li>
@@ -323,6 +329,9 @@ export function TimelineScreen(p: {
           </Card>
         </div>
       </div>
+
+      {/* 5. The region around the hospital (THL county data) */}
+      <RegionalCard locale={locale} asOf={asOf} />
     </div>
   );
 }

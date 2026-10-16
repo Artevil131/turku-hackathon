@@ -724,3 +724,41 @@
   white-space: nowrap;
   letter-spacing: 0.03em;
 }
+
+/* ---------- The region (Regional.tsx) ---------- */
+.timeline-region-list {
+  list-style: none;
+  margin: 0 0 var(--sp-3);
+  padding: 0;
+}
+.timeline-region-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "main side" "spark spark";
+  gap: var(--sp-2) var(--sp-3);
+  align-items: center;
+  padding: var(--sp-3) 0;
+}
+.timeline-region-item + .timeline-region-item {
+  border-top: 1px solid var(--line);
+}
+.timeline-region-main {
+  grid-area: main;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.timeline-region-item > svg {
+  grid-area: spark;
+}
+.timeline-region-side {
+  grid-area: side;
+  justify-self: end;
+}
+@media (min-width: 720px) {
+  .timeline-region-item {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-areas: "main spark side";
+  }
+}
