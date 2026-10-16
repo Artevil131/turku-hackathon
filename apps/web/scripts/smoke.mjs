@@ -216,8 +216,10 @@ async function watching(cdp, body) {
     }
     if (m.method === "Network.responseReceived") {
       const u = p.response.url;
+      // /api/regional answers 404 when no THL file is mounted (D-037): the app shows an empty state, so a warning.
+      const optional = p.response.status === 404 && u.includes("/api/regional");
       if (p.response.status >= 400)
-        (u.includes("/api/") ? problems.api : problems.other).push(`${p.response.status} ${u.replace(base, "")}`);
+        (u.includes("/api/") && !optional ? problems.api : problems.other).push(`${p.response.status} ${u.replace(base, "")}`);
     }
     if (
       process.env.SMOKE_DEBUG &&
@@ -452,6 +454,38 @@ async function main() {
     const changed = await waitIn(`(document.querySelector("nav.app-tabs")?.textContent ?? "") !== ${JSON.stringify(before)}`);
     if (!changed) reasons.push(`tab labels unchanged after choosing "${clicked}"`);
     await idle();
+  });
+
+  // Eight tabs at once in one browser: HTTP/1.1 allows six connections per host, so the app must share one
+  // live stream across tabs (src/feed) or the seventh tab never loads.
+  await interaction("eight-tabs", async (idle, reasons) => {
+    await load(cdp, `${base}/#alerts`, idle);
+    const extra = [];
+    try {
+      for (let i = 0; i < 7; i++) {
+        const p = await browser.newPage(VIEWPORTS[0]);
+        extra.push(p);
+        await p.send("Page.navigate", { url: `${base}/#${ROUTES[i % ROUTES.length]}` });
+      }
+      const loaded = async (p) => {
+        const until = Date.now() + 25_000;
+        while (Date.now() < until) {
+          const ok = await evaluate(
+            p,
+            `!!document.querySelector("main h1")?.textContent.trim() && document.querySelector("main").getAttribute("aria-busy") !== "true"`,
+          ).catch(() => false);
+          if (ok) return true;
+          await sleep(250);
+        }
+        return false;
+      };
+      const results = await Promise.all(extra.map(loaded));
+      results.forEach((ok, i) => {
+        if (!ok) reasons.push(`tab ${i + 2} of 8 (#${ROUTES[i % ROUTES.length]}) did not finish loading in 25 s`);
+      });
+    } finally {
+      for (const p of extra) await p.close();
+    }
   });
 
   // Put the clock back where it was, for a shared running app.
