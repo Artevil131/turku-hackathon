@@ -108,6 +108,16 @@ export function IncidentCard({ client, locale, incident: inc, open, findings, on
     first.current = false;
   }, []);
 
+  // A card opened by click scrolls so its header and the isolates are in view.
+  const prevOpen = useRef(open);
+  useEffect(() => {
+    const was = prevOpen.current;
+    prevOpen.current = open;
+    if (!open || was) return;
+    const id = requestAnimationFrame(() => ref.current?.scrollIntoView({ block: "start", behavior: "smooth" }));
+    return () => cancelAnimationFrame(id);
+  }, [open]);
+
   const close = () => {
     onToggle(null);
     requestAnimationFrame(() => ref.current?.querySelector<HTMLButtonElement>(".feed-head")?.focus());
@@ -231,32 +241,6 @@ function IncidentBody({
 
   return (
     <>
-      <dl className="feed-facts">
-        {inc.members.length > 1 ? (
-          <div>
-            <dt>{t(locale, "feedMembers")}</dt>
-            <dd>
-              <ul className="feed-members">
-                {inc.members.map((a) => (
-                  <li key={a.id}>
-                    <span>{memberLabel(locale, a)}</span>
-                    <AlertExplanation client={client} id={a.id} locale={locale} />
-                  </li>
-                ))}
-              </ul>
-            </dd>
-          </div>
-        ) : (
-          <div>
-            <AlertExplanation client={client} id={lead.id} locale={locale} />
-          </div>
-        )}
-        <div>
-          <dt>{t(locale, "feedFirstStepLabel")}</dt>
-          <dd>{t(locale, FIRST_STEP[inc.kind])}</dd>
-        </div>
-      </dl>
-
       <h3 className="feed-sub">{t(locale, "feedIsolatesBehind")}</h3>
       {isData ? (
         <p className="feed-note">
@@ -313,6 +297,32 @@ function IncidentBody({
           </ul>
         </>
       )}
+
+      <dl className="feed-facts">
+        {inc.members.length > 1 ? (
+          <div>
+            <dt>{t(locale, "feedMembers")}</dt>
+            <dd>
+              <ul className="feed-members">
+                {inc.members.map((a) => (
+                  <li key={a.id}>
+                    <span>{memberLabel(locale, a)}</span>
+                    <AlertExplanation client={client} id={a.id} locale={locale} />
+                  </li>
+                ))}
+              </ul>
+            </dd>
+          </div>
+        ) : (
+          <div>
+            <AlertExplanation client={client} id={lead.id} locale={locale} />
+          </div>
+        )}
+        <div>
+          <dt>{t(locale, "feedFirstStepLabel")}</dt>
+          <dd>{t(locale, FIRST_STEP[inc.kind])}</dd>
+        </div>
+      </dl>
 
       <div className="feed-actions">
         <a className="feed-btn" href={doctor}>

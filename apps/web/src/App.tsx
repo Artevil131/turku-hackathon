@@ -92,7 +92,6 @@ export function App() {
     };
   }, []);
 
-  const unseen = useMemo(() => live.findings.filter((f) => !f.seen).length, [live.findings]);
   // Opens the researcher's board filtered to a unit; the board reads its state from the URL on mount.
   const openSignals = useCallback((ward: WardCode) => {
     history.pushState(null, "", `#research?unit=${ward}`);
@@ -117,15 +116,11 @@ export function App() {
     <FlowsContext.Provider value={live.relations?.flows ?? NO_FLOWS}>
       <div className="chassis" aria-hidden="true" />
       <div className="console">
-        <TopBar
-          locale={locale}
-          page={page}
-          onPage={setPage}
-          unseen={unseen}
-          asOf={live.clock?.asOf ?? null}
-          onLocale={setLocale}
-          alerts={live.alerts}
-        />
+        {/* A button, not a link: the hash holds the page, so focus moves by script. */}
+        <button type="button" className="skip-link" onClick={() => document.getElementById("main-content")?.focus()}>
+          {t(locale, "skipToContent")}
+        </button>
+        <TopBar locale={locale} page={page} onPage={setPage} asOf={live.clock?.asOf ?? null} onLocale={setLocale} alerts={live.alerts} />
         <Timeline
           locale={locale}
           clock={live.clock}
@@ -135,40 +130,42 @@ export function App() {
           reducedMotion={reducedMotion}
         />
 
-        {page === "home" ? (
-          <Home
-            locale={locale}
-            clock={live.clock}
-            findings={live.findings}
-            lastRole={lastRole}
-            onRole={setPage}
-            connection={live.connection}
-            alerts={live.alerts}
-            records={live.records}
-          />
-        ) : null}
-        {page === "doctor" ? (
-          <DoctorPage
-            client={live.client}
-            locale={locale}
-            asOf={live.clock?.asOf ?? null}
-            alerts={live.alerts}
-            onOpenSignals={openSignals}
-          />
-        ) : null}
-        <Suspense fallback={<div className="section" aria-busy="true" />}>
-          {page === "research" ? (
-            <ResearchBoard
+        <main id="main-content" className="page" tabIndex={-1}>
+          {page === "home" ? (
+            <Home
+              locale={locale}
+              clock={live.clock}
+              findings={live.findings}
+              lastRole={lastRole}
+              onRole={setPage}
+              connection={live.connection}
+              alerts={live.alerts}
+              records={live.records}
+            />
+          ) : null}
+          {page === "doctor" ? (
+            <DoctorPage
               client={live.client}
               locale={locale}
               asOf={live.clock?.asOf ?? null}
-              findings={live.findings}
-              acknowledge={live.acknowledge}
-              reducedMotion={reducedMotion}
+              alerts={live.alerts}
+              onOpenSignals={openSignals}
             />
           ) : null}
-          {page === "settings" ? <Settings locale={locale} onLocale={setLocale} onResetRole={() => setLastRole(null)} /> : null}
-        </Suspense>
+          <Suspense fallback={<div className="section" aria-busy="true" />}>
+            {page === "research" ? (
+              <ResearchBoard
+                client={live.client}
+                locale={locale}
+                asOf={live.clock?.asOf ?? null}
+                findings={live.findings}
+                acknowledge={live.acknowledge}
+                reducedMotion={reducedMotion}
+              />
+            ) : null}
+            {page === "settings" ? <Settings locale={locale} onLocale={setLocale} onResetRole={() => setLastRole(null)} /> : null}
+          </Suspense>
+        </main>
       </div>
       {live.connection === "offline" ? (
         <p className="banner" role="status">

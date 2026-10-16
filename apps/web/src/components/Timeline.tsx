@@ -49,6 +49,25 @@ function useMediaQuery(query: string): boolean {
   return matches;
 }
 
+/** Moves focus between the enabled buttons of a group with the arrow keys; returns the one focused, or null. */
+function roveFocus(e: ReactKeyboardEvent<HTMLElement>): HTMLElement | null {
+  const keys = ["ArrowRight", "ArrowDown", "ArrowLeft", "ArrowUp", "Home", "End"];
+  if (!keys.includes(e.key)) return null;
+  const items = [...e.currentTarget.querySelectorAll<HTMLElement>("button:not(:disabled)")];
+  const at = items.indexOf(e.target as HTMLElement);
+  if (at < 0) return null;
+  e.preventDefault();
+  const to =
+    e.key === "Home"
+      ? 0
+      : e.key === "End"
+        ? items.length - 1
+        : (at + (e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : 1) + items.length) % items.length;
+  const next = items[to] ?? null;
+  next?.focus();
+  return next;
+}
+
 export function Timeline({ locale, clock, connection, lastArrivals, command, reducedMotion }: TimelineProps) {
   const phone = useMediaQuery("(max-width: 760px)");
   const rootRef = useRef<HTMLDivElement>(null);
@@ -57,6 +76,7 @@ export function Timeline({ locale, clock, connection, lastArrivals, command, red
   const [seekingTo, setSeekingTo] = useState<string | null>(null);
   const [sheet, setSheet] = useState(false);
   const [menu, setMenu] = useState(false);
+  const [stepStop, setStepStop] = useState(1);
   const previewRef = useRef<string | null>(null);
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -207,10 +227,20 @@ export function Timeline({ locale, clock, connection, lastArrivals, command, red
   );
 
   const steps = (
-    <div className="tl-steps" role="group" aria-label={t(locale, "stepDay")}>
+    <div
+      className="tl-steps"
+      role="toolbar"
+      aria-label={t(locale, "tlSteps")}
+      onKeyDown={(e) => {
+        const next = roveFocus(e);
+        if (next) setStepStop(Number(next.dataset.stop));
+      }}
+    >
       <button
         type="button"
         className="tl-btn tl-step-back-week"
+        data-stop={0}
+        tabIndex={stepStop === 0 ? 0 : -1}
         disabled={!ready}
         onClick={() => stepBy(-7)}
         aria-label={t(locale, "tlStepBackWeek")}
@@ -221,6 +251,8 @@ export function Timeline({ locale, clock, connection, lastArrivals, command, red
       <button
         type="button"
         className="tl-btn tl-step-back"
+        data-stop={1}
+        tabIndex={stepStop === 1 ? 0 : -1}
         disabled={!ready}
         onClick={() => stepBy(-1)}
         aria-label={t(locale, "tlStepBackDay")}
@@ -231,6 +263,8 @@ export function Timeline({ locale, clock, connection, lastArrivals, command, red
       <button
         type="button"
         className="tl-btn"
+        data-stop={2}
+        tabIndex={stepStop === 2 ? 0 : -1}
         disabled={!ready || atEnd}
         onClick={() => stepBy(1)}
         aria-label={t(locale, "stepDay")}
@@ -241,6 +275,8 @@ export function Timeline({ locale, clock, connection, lastArrivals, command, red
       <button
         type="button"
         className="tl-btn"
+        data-stop={3}
+        tabIndex={stepStop === 3 ? 0 : -1}
         disabled={!ready || atEnd}
         onClick={() => stepBy(7)}
         aria-label={t(locale, "tlStepWeek")}
@@ -253,14 +289,24 @@ export function Timeline({ locale, clock, connection, lastArrivals, command, red
 
   const selectedSpeed = clock ? SPEEDS.findIndex((s) => s.tickMs === clock.tickMs && s.daysPerTick === clock.daysPerTick) : -1;
   const speed = (
-    <div className="tl-speed" role="group" aria-label={t(locale, "tlSpeed")}>
+    <div
+      className="tl-speed"
+      role="radiogroup"
+      aria-label={t(locale, "tlSpeed")}
+      onKeyDown={(e) => {
+        const next = roveFocus(e);
+        if (next) next.click();
+      }}
+    >
       {SPEEDS.map((s, i) => (
         <button
           key={s.key}
           type="button"
+          role="radio"
           className="tl-seg"
           disabled={!ready}
-          aria-pressed={selectedSpeed === i}
+          aria-checked={selectedSpeed === i}
+          tabIndex={selectedSpeed === i || (selectedSpeed < 0 && i === 0) ? 0 : -1}
           onClick={() => command({ action: "configure", tickMs: s.tickMs, daysPerTick: s.daysPerTick })}
         >
           {t(locale, s.key)}
@@ -331,9 +377,10 @@ export function Timeline({ locale, clock, connection, lastArrivals, command, red
       max={end}
       value={shown ?? ""}
       disabled={!ready}
-      onGo={(iso) => {
+      onGo={(iso, keepOpen) => {
         command({ action: "pause" });
         seek(iso);
+        if (keepOpen) return;
         setMenu(false);
         setSheet(false);
       }}
@@ -470,11 +517,12 @@ function DateJump({
   max: string;
   value: string;
   disabled: boolean;
-  onGo: (iso: string) => void;
+  onGo: (iso: string, keepOpen?: boolean) => void;
 }) {
   const [draft, setDraft] = useState("");
   const current = draft || value;
-  const valid = current >= min && current <= max && current !== "";
+  const inRange = (iso: string) => iso !== "" && iso >= min && iso <= max;
+  const valid = inRange(current);
   return (
     <form
       className="tl-jump"
@@ -492,7 +540,11 @@ function DateJump({
           max={max}
           value={current}
           disabled={disabled}
-          onChange={(e) => setDraft(e.target.value)}
+          onChange={(e) => {
+            setDraft(e.target.value);
+            // a complete, valid date is applied at once (typed or picked); the menu stays open while typing
+            if (inRange(e.target.value) && e.target.value !== value) onGo(e.target.value, true);
+          }}
         />
       </label>
       <button type="submit" className="tl-seg tl-jump-go" disabled={disabled || !valid}>

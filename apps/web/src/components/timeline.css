@@ -85,6 +85,7 @@
 }
 
 .tl-seg[aria-pressed="true"],
+.tl-seg[aria-checked="true"],
 .tl-events-btn[aria-expanded="true"] {
   background: var(--live-soft);
   color: var(--live);

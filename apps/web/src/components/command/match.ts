@@ -179,7 +179,8 @@ function tokenScore(term: string, token: string): number {
   if (term === token) return 100;
   if (term.startsWith(token)) return 80;
   if (words(term).some((w) => w.startsWith(token))) return 60;
-  if (term.includes(token)) return 30;
+  // an infix match is a weak hint: it must never outrank a prefix match
+  if (term.includes(token)) return 10;
   return 0;
 }
 

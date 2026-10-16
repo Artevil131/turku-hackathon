@@ -1291,3 +1291,35 @@ button {
     padding: 0 8px;
   }
 }
+
+/* The page area: the third row of the console grid; focus target of the skip link. */
+.page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  min-height: 0;
+  min-width: 0;
+}
+
+.page:focus {
+  outline: none;
+}
+
+/* First tab stop on every page; visible only when focused. */
+.skip-link {
+  position: absolute;
+  left: 12px;
+  top: 8px;
+  z-index: 100;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--live);
+  color: var(--live-ink);
+  font-weight: 600;
+  transform: translateY(-150%);
+}
+
+.skip-link:focus {
+  transform: none;
+}

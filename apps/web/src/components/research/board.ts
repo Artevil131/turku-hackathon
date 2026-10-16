@@ -38,6 +38,8 @@ export interface BoardState {
   phenotype: Phenotype | null;
   /** The open incident in the feed (its `incident` id, or the alert id). */
   incident: string | null;
+  /** The unit of the open incident: highlighted by panels, never filters the feed. */
+  focus: WardCode | null;
 }
 
 export function boardFromUrl(): BoardState {
@@ -45,17 +47,19 @@ export function boardFromUrl(): BoardState {
   const panel = p.get("panel");
   const unit = p.get("unit");
   const ph = p.get("ph");
+  const focus = p.get("focus");
   return {
     panel: PANELS.includes(panel as Panel) ? (panel as Panel) : "grid",
     unit: unit && isWardCode(unit) ? unit : null,
     kinds: (p.get("kind") ?? "").split(",").filter((k): k is SignalKind => KINDS.includes(k as SignalKind)),
     phenotype: PHENOTYPES.includes(ph as Phenotype) ? (ph as Phenotype) : null,
     incident: p.get("inc"),
+    focus: focus && isWardCode(focus) ? focus : null,
   };
 }
 
 export function boardToParams(s: BoardState): Record<string, string | null> {
-  return { panel: s.panel, unit: s.unit, kind: s.kinds.join(",") || null, ph: s.phenotype, inc: s.incident };
+  return { panel: s.panel, unit: s.unit, kind: s.kinds.join(",") || null, ph: s.phenotype, inc: s.incident, focus: s.focus };
 }
 
 /** What every panel receives. */

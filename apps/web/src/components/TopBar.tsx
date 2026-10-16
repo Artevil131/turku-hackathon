@@ -2,6 +2,7 @@ import type { Alert } from "@aei/contract";
 import { formatDate, type Locale, t } from "@aei/i18n";
 import type { ReactNode } from "react";
 import { CommandField } from "./command/CommandField.tsx";
+import { openSignals } from "./home/changes.ts";
 import { Gear, Mark } from "./Icons.tsx";
 
 export type Page = "home" | "doctor" | "research" | "settings" | "intro";
@@ -10,7 +11,8 @@ interface Props {
   locale: Locale;
   page: Page;
   onPage: (p: Page) => void;
-  unseen: number;
+  /** No longer used: the badge counts open signals itself, from `alerts`. */
+  unseen?: number;
   /** The replay clock's as-of date, for the badge's label. */
   asOf?: string | null;
   /** Without it the FI/EN switch is left out. */
@@ -21,7 +23,12 @@ interface Props {
 
 export function TopBar(props: Props) {
   const { locale, page } = props;
-  const unseenLabel = t(locale, "unseenFinds", { n: props.unseen, date: props.asOf ? formatDate(locale, props.asOf, "long") : "-" });
+  // One quantity, the same as the home card: distinct open signals of the last 28 days up to the as-of date.
+  const signals = props.asOf && props.alerts ? openSignals(props.asOf, [...props.alerts]) : 0;
+  const unseenLabel = t(locale, signals === 1 ? "unseenFindsOne" : "unseenFinds", {
+    n: signals,
+    date: props.asOf ? formatDate(locale, props.asOf, "long") : "-",
+  });
   const other: Locale = locale === "fi" ? "en" : "fi";
   const tab = (p: Page, label: string, extra?: ReactNode) => (
     <button type="button" className="section-tab" aria-current={page === p ? "page" : undefined} onClick={() => props.onPage(p)}>
@@ -45,9 +52,9 @@ export function TopBar(props: Props) {
         {tab(
           "research",
           t(locale, "roleResearch"),
-          props.unseen > 0 ? (
+          signals > 0 ? (
             <span className="badge num" role="img" aria-label={unseenLabel} title={unseenLabel}>
-              {props.unseen}
+              {signals}
             </span>
           ) : null,
         )}

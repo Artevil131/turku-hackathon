@@ -79,6 +79,16 @@ export function SignalFeed(props: FeedProps) {
     return () => cancelAnimationFrame(id);
   }, [filterKey]);
 
+  // The open incident's unit is lit in the panels; it follows the card (also when opened from the URL).
+  const openFocus = useMemo(
+    () => (state.incident ? (incidents.find((i) => i.key === state.incident)?.ward ?? null) : null),
+    [incidents, state.incident],
+  );
+  useEffect(() => {
+    if (load.status !== "ready" && state.incident) return;
+    if (state.focus !== openFocus) onChange({ focus: openFocus });
+  }, [load.status, state.incident, state.focus, openFocus, onChange]);
+
   const toggleKind = (k: SignalKind) =>
     onChange({ kinds: state.kinds.includes(k) ? state.kinds.filter((x) => x !== k) : [...state.kinds, k] });
   const card = (i: Incident) => (

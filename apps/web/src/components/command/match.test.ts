@@ -57,6 +57,15 @@ describe("search", () => {
     expect(ids("en", "yksikkokartta")).toContain("page:network");
     expect(ids("en", "asetukset")).toContain("page:settings");
   });
+  it("ranks a prefix match before an infix one", () => {
+    const r = ids("en", "uro");
+    expect(r[0]).toMatch(/URO$/);
+    expect(r.indexOf("ab:CXM")).toBeGreaterThan(r.indexOf("doctor:URO"));
+  });
+  it("puts an exact code match first", () => {
+    expect(ids("en", "CIP")[0]).toBe("ab:CIP");
+    expect(ids("fi", "ed")[0]).toMatch(/ED$/);
+  });
   it("requires every word to match", () => {
     expect(ids("en", "urology cipro")).toEqual([]);
     expect(ids("en", "zzz")).toEqual([]);

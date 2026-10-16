@@ -60,3 +60,6 @@ Screenshots come from headless Chrome through
 | 01:49 | builder (Sonnet 5.5) | Feed filters collapse to one summary row on phones; pinned sentinels now in the first screen at 390 px (checked by the orchestrator) |
 | 01:54 | UX reviewer (Sonnet 5.5) | Wave 2 review (review-wave2.md): U1 4 clicks laptop and phone (~8–10 s), U2 1, U3 fails only on the home badge and network n, U7 5 of 5. Wave-1 items 1–5, 7, 8 fixed |
 | 01:56 | builder (Sonnet 5.5) | Dead rules pruned from styles.css (45.6 → 23.3 kB source; built CSS 63.8 → 45.7 kB); before/after shots identical where data did not differ |
+| 01:57 | builder (Sonnet 5.5) | Wave 3: Research badge and home card show one quantity (open signal incidents, 28 days, labelled with the as-of); timeline speed a radio group and steps a toolbar (one tab stop each); date entry applies on Enter and on change; search ranks prefix matches first |
+| 01:57 | builder (Sonnet 5.5) | Wave 3: isolates first in an opened incident, card scrolled into view (U2 1 click, no scroll at 1280×860, checked by the orchestrator); network labels with n; the open incident's unit ringed in the network (BoardState.focus) |
+| 01:57 | orchestrator (Opus 5.5) | Skip link as the first tab stop on every page, focusing a main landmark (checked in the browser) |

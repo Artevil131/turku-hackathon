@@ -179,6 +179,12 @@
   opacity: 0;
 }
 
+.hnet-node[data-focus="true"] .hnet-ring {
+  opacity: 1;
+  stroke-dasharray: 14 8;
+  stroke-width: 6;
+}
+
 .hnet-node[data-selected="true"] .hnet-ring,
 .hnet-node:focus-visible .hnet-ring {
   opacity: 1;

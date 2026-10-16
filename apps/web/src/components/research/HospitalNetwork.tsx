@@ -124,6 +124,7 @@ export function HospitalNetwork({ client, locale, asOf, state, onChange }: Panel
           : null,
       ...(ds ?? []).map((d) => t(locale, "netNodeShare", { share: pct(d.share), unit: d.from, n: d.n, total: d.total })),
       state.unit === code ? t(locale, "netNodeSelected") : null,
+      state.focus === code ? t(locale, "netNodeFocus") : null,
     ]
       .filter(Boolean)
       .join(". ");
@@ -243,6 +244,7 @@ export function HospitalNetwork({ client, locale, asOf, state, onChange }: Panel
               data-lit={lit}
               data-data={s?.data ?? false}
               data-selected={state.unit === w.code}
+              data-focus={state.focus === w.code}
               data-shaded={!!top}
               onClick={() => select(w.code)}
               onKeyDown={(e) => onKey(e, w.code)}
@@ -275,7 +277,7 @@ export function HospitalNetwork({ client, locale, asOf, state, onChange }: Panel
               </text>
               {top ? (
                 <text className="hnet-share" x={cx} y={cy + 33} textAnchor="middle">
-                  {t(locale, "netShareOnNode", { share: pct(top.share), unit: top.from })}
+                  {t(locale, "netShareOnNode", { share: pct(top.share), n: top.n, total: top.total })}
                 </text>
               ) : null}
               {pills.map((b, i) => {
