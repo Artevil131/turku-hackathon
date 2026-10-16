@@ -14,6 +14,7 @@
     "@aei/ask": "workspace:*",
     "@aei/coverage": "workspace:*",
     "@aei/domain": "workspace:*",
+    "@aei/quality": "workspace:*",
     "@aei/relations": "workspace:*",
     "@aei/replay": "workspace:*"
   }

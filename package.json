@@ -10,6 +10,7 @@
     "dev": "pnpm --parallel --filter @aei/api --filter @aei/web dev",
     "dev:web": "pnpm --filter @aei/web dev",
     "dev:api": "pnpm --filter @aei/api dev",
+    "demo": "bash scripts/demo.sh",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "test": "vitest run && uv run pytest -q libs/utils/py/tests",
