@@ -1,0 +1,89 @@
+/* The researcher's board shell: feed left (5/12), one panel right (7/12) at
+   1100 px and up; four tabs below that. Panels style themselves. */
+
+.board {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 12px;
+  min-height: 0;
+}
+
+.board-tabs {
+  grid-column: 2;
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--radius-control);
+  background: var(--glass-1);
+  border: 1px solid var(--line);
+  justify-self: start;
+}
+
+/* Wide: the feed is not a tab, it is always there. */
+.board-tab[data-panel="feed"] {
+  display: none;
+}
+
+.board-tab {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 7px;
+  background: none;
+  color: var(--ink-2);
+  font-weight: 600;
+}
+
+.board-tab:hover {
+  color: var(--ink);
+}
+
+.board-tab[aria-selected="true"] {
+  background: var(--glass-3);
+  color: var(--live);
+  box-shadow: var(--glass-shadow);
+}
+
+.board-feed {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  min-height: 0;
+  overflow: auto;
+}
+
+.board-main {
+  grid-column: 2;
+  grid-row: 2;
+  min-height: 0;
+  overflow: auto;
+}
+
+@media (max-width: 1099px) {
+  .board {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto;
+  }
+  .board-tabs {
+    grid-column: 1;
+    justify-self: stretch;
+    overflow-x: auto;
+  }
+  .board-tab {
+    flex: 1 0 auto;
+    min-height: 44px;
+  }
+  .board-tab[data-panel="feed"] {
+    display: inline-block;
+  }
+  .board-feed,
+  .board-main {
+    grid-column: 1;
+    grid-row: 2;
+    overflow: visible;
+  }
+  .board-feed[data-shown="false"],
+  .board-main[data-shown="false"] {
+    display: none;
+  }
+}

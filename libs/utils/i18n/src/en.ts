@@ -1,3 +1,11 @@
+import { boardEn } from "./surfaces/board.ts";
+import { doctorEn } from "./surfaces/doctor.ts";
+import { feedEn } from "./surfaces/feed.ts";
+import { gridEn } from "./surfaces/grid.ts";
+import { homeEn } from "./surfaces/home.ts";
+import { mapEn } from "./surfaces/map.ts";
+import { networkEn } from "./surfaces/network.ts";
+
 export const en = {
   askSubmit: "Ask",
   askLoading: "Understanding…",
@@ -240,4 +248,11 @@ export const en = {
   tlShortcuts: "Space play/pause · ← → day · Shift+← → week",
   asOfShort: "as of {date}",
   asOfUpdating: "updating to {date}",
+  ...boardEn,
+  ...doctorEn,
+  ...feedEn,
+  ...gridEn,
+  ...networkEn,
+  ...mapEn,
+  ...homeEn,
 } as const;

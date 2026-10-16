@@ -3,13 +3,14 @@ import { isWardCode, type WardCode } from "@aei/domain";
 import { type Locale, t } from "@aei/i18n";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Home, type Role } from "./components/Home.tsx";
-import { Research, type ResearchState } from "./components/Research.tsx";
+import { ResearchBoard } from "./components/research/ResearchBoard.tsx";
 import { Settings } from "./components/Settings.tsx";
 import { Timeline } from "./components/Timeline.tsx";
 import { type Page, TopBar } from "./components/TopBar.tsx";
 import { Treat, type TreatState } from "./components/Treat.tsx";
-import { type Finding, useLive } from "./live.ts";
+import { useLive } from "./live.ts";
 import { FlowsContext } from "./relations.ts";
+import { hashPage } from "./url.ts";
 
 const NO_FLOWS: readonly Flow[] = [];
 
@@ -43,7 +44,7 @@ function store(key: string, value: string | null) {
 
 // The page is in the URL hash (#doctor, #research) so it can be bookmarked.
 function pageFromHash(): Page {
-  const value = location.hash.slice(1) as Page;
+  const value = hashPage() as Page;
   return PAGES.includes(value) ? value : "home";
 }
 
@@ -74,17 +75,6 @@ export function App() {
     window: "recent",
     antibiotic: null,
   }));
-  const [research, setResearch] = useState<ResearchState>({
-    tab: "signals",
-    ward: "all",
-    phenotypes: [],
-    days: 28,
-    unseenOnly: false,
-    selected: null,
-    specimen: "urine",
-    window: "recent",
-    organism: null,
-  });
   const live = useLive();
   const reducedMotion = usePrefersReducedMotion();
 
@@ -98,8 +88,8 @@ export function App() {
   useEffect(() => store("aei.unit", treat.ward), [treat.ward]);
   useEffect(() => store("aei.role", lastRole), [lastRole]);
   useEffect(() => {
-    const next = page === "home" ? "" : `#${page}`;
-    if (location.hash !== next) history.pushState(null, "", next || location.pathname);
+    // Only a page change touches history; the page's own params (url.ts) stay.
+    if (hashPage() !== (page === "home" ? "" : page)) history.pushState(null, "", page === "home" ? location.pathname : `#${page}`);
     if (page === "doctor" || page === "research") setLastRole(page);
   }, [page]);
   useEffect(() => {
@@ -114,14 +104,10 @@ export function App() {
 
   const unseen = useMemo(() => live.findings.filter((f) => !f.seen).length, [live.findings]);
   const patchTreat = useCallback((p: Partial<TreatState>) => setTreat((s) => ({ ...s, ...p })), []);
-  const patchResearch = useCallback((p: Partial<ResearchState>) => setResearch((s) => ({ ...s, ...p })), []);
+  // Opens the researcher's board filtered to a unit; the board reads its state from the URL on mount.
   const openSignals = useCallback((ward: WardCode) => {
-    setResearch((s) => ({ ...s, ward, tab: "signals" }));
+    history.pushState(null, "", `#research?unit=${ward}`);
     setPage("research");
-  }, []);
-  const openInTreat = useCallback((f: Finding) => {
-    setTreat((s) => ({ ...s, ward: f.record.ward, specimen: f.record.specimen, organism: f.record.organism, antibiotic: null }));
-    setPage("doctor");
   }, []);
 
   return (
@@ -155,19 +141,13 @@ export function App() {
           />
         ) : null}
         {page === "research" ? (
-          <Research
+          <ResearchBoard
             client={live.client}
-            ai={live.meta?.ai ?? false}
-            alerts={live.alerts}
             locale={locale}
-            state={research}
-            onChange={patchResearch}
-            findings={live.findings}
             asOf={live.clock?.asOf ?? null}
+            findings={live.findings}
             acknowledge={live.acknowledge}
-            onTreat={openInTreat}
             reducedMotion={reducedMotion}
-            minIsolates={MIN_ISOLATES}
           />
         ) : null}
         {page === "settings" ? <Settings locale={locale} onLocale={setLocale} onResetRole={() => setLastRole(null)} /> : null}

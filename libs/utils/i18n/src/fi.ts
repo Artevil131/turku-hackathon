@@ -1,4 +1,11 @@
 import type { en } from "./en.ts";
+import { boardFi } from "./surfaces/board.ts";
+import { doctorFi } from "./surfaces/doctor.ts";
+import { feedFi } from "./surfaces/feed.ts";
+import { gridFi } from "./surfaces/grid.ts";
+import { homeFi } from "./surfaces/home.ts";
+import { mapFi } from "./surfaces/map.ts";
+import { networkFi } from "./surfaces/network.ts";
 
 export const fi: Record<keyof typeof en, string> = {
   askSubmit: "Kysy",
@@ -243,4 +250,11 @@ export const fi: Record<keyof typeof en, string> = {
   tlShortcuts: "Välilyönti toista/tauko · ← → päivä · Shift+← → viikko",
   asOfShort: "tilanne {date}",
   asOfUpdating: "päivitetään: {date}",
+  ...boardFi,
+  ...doctorFi,
+  ...feedFi,
+  ...gridFi,
+  ...networkFi,
+  ...mapFi,
+  ...homeFi,
 };
