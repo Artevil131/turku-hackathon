@@ -11,8 +11,9 @@ export const fi: Record<keyof typeof en, string> = {
   dataLoading: "Ladataan rajattuja tietoja…",
   dataLoadError: "Tietoja ei voitu ladata. Yritä uudelleen muuttamalla rajausta.",
   noQueryRecords: "Rajauksiin ei osu isolaatteja.",
-  queryCountNote:
-    "Ensimmäinen isolaatti potilasta, mikrobia ja näytetyyppiä kohti rajatuissa tiedoissa. Ei vuosivertailua tai rajauksen ulkopuolisia tietoja.",
+  queryCountNote: "Kysymyksen resistenssiprosentit odottavat tiimin laskentatapaa; tässä ovat rajausta vastaavat tulokset sellaisinaan.",
+  queryMatchCount: "{isolates} isolaattia {patients} potilaalta vastaa rajausta",
+  queryNewestShown: "Näytetään {n} uusinta.",
   queryFindings: "{n} resistenttiä löydöstä rajauksessa",
   explain: "Selitä",
   hideExplanation: "Piilota selitys",

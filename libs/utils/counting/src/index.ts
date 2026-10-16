@@ -1,4 +1,4 @@
-import { ANTIBIOTICS, type AntibioticCode, type IsoDate, type IsolateRecord, type Organism, type Specimen } from "@aei/domain";
+import type { IsoDate, IsolateRecord } from "@aei/domain";
 
 // Counting rules from surveillance practice that the organiser points to
 // (CONTEXT.md): only the first isolate per patient, per species, per
@@ -34,33 +34,4 @@ export function firstIsolates<R extends Counted>(records: readonly R[], period?:
     out.push(r);
   }
   return out;
-}
-
-/** Counts only: the caller owns reporting floors and presentation. */
-export function susceptibilityCounts(records: readonly IsolateRecord[]): {
-  organism: Organism;
-  specimen: Specimen;
-  antibiotic: AntibioticCode;
-  susceptible: number;
-  resistant: number;
-  n: number;
-}[] {
-  const first = firstIsolates(records);
-  const groups = new Map<string, IsolateRecord[]>();
-  for (const record of first) {
-    const key = `${record.organism}|${record.specimen}`;
-    const group = groups.get(key) ?? [];
-    group.push(record);
-    groups.set(key, group);
-  }
-  return [...groups.values()].flatMap((group) => {
-    const record = group[0];
-    if (!record) return [];
-    return ANTIBIOTICS.flatMap(({ code }) => {
-      const susceptible = group.filter((r) => r.results[code] === "S").length;
-      const resistant = group.filter((r) => r.results[code] === "R").length;
-      const n = susceptible + resistant;
-      return n ? [{ organism: record.organism, specimen: record.specimen, antibiotic: code, susceptible, resistant, n }] : [];
-    });
-  });
 }

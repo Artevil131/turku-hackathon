@@ -56,9 +56,6 @@ importers:
       '@aei/contract':
         specifier: workspace:*
         version: link:../../libs/utils/contract
-      '@aei/counting':
-        specifier: workspace:*
-        version: link:../../libs/utils/counting
       '@aei/domain':
         specifier: workspace:*
         version: link:../../libs/utils/domain

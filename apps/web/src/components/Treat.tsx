@@ -227,13 +227,7 @@ export function Treat({ locale, state, onChange, findings, records, asOf, minIso
         </header>
 
         {question.active ? (
-          <AskedResults
-            locale={locale}
-            records={question.records}
-            loading={question.loading}
-            error={question.loadError}
-            minIsolates={minIsolates}
-          />
+          <AskedResults locale={locale} records={question.records} loading={question.loading} error={question.loadError} />
         ) : strip && organism ? (
           <Ranked
             locale={locale}

@@ -335,13 +335,7 @@ export function Research(props: Props) {
         ) : null}
 
         {question.active && state.tab !== "signals" ? (
-          <AskedResults
-            locale={locale}
-            records={question.records}
-            loading={question.loading}
-            error={question.loadError}
-            minIsolates={minIsolates}
-          />
+          <AskedResults locale={locale} records={question.records} loading={question.loading} error={question.loadError} />
         ) : null}
         {!question.active && state.tab === "antibiogram" ? (
           <AntibiogramGrid

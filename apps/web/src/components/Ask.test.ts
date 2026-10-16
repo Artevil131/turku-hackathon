@@ -59,11 +59,11 @@ describe("assistant presentation", () => {
     expect(pending).toContain("disabled");
     expect(renderToStaticMarkup(createElement(Ask, { locale: "fi", question: { ...question, error: true } }))).toContain("Käytä rajauksia");
   });
-  it("shows code-derived figures only above the existing reporting floor", () => {
-    const records: IsolateRecord[] = Array.from({ length: 30 }, (_, i) => ({
+  it("shows measured counts and records, never resistance percentages", () => {
+    const records: IsolateRecord[] = Array.from({ length: 60 }, (_, i) => ({
       isolateId: `i${i}`,
       cultureId: `c${i}`,
-      patientId: `p${i}`,
+      patientId: `p${i % 40}`,
       sampleDate: "2025-05-01",
       admissionDate: null,
       ward: "ICU",
@@ -76,10 +76,12 @@ describe("assistant presentation", () => {
       results: { AMP: i < 25 ? "S" : "R" },
     }));
     const render = (records: IsolateRecord[]) =>
-      renderToStaticMarkup(createElement(AskedResults, { locale: "en", records, loading: false, error: false, minIsolates: 30 }));
-    expect(render(records)).toContain("83 %");
-    expect(render(records)).toContain(">30</td>");
-    expect(render(records.slice(1))).not.toContain("83 %");
+      renderToStaticMarkup(createElement(AskedResults, { locale: "en", records, loading: false, error: false }));
+    const html = render(records);
+    expect(html).toContain("60 isolates from 40 patients match");
+    expect(html).not.toContain("%");
+    expect(html.match(/<tr>/g)?.length).toBe(51); // header + the newest 50
+    expect(html).toContain("Newest 50 shown");
     expect(render([])).toContain("No isolates match these filters");
   });
   it("offers Explain even when no AI is configured", () => {

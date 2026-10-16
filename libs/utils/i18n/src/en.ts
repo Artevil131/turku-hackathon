@@ -9,8 +9,9 @@ export const en = {
   dataLoading: "Loading matching records…",
   dataLoadError: "Records could not be loaded. Change a filter to retry.",
   noQueryRecords: "No isolates match these filters.",
-  queryCountNote:
-    "First isolates per patient, organism and specimen within the filtered records. No annual fallback or comparison outside this selection.",
+  queryCountNote: "Resistance percentages for a question wait for the team's counting method; these are the matching records as they are.",
+  queryMatchCount: "{isolates} isolates from {patients} patients match",
+  queryNewestShown: "Newest {n} shown.",
   queryFindings: "{n} resistant finds in the selection",
   explain: "Explain",
   hideExplanation: "Hide explanation",

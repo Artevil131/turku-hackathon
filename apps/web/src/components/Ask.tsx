@@ -1,7 +1,6 @@
 import { AGE_GROUP_LABELS } from "@aei/ask";
-import { susceptibilityCounts } from "@aei/counting";
 import type { IsolateRecord } from "@aei/domain";
-import { antibioticName, type Locale, specimenName, t, wardName } from "@aei/i18n";
+import { formatDate, type Locale, phenotypeName, specimenName, t, wardName } from "@aei/i18n";
 import { useId, useMemo, useState } from "react";
 import type { FilterChip, Question } from "../ai.ts";
 
@@ -87,21 +86,32 @@ export function Ask({ locale, question }: { locale: Locale; question: Question }
   );
 }
 
-/** Same first-isolate gear as spread counts; the assistant supplies no figures. */
+/**
+ * What the question selected, as measured: how many isolates and patients
+ * match, and the newest records. No resistance percentages: the counting
+ * method for those is not decided yet (libs/utils/README.md), and the
+ * assistant supplies no figures.
+ */
 export function AskedResults({
   locale,
   records,
   loading,
   error,
-  minIsolates,
 }: {
   locale: Locale;
   records: IsolateRecord[];
   loading: boolean;
   error: boolean;
-  minIsolates: number;
 }) {
-  const rows = useMemo(() => susceptibilityCounts(records), [records]);
+  const patients = useMemo(() => new Set(records.map((r) => r.patientId)).size, [records]);
+  const newest = useMemo(
+    () =>
+      records
+        .slice()
+        .sort((a, b) => (a.sampleDate < b.sampleDate ? 1 : -1))
+        .slice(0, SHOWN),
+    [records],
+  );
   if (loading)
     return (
       <p className="empty" role="status">
@@ -114,36 +124,39 @@ export function AskedResults({
         {t(locale, "dataLoadError")}
       </p>
     );
-  if (!rows.length) return <p className="empty">{t(locale, "noQueryRecords")}</p>;
+  if (!records.length) return <p className="empty">{t(locale, "noQueryRecords")}</p>;
   return (
     <div className="asked-results">
-      <p className="field-hint">{t(locale, "queryCountNote")}</p>
+      <p className="result-sub">{t(locale, "queryMatchCount", { isolates: records.length, patients })}</p>
       <table className="signal-table">
         <caption className="visually-hidden">{t(locale, "askResults")}</caption>
         <thead>
           <tr>
+            <th scope="col">{t(locale, "date")}</th>
+            <th scope="col">{t(locale, "unit")}</th>
             <th scope="col">{t(locale, "organism")}</th>
             <th scope="col">{t(locale, "specimen")}</th>
-            <th scope="col">{t(locale, "antibiotic")}</th>
-            <th scope="col">{t(locale, "susceptibleHead")}</th>
-            <th scope="col">n</th>
+            <th scope="col">{t(locale, "phenotypesLabel")}</th>
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => (
-            <tr key={`${row.organism}:${row.specimen}:${row.antibiotic}`}>
+          {newest.map((r) => (
+            <tr key={r.isolateId}>
+              <td className="num">{formatDate(locale, r.sampleDate)}</td>
+              <td>{wardName(locale, r.ward)}</td>
               <td>
-                <em>{row.organism}</em>
+                <em>{r.organism}</em>
               </td>
-              <td>{specimenName(locale, row.specimen)}</td>
-              <td>{antibioticName(locale, row.antibiotic)}</td>
-              <td className="num">{row.n >= minIsolates ? `${Math.round((100 * row.susceptible) / row.n)} %` : "–"}</td>
-              <td className="num">{row.n}</td>
+              <td>{specimenName(locale, r.specimen)}</td>
+              <td>{r.phenotypes.map(phenotypeName).join(", ")}</td>
             </tr>
           ))}
         </tbody>
       </table>
-      <p className="result-foot">{t(locale, "worksFoot", { min: minIsolates })}</p>
+      {records.length > SHOWN ? <p className="result-foot">{t(locale, "queryNewestShown", { n: SHOWN })}</p> : null}
+      <p className="result-foot">{t(locale, "queryCountNote")}</p>
     </div>
   );
 }
+
+const SHOWN = 50;

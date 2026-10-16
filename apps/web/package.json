@@ -12,7 +12,6 @@
   "dependencies": {
     "@aei/ask": "workspace:*",
     "@aei/contract": "workspace:*",
-    "@aei/counting": "workspace:*",
     "@aei/domain": "workspace:*",
     "@aei/i18n": "workspace:*",
     "@aei/relations": "workspace:*",
