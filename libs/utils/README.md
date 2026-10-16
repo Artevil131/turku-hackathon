@@ -25,8 +25,11 @@ interface or behind the API contract (D-006).
 | `replay/` | Replay clock and release index: the dataset as a live feed |
 | `contract/` | API and live-event contract, typed client |
 | `i18n/` | Finnish and English copy, dataset names |
+| `relations/` | Patient flow and phenotype trails between units |
+| `alerts/` | Alerts that fire on a single result: CPE, carrier arrivals |
+| `eucast/` | Intrinsic resistance, breakpoint gaps, inferred results, urine-only agents |
+| `counting/` | Surveillance counting: first isolate per patient, organism, specimen, period |
 
 Not here yet, waiting for team decisions: the resistance counting method
-(CONTEXT.md questions 7–8), deviation detection (question 11) and the
-relation models (D-009). The web app draws those from labelled example
-data until then.
+(CONTEXT.md questions 7–8) and deviation detection (question 11). The
+web app draws those from labelled example data until then.

@@ -23,6 +23,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@aei/alerts':
+        specifier: workspace:*
+        version: link:../../libs/utils/alerts
       '@aei/contract':
         specifier: workspace:*
         version: link:../../libs/utils/contract
@@ -32,6 +35,9 @@ importers:
       '@aei/domain':
         specifier: workspace:*
         version: link:../../libs/utils/domain
+      '@aei/relations':
+        specifier: workspace:*
+        version: link:../../libs/utils/relations
       '@aei/replay':
         specifier: workspace:*
         version: link:../../libs/utils/replay
@@ -47,6 +53,9 @@ importers:
       '@aei/i18n':
         specifier: workspace:*
         version: link:../../libs/utils/i18n
+      '@aei/relations':
+        specifier: workspace:*
+        version: link:../../libs/utils/relations
       react:
         specifier: ^19.3.1
         version: 19.3.1
@@ -67,14 +76,35 @@ importers:
         specifier: ^8.3.4
         version: 8.3.4(@types/node@22.20.5)
 
-  libs/utils/contract:
+  libs/utils/alerts:
     dependencies:
       '@aei/domain':
         specifier: workspace:*
         version: link:../domain
+      '@aei/relations':
+        specifier: workspace:*
+        version: link:../relations
+
+  libs/utils/contract:
+    dependencies:
+      '@aei/alerts':
+        specifier: workspace:*
+        version: link:../alerts
+      '@aei/domain':
+        specifier: workspace:*
+        version: link:../domain
+      '@aei/relations':
+        specifier: workspace:*
+        version: link:../relations
       '@aei/replay':
         specifier: workspace:*
         version: link:../replay
+
+  libs/utils/counting:
+    dependencies:
+      '@aei/domain':
+        specifier: workspace:*
+        version: link:../domain
 
   libs/utils/dataset:
     dependencies:
@@ -82,13 +112,40 @@ importers:
         specifier: workspace:*
         version: link:../domain
 
+  libs/utils/detect:
+    dependencies:
+      '@aei/domain':
+        specifier: workspace:*
+        version: link:../domain
+      '@aei/eucast':
+        specifier: workspace:*
+        version: link:../eucast
+      '@aei/replay':
+        specifier: workspace:*
+        version: link:../replay
+
   libs/utils/domain: {}
+
+  libs/utils/eucast:
+    dependencies:
+      '@aei/domain':
+        specifier: workspace:*
+        version: link:../domain
 
   libs/utils/i18n:
     dependencies:
       '@aei/domain':
         specifier: workspace:*
         version: link:../domain
+
+  libs/utils/relations:
+    dependencies:
+      '@aei/domain':
+        specifier: workspace:*
+        version: link:../domain
+      '@aei/replay':
+        specifier: workspace:*
+        version: link:../replay
 
   libs/utils/replay: {}
 
