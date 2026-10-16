@@ -473,72 +473,75 @@
 | SURG | Escherichia coli `R.S.SS.SS....` | 2025-09-03 | 2025-09-18 | 3 | 4 vs 0.2 | 0.000052 |
 | MED-A | Escherichia coli `RSS.SS.SSRS..` | 2025-09-24 | 2025-09-25 | 2 | 8 vs 1.3 | 0.000068 |
 
-### 2b profile excess, share within specimen, alpha 0.01: 53 other episodes
+### 2b profile excess, share within specimen, alpha 0.01: 56 other episodes
 
 | unit | about | first signal | last signal | signals | observed | p |
 |---|---|---|---|---|---|---|
-| PHC-S | Escherichia coli `SSR.SS.SSSS..` | 2023-11-06 | 2023-12-04 | 7 | 4 vs 0.3 | 0.00037 |
-| PHC-N | Escherichia coli `SSS.SS.SSRS..` | 2023-12-18 | 2023-12-18 | 1 | 10 vs 4.0 | 0.0079 |
-| PHC-N | Escherichia coli `RSS.SS.SRSS..` | 2023-12-23 | 2023-12-23 | 1 | 4 vs 0.7 | 0.0045 |
-| PHC-S | Escherichia coli `RSS.RR.SSSS..` | 2024-01-09 | 2024-01-10 | 2 | 3 vs 0.0 | 0.0000093 |
-| PHC-N | Pseudomonas aeruginosa `..R...SSS....` | 2024-01-10 | 2024-01-10 | 1 | 3 vs 0.2 | 0.0011 |
-| PHC-N | Escherichia coli `SSS.SS.SRSS..` | 2024-01-21 | 2024-01-24 | 3 | 6 vs 1.6 | 0.0065 |
-| GER | Escherichia coli `RSS.SS.SSSS..` | 2024-02-01 | 2024-02-02 | 2 | 10 vs 3.6 | 0.0042 |
-| PHC-N | Proteus mirabilis `SSS.SS.SRSR..` | 2024-03-01 | 2024-03-01 | 1 | 3 vs 0.4 | 0.0057 |
+| PHC-S | Escherichia coli `SSR.SS.SSSS..` | 2023-11-06 | 2023-12-04 | 7 | 4 vs 0.3 | 0.00031 |
+| MED-A | Escherichia coli `RSS.SS.SSSS..` | 2023-11-22 | 2023-11-22 | 1 | 9 vs 3.5 | 0.0096 |
+| PHC-N | Escherichia coli `SSS.SS.SSRS..` | 2023-12-18 | 2023-12-18 | 1 | 10 vs 3.8 | 0.0063 |
+| PHC-N | Escherichia coli `RSS.SS.SRSS..` | 2023-12-23 | 2023-12-23 | 1 | 4 vs 0.6 | 0.0043 |
+| PHC-S | Escherichia coli `RSS.RR.SSSS..` | 2024-01-09 | 2024-01-10 | 2 | 3 vs 0.0 | 0.0000083 |
+| PHC-N | Escherichia coli `SSS.SS.SRSS..` | 2024-01-21 | 2024-01-24 | 3 | 6 vs 1.6 | 0.0055 |
+| GER | Escherichia coli `RSS.SS.SSSS..` | 2024-01-25 | 2024-02-02 | 3 | 9 vs 3.4 | 0.0084 |
+| PHC-N | Proteus mirabilis `SSS.SS.SRSR..` | 2024-03-01 | 2024-03-01 | 1 | 3 vs 0.3 | 0.0043 |
 | URO | Klebsiella pneumoniae `RSS.SS.SRSS..` | 2024-03-24 | 2024-03-24 | 1 | 3 vs 0.2 | 0.0011 |
-| GER | Escherichia coli `RSS.SS.SSSS..` | 2024-04-06 | 2024-04-10 | 4 | 13 vs 5.6 | 0.0054 |
-| MED-B | Escherichia coli `SSS.SS.SRSS..` | 2024-04-07 | 2024-04-07 | 1 | 4 vs 0.7 | 0.0051 |
+| GER | Escherichia coli `RSS.SS.SSSS..` | 2024-04-06 | 2024-04-10 | 4 | 13 vs 5.2 | 0.0028 |
+| MED-B | Escherichia coli `SSS.SS.SRSS..` | 2024-04-07 | 2024-04-07 | 1 | 4 vs 0.6 | 0.0037 |
 | PHC-S | Proteus mirabilis `SSS.SS.SSRR..` | 2024-06-03 | 2024-06-03 | 1 | 4 vs 0.8 | 0.0090 |
-| PHC-N | Escherichia coli `RSS.SS.SSSS..` | 2024-06-06 | 2024-06-11 | 5 | 25 vs 14.6 | 0.0084 |
-| PHC-N | Klebsiella pneumoniae `RSS.SS.SSRS..` | 2024-06-15 | 2024-06-15 | 1 | 4 vs 0.7 | 0.0072 |
-| PHC-N | Escherichia coli `SSS.SS.SSRS..` | 2024-06-27 | 2024-07-31 | 11 | 12 vs 5.2 | 0.0073 |
+| PHC-N | Escherichia coli `RSS.SS.SSSS..` | 2024-06-06 | 2024-06-12 | 6 | 25 vs 14.2 | 0.0059 |
+| PHC-N | Klebsiella pneumoniae `RSS.SS.SSRS..` | 2024-06-15 | 2024-06-15 | 1 | 4 vs 0.7 | 0.0057 |
+| PHC-N | Escherichia coli `SSS.SS.SSRS..` | 2024-06-27 | 2024-07-31 | 14 | 12 vs 5.0 | 0.0053 |
 | MED-B | Escherichia coli `SSR.SS.SSSS..` | 2024-07-29 | 2024-07-29 | 1 | 3 vs 0.3 | 0.0049 |
-| GER | Escherichia coli `RSS.SS.SSRS..` | 2024-08-05 | 2024-08-05 | 1 | 5 vs 1.0 | 0.0032 |
+| GER | Escherichia coli `RSS.SS.SSRS..` | 2024-08-05 | 2024-08-05 | 1 | 5 vs 0.9 | 0.0027 |
 | MED-B | Escherichia coli `RSS.SS.SSRS..` | 2024-08-22 | 2024-08-22 | 2 | 4 vs 0.8 | 0.0099 |
-| PHC-S | Escherichia coli `RSR.RR.SSRS..` | 2024-08-22 | 2024-08-22 | 1 | 3 vs 0.2 | 0.00097 |
-| ED | Klebsiella pneumoniae `RSR.SS.SSSS..` | 2024-09-15 | 2024-09-15 | 1 | 3 vs 0.3 | 0.0047 |
+| PHC-S | Escherichia coli `RSR.RR.SSRS..` | 2024-08-22 | 2024-08-22 | 1 | 3 vs 0.2 | 0.00093 |
+| ED | Klebsiella pneumoniae `RSR.SS.SSSS..` | 2024-09-15 | 2024-09-15 | 1 | 3 vs 0.3 | 0.0039 |
 | URO | Escherichia coli `RSS.SS.SSRS..` | 2024-09-16 | 2024-09-18 | 2 | 6 vs 1.3 | 0.0022 |
-| PHC-S | Klebsiella pneumoniae `RSR.SS.SSSS..` | 2024-09-22 | 2024-10-07 | 2 | 3 vs 0.4 | 0.0057 |
-| PHC-N | Escherichia coli `RSS.SS.SRSS..` | 2024-09-24 | 2024-10-05 | 2 | 5 vs 0.9 | 0.0026 |
-| MED-A | Escherichia coli `SSR.SS.SSSS..` | 2024-09-24 | 2024-09-24 | 1 | 4 vs 0.7 | 0.0056 |
-| GER | Escherichia coli `SSS.SS.SSRS..` | 2024-10-07 | 2024-10-07 | 1 | 7 vs 2.1 | 0.0064 |
-| SURG | Escherichia coli `SSS.SS.SSRS..` | 2024-10-14 | 2024-10-14 | 1 | 4 vs 0.8 | 0.0087 |
-| ED | Escherichia coli `SSR.SS.SSSS..` | 2024-10-22 | 2024-10-22 | 1 | 5 vs 1.3 | 0.0094 |
-| MED-B | Escherichia coli `RSS.RS.SSSS..` | 2024-10-24 | 2024-10-24 | 1 | 3 vs 0.2 | 0.0020 |
-| ED | Escherichia coli `SSS.RS.SSSS..` | 2024-10-26 | 2024-10-26 | 1 | 5 vs 1.3 | 0.0097 |
-| MED-A | Escherichia coli `RSS.SS.SSRS..` | 2024-12-14 | 2024-12-21 | 3 | 5 vs 1.2 | 0.0083 |
-| PHC-N | Escherichia coli `RSS.RS.SSSS..` | 2024-12-25 | 2024-12-25 | 2 | 4 vs 0.8 | 0.0097 |
+| PHC-S | Klebsiella pneumoniae `RSR.SS.SSSS..` | 2024-09-22 | 2024-10-07 | 2 | 3 vs 0.3 | 0.0047 |
+| PHC-N | Escherichia coli `RSS.SS.SRSS..` | 2024-09-24 | 2024-10-05 | 2 | 5 vs 0.9 | 0.0022 |
+| MED-A | Escherichia coli `SSR.SS.SSSS..` | 2024-09-24 | 2024-09-24 | 1 | 4 vs 0.6 | 0.0044 |
+| GER | Escherichia coli `SSS.SS.SSRS..` | 2024-10-07 | 2024-10-07 | 1 | 7 vs 2.0 | 0.0043 |
+| SURG | Escherichia coli `SSS.SS.SSRS..` | 2024-10-14 | 2024-10-14 | 1 | 4 vs 0.6 | 0.0040 |
+| ED | Escherichia coli `SSR.SS.SSSS..` | 2024-10-22 | 2024-10-22 | 1 | 5 vs 1.1 | 0.0050 |
+| MED-B | Escherichia coli `RSS.RS.SSSS..` | 2024-10-24 | 2024-10-24 | 1 | 3 vs 0.2 | 0.0018 |
+| ED | Escherichia coli `SSS.RS.SSSS..` | 2024-10-26 | 2024-11-07 | 2 | 5 vs 1.1 | 0.0046 |
+| MED-A | Escherichia coli `RSS.SS.SSRS..` | 2024-12-14 | 2024-12-21 | 3 | 5 vs 1.2 | 0.0072 |
+| PHC-N | Escherichia coli `RSS.RS.SSSS..` | 2024-12-25 | 2024-12-25 | 2 | 4 vs 0.8 | 0.0092 |
 | URO | Escherichia coli `RSS.SS.SSRS..` | 2025-02-16 | 2025-02-16 | 1 | 6 vs 1.4 | 0.0035 |
-| MED-B | Escherichia coli `SSS.SS.SSRS..` | 2025-03-24 | 2025-03-26 | 2 | 6 vs 1.6 | 0.0062 |
-| PHC-S | Pseudomonas aeruginosa `..S...SRS....` | 2025-04-11 | 2025-04-11 | 1 | 4 vs 0.5 | 0.0024 |
+| MED-B | Escherichia coli `SSS.SS.SSRS..` | 2025-03-24 | 2025-03-26 | 2 | 6 vs 1.4 | 0.0038 |
+| PHC-S | Pseudomonas aeruginosa `..S...SRS....` | 2025-04-11 | 2025-04-11 | 1 | 3 vs 0.3 | 0.0046 |
+| PHC-S | Escherichia coli `RSS.SS.SSRS..` | 2025-05-14 | 2025-05-14 | 1 | 8 vs 2.9 | 0.0093 |
+| ED | Escherichia coli `RSS.RR.SSSS..` | 2025-05-27 | 2025-05-27 | 1 | 3 vs 0.4 | 0.0090 |
 | MED-B | Klebsiella pneumoniae `RSS.SS.SSRR..` | 2025-06-06 | 2025-06-06 | 1 | 3 vs 0.2 | 0.0018 |
-| SURG | Pseudomonas aeruginosa `..S...RSS....` | 2025-06-26 | 2025-06-26 | 2 | 3 vs 0.4 | 0.0092 |
+| SURG | Pseudomonas aeruginosa `..S...RSS....` | 2025-06-26 | 2025-06-26 | 2 | 3 vs 0.4 | 0.0056 |
 | MED-B | Pseudomonas aeruginosa `..S...SSR....` | 2025-07-11 | 2025-07-11 | 1 | 3 vs 0.4 | 0.0065 |
-| SURG | Staphylococcus aureus `...S.......SR` | 2025-07-27 | 2025-07-27 | 1 | 5 vs 1.1 | 0.0049 |
-| MED-A | Escherichia coli `RSS.SS.SSRS..` | 2025-09-07 | 2025-09-28 | 6 | 6 vs 1.6 | 0.0061 |
-| PHC-S | Escherichia coli `SSS.SS.SRSS..` | 2025-11-02 | 2025-11-02 | 1 | 6 vs 1.7 | 0.0085 |
+| PHC-S | Escherichia coli `SSS.SS.SRSS..` | 2025-08-05 | 2025-08-05 | 1 | 6 vs 1.7 | 0.0090 |
 
-…and 13 more.
+…and 16 more.
 
-### 2b profile excess, share within specimen, alpha 0.001: 7 other episodes
+### 2b profile excess, share within specimen, alpha 0.001: 10 other episodes
 
 | unit | about | first signal | last signal | signals | observed | p |
 |---|---|---|---|---|---|---|
-| PHC-S | Escherichia coli `SSR.SS.SSSS..` | 2023-11-06 | 2023-11-12 | 6 | 4 vs 0.3 | 0.00037 |
-| PHC-S | Escherichia coli `RSS.RR.SSSS..` | 2024-01-09 | 2024-01-10 | 2 | 3 vs 0.0 | 0.0000093 |
-| PHC-N | Escherichia coli `SSS.SS.SSRS..` | 2024-07-05 | 2024-07-14 | 5 | 14 vs 4.9 | 0.00055 |
-| PHC-S | Escherichia coli `RSR.RR.SSRS..` | 2024-08-22 | 2024-08-22 | 1 | 3 vs 0.2 | 0.00097 |
+| PHC-S | Escherichia coli `SSR.SS.SSSS..` | 2023-11-06 | 2023-11-12 | 6 | 4 vs 0.3 | 0.00031 |
+| PHC-S | Escherichia coli `RSS.RR.SSSS..` | 2024-01-09 | 2024-01-10 | 2 | 3 vs 0.0 | 0.0000083 |
+| PHC-N | Escherichia coli `SSS.SS.SRSS..` | 2024-01-24 | 2024-01-24 | 1 | 7 vs 1.5 | 0.00093 |
+| GER | Escherichia coli `RSS.SS.SSSS..` | 2024-02-02 | 2024-02-02 | 1 | 11 vs 3.4 | 0.00083 |
+| GER | Escherichia coli `RSS.SS.SSSS..` | 2024-04-10 | 2024-04-10 | 1 | 15 vs 5.6 | 0.00072 |
+| PHC-N | Escherichia coli `SSS.SS.SSRS..` | 2024-07-05 | 2024-07-14 | 5 | 14 vs 4.7 | 0.00041 |
+| PHC-S | Escherichia coli `RSR.RR.SSRS..` | 2024-08-22 | 2024-08-22 | 1 | 3 vs 0.2 | 0.00093 |
 | URO | Escherichia coli `RSS.SS.SSRS..` | 2024-09-18 | 2024-09-18 | 1 | 7 vs 1.5 | 0.00094 |
-| MED-A | Escherichia coli `RSS.SS.SSRS..` | 2024-12-21 | 2024-12-21 | 1 | 7 vs 1.4 | 0.00067 |
-| MED-A | Escherichia coli `RSS.SS.SSRS..` | 2025-09-12 | 2025-09-28 | 5 | 8 vs 1.9 | 0.00078 |
+| MED-A | Escherichia coli `RSS.SS.SSRS..` | 2024-12-21 | 2024-12-21 | 1 | 7 vs 1.4 | 0.00056 |
+| MED-A | Escherichia coli `RSS.SS.SSRS..` | 2025-09-12 | 2025-09-28 | 5 | 8 vs 1.7 | 0.00033 |
 
 ### 2b profile excess, share within specimen, alpha 0.0001: 3 other episodes
 
 | unit | about | first signal | last signal | signals | observed | p |
 |---|---|---|---|---|---|---|
-| PHC-S | Escherichia coli `SSR.SS.SSSS..` | 2023-11-10 | 2023-11-12 | 5 | 5 vs 0.2 | 0.0000040 |
-| PHC-S | Escherichia coli `RSS.RR.SSSS..` | 2024-01-09 | 2024-01-10 | 2 | 3 vs 0.0 | 0.0000093 |
-| MED-A | Escherichia coli `RSS.SS.SSRS..` | 2025-09-25 | 2025-09-25 | 1 | 9 vs 1.6 | 0.000037 |
+| PHC-S | Escherichia coli `SSR.SS.SSSS..` | 2023-11-10 | 2023-11-12 | 5 | 5 vs 0.2 | 0.0000034 |
+| PHC-S | Escherichia coli `RSS.RR.SSSS..` | 2024-01-09 | 2024-01-10 | 2 | 3 vs 0.0 | 0.0000083 |
+| MED-A | Escherichia coli `RSS.SS.SSRS..` | 2025-09-24 | 2025-09-25 | 2 | 8 vs 1.3 | 0.000058 |
 
 ### 3 phenotype excess, alpha 0.01: 14 other episodes
 

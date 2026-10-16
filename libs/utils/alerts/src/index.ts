@@ -1,6 +1,6 @@
 import { type DetectorName, episodes, liveSignals, type Signal } from "@aei/detect";
 import type { AntibioticCode, Culture, IsoDate, IsolateRecord, Organism, Phenotype, Specimen, WardCode } from "@aei/domain";
-import { type CarrierArrival, carrierArrivals, type DateWindow, type PatientTrail, phenotypeTrails } from "@aei/relations";
+import type { CarrierArrival, DateWindow } from "@aei/relations";
 import { addDays, daysBetween } from "@aei/replay";
 
 // Infection-control alerts. Rules that fire on a single result (D-014) and
@@ -151,18 +151,14 @@ export function detectorAlerts(signals: readonly Signal[]): DetectorAlert[] {
 }
 
 /**
- * Every alert over a history, newest first: CPE finds, carrier arrivals and
- * live detector episodes. Each alert depends only on samples up to its date,
+ * Every pushed alert over a history, newest first: CPE finds, MRSA or VRE
+ * new in a unit, and live detector episodes. Carrier arrivals are not pushed
+ * (D-022): in this data almost none is confirmed in the new unit; they stay
+ * available per patient through `carrierAlerts`. Each alert depends only on samples up to its date,
  * so a server computes them once and releases them as its clock moves.
  */
-export function buildAlerts(records: readonly IsolateRecord[], cultures: readonly Culture[], trails?: readonly PatientTrail[]): Alert[] {
-  const t = trails ?? phenotypeTrails(cultures, records);
-  return sortAlerts<Alert>([
-    ...cpeAlerts(records),
-    ...newInUnitAlerts(records),
-    ...carrierAlerts(carrierArrivals(t)),
-    ...detectorAlerts(liveSignals(records, cultures)),
-  ]);
+export function buildAlerts(records: readonly IsolateRecord[], cultures: readonly Culture[]): Alert[] {
+  return sortAlerts<Alert>([...cpeAlerts(records), ...newInUnitAlerts(records), ...detectorAlerts(liveSignals(records, cultures))]);
 }
 
 /** Newest first; on the same day CPE, then new in a unit, then detectors, then carriers. */

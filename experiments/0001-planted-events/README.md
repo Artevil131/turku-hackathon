@@ -115,3 +115,11 @@ weeks before the end) misses all of them. Each detector the team chooses
 should be tested against them in a follow-up experiment: does it flag
 Urology in June 2025, the ICU in March 2026 and the empty week at
 Health centre South, how early, and how many other alerts it raises.
+
+## Data notes from the review (2026-10-16, after close)
+
+Checked by hand: children appear in every unit, including 27 cultures in
+Geriatrics, so age is not tied to unit; stays at sampling never exceed day
+22; 1,875 urine isolates at 10^3 CFU/ml carry susceptibility results and
+are counted like the rest. The trimethoprim rise in item 4 is partly the
+Urology outbreak strain (trimethoprim R); see 0002, corrections.

@@ -20,9 +20,9 @@ Delay: days from the event's start to the detector's first signal for it ("–":
 | 2 profile excess | alpha 0.01 | 0 d | 4 d | – | – | 92 | 30.8 |
 | 2 profile excess | alpha 0.001 | 0 d | 4 d | – | – | 29 | 9.7 |
 | 2 profile excess | alpha 0.0001 | 0 d | 4 d | – | – | 11 | 3.7 |
-| 2b profile excess, share within specimen | alpha 0.01 | 0 d | 4 d | – | – | 53 | 17.7 |
-| 2b profile excess, share within specimen | alpha 0.001 | 0 d | 4 d | – | – | 7 | 2.3 |
-| 2b profile excess, share within specimen | alpha 0.0001 | 0 d | 4 d | – | – | 3 | 1.0 |
+| 2b profile excess, share within specimen | alpha 0.01 | 0 d | 6 d | – | – | 56 | 18.7 |
+| 2b profile excess, share within specimen | alpha 0.001 | 0 d | 6 d | – | – | 10 | 3.3 |
+| 2b profile excess, share within specimen | alpha 0.0001 | 0 d | 6 d | – | – | 3 | 1.0 |
 | 3 phenotype excess | alpha 0.01 | 3 d | 2 d | – | – | 14 | 4.7 |
 | 3 phenotype excess | alpha 0.001 | 4 d | 4 d | – | – | 6 | 2.0 |
 | 3 phenotype excess | alpha 0.0001 | 6 d | 6 d | – | – | 2 | 0.7 |
@@ -36,4 +36,4 @@ Delay: days from the event's start to the detector's first signal for it ("–":
 | 6 rising trend | alpha 0.001 | – | – | – | 2025-09-28 | 2 | 0.7 |
 | 6 rising trend | alpha 0.0001 | – | – | – | 2026-02-15 | 1 | 0.3 |
 
-Sweep time: 12.4 s.
+Sweep time: 15.0 s.

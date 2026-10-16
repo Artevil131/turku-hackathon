@@ -1,5 +1,6 @@
-import type { Culture, IsolateRecord } from "@aei/domain";
-import { type Pair, phenotypeExcess, profileExcess, risingTrend, type Signal, samplingDrop } from "./detectors.ts";
+import type { Culture, IsoDate, IsolateRecord } from "@aei/domain";
+import { addDays } from "@aei/replay";
+import { episodes, type Pair, phenotypeExcess, profileExcess, risingTrend, type Signal, samplingDrop } from "./detectors.ts";
 
 // The detectors and thresholds the tool runs live (D-020): the best setting
 // of each detector in experiments/0002, provisional until the team reviews
@@ -39,12 +40,37 @@ export const LIVE_SETTINGS = {
   risingTrend: { binDays: 28, minBins: 13, alpha: 0.001 },
 } as const;
 
-/** Every signal of the live detector set over a history; each depends only on samples up to its date. */
+/**
+ * Every signal of the live detector set over a history; each depends only on
+ * samples up to its date. Isolates of a cluster already detected are left
+ * out of the trend test from the day it was detected, so an outbreak raises
+ * cluster alerts, not also a hospital-wide trend.
+ */
 export function liveSignals(records: readonly IsolateRecord[], cultures: readonly Culture[]): Signal[] {
-  return [
+  const clusters = [
     ...profileExcess(records, LIVE_SETTINGS.profileExcess),
     ...phenotypeExcess(records, ["esbl", "mrsa", "vre", "cpe"], LIVE_SETTINGS.phenotypeExcess),
+  ];
+  const spans = episodes(clusters).map((e) => ({
+    detected: e.first.date,
+    from: addDays(e.first.date, 1 - LIVE_SETTINGS.profileExcess.windowDays),
+    to: e.last.date,
+    ward: e.first.ward,
+    organism: e.first.organism,
+    phenotype: e.first.phenotype,
+  }));
+  const inDetectedCluster = (r: IsolateRecord, asOf: IsoDate) =>
+    spans.some(
+      (s) =>
+        s.detected <= asOf &&
+        r.ward === s.ward &&
+        r.sampleDate >= s.from &&
+        r.sampleDate <= s.to &&
+        (s.organism ? r.organism === s.organism : s.phenotype ? r.phenotypes.includes(s.phenotype) : false),
+    );
+  return [
+    ...clusters,
     ...samplingDrop(cultures, LIVE_SETTINGS.samplingDrop),
-    ...risingTrend(records, SURVEILLANCE_PAIRS, LIVE_SETTINGS.risingTrend),
+    ...risingTrend(records, SURVEILLANCE_PAIRS, { ...LIVE_SETTINGS.risingTrend, exclude: inDetectedCluster }),
   ];
 }

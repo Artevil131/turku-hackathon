@@ -118,3 +118,16 @@ estimate. Next experiments: the per-antibiotic breakdown; and patient
 factors (sex, age, day 3+ of stay, earlier resistant finds), which the
 dataset README says matter (urinary *E. coli* differs by sex) and which
 the team's planned logistic regression would use.
+
+## Notes from the review (2026-10-16, after close)
+
+- The outcome leaves untested pairs out, which drops whole organism
+  groups for some antibiotics: urinary ceftazidime "coverage" (21.8 %)
+  counts no Enterobacterales, and clindamycin and vancomycin count as
+  urine options. The comparison between estimators shares this outcome,
+  but no absolute number here is clinical coverage. A later version needs
+  a target organism group per antibiotic and per-antibiotic results.
+- Units do differ by type: urinary *E. coli* trimethoprim R is about
+  15 to 17 % in the emergency department and health centres and 21 to
+  25 % on the wards. An inpatient/outpatient estimator was not tested and
+  is the obvious next one.

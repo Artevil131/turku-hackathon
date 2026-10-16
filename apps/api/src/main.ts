@@ -36,7 +36,7 @@ const datasetEnd = dates.at(-1) ?? "";
 // computed once over all data and cut to the window up to the clock.
 const moves = patientMoves(dataset.cultures);
 const trails = phenotypeTrails(dataset.cultures, records);
-const alerts = createReleaseIndex(buildAlerts(records, dataset.cultures, trails), (a) => a.date);
+const alerts = createReleaseIndex(buildAlerts(records, dataset.cultures), (a) => a.date);
 const DEFAULT_RELATION_DAYS = 28;
 
 function relations(asOf: string, days: number): RelationsResponse {
