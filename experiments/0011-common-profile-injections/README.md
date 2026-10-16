@@ -129,7 +129,7 @@ other deviations.
 
 ## Interpretation
 
-All three predictions held. 
+All three predictions held.
 
 1. **An outbreak of the hospital's commonest resistant strain is not
    detected**: 1 of 180 clusters of 4 to 8 patients, 0 of 90 in the large
