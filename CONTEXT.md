@@ -6,6 +6,21 @@ the starting point for talking to the judges. Nothing technical,
 mathematical or statistical is decided here; those choices go in
 DECISIONS.md after the team (and the judges' answers) settle them.
 
+## What the judges told us (2026-10-16)
+
+The tool is for two audiences, described in AUDIENCE.md:
+
+- **Doctors** choosing empirical treatment: open the tool on their ward
+  and see a quick list of antibiotics likely to work. They type nothing;
+  the view is driven by filters already in the dataset.
+- **Researchers** trying to stop harmful bacteria spreading: continuous
+  data from one hospital, plus a network view of hospitals at regional,
+  national, continental and worldwide level from open data, with odd
+  signals raised for them.
+
+This widens the brief: the tool should suggest antibiotics, not only show
+percentages, and it reaches beyond the one hospital in the dataset.
+
 ## The problem in one sentence
 
 A doctor choosing an antibiotic for a patient today has no up-to-date view
@@ -161,23 +176,23 @@ not stated.
 
 ## Questions for the judges
 
+Questions 1 (who the user is) and 3 (which decision the tool supports)
+are answered by the judges (AUDIENCE.md) and removed. Numbering is kept so
+earlier notes still match.
+
 **Users and use**
 
-1. Who is the primary user: the ward doctor choosing treatment, the
-   infection control team, the microbiologist, or hospital management?
 2. Where and when is it used: at the bedside, on a ward computer, on a
    phone, during rounds? Is a mobile app useful here?
-3. What decision should the tool support: choosing empirical treatment,
-   spotting a rising trend or outbreak, antibiotic stewardship, or all of
-   these?
 
 **Scope**
 
 4. "e.g. antimicrobial resistance surveillance": should the tool be
    general enough for other laboratory indicators, or is AMR the focus?
 5. Which organisms, antibiotics and specimens matter most to clinicians?
-6. Should the tool only inform, or may it suggest a treatment? (A
-   suggestion may bring it under medical-device regulation.)
+6. The judges want a suggested list of antibiotics. How should the tool
+   present it so it stays decision support, given that a recommendation
+   may count as a medical device under EU rules?
 
 **Data and statistics**
 
@@ -204,12 +219,20 @@ not stated.
 12. Who should be told about a deviation, and how: shown in the tool, or
     pushed as an alert to the ward or the infection control team?
 13. Does the synthetic dataset contain planted deviations we are expected
-    to find?
-    Our scan (experiments/0001) found, very likely planted: an ESBL
-    *E. coli* cluster in Urology in June–July 2025, an MRSA cluster in the
-    ICU in March 2026, a week without any samples from Health centre South
-    (2025-12-08 to 12-14) and urinary *E. coli* trimethoprim resistance
-    rising from 15 % to 20 % over the three years.
+    to find? Inspection on 2026-10-16 found four that look planted (an
+    ESBL *E. coli* cluster in urology, an MRSA outbreak in the ICU, a
+    week with no samples from health centre South, and slow rises in two
+    resistance series); they are measured and listed in
+    `benchmarks/planted-events/README.md`. Experiments 0001 and 0002 found
+    the same four and two smaller candidates (a week with few samples in
+    internal medicine A, 2025-05-12 to 05-18, and a possible *E. coli*
+    cluster there in September 2025). Still to confirm with the organiser
+    whether that is the full list.
+
+**Other**
+
+14. Are AI or language-model components welcome, and under what
+    constraints on data (even synthetic)?
 
 ## Glossary
 
