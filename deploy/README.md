@@ -31,10 +31,20 @@ the THL county file. Both are mounted read-only at run time:
 | `/regional` | `data/external/thl` (from `scripts/fetch_thl_ttr.py`; without it `/api/regional` answers 404) | `AEI_THL_DIR` |
 | `/config` | `deploy/container/config` (a site's code map) | `AEI_CONFIG_DIR` |
 
-The container user must be able to read the dataset: make the files
-readable (`chmod -R a+rX data/synthetic_microbiology_dataset`), or with
-rootless podman run as your own user (`podman run --userns=keep-id`).
-The mounts carry `z` so SELinux hosts (Fedora) relabel them.
+The API runs as the image's user `node`, who must be able to read the
+dataset. If its files are private to you (mode 600), either make them
+readable (`chmod -R a+rX data/synthetic_microbiology_dataset`) or, under
+rootless podman, set `AEI_API_USER=root`: root in a rootless container is
+your own host user. Do not pass `--userns=keep-id` to podman-compose's
+`--podman-run-args`; it applies to the web container too, and nginx then
+cannot start. The mounts carry `z` so SELinux hosts (Fedora) relabel them.
+
+Checked end to end on 2026-10-17 with rootless podman 5.8 and
+podman-compose 1.6 (`AEI_API_USER=root AEI_LOAD_UNTIL=2025-06-01 podman
+compose -f deploy/container/compose.yaml up -d --build`): every route
+through the nginx proxy, the live stream unbuffered, three days of HL7
+posted to `/api/ingest` raising the Urology alert on 4 June, and the
+smoke tests (`SMOKE_URL=http://localhost:8080 pnpm smoke`) 13 of 13.
 
 The compose file passes the server's variables through: `AEI_REPLAY_START`,
 `AEI_LOAD_UNTIL` (load results up to a date, the rest can arrive through
@@ -43,7 +53,10 @@ The compose file passes the server's variables through: `AEI_REPLAY_START`,
 (`AEI_LLM_URL`, `AEI_LLM_MODEL`, `AEI_LLM_KEY`, `AEI_LLM_ACCESS_ID`,
 `AEI_LLM_ACCESS_SECRET`). Ports: `AEI_WEB_PORT` (8080) and `AEI_API_PORT`
 (8787, published on 127.0.0.1 only, for `scripts/send_lab_results.py`).
-Build with `--format docker` under podman to keep the health check.
+`AEI_API_USER` (`node`) sets the API's user. The compose file carries the
+API health check itself, since podman-compose builds OCI images, which
+drop the image's `HEALTHCHECK`; for a plain `podman build`, add
+`--format docker` to keep it.
 
 This is demo and pilot packaging, not a hardened deployment: no
 authentication, no TLS, no persistence (results posted to `/api/ingest`
