@@ -78,7 +78,7 @@ year for the whole country, a volume a researcher can read. If the
 tails were exact, chance would give about 1.4 signals among the 1,413
 series-months that could signal; 10 is more, so some are likely real
 surges, but the model probably underestimates variability for sparse
-series (dispersion fitted as 1 in 9 of the 10), so the weaker signals
+series (dispersion fitted as 1 in 8 of the 10), so the weaker signals
 (p near 1e-3) may be noise. The strongest ones (VRE in Länsi-Uusimaa,
 CPE *E. coli* in Varsinais-Suomi, MRSA in Keski-Suomi over two months)
 are far outside chance. These are statistical signals in public
