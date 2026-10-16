@@ -1,7 +1,7 @@
 import type { IsolateRecord } from "@aei/domain";
 import { addDays } from "@aei/replay";
 import { describe, expect, it } from "vitest";
-import { coverage, suggest, suggestCombinations, wilson } from "./index.ts";
+import { coverage, IV_ONLY, suggest, suggestCombinations, wilson } from "./index.ts";
 
 let n = 0;
 const iso = (extra: Partial<IsolateRecord>): IsolateRecord => {
@@ -39,11 +39,11 @@ describe("coverage", () => {
       ...Array.from({ length: 10 }, () => iso({ ward: "ICU", results: { CIP: "R" } })),
     ];
     const uro = coverage(records, { asOf: "2026-06-30", ward: "URO", specimen: "urine" });
-    const cip = uro.antibiotics.find((a) => a.antibiotic === "CIP");
-    expect(cip?.level).toBe("unit");
-    expect(cip?.share).toBeCloseTo(0.9, 10);
+    expect(uro.level).toBe("unit");
+    expect(uro.antibiotics.find((a) => a.antibiotic === "CIP")?.share).toBeCloseTo(0.9, 10);
     const icu = coverage(records, { asOf: "2026-06-30", ward: "ICU", specimen: "urine" });
-    expect(icu.antibiotics.find((a) => a.antibiotic === "CIP")?.level).toBe("ward type");
+    expect(icu.level).toBe("ward type");
+    expect(icu.isolates).toBe(50);
   });
 
   it("counts resistance by nature as not covering and reports untested organisms", () => {
@@ -114,5 +114,50 @@ describe("combinations", () => {
     const combos = suggestCombinations(result, "severe");
     expect(combos[0]?.standing).toBe("clears");
     expect(combos.some((c) => c.antibiotics.includes("TZP") && c.antibiotics.includes("VAN"))).toBe(true);
+  });
+});
+
+describe("review fixes (D-033)", () => {
+  it("judges untested shares on the level actually used, so a sparse unit cannot hide them", () => {
+    // PHC-N has 4 blood isolates, so the ward type is used; there a third are S. aureus, never tested on ciprofloxacin.
+    const records = [
+      ...Array.from({ length: 4 }, () => iso({ ward: "PHC-N", specimen: "blood", results: { CIP: "S" } })),
+      ...Array.from({ length: 36 }, () => iso({ ward: "ED", specimen: "blood", results: { CIP: "S" } })),
+      ...Array.from({ length: 20 }, () => iso({ ward: "ED", specimen: "blood", organism: "Staphylococcus aureus", results: { FOX: "S" } })),
+    ];
+    const result = coverage(records, { asOf: "2026-06-30", ward: "PHC-N", specimen: "blood" });
+    expect(result.level).toBe("ward type");
+    const cip = suggest(result, "severe").find((s) => s.antibiotic === "CIP");
+    expect(cip?.standing).toBe("not assessable");
+  });
+
+  it("drops the sex filter before giving up the unit's own data", () => {
+    const records = [...Array.from({ length: 25 }, () => iso({ sex: "F" })), ...Array.from({ length: 25 }, () => iso({ sex: "M" }))];
+    const result = coverage(records, { asOf: "2026-06-30", ward: "URO", specimen: "urine", sex: "F" });
+    expect(result.level).toBe("unit");
+    expect(result.sexApplied).toBe(false);
+    expect(result.isolates).toBe(50);
+  });
+
+  it("leaves injection-only drugs out of mild suggestions and always gives the all-organism share", () => {
+    const records = Array.from({ length: 40 }, () => iso({ specimen: "wound", results: { MEM: "S", CXM: "S" } }));
+    const list = suggest(coverage(records, { asOf: "2026-06-30", ward: "SURG", specimen: "wound" }), "mild");
+    expect(list.some((s) => IV_ONLY.includes(s.antibiotic))).toBe(false);
+    expect(list.find((s) => s.antibiotic === "CXM")?.allOrganisms.share).toBe(1);
+  });
+
+  it("does not suggest a pair whose partner adds nothing", () => {
+    // Blood: TZP misses the MRSA, VAN covers it; CLI adds nothing over TZP.
+    const records = [
+      ...Array.from({ length: 40 }, () => iso({ specimen: "blood", results: { TZP: "S", CIP: "R" } })),
+      ...Array.from({ length: 8 }, () =>
+        iso({ specimen: "blood", organism: "Staphylococcus aureus", results: { FOX: "R", VAN: "S", CLI: "R" } }),
+      ),
+    ];
+    const combos = suggestCombinations(coverage(records, { asOf: "2026-06-30", ward: "ICU", specimen: "blood" }), "severe");
+    const names = combos.map((c) => c.antibiotics.join("+"));
+    expect(names).toContain("TZP+VAN");
+    expect(names.some((n) => n.includes("CLI"))).toBe(false);
+    expect(combos.every((c) => c.gain >= 0.02)).toBe(true);
   });
 });

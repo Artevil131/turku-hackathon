@@ -1,7 +1,7 @@
 import type { IsolateRecord } from "@aei/domain";
 import type { CarrierArrival } from "@aei/relations";
 import { describe, expect, it } from "vitest";
-import { carrierAlerts, cpeAlerts, detectorAlerts, newInUnitAlerts, sortAlerts } from "./index.ts";
+import { type Alert, carrierAlerts, cpeAlerts, detectorAlerts, groupIncidents, newInUnitAlerts, sortAlerts } from "./index.ts";
 
 const record = (isolateId: string, sampleDate: string, phenotypes: IsolateRecord["phenotypes"]): IsolateRecord => ({
   isolateId,
@@ -108,5 +108,72 @@ describe("gap alerts", () => {
       ["empty-run", "ICU"],
       ["sampling-drop", "GER"],
     ]);
+  });
+});
+
+describe("incidents", () => {
+  it("groups one event's alerts and keeps other units and organisms apart", () => {
+    const base = { patientId: "P1", isolateId: "C1-1", previous: null };
+    const input: Alert[] = [
+      {
+        kind: "new-in-unit" as const,
+        id: "new:mrsa:C1-1",
+        date: "2026-03-03",
+        ward: "ICU" as const,
+        phenotype: "mrsa" as const,
+        organism: "Staphylococcus aureus" as const,
+        ...base,
+      },
+      {
+        kind: "detector" as const,
+        id: "d1",
+        date: "2026-03-07",
+        ward: "ICU" as const,
+        detector: "phenotype-excess" as const,
+        phenotype: "mrsa" as const,
+        observed: 3,
+      },
+      {
+        kind: "detector" as const,
+        id: "d2",
+        date: "2026-03-09",
+        ward: "ICU" as const,
+        detector: "profile-excess" as const,
+        organism: "Staphylococcus aureus" as const,
+        observed: 3,
+      },
+      {
+        kind: "detector" as const,
+        id: "d3",
+        date: "2026-03-09",
+        ward: "GER" as const,
+        detector: "phenotype-excess" as const,
+        phenotype: "mrsa" as const,
+        observed: 3,
+      },
+      {
+        kind: "detector" as const,
+        id: "d4",
+        date: "2026-06-01",
+        ward: "ICU" as const,
+        detector: "phenotype-excess" as const,
+        phenotype: "mrsa" as const,
+        observed: 3,
+      },
+    ];
+    const alerts = groupIncidents(input);
+    expect(alerts.map((a) => [a.id, a.incident])).toEqual([
+      ["new:mrsa:C1-1", "new:mrsa:C1-1"],
+      ["d1", "new:mrsa:C1-1"],
+      ["d2", "new:mrsa:C1-1"],
+      ["d3", "d3"],
+      ["d4", "d4"],
+    ]);
+  });
+
+  it("raises 'new in a unit' for inpatient units only", () => {
+    const mrsa = (id: string, date: string, ward: IsolateRecord["ward"]) => ({ ...record(id, date, ["mrsa"]), ward });
+    const records = [record("C0-1", "2025-01-01", []), mrsa("C1-1", "2025-10-01", "ED"), mrsa("C2-1", "2025-10-02", "SURG")];
+    expect(newInUnitAlerts(records, ["mrsa"], 180).map((a) => a.ward)).toEqual(["SURG"]);
   });
 });
