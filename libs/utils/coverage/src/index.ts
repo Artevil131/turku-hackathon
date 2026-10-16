@@ -55,6 +55,14 @@ export interface AntibioticCoverage {
   untested: { organism: Organism; share: number }[];
   /** Organisms resistant by nature or with no breakpoint, as a share of the pool's isolates. */
   notCovering: { organism: Organism; share: number }[];
+  /**
+   * Within the antibiotic's intended spectrum (D-027): organisms EUCAST gives
+   * no breakpoint for are left out, resistance by nature still counts
+   * against. Same fallback levels and interval as above.
+   */
+  spectrum: { share: number | null; interval: [number, number] | null; level: Level | null; counts: Record<Level, Counts> };
+  /** Organisms outside the intended spectrum (no breakpoint), as a share of the pool's isolates. */
+  outsideSpectrum: { organism: Organism; share: number }[];
 }
 
 export interface CoverageResult {
@@ -98,12 +106,12 @@ export function coverage(records: readonly IsolateRecord[], q: CoverageQuery): C
     hospital: pool,
   };
 
-  const count = (list: readonly IsolateRecord[], a: AntibioticCode): Counts => {
+  const count = (list: readonly IsolateRecord[], a: AntibioticCode, inSpectrumOnly = false): Counts => {
     let covered = 0;
     let known = 0;
     for (const r of list) {
       const e = effectiveResult(r, a);
-      if (e.basis === "untested") continue;
+      if (e.basis === "untested" || (inSpectrumOnly && e.basis === "no-breakpoint")) continue;
       known++;
       if (e.result === "S") covered++;
     }
@@ -126,6 +134,13 @@ export function coverage(records: readonly IsolateRecord[], q: CoverageQuery): C
     };
     const level = (["unit", "ward type", "hospital"] as Level[]).find((l) => counts[l].known >= minTested) ?? null;
     const c = level ? counts[level] : null;
+    const sCounts = {
+      unit: count(levels.unit, a.code, true),
+      "ward type": count(levels["ward type"], a.code, true),
+      hospital: count(levels.hospital, a.code, true),
+    };
+    const sLevel = (["unit", "ward type", "hospital"] as Level[]).find((l) => sCounts[l].known >= minTested) ?? null;
+    const sc = sLevel ? sCounts[sLevel] : null;
     return {
       antibiotic: a.code,
       share: c ? c.covered / c.known : null,
@@ -138,6 +153,13 @@ export function coverage(records: readonly IsolateRecord[], q: CoverageQuery): C
         const e = effectiveResult(r, a.code);
         return e.basis === "intrinsic" || e.basis === "no-breakpoint";
       }),
+      spectrum: {
+        share: sc ? sc.covered / sc.known : null,
+        interval: sc ? wilson(sc.covered, sc.known) : null,
+        level: sLevel,
+        counts: sCounts,
+      },
+      outsideSpectrum: organismShare((r) => effectiveResult(r, a.code).basis === "no-breakpoint"),
     };
   });
 
@@ -182,6 +204,10 @@ export interface Suggestion {
   antibiotic: AntibioticCode;
   aware: "Access" | "Watch";
   standing: Standing;
+  /** The share and interval the standing rests on: within the intended spectrum (mild) or all organisms (severe), D-027. */
+  basis: "spectrum" | "all organisms";
+  share: number | null;
+  interval: [number, number] | null;
   coverage: AntibioticCoverage;
 }
 
@@ -194,28 +220,32 @@ export const MAX_UNTESTED = 0.2;
  * Watch, then by coverage; then those whose estimate clears it but whose
  * interval does not; then the rest. Antibiotics with no level of 30 results,
  * or untested on more than a fifth of the pool, are "not assessable" and
- * come last. Informs; the doctor decides.
+ * come last. Mild infections are judged within each antibiotic's intended
+ * spectrum, severe ones over all organisms, since a severe infection must be
+ * covered whatever grows (D-027). Informs; the doctor decides.
  */
 export function suggest(result: CoverageResult, severity: Severity): Suggestion[] {
   const threshold = THRESHOLDS[severity];
   const rank: Record<Standing, number> = { clears: 0, borderline: 1, below: 2, "not assessable": 3 };
+  const basis = severity === "mild" ? "spectrum" : "all organisms";
   return result.antibiotics
     .map((c): Suggestion => {
       const untested = c.untested.reduce((s, u) => s + u.share, 0);
+      const { share, interval } = basis === "spectrum" ? c.spectrum : c;
       const standing: Standing =
-        c.share === null || c.interval === null || untested > MAX_UNTESTED
+        share === null || interval === null || untested > MAX_UNTESTED
           ? "not assessable"
-          : c.interval[0] >= threshold
+          : interval[0] >= threshold
             ? "clears"
-            : c.share >= threshold
+            : share >= threshold
               ? "borderline"
               : "below";
-      return { antibiotic: c.antibiotic, aware: AWARE[c.antibiotic], standing, coverage: c };
+      return { antibiotic: c.antibiotic, aware: AWARE[c.antibiotic], standing, basis, share, interval, coverage: c };
     })
     .sort(
       (a, b) =>
         rank[a.standing] - rank[b.standing] ||
         (a.standing === "clears" ? (a.aware === b.aware ? 0 : a.aware === "Access" ? -1 : 1) : 0) ||
-        (b.coverage.share ?? -1) - (a.coverage.share ?? -1),
+        (b.share ?? -1) - (a.share ?? -1),
     );
 }

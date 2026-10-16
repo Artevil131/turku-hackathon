@@ -83,3 +83,17 @@ describe("suggest", () => {
     expect(standing.CAZ).toBe("not assessable"); // never tested on E. coli
   });
 });
+
+describe("spectrum", () => {
+  it("leaves organisms with no breakpoint out of the spectrum share, but keeps resistance by nature against it", () => {
+    const records = [
+      ...Array.from({ length: 30 }, () => iso({ results: { MEC: "S" } })), // E. coli, covered
+      ...Array.from({ length: 10 }, () => iso({ organism: "Enterococcus faecalis", results: {} })), // mecillinam: no breakpoint
+      ...Array.from({ length: 10 }, () => iso({ organism: "Klebsiella pneumoniae", results: { MEC: "R" } })),
+    ];
+    const mec = coverage(records, { asOf: "2026-06-30", ward: "URO", specimen: "urine" }).antibiotics.find((a) => a.antibiotic === "MEC");
+    expect(mec?.share).toBeCloseTo(30 / 50, 10); // all organisms: Enterococcus counts as not covered
+    expect(mec?.spectrum.share).toBeCloseTo(30 / 40, 10); // within spectrum: Enterococcus left out
+    expect(mec?.outsideSpectrum).toEqual([{ organism: "Enterococcus faecalis", share: 0.2 }]);
+  });
+});
