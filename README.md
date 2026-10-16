@@ -1,8 +1,10 @@
 # turku-hackathon
 
-The challenge is not chosen yet. This repository lays the foundation so
-that whatever we build, a website and an iPhone app among it, sits on one
-structure from the first commit.
+Our challenge is the Antibiotic Efficacy Indicator (AEI) by Tyks
+Laboratories: a continuously updated, ward-level view of antibiotic
+resistance. The problem, the data and the open questions are in
+CONTEXT.md. This repository lays the foundation so that whatever we build,
+a website and an iPhone app among it, sits on one structure.
 
 The architecture tries to generalise and keep everything as untangled as
 possible. Each piece of logic is written once, in one place, behind a small
@@ -35,6 +37,7 @@ experiment, it belongs in `libs/utils`, from the start.
                     cost) that are rerun as the code changes
     experiments/    one directory per experiment, NNNN-slug/README.md,
                     started from experiments/TEMPLATE.md
+    CONTEXT.md      the challenge: problem, data, open questions
     PROTOCOL.md     how an experiment is planned, run and recorded in git,
                     and the rules for claims
     DECISIONS.md    every technical, mathematical or statistical choice the

@@ -8,3 +8,4 @@ reversed decision is not deleted: add a new entry and mark the old one
 | ID | Date | Decision | Why | Decided by |
 |----|------|----------|-----|------------|
 | D-001 | 2026-10-16 | Repository layout and dependency direction as in README.md | Website and iPhone app share one set of reusable utils | Artem |
+| D-002 | 2026-10-16 | Challenge: Antibiotic Efficacy Indicator by Tyks Laboratories (CONTEXT.md) | Team choice | Artem |
