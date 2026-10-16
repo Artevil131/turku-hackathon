@@ -25,3 +25,17 @@ xcuserdata/
 
 # macOS
 .DS_Store
+
+# impeccable: the engine binary (~21 MB) is fetched on first run into
+# ~/.impeccable, so it stays out of git; per-machine config and review
+# captures stay local too
+.claude/skills/impeccable/scripts/bin/
+.agents/skills/impeccable/scripts/bin/
+.impeccable/config.local.json
+**/.impeccable/review/
+**/.impeccable/hook.cache.json
+**/.impeccable/questions/
+.claude/settings.local.json
+# impeccable's font index sits in a folder named data/; keep it
+!.claude/skills/impeccable/scripts/data/
+!.agents/skills/impeccable/scripts/data/

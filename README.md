@@ -63,6 +63,21 @@ Dependencies point one way:
 
 ## Stack
 
-No language, framework, model, database or hosting provider is chosen
-yet. Each choice is made by the team and recorded in DECISIONS.md before
-code depends on it.
+TypeScript on the web (React + Vite) in a pnpm workspace; Rust is planned
+for some gears later. The full list of choices, with who made them, is in
+DECISIONS.md (D-003 to D-010). The data store is not chosen yet.
+
+## Running
+
+Needs Node 22 or newer and pnpm. Unzip the organiser's dataset into
+`data/synthetic_microbiology_dataset/`, then:
+
+    pnpm install
+    pnpm dev          # API on :8787 and the website on :5173
+    pnpm test         # unit tests (Vitest)
+    pnpm typecheck
+    pnpm check        # lint and format (Biome)
+
+Design work goes through the Impeccable skill (`/impeccable`), installed in
+the repo for Claude Code and Codex; PRODUCT.md holds the product context it
+reads.
