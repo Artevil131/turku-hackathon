@@ -1,0 +1,196 @@
+{
+  "experiment": "baseline-county-seasonal-naive",
+  "method": "County forecast baseline: Poisson at the same month last year's count (floor 0.5), one month ahead, 4 phenotypes x 23 counties + national, targets 2024-10 to 2026-09",
+  "family": "prediction",
+  "tuned_on_test": false,
+  "tuned_on": "none (no fitted parameters)",
+  "metrics": {
+    "P2": {
+      "mae": 2.77355,
+      "log_score": -2.5206,
+      "mae_skill": -0.0949401,
+      "log_skill": -0.390597,
+      "mae_skill_seasonal": 0.0,
+      "log_skill_seasonal": 0.0,
+      "MRSA_mae_skill": -0.0301845,
+      "MRSA_log_skill": -0.23654,
+      "ESBL_mae_skill": -0.135151,
+      "ESBL_log_skill": -1.21116,
+      "VRE_mae_skill": 0.0,
+      "VRE_log_skill": -0.0773207,
+      "CPE_mae_skill": -0.075,
+      "CPE_log_skill": -0.0373703,
+      "national_mae_skill": -0.397167,
+      "national_log_skill": -1.97155,
+      "mae_skill_no_last2": -0.0649198,
+      "log_skill_no_last2": -0.369908
+    }
+  },
+  "intervals": {
+    "P2": {
+      "mae": [
+        2.60143,
+        2.97918
+      ],
+      "log_score": [
+        -2.68159,
+        -2.36283
+      ],
+      "mae_skill": [
+        -0.183216,
+        -0.0138251
+      ],
+      "log_skill": [
+        -0.551163,
+        -0.232703
+      ],
+      "mae_skill_seasonal": [
+        0.0,
+        0.0
+      ],
+      "log_skill_seasonal": [
+        0.0,
+        0.0
+      ],
+      "MRSA_mae_skill": [
+        -0.134085,
+        0.0563426
+      ],
+      "MRSA_log_skill": [
+        -0.468788,
+        -0.0001534
+      ],
+      "ESBL_mae_skill": [
+        -0.267854,
+        -0.0139176
+      ],
+      "ESBL_log_skill": [
+        -1.85861,
+        -0.60158
+      ],
+      "VRE_mae_skill": [
+        -0.224039,
+        0.242449
+      ],
+      "VRE_log_skill": [
+        -0.22606,
+        0.038307
+      ],
+      "CPE_mae_skill": [
+        -0.176067,
+        0.0312419
+      ],
+      "CPE_log_skill": [
+        -0.0900038,
+        0.0155362
+      ],
+      "national_mae_skill": [
+        -0.887098,
+        -0.0712642
+      ],
+      "national_log_skill": [
+        -3.12621,
+        -0.872367
+      ],
+      "mae_skill_no_last2": [
+        -0.149555,
+        0.0103429
+      ],
+      "log_skill_no_last2": [
+        -0.549874,
+        -0.20663
+      ]
+    }
+  },
+  "n": {
+    "P2": {
+      "mae": 2208,
+      "log_score": 2208,
+      "mae_skill": 2208,
+      "log_skill": 2208,
+      "mae_skill_seasonal": 2208,
+      "log_skill_seasonal": 2208,
+      "MRSA_mae_skill": 552,
+      "MRSA_log_skill": 552,
+      "ESBL_mae_skill": 552,
+      "ESBL_log_skill": 552,
+      "VRE_mae_skill": 552,
+      "VRE_log_skill": 552,
+      "CPE_mae_skill": 552,
+      "CPE_log_skill": 552,
+      "national_mae_skill": 96,
+      "national_log_skill": 96,
+      "mae_skill_no_last2": 2024,
+      "log_skill_no_last2": 2024
+    }
+  },
+  "runtime_s": 0.1,
+  "cpu_s": 0.1,
+  "seeds": [
+    2026
+  ],
+  "data": "synthetic_microbiology_dataset, seed 2026, as received 2026-10-09",
+  "notes": "THL series as fetched 2026-10-17, final values for every target month, so not strictly as-of; the last two months (2026-08, 2026-09) are still incomplete at fetch time (see the _no_last2 keys). Skill is against persistence unless named; a baseline scored against itself has skill 0 by construction. Bootstrap: 1,000 resamples of target months, seed 2026.",
+  "detail": [
+    {
+      "group": "pooled",
+      "n": 2208,
+      "mae_model": 2.77355,
+      "log_model": -2.5206,
+      "mae_persistence": 2.53306,
+      "log_persistence": -2.13001,
+      "mae_seasonal_naive": 2.77355,
+      "log_seasonal_naive": -2.5206
+    },
+    {
+      "group": "MRSA",
+      "n": 552,
+      "mae_model": 3.33877,
+      "log_model": -3.19181,
+      "mae_persistence": 3.24094,
+      "log_persistence": -2.95527,
+      "mae_seasonal_naive": 3.33877,
+      "log_seasonal_naive": -3.19181
+    },
+    {
+      "group": "ESBL",
+      "n": 552,
+      "mae_model": 6.93841,
+      "log_model": -5.10523,
+      "mae_persistence": 6.11232,
+      "log_persistence": -3.89407,
+      "mae_seasonal_naive": 6.93841,
+      "log_seasonal_naive": -5.10523
+    },
+    {
+      "group": "VRE",
+      "n": 552,
+      "mae_model": 0.271739,
+      "log_model": -0.804847,
+      "mae_persistence": 0.271739,
+      "log_persistence": -0.727527,
+      "mae_seasonal_naive": 0.271739,
+      "log_seasonal_naive": -0.804847
+    },
+    {
+      "group": "CPE",
+      "n": 552,
+      "mae_model": 0.54529,
+      "log_model": -0.980517,
+      "mae_persistence": 0.507246,
+      "log_persistence": -0.943146,
+      "mae_seasonal_naive": 0.54529,
+      "log_seasonal_naive": -0.980517
+    },
+    {
+      "group": "national",
+      "n": 96,
+      "mae_model": 29.7917,
+      "log_model": -7.67947,
+      "mae_persistence": 21.3229,
+      "log_persistence": -5.70793,
+      "mae_seasonal_naive": 29.7917,
+      "log_seasonal_naive": -7.67947
+    }
+  ]
+}
