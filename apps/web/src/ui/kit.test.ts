@@ -80,8 +80,6 @@ describe("kit", () => {
       h(Settings, {
         locale: "en",
         onLocale: () => {},
-        rank: "access-first",
-        onRank: () => {},
         meta,
         asOf: "2024-06-01",
         resultCount: 1234,

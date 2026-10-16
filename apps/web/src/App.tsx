@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { aiStatus, forgetAiStatus } from "./ai/index.ts";
-import type { Catalog } from "./engine/types.ts";
 import type { FeedCommand, FeedMeta } from "./feed/types.ts";
 import { useFeed } from "./feed/useFeed.ts";
 import { formatDate, formatNumber, LOCALES, t, type Locale } from "./i18n/index.ts";
@@ -27,7 +26,6 @@ const ROUTES: readonly Route[] = ["treat", "alerts", "report", "timeline", "sett
 const REMEMBERED_ROUTES: readonly Route[] = ["treat", "alerts", "report", "timeline"];
 const isRoute = (v: unknown): v is Route => typeof v === "string" && (ROUTES as readonly string[]).includes(v);
 const isLocale = (v: unknown): v is Locale => typeof v === "string" && (LOCALES as readonly string[]).includes(v);
-const isRank = (v: unknown): v is "access-first" | "coverage" => v === "access-first" || v === "coverage";
 const isStringArray = (v: unknown): v is string[] => Array.isArray(v) && v.every((x) => typeof x === "string");
 
 /** Seen alert ids kept at most (oldest forgotten first). */
@@ -43,7 +41,7 @@ function routeFromHash(): Route | null {
 function initialTreat(meta: FeedMeta): TreatPrefs {
   const saved = store.get<string>("ward");
   const ward = saved && meta.units.some((u) => u.code === saved) ? saved : defaultWard(meta);
-  return { ward, specimen: defaultSpecimen(meta), sex: null, age: null, onset: null, organism: null };
+  return { ward, specimen: defaultSpecimen(meta), sex: null, severity: "mild" };
 }
 
 function initialReport(meta: FeedMeta): ReportPrefs {
@@ -55,7 +53,9 @@ function validTreatPatch(meta: FeedMeta, patch: Partial<TreatPrefs>): Partial<Tr
   const out: Partial<TreatPrefs> = { ...patch };
   if (out.ward !== undefined && !meta.units.some((u) => u.code === out.ward)) delete out.ward;
   if (out.specimen !== undefined && !meta.specimens.some((s) => s.code === out.specimen)) delete out.specimen;
-  if (out.organism != null && !meta.organisms.includes(out.organism)) delete out.organism;
+  if (out.severity !== undefined && out.severity !== "mild" && out.severity !== "severe") delete out.severity;
+  // The server's coverage list (D-023) is for a unit, site and sex; other filters do not apply there.
+  for (const key of Object.keys(out)) if (!["ward", "specimen", "sex", "severity"].includes(key)) delete out[key as keyof TreatPrefs];
   return out;
 }
 
@@ -68,7 +68,6 @@ export function App() {
 
   // ---------- Remembered choices ----------
   const [locale, setLocale] = useStored<Locale>("locale", "fi", isLocale);
-  const [rank, setRank] = useStored<"access-first" | "coverage">("rank", "access-first", isRank);
   const [seenList, setSeenList] = useStored<string[]>("seen", [], isStringArray);
   const seen = useMemo(() => new Set(seenList), [seenList]);
 
@@ -146,8 +145,7 @@ export function App() {
   );
 
   // ---------- Signals ----------
-  const catalog = useMemo<Catalog | null>(() => (meta ? { units: meta.units, antibiotics: meta.antibiotics } : null), [meta]);
-  const { signals, signalsAsOf, signalsGen, pending } = useSignals(results, asOf, generation, catalog);
+  const { signals, signalsAsOf, signalsGen, pending } = useSignals(results, asOf, generation);
   const [focus, setFocus] = useState<string | null>(null);
   const openSignal = useCallback(
     (id: string) => {
@@ -240,11 +238,10 @@ export function App() {
   const forget = useCallback(() => {
     store.clear();
     setLocale("fi");
-    setRank("access-first");
     setSeenList([]);
     if (meta) setTreatPrefs(initialTreat(meta));
     if (meta) setReportPrefs(initialReport(meta));
-  }, [meta, setLocale, setRank, setSeenList]);
+  }, [meta, setLocale, setSeenList]);
 
   // ---------- Render ----------
   const ready = meta && clock && asOf && treatPrefs && reportPrefs;
@@ -266,8 +263,6 @@ export function App() {
       <Settings
         locale={locale}
         onLocale={setLocale}
-        rank={rank}
-        onRank={setRank}
         meta={meta}
         asOf={asOf}
         resultCount={results.length}
@@ -297,7 +292,6 @@ export function App() {
         prefs={treatPrefs}
         onPrefs={onTreatPrefs}
         onOpenSignal={openSignal}
-        rank={rank}
       />
     );
   } else if (route === "alerts") {

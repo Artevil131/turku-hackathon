@@ -6,13 +6,12 @@ import { Card } from "./Card.tsx";
 import { Icon } from "./Icon.tsx";
 import { Segmented } from "./Segmented.tsx";
 import { MIN_ISOLATES } from "./ShareBar.tsx";
-import { Switch } from "./Switch.tsx";
 
 /*
-  Settings (route #settings): language, ranking preference, about the data,
-  the optional AI's status, and forgetting what this device remembers.
+  Settings (route #settings): language, about the data, the optional AI's
+  status, and forgetting what this device remembers. (The coverage list's
+  order is the server's, D-026, so there is no ranking preference here.)
     locale, onLocale(locale)
-    rank: "access-first" | "coverage", onRank(rank)
     meta: FeedMeta | null, asOf: IsoDate | null, resultCount: number
     feedSource: string            where the feed is read from (shown to the user)
     ai: { available: boolean; model: string | null; checking: boolean }
@@ -29,8 +28,6 @@ export interface AiState {
 export function Settings({
   locale,
   onLocale,
-  rank,
-  onRank,
   meta,
   asOf,
   resultCount,
@@ -41,8 +38,6 @@ export function Settings({
 }: {
   locale: Locale;
   onLocale: (locale: Locale) => void;
-  rank: "access-first" | "coverage";
-  onRank: (rank: "access-first" | "coverage") => void;
   meta: FeedMeta | null;
   asOf: IsoDate | null;
   resultCount: number;
@@ -68,15 +63,6 @@ export function Settings({
             { value: "fi", label: <span lang="fi">Suomi</span> },
             { value: "en", label: <span lang="en">English</span> },
           ]}
-        />
-      </Card>
-
-      <Card pad="md">
-        <Switch
-          checked={rank === "access-first"}
-          onChange={(on) => onRank(on ? "access-first" : "coverage")}
-          label={t(locale, "common.settings.rank")}
-          description={t(locale, "common.settings.rankWhy")}
         />
       </Card>
 

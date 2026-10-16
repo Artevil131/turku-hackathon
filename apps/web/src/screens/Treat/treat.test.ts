@@ -1,11 +1,14 @@
+import { coverage, suggest, suggestCombinations } from "@aei/coverage";
+import { ANTIBIOTICS, type IsolateRecord } from "@aei/domain";
+import type { CoverageResponse } from "@aei/contract";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import type { Signal } from "../../engine/types.ts";
+import type { Signal } from "../../model/types.ts";
 import type { FeedMeta, Result } from "../../feed/types.ts";
 import { TreatScreen, type TreatPrefs } from "./index.tsx";
-import { capFirst, hasDetails, humanize, midSentence, queryOf, sexesIn, signalsFor, unitGroups } from "./model.ts";
-import { whoPhrase } from "./text.tsx";
+import { capFirst, coverageUrl, humanize, midSentence, sexesIn, signalsFor, unitGroups } from "./model.ts";
+import { ResultView } from "./Result.tsx";
 
 // A small synthetic feed, for tests only: codes are arbitrary on purpose so
 // nothing in the screen can depend on a particular hospital.
@@ -52,12 +55,14 @@ function results(count: number, ward = "W1"): Result[] {
   return out;
 }
 
-const prefs: TreatPrefs = { ward: "W1", specimen: "sp1", sex: null, age: null, onset: null, organism: null };
+const prefs: TreatPrefs = { ward: "W1", specimen: "sp1", sex: null, severity: "mild" };
 
 function signal(over: Partial<Signal>): Signal {
   return {
     id: "x",
     kind: "cluster",
+    source: "profile-excess",
+    related: [],
     severity: "high",
     firstDate: "2024-11-20",
     lastDate: "2024-11-28",
@@ -70,11 +75,11 @@ function signal(over: Partial<Signal>): Signal {
 }
 
 describe("treat model", () => {
-  it("drops onset on a unit without admissions and keeps only set filters", () => {
-    expect(queryOf(meta, { ...prefs, onset: "hospital" })).toEqual({ ward: "W1", specimen: "sp1", onset: "hospital" });
-    expect(queryOf(meta, { ...prefs, ward: "C1", onset: "hospital", sex: "F" })).toEqual({ ward: "C1", specimen: "sp1", sex: "F" });
-    expect(hasDetails(prefs)).toBe(false);
-    expect(hasDetails({ ...prefs, organism: "Genus alpha" })).toBe(true);
+  it("asks the server for the unit, site, severity and, when set, sex", () => {
+    expect(coverageUrl("", prefs)).toBe("/api/coverage?ward=W1&specimen=sp1&severity=mild");
+    expect(coverageUrl("http://x", { ...prefs, sex: "F", severity: "severe" })).toBe(
+      "http://x/api/coverage?ward=W1&specimen=sp1&severity=severe&sex=F",
+    );
   });
 
   it("shows recent signals for the unit and whole-hospital ones that matter, most severe first", () => {
@@ -103,9 +108,79 @@ describe("treat model", () => {
     expect(midSentence("Urine")).toBe("urine");
     expect(midSentence("CSF")).toBe("CSF");
     expect(sexesIn(results(4))).toEqual(["F", "M"]);
-    expect(whoPhrase("en", { ward: "W1", specimen: "sp1", sex: "M", age: "65plus" })).toBe("men 65+");
-    expect(whoPhrase("en", { ward: "W1", specimen: "sp1", age: "under65" })).toBe("patients under 65");
-    expect(whoPhrase("en", { ward: "W1", specimen: "sp1" })).toBeNull();
+  });
+});
+
+// The server's answer for a small urine pool at a real unit code, built with the same gear the server runs.
+const realMeta: FeedMeta = {
+  ...meta,
+  units: [
+    { code: "URO", en: "Urology", fi: "Urologia", type: "in", institution: "hospital" },
+    { code: "MED-A", en: "Internal medicine A", fi: "Sisätaudit A", type: "in", institution: "hospital" },
+  ],
+  antibiotics: ANTIBIOTICS.map((a) => ({ code: a.code, en: a.en, fi: a.fi, class: a.class, reportedFor: a.reportedFor })),
+  specimens: [{ code: "urine", en: "urine", fi: "virtsa" }],
+};
+
+function pool(n: number, ward = "URO"): IsolateRecord[] {
+  return Array.from({ length: n }, (_, i) => ({
+    isolateId: `${ward}-${i}`,
+    cultureId: `c-${ward}-${i}`,
+    patientId: `p-${ward}-${i}`,
+    sampleDate: `2025-05-${String(1 + (i % 28)).padStart(2, "0")}`,
+    admissionDate: null,
+    ward: ward as IsolateRecord["ward"],
+    specimen: "urine",
+    organism: i % 5 === 0 ? "Enterococcus faecalis" : "Escherichia coli",
+    sex: i % 2 ? "F" : "M",
+    ageYears: 70,
+    homeArea: "North",
+    phenotypes: [],
+    results: i % 5 === 0 ? { AMP: "S", NIT: "R" } : { AMP: i % 2 ? "R" : "S", MEC: "S", NIT: "S", CIP: i % 7 ? "S" : "R", TMP: "S" },
+  }));
+}
+
+function response(records: IsolateRecord[], ward: "URO" | "MED-A", severity: "mild" | "severe"): CoverageResponse {
+  const c = coverage(records, { asOf: "2025-06-01", ward, specimen: "urine" });
+  return { asOf: "2025-06-01", severity, coverage: c, suggestions: suggest(c, severity), combinationSuggestions: suggestCombinations(c, severity) };
+}
+
+describe("ResultView (the server's coverage list)", () => {
+  const view = (data: CoverageResponse | null, p: Partial<TreatPrefs> = {}, locale: "en" | "fi" = "en", failed = false) =>
+    renderToStaticMarkup(
+      createElement(ResultView, {
+        locale,
+        meta: realMeta,
+        prefs: { ward: "URO", specimen: "urine", sex: null, severity: "mild", ...p },
+        data,
+        failed,
+        min: 30,
+      }),
+    );
+
+  it("leads with the top suggestion and says how much of everything that grows it covers", () => {
+    const html = view(response(pool(100), "URO", "mild"));
+    expect(html).toContain("Based on 100 first isolates");
+    expect(html).toContain("Mecillinam");
+    expect(html).toContain("Covers 80% of everything that grows here");
+    expect(html).toContain("Does not cover");
+    expect(html).not.toContain("Vancomycin"); // not offered for urine
+  });
+
+  it("says when the figures come from units like this one", () => {
+    const html = view(response(pool(100), "MED-A", "mild"), { ward: "MED-A" });
+    expect(html).toContain("so the figures are from all inpatient units");
+  });
+
+  it("shows an error, and a calm empty state, instead of numbers it does not have", () => {
+    expect(view(null, {}, "en", true)).toContain("could not be loaded");
+    expect(view(response([], "URO", "mild"))).toContain("No results for these patients yet");
+  });
+
+  it("renders in Finnish", () => {
+    const html = view(response(pool(100), "URO", "mild"), {}, "fi");
+    expect(html).toContain("Perustuu");
+    expect(html).toContain("kaikista täällä kasvaneista bakteereista");
   });
 });
 
@@ -121,31 +196,9 @@ describe("TreatScreen", () => {
         prefs,
         onPrefs: () => {},
         onOpenSignal: () => {},
-        rank: "access-first",
         ...props,
       }),
     );
-
-  it("answers with no input: basis, top match and the rest, never a screening test", () => {
-    const html = render({});
-    expect(html).toContain("Based on");
-    expect(html).toContain("Best match here");
-    expect(html).toContain("Alphacillin");
-    expect(html).toContain("Betamycin");
-    expect(html).not.toContain("Screen test");
-    expect(html).toContain("Not known yet");
-  });
-
-  it("says when the group was widened and never shows a percentage from too few", () => {
-    const html = render({ results: [...results(10), ...results(60, "W2")] });
-    expect(html).toContain("Left out the unit");
-    expect(html).toContain("from all units");
-  });
-
-  it("shows a calm empty state when nothing matches", () => {
-    const html = render({ prefs: { ...prefs, specimen: "sp2" } });
-    expect(html).toContain("No results for these patients yet");
-  });
 
   it("shows the unit's recent signals as plain lines, at most two, then a link to the rest", () => {
     const html = render({
@@ -155,9 +208,11 @@ describe("TreatScreen", () => {
     expect(html).toContain("+1 more alert");
   });
 
-  it("renders in Finnish", () => {
-    const html = render({ locale: "fi" });
-    expect(html).toContain("Perustuu");
-    expect(html).toContain("Paras vaihtoehto täällä");
+  it("offers severity and sex, not age, onset or a bacterium filter", () => {
+    const html = render({});
+    expect(html).toContain("Mild or moderate");
+    expect(html).toContain("Severe");
+    expect(html).not.toContain("Under 65");
+    expect(html).not.toContain("Not known yet");
   });
 });

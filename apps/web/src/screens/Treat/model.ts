@@ -1,49 +1,35 @@
-import type { FeedMeta, IsoDate, Unit } from "../../feed/types.ts";
-import type { AgeBand, Onset, PatientQuery, Severity, Share, Signal } from "../../engine/types.ts";
-import { daysBetween } from "../../engine/dates.ts";
+import type { IsoDate, Unit } from "../../feed/types.ts";
+import type { Severity, Share, Signal } from "../../model/types.ts";
+import { daysBetween } from "../../model/dates.ts";
 
-// Pure helpers for the Treat screen: prefs -> engine query, which signals the
-// doctor sees, how units group. Nothing here knows any unit, organism or
-// antibiotic by name; everything is read from the feed meta and the results.
+// Pure helpers for the Treat screen: prefs -> the server's coverage query,
+// which signals the doctor sees, how units group. Nothing here knows any
+// unit, organism or antibiotic by name; everything is read from the feed meta.
 
-/** The doctor's choices (the shape App keeps and remembers). */
+/** Mild or moderate infections are judged against 80 %, severe ones against 90 % (D-026, D-027). */
+export type InfectionSeverity = "mild" | "severe";
+
+/** The doctor's choices (the shape App keeps and remembers): the server's coverage query (D-023). */
 export interface TreatChoice {
   ward: string;
   specimen: string;
   sex: string | null;
-  age: AgeBand | null;
-  onset: Onset | null;
-  organism: string | null;
+  severity: InfectionSeverity;
+}
+
+/** GET /api/coverage for these choices. */
+export function coverageUrl(base: string, p: TreatChoice): string {
+  const q = new URLSearchParams({ ward: p.ward, specimen: p.specimen, severity: p.severity });
+  if (p.sex) q.set("sex", p.sex);
+  return `${base}/api/coverage?${q.toString()}`;
 }
 
 /** Signals older than this (days since they last fired) are not shown on the doctor's screen. */
 export const SIGNAL_DAYS = 14;
 /** Signal lines shown before "+N more". */
 export const SIGNAL_LINES = 2;
-/** At or above this share an antibiotic reads as "worked often"; below it the row is drawn weaker. */
-export const STRONG_SHARE = 0.8;
-/** Likely-organism chips shown before "Other". */
-export const ORGANISM_CHIPS = 4;
-
-/** "Caught in hospital" only means something on a unit where patients stay (admission dates exist). */
-export function onsetApplies(meta: FeedMeta, ward: string): boolean {
-  return meta.units.find((u) => u.code === ward)?.type === "in";
-}
-
-/** The engine query for the doctor's choices. Onset is ignored on units without admissions. */
-export function queryOf(meta: FeedMeta, p: TreatChoice): PatientQuery {
-  const q: PatientQuery = { ward: p.ward, specimen: p.specimen };
-  if (p.sex) q.sex = p.sex;
-  if (p.age) q.age = p.age;
-  if (p.onset && onsetApplies(meta, p.ward)) q.onset = p.onset;
-  if (p.organism) q.organism = p.organism;
-  return q;
-}
-
-/** True when any patient detail beyond unit and site is set. */
-export function hasDetails(p: TreatChoice): boolean {
-  return p.sex !== null || p.age !== null || p.onset !== null || p.organism !== null;
-}
+/** The bar a choice should reach (libs/utils/coverage THRESHOLDS). */
+export { THRESHOLDS } from "@aei/coverage";
 
 const SEVERITY_RANK: Record<Severity, number> = { high: 0, medium: 1, low: 2 };
 

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { AiError, askAi, type AgeGroup, type AiErrorCode, type ResolvedPeriod } from "../ai/index.ts";
-import type { AgeBand, Onset } from "../engine/types.ts";
+import type { AgeBand, Onset } from "../model/types.ts";
 import type { FeedMeta, IsoDate } from "../feed/types.ts";
 import { formatDate, named, t, type Locale } from "../i18n/index.ts";
 import type { ReportPrefs } from "../screens/Report/index.tsx";
@@ -147,14 +147,12 @@ export function AskSheet({
   const chosen = answer?.chosen ?? {};
   const hasFilters = Object.keys(chosen).some((k) => k !== "period");
 
+  // The doctor's list is the server's (D-023): unit, site and sex. Bacteria, age and onset go to the report.
   function treatPatch(): Partial<TreatPrefs> {
     const p: Partial<TreatPrefs> = {};
     if (chosen.ward) p.ward = chosen.ward;
     if (chosen.specimen) p.specimen = chosen.specimen;
-    if (chosen.organism) p.organism = chosen.organism;
     if (chosen.sex) p.sex = chosen.sex;
-    if (chosen.age) p.age = chosen.age;
-    if (chosen.onset) p.onset = chosen.onset;
     return p;
   }
   function reportPatch(): Partial<ReportPrefs> {
