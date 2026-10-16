@@ -20,3 +20,6 @@ Screenshots come from headless Chrome through
 | 01:08 | orchestrator (Opus 5.5) | `pnpm check` already fails on main with 6 errors, all in scripts/explore (surface.html, thl.js), outside tonight's bounds; the commit gate is Biome over apps/web, libs/utils/i18n and benchmarks/overnight-2026-10-17, plus pnpm typecheck and pnpm test:ts |
 | 01:09 | orchestrator (Opus 5.5) | Branding slots: --brand-accent, -soft, -ink, fonts and radius feed the existing tokens; rendering unchanged (checked in browser) |
 | 01:10 | orchestrator (Opus 5.5) | Additive optional route GET /api/counties (contract, client, API wiring, test, AEI_COUNTIES); DECISIONS.md D-040 proposed, pending Artem |
+| 01:11 | designer (Fable 5.1) | Finished spec-timeline.md: video-player transport, TradingView-style event flags, Grafana-style as-of readout; seek on release, four speeds, ±day/week, three event markers, phone sheet |
+| 01:11 | builder (Sonnet 5.5) | Started: replay timeline (Timeline, AsOf, TopBar clock removed) |
+| 01:13 | quality (Haiku 5.5) | measure.sh written; before U4–U6 measured; rerun by orchestrator on a clean detached worktree of ec23f01 with identical results. Before: U4 100/96/100, doctor contrast fail; U5 0 missing; U6 LCP 3.6 s on all three pages |
