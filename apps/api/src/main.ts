@@ -9,6 +9,7 @@ import {
   type IsolateQuery,
   type LiveEvent,
   type Meta,
+  type QualityResponse,
   type RegionalData,
   type RegionalQuery,
   type RelationsResponse,
@@ -20,6 +21,7 @@ import { type Dataset, joinIsolates, loadDataset } from "@aei/dataset";
 import { ANTIBIOTICS, type IsolateRecord, ORGANISMS, SPECIMENS, type Specimen, WARDS, type WardCode } from "@aei/domain";
 import { antibioticName, phenotypeName, specimenName, wardName } from "@aei/i18n";
 import { asResult, type CodeMaps, DEFAULT_CODE_MAPS, detectFormat, extendCodeMaps, ingest, mergeResults } from "@aei/ingest";
+import { checkRows, type Finding, summarize } from "@aei/quality";
 import { countFlows, patientMoves, phenotypeTrails, trailLinks } from "@aei/relations";
 import { addDays, createReleaseIndex, createReplayClock } from "@aei/replay";
 
@@ -167,11 +169,14 @@ function ingestPayload(body: string, contentType: string) {
   const format = detectFormat(body, contentType);
   if (!format) return { status: 415, body: { error: "unknown format: send HL7 v2 (MSH...), a FHIR Bundle (JSON) or CSV" } };
   const result = ingest(body, format, { maps: codeMaps, guideline: config.guideline });
-  if (!result.cultures.length) return { status: 422, body: { format, accepted: 0, warnings: result.warnings } };
+  // Plausibility checks on what arrived (D-038): reported with the response, rows kept as sent.
+  const quality: Finding[] = checkRows(result, { asOf: new Date().toISOString().slice(0, 10) });
+  if (!result.cultures.length) return { status: 422, body: { format, accepted: 0, warnings: result.warnings, quality } };
   const before = new Set(state.alerts.upTo(datasetEnd).map((a) => a.id));
   dataset = mergeResults(asResult(dataset), result);
   state = derive(dataset);
   coverages.clear();
+  qualityCache = undefined;
   const ids = new Set(result.cultures.map((c) => c.cultureId));
   const arrived = state.records.filter((r) => ids.has(r.cultureId));
   const latest =
@@ -198,8 +203,25 @@ function ingestPayload(body: string, contentType: string) {
       asOf: clock.state().asOf,
       newAlerts: newAlerts.map((a) => a.id),
       warnings: result.warnings,
+      quality,
     },
   };
+}
+
+let qualityCache: QualityResponse | undefined;
+
+/** The plausibility checks over every row the server holds (D-038), computed once per change of the data. */
+function quality(): QualityResponse {
+  qualityCache ??= {
+    checked: {
+      patients: dataset.patients.length,
+      cultures: dataset.cultures.length,
+      isolates: dataset.isolates.length,
+      results: dataset.susceptibility.length,
+    },
+    summary: summarize(checkRows(dataset)),
+  };
+  return qualityCache;
 }
 
 function runCommand(command: ClockCommand) {
@@ -313,6 +335,7 @@ export const server = createServer(async (req, res) => {
       const out = ingestPayload(await readText(req), req.headers["content-type"] ?? "");
       return send(res, out.status, out.body);
     }
+    if (url.pathname === ROUTES.quality) return send(res, 200, quality());
     if (url.pathname === ROUTES.regional) {
       if (!existsSync(config.regionalFile))
         return send(res, 404, { error: "No regional data; run `uv run python scripts/fetch_thl_ttr.py`" });
@@ -366,5 +389,7 @@ export const server = createServer(async (req, res) => {
 server.listen(config.port, () => {
   console.log(`[aei-api] ${state.records.length} isolates, ${datasetStart} to ${datasetEnd}; replay at ${clock.state().asOf}`);
   console.log(`[aei-api] ${state.moves.length} unit moves, ${state.trails.length} carrier trails, ${state.alerts.size} alerts`);
+  const findings = quality().summary.reduce((n, c) => n + c.count, 0);
+  console.log(`[aei-api] data checks: ${findings ? `${findings} findings, see ${ROUTES.quality}` : "every check passed"}`);
   console.log(`[aei-api] http://localhost:${config.port}${ROUTES.meta}`);
 });

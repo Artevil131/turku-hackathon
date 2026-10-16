@@ -47,6 +47,9 @@ importers:
       '@aei/ingest':
         specifier: workspace:*
         version: link:../../libs/utils/ingest
+      '@aei/quality':
+        specifier: workspace:*
+        version: link:../../libs/utils/quality
       '@aei/relations':
         specifier: workspace:*
         version: link:../../libs/utils/relations
@@ -129,6 +132,9 @@ importers:
       '@aei/domain':
         specifier: workspace:*
         version: link:../domain
+      '@aei/quality':
+        specifier: workspace:*
+        version: link:../quality
       '@aei/relations':
         specifier: workspace:*
         version: link:../relations
@@ -197,6 +203,15 @@ importers:
       '@aei/domain':
         specifier: workspace:*
         version: link:../domain
+
+  libs/utils/quality:
+    dependencies:
+      '@aei/domain':
+        specifier: workspace:*
+        version: link:../domain
+      '@aei/eucast':
+        specifier: workspace:*
+        version: link:../eucast
 
   libs/utils/relations:
     dependencies:
