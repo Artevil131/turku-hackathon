@@ -85,6 +85,12 @@ importers:
         specifier: workspace:*
         version: link:../relations
 
+  libs/utils/ask:
+    dependencies:
+      '@aei/domain':
+        specifier: workspace:*
+        version: link:../domain
+
   libs/utils/contract:
     dependencies:
       '@aei/alerts':
