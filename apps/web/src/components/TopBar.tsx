@@ -1,5 +1,7 @@
+import type { Alert } from "@aei/contract";
 import { formatDate, type Locale, t } from "@aei/i18n";
 import type { ReactNode } from "react";
+import { CommandField } from "./command/CommandField.tsx";
 import { Gear, Mark } from "./Icons.tsx";
 
 export type Page = "home" | "doctor" | "research" | "settings" | "intro";
@@ -13,6 +15,8 @@ interface Props {
   asOf?: string | null;
   /** Without it the FI/EN switch is left out. */
   onLocale?: (l: Locale) => void;
+  /** The released alerts the app holds, for the search field; without them it offers none. */
+  alerts?: readonly Alert[];
 }
 
 export function TopBar(props: Props) {
@@ -50,6 +54,7 @@ export function TopBar(props: Props) {
       </nav>
 
       <div className="top-tools">
+        <CommandField locale={locale} alerts={props.alerts} asOf={props.asOf ?? null} />
         {props.onLocale ? (
           <button
             type="button"

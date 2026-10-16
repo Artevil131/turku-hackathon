@@ -117,7 +117,15 @@ export function App() {
     <FlowsContext.Provider value={live.relations?.flows ?? NO_FLOWS}>
       <div className="chassis" aria-hidden="true" />
       <div className="console">
-        <TopBar locale={locale} page={page} onPage={setPage} unseen={unseen} asOf={live.clock?.asOf ?? null} onLocale={setLocale} />
+        <TopBar
+          locale={locale}
+          page={page}
+          onPage={setPage}
+          unseen={unseen}
+          asOf={live.clock?.asOf ?? null}
+          onLocale={setLocale}
+          alerts={live.alerts}
+        />
         <Timeline
           locale={locale}
           clock={live.clock}

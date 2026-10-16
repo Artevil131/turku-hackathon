@@ -52,3 +52,5 @@ Screenshots come from headless Chrome through
 | 01:43 | orchestrator (Opus 5.5) | Doctor named-context view checked at true 390 px; App passes asOf and onLocale to TopBar |
 | 01:44 | orchestrator (Opus 5.5) | Tested the timeline date entry in the browser (seek to 2026-02-10, doctor's list followed with its as-of); doctor page now follows hash changes while mounted. Clock back to 2025-05-12 |
 | 01:45 | orchestrator (Opus 5.5) | U6: typeface stylesheet no longer render-blocking; research board, settings and intro load on demand (main bundle 385 → 336 kB, research 50 kB, intro 16 kB) |
+| 01:46 | builder (Sonnet 5.5) | Search field in the top bar (/ or Ctrl+K): units, antibiotics, organisms, phenotypes, recent alerts and pages in Finnish and English, diacritics-insensitive, combobox keyboard pattern; matcher with 14 unit tests |
+| 01:46 | orchestrator (Opus 5.5) | Search wired to the live alerts; its hash workaround removed (pages follow hash changes). Checked in the browser at 1280. The API was restarted by an agent once more (brief 502s) |
