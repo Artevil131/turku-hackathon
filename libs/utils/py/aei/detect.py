@@ -200,10 +200,12 @@ def profile_excess(
     alpha: float,
     min_observed: int,
     same_specimen: bool = False,
+    only: Callable[[IsolateRecord], bool] | None = None,
 ) -> list[Signal]:
     """Patients in one unit with the same organism and profile within the window, against the unit's patients with
     that organism (and specimen, with `same_specimen`) in the window times the profile's share hospital-wide over the
-    baseline before the window, smoothed by adding one half."""
+    baseline before the window, smoothed by adding one half. `only` limits the days tested to those of the isolates it
+    accepts (the signals are the same for them); Python only, for experiments that need one unit and period."""
     ordered = _by_date(records)
     profile = {id(r): profile_of(r) for r in ordered}
 
@@ -219,7 +221,7 @@ def profile_excess(
 
     signals = []
     for r in ordered:
-        if not has_acquired_resistance(r):
+        if (only is not None and not only(r)) or not has_acquired_resistance(r):
             continue
         prof = profile[id(r)]
         start = add_days(r.sample_date, 1 - window_days)

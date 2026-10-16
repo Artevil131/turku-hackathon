@@ -6,6 +6,9 @@ Draws come from a `rand()` returning floats in [0, 1), in the same order as the 
 
     rand = mulberry32(2026)
     trial = cluster_trial(records, clones(records), rand, k=3, t=0)
+
+Experiment 0011 injects clones of common profiles instead: `common_group` picks the source group from the year before
+the start, `inject_cluster` runs one trial with a chosen unit, start and source.
 """
 
 from __future__ import annotations
@@ -16,7 +19,7 @@ from dataclasses import dataclass
 
 from aei.dataset import Culture, IsolateRecord
 from aei.dates import add_days, days_between
-from aei.detect import LIVE_SETTINGS, Signal, phenotype_excess, profile_excess, sampling_drop
+from aei.detect import LIVE_SETTINGS, Signal, has_acquired_resistance, phenotype_excess, profile_excess, profile_of, sampling_drop
 from aei.domain import UNITS, WARD_TYPE
 
 Rand = Callable[[], float]
@@ -35,6 +38,7 @@ class Trial:
     detected: bool
     delay: int | None
     first: str | None  # date of the first matching signal
+    strict: bool = False  # a profile-excess signal for the source's exact profile (0011)
 
 
 def _pick_int(rand: Rand, n: int) -> int:
@@ -70,6 +74,14 @@ def cluster_trial(records: Sequence[IsolateRecord], sources: Sequence[IsolateRec
     unit = UNITS[_pick_int(rand, len(UNITS))]
     start = draw_start(rand, unit, CLUSTER_AVOID)
     source = sources[_pick_int(rand, len(sources))]
+    return inject_cluster(records, source, unit, start, rand, k, t, f"cluster k = {k}")
+
+
+def inject_cluster(
+    records: Sequence[IsolateRecord], source: IsolateRecord, unit: str, start: str, rand: Rand, k: int, t: int, setting: str
+) -> Trial:
+    """k copies of `source` as new patients in `unit`, sampled within 14 days of `start`, then 0007's detection rule:
+    a live profile- or phenotype-excess signal for the unit and the source's organism or phenotype within 28 days."""
     inpatient = WARD_TYPE[unit] == "in"
     injected = []
     for i in range(k):
@@ -88,25 +100,52 @@ def cluster_trial(records: Sequence[IsolateRecord], sources: Sequence[IsolateRec
         )
     frm, to = add_days(start, -400), add_days(start, 60)
     around = [r for r in records if frm <= r.sample_date <= to]
-    same_organism = [r for r in around if r.organism == source.organism] + injected
+    settings = LIVE_SETTINGS["profile_excess"]
+    # Profile excess works per organism (and specimen) stratum, so the source's stratum gives the same signals.
+    same_stratum = [
+        r for r in around if r.organism == source.organism and (not settings.get("same_specimen") or r.specimen == source.specimen)
+    ] + injected
     same_unit = [r for r in around if r.ward == unit] + injected
+    until = add_days(start, 28)
     signals = [
-        *profile_excess(same_organism, **LIVE_SETTINGS["profile_excess"]),
+        *profile_excess(same_stratum, **settings, only=lambda r: r.ward == unit and start <= r.sample_date <= until),
         *phenotype_excess(same_unit, ["esbl", "mrsa"], **LIVE_SETTINGS["phenotype_excess"]),
     ]
-    until = add_days(start, 28)
-    first = _earliest(
-        [
-            s
-            for s in signals
-            if s.ward == unit
-            and (s.organism == source.organism or (s.phenotype is not None and s.phenotype in source.phenotypes))
-            and start <= s.date <= until
-        ]
-    )
+    matching = [
+        s
+        for s in signals
+        if s.ward == unit
+        and (s.organism == source.organism or (s.phenotype is not None and s.phenotype in source.phenotypes))
+        and start <= s.date <= until
+    ]
+    first = _earliest(matching)
+    prof = profile_of(source)
+    strict = any(s.detector == "profile-excess" and s.organism == source.organism and s.profile == prof for s in matching)
     onset = min((r.sample_date for r in injected), default=start)  # the first injected case is the onset
     delay = max(0, days_between(onset, first)) if first else None
-    return Trial(f"cluster k = {k}", unit, first is not None, delay, first)
+    return Trial(setting, unit, first is not None, delay, first, strict)
+
+
+COMMON_KINDS = ("common resistant", "wild type", "common ESBL E. coli")
+
+
+def common_group(records: Sequence[IsolateRecord], unit: str, start: str, kind: str) -> list[IsolateRecord]:
+    """The isolates of the largest (organism, specimen, profile) group by distinct patients in the 365 days before
+    `start`: in `unit` among isolates with acquired resistance ("common resistant") or without ("wild type"), or among
+    ESBL E. coli in the whole hospital ("common ESBL E. coli"). Ties go to the group seen first. Empty if none."""
+    frm, to = add_days(start, -365), add_days(start, -1)
+    pool = [r for r in records if frm <= r.sample_date <= to]
+    if kind == "common ESBL E. coli":
+        pool = [r for r in pool if r.organism == "Escherichia coli" and "esbl" in r.phenotypes]
+    else:
+        resistant = kind == "common resistant"
+        pool = [r for r in pool if r.ward == unit and has_acquired_resistance(r) == resistant]
+    groups: dict[tuple[str, str, str], list[IsolateRecord]] = {}
+    for r in pool:
+        groups.setdefault((r.organism, r.specimen, profile_of(r)), []).append(r)
+    if not groups:
+        return []
+    return max(groups.values(), key=lambda g: len({r.patient_id for r in g}))
 
 
 def gap_trial(cultures: Sequence[Culture], rand: Rand, days: int, halve: bool) -> Trial:
