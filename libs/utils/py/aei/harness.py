@@ -28,7 +28,10 @@ THL_FETCHED = "2026-10-17"
 # METRICS.md "Split": tune on the first year, score on the rest.
 TUNE = ("2023-10-02", "2024-09-30")
 SCORE = ("2024-10-01", "2026-09-27")
-SEEDS = (2026, 2027, 2028, 2029, 2030)
+# Injection seeds (Artem's addendum, 01:15): screen on 2026 only; 2027 to 2030 are held out to re-score winners.
+SCREEN_SEEDS = (2026,)
+HELDOUT_SEEDS = (2027, 2028, 2029, 2030)
+SEEDS = SCREEN_SEEDS
 DATASET = "synthetic_microbiology_dataset, seed 2026, as received 2026-10-09"
 FAMILIES = ("detection", "coverage", "prediction", "interpretation")
 

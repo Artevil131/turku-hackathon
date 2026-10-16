@@ -31,7 +31,14 @@ each writing `baselines/<row>.json` in the METRICS.md schema.
   with sample date ≤ t (detection) or < the first target day (coverage).
   The harness passes estimators only the visible rows.
 - Spread: bootstrap over target windows (coverage), over months (county),
-  per-seed counts (injections). Seeds 2026 to 2030.
+  per-seed counts (injections).
+- Injection seeds (Artem's addendum, 01:15): every experiment and baseline
+  row screens on seed 2026 only. Seeds 2027 to 2030 are held out: a method
+  is named best in its family only after it is re-scored on them, and both
+  numbers are reported (keys with the suffix `_heldout`). The leaderboard
+  is screening, not selection.
+- Runtime is informational (the design session shares this CPU): never
+  ranked, never a reason to cut, except the 10-minute CPU budget rule.
 
 ## Coverage (C1 to C8)
 
@@ -116,8 +123,9 @@ re-implementation of `newInUnitAlerts` in `@aei/alerts`.
 
 - D1: E1 to E4 with 0002's matchers and delays (from 0002's start dates)
   and, beside them, delays from the corrected onsets. Demonstration only.
-- D2: injected clusters, k ∈ {2, 3, 4, 6} plus controls, 5 seeds (2026 to
-  2030) × 40 trials = 200 per cell, families:
+- D2: injected clusters, k ∈ {2, 3, 4, 6} plus controls, 200 trials per
+  cell from one seed-2026 stream (held-out: seeds 2027 to 2030 at 50 each),
+  families:
   `rare` (0007's ESBL and MRSA clones, 0007's draw order: seed 2026, 40
   trials reproduces 0007), `common_resistant`, `wild_type`, `common_esbl`
   (0011's arms and draws: seeds 2026 to 2028 at 20 per seed reproduce
@@ -219,3 +227,38 @@ re-implementation of `newInUnitAlerts` in `@aei/alerts`.
    culture rows is a uniform draw among bipartite multigraphs with the
    same patient and unit degrees, and keeps dates, so the time-ordered
    30-day edges can be recomputed on each replicate.
+
+## Metric keys in metrics.json
+
+Stable names, so the leaderboard reads every row the same way. A metric a
+method does not produce is left out, not set to null. `intervals` mirrors
+`metrics` for the keys that have one (95 % unless named); `n` gives what
+each number rests on.
+
+```
+coverage
+  C1        {all, small, all_counted, small_counted}            Brier
+  C1_diff   same keys, value minus the hospital-365 baseline (intervals: bootstrap of the difference)
+  C2, C2_diff                                                    log loss, same keys
+  C3a       {slope, intercept}
+  C3b       {mild_obs, mild_exp, mild_ratio, severe_obs, severe_exp, severe_ratio, pass}
+  C4        {mild_spectrum, mild_all, severe, mild_spectrum_counted, mild_all_counted, severe_counted}
+  C5        {"<organism>|<antibiotic>": Brier}                   left_out convention
+  C6        {E1_CRO, E1_CXM, E2_CXM}                             days, null when not reached
+  C7        {a, b, a_literal, b_literal, pass_a}
+  C8        {C1, C1_diff, C4_mild_spectrum, C4_severe}
+detection
+  D1        {E1, E2, E3, E1_corrected, E2_corrected, E4}         days; E4 a date
+  D2        {"<family>_k<k>": rate}  families rare, common_resistant, wild_type, common_esbl, two_unit; k 0 (control), 2, 3, 4, 6
+  D2_delay  same keys, median days
+  D3        {gap2, gap3, gap5, gap7, half7}, D3_delay
+  D4        {episodes_per_year, cluster, sentinel, data, trend, divergence, alerts_per_week}
+  D5        {level, noise, rare, common_esbl, rare_delay, common_esbl_delay}; the curve in the top-level field "D5_curve"
+  D6, D7    shares
+  I1        {alerts, incidents, alerts_per_incident}
+prediction
+  P1        {auc_share_a05, auc_raw_a05, auc_share_a001, auc_raw_a001, null_p_share_a05, null_p_raw_a05, positives_a05, positives_a001}
+  P2        {mae, log_score, mae_skill, log_skill, mae_skill_seasonal, log_skill_seasonal,
+             "<phenotype>_mae_skill", "<phenotype>_log_skill" for MRSA ESBL VRE CPE, national_mae_skill, national_log_skill,
+             mae_skill_no_last2, log_skill_no_last2}       skill against persistence unless named
+```
