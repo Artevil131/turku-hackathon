@@ -1,0 +1,17 @@
+{
+  "name": "@aei/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/main.ts",
+    "start": "node src/main.ts",
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@aei/contract": "workspace:*",
+    "@aei/dataset": "workspace:*",
+    "@aei/domain": "workspace:*",
+    "@aei/replay": "workspace:*"
+  }
+}
