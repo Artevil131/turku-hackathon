@@ -11,8 +11,7 @@ main checkout `/Users/artevil/turku-hackathon`; read it first.
 - **Running app.** API on http://localhost:8788, web (Vite dev, hot reload)
   on http://localhost:5174, already running from the worktree. Do not
   start or stop servers. The replay clock is shared by everyone: do not
-  leave it playing, and seek it back to 2025-05-12 (paused) when you are done if you
-  moved it.
+  leave it playing, and do not move it at all during wave 1 (it is parked at 2025-06-23, after the Urology outbreak).
 - **Screenshots.** `benchmarks/overnight-2026-10-17/design/shoot.sh
   http://localhost:5174 <label> <surface...>` writes
   `<surface>-<label>-phone.png` and `-laptop.png` (390 and 1280 wide) with
@@ -35,8 +34,16 @@ main checkout `/Users/artevil/turku-hackathon`; read it first.
   "recommendation" (medical-device boundary). Branding stays neutral:
   use the tokens in `apps/web/src/styles.css`, one accent (`--live`), no
   logo or brand voice.
+- **Shell commands** run from the worktree root with explicit paths
+  (`cd /Users/artevil/turku-hackathon-design && ...`). Never use `pkill`,
+  `killall` or kill processes you did not start.
+- **Headless phone shots** from shoot.sh render wider than 390 px; check
+  true phone layout by reasoning from the CSS and by setting a narrow
+  window in the screenshot (`--window-size=390,844` is clamped by Chrome)
+  only as a rough guide. The orchestrator verifies phone width in a real
+  browser.
 - **Checks before you report done.** From the worktree root:
-  `pnpm check` (Biome; `pnpm format` fixes formatting), `pnpm typecheck`,
+  `npx biome check apps/web libs/utils/i18n` (`--write` fixes formatting; `pnpm check` has known failures in scripts/explore that are not yours), `pnpm typecheck`,
   `pnpm test:ts`. Report failures you could not fix, and which files you
   touched.
 - **Report back** in under 300 words: files touched, what changed, what
