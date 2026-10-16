@@ -26,6 +26,9 @@ importers:
       '@aei/alerts':
         specifier: workspace:*
         version: link:../../libs/utils/alerts
+      '@aei/ask':
+        specifier: workspace:*
+        version: link:../../libs/utils/ask
       '@aei/contract':
         specifier: workspace:*
         version: link:../../libs/utils/contract
@@ -35,6 +38,9 @@ importers:
       '@aei/domain':
         specifier: workspace:*
         version: link:../../libs/utils/domain
+      '@aei/i18n':
+        specifier: workspace:*
+        version: link:../../libs/utils/i18n
       '@aei/relations':
         specifier: workspace:*
         version: link:../../libs/utils/relations
@@ -44,9 +50,15 @@ importers:
 
   apps/web:
     dependencies:
+      '@aei/ask':
+        specifier: workspace:*
+        version: link:../../libs/utils/ask
       '@aei/contract':
         specifier: workspace:*
         version: link:../../libs/utils/contract
+      '@aei/counting':
+        specifier: workspace:*
+        version: link:../../libs/utils/counting
       '@aei/domain':
         specifier: workspace:*
         version: link:../../libs/utils/domain
@@ -87,6 +99,9 @@ importers:
 
   libs/utils/ask:
     dependencies:
+      '@aei/alerts':
+        specifier: workspace:*
+        version: link:../alerts
       '@aei/domain':
         specifier: workspace:*
         version: link:../domain
@@ -96,6 +111,9 @@ importers:
       '@aei/alerts':
         specifier: workspace:*
         version: link:../alerts
+      '@aei/ask':
+        specifier: workspace:*
+        version: link:../ask
       '@aei/domain':
         specifier: workspace:*
         version: link:../domain

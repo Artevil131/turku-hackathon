@@ -2,7 +2,7 @@
 
 The optional AI gear: map Finnish or English questions to validated filters,
 and phrase alerts without giving the model ownership of their numbers.
-No npm runtime dependencies; only `@aei/domain` types. Requires Node >=22
+No npm runtime dependencies; `@aei/domain` and `@aei/alerts` types. Requires Node >=22
 and its built-in fetch. This implements **D-017 to D-019 (AI layer)** in
 DECISIONS.md; the operator adds those decision entries.
 
@@ -106,3 +106,6 @@ pnpm vitest run libs/utils/ask
 pnpm biome check libs/utils/ask
 pnpm tsc -p libs/utils/ask
 ```
+
+`alertExplainInput(alert, lang, names)` builds the trusted facts and bilingual
+fallback for CPE and D-012 carrier alerts. Elapsed days are computed in code.

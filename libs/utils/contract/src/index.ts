@@ -1,5 +1,6 @@
 import type { Alert } from "@aei/alerts";
-import type { Antibiotic, IsoDate, IsolateRecord, Organism, Specimen, Ward, WardCode } from "@aei/domain";
+import type { AgeGroup } from "@aei/ask";
+import type { Antibiotic, IsoDate, IsolateRecord, Organism, Sex, Specimen, Ward, WardCode } from "@aei/domain";
 import type { Flow, TrailLink } from "@aei/relations";
 import type { ClockState } from "@aei/replay";
 
@@ -8,6 +9,8 @@ import type { ClockState } from "@aei/replay";
 // can replace it by serving the same routes and events (DECISIONS.md D-006).
 
 export const ROUTES = {
+  ask: "/api/ask",
+  explain: "/api/explain",
   meta: "/api/meta",
   clock: "/api/clock",
   isolates: "/api/isolates",
@@ -17,6 +20,7 @@ export const ROUTES = {
 } as const;
 
 export interface Meta {
+  ai: boolean;
   datasetStart: IsoDate;
   datasetEnd: IsoDate;
   wards: readonly Ward[];
@@ -41,6 +45,22 @@ export interface IsolateQuery {
   ward?: WardCode;
   specimen?: Specimen;
   organism?: Organism;
+  sex?: Sex;
+  ageMin?: number;
+  ageMax?: number;
+}
+
+export interface AskResponse {
+  asOf: IsoDate;
+  filters: IsolateQuery;
+  ageGroup?: AgeGroup;
+  unmatched: string[];
+}
+
+export interface ExplainResponse {
+  id: string;
+  text: string;
+  source: "model" | "template";
 }
 
 export interface IsolatesResponse {
@@ -93,7 +113,8 @@ export function isolatesUrl(query: IsolateQuery): string {
 
 function withQuery(path: string, query: object): string {
   const params = new URLSearchParams();
-  for (const [key, value] of Object.entries(query)) if (value) params.set(key, String(value));
+  for (const [key, value] of Object.entries(query))
+    if (value !== undefined && value !== null && value !== "") params.set(key, String(value));
   const qs = params.toString();
   return qs ? `${path}?${qs}` : path;
 }
@@ -106,6 +127,8 @@ export interface AeiClientOptions {
 }
 
 export interface AeiClient {
+  ask(text: string, lang: "en" | "fi"): Promise<AskResponse>;
+  explain(id: string, lang: "en" | "fi"): Promise<ExplainResponse>;
   meta(): Promise<Meta>;
   clock(): Promise<ClockState>;
   command(command: ClockCommand): Promise<ClockState>;
@@ -116,6 +139,15 @@ export interface AeiClient {
   live(onEvent: (event: LiveEvent) => void, onError?: (error: Event) => void): () => void;
 }
 
+export class ApiError extends Error {
+  readonly status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
 export function createAeiClient(options: AeiClientOptions): AeiClient {
   const doFetch = options.fetch ?? globalThis.fetch.bind(globalThis);
   const ES = options.EventSource ?? globalThis.EventSource;
@@ -123,11 +155,18 @@ export function createAeiClient(options: AeiClientOptions): AeiClient {
 
   async function json<T>(path: string, init?: RequestInit): Promise<T> {
     const res = await doFetch(url(path), init);
-    if (!res.ok) throw new Error(`${init?.method ?? "GET"} ${path}: ${res.status} ${await res.text()}`);
+    if (!res.ok) throw new ApiError(res.status, `${init?.method ?? "GET"} ${path}: ${res.status} ${await res.text()}`);
     return (await res.json()) as T;
   }
 
   return {
+    ask: (text, lang) =>
+      json<AskResponse>(ROUTES.ask, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ text, lang }),
+      }),
+    explain: (id, lang) => json<ExplainResponse>(withQuery(ROUTES.explain, { id, lang })),
     meta: () => json<Meta>(ROUTES.meta),
     clock: () => json<ClockState>(ROUTES.clock),
     command: (command) =>

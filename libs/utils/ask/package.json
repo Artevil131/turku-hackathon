@@ -10,6 +10,7 @@
     "typecheck": "tsc -p ."
   },
   "dependencies": {
+    "@aei/alerts": "workspace:*",
     "@aei/domain": "workspace:*"
   }
 }

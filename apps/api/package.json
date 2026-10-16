@@ -10,9 +10,11 @@
   },
   "dependencies": {
     "@aei/alerts": "workspace:*",
+    "@aei/ask": "workspace:*",
     "@aei/contract": "workspace:*",
     "@aei/dataset": "workspace:*",
     "@aei/domain": "workspace:*",
+    "@aei/i18n": "workspace:*",
     "@aei/relations": "workspace:*",
     "@aei/replay": "workspace:*"
   }
