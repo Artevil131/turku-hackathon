@@ -31,6 +31,7 @@ interface or behind the API contract (D-006).
 | `counting/` | Surveillance counting: first isolate per patient, organism, specimen, period |
 | `detect/` | Deviation detectors and the live set: clusters, surges, sampling drops, trends |
 
-Not here yet, waiting for team decisions: the resistance counting method
-(CONTEXT.md questions 7–8) and deviation detection (question 11). The
-web app draws those from labelled example data until then.
+Not here yet, waiting for team decisions: the resistance estimate for the
+doctor's coverage list (CONTEXT.md questions 7–8); the web app draws it
+from labelled example data until then. Deviation detection runs a
+provisional set (D-020) until the team reviews experiments/0002.
