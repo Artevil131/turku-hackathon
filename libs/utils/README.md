@@ -29,6 +29,7 @@ interface or behind the API contract (D-006).
 | `alerts/` | Alerts that fire on a single result: CPE, carrier arrivals |
 | `eucast/` | Intrinsic resistance, breakpoint gaps, inferred results, urine-only agents |
 | `counting/` | Surveillance counting: first isolate per patient, organism, specimen, period |
+| `detect/` | Deviation detectors and the live set: clusters, surges, sampling drops, trends |
 
 Not here yet, waiting for team decisions: the resistance counting method
 (CONTEXT.md questions 7–8) and deviation detection (question 11). The

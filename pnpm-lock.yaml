@@ -78,6 +78,9 @@ importers:
 
   libs/utils/alerts:
     dependencies:
+      '@aei/detect':
+        specifier: workspace:*
+        version: link:../detect
       '@aei/domain':
         specifier: workspace:*
         version: link:../domain

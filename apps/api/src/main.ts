@@ -1,10 +1,10 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { resolve } from "node:path";
-import { type Alert, carrierAlerts, cpeAlerts, sortAlerts } from "@aei/alerts";
+import { buildAlerts, sortAlerts } from "@aei/alerts";
 import { type ClockCommand, type IsolateQuery, type LiveEvent, type Meta, type RelationsResponse, ROUTES } from "@aei/contract";
 import { joinIsolates, loadDataset } from "@aei/dataset";
 import { ANTIBIOTICS, type IsolateRecord, ORGANISMS, SPECIMENS, WARDS } from "@aei/domain";
-import { carrierArrivals, countFlows, patientMoves, phenotypeTrails, trailLinks } from "@aei/relations";
+import { countFlows, patientMoves, phenotypeTrails, trailLinks } from "@aei/relations";
 import { addDays, createReleaseIndex, createReplayClock } from "@aei/replay";
 
 // Development server for the AEI contract (libs/utils/contract). It loads
@@ -36,7 +36,7 @@ const datasetEnd = dates.at(-1) ?? "";
 // computed once over all data and cut to the window up to the clock.
 const moves = patientMoves(dataset.cultures);
 const trails = phenotypeTrails(dataset.cultures, records);
-const alerts = createReleaseIndex(sortAlerts<Alert>([...cpeAlerts(records), ...carrierAlerts(carrierArrivals(trails))]), (a) => a.date);
+const alerts = createReleaseIndex(buildAlerts(records, dataset.cultures, trails), (a) => a.date);
 const DEFAULT_RELATION_DAYS = 28;
 
 function relations(asOf: string, days: number): RelationsResponse {

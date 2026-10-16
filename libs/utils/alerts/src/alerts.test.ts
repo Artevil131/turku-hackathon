@@ -1,7 +1,7 @@
 import type { IsolateRecord } from "@aei/domain";
 import type { CarrierArrival } from "@aei/relations";
 import { describe, expect, it } from "vitest";
-import { carrierAlerts, cpeAlerts, sortAlerts } from "./index.ts";
+import { carrierAlerts, cpeAlerts, detectorAlerts, sortAlerts } from "./index.ts";
 
 const record = (isolateId: string, sampleDate: string, phenotypes: IsolateRecord["phenotypes"]): IsolateRecord => ({
   isolateId,
@@ -47,5 +47,23 @@ describe("alerts", () => {
       ["cpe", "2026-03-01"],
     ]);
     expect(alerts[0]).toMatchObject({ from: "ICU", foundOn: "2026-02-20", phenotype: "esbl" });
+  });
+});
+
+describe("detectorAlerts", () => {
+  it("raises one alert per signal episode, on its first day", () => {
+    const signal = (date: string) => ({
+      detector: "phenotype-excess" as const,
+      key: "URO|esbl",
+      date,
+      ward: "URO" as const,
+      phenotype: "esbl" as const,
+      observed: 6,
+      expected: 1.2,
+      p: 0.0004,
+    });
+    const alerts = detectorAlerts([signal("2025-06-10"), signal("2025-06-12"), signal("2025-09-01")]);
+    expect(alerts.map((a) => a.date)).toEqual(["2025-06-10", "2025-09-01"]);
+    expect(alerts[0]).toMatchObject({ kind: "detector", ward: "URO", detector: "phenotype-excess", phenotype: "esbl", observed: 6 });
   });
 });
