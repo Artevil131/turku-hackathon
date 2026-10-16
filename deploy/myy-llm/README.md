@@ -49,7 +49,7 @@ sha256) into `~compute/aei-llm` on myy:
 The tunnel token goes in `~compute/aei-llm/tunnel-token` (mode 600). It is
 not in git. Then, for each session or demo:
 
-    cj run --snap -p myy -g -n aei-llm -c 4 -m 8G -t 12h --tag aei-llm -- bash deploy/myy-llm/serve.sh qwen
+    cj run --snap -p myy -g -n aei-llm -c 4 -m 5G -t 12h --tag aei-llm -- bash deploy/myy-llm/serve.sh qwen
 
 - `qwen` or `gemma` picks the model. The served name (`AEI_LLM_MODEL`) is
   `qwen3.5-4b` or `gemma-4-e4b`.

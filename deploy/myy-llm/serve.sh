@@ -5,7 +5,7 @@
 # inside the same job: the URL is live exactly as long as the job. Installed by
 # scripts/fetch-llm.sh. Usage from the repo root on nipsu:
 #
-#   cj run --snap -p myy -g -n aei-llm -c 4 -m 8G -t 12h --tag aei-llm -- bash deploy/myy-llm/serve.sh [MODEL]
+#   cj run --snap -p myy -g -n aei-llm -c 4 -m 5G -t 12h --tag aei-llm -- bash deploy/myy-llm/serve.sh [MODEL]
 #
 # MODEL: qwen (default) or gemma. AEI_LLM_PUBLIC=0 skips the tunnel (then
 # reach it with deploy/myy-llm/tunnel.sh). Cloudflare Access lets through only
@@ -28,15 +28,25 @@ echo "[$(date -Is)] aei-llm job ${SLURM_JOB_ID:-?} on $(hostname): $ALIAS on 127
 nvidia-smi --query-gpu=name,memory.used,memory.total --format=csv,noheader || true
 
 pids=()
-cleanup() { kill "${pids[@]}" 2>/dev/null || true; wait || true; }
+cleanup() {
+  kill "${pids[@]}" 2>/dev/null || true
+  wait || true
+  # The job cgroup's memory peak, for sizing -m (peak + 20 %).
+  local cg; cg="/sys/fs/cgroup$(cut -d: -f3 /proc/self/cgroup | head -1)"
+  while [ "$cg" != /sys/fs/cgroup ] && [ ! -f "$cg/memory.peak" ]; do cg="${cg%/*}"; done
+  [ -f "$cg/memory.peak" ] && echo "[$(date -Is)] memory.peak $(( $(cat "$cg/memory.peak") / 1048576 )) MiB (${cg#/sys/fs/cgroup})" || true
+}
 trap cleanup EXIT TERM INT
 
 # Short context and two slots: questions and alert explanations are a few
 # hundred tokens. Small batches keep each GPU dispatch short, so the desktop
-# on the same card does not stutter.
+# on the same card does not stutter. The prompt cache in host RAM defaults
+# to 8 GiB and grew until the job was OOM-killed (2026-10-16); 256 MiB is
+# plenty for two short slots. The model is mmapped: with every layer on the
+# GPU its pages are reclaimable cache, not resident memory.
 LD_LIBRARY_PATH="$BIN${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" "$BIN/llama-server" -m "$MODEL" --alias "$ALIAS" \
   --host 127.0.0.1 --port "$PORT" \
-  -ngl 999 -fa on -c 8192 --parallel 2 -b 512 -ub 256 \
+  -ngl 999 -fa on -c 8192 --parallel 2 -b 512 -ub 256 --cache-ram 256 \
   --jinja --no-webui &
 pids+=($!)
 
