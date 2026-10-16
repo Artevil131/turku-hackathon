@@ -87,6 +87,9 @@ importers:
       '@aei/relations':
         specifier: workspace:*
         version: link:../relations
+      '@aei/replay':
+        specifier: workspace:*
+        version: link:../replay
 
   libs/utils/contract:
     dependencies:
