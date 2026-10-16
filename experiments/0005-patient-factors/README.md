@@ -111,3 +111,18 @@ from published studies, not from this data. Before any coverage number
 reaches the screen, untested pairs need handling (inference from related
 antibiotics or the organism mix, Artem's WISCA section), or antibiotics
 tested on a subset of organisms must be labelled as such.
+
+## Port to Python (2026-10-16)
+
+`backtest.ts` was ported to `backtest.py` (D-024), with the Python mirrors
+of `@aei/counting`, `@aei/eucast` and `@aei/logistic` and the same
+mulberry32 generator (`aei.jscompat`):
+
+    uv run python experiments/0005-patient-factors/backtest.py
+
+It reproduces `out/results.md` byte for byte (about 63 s on the laptop). The
+logistic fits sum through numpy rather than the TypeScript's loops, so their
+weights agree with the TypeScript's to rounding (about 1e-15 relative), not
+bit for bit; no printed digit changes. The parity tests (`uv run pytest
+libs/utils/py/tests`) check the Python mirrors in `libs/utils/py/aei`
+against the TypeScript gears on the full dataset.
