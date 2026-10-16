@@ -47,7 +47,12 @@ function toFindings(records: IsolateRecord[], seenBefore: string | null): Findin
     .sort((a, b) => (a.arrivedAt < b.arrivedAt ? 1 : a.arrivedAt > b.arrivedAt ? -1 : 0));
 }
 
-export function useLive(baseUrl = "") {
+// The backend's origin comes from the environment so the web app can sit in
+// front of a separately deployed API container; empty means same origin
+// (the Vite dev server proxies /api).
+const API_BASE_URL: string = import.meta.env.VITE_AEI_API_URL ?? "";
+
+export function useLive(baseUrl = API_BASE_URL) {
   const client: AeiClient = useMemo(() => createAeiClient({ baseUrl }), [baseUrl]);
   const [meta, setMeta] = useState<Meta | null>(null);
   const [clock, setClock] = useState<ClockState | null>(null);

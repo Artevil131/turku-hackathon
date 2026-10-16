@@ -5,6 +5,11 @@ The website (React + Vite, D-003). A thin layer over `libs/utils`; see
 
     pnpm dev        # API and web together; open http://localhost:5173
 
+The app reaches the backend only through `@aei/contract`. In development
+Vite proxies `/api` to `AEI_API_URL` (default http://localhost:8787). A
+build that talks to a separately hosted API sets `VITE_AEI_API_URL` to its
+origin at build time; unset means same origin.
+
 Pages (URL hash):
 
 - **Home** (`/`): resistant finds of the last 28 days and the role choice.
