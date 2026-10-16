@@ -10,24 +10,29 @@ Vite proxies `/api` to `AEI_API_URL` (default http://localhost:8787). A
 build that talks to a separately hosted API sets `VITE_AEI_API_URL` to its
 origin at build time; unset means same origin.
 
-Pages (URL hash):
+Pages (URL hash; each page keeps its view state in the hash, so any view is a link):
 
-- **Home** (`/`): resistant finds of the last 28 days and the role choice.
-- **Doctor** (`#doctor`): patient form (unit, infection site, organism by
-  how common it is here), antibiotics ranked by % susceptible with the
-  isolate count, a drawer with monthly history, and "what is going around":
-  units that send patients here, resistant finds by unit, organisms by how
-  many units and home regions they appear in. When four weeks has too few
-  isolates the 12-month figure is shown, tagged (provisional, CONTEXT.md Q7).
-- **Research** (`#research`): signals (resistant finds as they arrive, with
-  where those patients go next and the same patient's other finds),
-  antibiogram grid, monthly trends per antibiotic, unit relations map.
+- **Home** (`/`): what changed since the previous replay day (isolates,
+  resistant finds, signals, each linking to where it is shown) and the two
+  role entries; the doctor's names the remembered unit.
+- **Doctor** (`#doctor?unit&site&sex&age&onset&sev&period`): the doctor's
+  list from `/api/coverage` (D-023, D-026, D-027, D-033). One-click filters
+  with defaults, unit remembered; age group and inpatient day 3 or later
+  are shown but not applied (the API has no such filter). Each row: covers
+  %, 95 % interval against the bar, n, the level the data came from,
+  standing in words and glyph, and why it sits where it does. Likely
+  organisms for the specimen on the unit beside the list. Printable.
+- **Research** (`#research?panel&unit&kind&ph&inc`): the signal feed
+  (incidents, pinned sentinels, one click to the isolates behind an alert)
+  beside one of the unit grid (counts per unit-week), the hospital network
+  (patient flow, alert-lit units) and the regional map (THL county series,
+  `/api/regional` and `/api/counties`).
 - **Settings** (`#settings`): language, remembered view, about the data.
+- **Intro** (`#intro`): the pitch opening, a terraced picture of county
+  pressure; not a working view.
 
-Real data: resistant finds, organism and region counts, patient flows
-(`src/relations.ts`). Example data, labelled in the UI: resistance
-percentages and their history (`src/examples.ts`), until the counting
-method is decided.
+The replay timeline sits under the top bar on every working page. Every
+figure comes from the API; nothing on screen is example data.
 
 Design: Impeccable (D-008). Product context in /PRODUCT.md, the direction
 contract in `.impeccable/surfaces/`. Light mode only for now; dark tokens
