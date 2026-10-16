@@ -1,22 +1,18 @@
 import type { Flow } from "@aei/contract";
-import { isWardCode, type WardCode } from "@aei/domain";
+import type { WardCode } from "@aei/domain";
 import { type Locale, t } from "@aei/i18n";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { DoctorPage } from "./components/doctor/DoctorPage.tsx";
 import { Home, type Role } from "./components/Home.tsx";
 import { ResearchBoard } from "./components/research/ResearchBoard.tsx";
 import { Settings } from "./components/Settings.tsx";
 import { Timeline } from "./components/Timeline.tsx";
 import { type Page, TopBar } from "./components/TopBar.tsx";
-import { Treat, type TreatState } from "./components/Treat.tsx";
 import { useLive } from "./live.ts";
 import { FlowsContext } from "./relations.ts";
 import { hashPage } from "./url.ts";
 
 const NO_FLOWS: readonly Flow[] = [];
-
-// The organiser's reporting floor (CONTEXT.md): no percentage from fewer
-// than 30 isolates. Passed down so it is set in one place.
-const MIN_ISOLATES = 30;
 
 // Light only for now. Dark tokens stay in styles.css under
 // [data-theme="dark"]; switch this (or add a toggle) to bring them back.
@@ -67,14 +63,6 @@ export function App() {
     const r = stored<Role | "">("aei.role", "", (v) => v === "doctor" || v === "research");
     return r === "" ? null : r;
   });
-  // The doctor's own unit is remembered, so the doctor page opens where they work.
-  const [treat, setTreat] = useState<TreatState>(() => ({
-    ward: stored<WardCode>("aei.unit", "MED-A", isWardCode),
-    specimen: "urine",
-    organism: null,
-    window: "recent",
-    antibiotic: null,
-  }));
   const live = useLive();
   const reducedMotion = usePrefersReducedMotion();
 
@@ -85,7 +73,6 @@ export function App() {
     document.documentElement.lang = locale;
     store("aei.locale", locale);
   }, [locale]);
-  useEffect(() => store("aei.unit", treat.ward), [treat.ward]);
   useEffect(() => store("aei.role", lastRole), [lastRole]);
   useEffect(() => {
     // Only a page change touches history; the page's own params (url.ts) stay.
@@ -103,7 +90,6 @@ export function App() {
   }, []);
 
   const unseen = useMemo(() => live.findings.filter((f) => !f.seen).length, [live.findings]);
-  const patchTreat = useCallback((p: Partial<TreatState>) => setTreat((s) => ({ ...s, ...p })), []);
   // Opens the researcher's board filtered to a unit; the board reads its state from the URL on mount.
   const openSignals = useCallback((ward: WardCode) => {
     history.pushState(null, "", `#research?unit=${ward}`);
@@ -126,17 +112,11 @@ export function App() {
 
         {page === "home" ? <Home locale={locale} clock={live.clock} findings={live.findings} lastRole={lastRole} onRole={setPage} /> : null}
         {page === "doctor" ? (
-          <Treat
+          <DoctorPage
             client={live.client}
-            ai={live.meta?.ai ?? false}
-            alerts={live.alerts}
             locale={locale}
-            state={treat}
-            onChange={patchTreat}
-            findings={live.findings}
-            records={live.records}
             asOf={live.clock?.asOf ?? null}
-            minIsolates={MIN_ISOLATES}
+            alerts={live.alerts}
             onOpenSignals={openSignals}
           />
         ) : null}
