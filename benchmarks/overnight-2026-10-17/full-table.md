@@ -166,8 +166,8 @@ Every flattened metric key (dotted path into `metrics`) for every row, by family
 |---|---|---|
 | mark | baseline | baseline, tuned on test |
 | method | The live detector set with cluster and data alphas re-tuned on year 1 (Choices 5), trend and new-in-unit as shipped | The live detector set as shipped (D-020, D-021, D-022, D-031, D-034), scored on D1 to D7 and I1 over 2024-10-01 to 2026-09-27 |
-| runtime_s | 154 | 145 |
-| cpu_s | 150 | 140 |
+| runtime_s | 134 | 145 |
+| cpu_s | 131 | 140 |
 | D1.E1 | 0 | 0 |
 | D1.E1_corrected | 5 | 5 |
 | D1.E2 | 0 | 0 |
