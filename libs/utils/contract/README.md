@@ -12,7 +12,7 @@ and response types, live event types, and a typed client.
 | `/api/relations?days` | GET | `RelationsResponse`: patient flows and carrier links for the `days` up to the clock (D-011 to D-013) |
 | `/api/alerts?from` | GET | `AlertsResponse`: CPE and carrier alerts up to the clock (D-014) |
 | `/api/ingest` | POST HL7 v2 / FHIR Bundle / CSV | lab results from a laboratory system, parsed by `@aei/ingest` (D-035); returns what was accepted, new alert ids and warnings |
-| `/api/regional?group&region` | GET | `RegionalResponse`: THL county series of MRSA, ESBL, VRE and CPE and their regional signals, months before the clock only (D-025, D-037); 404 until `scripts/fetch_thl_ttr.py` has run |
+| `/api/regional?group&region` | GET | `RegionalResponse`: THL county series of MRSA, ESBL, VRE and CPE and their regional signals (each marked `strong` when it survives a Bonferroni correction), months before the clock only (D-025, D-037); 404 until `scripts/fetch_thl_ttr.py` has run |
 | `/api/live` | SSE | `LiveEvent`: `clock`, `arrivals`, `alerts`, `reset` |
 
 `createAeiClient({ baseUrl })` wraps them, with `live(onEvent)` for the

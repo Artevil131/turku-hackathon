@@ -38,7 +38,7 @@ describe("regionalUpTo", () => {
   const data: RegionalData = {
     source: "THL",
     fetched: "2026-10-16",
-    settings: { firstTarget: "2024-01", baseline: 36, alpha: 0.001, minCases: 5 },
+    settings: { firstTarget: "2024-01", baseline: 36, alpha: 0.001, minCases: 5, familyAlpha: 0.05, testedSeriesMonths: 8 },
     months: ["2025-07", "2025-08", "2025-09", "2025-10"],
     groups: ["CPE carriage, E. coli", "MRSA carriage"],
     regions: ["Varsinais-Suomen hyvinvointialue", "Finland (all counties)"],
@@ -60,6 +60,7 @@ describe("regionalUpTo", () => {
         expected: 0.6,
         dispersion: 1,
         p: 1.7e-7,
+        strong: true,
       },
     ],
   };

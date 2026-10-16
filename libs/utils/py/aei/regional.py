@@ -70,12 +70,16 @@ def regional_signals(
 NATIONAL = "Finland (all counties)"
 # The settings of experiments/0008.
 VIEW_SETTINGS = {"from_month": "2021-01", "first_target": "2024-01", "baseline": 36, "alpha": 1e-3, "min_cases": 5}
+# A signal is "strong" when it survives a Bonferroni correction at this level over every series-month tested
+# (experiments/0008, review round 2: most of the weaker signals could be chance).
+FAMILY_ALPHA = 0.05
 
 
 def regional_view(thl: pd.DataFrame, *, fetched: str) -> dict:
     """County series and their signals for the network view, as JSON-ready data (D-037). `thl` is
     `aei.thl.fetch_ttr_monthly()`'s table; the month of `fetched` is left out, being incomplete. The national total is
-    added as one more region. Series run from VIEW_SETTINGS["from_month"]; signals are tested from "first_target"."""
+    added as one more region. Series run from VIEW_SETTINGS["from_month"]; signals are tested from "first_target".
+    Each signal says whether it is strong: p below FAMILY_ALPHA divided by the number of series-months tested."""
     cfg = VIEW_SETTINGS
     last = (pd.Period(fetched[:7], "M") - 1).strftime("%Y-%m")
     thl = thl[(thl["month"] >= cfg["from_month"]) & (thl["month"] <= last)]
@@ -95,17 +99,27 @@ def regional_view(thl: pd.DataFrame, *, fetched: str) -> dict:
     signals = regional_signals(
         series, first_target=cfg["first_target"], baseline=cfg["baseline"], alpha=cfg["alpha"], min_cases=cfg["min_cases"]
     )
+    tested = sum(1 for m in months if m >= cfg["first_target"]) * len(out_series)
+    strong_below = FAMILY_ALPHA / tested if tested else 0.0
     return {
         "source": "THL communicable disease register (tartuntatautirekisteri), CC BY 4.0 (c) THL",
         "fetched": fetched,
-        "settings": {"firstTarget": cfg["first_target"], "baseline": cfg["baseline"], "alpha": cfg["alpha"], "minCases": cfg["min_cases"]},
+        "settings": {
+            "firstTarget": cfg["first_target"],
+            "baseline": cfg["baseline"],
+            "alpha": cfg["alpha"],
+            "minCases": cfg["min_cases"],
+            "familyAlpha": FAMILY_ALPHA,
+            "testedSeriesMonths": tested,
+        },
         "months": months,
         "groups": sorted(series["group"].unique()),
         "regions": sorted(r for r in series["region"].unique() if r != NATIONAL) + [NATIONAL],
         "series": out_series,
         "signals": [
             {"group": r.group, "region": r.region, "month": r.month, "cases": int(r.cases),
-             "expected": round(float(r.expected), 3), "dispersion": round(float(r.dispersion), 3), "p": float(f"{r.p:.3g}")}
+             "expected": round(float(r.expected), 3), "dispersion": round(float(r.dispersion), 3), "p": float(f"{r.p:.3g}"),
+             "strong": bool(r.p < strong_below)}
             for r in signals.itertuples()
         ],
     }

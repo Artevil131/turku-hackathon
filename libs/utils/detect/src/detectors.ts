@@ -9,14 +9,7 @@ import { cochranArmitageRising, poissonLower, poissonUpper } from "./stats.ts";
 // Thresholds are parameters; which detectors and thresholds the tool uses
 // is decided from experiments/0002.
 
-export type DetectorName =
-  | "profile-rule"
-  | "profile-excess"
-  | "phenotype-excess"
-  | "sampling-drop"
-  | "empty-run"
-  | "resistance-shift"
-  | "rising-trend";
+export type DetectorName = "profile-excess" | "phenotype-excess" | "sampling-drop" | "empty-run" | "rising-trend";
 
 export interface Signal {
   detector: DetectorName;

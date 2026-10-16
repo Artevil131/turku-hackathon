@@ -38,3 +38,11 @@ def test_view_drops_the_fetch_month_and_adds_the_national_total():
     assert [s["region"] for s in view["series"]] == [NATIONAL, "Varsinais-Suomi"]
     assert view["series"][0]["incidencePer100k"] is None
     assert {(g["region"], g["month"], g["cases"]) for g in view["signals"]} == {("Varsinais-Suomi", "2024-03", 15), (NATIONAL, "2024-03", 15)}
+
+
+def test_view_marks_signals_that_survive_bonferroni():
+    steady = [3, 4, 2, 3, 5, 3, 4, 3, 2, 4] * 4
+    spike = steady[:38] + [15] + steady[39:]
+    view = regional_view(series(spike).assign(incidence_per_100k=1.0), fetched="2024-04-16")
+    assert view["settings"]["testedSeriesMonths"] == 3 * 2  # 2024-01..03, county and national
+    assert all(g["strong"] == (g["p"] < 0.05 / 6) for g in view["signals"])

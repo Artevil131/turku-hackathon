@@ -143,6 +143,8 @@ export interface RegionalSignal {
   dispersion: number;
   /** P(cases or more) under the fitted model; signals below `settings.alpha`. */
   p: number;
+  /** Survives a Bonferroni correction: p below familyAlpha / testedSeriesMonths. Weaker signals may be chance. */
+  strong: boolean;
 }
 
 /** The regional view: the file `scripts/fetch_thl_ttr.py` writes, cut at the clock. */
@@ -150,7 +152,15 @@ export interface RegionalData {
   source: string;
   /** When the series were fetched; THL revises the latest months. */
   fetched: IsoDate;
-  settings: { firstTarget: string; baseline: number; alpha: number; minCases: number };
+  settings: {
+    firstTarget: string;
+    baseline: number;
+    alpha: number;
+    minCases: number;
+    familyAlpha: number;
+    /** Series times months tested, the Bonferroni denominator. */
+    testedSeriesMonths: number;
+  };
   /** YYYY-MM, oldest first. */
   months: string[];
   groups: string[];
