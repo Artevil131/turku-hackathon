@@ -9,6 +9,7 @@ import {
   poissonLower,
   poissonUpper,
   profileRule,
+  risingTrend,
   samplingDrop,
 } from "./index.ts";
 
@@ -106,5 +107,26 @@ describe("samplingDrop", () => {
     expect(eps).toHaveLength(1);
     // Three silent days take the 7-day count from 56 to 32, below the threshold.
     expect(eps[0]?.first.date).toBe(addDays("2025-10-01", 92));
+  });
+});
+
+describe("risingTrend", () => {
+  it("tests a ward-type stratum on its own", () => {
+    // Inpatient (URO) resistance rises 0 % → 50 % over 20 bins; outpatient (ED) stays at 0 %.
+    const records: IsolateRecord[] = [];
+    for (let bin = 0; bin < 20; bin++) {
+      for (let i = 0; i < 10; i++) {
+        const date = addDays("2024-01-01", bin * 28 + i);
+        const rising = i < bin / 4 ? "R" : "S";
+        records.push(rec(`u${bin}-${i}`, `P${bin}-${i}`, date, { results: { CIP: rising } }));
+        records.push(rec(`e${bin}-${i}`, `Q${bin}-${i}`, date, { ward: "ED", results: { CIP: "S" } }));
+      }
+    }
+    const opts = { binDays: 28, minBins: 13, alpha: 0.001 };
+    const inpatient = risingTrend(records, [{ organism: "Escherichia coli", antibiotic: "CIP", setting: "in" }], opts);
+    const outpatient = risingTrend(records, [{ organism: "Escherichia coli", antibiotic: "CIP", setting: "out" }], opts);
+    expect(inpatient.length).toBeGreaterThan(0);
+    expect(inpatient[0]?.key).toBe("Escherichia coli|CIP|all|in");
+    expect(outpatient).toEqual([]);
   });
 });

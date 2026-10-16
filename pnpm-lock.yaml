@@ -133,6 +133,21 @@ importers:
         specifier: workspace:*
         version: link:../domain
 
+  libs/utils/coverage:
+    dependencies:
+      '@aei/counting':
+        specifier: workspace:*
+        version: link:../counting
+      '@aei/domain':
+        specifier: workspace:*
+        version: link:../domain
+      '@aei/eucast':
+        specifier: workspace:*
+        version: link:../eucast
+      '@aei/replay':
+        specifier: workspace:*
+        version: link:../replay
+
   libs/utils/dataset:
     dependencies:
       '@aei/domain':
