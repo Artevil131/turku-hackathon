@@ -110,3 +110,18 @@ episodes a year).
 For short gaps in small units a different rule would do better: a run of
 consecutive days with no cultures, compared with how often the unit has
 such runs, rather than a 7-day count.
+
+## Port to Python (2026-10-16)
+
+`inject.ts` was ported to `inject.py` (D-024). The trials moved to
+`libs/utils/py/aei/inject.py` and draw from the same mulberry32 generator
+in the same order, so every trial is the same as in the original run:
+
+    uv run python experiments/0007-injected-events/inject.py
+
+It reproduces the table of `out/results.md` exactly. The one difference is
+the measured "Run time" in the text (36.6 s in Python against the 66.0 s
+recorded), so the committed file keeps the original run's line. The parity tests (`uv run pytest libs/utils/py/tests`) check the Python mirrors in `libs/utils/py/aei` against the TypeScript gears on the full dataset. The
+tests also run the original trial code (copied into
+`libs/utils/py/tests/ts_dump.ts`) and the Python trials on seeds 1, 7 and
+2026 and require the same units, first signal dates and delays.
