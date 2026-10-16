@@ -39,6 +39,12 @@ export function ResearchBoard(props: Props) {
   const [tab, setTab] = useState<Tab>("feed");
   const onChange = useCallback((patch: Partial<BoardState>) => setState((s) => ({ ...s, ...patch })), []);
   useEffect(() => writeHashParams(boardToParams(state)), [state]);
+  // A link followed inside the app (or the back button) changes the hash without remounting.
+  useEffect(() => {
+    const onHash = () => setState(boardFromUrl());
+    addEventListener("hashchange", onHash);
+    return () => removeEventListener("hashchange", onHash);
+  }, []);
 
   const wide = useWide();
   const panelProps = { ...props, state, onChange };

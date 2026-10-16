@@ -1,1 +1,412 @@
-/* RegionalMap panel styles (spec-research.md). */
+/* RegionalMap panel styles (spec-research.md). Container-based, so it works in
+   the 7/12 column and as a full-width tab. */
+
+.map {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border-radius: var(--radius-panel);
+  background: var(--glass-2);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-shadow);
+  color: var(--ink);
+}
+
+.map-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+
+.map-title {
+  margin: 0;
+  font-size: var(--step-2);
+  font-weight: 650;
+}
+
+.map-asof {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  color: var(--ink-2);
+  font-size: var(--step--1);
+}
+
+.map-monthshown {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.map-quantity,
+.map-note {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--step--1);
+  line-height: 1.4;
+}
+
+.map-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  align-items: end;
+}
+
+.map-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: var(--step--1);
+  color: var(--ink-2);
+  min-width: 0;
+}
+
+.map-field select {
+  min-height: 40px;
+  max-width: 100%;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control);
+  background: var(--glass-3);
+  color: var(--ink);
+  font: inherit;
+}
+
+.map-seg {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--glass-1);
+}
+
+.map-seg-btn {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 7px;
+  background: none;
+  color: var(--ink-2);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.map-seg-btn[aria-checked="true"] {
+  background: var(--glass-3);
+  color: var(--live);
+  box-shadow: var(--glass-shadow);
+}
+
+.map-btn {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control);
+  background: var(--glass-3);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.map-btn:disabled {
+  color: var(--ink-3);
+  cursor: default;
+}
+
+.map-slider {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.map-slider label {
+  display: flex;
+  flex-direction: column;
+  min-width: 7.5em;
+  font-size: var(--step--1);
+  color: var(--ink-2);
+}
+
+.map-slider-value {
+  color: var(--ink);
+  font-size: var(--step-1);
+}
+
+.map-slider input[type="range"] {
+  width: 100%;
+  min-height: 44px;
+  accent-color: var(--live);
+}
+
+.map-body {
+  display: grid;
+  gap: 14px;
+}
+
+.map-figure {
+  margin: 0;
+  position: relative;
+  max-width: 270px;
+  justify-self: center;
+  width: 100%;
+}
+
+.map-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.map-loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--ink-3);
+  font-size: var(--step--1);
+}
+
+.map-side {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.map-side h3 {
+  margin: 0 0 6px;
+  font-size: var(--step-0);
+  font-weight: 650;
+}
+
+/* Fills: steps of --resist mixed into white. */
+.map-fill-s0 {
+  fill: #f4efe9;
+  background: #f4efe9;
+}
+.map-fill-s1 {
+  fill: color-mix(in srgb, var(--resist) 22%, #fff);
+  background: color-mix(in srgb, var(--resist) 22%, #fff);
+}
+.map-fill-s2 {
+  fill: color-mix(in srgb, var(--resist) 42%, #fff);
+  background: color-mix(in srgb, var(--resist) 42%, #fff);
+}
+.map-fill-s3 {
+  fill: color-mix(in srgb, var(--resist) 68%, #fff);
+  background: color-mix(in srgb, var(--resist) 68%, #fff);
+}
+.map-fill-s4 {
+  fill: color-mix(in srgb, var(--resist) 100%, #000 12%);
+  background: color-mix(in srgb, var(--resist) 100%, #000 12%);
+}
+.map-fill-plain {
+  fill: color-mix(in srgb, var(--live) 18%, #fff);
+  background: color-mix(in srgb, var(--live) 18%, #fff);
+}
+.map-fill-few,
+.map-fill-norate {
+  fill: url(#map-hatch);
+  background: repeating-linear-gradient(45deg, #fff 0 3px, #9db0bc 3px 4px);
+}
+.map-fill-none,
+.map-fill-loading {
+  fill: var(--glass-3);
+  background: var(--glass-3);
+}
+
+.map-hatch-bg {
+  fill: #fff;
+}
+.map-hatch-line {
+  stroke: #8a9ca8;
+  stroke-width: 1.2;
+}
+
+.map-county {
+  stroke: #fff;
+  stroke-width: 0.8;
+  cursor: pointer;
+  outline: none;
+}
+.map-fill-loading {
+  stroke: var(--line-strong);
+}
+.map-county:hover {
+  stroke: var(--ink-2);
+  stroke-width: 1.6;
+}
+.map-county[data-selected="true"],
+.map-county:focus-visible {
+  stroke: var(--ink);
+  stroke-width: 2.4;
+}
+.map-county:focus-visible {
+  stroke: var(--live);
+  stroke-width: 3;
+}
+
+.map-glyph {
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+.map-glyph-strong {
+  fill: var(--ink);
+}
+.map-glyph-weak {
+  fill: #fff;
+}
+
+.map-tyks {
+  fill: var(--live);
+  stroke: #fff;
+  stroke-width: 1.5;
+}
+.map-tyks-label {
+  font-size: 12px;
+  font-weight: 600;
+  fill: var(--ink);
+  paint-order: stroke;
+  stroke: #fff;
+  stroke-width: 3px;
+}
+
+.map-legend-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin: 0 0 6px;
+  padding: 0;
+  list-style: none;
+  font-size: var(--step--1);
+}
+.map-legend-row li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.map-swatch {
+  width: 18px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid var(--line-strong);
+  flex: none;
+}
+.map-glyph-key {
+  margin-top: 8px;
+}
+.map-national {
+  margin: 8px 0 0;
+  font-size: var(--step-1);
+  font-weight: 650;
+}
+
+.map-focus,
+.map-signals {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--glass-1);
+}
+.map-focus-name {
+  margin: 0 0 6px;
+  font-size: var(--step-1);
+  font-weight: 650;
+}
+.map-focus dl {
+  display: flex;
+  gap: 24px;
+  margin: 0 0 6px;
+}
+.map-focus dt {
+  color: var(--ink-2);
+  font-size: var(--step--1);
+}
+.map-focus dd {
+  margin: 0;
+  font-size: var(--step-3);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+.map-focus-line {
+  margin: 2px 0 0;
+  font-size: var(--step-0);
+}
+
+.map-signals ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.map-signal-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  width: 100%;
+  min-height: 44px;
+  padding: 6px 4px;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 6px;
+}
+.map-signal-row svg {
+  flex: none;
+  margin-top: 3px;
+}
+.map-signal-row:hover {
+  background: var(--glass-3);
+}
+
+.map-state {
+  padding: 16px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-control);
+  color: var(--ink-2);
+}
+.map-state p {
+  margin: 0 0 8px;
+}
+
+.map-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  color: var(--ink-3);
+  font-size: var(--step--1);
+}
+
+.map button:focus-visible,
+.map select:focus-visible,
+.map input:focus-visible {
+  outline: 2px solid var(--live);
+  outline-offset: 2px;
+}
+
+@container (min-width: 640px) {
+  .map-body {
+    grid-template-columns: minmax(240px, 340px) minmax(0, 1fr);
+    align-items: start;
+  }
+  .map-figure {
+    max-width: 340px;
+    position: sticky;
+    top: 0;
+  }
+}
