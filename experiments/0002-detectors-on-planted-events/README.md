@@ -1,5 +1,5 @@
 ---
-status: proposed    # proposed, then accepted, rejected or superseded
+status: accepted    # proposed, then accepted, rejected or superseded
 by: Claude Code, operated by Aapo
 data: [synthetic_microbiology_dataset, seed 2026, 2023-10-02 to 2026-09-27, as received 2026-10-09]
 parent: 0001
@@ -76,4 +76,69 @@ to chili.
 
 ## Result
 
+`node experiments/0002-detectors-on-planted-events/sweep.ts` (about 12 s
+on a laptop) writes `out/summary.md` (the full table) and
+`out/other-episodes.md` (every signal episode that matches no planted
+event, per variant). All numbers computed; deterministic, one run.
+
+The best setting of each detector (delay in days from the event's start
+to the first signal; other episodes over 2.99 years):
+
+| detector | setting | E1 Urology ESBL | E2 ICU MRSA | E3 PHC-S gap | E4 TMP trend | other episodes / year |
+|---|---|---|---|---|---|---|
+| 2b profile excess (share within specimen) | alpha 0.0001 | 0 d | 4 d | – | – | 1.0 |
+| 3 phenotype excess | alpha 0.001 | 4 d | 4 d | – | – | 2.0 |
+| 4 sampling drop | alpha 0.0001 | – | – | 3 d | – | 1.0 |
+| 5 resistance shift | alpha 0.001 | 11 d | 12 d | – | – | 0.3 |
+| 6 rising trend | alpha 0.001 | – | – | – | first 2025-09-28 | 0.7 |
+
+- The **profile rule** (Artem's literal cluster definition) finds both
+  outbreaks within 0 to 15 days but raises 16 to 138 other episodes a
+  year: common resistant profiles (for example *E. coli* resistant only to
+  ampicillin) reach three patients in a unit all the time. Limiting it to
+  patients on day 3+ of their stay cuts the noise by about two thirds and
+  delays detection by 3 to 9 days.
+- **Profile excess** compares the count with what the profile's usual
+  share predicts, which removes most of that noise at no cost in delay.
+- **Sampling drop** finds the empty week after 2 to 3 silent days; at
+  alpha 0.001 it also flags 11 short dips elsewhere (for example Internal
+  medicine A, 9 cultures in a week against 30 expected, 2025-05-18).
+- **Rising trend** flags urinary *E. coli* trimethoprim from 2024-09-29 at
+  alpha 0.01 and from 2025-09-28 at 0.001.
+
+Other episodes that look like more than noise and should be checked by
+hand: *E. coli* resistant only to piperacillin-tazobactam at Health
+centre South, 5 patients against 0.2 expected (2023-11-10); ESBL at Health
+centre South, 10 patients against 2.4 (2024-08-18); *E. coli* in Internal
+medicine A, 9 patients with one ampicillin-trimethoprim profile against
+1.6 (2025-09-25). The first two fall in the first year, where the 365-day
+baseline is incomplete.
+
+Deviations from plan: detector 2 as planned took the profile's share among
+all isolates of the organism. Wound and blood isolates have no
+urine-only results, so their profiles are rare in a share dominated by
+urine and *E. coli* from Surgery kept signalling (7 of 11 other episodes
+at alpha 0.0001). Variant 2b, added after the first run, takes the share
+within the same specimen type; both are reported. The E4 column of
+`out/summary.md` is headed "delay" but holds the first signal date.
+
 ## Interpretation
+
+Four detectors together cover every planted event with about 4 other
+episodes a year in total: profile excess within specimen (alpha 0.0001)
+for clonal clusters, phenotype excess (alpha 0.001) for ESBL, MRSA, VRE
+and CPE surges, sampling drop (alpha 0.0001) for missing data, and rising
+trend (alpha 0.001) for slow drift. Resistance shift is slower and adds
+little once those run. The simple profile rule is too noisy to show on its
+own.
+
+Caveats. The thresholds were tuned on the very events they are scored
+on, so the delays are optimistic; no held-out events exist. "Other
+episodes" mixes false alarms with events 0001 did not find. Thresholds
+are per test and not corrected for the many units, profiles and days.
+
+Next: the team picks detectors and thresholds from this table (and
+records them in DECISIONS.md); the server runs them causally as the
+replay clock moves and pushes their signals as alerts (D-014 extended).
+A follow-up could plant synthetic events of known size into the data to
+measure detection without tuning on the same events.
