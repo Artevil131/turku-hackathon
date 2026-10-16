@@ -296,3 +296,31 @@ describe("hidden numeric facts", () => {
     expect(reformatted).toEqual({ text: "pohja Urology", source: "template" });
   });
 });
+
+describe("template-only facts", () => {
+  const input = {
+    lang: "fi" as const,
+    kind: "cpe",
+    summary: "s",
+    facts: { ward: "Urologia", patientId: "P000769", date: "2025-06-13" },
+    templateOnly: ["patientId"],
+    fallback: "{date}: potilas {patientId}, {ward}.",
+  };
+
+  it("never offers a patient identifier to the model", async () => {
+    const { llm, fetch } = mockLlm({ text: "Osastolla Urologia {date}." });
+    expect(await explainAlert(llm, input)).toEqual({ text: "Osastolla Urologia 2025-06-13.", source: "model" });
+    const body = String(fetch.mock.calls[0]?.[1]?.body);
+    expect(body).not.toContain("patientId");
+    expect(body).not.toContain("P000769");
+  });
+
+  it("rejects a model text that names the patient, by slot or by copy, and keeps the ID in the template", async () => {
+    for (const text of ["Potilas {patientId} osastolla Urologia.", "Potilas P000769 osastolla Urologia."]) {
+      expect(await explainAlert(mockLlm({ text }).llm, input)).toEqual({
+        text: "2025-06-13: potilas P000769, Urologia.",
+        source: "template",
+      });
+    }
+  });
+});

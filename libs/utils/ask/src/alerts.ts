@@ -99,6 +99,7 @@ export function alertExplainInput(alert: Alert, lang: Lang, names: AlertNames): 
           specimen: names.specimen(alert.specimen),
           patientId: alert.patientId,
         },
+        templateOnly: ["patientId"],
         fallback: pick(
           lang,
           "On {date}, a carbapenemase-producing Enterobacterales isolate ({organism}) was found in a {specimen} sample from patient {patientId} in {ward}; an infection-control alert.",
@@ -120,6 +121,7 @@ export function alertExplainInput(alert: Alert, lang: Lang, names: AlertNames): 
       return {
         lang,
         kind: alert.kind,
+        templateOnly: ["patientId"],
         summary:
           "The first MRSA or VRE isolate in this unit after a long time without one (180 days or more, D-021). A sentinel finding for infection control.",
         facts,
@@ -170,6 +172,7 @@ export function alertExplainInput(alert: Alert, lang: Lang, names: AlertNames): 
         kind: unknown.kind,
         summary: `An infection-control alert of kind ${unknown.kind}.`,
         facts,
+        templateOnly: Object.keys(facts).filter((k) => /patient/i.test(k)),
         fallback: generic(lang, facts),
       };
     }

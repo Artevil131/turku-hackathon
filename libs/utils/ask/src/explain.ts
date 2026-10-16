@@ -78,6 +78,11 @@ export interface ExplainInput {
   summary: string;
   facts: Record<string, string | number>;
   fallback: string;
+  /**
+   * Facts for the template only (patient identifiers): never offered to the
+   * model, and a model text that names one is rejected.
+   */
+  templateOnly?: readonly string[];
 }
 
 /** Validate before substitution, so every numeric claim comes from a named fact. */
@@ -128,7 +133,8 @@ export function reslot(text: string, facts: Record<string, string | number>): st
 }
 
 export async function explainAlert(llm: Llm, input: ExplainInput): Promise<{ text: string; source: "model" | "template" }> {
-  const { lang, kind, summary, facts, fallback } = input;
+  const { lang, kind, summary, facts: all, fallback, templateOnly = [] } = input;
+  const facts = Object.fromEntries(Object.entries(all).filter(([name]) => !templateOnly.includes(name)));
   const secret = new Set(hidden(facts));
   // Values with digits never reach the model, so it cannot copy or alter a number.
   const shown = Object.fromEntries(Object.entries(facts).map(([name, value]) => [name, secret.has(name) ? `{${name}}` : value]));
@@ -151,7 +157,8 @@ export async function explainAlert(llm: Llm, input: ExplainInput): Promise<{ tex
       },
     );
     if (typeof output === "object" && output !== null && "text" in output && typeof output.text === "string") {
-      const text = reslot(output.text, facts);
+      // Re-slotting against every fact catches a copied identifier, which the check then rejects.
+      const text = reslot(output.text, all);
       if (text.trim() && checkSlots(text, Object.keys(facts))) {
         return { text: fillSlots(text, facts, lang), source: "model" };
       }
@@ -159,5 +166,5 @@ export async function explainAlert(llm: Llm, input: ExplainInput): Promise<{ tex
   } catch {
     // The optional AI layer must never prevent the code-owned explanation.
   }
-  return { text: fillSlots(fallback, facts, lang), source: "template" };
+  return { text: fillSlots(fallback, all, lang), source: "template" };
 }
