@@ -48,7 +48,7 @@ const config = {
   tickMs: Number(env.AEI_TICK_MS ?? 2000),
   daysPerTick: Number(env.AEI_DAYS_PER_TICK ?? 1),
   // Load only results sampled up to this date; later ones can then arrive through /api/ingest.
-  loadUntil: env.AEI_LOAD_UNTIL,
+  loadUntil: env.AEI_LOAD_UNTIL || undefined, // empty counts as unset (compose passes empty variables)
   // A JSON file of the site's own codes (see @aei/ingest CodeMaps), merged over the defaults.
   codeMapFile: env.AEI_CODE_MAP,
   guideline: env.AEI_GUIDELINE ?? "",
@@ -385,6 +385,14 @@ export const server = createServer(async (req, res) => {
     send(res, error instanceof LlmError ? 502 : 400, { error: error instanceof LlmError ? "The assistant is unavailable" : String(error) });
   }
 });
+
+// Stop promptly on SIGTERM and SIGINT: in a container Node runs as PID 1, which ignores signals it has no handler for.
+for (const signal of ["SIGTERM", "SIGINT"] as const)
+  process.on(signal, () => {
+    server.closeAllConnections();
+    server.close();
+    process.exit(0);
+  });
 
 server.listen(config.port, () => {
   console.log(`[aei-api] ${state.records.length} isolates, ${datasetStart} to ${datasetEnd}; replay at ${clock.state().asOf}`);

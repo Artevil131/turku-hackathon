@@ -23,3 +23,11 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm check
       - run: pnpm test
+
+  # The container files in deploy/container stay buildable (images are not pushed).
+  containers:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - run: docker build -f deploy/container/Containerfile.api -t aei-api:ci .
+      - run: docker build -f deploy/container/Containerfile.web -t aei-web:ci .
