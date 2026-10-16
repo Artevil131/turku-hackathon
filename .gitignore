@@ -1,6 +1,9 @@
 # datasets and large outputs stay out of git (PROTOCOL.md)
 data/
 
+# challenge materials from the organisers (PDFs), kept local only
+materials/
+
 # secrets
 .env
 .env.*
