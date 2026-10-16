@@ -32,6 +32,7 @@ interface or behind the API contract (D-006).
 | `detect/` | Deviation detectors and the live set: clusters, surges, sampling drops, trends |
 | `coverage/` | The doctor's coverage list: share covered per antibiotic, with fallback level and counts |
 | `logistic/` | L2-penalised logistic regression (experiments/0005) |
+| `py/aei/` | Python analysis helpers (D-024): load the dataset into pandas |
 
 The coverage list (D-023) and the live detection set (D-020 to D-022) are
 provisional until the team reviews experiments/0002 to 0006.
