@@ -124,7 +124,7 @@ within the same specimen type; both are reported. The E4 column of
 
 ## Interpretation
 
-Four detectors together cover every planted event with about 4 other
+Four detectors together cover every planted event with about 5 other
 episodes a year in total: profile excess within specimen (alpha 0.0001)
 for clonal clusters, phenotype excess (alpha 0.001) for ESBL, MRSA, VRE
 and CPE surges, sampling drop (alpha 0.0001) for missing data, and rising
