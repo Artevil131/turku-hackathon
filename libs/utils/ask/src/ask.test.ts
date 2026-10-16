@@ -246,3 +246,22 @@ describe("safe explanations", () => {
     });
   });
 });
+
+describe("review additions", () => {
+  it("sends Cloudflare Access headers from the environment", async () => {
+    const config = llmConfigFromEnv({ AEI_LLM_URL: "https://x", AEI_LLM_MODEL: "m", AEI_LLM_ACCESS_ID: "id", AEI_LLM_ACCESS_SECRET: "s" });
+    expect(config?.headers).toEqual({ "CF-Access-Client-Id": "id", "CF-Access-Client-Secret": "s" });
+    const fetch = vi
+      .fn<typeof globalThis.fetch>()
+      .mockResolvedValue(new Response(JSON.stringify({ choices: [{ message: { content: "{}" } }] })));
+    await createLlm({ ...(config ?? { baseUrl: "", model: "" }), fetch }).json([], { name: "x", schema: {} });
+    const headers = fetch.mock.calls[0]?.[1]?.headers as Record<string, string>;
+    expect(headers["CF-Access-Client-Secret"]).toBe("s");
+  });
+
+  it("accepts ordinary Finnish words that share a prefix with a number", () => {
+    expect(checkSlots("Löydös viittaa siihen, että tartunta voi levitä osastolle {ward}.", ["ward"])).toBe(true);
+    expect(checkSlots("Viittä potilasta seurataan.", [])).toBe(false);
+    expect(checkSlots("Tuhannen näytteen joukossa.", [])).toBe(false);
+  });
+});

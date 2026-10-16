@@ -56,7 +56,7 @@ const FI_NUMBER_STEMS: Record<string, string> = {
   yhdeksäntoista: "yhdeksäntoist",
   kaksikymmentä: "kaksikymmen",
   sata: "sata",
-  tuhat: "tuh",
+  tuhat: "tuhat",
   puolet: "puol",
   kolmannes: "kolman",
   neljännes: "neljän",
@@ -65,8 +65,10 @@ const FI_NUMBER_STEMS: Record<string, string> = {
 };
 
 // Consonant changes in common inflections: viidellä, viittä, kuudesta,
-// kuutta, yhdentoista, kahdentoista and kahdenkymmenen.
-const FI_INFLECTED_STEMS = ["viide", "viit", "kuude", "kuut", "yhdentoist", "kahdentoist", "kahdenkymmen"];
+// kuutta, tuhannen, yhdentoista, kahdentoista and kahdenkymmenen. Stems are
+// kept long enough not to catch ordinary words (viittaa, tuhoaa); a false
+// match only sends the explanation to its template.
+const FI_INFLECTED_STEMS = ["viide", "viittä", "kuude", "kuutta", "tuhann", "yhdentoist", "kahdentoist", "kahdenkymmen"];
 
 export const NUMBER_WORDS: readonly string[] = [...EN_NUMBER_WORDS, ...Object.keys(FI_NUMBER_STEMS)];
 

@@ -7,6 +7,8 @@ export interface LlmConfig {
   baseUrl: string;
   model: string;
   apiKey?: string;
+  /** Extra request headers, e.g. a Cloudflare Access service token. */
+  headers?: Record<string, string>;
   fetch?: typeof fetch;
   timeoutMs?: number;
 }
@@ -32,6 +34,7 @@ export function createLlm(cfg: LlmConfig): Llm {
           headers: {
             "Content-Type": "application/json",
             ...(cfg.apiKey ? { Authorization: `Bearer ${cfg.apiKey}` } : {}),
+            ...cfg.headers,
           },
           signal: AbortSignal.timeout(cfg.timeoutMs ?? 20_000),
           body: JSON.stringify({
@@ -55,8 +58,17 @@ export function createLlm(cfg: LlmConfig): Llm {
   };
 }
 
-/** Read lazily: importing this module does not access Node's process global. */
+/**
+ * AEI_LLM_URL, AEI_LLM_MODEL, AEI_LLM_KEY, and AEI_LLM_ACCESS_ID with
+ * AEI_LLM_ACCESS_SECRET for a server behind Cloudflare Access
+ * (deploy/myy-llm). Read lazily: importing this module does not access
+ * Node's process global.
+ */
 export function llmConfigFromEnv(env: Record<string, string | undefined> = process.env): LlmConfig | undefined {
   if (!env.AEI_LLM_URL) return undefined;
-  return { baseUrl: env.AEI_LLM_URL, model: env.AEI_LLM_MODEL ?? "", apiKey: env.AEI_LLM_KEY };
+  const access =
+    env.AEI_LLM_ACCESS_ID && env.AEI_LLM_ACCESS_SECRET
+      ? { "CF-Access-Client-Id": env.AEI_LLM_ACCESS_ID, "CF-Access-Client-Secret": env.AEI_LLM_ACCESS_SECRET }
+      : undefined;
+  return { baseUrl: env.AEI_LLM_URL, model: env.AEI_LLM_MODEL ?? "", apiKey: env.AEI_LLM_KEY, headers: access };
 }
