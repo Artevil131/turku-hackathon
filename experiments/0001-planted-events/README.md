@@ -123,3 +123,13 @@ Geriatrics, so age is not tied to unit; stays at sampling never exceed day
 22; 1,875 urine isolates at 10^3 CFU/ml carry susceptibility results and
 are counted like the rest. The trimethoprim rise in item 4 is partly the
 Urology outbreak strain (trimethoprim R); see 0002, corrections.
+
+## Port to Python (2026-10-16)
+
+`scan.ts` was ported to `scan.py` (D-024), using the Python mirrors of
+`@aei/dataset`, `@aei/detect` and `@aei/relations` in `libs/utils/py/aei`:
+
+    uv run python experiments/0001-planted-events/scan.py
+
+It reproduces `out/1-weekly.md` to `out/5-carriers.md` byte for byte
+(about 14 s on the laptop). The parity tests (`uv run pytest libs/utils/py/tests`) check the Python mirrors in `libs/utils/py/aei` against the TypeScript gears on the full dataset.
