@@ -22,22 +22,24 @@ experiments in Python speak for the live tool:
   `suits_specimen`, `effective_result` (`@aei/eucast`).
 - `aei.counting`: `first_isolates` (`@aei/counting`).
 - `aei.coverage`: `wilson` (`@aei/coverage`).
-- `aei.detect`: `profile_of`, `has_acquired_resistance`, the six
-  detectors (`profile_rule`, `profile_excess` with `same_specimen`,
-  `phenotype_excess`, `sampling_drop`, `resistance_shift`,
-  `rising_trend` with `setting` and `exclude`), `episodes`, and the live
-  set: `LIVE_SETTINGS`, `SURVEILLANCE_PAIRS`, `cluster_signals`,
-  `in_detected_cluster`, `live_signals` (`@aei/detect`, D-016, D-020 to
-  D-022). Poisson and hypergeometric tails come from scipy; the trend
-  test keeps the TypeScript's normal-tail approximation so its p-values
-  match the live tool's.
+- `aei.detect`: `profile_of`, `has_acquired_resistance`, the live
+  detectors (`profile_excess` with `same_specimen`, `phenotype_excess`,
+  `sampling_drop`, `empty_run`, `rising_trend` with `exclude`),
+  `episodes`, and the live set: `LIVE_SETTINGS`, `SURVEILLANCE_PAIRS`,
+  `cluster_signals`, `in_detected_cluster`, `live_signals`
+  (`@aei/detect`, D-016, D-020 to D-022, D-031). Poisson tails come from
+  scipy; the trend test keeps the TypeScript's normal-tail approximation
+  so its p-values match the live tool's.
 - `aei.relations`: `patient_moves`, `patient_flows`, `phenotype_trails`,
   `trail_links`, `carrier_arrivals` (`@aei/relations`, D-011, D-012).
-- `aei.logistic`: `fit_logistic`, `predict` (`@aei/logistic`).
+Python only, no TypeScript copy (D-032): in `aei.detect` the profile
+rule (`profile_rule`), resistance shift (`resistance_shift`, mid-p Fisher
+from scipy) and trends by ward type (`rising_trend` with `setting`), which
+the experiments use and the live tool does not; and
 
-Helpers for the experiments:
-
+- `aei.logistic`: `fit_logistic`, `predict` (experiments/0005).
 - `aei.inject`: experiments/0007's injected clusters and sampling gaps.
+
 - `aei.jscompat`: JavaScript's `toFixed`, `toPrecision`,
   `toExponential`, `Math.round`, `String(number)`, the Markdown `table`
   the TypeScript experiments wrote, and their `mulberry32` generator, so
@@ -53,8 +55,10 @@ Node (in the background while pytest computes the Python side), and
 same signals in the same order with the same keys, dates and observed
 values, expected values and p-values within 1e-9 relative; the same
 first isolates, EUCAST results, flows, trails, links and carrier
-arrivals; the same 0007 trials on three seeds; the same formatted
-numbers and random draws.
+arrivals; the same formatted numbers and random draws. Only code the app
+runs has a TypeScript side to compare with; the Python-only parts were
+compared while their TypeScript existed (D-030) and stand alone since
+(D-032).
 
 The live tool does not import these; logic the app needs is ported to the
 TypeScript gears.

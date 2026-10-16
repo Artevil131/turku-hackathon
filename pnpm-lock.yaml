@@ -159,8 +159,6 @@ importers:
         specifier: workspace:*
         version: link:../domain
 
-  libs/utils/logistic: {}
-
   libs/utils/relations:
     dependencies:
       '@aei/domain':

@@ -1,16 +1,7 @@
-import {
-  type AntibioticCode,
-  type Culture,
-  type IsoDate,
-  type IsolateRecord,
-  type Organism,
-  type Phenotype,
-  WARDS,
-  type WardCode,
-} from "@aei/domain";
+import type { AntibioticCode, Culture, IsoDate, IsolateRecord, Organism, Phenotype, WardCode } from "@aei/domain";
 import { isIntrinsic } from "@aei/eucast";
 import { addDays, daysBetween } from "@aei/replay";
-import { cochranArmitageRising, fisherMidPGreater, poissonLower, poissonUpper } from "./stats.ts";
+import { cochranArmitageRising, poissonLower, poissonUpper } from "./stats.ts";
 
 // Candidate deviation detectors (D-016). Each scans a whole history and
 // returns the days it would have signalled; the signal on day t uses only
@@ -111,39 +102,6 @@ function slice<T extends { sampleDate: IsoDate }>(
 }
 
 const distinctPatients = (items: readonly { patientId: string }[]) => new Set(items.map((i) => i.patientId)).size;
-
-// ---------- 1. profile rule ----------
-
-export interface ProfileRuleOptions {
-  minPatients: number;
-  windowDays: number;
-  hospitalOnsetOnly: boolean;
-}
-
-/** At least `minPatients` patients in one unit with the same organism and resistant profile within the window. */
-export function profileRule(records: readonly IsolateRecord[], o: ProfileRuleOptions): Signal[] {
-  const pool = records.filter((r) => hasAcquiredResistance(r) && (!o.hospitalOnsetOnly || isHospitalOnset(r)));
-  const signals: Signal[] = [];
-  for (const [key, list] of groupBy(pool, (r) => `${r.ward}|${r.organism}|${profileOf(r)}`)) {
-    list.sort(byDate);
-    const dates = list.map((r) => r.sampleDate);
-    for (const r of list) {
-      const n = distinctPatients(slice(list, dates, addDays(r.sampleDate, 1 - o.windowDays), r.sampleDate));
-      if (n >= o.minPatients) {
-        signals.push({
-          detector: "profile-rule",
-          key,
-          date: r.sampleDate,
-          ward: r.ward,
-          organism: r.organism,
-          profile: profileOf(r),
-          observed: n,
-        });
-      }
-    }
-  }
-  return signals;
-}
 
 // ---------- 2. profile excess ----------
 
@@ -328,75 +286,20 @@ export function emptyRun(cultures: readonly Culture[], o: EmptyRunOptions): Sign
   return signals;
 }
 
-// ---------- 5. resistance shift ----------
+// ---------- pairs ----------
 
 export interface Pair {
   organism: Organism;
   antibiotic: AntibioticCode;
   specimen?: IsolateRecord["specimen"];
-  /** Only inpatient units ("in") or only the emergency department and health centres ("out"). */
-  setting?: "in" | "out";
 }
-
-const WARD_TYPE = new Map(WARDS.map((w) => [w.code, w.type]));
 
 /** The isolates a pair covers that have a result for its antibiotic. */
 function inPair(r: IsolateRecord, pair: Pair): boolean {
-  return (
-    r.organism === pair.organism &&
-    (!pair.specimen || r.specimen === pair.specimen) &&
-    (!pair.setting || WARD_TYPE.get(r.ward) === pair.setting) &&
-    r.results[pair.antibiotic] !== undefined
-  );
+  return r.organism === pair.organism && (!pair.specimen || r.specimen === pair.specimen) && r.results[pair.antibiotic] !== undefined;
 }
 
-const pairKey = (pair: Pair) => `${pair.organism}|${pair.antibiotic}|${pair.specimen ?? "all"}${pair.setting ? `|${pair.setting}` : ""}`;
-
-export interface ShiftOptions {
-  windowDays: number;
-  baselineDays: number;
-  stepDays: number;
-  alpha: number;
-  minResistant: number;
-}
-
-/** Per unit and pair: % R in the window against the same unit's non-overlapping baseline, one-sided mid-p Fisher. */
-export function resistanceShift(records: readonly IsolateRecord[], pairs: readonly Pair[], o: ShiftOptions): Signal[] {
-  const sorted = [...records].sort(byDate);
-  if (sorted.length === 0) return [];
-  const start = (sorted[0] as IsolateRecord).sampleDate;
-  const end = (sorted.at(-1) as IsolateRecord).sampleDate;
-  const signals: Signal[] = [];
-  for (const pair of pairs) {
-    const tested = sorted.filter((r) => inPair(r, pair));
-    for (const [ward, list] of groupBy(tested, (r) => r.ward)) {
-      const dates = list.map((r) => r.sampleDate);
-      for (let t = addDays(start, o.windowDays + o.baselineDays - 1); t <= end; t = addDays(t, o.stepDays)) {
-        const from = addDays(t, 1 - o.windowDays);
-        const win = slice(list, dates, from, t);
-        const base = slice(list, dates, addDays(from, -o.baselineDays), addDays(from, -1));
-        const a = win.filter((r) => r.results[pair.antibiotic] === "R").length;
-        if (a < o.minResistant || base.length === 0) continue;
-        const c = base.filter((r) => r.results[pair.antibiotic] === "R").length;
-        const p = fisherMidPGreater(a, win.length - a, c, base.length - c);
-        if (p < o.alpha) {
-          signals.push({
-            detector: "resistance-shift",
-            key: `${ward}|${pairKey(pair)}`,
-            date: t,
-            ward: ward as WardCode,
-            organism: pair.organism,
-            antibiotic: pair.antibiotic,
-            observed: a / win.length,
-            expected: c / base.length,
-            p,
-          });
-        }
-      }
-    }
-  }
-  return signals;
-}
+const pairKey = (pair: Pair) => `${pair.organism}|${pair.antibiotic}|${pair.specimen ?? "all"}`;
 
 // ---------- 6. rising trend ----------
 

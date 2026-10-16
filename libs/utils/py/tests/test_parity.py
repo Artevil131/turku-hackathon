@@ -1,4 +1,6 @@
-"""The Python mirrors in `aei` compute what the TypeScript gears compute, on the full dataset (D-024).
+"""The Python mirrors in `aei` compute what the TypeScript gears the app runs compute, on the full dataset (D-024,
+D-030). Python-only analysis code (profile rule, resistance shift, logistic regression, injected trials) has no
+TypeScript copy and is not compared (D-032).
 
 Strings, dates, counts and observed values must be identical, and lists in the same order; expected values and
 p-values agree within 1e-9 relative (scipy's Poisson and hypergeometric tails against the TypeScript's sums).
@@ -11,9 +13,9 @@ import math
 
 import pytest
 
-from aei import counting, coverage, detect, eucast, inject, jscompat, logistic, relations
+from aei import counting, coverage, detect, eucast, jscompat, relations
 from aei.dates import add_days
-from aei.detect import LIVE_SETTINGS, SURVEILLANCE_PAIRS, Pair, Signal
+from aei.detect import SURVEILLANCE_PAIRS, Signal
 from aei.domain import ANTIBIOTICS, PHENOTYPES, SPECIMENS
 
 REL = 1e-9
@@ -72,40 +74,14 @@ def arrival(a: relations.CarrierArrival) -> dict:
     }
 
 
-def trials(records, cultures, seed: int) -> list[dict]:
-    """experiments/0007's trial sequence on a seed, trimmed as in ts_dump.ts."""
-    rand = jscompat.mulberry32(seed)
-    sources = inject.clones(records)
-    out = []
-    n = 0
-    for k in (0, 3, 6):
-        for _ in range(2):
-            out.append(inject.cluster_trial(records, sources, rand, k, n))
-            n += 1
-    for days, halve in ((0, False), (3, False), (7, True)):
-        for _ in range(2):
-            out.append(inject.gap_trial(cultures, rand, days, halve))
-    return [{"setting": t.setting, "unit": t.unit, "detected": t.detected, "delay": t.delay, "first": t.first} for t in out]
-
-
 @pytest.fixture(scope="session")
 def py(dataset) -> dict:
     """The Python mirrors' output, shaped like ts_dump.ts's."""
     records, cultures = dataset
     live = detect.live_signals(records, cultures)
-    clusters = [s for s in live if s.detector in ("profile-excess", "phenotype-excess")]
     excess = detect.profile_excess(records, window_days=28, baseline_days=365, alpha=0.01, min_observed=3)
-    by_setting = [
-        Pair(p.organism, p.antibiotic, p.specimen, setting)
-        for p in SURVEILLANCE_PAIRS
-        if f"{p.organism}|{p.antibiotic}" in ("Escherichia coli|TMP", "Escherichia coli|CXM", "Klebsiella pneumoniae|CRO", "Pseudomonas aeruginosa|MEM")
-        for setting in (None, "in", "out")
-    ]
     window = ("2025-01-01", "2025-06-30")
     all_trails = relations.phenotype_trails(cultures, records)
-    rows = [r for r in records if "CIP" in r.results][:3000]
-    x = [[1 if r.sex == "M" else 0, (r.age_years - 60) / 10, 1 if r.phenotypes else 0] for r in rows]
-    model = logistic.fit_logistic(x, [1 if r.results["CIP"] == "R" else 0 for r in rows], l2=1)
     return {
         "eucast": {
             "effective": [",".join(f"{e.result or '-'}:{e.basis}" for e in (eucast.effective_result(r, a) for a in ANTIBIOTICS)) for r in records],
@@ -118,8 +94,6 @@ def py(dataset) -> dict:
         "detect": {
             "profile": [detect.profile_of(r) for r in records],
             "acquired": [detect.has_acquired_resistance(r) for r in records],
-            "profileRule": signals(detect.profile_rule(records, min_patients=3, window_days=14, hospital_onset_only=True)),
-            "profileRule4": signals(detect.profile_rule(records, min_patients=4, window_days=28, hospital_onset_only=False)),
             "profileExcess": signals(excess),
             "profileExcessSpecimen": signals(
                 detect.profile_excess(records, window_days=28, baseline_days=365, alpha=0.01, min_observed=3, same_specimen=True)
@@ -127,15 +101,7 @@ def py(dataset) -> dict:
             "phenotypeExcess": signals(detect.phenotype_excess(records, PHENOTYPES, window_days=28, baseline_days=365, alpha=0.01, min_observed=2)),
             "samplingDrop": signals(detect.sampling_drop(cultures, window_days=7, baseline_days=56, alpha=0.01)),
             "emptyRun": signals(detect.empty_run(cultures, baseline_days=56, alpha=0.05)),
-            "resistanceShift": signals(
-                detect.resistance_shift(records, SURVEILLANCE_PAIRS, window_days=28, baseline_days=336, step_days=7, alpha=0.01, min_resistant=3)
-            ),
             "risingTrend": signals(detect.rising_trend(records, SURVEILLANCE_PAIRS, bin_days=28, min_bins=13, alpha=0.01)),
-            "risingTrendBySetting": signals(
-                detect.rising_trend(
-                    records, by_setting, **{**LIVE_SETTINGS["rising_trend"], "alpha": 0.01}, exclude=detect.in_detected_cluster(clusters)
-                )
-            ),
             "episodes": eps(excess),
             "liveSignals": signals(live),
             "liveEpisodes": eps(live),
@@ -151,12 +117,6 @@ def py(dataset) -> dict:
             "arrivals": [arrival(a) for a in relations.carrier_arrivals(all_trails)],
             "arrivalsWindow": [arrival(a) for a in relations.carrier_arrivals(all_trails, window)],
         },
-        "logistic": {
-            "weights": model.weights,
-            "iterations": model.iterations,
-            "predictions": [logistic.predict(model, row) for row in x[:50]],
-        },
-        "trials": {str(seed): trials(records, cultures, seed) for seed in (1, 7, 2026)},
     }
 
 
@@ -179,16 +139,12 @@ def test_profiles(py, ts):
 @pytest.mark.parametrize(
     "name",
     [
-        "profileRule",
-        "profileRule4",
         "profileExcess",
         "profileExcessSpecimen",
         "phenotypeExcess",
         "samplingDrop",
         "emptyRun",
-        "resistanceShift",
         "risingTrend",
-        "risingTrendBySetting",
         "episodes",
         "liveSignals",
         "liveEpisodes",
@@ -205,25 +161,11 @@ def test_relations(py, ts, name):
     same(ts["relations"][name], py["relations"][name], name)
 
 
-def test_injected_trials(py, ts):
-    same(ts["trials"], py["trials"])
-    assert any(t["detected"] for ts_trials in ts["trials"].values() for t in ts_trials)
-
-
-def test_logistic(py, ts):
-    assert py["logistic"]["iterations"] == ts["logistic"]["iterations"]
-    # numpy sums in another order than the TypeScript loops: agreement to rounding, not to the bit.
-    same(ts["logistic"]["weights"], py["logistic"]["weights"], "weights", close=True, rel=1e-9, abs_tol=1e-12)
-    same(ts["logistic"]["predictions"], py["logistic"]["predictions"], "predictions", close=True)
-
-
 def test_statistics(ts):
     s = ts["stats"]
     grid = [(k, m) for k in (0, 1, 2, 3, 5, 9, 20) for m in (0, 0.01, 0.4, 2.5, 11)]
     same(s["poissonUpper"], [detect.poisson_upper(k, m) for k, m in grid], "poissonUpper", close=True)
     same(s["poissonLower"], [detect.poisson_lower(k, m) for k, m in grid], "poissonLower", close=True)
-    tables = [(3, 2, 1, 40), (5, 20, 30, 400), (0, 3, 3, 0), (12, 3, 2, 300), (4, 0, 0, 50)]
-    same(s["fisher"], [detect.fisher_mid_p_greater(*t) for t in tables], "fisher", close=True)
     same(s["normalUpper"], [detect.normal_upper(z) for z in (-3, -1, 0, 0.7, 2, 3.5, 6)], "normalUpper", close=True)
     groups = [[(1, 10), (2, 10), (5, 12)], [(0, 5), (0, 0), (3, 4), (9, 11)]]
     same(s["trend"], [detect.cochran_armitage_rising(g) for g in groups], "trend", close=True)
