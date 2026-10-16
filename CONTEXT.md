@@ -10,8 +10,9 @@ DECISIONS.md after the team (and the judges' answers) settle them.
 
 The tool is for two audiences, described in AUDIENCE.md:
 
-- **Doctors** choosing empirical treatment: enter what they know about the
-  patient and get a quick list of antibiotics likely to work.
+- **Doctors** choosing empirical treatment: open the tool on their ward
+  and see a quick list of antibiotics likely to work. They type nothing;
+  the view is driven by filters already in the dataset.
 - **Researchers** trying to stop harmful bacteria spreading: continuous
   data from one hospital, plus a network view of hospitals at regional,
   national, continental and worldwide level from open data, with odd

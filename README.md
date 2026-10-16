@@ -41,7 +41,7 @@ experiment, it belongs in `libs/utils`, from the start.
     experiments/    one directory per experiment, NNNN-slug/README.md,
                     started from experiments/TEMPLATE.md
     CONTEXT.md      the challenge: problem, data, open questions
-    AUDIENCE.md     the two audiences, their needs, and who on the team does what
+    AUDIENCE.md     the audiences, what each needs from the data, and who on the team does what
     PROTOCOL.md     how an experiment is planned, run and recorded in git,
                     and the rules for claims
     DECISIONS.md    every technical, mathematical or statistical choice the
