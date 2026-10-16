@@ -218,7 +218,12 @@ earlier notes still match.
 12. Who should be told about a deviation, and how: shown in the tool, or
     pushed as an alert to the ward or the infection control team?
 13. Does the synthetic dataset contain planted deviations we are expected
-    to find?
+    to find? Inspection on 2026-10-16 found four that look planted (an
+    ESBL *E. coli* cluster in urology, an MRSA outbreak in the ICU, a
+    week with no samples from health centre South, and slow rises in two
+    resistance series); they are measured and listed in
+    `benchmarks/planted-events/README.md`. Still to confirm with the
+    organiser whether that is the full list.
 
 **Other**
 
