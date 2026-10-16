@@ -44,3 +44,6 @@ xcuserdata/
 # impeccable's font index sits in a folder named data/; keep it
 !.claude/skills/impeccable/scripts/data/
 !.agents/skills/impeccable/scripts/data/
+
+# backup demo videos (scripts/record_demo.mjs)
+/demo-*.mp4

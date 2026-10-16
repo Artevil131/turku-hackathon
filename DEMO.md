@@ -5,47 +5,58 @@
 Starts the server with results up to 1 June 2025 and the app at
 http://localhost:5173. Press Enter and a stand-in laboratory system sends
 2 to 14 June as HL7 v2 messages, one day every 3 seconds
-(`scripts/demo.sh`; `scripts/demo.sh 5` slows it down). Every number below
-was read from the running server on 2026-10-17 and traces to the
-experiment or decision named beside it.
+(`scripts/demo.sh`; `scripts/demo.sh 5` slows it down). Open the Alerts
+tab before pressing Enter. Every number below was read from the running
+app on 2026-10-17 and traces to the experiment or decision named beside
+it.
+
+Backup: `node scripts/record_demo.mjs --lang en` (or `--lang fi`) records
+the same four steps as a 70-second video, `demo-en.mp4`, in about two
+minutes. To run from containers instead of a dev setup, see
+deploy/README.md (Containers).
 
 ## 1. The lab feed arrives
 
 The terminal shows each day's batch: about 40 cultures a day, sent as
 HL7 v2.5.1 ORU^R01 with THL's national codes (`7640-22` *E. coli*, `12`
 ceftriaxone), the format Tyks's lab system sends inside the hospital
-(D-035, D-036, deploy/integration.md). Every batch passes the fifteen data
-checks; so do the 10,000 patients already loaded (`/api/quality`, D-038).
+(D-035, D-036, deploy/integration.md). The app notes each batch: "+23
+results · 3 Jun · data checks passed". The fifteen data checks also pass
+over everything loaded; Timeline shows them (`/api/quality`, D-038).
 
 ## 2. The outbreak alert, 4 June
 
-On the 4 June batch the app raises: "On 2025-06-04, 4 patients in Urology
-shared one resistance profile of *Escherichia coli* within 28 days, where
-about 0.2 were expected." This is the ESBL *E. coli* cluster planted in
-the dataset (experiments/0001), caught by the profile-excess detector
-(0002, D-020). On 8 June an ESBL excess in Urology joins the same
-incident instead of raising a second one (D-034).
+On the 4 June batch a notice says "New alert: Possible cluster ·
+Urology", and Alerts shows "Same resistant *E. coli* (urine) in 4 patients
+on Urology in 4 weeks", resistant to ampicillin, cefuroxime, ceftriaxone,
+ciprofloxacin and trimethoprim; about 0.2 were expected. This is the ESBL
+*E. coli* cluster planted in the dataset (experiments/0001), caught by the
+profile-excess detector (0002, D-020). On 8 June an ESBL excess in Urology
+joins the same incident instead of raising a second one (D-034).
 
 ## 3. What works on that ward
 
-Open the doctor's view for Urology, urine (as of 8 June, the unit's own
-563 isolates since 9 June 2024, D-023):
+Open Treat, unit Urology, infection site Urine (as of 8 June, the unit's
+own 563 isolates since 9 June 2024, D-023). The alert stays on top of the
+page: "Possible cluster of *E. coli* on this unit".
 
 - Mild: mecillinam and nitrofurantoin first, both WHO Access. Mecillinam
   covers 95 % of the bacteria it is meant for, but only 74 % of
   everything that grows here; nitrofurantoin 86 % and 82 %. Say the
   second number: our backtest found the first one holds (0010) and the
   second is what the patient gets.
-- Severe: piperacillin-tazobactam, 95 % (93–97 %).
+- Switch How severe to Severe: piperacillin-tazobactam, 95 % (93–97 %),
+  judged on everything that grows.
 
 ## 4. The region
 
-Seek the clock to 3 October 2025 and open the regional view (or
-`/api/regional?region=Varsinais-Suomen%20hyvinvointialue`): in September
-2025 Varsinais-Suomi had 8 CPE *E. coli* carriage cases against 0.6
-expected, one of 3 county signals in 33 months that survive a
-correction for testing 8,250 county-months (0008, D-037). This is real THL
-data, not the synthetic hospital.
+Set the date to 3 October 2025 (the date field in the simulation bar, then
+Go), open Timeline and scroll to "The region: county signals": in
+September 2025 Varsinais-Suomi, Tyks's county, had 8 CPE *E. coli*
+carriage cases against about 0.6 expected, marked "Strong signal". Of the
+7 county signals known by then, 2 survive a correction for testing 8,250
+county-months; the rest say "May be chance" (0008, D-037). This is real
+THL data, not the synthetic hospital; `pnpm demo` fetches it if missing.
 
 ## What we tested, and the limits
 
