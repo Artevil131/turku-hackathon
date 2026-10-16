@@ -29,3 +29,4 @@ Code, Opus 5.5, operated by Artem).
 | 01:45 | harness check | start | Fable 5.1 | | reproductions, strictness, the spec's choices as implemented, the flaky coverage test |
 | 01:54 | 0013 | plan committed | Sonnet 5.5 | 9 min | grid M_π × M ∈ {10,30,100,300}², chosen on TUNE |
 | 02:04 | 0012 | result committed | Sonnet 5.5 | 22 min agent, 33 s CPU | TUNE chose δ 0.95, M 10; C1 +0.0002 (−0.0000 to +0.0004) vs hospital-365; C8 C1 worse than shipped (+0.0011); C7(a) 0.929; C6 E1 CRO 48 d (shipped 47); replacement rule not met; no Fable review (does not beat baseline) |
+| 02:05 | harness check | finish | Fable 5.1 | 19 min | sound: reproductions exact, views strict, post-hoc level filter exact; 18 findings, none invalidates a row; fixes: C3(b) tail p beside the ratio, C7 expected coverage, D5 noise/level columns, D4 interval, re-tuned row caveat, flaky test (tests read files the verifier rewrites) |
