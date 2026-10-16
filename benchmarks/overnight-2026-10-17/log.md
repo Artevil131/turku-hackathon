@@ -24,3 +24,4 @@ Code, Opus 5.5, operated by Artem).
 | 01:42 | 0012 discounted Beta-binomial (m1) | implement start | Sonnet 5.5 | | plan by Fable (committed) |
 | 01:42 | 0013 Dirichlet-multinomial × Beta, WISCA (m3) | plan start | Sonnet 5.5 | | plan then implement |
 | 01:43 | plans 0018, 0019 | committed | Fable 5.1 | 14 min | 0019 treats flow-partner injections as a positive control only (circular) |
+| 01:44 | 0019 exposure ranking (m22) | implement start | Sonnet 5.5 | | plan by Fable (committed) |
