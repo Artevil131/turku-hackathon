@@ -205,11 +205,11 @@ not stated.
     pushed as an alert to the ward or the infection control team?
 13. Does the synthetic dataset contain planted deviations we are expected
     to find?
-
-**Other**
-
-14. Are AI or language-model components welcome, and under what
-    constraints on data (even synthetic)?
+    Our scan (experiments/0001) found, very likely planted: an ESBL
+    *E. coli* cluster in Urology in June–July 2025, an MRSA cluster in the
+    ICU in March 2026, a week without any samples from Health centre South
+    (2025-12-08 to 12-14) and urinary *E. coli* trimethoprim resistance
+    rising from 15 % to 20 % over the three years.
 
 ## Glossary
 
