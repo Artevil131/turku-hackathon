@@ -41,8 +41,10 @@ function fmt(locale: Locale, v: number, digits = 1): string {
   return new Intl.NumberFormat(locale === "fi" ? "fi-FI" : "en-GB", { maximumFractionDigits: digits }).format(v);
 }
 
-function fmtP(p: number): string {
-  return p < 0.001 ? p.toExponential(1) : p.toFixed(3);
+function fmtP(locale: Locale, p: number): string {
+  // Plain decimals, never scientific notation; very small values read "< 0,001".
+  if (p < 0.001) return `< ${fmt(locale, 0.001, 3)}`;
+  return fmt(locale, p, 3);
 }
 
 /** Five steps: zero, then quarters of the non-zero county-months of the series. */
@@ -231,7 +233,10 @@ export function RegionalMap({ client, locale, asOf }: PanelProps) {
         </div>
       ) : (
         <>
-          <div className="map-slider">
+          <div className="map-slider" data-browsing={idx !== latest}>
+            <p className="map-slider-hint" id="map-month-hint">
+              {t(locale, "mapBrowseHint", { month: months[latest] ? monthLong(months[latest] as string) : "…" })}
+            </p>
             <label htmlFor="map-month">
               <span className="map-slider-label">{t(locale, "mapMonth")}</span>
               <strong className="map-slider-value">{month ? monthLong(month) : "…"}</strong>
@@ -245,21 +250,18 @@ export function RegionalMap({ client, locale, asOf }: PanelProps) {
               value={Math.max(0, idx)}
               disabled={!data}
               aria-label={t(locale, "mapSlider")}
+              aria-describedby="map-month-hint"
               aria-valuetext={month ? monthLong(month) : undefined}
               onChange={(e) => {
                 const i = Number(e.target.value);
                 setPick(i >= latest ? null : (months[i] ?? null));
               }}
             />
-            <button
-              type="button"
-              className="map-btn"
-              disabled={!data || idx === latest}
-              title={t(locale, "mapLatestHint")}
-              onClick={() => setPick(null)}
-            >
-              {t(locale, "mapLatest")}
-            </button>
+            {idx !== latest ? (
+              <button type="button" className="map-btn map-back" onClick={() => setPick(null)}>
+                {t(locale, "mapBackToReplay")}
+              </button>
+            ) : null}
           </div>
 
           <div className="map-body">
@@ -322,7 +324,9 @@ export function RegionalMap({ client, locale, asOf }: PanelProps) {
                         className={s.strong ? "map-glyph map-glyph-strong" : "map-glyph map-glyph-weak"}
                         pointerEvents="none"
                       >
-                        <title>{t(locale, "mapSignalDetail", { cases: s.cases, expected: fmt(locale, s.expected), p: fmtP(s.p) })}</title>
+                        <title>
+                          {t(locale, "mapSignalDetail", { cases: s.cases, expected: fmt(locale, s.expected), p: fmtP(locale, s.p) })}
+                        </title>
                       </circle>
                     );
                   })}
@@ -420,7 +424,7 @@ export function RegionalMap({ client, locale, asOf }: PanelProps) {
                       {signalOf.has(focusName)
                         ? (() => {
                             const s = signalOf.get(focusName) as RegionalSignal;
-                            return `${t(locale, s.strong ? "mapSignalStrong" : "mapSignalWeak")}, ${monthLong(s.month)}: ${t(locale, "mapSignalDetail", { cases: s.cases, expected: fmt(locale, s.expected), p: fmtP(s.p) })}`;
+                            return `${t(locale, s.strong ? "mapSignalStrong" : "mapSignalWeak")}, ${monthLong(s.month)}: ${t(locale, "mapSignalDetail", { cases: s.cases, expected: fmt(locale, s.expected), p: fmtP(locale, s.p) })}`;
                           })()
                         : t(locale, "mapFocusNoSignal")}
                     </p>
@@ -447,7 +451,7 @@ export function RegionalMap({ client, locale, asOf }: PanelProps) {
                             <br />
                             <span className="map-note">
                               {t(locale, s.strong ? "mapSignalStrong" : "mapSignalWeak")}:{" "}
-                              {t(locale, "mapSignalDetail", { cases: s.cases, expected: fmt(locale, s.expected), p: fmtP(s.p) })}
+                              {t(locale, "mapSignalDetail", { cases: s.cases, expected: fmt(locale, s.expected), p: fmtP(locale, s.p) })}
                             </span>
                           </span>
                         </button>

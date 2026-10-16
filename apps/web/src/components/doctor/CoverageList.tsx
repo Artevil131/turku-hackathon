@@ -5,7 +5,7 @@ import { useState } from "react";
 import { AsOf } from "../AsOf.tsx";
 import { AlertTri } from "../Icons.tsx";
 import "./CoverageList.css";
-import { BAR, certaintyOf, type DoctorFilters, halfWidth, pct, type Row, rowN } from "./filters.ts";
+import { BAR, certaintyOf, type DoctorFilters, halfWidth, num, pct, type Row, rowN, sexLabel } from "./filters.ts";
 import { signalDate, type UnitSignal } from "./signals.ts";
 
 export type ListStatus = "loading" | "error" | "ready";
@@ -61,13 +61,17 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, onR
   const ready = status === "ready" && data && cov;
   const stale = status === "loading" && data;
 
+  const ageChosen = filters.age !== "any";
+  const notAppliedKey: MessageKey | null =
+    ageChosen && filters.onset ? "drNotAppliedBoth" : ageChosen ? "drNotAppliedAge" : filters.onset ? "drNotAppliedDay3" : null;
+
   const reasonOf = (row: Row): string => {
     const lo = row.interval ? pct(row.interval[0]) : 0;
     const hi = row.interval ? pct(row.interval[1]) : 0;
     if (row.standing === "clears") {
       const base = t(locale, "drReasonClears", {
         bar,
-        n: rowN(row),
+        n: num(locale, rowN(row)),
         specimen: site.toLowerCase(),
         level: t(locale, LEVEL_KEYS[cov?.level ?? "unit"]),
         from: cov ? formatDate(locale, cov.from, "long") : "",
@@ -78,7 +82,7 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, onR
     if (row.standing === "borderline") return t(locale, "drReasonBorderline", { lo, hi, bar });
     if (row.standing === "below") return t(locale, "drReasonBelow", { share: pct(row.share ?? 0), bar });
     const untested = row.coverage.untested.reduce((s, u) => s + u.share, 0);
-    return row.share === null ? t(locale, "drReasonFew") : t(locale, "drReasonUntested", { pct: pct(untested) });
+    return row.share === null ? t(locale, "drNaFew") : t(locale, "drNaUntested", { pct: pct(untested) });
   };
 
   // Organisms a row leaves out, as text: only the ones that are a real share of the pool.
@@ -94,6 +98,7 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, onR
     const st = STANDING[row.standing];
     const flags = flagsOf(row);
     const n = rowN(row);
+    const assessable = row.standing !== "not assessable" && row.share !== null;
     const hidden = Math.max(0, flags.notCovering.length - 2) + Math.max(0, flags.untested.length - 2);
     const w = halfWidth(row.interval);
     const rowSignals = signals.filter((s) => "antibiotic" in s.alert && s.alert.antibiotic === row.antibiotic);
@@ -114,14 +119,18 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, onR
             </span>
           </span>
           <span className="cl-cov">
-            <b className="num">{row.share === null ? "–" : `${pct(row.share)} %`}</b>
-            <small className="num">{t(locale, "drN", { n })}</small>
+            {assessable && row.share !== null ? <b className="num">{pct(row.share)} %</b> : null}
+            <small className="num">{t(locale, "drN", { n: num(locale, n) })}</small>
           </span>
           <span className="cl-barcell">
-            <IntervalBar interval={row.interval} share={row.share} bar={bar} />
-            <small className="num">
-              {row.interval ? t(locale, "drIntervalText", { lo: pct(row.interval[0]), hi: pct(row.interval[1]) }) : ""}
-            </small>
+            {assessable ? (
+              <>
+                <IntervalBar interval={row.interval} share={row.share} bar={bar} />
+                <small className="num">
+                  {row.interval ? t(locale, "drIntervalText", { lo: pct(row.interval[0]), hi: pct(row.interval[1]) }) : ""}
+                </small>
+              </>
+            ) : null}
           </span>
           <span className="cl-standing" data-standing={row.standing}>
             <span className="cl-glyph" aria-hidden="true">
@@ -131,6 +140,7 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, onR
           </span>
           <span className="cl-why">{reasonOf(row)}</span>
           <span className="cl-meta">
+            <span className="cl-date num">{t(locale, "drResultsTo", { date: formatDate(locale, data?.asOf ?? asOf ?? "", "long") })}</span>
             {level ? (
               <span className="cl-badge" title={t(locale, level.label)}>
                 <span aria-hidden="true">{level.glyph}</span> {t(locale, level.short)}
@@ -164,7 +174,10 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, onR
               <div>
                 <dt>{t(locale, "drCovers")}</dt>
                 <dd className="num">
-                  {t(locale, "drCoveredOf", { covered: row.basis === "spectrum" ? c.spectrum.counts.covered : c.counts.covered, known: n })}
+                  {t(locale, "drCoveredOf", {
+                    covered: num(locale, row.basis === "spectrum" ? c.spectrum.counts.covered : c.counts.covered),
+                    known: num(locale, n),
+                  })}
                   <small> {row.basis === "spectrum" ? t(locale, "drBasisSpectrum") : t(locale, "drBasisAll")}</small>
                 </dd>
               </div>
@@ -180,18 +193,16 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, onR
                       share: row.allOrganisms.share === null ? "–" : pct(row.allOrganisms.share),
                       lo: row.allOrganisms.interval ? pct(row.allOrganisms.interval[0]) : "–",
                       hi: row.allOrganisms.interval ? pct(row.allOrganisms.interval[1]) : "–",
-                      n: c.counts.known,
+                      n: num(locale, c.counts.known),
                     })}
                   </dd>
                 </div>
               ) : null}
               <div>
                 <dt>{t(locale, "drLabelRecent")}</dt>
-                <dd className="num">{t(locale, "drRecent", { covered: c.recent.covered, known: c.recent.known })}</dd>
-              </div>
-              <div>
-                <dt>{t(locale, "drLabelNewest")}</dt>
-                <dd>{asOf ? t(locale, "drResultsTo", { date: formatDate(locale, asOf, "long") }) : ""}</dd>
+                <dd className="num">
+                  {t(locale, "drRecent", { covered: num(locale, c.recent.covered), known: num(locale, c.recent.known) })}
+                </dd>
               </div>
               <div>
                 <dt>{t(locale, "drOrgNotCovered")}</dt>
@@ -255,8 +266,8 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, onR
               <span aria-hidden="true">{level?.glyph}</span> {level ? t(locale, level.label) : ""}
             </span>{" "}
             <span className="num">
-              {t(locale, "drPoolLine", {
-                n: cov.isolates,
+              {t(locale, cov.isolates === 1 ? "drPoolLineOne" : "drPoolLine", {
+                n: num(locale, cov.isolates),
                 level: t(locale, LEVEL_KEYS[cov.level]),
                 from: formatDate(locale, cov.from, "long"),
               })}
@@ -268,13 +279,12 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, onR
           </p>
         )}
         <p className="cl-print-record print-only">
-          {unit} · {site} · {filters.sex === "any" ? t(locale, "drSexAny") : filters.sex} ·{" "}
-          {t(locale, filters.sev === "mild" ? "drSevMild" : "drSevSevere")} ·{" "}
+          {unit} · {site} · {sexLabel(locale, filters.sex)} · {t(locale, filters.sev === "mild" ? "drSevMild" : "drSevSevere")} ·{" "}
           {t(locale, filters.period === 365 ? "drPeriodYear" : "drPeriodMonth")}
         </p>
-        {filters.age !== "any" || filters.onset ? (
+        {notAppliedKey ? (
           <p className="cl-note">
-            <span className="rs-tag">{t(locale, "drNotApplied")}</span> {t(locale, "drNotAppliedNote")}
+            <span className="rs-tag">{t(locale, "drNotApplied")}</span> {t(locale, notAppliedKey)}
           </p>
         ) : null}
         {ready && filters.sex !== "any" && !cov.sexApplied ? <p className="cl-note">{t(locale, "drSexDropped")}</p> : null}
@@ -341,7 +351,7 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, onR
                         </span>
                         <span className="cl-cov">
                           <b className="num">{c.share === null ? "–" : `${pct(c.share)} %`}</b>
-                          <small className="num">{t(locale, "drN", { n: c.counts.known })}</small>
+                          <small className="num">{t(locale, "drN", { n: num(locale, c.counts.known) })}</small>
                         </span>
                         <span className="cl-barcell">
                           <IntervalBar interval={c.interval} share={c.share} bar={bar} />
@@ -356,7 +366,8 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, onR
                           {t(locale, st.key)}
                         </span>
                         <span className="cl-why">
-                          {t(locale, "drGain", { gain: Math.round(p.gain * 100) })} · {t(locale, "drAccessCount", { n: p.access })}
+                          {t(locale, Math.round(p.gain * 100) === 1 ? "drGainOne" : "drGain", { gain: Math.round(p.gain * 100) })} ·{" "}
+                          {t(locale, "drAccessCount", { n: p.access })}
                         </span>
                       </div>
                     </li>
@@ -369,7 +380,7 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, onR
       ) : null}
 
       <footer className="cl-foot">
-        <p>{t(locale, "drFoot")}</p>
+        <p>{t(locale, "drFoot", { mild: BAR.mild, severe: BAR.severe })}</p>
         {asOf ? <p className="print-only">{t(locale, "drPrinted", { date: formatDate(locale, asOf, "long") })}</p> : null}
       </footer>
     </section>

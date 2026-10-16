@@ -465,3 +465,41 @@
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+
+.hnet-down {
+  padding: 12px;
+  border-radius: var(--radius-control);
+  background: var(--glass-3);
+  border: 1px solid var(--line);
+  min-width: 0;
+}
+
+.hnet-down-list {
+  list-style: none;
+  margin: 0 0 6px;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  font-size: var(--step-0);
+  color: var(--ink);
+}
+
+.hnet-down-list li {
+  padding-left: 10px;
+  border-left: 3px solid var(--line);
+}
+
+.hnet-down-list li[data-active="true"] {
+  border-left-color: var(--live);
+}
+
+.hnet-down-share {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 759px) {
+  .hnet-down-list {
+    font-size: 1.0625rem;
+  }
+}

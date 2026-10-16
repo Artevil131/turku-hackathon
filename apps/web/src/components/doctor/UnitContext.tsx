@@ -5,7 +5,7 @@ import { type Locale, specimenName, t, wardName } from "@aei/i18n";
 import { AlertExplanation } from "../AlertExplanation.tsx";
 import { AsOf } from "../AsOf.tsx";
 import { AlertTri } from "../Icons.tsx";
-import { certaintyOf, type DoctorFilters, pct } from "./filters.ts";
+import { certaintyOf, type DoctorFilters, num, pct } from "./filters.ts";
 import { signalDate, type UnitSignal } from "./signals.ts";
 import { useMedia } from "./useMedia.ts";
 import "./UnitContext.css";
@@ -36,7 +36,7 @@ export function UnitContext({ client, locale, filters, asOf, data, signals, onOp
           <h3 id="uc-org">{t(locale, "drLikely", { specimen: site, unit })}</h3>
           {cov && level ? (
             <p className="uc-sub num">
-              <span aria-hidden="true">{level.glyph}</span> {t(locale, level.short)} · {t(locale, "drN", { n: cov.isolates })}{" "}
+              <span aria-hidden="true">{level.glyph}</span> {t(locale, level.short)} · {t(locale, "drN", { n: num(locale, cov.isolates) })}{" "}
               {asOf ? <AsOf locale={locale} date={data?.asOf ?? asOf} /> : null}
             </p>
           ) : null}
@@ -50,7 +50,7 @@ export function UnitContext({ client, locale, filters, asOf, data, signals, onOp
                   <b style={{ width: `${o.share * 100}%` }} />
                 </span>
                 <span className="uc-org-n num">
-                  {pct(o.share)} % <small>n {o.isolates}</small>
+                  {pct(o.share)} % <small>{t(locale, "drN", { n: num(locale, o.isolates) })}</small>
                 </span>
               </li>
             ))}

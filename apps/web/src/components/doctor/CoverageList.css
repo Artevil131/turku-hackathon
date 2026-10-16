@@ -302,6 +302,18 @@ button.cl-main:hover {
   empty-cells: hide;
 }
 
+.cl-date {
+  align-self: center;
+  font-size: var(--step--1);
+  color: var(--ink-3);
+  padding: 1px 0;
+}
+
+.cl-row[data-standing="not assessable"] .cl-name b,
+.cl-row[data-standing="not assessable"] .cl-why {
+  color: var(--ink-2);
+}
+
 .cl-meta:empty {
   display: none;
 }

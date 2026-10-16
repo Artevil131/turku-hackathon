@@ -348,6 +348,8 @@
   width: max-content;
   max-width: 340px;
   padding: 6px;
+  background: #fff;
+  backdrop-filter: none;
 }
 
 .tl-event-list {
@@ -603,4 +605,55 @@
 .tl-step-back svg,
 .tl-step-back-week svg {
   transform: scaleX(-1);
+}
+
+.tl-jump {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 8px;
+  align-items: end;
+  padding: 8px 4px 4px;
+  border-top: 1px solid var(--line);
+  margin-top: 6px;
+}
+
+.tl-jump-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--step--1);
+  color: var(--ink-2);
+}
+
+.tl-jump-input {
+  min-height: 36px;
+  padding: 0 8px;
+  font: inherit;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control);
+}
+
+.tl-jump-input:focus-visible,
+.tl-jump-go:focus-visible {
+  outline: 2px solid var(--live);
+  outline-offset: 2px;
+}
+
+.tl-jump-go {
+  min-height: 36px;
+}
+
+.tl-jump-range {
+  grid-column: 1 / -1;
+  font-size: var(--step--1);
+  color: var(--ink-2);
+}
+
+@media (max-width: 760px) {
+  .tl-jump-input,
+  .tl-jump-go {
+    min-height: 44px;
+  }
 }

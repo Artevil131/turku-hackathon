@@ -1,6 +1,6 @@
 import { type CoverageResponse, type Level, type Severity, THRESHOLDS } from "@aei/contract";
 import { isWardCode, type Sex, type Specimen, WARDS, type WardCode } from "@aei/domain";
-import type { MessageKey } from "@aei/i18n";
+import { type Locale, type MessageKey, t } from "@aei/i18n";
 
 // The doctor's one-click filters, their defaults, and how they travel in the URL
 // (`#doctor?unit=URO&site=urine&sex=F&age=older&onset=1&sev=severe&period=28`) and in localStorage (`aei.unit`).
@@ -115,9 +115,17 @@ export function halfWidth(interval: [number, number] | null): number | null {
 
 export const pct = (x: number): number => Math.round(x * 100);
 
+/** A count in the locale's digits and grouping (Finnish groups with a no-break space). */
+export const num = (locale: string, n: number): string => new Intl.NumberFormat(locale).format(n);
+
 export type Row = CoverageResponse["suggestions"][number];
 
 /** n behind a row's headline share: within-spectrum (mild) or all-organism (severe) known results. */
 export function rowN(row: Row): number {
   return row.basis === "spectrum" ? row.coverage.spectrum.counts.known : row.coverage.counts.known;
+}
+
+/** The sex chip's label: Finnish N/M, English F/M, "any" spelled out. */
+export function sexLabel(locale: Locale, sex: Sex | "any"): string {
+  return t(locale, sex === "any" ? "drSexAny" : sex === "F" ? "drSexF" : "drSexM");
 }

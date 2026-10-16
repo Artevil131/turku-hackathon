@@ -324,6 +324,22 @@ export function Timeline({ locale, clock, connection, lastArrivals, command, red
     </div>
   );
 
+  const dateJump = (
+    <DateJump
+      locale={locale}
+      min={start}
+      max={end}
+      value={shown ?? ""}
+      disabled={!ready}
+      onGo={(iso) => {
+        command({ action: "pause" });
+        seek(iso);
+        setMenu(false);
+        setSheet(false);
+      }}
+    />
+  );
+
   const eventList = (
     <ul className="tl-event-list">
       {EVENTS.map((ev) => (
@@ -389,6 +405,7 @@ export function Timeline({ locale, clock, connection, lastArrivals, command, red
             {steps}
             {speed}
             {eventList}
+            {dateJump}
           </Sheet>
         ) : null}
       </div>
@@ -432,10 +449,59 @@ export function Timeline({ locale, clock, connection, lastArrivals, command, red
             }}
           >
             {eventList}
+            {dateJump}
           </div>
         ) : null}
       </div>
     </div>
+  );
+}
+
+function DateJump({
+  locale,
+  min,
+  max,
+  value,
+  disabled,
+  onGo,
+}: {
+  locale: Locale;
+  min: string;
+  max: string;
+  value: string;
+  disabled: boolean;
+  onGo: (iso: string) => void;
+}) {
+  const [draft, setDraft] = useState("");
+  const current = draft || value;
+  const valid = current >= min && current <= max && current !== "";
+  return (
+    <form
+      className="tl-jump"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (valid) onGo(current);
+      }}
+    >
+      <label className="tl-jump-label">
+        <span>{t(locale, "tlJumpLabel")}</span>
+        <input
+          type="date"
+          className="tl-jump-input"
+          min={min}
+          max={max}
+          value={current}
+          disabled={disabled}
+          onChange={(e) => setDraft(e.target.value)}
+        />
+      </label>
+      <button type="submit" className="tl-seg tl-jump-go" disabled={disabled || !valid}>
+        {t(locale, "tlJumpGo")}
+      </button>
+      <span className="tl-jump-range num">
+        {t(locale, "tlJumpRange", { from: formatDate(locale, min, "long"), to: formatDate(locale, max, "long") })}
+      </span>
+    </form>
   );
 }
 

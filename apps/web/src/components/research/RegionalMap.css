@@ -122,9 +122,21 @@
 
 .map-slider {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr);
   gap: 10px;
   align-items: center;
+}
+
+.map-slider-hint {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: var(--step--1);
+  color: var(--ink-2);
+}
+
+.map-back {
+  grid-column: 1 / -1;
+  justify-self: start;
 }
 
 .map-slider label {

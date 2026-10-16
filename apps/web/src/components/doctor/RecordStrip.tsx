@@ -1,8 +1,8 @@
 import type { Severity } from "@aei/contract";
 import type { Sex, Specimen, WardCode } from "@aei/domain";
 import { type Locale, type MessageKey, specimenName, t, wardName } from "@aei/i18n";
-import type { ReactNode } from "react";
-import { AGE_GROUPS, AGE_KEYS, type AgeGroup, type DoctorFilters, type Period, SITES, unitGroups } from "./filters.ts";
+import { type ReactNode, useState } from "react";
+import { AGE_GROUPS, AGE_KEYS, type AgeGroup, type DoctorFilters, type Period, SITES, sexLabel, unitGroups } from "./filters.ts";
 import { useMedia } from "./useMedia.ts";
 import "./RecordStrip.css";
 
@@ -12,9 +12,9 @@ interface Props {
   onChange: (patch: Partial<DoctorFilters>) => void;
 }
 
-function Group({ label, tag, children }: { label: string; tag?: string | false; children: ReactNode }) {
+function Group({ label, tag, inline, children }: { label: string; tag?: string | false; inline?: boolean; children: ReactNode }) {
   return (
-    <div className="rs-group" role="group" aria-label={label}>
+    <div className="rs-group" data-inline={inline ? "" : undefined} role="group" aria-label={label}>
       <span className="rs-label">
         {label}
         {tag ? <span className="rs-tag">{tag}</span> : null}
@@ -41,103 +41,148 @@ export function RecordStrip({ locale, filters, onChange }: Props) {
   const tr = (key: MessageKey) => t(locale, key);
   const notApplied = tr("drNotApplied");
   const wide = useMedia("(min-width: 701px)");
+  const [more, setMore] = useState(false);
   const summary = [
     wardName(locale, filters.unit),
     specimenName(locale, filters.site),
-    filters.sex === "any" ? tr("drSexAny") : filters.sex,
+    sexLabel(locale, filters.sex),
     tr(filters.sev === "mild" ? "drSevMildShort" : "drSevSevereShort"),
     tr(filters.period === 365 ? "drPeriodYear" : "drPeriodMonth"),
-  ].join(" · ");
+    filters.age !== "any" ? tr(AGE_KEYS[filters.age]) : null,
+    filters.onset ? tr("drOnset") : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  const unit = (
+    <label className="rs-group rs-unit">
+      <span className="rs-label">{tr("drUnit")}</span>
+      <select className="rs-select" value={filters.unit} onChange={(e) => onChange({ unit: e.target.value as WardCode })}>
+        <optgroup label={tr("hospital")}>
+          {unitGroups.hospital.map((w) => (
+            <option key={w.code} value={w.code}>
+              {wardName(locale, w.code)}
+            </option>
+          ))}
+        </optgroup>
+        <optgroup label={tr("primaryCare")}>
+          {unitGroups.primary.map((w) => (
+            <option key={w.code} value={w.code}>
+              {wardName(locale, w.code)}
+            </option>
+          ))}
+        </optgroup>
+      </select>
+    </label>
+  );
+  const site = (
+    <Group label={tr("drSite")}>
+      <Choices<Specimen>
+        options={SITES.map((s) => [s, specimenName(locale, s)] as const)}
+        value={filters.site}
+        onPick={(s) => onChange({ site: s })}
+      />
+    </Group>
+  );
+  const sex = (
+    <Group label={tr("drSex")} inline>
+      <Choices<Sex | "any">
+        options={[
+          ["any", tr("drSexAny")],
+          ["F", tr("drSexF")],
+          ["M", tr("drSexM")],
+        ]}
+        value={filters.sex}
+        onPick={(v) => onChange({ sex: v })}
+      />
+    </Group>
+  );
+  const severity = (
+    <Group label={tr("drSeverity")} inline>
+      <Choices<Severity>
+        options={[
+          ["mild", tr("drSevMild")],
+          ["severe", tr("drSevSevere")],
+        ]}
+        value={filters.sev}
+        onPick={(v) => onChange({ sev: v })}
+      />
+    </Group>
+  );
+  const period = (
+    <Group label={tr("drPeriod")}>
+      <Choices<Period>
+        options={[
+          [365, tr("drPeriodYear")],
+          [28, tr("drPeriodMonth")],
+        ]}
+        value={filters.period}
+        onPick={(v) => onChange({ period: v })}
+      />
+    </Group>
+  );
+  const age = (
+    <Group label={tr("drAge")} tag={filters.age !== "any" && notApplied}>
+      <Choices<AgeGroup>
+        options={AGE_GROUPS.map((a) => [a, tr(AGE_KEYS[a])] as const)}
+        value={filters.age}
+        onPick={(v) => onChange({ age: v })}
+      />
+    </Group>
+  );
+  const onset = (
+    <Group label={tr("drOnset")} tag={filters.onset && notApplied}>
+      <Choices<"0" | "1">
+        options={[
+          ["0", tr("drOff")],
+          ["1", tr("drOn")],
+        ]}
+        value={filters.onset ? "1" : "0"}
+        onPick={(v) => onChange({ onset: v === "1" })}
+      />
+    </Group>
+  );
+
+  // Laptop: every filter in one wrapping row. Phone: the patient's own filters stay open under a one-line
+  // summary so the list is in view while choosing; unit, specimen, period and day 3 sit behind "More filters".
+  if (wide) {
+    return (
+      <form className="rs glass ply-2" aria-label={tr("drRecord")} onSubmit={(e) => e.preventDefault()}>
+        <div className="rs-body">
+          {unit}
+          {site}
+          {sex}
+          {severity}
+          {period}
+          {age}
+          {onset}
+        </div>
+      </form>
+    );
+  }
   return (
     <form className="rs glass ply-2" aria-label={tr("drRecord")} onSubmit={(e) => e.preventDefault()}>
-      <details className="rs-details" open={wide}>
-        <summary>
-          <span className="rs-sum-label">{tr("drFilters")}</span>
-          <span className="rs-sum">{summary}</span>
-        </summary>
-        <div className="rs-body">
-          <label className="rs-group rs-unit">
-            <span className="rs-label">{tr("drUnit")}</span>
-            <select className="rs-select" value={filters.unit} onChange={(e) => onChange({ unit: e.target.value as WardCode })}>
-              <optgroup label={tr("hospital")}>
-                {unitGroups.hospital.map((w) => (
-                  <option key={w.code} value={w.code}>
-                    {wardName(locale, w.code)}
-                  </option>
-                ))}
-              </optgroup>
-              <optgroup label={tr("primaryCare")}>
-                {unitGroups.primary.map((w) => (
-                  <option key={w.code} value={w.code}>
-                    {wardName(locale, w.code)}
-                  </option>
-                ))}
-              </optgroup>
-            </select>
-          </label>
-
-          <Group label={tr("drSite")}>
-            <Choices<Specimen>
-              options={SITES.map((s) => [s, specimenName(locale, s)] as const)}
-              value={filters.site}
-              onPick={(site) => onChange({ site })}
-            />
-          </Group>
-
-          <Group label={tr("drSex")}>
-            <Choices<Sex | "any">
-              options={[
-                ["any", tr("drSexAny")],
-                ["F", "F"],
-                ["M", "M"],
-              ]}
-              value={filters.sex}
-              onPick={(sex) => onChange({ sex })}
-            />
-          </Group>
-
-          <Group label={tr("drSeverity")}>
-            <Choices<Severity>
-              options={[
-                ["mild", tr("drSevMild")],
-                ["severe", tr("drSevSevere")],
-              ]}
-              value={filters.sev}
-              onPick={(sev) => onChange({ sev })}
-            />
-          </Group>
-
-          <Group label={tr("drPeriod")}>
-            <Choices<Period>
-              options={[
-                [365, tr("drPeriodYear")],
-                [28, tr("drPeriodMonth")],
-              ]}
-              value={filters.period}
-              onPick={(period) => onChange({ period })}
-            />
-          </Group>
-
-          <Group label={tr("drAge")} tag={filters.age !== "any" && notApplied}>
-            <Choices<AgeGroup>
-              options={AGE_GROUPS.map((a) => [a, tr(AGE_KEYS[a])] as const)}
-              value={filters.age}
-              onPick={(age) => onChange({ age })}
-            />
-          </Group>
-
-          <Group label={tr("drOnset")} tag={filters.onset && notApplied}>
-            <Choices<"0" | "1">
-              options={[
-                ["0", tr("drOff")],
-                ["1", tr("drOn")],
-              ]}
-              value={filters.onset ? "1" : "0"}
-              onPick={(v) => onChange({ onset: v === "1" })}
-            />
-          </Group>
+      <div className="rs-sumrow">
+        <p className="rs-sum" aria-live="polite">
+          <span className="rs-sum-label">{tr("drFilters")}</span> {summary}
+        </p>
+      </div>
+      <div className="rs-body">
+        {sex}
+        {age}
+        {severity}
+      </div>
+      <button type="button" className="rs-morebtn" aria-expanded={more} aria-controls="rs-more" onClick={() => setMore(!more)}>
+        {more ? tr("drFewerFilters") : tr("drMoreFilters")} <span aria-hidden="true">{more ? "▴" : "▾"}</span>
+      </button>
+      {more ? (
+        <div className="rs-body rs-more" id="rs-more">
+          {unit}
+          {site}
+          {period}
+          {onset}
         </div>
-      </details>
+      ) : null}
     </form>
   );
 }

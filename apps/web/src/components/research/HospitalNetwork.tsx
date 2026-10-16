@@ -83,12 +83,12 @@ export function HospitalNetwork({ client, locale, asOf, state, onChange }: Panel
 
   // Downstream shading: for each unit lit by a resistance signal, where its patients go next.
   const downstream = useMemo(() => {
-    const map = new Map<WardCode, { from: WardCode; share: number }[]>();
+    const map = new Map<WardCode, { from: WardCode; share: number; n: number; total: number }[]>();
     for (const [unit, s] of signals.byUnit) {
       if (!s.resistance) continue;
       for (const n of nextUnits(flows, unit, 4)) {
         const list = map.get(n.ward) ?? [];
-        list.push({ from: unit, share: n.share });
+        list.push({ from: unit, share: n.share, n: n.patients, total: n.share ? Math.round(n.patients / n.share) : n.patients });
         map.set(n.ward, list);
       }
     }
@@ -122,7 +122,7 @@ export function HospitalNetwork({ client, locale, asOf, state, onChange }: Panel
         : data
           ? t(locale, "netNodeNoSignals")
           : null,
-      ...(ds ?? []).map((d) => t(locale, "netNodeShare", { share: pct(d.share), unit: d.from })),
+      ...(ds ?? []).map((d) => t(locale, "netNodeShare", { share: pct(d.share), unit: d.from, n: d.n, total: d.total })),
       state.unit === code ? t(locale, "netNodeSelected") : null,
     ]
       .filter(Boolean)
@@ -302,6 +302,27 @@ export function HospitalNetwork({ client, locale, asOf, state, onChange }: Panel
         })}
       </svg>
 
+      {data && downstream.size > 0 ? (
+        <section className="hnet-down" aria-labelledby="hnet-down-title">
+          <h3 id="hnet-down-title" className="hnet-h3">
+            {t(locale, "netDownHeading")}
+          </h3>
+          <ul className="hnet-down-list">
+            {WARDS.flatMap((w) =>
+              (downstream.get(w.code) ?? []).map((d) => (
+                <li key={`${d.from}|${w.code}`} data-active={sel === w.code || sel === d.from}>
+                  <span className="hnet-down-share">{pct(d.share)} %</span>{" "}
+                  {t(locale, "netShareCount", { unit: d.from, n: d.n, total: d.total, dest: w.code })}
+                </li>
+              )),
+            )}
+          </ul>
+          <p className="hnet-faint">
+            {t(locale, "netShareNote")} · {from}–{to}
+          </p>
+        </section>
+      ) : null}
+
       {showTrail ? (
         <ul className="hnet-sr">
           {(rel?.links ?? []).map((l) => (
@@ -400,7 +421,7 @@ interface CardProps {
   locale: PanelProps["locale"];
   flows: RelationsResponse["flows"];
   signals: ReturnType<typeof signalsOf>["byUnit"] extends Map<WardCode, infer U> ? U | undefined : never;
-  shares: { from: WardCode; share: number }[] | undefined;
+  shares: { from: WardCode; share: number; n: number; total: number }[] | undefined;
   selected: boolean;
   ready: boolean;
   onFilter: () => void;
@@ -430,7 +451,7 @@ function FocusCard({ unit, locale, flows, signals, shares, selected, ready, onFi
 
       {shares?.map((d) => (
         <p key={d.from} className="hnet-card-share">
-          {t(locale, "netGoesHere", { share: Math.round(d.share * 100), unit: d.from })}{" "}
+          {t(locale, "netGoesHere", { share: Math.round(d.share * 100), unit: d.from, n: d.n, total: d.total })}{" "}
           <span className="hnet-faint">({t(locale, "netShareNote")})</span>
         </p>
       ))}

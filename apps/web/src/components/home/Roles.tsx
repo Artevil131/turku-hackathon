@@ -55,7 +55,8 @@ export function Roles({ locale, lastRole, unit, asOf, signals, onRole }: Props) 
   );
   return (
     <section className="hm-roles" aria-label={t(locale, "homeRoles")}>
-      {lastRole === "research" ? [research, doctor] : [doctor, research]}
+      {doctor}
+      {research}
     </section>
   );
 }
