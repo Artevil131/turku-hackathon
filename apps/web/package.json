@@ -10,6 +10,7 @@
     "typecheck": "tsc -p ."
   },
   "dependencies": {
+    "@aei/ask": "workspace:*",
     "@aei/contract": "workspace:*",
     "@aei/domain": "workspace:*",
     "@aei/i18n": "workspace:*",

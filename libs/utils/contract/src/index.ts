@@ -1,5 +1,7 @@
 import type { Alert } from "@aei/alerts";
-import type { Antibiotic, IsoDate, IsolateRecord, Organism, Specimen, Ward, WardCode } from "@aei/domain";
+import type { AgeGroup } from "@aei/ask";
+import type { CombinationSuggestion, CoverageResult, CoverageQuery as GearCoverageQuery, Severity, Suggestion } from "@aei/coverage";
+import type { Antibiotic, IsoDate, IsolateRecord, Organism, Sex, Specimen, Ward, WardCode } from "@aei/domain";
 import type { Flow, TrailLink } from "@aei/relations";
 import type { ClockState } from "@aei/replay";
 
@@ -8,6 +10,9 @@ import type { ClockState } from "@aei/replay";
 // can replace it by serving the same routes and events (DECISIONS.md D-006).
 
 export const ROUTES = {
+  ask: "/api/ask",
+  explain: "/api/explain",
+  coverage: "/api/coverage",
   meta: "/api/meta",
   clock: "/api/clock",
   isolates: "/api/isolates",
@@ -17,6 +22,7 @@ export const ROUTES = {
 } as const;
 
 export interface Meta {
+  ai: boolean;
   datasetStart: IsoDate;
   datasetEnd: IsoDate;
   wards: readonly Ward[];
@@ -41,6 +47,42 @@ export interface IsolateQuery {
   ward?: WardCode;
   specimen?: Specimen;
   organism?: Organism;
+  sex?: Sex;
+  ageMin?: number;
+  ageMax?: number;
+}
+
+export type { AntibioticCoverage, CombinationSuggestion, Counts, CoverageResult, Level, Severity, Suggestion } from "@aei/coverage";
+
+/** The doctor's coverage list (D-023). The server sets the as-of date from its clock. */
+export type CoverageQuery = Omit<GearCoverageQuery, "asOf" | "minTested"> & {
+  /** How suggestions are judged (D-026, D-027); "mild" when omitted. */
+  severity?: Severity;
+};
+
+export interface CoverageResponse {
+  asOf: IsoDate;
+  severity: Severity;
+  coverage: CoverageResult;
+  /** Ordered: clears, borderline, below, not assessable. Decision support only. */
+  suggestions: Suggestion[];
+  /** Pairs, only when no single antibiotic clears (D-028). */
+  combinationSuggestions: CombinationSuggestion[];
+}
+
+export interface AskResponse {
+  asOf: IsoDate;
+  filters: IsolateQuery;
+  ageGroup?: AgeGroup;
+  unmatched: string[];
+}
+
+export type ExplainWording = "template" | "model";
+
+export interface ExplainResponse {
+  id: string;
+  text: string;
+  source: "model" | "template";
 }
 
 export interface IsolatesResponse {
@@ -93,7 +135,8 @@ export function isolatesUrl(query: IsolateQuery): string {
 
 function withQuery(path: string, query: object): string {
   const params = new URLSearchParams();
-  for (const [key, value] of Object.entries(query)) if (value) params.set(key, String(value));
+  for (const [key, value] of Object.entries(query))
+    if (value !== undefined && value !== null && value !== "") params.set(key, String(value));
   const qs = params.toString();
   return qs ? `${path}?${qs}` : path;
 }
@@ -106,6 +149,10 @@ export interface AeiClientOptions {
 }
 
 export interface AeiClient {
+  ask(text: string, lang: "en" | "fi"): Promise<AskResponse>;
+  /** The code's template by default; `wording: "model"` asks the AI to reword it (D-029). */
+  explain(id: string, lang: "en" | "fi", wording?: ExplainWording): Promise<ExplainResponse>;
+  coverage(query: CoverageQuery): Promise<CoverageResponse>;
   meta(): Promise<Meta>;
   clock(): Promise<ClockState>;
   command(command: ClockCommand): Promise<ClockState>;
@@ -116,6 +163,15 @@ export interface AeiClient {
   live(onEvent: (event: LiveEvent) => void, onError?: (error: Event) => void): () => void;
 }
 
+export class ApiError extends Error {
+  readonly status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
 export function createAeiClient(options: AeiClientOptions): AeiClient {
   const doFetch = options.fetch ?? globalThis.fetch.bind(globalThis);
   const ES = options.EventSource ?? globalThis.EventSource;
@@ -123,11 +179,19 @@ export function createAeiClient(options: AeiClientOptions): AeiClient {
 
   async function json<T>(path: string, init?: RequestInit): Promise<T> {
     const res = await doFetch(url(path), init);
-    if (!res.ok) throw new Error(`${init?.method ?? "GET"} ${path}: ${res.status} ${await res.text()}`);
+    if (!res.ok) throw new ApiError(res.status, `${init?.method ?? "GET"} ${path}: ${res.status} ${await res.text()}`);
     return (await res.json()) as T;
   }
 
   return {
+    ask: (text, lang) =>
+      json<AskResponse>(ROUTES.ask, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ text, lang }),
+      }),
+    explain: (id, lang, wording) => json<ExplainResponse>(withQuery(ROUTES.explain, { id, lang, wording })),
+    coverage: (query) => json<CoverageResponse>(withQuery(ROUTES.coverage, query)),
     meta: () => json<Meta>(ROUTES.meta),
     clock: () => json<ClockState>(ROUTES.clock),
     command: (command) =>

@@ -152,5 +152,5 @@ export function useLive(baseUrl = "") {
     setFindings((list) => list.map((f) => (set.has(f.id) ? { ...f, seen: true } : f)));
   }, []);
 
-  return { meta, clock, connection, findings, records, alerts, relations, lastArrivals, command, acknowledge };
+  return { client, meta, clock, connection, findings, records, alerts, relations, lastArrivals, command, acknowledge };
 }

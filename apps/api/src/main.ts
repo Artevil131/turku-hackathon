@@ -1,9 +1,20 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { resolve } from "node:path";
 import { buildAlerts, sortAlerts } from "@aei/alerts";
-import { type ClockCommand, type IsolateQuery, type LiveEvent, type Meta, type RelationsResponse, ROUTES } from "@aei/contract";
+import { alertExplainInput, createLlm, explainAlert, fillSlots, LlmError, llmConfigFromEnv, parseQuestion } from "@aei/ask";
+import {
+  type ClockCommand,
+  type ExplainResponse,
+  type IsolateQuery,
+  type LiveEvent,
+  type Meta,
+  type RelationsResponse,
+  ROUTES,
+} from "@aei/contract";
+import { type CoverageResult, coverage, suggest, suggestCombinations } from "@aei/coverage";
 import { joinIsolates, loadDataset } from "@aei/dataset";
-import { ANTIBIOTICS, type IsolateRecord, ORGANISMS, SPECIMENS, WARDS } from "@aei/domain";
+import { ANTIBIOTICS, type IsolateRecord, ORGANISMS, SPECIMENS, type Specimen, WARDS, type WardCode } from "@aei/domain";
+import { antibioticName, phenotypeName, specimenName, wardName } from "@aei/i18n";
 import { countFlows, patientMoves, phenotypeTrails, trailLinks } from "@aei/relations";
 import { addDays, createReleaseIndex, createReplayClock } from "@aei/replay";
 
@@ -12,6 +23,12 @@ import { addDays, createReleaseIndex, createReplayClock } from "@aei/replay";
 // clients over server-sent events. Wiring only; the logic is in the gears.
 
 const env = process.env;
+const llmConfig = llmConfigFromEnv();
+const llm = llmConfig && createLlm(llmConfig);
+console.log(`[aei-api] AI ${llm ? `on; model ${llmConfig.model}` : "off"}`);
+const explanations = new Map<string, ExplainResponse>();
+// coverage() takes about 0.25 s (pairs over three levels), so cache by query and replay date.
+const coverages = new Map<string, CoverageResult>();
 const config = {
   port: Number(env.AEI_PORT ?? 8787),
   dataDir: resolve(env.AEI_DATA_DIR ?? "../../data/synthetic_microbiology_dataset"),
@@ -52,7 +69,15 @@ const clock = createReplayClock({
   daysPerTick: config.daysPerTick,
 });
 
-const meta: Meta = { datasetStart, datasetEnd, wards: WARDS, antibiotics: ANTIBIOTICS, organisms: ORGANISMS, specimens: SPECIMENS };
+const meta: Meta = {
+  ai: Boolean(llm),
+  datasetStart,
+  datasetEnd,
+  wards: WARDS,
+  antibiotics: ANTIBIOTICS,
+  organisms: ORGANISMS,
+  specimens: SPECIMENS,
+};
 
 const streams = new Set<ServerResponse>();
 function broadcast(event: LiveEvent) {
@@ -76,7 +101,10 @@ function matches(r: IsolateRecord, q: IsolateQuery): boolean {
     (!q.to || r.sampleDate <= q.to) &&
     (!q.ward || r.ward === q.ward) &&
     (!q.specimen || r.specimen === q.specimen) &&
-    (!q.organism || r.organism === q.organism)
+    (!q.organism || r.organism === q.organism) &&
+    (!q.sex || r.sex === q.sex) &&
+    (q.ageMin === undefined || r.ageYears >= q.ageMin) &&
+    (q.ageMax === undefined || r.ageYears <= q.ageMax)
   );
 }
 
@@ -108,7 +136,7 @@ function runCommand(command: ClockCommand) {
   }
 }
 
-const server = createServer(async (req, res) => {
+export const server = createServer(async (req, res) => {
   // The web dev server proxies /api, so CORS is only for other local clients.
   res.setHeader("access-control-allow-origin", "*");
   res.setHeader("access-control-allow-headers", "content-type");
@@ -116,6 +144,88 @@ const server = createServer(async (req, res) => {
 
   const url = new URL(req.url ?? "/", "http://localhost");
   try {
+    if (url.pathname === ROUTES.ask && req.method === "POST") {
+      if (!llm) return send(res, 503, { error: "AI is not configured" });
+      const body = (await readJson(req)) as { text?: unknown; lang?: unknown } | null;
+      if (!body || typeof body.text !== "string" || !body.text.trim() || (body.lang !== "en" && body.lang !== "fi")) {
+        return send(res, 400, { error: "text and lang (en or fi) are required" });
+      }
+      const asOf = clock.state().asOf;
+      const parsed = await parseQuestion(llm, {
+        text: body.text,
+        asOf,
+        vocabulary: {
+          wards: meta.wards.map(({ code, en, fi }) => ({ code, en, fi })),
+          organisms: [...meta.organisms],
+          specimens: [...meta.specimens],
+        },
+      });
+      return send(res, 200, { asOf, ...parsed });
+    }
+    if (url.pathname === ROUTES.explain && req.method === "GET") {
+      const id = url.searchParams.get("id");
+      const lang = url.searchParams.get("lang");
+      if (lang !== "en" && lang !== "fi") return send(res, 400, { error: "lang must be en or fi" });
+      // The template by default: small models write unreliable Finnish (experiments/0003, D-029).
+      const wording = url.searchParams.get("wording") ?? "template";
+      if (wording !== "template" && wording !== "model") return send(res, 400, { error: "wording must be template or model" });
+      const alert = alerts.upTo(clock.state().asOf).find((a) => a.id === id);
+      if (!alert) return send(res, 404, { error: "unknown alert" });
+      const key = `${alert.id}:${lang}:${wording}`;
+      let explanation = explanations.get(key);
+      if (!explanation) {
+        const input = alertExplainInput(alert, lang, {
+          ward: (code) => wardName(lang, code),
+          phenotype: phenotypeName,
+          organism: (name) => name,
+          specimen: (code) => specimenName(lang, code),
+          antibiotic: (code) => antibioticName(lang, code),
+        });
+        const result =
+          llm && wording === "model"
+            ? await explainAlert(llm, input)
+            : { text: fillSlots(input.fallback, input.facts, lang), source: "template" as const };
+        explanation = { id: alert.id, ...result };
+        explanations.set(key, explanation);
+      }
+      return send(res, 200, explanation);
+    }
+    if (url.pathname === ROUTES.coverage) {
+      const ward = url.searchParams.get("ward");
+      const specimen = url.searchParams.get("specimen");
+      const sex = url.searchParams.get("sex");
+      const windowDays = url.searchParams.get("windowDays");
+      const severity = url.searchParams.get("severity") ?? "mild";
+      if (severity !== "mild" && severity !== "severe") return send(res, 400, { error: "severity must be mild or severe" });
+      if (!meta.wards.some((w) => w.code === ward)) return send(res, 400, { error: "ward is required and must be a ward code" });
+      if (!meta.specimens.some((x) => x.code === specimen)) return send(res, 400, { error: "specimen is required" });
+      if (sex !== null && sex !== "F" && sex !== "M") return send(res, 400, { error: "sex must be F or M" });
+      const days = windowDays === null ? undefined : Number(windowDays);
+      if (days !== undefined && (!Number.isInteger(days) || days < 1))
+        return send(res, 400, { error: "windowDays must be a positive integer" });
+      const asOf = clock.state().asOf;
+      // Only released records, so nothing after the replay date leaks in.
+      const key = JSON.stringify([asOf, ward, specimen, sex, days]);
+      let result = coverages.get(key);
+      if (!result) {
+        if (coverages.size > 500) coverages.clear();
+        result = coverage(released.upTo(asOf), {
+          asOf,
+          ward: ward as WardCode,
+          specimen: specimen as Specimen,
+          ...(sex ? { sex } : {}),
+          ...(days ? { windowDays: days } : {}),
+        });
+        coverages.set(key, result);
+      }
+      return send(res, 200, {
+        asOf,
+        severity,
+        coverage: result,
+        suggestions: suggest(result, severity),
+        combinationSuggestions: suggestCombinations(result, severity),
+      });
+    }
     if (url.pathname === ROUTES.meta) return send(res, 200, meta);
     if (url.pathname === ROUTES.clock && req.method === "GET") return send(res, 200, clock.state());
     if (url.pathname === ROUTES.clock && req.method === "POST") {
@@ -124,6 +234,14 @@ const server = createServer(async (req, res) => {
     }
     if (url.pathname === ROUTES.isolates) {
       const q = Object.fromEntries(url.searchParams) as IsolateQuery;
+      for (const key of ["ageMin", "ageMax"] as const) {
+        if (url.searchParams.has(key)) {
+          const value = Number(url.searchParams.get(key));
+          if (!Number.isInteger(value) || value < 0 || value > 120)
+            return send(res, 400, { error: `${key} must be an integer from 0 to 120` });
+          q[key] = value;
+        }
+      }
       const asOf = clock.state().asOf;
       const to = q.to && q.to < asOf ? q.to : asOf;
       return send(res, 200, { asOf, records: released.upTo(to).filter((r) => matches(r, { ...q, to })) });
@@ -147,7 +265,7 @@ const server = createServer(async (req, res) => {
     }
     send(res, 404, { error: `no route ${url.pathname}` });
   } catch (error) {
-    send(res, 400, { error: String(error) });
+    send(res, error instanceof LlmError ? 502 : 400, { error: error instanceof LlmError ? "The assistant is unavailable" : String(error) });
   }
 });
 

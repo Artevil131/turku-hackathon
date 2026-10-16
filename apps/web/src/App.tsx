@@ -141,6 +141,9 @@ export function App() {
         {page === "home" ? <Home locale={locale} clock={live.clock} findings={live.findings} lastRole={lastRole} onRole={setPage} /> : null}
         {page === "doctor" ? (
           <Treat
+            client={live.client}
+            ai={live.meta?.ai ?? false}
+            alerts={live.alerts}
             locale={locale}
             state={treat}
             onChange={patchTreat}
@@ -153,6 +156,9 @@ export function App() {
         ) : null}
         {page === "research" ? (
           <Research
+            client={live.client}
+            ai={live.meta?.ai ?? false}
+            alerts={live.alerts}
             locale={locale}
             state={research}
             onChange={patchResearch}

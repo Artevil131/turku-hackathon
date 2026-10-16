@@ -27,3 +27,25 @@ method is decided.
 Design: Impeccable (D-008). Product context in /PRODUCT.md, the direction
 contract in `.impeccable/surfaces/`. Light mode only for now; dark tokens
 stay in `src/styles.css` under `[data-theme="dark"]` (`THEME` in `App.tsx`).
+
+## Optional assistant
+
+When `/api/meta` reports `ai: true`, Doctor and Research offer a bilingual
+Ask field. Parsed filters appear as removable chips; sex, inclusive age
+bounds and dates are carried through to the isolate request. Unrecognised
+words remain visible. The field hides on 503 and a 502 leaves manual
+filters available. Requests are refreshed on replay-clock changes; stale
+responses cannot replace newer data.
+
+The incumbent antibiograms and history use invented example figures, not
+an isolate-backed statistics pipeline. An active question therefore shows
+an exact-selection results table instead of those example percentages or
+history. Counts reuse `@aei/counting` first-isolate deduplication, grouped
+by organism/specimen/antibiotic; the existing reporting floor still applies.
+It makes no annual fallback or comparison beyond the requested records.
+Clearing the question restores the ordinary example views. Research signals
+continue through their existing finding list, populated from matched records.
+
+Released CPE/carrier alerts have an inline Explain action, including without
+an LLM. Template responses are explicitly marked; explanations reload when
+the language changes. The model never supplies a susceptibility count.

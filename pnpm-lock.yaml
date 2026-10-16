@@ -26,15 +26,24 @@ importers:
       '@aei/alerts':
         specifier: workspace:*
         version: link:../../libs/utils/alerts
+      '@aei/ask':
+        specifier: workspace:*
+        version: link:../../libs/utils/ask
       '@aei/contract':
         specifier: workspace:*
         version: link:../../libs/utils/contract
+      '@aei/coverage':
+        specifier: workspace:*
+        version: link:../../libs/utils/coverage
       '@aei/dataset':
         specifier: workspace:*
         version: link:../../libs/utils/dataset
       '@aei/domain':
         specifier: workspace:*
         version: link:../../libs/utils/domain
+      '@aei/i18n':
+        specifier: workspace:*
+        version: link:../../libs/utils/i18n
       '@aei/relations':
         specifier: workspace:*
         version: link:../../libs/utils/relations
@@ -44,6 +53,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@aei/ask':
+        specifier: workspace:*
+        version: link:../../libs/utils/ask
       '@aei/contract':
         specifier: workspace:*
         version: link:../../libs/utils/contract
@@ -91,11 +103,26 @@ importers:
         specifier: workspace:*
         version: link:../replay
 
+  libs/utils/ask:
+    dependencies:
+      '@aei/alerts':
+        specifier: workspace:*
+        version: link:../alerts
+      '@aei/domain':
+        specifier: workspace:*
+        version: link:../domain
+
   libs/utils/contract:
     dependencies:
       '@aei/alerts':
         specifier: workspace:*
         version: link:../alerts
+      '@aei/ask':
+        specifier: workspace:*
+        version: link:../ask
+      '@aei/coverage':
+        specifier: workspace:*
+        version: link:../coverage
       '@aei/domain':
         specifier: workspace:*
         version: link:../domain

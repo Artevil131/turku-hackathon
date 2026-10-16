@@ -1,7 +1,9 @@
+import type { AeiClient, Alert, IsolateQuery } from "@aei/contract";
 import {
   ANTIBIOTICS,
   type AntibioticCode,
   type IsolateRecord,
+  ORGANISMS,
   type Organism,
   type Specimen,
   shortOrganism,
@@ -10,9 +12,12 @@ import {
 } from "@aei/domain";
 import { antibioticName, formatDate, type Locale, phenotypeName, specimenName, t, wardName } from "@aei/i18n";
 import { type ReactNode, useMemo } from "react";
+import { useQuestion } from "../ai.ts";
 import { type Cell, type Figure, historyFor, organismsFor, stripsFor } from "../examples.ts";
 import type { Finding } from "../live.ts";
 import { previousUnits, useFlows } from "../relations.ts";
+import { AlertList } from "./AlertExplanation.tsx";
+import { Ask, AskedResults } from "./Ask.tsx";
 import { AlertTri, Flask, Tri } from "./Icons.tsx";
 import { Spread } from "./Spread.tsx";
 import { TrendChart } from "./TrendChart.tsx";
@@ -32,6 +37,9 @@ export interface TreatState {
 }
 
 interface Props {
+  client: AeiClient;
+  ai: boolean;
+  alerts: Alert[];
   locale: Locale;
   state: TreatState;
   onChange: (patch: Partial<TreatState>) => void;
@@ -45,10 +53,33 @@ interface Props {
 const SPECIMENS: Specimen[] = ["urine", "blood", "wound"];
 const susceptible = (f: Figure) => Math.round(100 - f.r);
 
-export function Treat({ locale, state, onChange, findings, records, asOf, minIsolates, onOpenSignals }: Props) {
-  const organisms = useMemo(() => organismsFor(state.ward, state.specimen), [state.ward, state.specimen]);
-  const organism =
-    state.organism && organisms.some((o) => o.organism === state.organism) ? state.organism : (organisms[0]?.organism ?? null);
+export function Treat({ locale, state, onChange, findings, records, asOf, minIsolates, onOpenSignals, client, ai, alerts }: Props) {
+  const question = useQuestion(
+    client,
+    ai,
+    asOf,
+    { ward: state.ward, specimen: state.specimen, organism: state.organism ?? undefined },
+    (filters: IsolateQuery) => {
+      onChange({
+        ...(filters.ward ? { ward: filters.ward } : {}),
+        ...(filters.specimen ? { specimen: filters.specimen } : {}),
+        ...("organism" in filters ? { organism: filters.organism ?? null } : {}),
+        antibiotic: null,
+      });
+    },
+  );
+  const queriedFindings = question.active
+    ? findings.filter((f) => question.records.some((r) => r.isolateId === f.record.isolateId))
+    : findings;
+  const organisms = useMemo(
+    () => (question.active ? ORGANISMS.map((organism) => ({ organism, n: 0, share: 0 })) : organismsFor(state.ward, state.specimen)),
+    [state.ward, state.specimen, question.active],
+  );
+  const organism = question.active
+    ? state.organism
+    : state.organism && organisms.some((o) => o.organism === state.organism)
+      ? state.organism
+      : (organisms[0]?.organism ?? null);
   const strip = useMemo(
     () => (organism ? stripsFor(state.ward, state.specimen).find((s) => s.organism === organism) : undefined),
     [state.ward, state.specimen, organism],
@@ -56,7 +87,7 @@ export function Treat({ locale, state, onChange, findings, records, asOf, minIso
 
   // Resistant-phenotype findings here or in the units that send most patients here, last 14 days.
   const feeders = previousUnits(useFlows(), state.ward, 3).map((p) => p.ward);
-  const nearby = findings.filter(
+  const nearby = queriedFindings.filter(
     (f) => (f.record.ward === state.ward || feeders.includes(f.record.ward)) && (!asOf || f.arrivedAt >= shiftDays(asOf, -14)),
   );
 
@@ -64,6 +95,7 @@ export function Treat({ locale, state, onChange, findings, records, asOf, minIso
     <div className="section section-doctor">
       <form className="context glass ply-1" onSubmit={(e) => e.preventDefault()} aria-label={t(locale, "patientContext")}>
         <h2 className="context-title">{t(locale, "patientContext")}</h2>
+        <Ask locale={locale} question={question} />
 
         <label className="field" htmlFor="treat-unit">
           <span className="field-label">{t(locale, "unit")}</span>
@@ -109,7 +141,7 @@ export function Treat({ locale, state, onChange, findings, records, asOf, minIso
 
         <fieldset className="field">
           <legend className="field-label">{t(locale, "organism")}</legend>
-          <p className="field-hint">{t(locale, "organismHint")}</p>
+          {!question.active ? <p className="field-hint">{t(locale, "organismHint")}</p> : null}
           <div className="org-list">
             {organisms.map((o) => (
               <button
@@ -120,16 +152,21 @@ export function Treat({ locale, state, onChange, findings, records, asOf, minIso
                 onClick={() => onChange({ organism: o.organism, antibiotic: null })}
               >
                 <span className="org-choice-name">{o.organism}</span>
-                <span className="org-choice-share num">{Math.round(o.share * 100)} %</span>
-                <span className="org-choice-bar" aria-hidden="true">
-                  <i style={{ width: `${Math.round(o.share * 100)}%` }} />
-                </span>
+                {!question.active ? (
+                  <>
+                    <span className="org-choice-share num">{Math.round(o.share * 100)} %</span>
+                    <span className="org-choice-bar" aria-hidden="true">
+                      <i style={{ width: `${Math.round(o.share * 100)}%` }} />
+                    </span>
+                  </>
+                ) : null}
               </button>
             ))}
           </div>
         </fieldset>
 
-        <p className="field-hint">{t(locale, "moreFiltersLater")}</p>
+        {!question.active ? <p className="field-hint">{t(locale, "moreFiltersLater")}</p> : null}
+        <AlertList client={client} alerts={alerts.filter((a) => a.ward === state.ward || a.ward === null)} locale={locale} ai={ai} />
 
         {nearby.length > 0 ? (
           <div className="nearby">
@@ -159,32 +196,39 @@ export function Treat({ locale, state, onChange, findings, records, asOf, minIso
               {t(locale, "whatWorks")}
             </h1>
             <p className="result-sub">
-              {organism ? (
+              {!question.active && organism ? (
                 <>
                   <em>{organism}</em> · {specimenName(locale, state.specimen)} ·{" "}
                 </>
               ) : null}
-              {wardName(locale, state.ward)} · {state.window === "recent" ? t(locale, "windowRecent") : t(locale, "windowYear")}
-              <span className="chip chip-example" title={t(locale, "exampleDataNote")}>
-                <Flask />
-                {t(locale, "exampleData")}
-              </span>
+              {wardName(locale, state.ward)} ·{" "}
+              {question.active ? t(locale, "askResults") : state.window === "recent" ? t(locale, "windowRecent") : t(locale, "windowYear")}
+              {!question.active ? (
+                <span className="chip chip-example" title={t(locale, "exampleDataNote")}>
+                  <Flask />
+                  {t(locale, "exampleData")}
+                </span>
+              ) : null}
             </p>
           </div>
-          <div className="result-tools">
-            <Seg
-              label={t(locale, "windowLabel")}
-              value={state.window}
-              onChange={(window) => onChange({ window })}
-              options={[
-                ["recent", t(locale, "windowRecent")],
-                ["year", t(locale, "windowYear")],
-              ]}
-            />
-          </div>
+          {!question.active ? (
+            <div className="result-tools">
+              <Seg
+                label={t(locale, "windowLabel")}
+                value={state.window}
+                onChange={(window) => onChange({ window })}
+                options={[
+                  ["recent", t(locale, "windowRecent")],
+                  ["year", t(locale, "windowYear")],
+                ]}
+              />
+            </div>
+          ) : null}
         </header>
 
-        {strip && organism ? (
+        {question.active ? (
+          <AskedResults locale={locale} records={question.records} loading={question.loading} error={question.loadError} />
+        ) : strip && organism ? (
           <Ranked
             locale={locale}
             cells={strip.cells}
@@ -211,16 +255,18 @@ export function Treat({ locale, state, onChange, findings, records, asOf, minIso
         )}
       </section>
 
-      <Spread
-        locale={locale}
-        ward={state.ward}
-        specimen={state.specimen}
-        organism={organism}
-        records={records}
-        findings={findings}
-        onPickOrganism={(o) => onChange({ organism: o, antibiotic: null })}
-        onOpenResearch={() => onOpenSignals(state.ward)}
-      />
+      {!question.active ? (
+        <Spread
+          locale={locale}
+          ward={state.ward}
+          specimen={state.specimen}
+          organism={organism}
+          records={records}
+          findings={queriedFindings}
+          onPickOrganism={(o) => onChange({ organism: o, antibiotic: null })}
+          onOpenResearch={() => onOpenSignals(state.ward)}
+        />
+      ) : null}
     </div>
   );
 }
