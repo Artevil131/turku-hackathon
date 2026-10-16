@@ -1,5 +1,5 @@
 ---
-status: proposed    # proposed, then accepted, rejected or superseded
+status: accepted    # proposed, then accepted, rejected or superseded
 by: Claude Code, operated by Aapo
 data: [thl-ttr-cases fetched 2026-10-16 by scripts/fetch_thl_ttr.py, months 2021-01 to 2026-09; synthetic_microbiology_dataset seed 2026 for the comparison]
 parent:
@@ -50,4 +50,50 @@ Exploratory; no prediction is tested. Described:
 
 ## Result
 
+`uv run python experiments/0008-regional-signals/analysis.py` (about 25 s)
+writes `out/results.md`. Counts from THL are measured; expected counts,
+tails and correlations computed.
+
+1. **10 signals** in 33 months across 250 series (8,250 series-months;
+   1,413 of them had at least 5 cases and could signal at all). Strongest
+   first: VRE carriage, Länsi-Uusimaa, 2026-07 (15 cases, 1.9 expected,
+   p 2.4e-9); CPE *E. coli* carriage, **Varsinais-Suomi**, 2025-09 (8 vs
+   0.6, p 1.7e-7); MRSA carriage, Keski-Suomi, 2025-07 and 2025-08 (12 vs
+   2.1, 18 vs 5.0); MRSA carriage, Päijät-Häme, 2024-02; ESBL *K.
+   pneumoniae* carriage, Itä-Uusimaa, 2024-02; CPE *E. coli*, Helsinki,
+   2026-03; ESBL *E. coli* carriage, Pohjois-Karjala, 2025-08; MRSA in
+   blood, **Varsinais-Suomi**, 2025-06 (5 vs 0.6); ESBL *E. coli* in blood,
+   Pohjois-Pohjanmaa, 2026-02. The national series raised none.
+2. **Synthetic hospital against Varsinais-Suomi**: ESBL *E. coli* 11.0
+   first isolates a month against 26.5 county carriage cases (ratio 0.41),
+   Pearson r −0.03 (p 0.85); MRSA 3.1 against 18.4 (ratio 0.17), r −0.08
+   (p 0.63); 36 months.
+
+Deviations from plan: none.
+
 ## Interpretation
+
+On real Finnish data the regional detector raises about 3.6 signals a
+year for the whole country, a volume a researcher can read. If the
+tails were exact, chance would give about 1.4 signals among the 1,413
+series-months that could signal; 10 is more, so some are likely real
+surges, but the model probably underestimates variability for sparse
+series (dispersion fitted as 1 in 9 of the 10), so the weaker signals
+(p near 1e-3) may be noise. The strongest ones (VRE in Länsi-Uusimaa,
+CPE *E. coli* in Varsinais-Suomi, MRSA in Keski-Suomi over two months)
+are far outside chance. These are statistical signals in public
+notification counts, not confirmed outbreaks; recent months can also
+still grow as late notifications arrive.
+
+The synthetic hospital does not follow its county's real series (r near
+0), as expected for generated data. The two can be shown side by side
+for context (the hospital's own signals next to the county's), but no
+claim may link them, and the planted events (0001) have no counterpart in
+the real data. The demo can say: Tyks's own county had a real CPE *E.
+coli* carriage signal in September 2025, which the regional view would
+have raised.
+
+Next: show these county signals in the network view (one row per signal
+with cases, expected and the month), and decide with Artem whether to
+down-weight past outbreaks in the baseline (full Farrington) and to
+fit a negative binomial for sparse series.
