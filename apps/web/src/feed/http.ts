@@ -1,3 +1,4 @@
+import { subscribeShared } from "./sharedStream.ts";
 import type { Feed, FeedClock, FeedCommand, FeedEvent, FeedMeta, Result } from "./types.ts";
 
 // A Feed over HTTP and server-sent events. Routes (relative to `base`):
@@ -5,7 +6,7 @@ import type { Feed, FeedClock, FeedCommand, FeedEvent, FeedMeta, Result } from "
 //   GET  /api/clock                     the clock
 //   POST /api/clock {action...}         demo controls
 //   GET  /api/isolates?from=&to=        results released so far
-//   GET  /api/live                      events: clock, arrivals, reset
+//   GET  /api/live                      events: clock, arrivals, reset (one stream shared by all tabs, sharedStream.ts)
 // This matches the team's development feed server (apps/api on ui/web-app),
 // whose field names differ slightly; they are mapped here and nowhere else.
 
@@ -56,16 +57,17 @@ export function httpFeed(base = ""): Feed {
       return records;
     },
     subscribe(onEvent, onError) {
-      const source = new EventSource(`${base}/api/live`);
-      const handle = (e: MessageEvent<string>) => {
-        const event = JSON.parse(e.data) as ServerEvent;
-        const mapped: FeedEvent =
-          event.type === "arrivals" ? { type: "arrivals", from: event.from, to: event.to, results: event.records } : event;
-        onEvent(mapped);
-      };
-      for (const type of ["clock", "arrivals", "reset"]) source.addEventListener(type, handle as EventListener);
-      if (onError) source.onerror = onError;
-      return () => source.close();
+      return subscribeShared(
+        `${base}/api/live`,
+        ["clock", "arrivals", "reset"],
+        (e) => {
+          const event = JSON.parse(e.data) as ServerEvent;
+          const mapped: FeedEvent =
+            event.type === "arrivals" ? { type: "arrivals", from: event.from, to: event.to, results: event.records } : event;
+          onEvent(mapped);
+        },
+        onError,
+      );
     },
     control: (command: FeedCommand) => post<FeedClock>("/api/clock", command),
   };
