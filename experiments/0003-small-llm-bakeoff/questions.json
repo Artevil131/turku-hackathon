@@ -1,0 +1,219 @@
+{
+  "asOf": "2025-06-15",
+  "questions": [
+    {
+      "id": "q01",
+      "en": "urine E. coli in older men, last 3 months",
+      "fi": "virtsan E. coli iäkkäillä miehillä, viimeiset 3 kuukautta",
+      "expected": {
+        "specimen": "urine",
+        "organism": "Escherichia coli",
+        "sex": "M",
+        "ageMin": 65,
+        "from": "2025-03-16",
+        "to": "2025-06-15"
+      }
+    },
+    {
+      "id": "q02",
+      "en": "Klebsiella pneumoniae in blood cultures in the ICU",
+      "fi": "Klebsiella pneumoniae veriviljelyissä teho-osastolla",
+      "expected": {
+        "ward": "ICU",
+        "specimen": "blood",
+        "organism": "Klebsiella pneumoniae"
+      }
+    },
+    {
+      "id": "q03",
+      "en": "S. aureus from wounds in Surgery in the past 30 days",
+      "fi": "S. aureus haavanäytteistä kirurgialla viimeisen 30 päivän aikana",
+      "expected": {
+        "ward": "SURG",
+        "specimen": "wound",
+        "organism": "Staphylococcus aureus",
+        "from": "2025-05-17",
+        "to": "2025-06-15"
+      }
+    },
+    {
+      "id": "q04",
+      "en": "urine samples from women aged 18 to 40 at Health centre South",
+      "fi": "virtsanäytteet 18–40-vuotiailta naisilta Terveysasema Etelässä",
+      "expected": {
+        "ward": "PHC-S",
+        "specimen": "urine",
+        "sex": "F",
+        "ageMin": 18,
+        "ageMax": 40
+      }
+    },
+    {
+      "id": "q05",
+      "en": "what grows in children's urine in the emergency department",
+      "fi": "mitä lasten virtsasta kasvaa päivystyksessä",
+      "expected": {
+        "ward": "ED",
+        "specimen": "urine",
+        "ageMin": 0,
+        "ageMax": 17
+      }
+    },
+    {
+      "id": "q06",
+      "en": "Pseudomonas aeruginosa in Geriatrics in the last year",
+      "fi": "Pseudomonas aeruginosa geriatrialla viimeisen vuoden aikana",
+      "expected": {
+        "ward": "GER",
+        "organism": "Pseudomonas aeruginosa",
+        "from": "2024-06-16",
+        "to": "2025-06-15"
+      }
+    },
+    {
+      "id": "q07",
+      "en": "Enterococcus faecalis in Urology over the last two weeks",
+      "fi": "Enterococcus faecalis urologialla kahden viime viikon aikana",
+      "expected": {
+        "ward": "URO",
+        "organism": "Enterococcus faecalis",
+        "from": "2025-06-02",
+        "to": "2025-06-15"
+      }
+    },
+    {
+      "id": "q08",
+      "en": "Proteus mirabilis in urine from patients aged 80 or older",
+      "fi": "Proteus mirabilis virtsassa 80-vuotiailla ja sitä vanhemmilla potilailla",
+      "expected": {
+        "specimen": "urine",
+        "organism": "Proteus mirabilis",
+        "ageMin": 80
+      }
+    },
+    {
+      "id": "q09",
+      "en": "blood cultures in Internal medicine B from 1 January to 31 March 2025",
+      "fi": "veriviljelyt Sisätaudit B:llä 1.1.–31.3.2025",
+      "expected": {
+        "ward": "MED-B",
+        "specimen": "blood",
+        "from": "2025-01-01",
+        "to": "2025-03-31"
+      }
+    },
+    {
+      "id": "q10",
+      "en": "E. coli in men at Health centre North in the last six months",
+      "fi": "E. coli miehillä Terveysasema Pohjoisessa viimeisen puolen vuoden aikana",
+      "expected": {
+        "ward": "PHC-N",
+        "organism": "Escherichia coli",
+        "sex": "M",
+        "from": "2024-12-16",
+        "to": "2025-06-15"
+      }
+    },
+    {
+      "id": "q11",
+      "en": "Citrobacter freundii in Internal medicine A",
+      "fi": "Citrobacter freundii Sisätaudit A -osastolla",
+      "expected": {
+        "ward": "MED-A",
+        "organism": "Citrobacter freundii"
+      }
+    },
+    {
+      "id": "q12",
+      "en": "wound swabs from elderly women in Geriatrics",
+      "fi": "haavanäytteet iäkkäiltä naisilta geriatrialla",
+      "expected": {
+        "ward": "GER",
+        "specimen": "wound",
+        "sex": "F",
+        "ageMin": 65
+      }
+    },
+    {
+      "id": "q13",
+      "en": "Klebsiella oxytoca in the past week",
+      "fi": "Klebsiella oxytoca viimeisen viikon aikana",
+      "expected": {
+        "organism": "Klebsiella oxytoca",
+        "from": "2025-06-09",
+        "to": "2025-06-15"
+      }
+    },
+    {
+      "id": "q14",
+      "en": "Staphylococcus saprophyticus in urine from young women",
+      "fi": "Staphylococcus saprophyticus nuorten naisten virtsassa",
+      "expected": {
+        "specimen": "urine",
+        "organism": "Staphylococcus saprophyticus",
+        "sex": "F"
+      }
+    },
+    {
+      "id": "q15",
+      "en": "ESBL E. coli in Urology",
+      "fi": "ESBL E. coli urologialla",
+      "expected": {
+        "ward": "URO",
+        "organism": "Escherichia coli"
+      }
+    },
+    {
+      "id": "q16",
+      "en": "positive blood cultures from adults in the ICU in the last 3 months",
+      "fi": "positiiviset veriviljelyt aikuisilta teho-osastolla viimeisen 3 kuukauden aikana",
+      "expected": {
+        "ward": "ICU",
+        "specimen": "blood",
+        "ageMin": 18,
+        "ageMax": 64,
+        "from": "2025-03-16",
+        "to": "2025-06-15"
+      }
+    },
+    {
+      "id": "q17",
+      "en": "Pseudomonas in wounds",
+      "fi": "Pseudomonas haavoissa",
+      "expected": {
+        "specimen": "wound",
+        "organism": "Pseudomonas aeruginosa"
+      }
+    },
+    {
+      "id": "q18",
+      "en": "urine cultures in Surgery for patients aged 50-70",
+      "fi": "virtsaviljelyt kirurgialla 50–70-vuotiailla potilailla",
+      "expected": {
+        "ward": "SURG",
+        "specimen": "urine",
+        "ageMin": 50,
+        "ageMax": 70
+      }
+    },
+    {
+      "id": "q19",
+      "en": "S. aureus in the emergency department in the past month",
+      "fi": "S. aureus päivystyksessä viimeisen kuukauden aikana",
+      "expected": {
+        "ward": "ED",
+        "organism": "Staphylococcus aureus",
+        "from": "2025-05-16",
+        "to": "2025-06-15"
+      }
+    },
+    {
+      "id": "q20",
+      "en": "what about Health centre South",
+      "fi": "entä Terveysasema Etelä",
+      "expected": {
+        "ward": "PHC-S"
+      }
+    }
+  ]
+}
