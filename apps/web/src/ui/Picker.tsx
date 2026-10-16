@@ -1,5 +1,5 @@
-import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import { t, type Locale } from "../i18n/index.ts";
+import { type KeyboardEvent, type ReactNode, useEffect, useId, useMemo, useRef, useState } from "react";
+import { type Locale, t } from "../i18n/index.ts";
 import { useIsDesktop } from "./hooks.ts";
 import { Icon } from "./Icon.tsx";
 import { Sheet } from "./Sheet.tsx";
@@ -24,6 +24,11 @@ import { Sheet } from "./Sheet.tsx";
   PickerOption<T>: { value: T; label: ReactNode; text?: string (for search; defaults to label when a string);
                      hint?: ReactNode (right-aligned, e.g. a count); disabled?: boolean }
 */
+
+/** What the search box matches an option on, lower case. */
+function optionText<T extends string>(o: PickerOption<T>): string {
+  return (o.text ?? (typeof o.label === "string" ? o.label : String(o.value))).toLowerCase();
+}
 
 export interface PickerOption<T extends string> {
   value: T;
@@ -78,12 +83,11 @@ export function Picker<T extends string>({
   const chosen = value === null ? undefined : all.find((o) => o.value === value);
   const searchable = all.length > 8;
 
-  const textOf = (o: PickerOption<T>) => (o.text ?? (typeof o.label === "string" ? o.label : String(o.value))).toLowerCase();
   const q = query.trim().toLowerCase();
   const shown = useMemo(
     () =>
       groups
-        .map((g) => ({ ...g, options: q ? g.options.filter((o) => textOf(o).includes(q)) : g.options }))
+        .map((g) => ({ ...g, options: q ? g.options.filter((o) => optionText(o).includes(q)) : g.options }))
         .filter((g) => g.options.length > 0),
     [groups, q],
   );
@@ -134,6 +138,7 @@ export function Picker<T extends string>({
   }
 
   const list = (
+    // biome-ignore lint/a11y/noStaticElementInteractions: arrow-key handling for the options inside the list
     <div className="k-pick-list" onKeyDown={onListKey}>
       {searchable ? (
         <label className="k-pick-search">
@@ -164,7 +169,11 @@ export function Picker<T extends string>({
         ) : null}
         {shown.map((g, gi) => (
           <div role="group" aria-label={g.label} key={g.label ?? gi} className="k-pick-group">
-            {g.label ? <div className="k-pick-group-label" aria-hidden="true">{g.label}</div> : null}
+            {g.label ? (
+              <div className="k-pick-group-label" aria-hidden="true">
+                {g.label}
+              </div>
+            ) : null}
             {g.options.map((o) => (
               <PickerRow
                 key={o.value}
@@ -182,7 +191,13 @@ export function Picker<T extends string>({
     </div>
   );
 
-  const valueNode = chosen ? (renderValue ? renderValue(chosen) : chosen.label) : value === null && nullLabel !== undefined ? nullLabel : placeholder;
+  const valueNode = chosen
+    ? renderValue
+      ? renderValue(chosen)
+      : chosen.label
+    : value === null && nullLabel !== undefined
+      ? nullLabel
+      : placeholder;
 
   return (
     <div className={`k-pick${open ? " is-open" : ""}`}>
@@ -231,7 +246,14 @@ function PickerRow({
   disabled?: boolean;
 }) {
   return (
-    <button type="button" role="option" aria-selected={selected} className={`k-pick-opt${selected ? " is-on" : ""}`} onClick={onPick} disabled={disabled}>
+    <button
+      type="button"
+      role="option"
+      aria-selected={selected}
+      className={`k-pick-opt${selected ? " is-on" : ""}`}
+      onClick={onPick}
+      disabled={disabled}
+    >
       <span className="k-pick-opt-label">{label}</span>
       {hint !== undefined ? <span className="k-pick-opt-hint u-num">{hint}</span> : null}
       <Icon name="check" size={18} className="k-pick-opt-check" />

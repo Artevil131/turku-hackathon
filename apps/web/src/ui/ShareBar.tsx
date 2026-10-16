@@ -1,7 +1,6 @@
+import { MIN_ISOLATES, type Share } from "@aei/isolates";
 import type { ReactNode } from "react";
-import { MIN_ISOLATES } from "../engine/rules.ts";
-import type { Share } from "../engine/types.ts";
-import { formatNumber, formatShare, t, type Locale } from "../i18n/index.ts";
+import { formatNumber, formatShare, type Locale, t } from "../i18n/index.ts";
 
 /*
   ShareBar: "works in X of N" as a percentage, a bar and the count it rests on.
@@ -21,7 +20,7 @@ import { formatNumber, formatShare, t, type Locale } from "../i18n/index.ts";
 */
 
 // The organiser's 30, defined once in the engine and shared by every screen.
-export { MIN_ISOLATES } from "../engine/rules.ts";
+export { MIN_ISOLATES } from "@aei/isolates";
 
 export function ShareBar({
   locale,

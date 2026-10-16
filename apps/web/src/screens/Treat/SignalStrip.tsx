@@ -1,8 +1,8 @@
+import type { FeedMeta } from "@aei/feed";
+import type { Severity, Signal } from "@aei/signals";
 import { useMemo } from "react";
-import { groupEpisodes } from "../../engine/episodes.ts";
-import type { Severity, Signal } from "../../engine/types.ts";
-import type { FeedMeta } from "../../feed/types.ts";
-import { formatDate, formatNumber, t, type Locale } from "../../i18n/index.ts";
+import { groupEpisodes } from "../../analytics/helpers.ts";
+import { formatDate, formatNumber, type Locale, t } from "../../i18n/index.ts";
 import { Icon } from "../../ui/index.ts";
 import { SIGNAL_LINES } from "./model.ts";
 import { signalSentence } from "./text.tsx";

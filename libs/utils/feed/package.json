@@ -1,0 +1,13 @@
+{
+  "name": "@aei/feed",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./http": "./src/http.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p ."
+  }
+}

@@ -1,7 +1,7 @@
-import type { FeedMeta, IsoDate } from "../feed/types.ts";
-import { answerSchema, buildMessages, cleanQuestion, parseReply, validateAnswer, type AiAnswer, type Lang } from "./core.ts";
+import type { FeedMeta, IsoDate } from "@aei/feed";
+import { type AiAnswer, chatRequest, cleanQuestion, type Lang, parseReply, validateAnswer } from "@aei/question-filters";
 
-export * from "./core.ts";
+export * from "@aei/question-filters";
 
 // Optional AI layer: a plain-language question becomes filters the doctor can
 // see and change. The team's small language model (an OpenAI-compatible
@@ -9,7 +9,8 @@ export * from "./core.ts";
 // the Cloudflare Access credentials on the server side (vite.config.ts); the
 // browser never holds them. Without the proxy, aiStatus() reports it off and
 // the app works the same without it. The model only chooses from the feed's
-// code lists; core.ts checks everything it returns.
+// code lists; @aei/question-filters builds the request and checks everything
+// it returns.
 
 export const LLM_BASE = "/llm";
 const STATUS_TIMEOUT_MS = 4_000;
@@ -110,21 +111,6 @@ export async function aiStatus(options: AiOptions = {}): Promise<AiStatus> {
   }
 }
 
-/** The request body for one try; the two response_format spellings llama.cpp accepts. */
-export function chatRequest(text: string, lang: Lang, meta: FeedMeta, model: string | null, format: 0 | 1): Record<string, unknown> {
-  const schema = answerSchema(meta);
-  return {
-    ...(model ? { model } : {}),
-    messages: buildMessages(text, lang, meta),
-    temperature: 0,
-    max_tokens: 400,
-    stream: false,
-    response_format: format === 0 ? { type: "json_schema", json_schema: { name: "aei_filters", strict: true, schema } } : { type: "json_object", schema },
-    // Qwen3-family models think aloud unless told not to; that costs seconds and is not needed here.
-    ...(model && /qwen-?3/i.test(model) ? { chat_template_kwargs: { enable_thinking: false } } : {}),
-  };
-}
-
 /**
  * A plain-language question (Finnish or English) turned into filters from
  * the feed's code lists. The period is resolved against `asOf` (the feed's
@@ -166,7 +152,8 @@ export async function askAi(text: string, lang: Lang, meta: FeedMeta, asOf: IsoD
         format = format === 0 ? 1 : 0;
         continue;
       }
-      if (!res.ok) throw new AiError(res.status === 404 || res.status === 502 || res.status === 504 ? "off" : "network", String(res.status));
+      if (!res.ok)
+        throw new AiError(res.status === 404 || res.status === 502 || res.status === 504 ? "off" : "network", String(res.status));
       let body: { choices?: { message?: { content?: unknown } }[] };
       try {
         body = (await res.json()) as typeof body;

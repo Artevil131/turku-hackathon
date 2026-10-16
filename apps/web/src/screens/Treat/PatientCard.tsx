@@ -1,9 +1,10 @@
+import type { LikelyOrganism } from "@aei/empiric";
+import type { FeedMeta } from "@aei/feed";
+import type { AgeBand, Onset } from "@aei/isolates";
 import { useMemo, useState } from "react";
-import type { AgeBand, LikelyOrganism, Onset } from "../../engine/types.ts";
-import type { FeedMeta } from "../../feed/types.ts";
-import { formatNumber, formatShare, named, t, type Locale } from "../../i18n/index.ts";
-import { Card, Icon, Org, Picker, Segmented, Sheet, ToggleChip, shortOrganism, type PickerGroup } from "../../ui/index.ts";
-import { capFirst, hasDetails, midSentence, ORGANISM_CHIPS, onsetApplies, unitGroups, type TreatChoice } from "./model.ts";
+import { formatNumber, formatShare, type Locale, named, t } from "../../i18n/index.ts";
+import { Card, Icon, Org, Picker, type PickerGroup, Segmented, Sheet, shortOrganism, ToggleChip } from "../../ui/index.ts";
+import { capFirst, hasDetails, midSentence, ORGANISM_CHIPS, onsetApplies, type TreatChoice, unitGroups } from "./model.ts";
 import { institutionLabel, MONTHS, sexChipLabel } from "./text.tsx";
 
 // "Your patient": every control one tap, sensible defaults so the answer
@@ -33,7 +34,13 @@ interface Props {
 
 const CLEAR: Partial<TreatChoice> = { sex: null, age: null, onset: null, organism: null };
 
-function UnitField({ locale, meta, prefs, onPrefs, compact = false }: Pick<Props, "locale" | "meta" | "prefs" | "onPrefs"> & { compact?: boolean }) {
+function UnitField({
+  locale,
+  meta,
+  prefs,
+  onPrefs,
+  compact = false,
+}: Pick<Props, "locale" | "meta" | "prefs" | "onPrefs"> & { compact?: boolean }) {
   const groups = useMemo<PickerGroup<string>[]>(() => {
     const list = unitGroups(meta.units);
     return list.map((g) => ({
@@ -57,7 +64,13 @@ function UnitField({ locale, meta, prefs, onPrefs, compact = false }: Pick<Props
   );
 }
 
-function SiteField({ locale, meta, prefs, onPrefs, showLabel = true }: Pick<Props, "locale" | "meta" | "prefs" | "onPrefs"> & { showLabel?: boolean }) {
+function SiteField({
+  locale,
+  meta,
+  prefs,
+  onPrefs,
+  showLabel = true,
+}: Pick<Props, "locale" | "meta" | "prefs" | "onPrefs"> & { showLabel?: boolean }) {
   const options = meta.specimens.map((s) => ({ value: s.code, label: capFirst(named(locale, s)) }));
   return meta.specimens.length <= SEGMENT_MAX ? (
     <Segmented
@@ -91,7 +104,13 @@ function PatientDetails({ locale, meta, prefs, onPrefs, sexes, organisms, organi
 
   // A share only from `min` samples; below that the plain count.
   const orgFigure = (o: LikelyOrganism) => (total >= min ? formatShare(locale, o.share) : formatNumber(locale, o.n));
-  const specimen = midSentence(named(locale, meta.specimens.find((s) => s.code === prefs.specimen), prefs.specimen));
+  const specimen = midSentence(
+    named(
+      locale,
+      meta.specimens.find((s) => s.code === prefs.specimen),
+      prefs.specimen,
+    ),
+  );
   const hint =
     total === 0
       ? t(locale, "treat.patient.bacteriaNone", { months: formatNumber(locale, MONTHS) })
@@ -200,7 +219,12 @@ export function PatientCard(p: Props) {
       title={t(locale, "treat.patient.title")}
       actions={
         hasDetails(prefs) ? (
-          <button type="button" className="k-btn is-ghost is-sm" aria-label={t(locale, "treat.patient.clearLabel")} onClick={() => onPrefs(CLEAR)}>
+          <button
+            type="button"
+            className="k-btn is-ghost is-sm"
+            aria-label={t(locale, "treat.patient.clearLabel")}
+            onClick={() => onPrefs(CLEAR)}
+          >
             <Icon name="close" size={16} />
             {t(locale, "treat.patient.clear")}
           </button>
@@ -236,11 +260,7 @@ export function PatientBar(p: Props) {
           className={`k-btn is-secondary treat-bar-more${count ? " has-value" : ""}`}
           onClick={() => setOpen(true)}
           aria-haspopup="dialog"
-          aria-label={
-            count
-              ? t(locale, "treat.bar.detailsSet", { count: formatNumber(locale, count) })
-              : t(locale, "treat.bar.details")
-          }
+          aria-label={count ? t(locale, "treat.bar.detailsSet", { count: formatNumber(locale, count) }) : t(locale, "treat.bar.details")}
         >
           <Icon name="sliders" size={18} />
           <span aria-hidden="true">{t(locale, "treat.bar.patient")}</span>

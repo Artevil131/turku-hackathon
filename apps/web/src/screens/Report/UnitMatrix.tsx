@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useId, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
-import { formatNumber, formatShare, t, type Locale } from "../../i18n/index.ts";
+import type { Cell, MatrixRow, ReportMatrix } from "@aei/empiric";
+import { type CSSProperties, type KeyboardEvent, type ReactNode, useCallback, useEffect, useId, useRef, useState } from "react";
+import { formatNumber, formatShare, type Locale, t } from "../../i18n/index.ts";
 import { Card, EmptyState, Icon, Segmented } from "../../ui/index.ts";
-import { MIN, tintOf, type Cell, type MatrixModel, type MatrixRow } from "./model.ts";
+import { MIN, tintOf } from "./model.ts";
 import { cap, cellAria } from "./parts.tsx";
 
 /*
@@ -62,7 +63,7 @@ export function UnitMatrix({
   actions,
 }: {
   locale: Locale;
-  model: MatrixModel;
+  model: ReportMatrix;
   /** The unit chosen in the filters (its row is marked), or null. */
   selected: string | null;
   period: Period;
@@ -94,6 +95,7 @@ export function UnitMatrix({
     setEdge((prev) => (prev.overflow === overflow && prev.start === start && prev.end === end ? prev : { overflow, start, end }));
   }, []);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: re-measure when the table model changes
   useEffect(() => {
     measure();
     const el = scrollRef.current;
@@ -238,7 +240,7 @@ export function UnitMatrix({
                       <tr key={row.ward} className={mine ? "is-mine" : undefined} aria-current={mine ? "true" : undefined}>
                         {rowHeader(row, true, mine)}
                         {model.columns.map((c, ci) => {
-                          const cell = row.cells.get(c.code) ?? { state: "none" as const, share: null };
+                          const cell = row.cells[c.code] ?? { state: "none" as const, share: null };
                           const label = t(locale, "report.units.cellOpen", {
                             unit: name,
                             drug: drugName(c.code),
@@ -270,8 +272,12 @@ export function UnitMatrix({
                   <tr>
                     {rowHeader(model.all, false)}
                     {model.columns.map((c) => {
-                      const cell = model.all.cells.get(c.code) ?? { state: "none" as const, share: null };
-                      const label = t(locale, "report.units.cell", { unit: allUnits, drug: drugName(c.code), value: cellAria(locale, periodLabel, cell) });
+                      const cell = model.all.cells[c.code] ?? { state: "none" as const, share: null };
+                      const label = t(locale, "report.units.cell", {
+                        unit: allUnits,
+                        drug: drugName(c.code),
+                        value: cellAria(locale, periodLabel, cell),
+                      });
                       return (
                         <td key={c.code} className="report-mx-td">
                           <span className={`report-mx-cell is-static is-${cell.state}`} style={tintStyle(cell)} title={label}>

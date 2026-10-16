@@ -51,6 +51,7 @@ const en = {
 
   "common.loading.title": "Connecting to the laboratory feed",
   "common.loading.body": "Loading every result released so far…",
+  "common.loading.short": "Loading…",
   "common.offline.title": "Can't reach the data feed",
   "common.offline.body": "AEI keeps trying on its own. Next try in {seconds} s.",
   "common.offline.retry": "Try now",
@@ -65,6 +66,8 @@ const en = {
   "common.toast.arrivals": "+{count} results · {date}",
   "common.toast.arrivalsOne": "+1 result · {date}",
   "common.toast.region": "Notifications",
+  "common.toast.analysisFailed": "The server did not answer. Figures appear when it does.",
+  "common.toast.retry": "Try again",
 
   "common.signal.sentinel": "Rare resistance",
   "common.signal.surge": "More resistant finds than usual",
@@ -117,10 +120,15 @@ const en = {
   "common.settings.data": "About the data",
   "common.settings.feed": "Reads the laboratory feed at {source}.",
   "common.settings.thisServer": "this server",
+  "common.settings.analysis": "Analysis runs in: {where}.",
+  "common.settings.analysisBrowser": "this browser",
+  "common.settings.analysisServer": "the server",
   "common.settings.range": "The feed covers {start} to {end}. Results are released up to {asOf}.",
   "common.settings.count": "{count} results released so far.",
-  "common.settings.sim": "This demo is a simulation: past laboratory results are released day by day, as if they were arriving now. AEI notices changes by itself.",
-  "common.settings.rules": "Counting: the first isolate per patient, organism and specimen in each period. No percentage from fewer than {min} isolates.",
+  "common.settings.sim":
+    "This demo is a simulation: past laboratory results are released day by day, as if they were arriving now. AEI notices changes by itself.",
+  "common.settings.rules":
+    "Counting: the first isolate per patient, organism and specimen in each period. No percentage from fewer than {min} isolates.",
   "common.settings.decide": "AEI informs. The doctor decides.",
   "common.settings.ai": "Questions in your own words (AI)",
   "common.settings.aiOn": "On, using {model}",
@@ -192,7 +200,8 @@ const fi: Record<keyof typeof en, string> = {
   "common.fresh.checking": "Tarkistetaan muutoksia…",
 
   "common.sim.label": "Simulaatio",
-  "common.sim.note": "Demo: aiempia laboratoriotuloksia julkaistaan päivä kerrallaan kuin ne saapuisivat nyt. Oikeassa sairaalan syötteessä tätä ohjainta ei ole.",
+  "common.sim.note":
+    "Demo: aiempia laboratoriotuloksia julkaistaan päivä kerrallaan kuin ne saapuisivat nyt. Oikeassa sairaalan syötteessä tätä ohjainta ei ole.",
   "common.sim.play": "Toista",
   "common.sim.pause": "Tauko",
   "common.sim.step1": "+1 päivä",
@@ -217,6 +226,7 @@ const fi: Record<keyof typeof en, string> = {
 
   "common.loading.title": "Yhdistetään laboratorion tietoihin",
   "common.loading.body": "Ladataan kaikki tähän mennessä julkaistut tulokset…",
+  "common.loading.short": "Ladataan…",
   "common.offline.title": "Tietosyötteeseen ei saada yhteyttä",
   "common.offline.body": "AEI yrittää itse uudelleen. Seuraava yritys {seconds} s kuluttua.",
   "common.offline.retry": "Yritä nyt",
@@ -231,6 +241,8 @@ const fi: Record<keyof typeof en, string> = {
   "common.toast.arrivals": "+{count} tulosta · {date}",
   "common.toast.arrivalsOne": "+1 tulos · {date}",
   "common.toast.region": "Ilmoitukset",
+  "common.toast.analysisFailed": "Palvelin ei vastannut. Luvut näkyvät, kun se vastaa.",
+  "common.toast.retry": "Yritä uudelleen",
 
   "common.signal.sentinel": "Harvinainen resistenssi",
   "common.signal.surge": "Tavallista enemmän resistenttejä löydöksiä",
@@ -283,10 +295,15 @@ const fi: Record<keyof typeof en, string> = {
   "common.settings.data": "Tiedoista",
   "common.settings.feed": "Lukee laboratorion syötettä osoitteesta {source}.",
   "common.settings.thisServer": "tämä palvelin",
+  "common.settings.analysis": "Analyysi tehdään: {where}.",
+  "common.settings.analysisBrowser": "tässä selaimessa",
+  "common.settings.analysisServer": "palvelimella",
   "common.settings.range": "Syöte kattaa {start}–{end}. Tulokset on julkaistu {asOf} asti.",
   "common.settings.count": "{count} tulosta julkaistu tähän mennessä.",
-  "common.settings.sim": "Tämä demo on simulaatio: aiempia laboratoriotuloksia julkaistaan päivä kerrallaan kuin ne saapuisivat nyt. AEI huomaa muutokset itse.",
-  "common.settings.rules": "Laskenta: ensimmäinen kanta potilasta, bakteeria ja näytettä kohden kullakin jaksolla. Ei prosenttia alle {min} kannasta.",
+  "common.settings.sim":
+    "Tämä demo on simulaatio: aiempia laboratoriotuloksia julkaistaan päivä kerrallaan kuin ne saapuisivat nyt. AEI huomaa muutokset itse.",
+  "common.settings.rules":
+    "Laskenta: ensimmäinen kanta potilasta, bakteeria ja näytettä kohden kullakin jaksolla. Ei prosenttia alle {min} kannasta.",
   "common.settings.decide": "AEI kertoo. Lääkäri päättää.",
   "common.settings.ai": "Kysy omin sanoin (tekoäly)",
   "common.settings.aiOn": "Käytössä, malli {model}",

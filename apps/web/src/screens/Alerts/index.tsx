@@ -1,12 +1,34 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { episodeOf, groupEpisodes, type Episode } from "../../engine/episodes.ts";
-import type { Severity, Signal, SignalKind } from "../../engine/types.ts";
-import type { FeedMeta, IsoDate, Result } from "../../feed/types.ts";
-import { formatDate, formatNumber, named, t, type Locale } from "../../i18n/index.ts";
-import { Card, ChipGroup, EmptyState, Icon, Picker, Segmented, signalKindLabel, ToggleChip, useIsDesktop, useReducedMotion } from "../../ui/index.ts";
+import type { FeedMeta, IsoDate, Result } from "@aei/feed";
+import type { Episode, Severity, Signal, SignalKind } from "@aei/signals";
+import { type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { episodeOf, groupEpisodes } from "../../analytics/helpers.ts";
+import { formatDate, formatNumber, type Locale, named, t } from "../../i18n/index.ts";
+import {
+  Card,
+  ChipGroup,
+  EmptyState,
+  Icon,
+  Picker,
+  Segmented,
+  signalKindLabel,
+  ToggleChip,
+  useIsDesktop,
+  useReducedMotion,
+} from "../../ui/index.ts";
 import type { TreatPrefs } from "../Treat/index.tsx";
-import { compose, describe, type Described } from "./describe.tsx";
-import { ACTIVE_DAYS, DEFAULT_FILTERS, isActive, KINDS, passes, reveal, SEVERITIES, sortAlerts, type AlertFilters, type Period } from "./filters.ts";
+import { compose, type Described, describe } from "./describe.tsx";
+import {
+  ACTIVE_DAYS,
+  type AlertFilters,
+  DEFAULT_FILTERS,
+  isActive,
+  KINDS,
+  type Period,
+  passes,
+  reveal,
+  SEVERITIES,
+  sortAlerts,
+} from "./filters.ts";
 import { Body, Story, StoryLine, Summary, Tags } from "./parts.tsx";
 import "./Alerts.css";
 
@@ -103,9 +125,19 @@ export function AlertsScreen(p: {
   const checking = signals.length === 0 && (!graceOver || computing);
 
   // ---------- What is listed ----------
-  const sorted = useMemo(() => sortAlerts(signals.filter((s) => passes(s, filters, asOf)), asOf), [signals, filters, asOf]);
+  const sorted = useMemo(
+    () =>
+      sortAlerts(
+        signals.filter((s) => passes(s, filters, asOf)),
+        asOf,
+      ),
+    [signals, filters, asOf],
+  );
   const episodes = useMemo(() => groupEpisodes(sorted), [sorted]);
-  const inPeriod = useMemo(() => signals.filter((s) => filters.period === "all" || isActive(s, asOf)).length, [signals, filters.period, asOf]);
+  const inPeriod = useMemo(
+    () => signals.filter((s) => filters.period === "all" || isActive(s, asOf)).length,
+    [signals, filters.period, asOf],
+  );
   const hiddenCount = inPeriod - sorted.length;
   const isNewEp = (e: Episode) => e.members.some((s) => !seen.has(s.id));
   const newCount = episodes.reduce((k, e) => k + (isNewEp(e) ? 1 : 0), 0);
@@ -120,12 +152,16 @@ export function AlertsScreen(p: {
     }
     return { sev, kind, unit };
   }, [signals, filters, asOf]);
-  const described = useMemo(() => new Map<string, Described>(sorted.map((s) => [s.id, describe(locale, meta, s, asOf)])), [sorted, locale, meta, asOf]);
+  const described = useMemo(
+    () => new Map<string, Described>(sorted.map((s) => [s.id, describe(locale, meta, s, asOf)])),
+    [sorted, locale, meta, asOf],
+  );
   const current = desktop ? (episodes.find((e) => e.id === selected) ?? episodes[0] ?? null) : null;
   /** The step a card's body shows: the one picked in its story, else its lead. */
   const stepOf = (e: Episode): Signal => e.members.find((s) => s.id === step[e.id]) ?? e.lead;
 
   // ---------- Opened from elsewhere (a toast, the Treat or Timeline screen) ----------
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs for each focus request, not for every filter or signal change
   useEffect(() => {
     if (!focus) return;
     const s = signals.find((x) => x.id === focus);
@@ -136,7 +172,15 @@ export function AlertsScreen(p: {
     const f = reveal(filters, s, asOf);
     setFilters(f);
     // The card that holds it once the filters are widened.
-    const ep = episodeOf(groupEpisodes(sortAlerts(signals.filter((x) => passes(x, f, asOf)), asOf)), s.id);
+    const ep = episodeOf(
+      groupEpisodes(
+        sortAlerts(
+          signals.filter((x) => passes(x, f, asOf)),
+          asOf,
+        ),
+      ),
+      s.id,
+    );
     const key = ep?.id ?? s.id;
     setExpanded((e) => new Set(e).add(key));
     setSelected(key);
@@ -205,6 +249,7 @@ export function AlertsScreen(p: {
   }, [entering]);
 
   // The detail pane starts at the top for each alert.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: scroll to top when another alert is opened
   useEffect(() => {
     detailRef.current?.scrollTo?.({ top: 0 });
   }, [current?.id]);
@@ -213,7 +258,9 @@ export function AlertsScreen(p: {
   const toggleSeverity = (sev: Severity) =>
     setFilters((f) => ({
       ...f,
-      severities: f.severities.includes(sev) ? f.severities.filter((x) => x !== sev) : SEVERITIES.filter((x) => x === sev || f.severities.includes(x)),
+      severities: f.severities.includes(sev)
+        ? f.severities.filter((x) => x !== sev)
+        : SEVERITIES.filter((x) => x === sev || f.severities.includes(x)),
     }));
   const showAll = () => setFilters((f) => ({ ...f, severities: [...SEVERITIES], kind: null, unit: null }));
   const markAll = () => onSeen(sorted.filter((s) => !seen.has(s.id)).map((s) => s.id));
@@ -278,7 +325,11 @@ export function AlertsScreen(p: {
           onChange={(period) => setFilters((f) => ({ ...f, period }))}
           stretch={!desktop}
           options={[
-            { value: "active", label: t(locale, "alerts.period.active"), hint: t(locale, "alerts.period.activeHint", { days: ACTIVE_DAYS }) },
+            {
+              value: "active",
+              label: t(locale, "alerts.period.active"),
+              hint: t(locale, "alerts.period.activeHint", { days: ACTIVE_DAYS }),
+            },
             { value: "all", label: t(locale, "alerts.period.all"), hint: t(locale, "alerts.period.allHint") },
           ]}
         />
@@ -422,7 +473,13 @@ export function AlertsScreen(p: {
               d={lead}
               extra={open ? null : storyLine}
               control={
-                <button type="button" className="alerts-toggle" aria-expanded={open} aria-controls={`${id}-body`} onClick={() => toggle(e.id)}>
+                <button
+                  type="button"
+                  className="alerts-toggle"
+                  aria-expanded={open}
+                  aria-controls={`${id}-body`}
+                  onClick={() => toggle(e.id)}
+                >
                   {lead.title.node}
                 </button>
               }
@@ -433,7 +490,14 @@ export function AlertsScreen(p: {
             {open ? (
               <>
                 {many ? (
-                  <Story locale={locale} asOf={asOf} members={e.members} described={described} current={shown.id} onPick={(sid) => pickStep(e.id, sid)} />
+                  <Story
+                    locale={locale}
+                    asOf={asOf}
+                    members={e.members}
+                    described={described}
+                    current={shown.id}
+                    onPick={(sid) => pickStep(e.id, sid)}
+                  />
                 ) : null}
                 <Body key={shown.id} {...bodyProps} s={shown} d={d} seen={ids.every((x) => seen.has(x))} seenIds={ids} />
               </>
@@ -517,14 +581,15 @@ export function AlertsScreen(p: {
       {header}
       {signals.length > 0 ? filterBar : null}
       {hiddenLine}
-      {empty ?? (desktop ? (
-        <div className="alerts-cols">
-          {list}
-          {detail}
-        </div>
-      ) : (
-        list
-      ))}
+      {empty ??
+        (desktop ? (
+          <div className="alerts-cols">
+            {list}
+            {detail}
+          </div>
+        ) : (
+          list
+        ))}
     </div>
   );
 }

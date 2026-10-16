@@ -1,19 +1,19 @@
+import type { FeedClock, FeedMeta, IsoDate, Result } from "@aei/feed";
+import { MIN_ISOLATES, toDayNumber } from "@aei/isolates";
+import type { Severity, Signal, SignalKind } from "@aei/signals";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { toDayNumber } from "../../engine/dates.ts";
-import type { Severity, Signal, SignalKind } from "../../engine/types.ts";
-import type { FeedClock, FeedMeta, IsoDate, Result } from "../../feed/types.ts";
-import { formatDate, formatMonth, formatNumber, formatShare, t, type Locale } from "../../i18n/index.ts";
+import { visibleSignals } from "../../analytics/helpers.ts";
+import { formatDate, formatMonth, formatNumber, formatShare, type Locale, t } from "../../i18n/index.ts";
 import { Badge, SeverityBadge } from "../../ui/Badge.tsx";
 import { Card } from "../../ui/Card.tsx";
 import { signalKindLabel, unitName } from "../../ui/defaults.ts";
 import { EmptyState } from "../../ui/EmptyState.tsx";
 import { useIsDesktop, useReducedMotion } from "../../ui/hooks.ts";
 import { Icon } from "../../ui/Icon.tsx";
-import { MIN_ISOLATES, visibleSignals } from "../../engine/rules.ts";
-import { byMonth, laneOrder, updateStore, weekly, type DailyStore } from "./aggregate.ts";
+import { byMonth, type DailyStore, laneOrder, updateStore, weekly } from "./aggregate.ts";
 import { TimelineChart } from "./Chart.tsx";
 import { KindGlyph } from "./Glyph.tsx";
-import { flagLabel, signalTitle, signalWhen, signalWhere, Summary, summaryText } from "./words.tsx";
+import { flagLabel, Summary, signalTitle, signalWhen, signalWhere, summaryText } from "./words.tsx";
 import "./Timeline.css";
 
 // The Timeline: the feed's whole period on one view, the story so far, and the
@@ -51,6 +51,7 @@ export function TimelineScreen(p: {
 
   const shown = useMemo(() => visibleSignals(signals, asOf), [signals, asOf]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: store is append-only and mutated in place; results marks a change
   const wardKey = useMemo(() => {
     const codes = new Set(store.byWard.keys());
     for (const s of shown) if (s.ward) codes.add(s.ward);
@@ -58,6 +59,7 @@ export function TimelineScreen(p: {
   }, [store, results, shown]);
   const groups = useMemo(() => laneOrder(meta, wardKey ? wardKey.split("|") : []), [meta, wardKey]);
   const laneCodes = useMemo(() => groups.flatMap((g) => g.codes), [groups]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: store is append-only and mutated in place; results marks a change
   const view = useMemo(() => weekly(store, asOf, laneCodes), [store, results, asOf, laneCodes]);
 
   const [highlight, setHighlight] = useState<string | null>(null);
@@ -66,6 +68,7 @@ export function TimelineScreen(p: {
   // Opened for one signal: ring it, scroll the chart to its weeks and the page to the chart.
   const [focused, setFocused] = useState<{ id: string; seq: number } | null>(null);
   const focusSeq = useRef(0);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs for each new focus request (seq), not on reduced-motion changes
   useEffect(() => {
     if (!focus || focus.seq === focusSeq.current) return;
     focusSeq.current = focus.seq;
@@ -264,6 +267,7 @@ export function TimelineScreen(p: {
           {months.length === 0 ? (
             <EmptyState compact icon="shield" title={t(locale, "timeline.list.empty")} />
           ) : (
+            // biome-ignore lint/a11y/noStaticElementInteractions: mouse leave only clears the hover highlight
             <div className="timeline-months" onMouseLeave={() => setHighlight(null)}>
               {visibleMonths.map(({ month, items }) => (
                 <section key={month} className="timeline-month" aria-labelledby={`timeline-m-${month}`}>
@@ -309,7 +313,12 @@ export function TimelineScreen(p: {
                 </section>
               ))}
               {months.length > MONTHS_SHOWN ? (
-                <button type="button" className="k-btn is-ghost timeline-more" onClick={() => setAllMonths(!allMonths)} aria-expanded={allMonths}>
+                <button
+                  type="button"
+                  className="k-btn is-ghost timeline-more"
+                  onClick={() => setAllMonths(!allMonths)}
+                  aria-expanded={allMonths}
+                >
                   <Icon name={allMonths ? "chevron-down" : "chevron-right"} size={18} />
                   {allMonths ? t(locale, "timeline.list.fewer") : t(locale, "timeline.list.older", { count: months.length - MONTHS_SHOWN })}
                 </button>
@@ -324,12 +333,12 @@ export function TimelineScreen(p: {
               {shown.length === 1
                 ? t(locale, "timeline.volume.bodyOne", { months: formatNumber(locale, monthsOfData, 0) })
                 : shown.length
-                ? t(locale, "timeline.volume.body", {
-                    count: formatNumber(locale, shown.length),
-                    months: formatNumber(locale, monthsOfData, 0),
-                    rate: formatNumber(locale, shown.length / Math.max(1, monthsOfData), 1),
-                  })
-                : t(locale, "timeline.volume.none", { months: formatNumber(locale, monthsOfData, 0) })}
+                  ? t(locale, "timeline.volume.body", {
+                      count: formatNumber(locale, shown.length),
+                      months: formatNumber(locale, monthsOfData, 0),
+                      rate: formatNumber(locale, shown.length / Math.max(1, monthsOfData), 1),
+                    })
+                  : t(locale, "timeline.volume.none", { months: formatNumber(locale, monthsOfData, 0) })}
             </p>
             <ul className="timeline-kinds">
               {KINDS.map((kind) => (

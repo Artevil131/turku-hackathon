@@ -1,4 +1,4 @@
-import type { Severity, SignalKind } from "../../engine/types.ts";
+import type { Severity, SignalKind } from "@aei/signals";
 
 // The mark inside a signal segment: one small glyph per kind, drawn on a
 // 10 x 10 box centred on (0, 0). Kind is never shown by the glyph alone:
@@ -18,6 +18,7 @@ export function GlyphMark({ kind, x, y, color, scale = 1 }: { kind: SignalKind; 
   const tr = `translate(${x} ${y})${scale !== 1 ? ` scale(${scale})` : ""}`;
   if (kind === "cluster")
     return (
+      // biome-ignore lint/a11y/noAriaHiddenOnFocusable: an SVG group is not focusable; the glyph is decorative
       <g transform={tr} fill={color} aria-hidden="true">
         <circle cx={-2.3} cy={1.6} r={1.35} />
         <circle cx={2.3} cy={1.6} r={1.35} />
@@ -25,6 +26,7 @@ export function GlyphMark({ kind, x, y, color, scale = 1 }: { kind: SignalKind; 
       </g>
     );
   return (
+    // biome-ignore lint/a11y/noAriaHiddenOnFocusable: an SVG path is not focusable; the glyph is decorative
     <path
       transform={tr}
       d={PATH[kind]}

@@ -1,10 +1,12 @@
+import type { PatientQuery, Widening } from "@aei/empiric";
+import type { FeedMeta } from "@aei/feed";
+import type { Share } from "@aei/isolates";
+import type { Signal } from "@aei/signals";
 import { Fragment, type ReactNode } from "react";
-import { DEFAULT_COVERAGE, EVERY_UNIT, isScreen } from "../../engine/coverage.ts";
-import type { PatientQuery, Share, Signal, Widening } from "../../engine/types.ts";
-import type { FeedMeta } from "../../feed/types.ts";
-import { formatNumber, formatShare, t, type Locale, type MessageKey } from "../../i18n/index.ts";
+import { DEFAULT_COVERAGE, EVERY_UNIT, isScreen } from "../../analytics/helpers.ts";
+import { formatNumber, formatShare, type Locale, type MessageKey, t } from "../../i18n/index.ts";
 import { antibioticByCode, antibioticName, Org, signalKindLabel, specimenName, unitName } from "../../ui/index.ts";
-import { capFirst, humanize, midSentence, type coverGap } from "./model.ts";
+import { capFirst, type coverGap, humanize, midSentence } from "./model.ts";
 
 // Words for the Treat screen, built from t() and the feed's own names.
 
@@ -19,6 +21,7 @@ export function tn(locale: Locale, key: MessageKey, vars: Record<string, ReactNo
     const m = /^\{(\w+)\}$/.exec(part);
     if (!m) return part;
     const v = vars[m[1]!];
+    // biome-ignore lint/suspicious/noArrayIndexKey: template parts are positional and never reorder
     return <Fragment key={i}>{v === undefined ? part : v}</Fragment>;
   });
 }
@@ -69,7 +72,14 @@ function list(locale: Locale, items: string[]): string {
 }
 
 /** The amber line when the engine widened the group: who was too few, what was left out, what is shown instead. */
-export function widenedText(locale: Locale, meta: FeedMeta, asked: PatientQuery, used: PatientQuery, widened: readonly Widening[], min: number): string {
+export function widenedText(
+  locale: Locale,
+  meta: FeedMeta,
+  asked: PatientQuery,
+  used: PatientQuery,
+  widened: readonly Widening[],
+  min: number,
+): string {
   const specimen = midSentence(specimenName(locale, meta, asked.specimen));
   const who = whoPhrase(locale, asked) ?? t(locale, "treat.who.samples", { specimen });
   const group = whoPhrase(locale, used);
@@ -97,7 +107,8 @@ export function widenedText(locale: Locale, meta: FeedMeta, asked: PatientQuery,
 /** "84 % · 110/131", "9 results — too few" or "No results". */
 export function figText(locale: Locale, share: Share, min: number): string {
   if (share.n === 0) return t(locale, "treat.fig.none");
-  if (share.n < min) return share.n === 1 ? t(locale, "treat.fig.tooFewOne") : t(locale, "treat.fig.tooFew", { n: formatNumber(locale, share.n) });
+  if (share.n < min)
+    return share.n === 1 ? t(locale, "treat.fig.tooFewOne") : t(locale, "treat.fig.tooFew", { n: formatNumber(locale, share.n) });
   return t(locale, "treat.fig.value", {
     percent: formatShare(locale, share.works / share.n),
     works: formatNumber(locale, share.works),
@@ -149,7 +160,8 @@ export function signalSentence(locale: Locale, meta: FeedMeta, s: Signal, ward: 
         ? t(locale, "treat.signal.thisUnit")
         : t(locale, "treat.signal.onUnit", { unit: unitName(locale, meta, s.ward) });
   const count = s.patients ?? s.observed;
-  const patients = count === 1 ? t(locale, "treat.signal.patientsOne") : t(locale, "treat.signal.patients", { count: formatNumber(locale, count) });
+  const patients =
+    count === 1 ? t(locale, "treat.signal.patientsOne") : t(locale, "treat.signal.patients", { count: formatNumber(locale, count) });
   const flag = s.phenotype ? s.phenotype.toUpperCase() : signalKindLabel(locale, s.kind);
   const organism = s.organism ? <Org name={s.organism} short /> : "–";
   const expected = formatNumber(locale, s.expected ?? 0, (s.expected ?? 0) >= 10 ? 0 : 1);

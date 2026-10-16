@@ -1,154 +1,24 @@
-import { coverage, DEFAULT_COVERAGE, EVERY_UNIT, MIN_KNOWN_SHARE, monthly, shareValue, treatmentsFor } from "../../engine/coverage.ts";
-import { addDays } from "../../engine/dates.ts";
-import type { AwareGroup, Catalog, CoverageResult, LikelyOrganism, MonthPoint, PatientQuery, Share } from "../../engine/types.ts";
-import type { IsoDate, Result } from "../../feed/types.ts";
+import type { Cell, CellState, DrugRow, ReportMatrix, ReportTable } from "@aei/empiric";
+import type { IsoDate } from "@aei/feed";
+import { addDays } from "@aei/isolates";
+import { cellValue, EVERY_UNIT, REPORT_MIN, REPORT_MONTHS, REPORT_RECENT_DAYS, REPORT_YEAR_DAYS } from "../../analytics/helpers.ts";
 
 /*
-  The report's numbers. Pure functions over the released results; every
-  figure comes from engine/coverage.ts, so the report and the Treat screen
-  count the same way (first isolate per patient, organism and specimen in the
-  window; missing results handled by the engine's EUCAST rule).
-
-  A report shows the filters exactly as chosen. coverage() widens a thin
-  query on its own (drops age, sex, then the unit) for the doctor's screen;
-  here minIsolates 0 turns that off, and the organiser's floor is applied
-  when a figure is shown: no percentage from fewer than MIN first isolates.
+  How the report presents its tables. The tables themselves (ReportTable,
+  ReportMatrix) come from the analysis (useReportTable, useReportMatrix in
+  src/analytics; computed by @aei/empiric reportTable and reportMatrix), so the
+  report and the Treat screen count the same way. Here: the windows' dates,
+  sorting, cell shading, and the CSV files.
 */
 
-export const MIN = DEFAULT_COVERAGE.minIsolates;
-export const RECENT_DAYS = DEFAULT_COVERAGE.recentDays;
-export const YEAR_DAYS = DEFAULT_COVERAGE.yearDays;
-export const MONTHS = 12;
+export const MIN = REPORT_MIN;
+export const RECENT_DAYS = REPORT_RECENT_DAYS;
+export const YEAR_DAYS = REPORT_YEAR_DAYS;
+export const MONTHS = REPORT_MONTHS;
 
-/** How one figure can be shown. */
-export type CellState =
-  | "ok" // a percentage: at least MIN first isolates with a known answer
-  | "few" // fewer than MIN (share given when the engine returned one; else fewer than MIN for sure)
-  | "rare" // enough isolates, but the antibiotic was tested in fewer than half of them (engine rule)
-  | "none"; // no isolates in the window, or none with a result for this antibiotic
-
-export interface Cell {
-  state: CellState;
-  /** The engine's figure, when it returned one for this antibiotic in this window. */
-  share: Share | null;
-}
-
-/** The window's first day as shown (the engine's window is from < date <= asOf). */
+/** The window's first day as shown (the analysis's window is from < date <= asOf). */
 export function windowStart(asOf: IsoDate, days: number): IsoDate {
   return addDays(asOf, -days + 1);
-}
-
-/** coverage() over one window of `days`, for exactly this query (no widening). */
-export function windowCoverage(
-  results: readonly Result[],
-  asOf: IsoDate,
-  query: PatientQuery,
-  catalog: Catalog,
-  days: number,
-): CoverageResult {
-  // One window (counted once), no widening, and no every-unit figure: the report computes that itself where it shows it.
-  return coverage(results, asOf, query, catalog, { minIsolates: 0, recentDays: days, yearDays: days, withHospital: false });
-}
-
-export function cellFromShare(share: Share): Cell {
-  if (share.n >= MIN && share.n > 0) return { state: "ok", share };
-  if (share.n > 0) return { state: "few", share };
-  return { state: "none", share };
-}
-
-/**
- * The figure for one antibiotic in a window. The engine leaves an antibiotic
- * out when it has no result in the window or (organism not known) when fewer
- * than half of the window's isolates have a known answer for it; below 2 x MIN
- * isolates that also means fewer than MIN answers, so it reads "too few".
- */
-export function cellOf(cov: CoverageResult, antibiotic: string, organismKnown: boolean): Cell {
-  const d = cov.drugs.find((x) => x.antibiotic === antibiotic);
-  if (d) return cellFromShare(d.main);
-  const isolates = cov.basis.n;
-  if (isolates === 0 || organismKnown) return { state: "none", share: null };
-  if (isolates * MIN_KNOWN_SHARE < MIN) return { state: "few", share: null };
-  return { state: "rare", share: null };
-}
-
-/** 0-1 when the cell shows a percentage, else null. */
-export function cellValue(cell: Cell): number | null {
-  return cell.state === "ok" && cell.share ? shareValue(cell.share) : null;
-}
-
-/** Percentage points, last 4 weeks minus 12 months, only when both show a percentage. */
-export function changeOf(recent: Cell, year: Cell): number | null {
-  const r = cellValue(recent);
-  const y = cellValue(year);
-  // `|| 0` turns a rounded -0 into 0.
-  return r === null || y === null ? null : Math.round(100 * (r - y)) || 0;
-}
-
-// ---------- Antibiotics view ----------
-
-export interface DrugRow {
-  code: string;
-  aware: AwareGroup | null;
-  /** Position in the lab's list (catalog order). */
-  order: number;
-  recent: Cell;
-  year: Cell;
-  /** Every unit, 12 months; null when the report already covers every unit. */
-  hospital: Cell | null;
-  change: number | null;
-  months: MonthPoint[];
-}
-
-export interface TableModel {
-  asOf: IsoDate;
-  query: PatientQuery;
-  recentN: number;
-  yearN: number;
-  /** First isolates on every unit in 12 months (null when the report covers every unit). */
-  hospitalN: number | null;
-  rows: DrugRow[];
-  /** Treatment antibiotics for this specimen that have no row (too rarely tested here). */
-  hidden: string[];
-  /** Organisms behind this infection in 12 months (query without the organism), most common first. */
-  organisms: LikelyOrganism[];
-}
-
-export function buildTable(results: readonly Result[], asOf: IsoDate, query: PatientQuery, catalog: Catalog): TableModel {
-  const organismKnown = !!query.organism;
-  const year = windowCoverage(results, asOf, query, catalog, YEAR_DAYS);
-  const recent = windowCoverage(results, asOf, query, catalog, RECENT_DAYS);
-  const everyUnit = query.ward === EVERY_UNIT;
-  const hospital = everyUnit ? null : windowCoverage(results, asOf, { ...query, ward: EVERY_UNIT }, catalog, YEAR_DAYS);
-  const treatments = treatmentsFor(catalog, query.specimen);
-  const order = new Map(treatments.map((a, i) => [a.code, i]));
-
-  const rows: DrugRow[] = year.drugs.map((d) => {
-    const r = cellOf(recent, d.antibiotic, organismKnown);
-    const y = cellFromShare(d.main);
-    return {
-      code: d.antibiotic,
-      aware: d.aware,
-      order: order.get(d.antibiotic) ?? treatments.length,
-      recent: r,
-      year: y,
-      hospital: hospital ? cellOf(hospital, d.antibiotic, organismKnown) : null,
-      change: changeOf(r, y),
-      months: monthly(results, asOf, query, d.antibiotic, MONTHS, catalog),
-    };
-  });
-  rows.sort((a, b) => a.order - b.order);
-  const shown = new Set(rows.map((r) => r.code));
-
-  return {
-    asOf,
-    query,
-    recentN: recent.basis.n,
-    yearN: year.basis.n,
-    hospitalN: hospital ? hospital.basis.n : null,
-    rows,
-    hidden: treatments.filter((a) => !shown.has(a.code)).map((a) => a.code),
-    organisms: year.organisms,
-  };
 }
 
 export type SortKey = "list" | "works" | "drop";
@@ -175,62 +45,6 @@ export function largestDrop(rows: readonly DrugRow[]): DrugRow | null {
     if (!best || r.change < (best.change ?? 0) || (r.change === best.change && r.order < best.order)) best = r;
   }
   return best;
-}
-
-// ---------- Compare units view ----------
-
-export interface MatrixRow {
-  /** Unit code; EVERY_UNIT for the all-units row. */
-  ward: string;
-  /** First isolates in the window. */
-  n: number;
-  cells: Map<string, Cell>;
-}
-
-export interface MatrixModel {
-  asOf: IsoDate;
-  days: number;
-  /** Antibiotic codes in the lab's order: every one shown on at least one row. */
-  columns: { code: string; aware: AwareGroup | null }[];
-  rows: MatrixRow[];
-  all: MatrixRow;
-  /** Organisms behind this infection on every unit in 12 months. */
-  organisms: LikelyOrganism[];
-}
-
-export function buildMatrix(
-  results: readonly Result[],
-  asOf: IsoDate,
-  query: PatientQuery,
-  catalog: Catalog,
-  days: number,
-): MatrixModel {
-  const organismKnown = !!query.organism;
-  const base: PatientQuery = { ...query, ward: EVERY_UNIT };
-  const allCov = windowCoverage(results, asOf, base, catalog, days);
-  const unitCovs = catalog.units.map((u) => ({ ward: u.code, cov: windowCoverage(results, asOf, { ...base, ward: u.code }, catalog, days) }));
-  const organisms = days === YEAR_DAYS ? allCov.organisms : windowCoverage(results, asOf, base, catalog, YEAR_DAYS).organisms;
-
-  const used = new Map<string, AwareGroup | null>();
-  for (const cov of [allCov, ...unitCovs.map((u) => u.cov)]) for (const d of cov.drugs) used.set(d.antibiotic, d.aware);
-  const columns = treatmentsFor(catalog, query.specimen)
-    .filter((a) => used.has(a.code))
-    .map((a) => ({ code: a.code, aware: used.get(a.code) ?? null }));
-
-  const rowOf = (ward: string, cov: CoverageResult): MatrixRow => ({
-    ward,
-    n: cov.basis.n,
-    cells: new Map(columns.map((c) => [c.code, cellOf(cov, c.code, organismKnown)])),
-  });
-
-  return {
-    asOf,
-    days,
-    columns,
-    rows: unitCovs.map((u) => rowOf(u.ward, u.cov)),
-    all: rowOf(EVERY_UNIT, allCov),
-    organisms,
-  };
 }
 
 /** Background strength (0-50 %) for a matrix cell: works less often = stronger. Square root spreads the clinically busy 80-100 % range. */
@@ -289,7 +103,7 @@ export interface CsvLabels {
 }
 
 // Column names are machine-readable identifiers (the same in every language), so scripts can rely on them.
-export function tableCsv(model: TableModel, labels: CsvLabels, dialect: CsvDialect = CSV_EN): string {
+export function tableCsv(model: ReportTable, labels: CsvLabels, dialect: CsvDialect = CSV_EN): string {
   const recentFrom = windowStart(model.asOf, RECENT_DAYS);
   const yearFrom = windowStart(model.asOf, YEAR_DAYS);
   const ward = model.query.ward;
@@ -364,7 +178,7 @@ export function tableCsv(model: TableModel, labels: CsvLabels, dialect: CsvDiale
   return toCsv(lines, dialect);
 }
 
-export function matrixCsv(model: MatrixModel, labels: CsvLabels, dialect: CsvDialect = CSV_EN): string {
+export function matrixCsv(model: ReportMatrix, labels: CsvLabels, dialect: CsvDialect = CSV_EN): string {
   const from = windowStart(model.asOf, model.days);
   const head = [
     "as_of",
@@ -388,7 +202,7 @@ export function matrixCsv(model: MatrixModel, labels: CsvLabels, dialect: CsvDia
   const lines: CsvValue[][] = [head];
   for (const row of [...model.rows, model.all]) {
     for (const c of model.columns) {
-      const cell = row.cells.get(c.code) ?? { state: "none" as const, share: null };
+      const cell = row.cells[c.code] ?? { state: "none" as const, share: null };
       lines.push([
         model.asOf,
         from,

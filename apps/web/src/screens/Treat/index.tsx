@@ -1,9 +1,11 @@
+import type { FeedMeta, IsoDate, Result } from "@aei/feed";
+import type { AgeBand, Catalog, Onset } from "@aei/isolates";
+import type { Signal } from "@aei/signals";
 import { useCallback, useMemo } from "react";
-import type { FeedMeta, IsoDate, Result } from "../../feed/types.ts";
-import type { AgeBand, Catalog, Onset, Signal } from "../../engine/types.ts";
-import { coverage, DEFAULT_COVERAGE, EVERY_UNIT } from "../../engine/coverage.ts";
-import { t, type Locale } from "../../i18n/index.ts";
-import { useIsDesktop } from "../../ui/index.ts";
+import { DEFAULT_COVERAGE, EVERY_UNIT } from "../../analytics/helpers.ts";
+import { type Rank, type Released, useCoverage } from "../../analytics/index.ts";
+import { type Locale, t } from "../../i18n/index.ts";
+import { EmptyState, useIsDesktop } from "../../ui/index.ts";
 import { fallingHere, hasDetails, queryOf, sexesIn, signalsFor } from "./model.ts";
 import { PatientBar, PatientCard } from "./PatientCard.tsx";
 import { ResultView } from "./Result.tsx";
@@ -34,7 +36,7 @@ export function TreatScreen(p: {
   prefs: TreatPrefs;
   onPrefs: (patch: Partial<TreatPrefs>) => void;
   onOpenSignal: (id: string) => void;
-  rank: "access-first" | "coverage";
+  rank: Rank;
 }) {
   const { locale, meta, results, asOf, signals, prefs, onPrefs, onOpenSignal, rank } = p;
   const min = DEFAULT_COVERAGE.minIsolates;
@@ -46,11 +48,22 @@ export function TreatScreen(p: {
     () => queryOf(meta, { ward, specimen, sex, age, onset, organism }),
     [meta, ward, specimen, sex, age, onset, organism],
   );
-  const cov = useMemo(() => coverage(results, asOf, asked, catalog, { rank }), [results, asOf, asked, catalog, rank]);
+  const at = useMemo<Released>(() => ({ results, asOf, catalog }), [results, asOf, catalog]);
+  const cov = useCoverage(at, asked, rank);
   const sexes = useMemo(() => sexesIn(results), [results]);
   const mine = useMemo(() => signalsFor(signals, ward, specimen, asOf), [signals, ward, specimen, asOf]);
   const falling = useMemo(() => fallingHere(mine, ward, specimen, organism), [mine, ward, specimen, organism]);
   const clearDetails = useCallback(() => onPrefs({ sex: null, age: null, onset: null, organism: null }), [onPrefs]);
+
+  // Only while a server is computing the first answer (never with the analysis in this browser).
+  if (!cov) {
+    return (
+      <div className={`treat${desktop ? "" : " is-phone"}`}>
+        <h1 className="u-sr">{t(locale, "treat.title")}</h1>
+        <EmptyState tone="loading" icon="flask" title={t(locale, "common.loading.title")} body={t(locale, "common.loading.body")} />
+      </div>
+    );
+  }
 
   const patient = {
     locale,
@@ -67,9 +80,7 @@ export function TreatScreen(p: {
     <ResultView
       locale={locale}
       meta={meta}
-      results={results}
-      asOf={asOf}
-      catalog={catalog}
+      at={at}
       asked={asked}
       cov={cov}
       rank={rank}

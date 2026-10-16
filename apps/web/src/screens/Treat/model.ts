@@ -1,6 +1,7 @@
-import type { FeedMeta, IsoDate, Unit } from "../../feed/types.ts";
-import type { AgeBand, Onset, PatientQuery, Severity, Share, Signal } from "../../engine/types.ts";
-import { daysBetween } from "../../engine/dates.ts";
+import type { PatientQuery } from "@aei/empiric";
+import type { FeedMeta, IsoDate, Unit } from "@aei/feed";
+import { type AgeBand, daysBetween, type Onset, type Share } from "@aei/isolates";
+import type { Severity, Signal } from "@aei/signals";
 
 // Pure helpers for the Treat screen: prefs -> engine query, which signals the
 // doctor sees, how units group. Nothing here knows any unit, organism or
@@ -141,7 +142,11 @@ export const COVER_NOTE_BELOW = 0.95;
 export const COVER_NAMES = 2;
 
 /** The isolates a figure leaves out, when they are enough to mention (else null). */
-export function coverGap(d: { main: Share; isolates: number; untested: { organism: string; n: number }[] }): { known: number; total: number; names: string[]; more: number } | null {
+export function coverGap(d: {
+  main: Share;
+  isolates: number;
+  untested: { organism: string; n: number }[];
+}): { known: number; total: number; names: string[]; more: number } | null {
   if (d.isolates <= 0 || d.untested.length === 0 || d.main.n >= COVER_NOTE_BELOW * d.isolates) return null;
   return {
     known: d.main.n,

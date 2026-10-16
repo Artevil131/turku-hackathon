@@ -1,12 +1,15 @@
+import type { PatientQuery } from "@aei/empiric";
+import type { FeedMeta, IsoDate, Result } from "@aei/feed";
+import type { AgeBand, Catalog } from "@aei/isolates";
 import { useDeferredValue, useMemo } from "react";
-import { EVERY_UNIT } from "../../engine/coverage.ts";
-import type { AgeBand, Catalog, PatientQuery } from "../../engine/types.ts";
-import type { FeedMeta, IsoDate, Result } from "../../feed/types.ts";
-import { formatDate, formatNumber, t, type Locale } from "../../i18n/index.ts";
+import { EVERY_UNIT } from "../../analytics/helpers.ts";
+import { type Released, useReportMatrix, useReportTable } from "../../analytics/index.ts";
+import { formatDate, formatNumber, type Locale, t } from "../../i18n/index.ts";
 import {
   ageLabel,
   antibioticName,
   defaultSpecimen,
+  EmptyState,
   Icon,
   Org,
   Segmented,
@@ -21,22 +24,20 @@ import type { TreatPrefs } from "../Treat/index.tsx";
 import { DrugTable } from "./DrugTable.tsx";
 import { Filters } from "./Filters.tsx";
 import {
-  buildMatrix,
-  buildTable,
   CSV_EN,
   CSV_FI,
+  type CsvLabels,
   csvFilename,
-  matrixCsv,
   MIN,
+  matrixCsv,
   RECENT_DAYS,
   SORT_KEYS,
+  type SortKey,
   tableCsv,
   YEAR_DAYS,
-  type CsvLabels,
-  type SortKey,
 } from "./model.ts";
-import { cap, CsvButton, downloadCsv } from "./parts.tsx";
-import { PERIODS, UnitMatrix, type Period } from "./UnitMatrix.tsx";
+import { CsvButton, cap, downloadCsv } from "./parts.tsx";
+import { PERIODS, type Period, UnitMatrix } from "./UnitMatrix.tsx";
 import "./Report.css";
 
 /*
@@ -45,7 +46,8 @@ import "./Report.css";
   by the data's own parameters (unit, infection site, bacteria, sex, age),
   updated as each day's results arrive. Two views: one row per antibiotic, or
   every unit side by side. Both download as CSV with the counting rules
-  applied. Every number comes from engine/coverage.ts.
+  applied. Every number comes from the analysis (src/analytics: useReportTable,
+  useReportMatrix), computed by @aei/empiric.
 */
 
 export interface ReportPrefs {
@@ -107,8 +109,9 @@ export function ReportScreen(p: {
   const query = useMemo<PatientQuery>(() => ({ ...base, ward: ward ?? EVERY_UNIT }), [base, ward]);
   const days = period === "recent" ? RECENT_DAYS : YEAR_DAYS;
 
-  const table = useMemo(() => (view === "table" ? buildTable(results, asOf, query, catalog) : null), [view, results, asOf, query, catalog]);
-  const matrix = useMemo(() => (view === "units" ? buildMatrix(results, asOf, base, catalog, days) : null), [view, results, asOf, base, catalog, days]);
+  const at = useMemo<Released>(() => ({ results, asOf, catalog }), [results, asOf, catalog]);
+  const table = useReportTable(at, view === "table" ? query : null);
+  const matrix = useReportMatrix(at, view === "units" ? base : null, days);
 
   const site = cap(locale, specimenName(locale, meta, specimen));
   const unitLabel = ward ? unitName(locale, meta, ward) : t(locale, "common.unit.all");
@@ -206,6 +209,11 @@ export function ReportScreen(p: {
         onPrefs={onPrefs}
         unitFilter={view === "table"}
       />
+
+      {!table && !matrix ? (
+        // Only while a server is computing the first answer (never with the analysis in this browser).
+        <EmptyState compact tone="loading" icon="report" title={t(locale, "common.loading.short")} />
+      ) : null}
 
       {table ? (
         <DrugTable

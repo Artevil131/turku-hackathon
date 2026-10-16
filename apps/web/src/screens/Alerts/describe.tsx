@@ -1,5 +1,7 @@
+import type { FeedMeta, IsoDate } from "@aei/feed";
+import { daysBetween, type Share } from "@aei/isolates";
+import type { Signal } from "@aei/signals";
 import { Fragment, type ReactNode } from "react";
-import { daysBetween } from "../../engine/dates.ts";
 import {
   CLUSTER_ALPHA,
   CLUSTER_MIN_PATIENTS,
@@ -8,6 +10,7 @@ import {
   GAP_BASELINE_DAYS,
   GAP_WINDOW_DAYS,
   GAP_ZERO_RUN_DAYS,
+  isScreen,
   NEW_FLAG_QUIET_DAYS,
   SENTINEL_GAP_DAYS,
   SHIFT_ALPHA,
@@ -21,11 +24,9 @@ import {
   TREND_BIN_DAYS,
   TREND_MIN_RISE,
   TREND_RECENT_BINS,
-} from "../../engine/signals.ts";
-import type { Share, Signal } from "../../engine/types.ts";
-import type { FeedMeta, IsoDate } from "../../feed/types.ts";
-import { formatDate, formatNumber, formatShare, t, type Locale, type MessageKey } from "../../i18n/index.ts";
-import { isScreen } from "../../engine/coverage.ts";
+} from "../../analytics/helpers.ts";
+import { formatDate, formatNumber, formatShare, type Locale, type MessageKey, t } from "../../i18n/index.ts";
+import type { IconName } from "../../ui/index.ts";
 import {
   antibioticByCode,
   antibioticName,
@@ -37,7 +38,6 @@ import {
   unitByCode,
   unitName,
 } from "../../ui/index.ts";
-import type { IconName } from "../../ui/index.ts";
 import type { TreatPrefs } from "../Treat/index.tsx";
 
 // Turns one signal into plain clinical words: what happened, where and when,
@@ -114,6 +114,7 @@ export function compose(locale: Locale, key: MessageKey, vars: Record<string, Va
       nodes.push(`{${part}}`);
       texts.push(`{${part}}`);
     } else if (typeof v === "object") {
+      // biome-ignore lint/suspicious/noArrayIndexKey: sentence parts are positional and never reorder
       nodes.push(<Fragment key={i}>{v.node}</Fragment>);
       texts.push(v.text);
     } else {
@@ -156,7 +157,8 @@ function ago(locale: Locale, iso: IsoDate, asOf: IsoDate): string {
 }
 
 export function whenText(locale: Locale, s: Signal, asOf: IsoDate): string {
-  if (s.firstDate === s.lastDate) return `${t(locale, "alerts.when.on", { date: dateText(locale, s.firstDate, asOf) })} · ${ago(locale, s.lastDate, asOf)}`;
+  if (s.firstDate === s.lastDate)
+    return `${t(locale, "alerts.when.on", { date: dateText(locale, s.firstDate, asOf) })} · ${ago(locale, s.lastDate, asOf)}`;
   const since = t(locale, "alerts.when.since", { date: dateText(locale, s.firstDate, asOf) });
   if (s.lastDate >= asOf) return `${since} · ${t(locale, "alerts.when.ongoing")}`;
   return `${since} · ${t(locale, "alerts.when.last", { date: dateText(locale, s.lastDate, asOf) })} (${ago(locale, s.lastDate, asOf)})`;
@@ -261,7 +263,9 @@ export function describe(locale: Locale, meta: FeedMeta, s: Signal, asOf: IsoDat
         ? t(locale, "alerts.how.surge", { observed: n(s.observed), flag, days: n(SURGE_WINDOW_DAYS), expected: exp })
         : patientsLine(s.observed);
       short = exp ? t(locale, "alerts.short.patients", { count: n(s.observed), expected: exp }) : patientsLine(s.observed);
-      method.push(t(locale, "alerts.m.surge", { flag, days: n(SURGE_WINDOW_DAYS), min: n(SURGE_MIN_PATIENTS), alpha: alpha(locale, SURGE_ALPHA) }));
+      method.push(
+        t(locale, "alerts.m.surge", { flag, days: n(SURGE_WINDOW_DAYS), min: n(SURGE_MIN_PATIENTS), alpha: alpha(locale, SURGE_ALPHA) }),
+      );
       break;
     }
     case "cluster": {
@@ -283,7 +287,12 @@ export function describe(locale: Locale, meta: FeedMeta, s: Signal, asOf: IsoDat
       how = t(locale, "alerts.how.gap", { observed: n(s.observed), days: n(GAP_WINDOW_DAYS), expected: exp ?? "–" });
       short = exp ? t(locale, "alerts.short.results", { count: n(s.observed), days: n(GAP_WINDOW_DAYS), expected: exp }) : null;
       method.push(
-        t(locale, "alerts.m.gap", { days: n(GAP_WINDOW_DAYS), base: n(GAP_BASELINE_DAYS), alpha: alpha(locale, GAP_ALPHA), run: n(GAP_ZERO_RUN_DAYS) }),
+        t(locale, "alerts.m.gap", {
+          days: n(GAP_WINDOW_DAYS),
+          base: n(GAP_BASELINE_DAYS),
+          alpha: alpha(locale, GAP_ALPHA),
+          run: n(GAP_ZERO_RUN_DAYS),
+        }),
       );
       break;
     }

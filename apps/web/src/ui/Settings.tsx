@@ -1,6 +1,7 @@
+import type { FeedMeta, IsoDate } from "@aei/feed";
 import { useState } from "react";
-import type { FeedMeta, IsoDate } from "../feed/types.ts";
-import { formatDate, formatNumber, t, type Locale } from "../i18n/index.ts";
+import type { AnalyticsWhere, Rank } from "../analytics/types.ts";
+import { formatDate, formatNumber, type Locale, t } from "../i18n/index.ts";
 import { Badge } from "./Badge.tsx";
 import { Card } from "./Card.tsx";
 import { Icon } from "./Icon.tsx";
@@ -12,9 +13,10 @@ import { Switch } from "./Switch.tsx";
   Settings (route #settings): language, ranking preference, about the data,
   the optional AI's status, and forgetting what this device remembers.
     locale, onLocale(locale)
-    rank: "access-first" | "coverage", onRank(rank)
+    rank: Rank, onRank(rank)
     meta: FeedMeta | null, asOf: IsoDate | null, resultCount: number
     feedSource: string            where the feed is read from (shown to the user)
+    analysisWhere: "browser" | "server"   where the analysis runs (src/analytics)
     ai: { available: boolean; model: string | null; checking: boolean }
     onCheckAi()                   check the language model again
     onForget()                    clear every remembered choice on this device
@@ -35,18 +37,20 @@ export function Settings({
   asOf,
   resultCount,
   feedSource,
+  analysisWhere,
   ai,
   onCheckAi,
   onForget,
 }: {
   locale: Locale;
   onLocale: (locale: Locale) => void;
-  rank: "access-first" | "coverage";
-  onRank: (rank: "access-first" | "coverage") => void;
+  rank: Rank;
+  onRank: (rank: Rank) => void;
   meta: FeedMeta | null;
   asOf: IsoDate | null;
   resultCount: number;
   feedSource: string;
+  analysisWhere: AnalyticsWhere;
   ai: AiState;
   onCheckAi: () => void;
   onForget: () => void;
@@ -85,6 +89,14 @@ export function Settings({
           <li>
             <Icon name="flask" size={18} />
             <span>{t(locale, "common.settings.feed", { source: feedSource })}</span>
+          </li>
+          <li>
+            <Icon name="sliders" size={18} />
+            <span>
+              {t(locale, "common.settings.analysis", {
+                where: t(locale, analysisWhere === "server" ? "common.settings.analysisServer" : "common.settings.analysisBrowser"),
+              })}
+            </span>
           </li>
           {meta && asOf ? (
             <li>

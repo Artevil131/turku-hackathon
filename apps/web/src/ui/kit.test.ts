@@ -1,7 +1,7 @@
+import type { FeedClock, FeedMeta } from "@aei/feed";
 import { createElement as h } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import type { FeedClock, FeedMeta } from "../feed/types.ts";
 import { AwareBadge, Badge, SeverityBadge } from "./Badge.tsx";
 import { Card } from "./Card.tsx";
 import { ChipGroup } from "./Chips.tsx";
@@ -62,14 +62,29 @@ describe("kit", () => {
     expect(renderToStaticMarkup(h(SeverityBadge, { locale: "en", severity: "high" }))).toContain("High");
     expect(renderToStaticMarkup(h(AwareBadge, { locale: "fi", group: "access" }))).toContain("Access");
     expect(renderToStaticMarkup(h(AwareBadge, { locale: "en", group: null }))).toBe("");
+    // biome-ignore lint/correctness/noChildrenProp: Badge's props type requires children, so createElement needs it in the props
     expect(renderToStaticMarkup(h(Badge, { tone: "medium", children: "x" }))).toContain("◆");
   });
   it("renders the remaining components", () => {
     const parts = [
-      h(Card, { title: "T", footer: "f", children: "c" }),
-      h(Segmented, { label: "L", value: "a", options: [{ value: "a", label: "A" }, { value: "b", label: "B" }], onChange: () => {} }),
+      h(Card, { title: "T", footer: "f" }, "c"),
+      h(Segmented, {
+        label: "L",
+        value: "a",
+        options: [
+          { value: "a", label: "A" },
+          { value: "b", label: "B" },
+        ],
+        onChange: () => {},
+      }),
       h(ChipGroup, { label: "L", value: null, options: [{ value: "a", label: "A" }], onChange: () => {}, anyLabel: "Any" }),
-      h(Picker, { locale: "en", label: "Unit", value: "U1", groups: [{ options: meta.units.map((u) => ({ value: u.code, label: u.en })) }], onChange: () => {} }),
+      h(Picker, {
+        locale: "en",
+        label: "Unit",
+        value: "U1",
+        groups: [{ options: meta.units.map((u) => ({ value: u.code, label: u.en })) }],
+        onChange: () => {},
+      }),
       h(Sparkline, { values: [0.1, null, 0.2, 0.3], label: "trend", band: { lo: [0, 0, 0, 0], hi: [0.4, 0.4, 0.4, 0.4] } }),
       h(EmptyState, { title: "Nothing" }),
       h(Org, { name: "Genus species", short: true }),
@@ -86,6 +101,7 @@ describe("kit", () => {
         asOf: "2024-06-01",
         resultCount: 1234,
         feedSource: "localhost/api",
+        analysisWhere: "browser",
         ai: { available: false, model: null, checking: false },
         onCheckAi: () => {},
         onForget: () => {},
@@ -94,9 +110,11 @@ describe("kit", () => {
     for (const p of parts) expect(renderToStaticMarkup(p).length).toBeGreaterThan(0);
   });
   it("labels the freshness and the alerts badge in words", () => {
-    expect(renderToStaticMarkup(h(FreshChip, { locale: "fi", status: "live", asOf: "2025-05-12", arrivalSeq: 0, checking: false, short: false }))).toContain(
-      "Tulokset 12. toukokuuta 2025 asti",
-    );
+    expect(
+      renderToStaticMarkup(
+        h(FreshChip, { locale: "fi", status: "live", asOf: "2025-05-12", arrivalSeq: 0, checking: false, short: false }),
+      ),
+    ).toContain("Tulokset 12. toukokuuta 2025 asti");
     expect(renderToStaticMarkup(h(Tabs, { locale: "en", route: "treat", alertsBadge: 3, variant: "top" }))).toContain("3 new");
   });
 });

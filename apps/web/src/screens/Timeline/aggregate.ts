@@ -1,7 +1,6 @@
-import { addDays, fromDayNumber, toDayNumber, weekStart } from "../../engine/dates.ts";
-import { isolateKey } from "../../engine/counting.ts";
-import type { Signal } from "../../engine/types.ts";
-import type { FeedMeta, IsoDate, Result } from "../../feed/types.ts";
+import type { FeedMeta, IsoDate, Result } from "@aei/feed";
+import { addDays, fromDayNumber, isolateKey, toDayNumber, weekStart } from "@aei/isolates";
+import type { Signal } from "@aei/signals";
 
 /*
   Week-by-week numbers for the Timeline, from released results only.
@@ -235,7 +234,7 @@ export function weekly(s: DailyStore, asOf: IsoDate, laneCodes: readonly string[
 }
 
 /** Signals known on `asOf` (defined once, in the engine). */
-export { visibleSignals } from "../../engine/rules.ts";
+export { visibleSignals } from "../../analytics/helpers.ts";
 
 export interface Packed {
   signal: Signal;
@@ -297,7 +296,9 @@ export function byMonth(signals: readonly Signal[]): { month: IsoDate; items: Si
       month,
       items: items.sort(
         (a, b) =>
-          (a.firstDate < b.firstDate ? 1 : a.firstDate > b.firstDate ? -1 : 0) || rank[a.severity] - rank[b.severity] || (a.id < b.id ? -1 : 1),
+          (a.firstDate < b.firstDate ? 1 : a.firstDate > b.firstDate ? -1 : 0) ||
+          rank[a.severity] - rank[b.severity] ||
+          (a.id < b.id ? -1 : 1),
       ),
     }));
 }

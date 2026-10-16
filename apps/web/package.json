@@ -11,6 +11,11 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@aei/empiric": "workspace:*",
+    "@aei/feed": "workspace:*",
+    "@aei/isolates": "workspace:*",
+    "@aei/question-filters": "workspace:*",
+    "@aei/signals": "workspace:*",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },

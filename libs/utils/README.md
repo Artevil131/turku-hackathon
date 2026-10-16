@@ -34,7 +34,18 @@ interface or behind the API contract (D-006).
 | `detect/` | Deviation detectors and the live set: clusters, surges, sampling drops, trends |
 | `coverage/` | The doctor's coverage list: share covered per antibiotic, with fallback level and counts |
 | `logistic/` | L2-penalised logistic regression (experiments/0005) |
+| `feed/` | The web app's data feed: its format (types only) and the browser client `@aei/feed/http` |
+| `isolates/` | Feed results: first-isolate index, ISO dates, onset and age band, the 30-isolate floor |
+| `empiric/` | The web app's coverage list and report tables: 4 weeks next to 12 months, filter widening, AWaRe and EUCAST tables |
+| `signals/` | The web app's deviation detection over the feed: sentinel, surge, cluster, data gap, shift, trend; episodes |
+| `question-filters/` | Plain-language question to checked filters, the pure browser part (no network) |
 | `py/` | Python analysis helpers, package `aei` (D-024): load the dataset into pandas. Not a pnpm package |
 
 The coverage list (D-023) and the live detection set (D-020 to D-022) are
 provisional until the team reviews experiments/0002 to 0006.
+
+`feed`, `isolates`, `empiric`, `signals` and `question-filters` are the web
+app's engines over the day-by-day feed. Each overlaps a server-side gear
+(`contract`, `counting`, `coverage` and `eucast`, `detect` and `alerts`,
+`ask`); its README says how they differ and why both exist until the team
+picks one.

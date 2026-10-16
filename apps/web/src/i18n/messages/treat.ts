@@ -134,11 +134,14 @@ const en = {
   // ---- How it is counted ----
   "treat.how.title": "How this is counted",
   "treat.how.first": "The first result per patient, bacterium and sample type in each period, so repeat samples don't tilt the figure.",
-  "treat.how.min": "No percentage from fewer than {min} results. When a group is too small, AEI widens it step by step and says what it left out.",
-  "treat.how.untested": "While the bacterium is not known, an antibiotic the lab did not test counts as not working only when the bacterium is naturally resistant to it (EUCAST). Otherwise it is left out of the count.",
+  "treat.how.min":
+    "No percentage from fewer than {min} results. When a group is too small, AEI widens it step by step and says what it left out.",
+  "treat.how.untested":
+    "While the bacterium is not known, an antibiotic the lab did not test counts as not working only when the bacterium is naturally resistant to it (EUCAST). Otherwise it is left out of the count.",
   "treat.how.rankAccess": "When a WHO Access antibiotic works within {margin} points of the best one, it is listed first.",
   "treat.how.rankCoverage": "Antibiotics are listed by how often they worked.",
-  "treat.how.aware": "Badges are the WHO AWaRe groups: Access (lower resistance risk), Watch (use with care), Reserve (last resort). A group says nothing about this patient.",
+  "treat.how.aware":
+    "Badges are the WHO AWaRe groups: Access (lower resistance risk), Watch (use with care), Reserve (last resort). A group says nothing about this patient.",
   "treat.how.live": "Updates by itself as each new result arrives.",
 
   // ---- Screen reader summary ----
@@ -179,7 +182,8 @@ const fi: Record<keyof typeof en, string> = {
   "treat.patient.hint": "Valinnainen. Napauta rajataksesi samankaltaisiin potilaisiin, uudelleen poistaaksesi.",
   "treat.patient.bacteria": "Bakteeri",
   "treat.patient.bacteriaHere": "Osuus tämän yksikön {n} kasvua osoittaneesta näytteestä ({specimen}), viimeiset {months} kuukautta.",
-  "treat.patient.bacteriaWider": "Tässä yksikössä liian vähän: osuus kaikkien yksiköiden {n} kasvua osoittaneesta näytteestä ({specimen}), viimeiset {months} kuukautta.",
+  "treat.patient.bacteriaWider":
+    "Tässä yksikössä liian vähän: osuus kaikkien yksiköiden {n} kasvua osoittaneesta näytteestä ({specimen}), viimeiset {months} kuukautta.",
   "treat.patient.bacteriaNone": "Ei kasvua osoittaneita näytteitä viimeisten {months} kuukauden aikana.",
   "treat.patient.bacteriaPick": "Valitse vasta, kun laboratorio on tunnistanut sen.",
   "treat.patient.unknown": "Ei vielä tiedossa",
@@ -230,7 +234,8 @@ const fi: Record<keyof typeof en, string> = {
   "treat.top.labelFew": "Liian vähän tuloksia järjestykseen",
   "treat.top.worked": "tehosi {works}/{n} vastaavassa tapauksessa",
   "treat.top.access": "Tehoaa lähes yhtä usein kuin {strongest} ({share}); {strongest} säästyy näin vaikeisiin infektioihin.",
-  "treat.top.decide": "Kuinka usein kukin antibiootti on tehonnut vastaavilla potilailla täällä. Sinä päätät – tarkista paikallinen hoito-ohje.",
+  "treat.top.decide":
+    "Kuinka usein kukin antibiootti on tehonnut vastaavilla potilailla täällä. Sinä päätät – tarkista paikallinen hoito-ohje.",
   "treat.top.allUnitsRef": "Kaikki yksiköt",
   "treat.cover.line": "Perustuu {known}/{total} tulokseen · ei testattu: {list}",
   "treat.cover.more": "Perustuu {known}/{total} tulokseen · ei testattu: {list} ja {more} muuta",
@@ -264,16 +269,22 @@ const fi: Record<keyof typeof en, string> = {
   "treat.row.trendFew": "Kuukausittain liian vähän tuloksia trendiin (kuukausi tarvitsee {min}).",
 
   "treat.empty.title": "Näille potilaille ei ole vielä tuloksia",
-  "treat.empty.body": "Luvut tulevat näkyviin heti, kun laboratorio julkaisee tuloksia (näyte: {specimen}, {unit}). Kokeile toista infektiokohtaa tai yksikköä.",
+  "treat.empty.body":
+    "Luvut tulevat näkyviin heti, kun laboratorio julkaisee tuloksia (näyte: {specimen}, {unit}). Kokeile toista infektiokohtaa tai yksikköä.",
   "treat.empty.clear": "Tyhjennä potilaan tiedot",
 
   "treat.how.title": "Miten tämä lasketaan",
-  "treat.how.first": "Ensimmäinen tulos potilasta, bakteeria ja näytetyyppiä kohden kullakin jaksolla, jotta toistonäytteet eivät vääristä lukua.",
-  "treat.how.min": "Prosenttia ei lasketa alle {min} tuloksesta. Kun ryhmä on liian pieni, AEI laajentaa sitä vaihe vaiheelta ja kertoo, mitä jätti pois.",
-  "treat.how.untested": "Kun bakteeri ei ole tiedossa, testaamaton antibiootti lasketaan tehottomaksi vain, jos bakteeri on luontaisesti resistentti sille (EUCAST). Muuten se jätetään laskusta pois.",
-  "treat.how.rankAccess": "Kun WHO:n Access-ryhmän antibiootti tehoaa enintään {margin} prosenttiyksikköä heikommin kuin paras, se näytetään ensin.",
+  "treat.how.first":
+    "Ensimmäinen tulos potilasta, bakteeria ja näytetyyppiä kohden kullakin jaksolla, jotta toistonäytteet eivät vääristä lukua.",
+  "treat.how.min":
+    "Prosenttia ei lasketa alle {min} tuloksesta. Kun ryhmä on liian pieni, AEI laajentaa sitä vaihe vaiheelta ja kertoo, mitä jätti pois.",
+  "treat.how.untested":
+    "Kun bakteeri ei ole tiedossa, testaamaton antibiootti lasketaan tehottomaksi vain, jos bakteeri on luontaisesti resistentti sille (EUCAST). Muuten se jätetään laskusta pois.",
+  "treat.how.rankAccess":
+    "Kun WHO:n Access-ryhmän antibiootti tehoaa enintään {margin} prosenttiyksikköä heikommin kuin paras, se näytetään ensin.",
   "treat.how.rankCoverage": "Antibiootit on järjestetty sen mukaan, kuinka usein ne tehosivat.",
-  "treat.how.aware": "Merkinnät ovat WHO:n AWaRe-ryhmät: Access (pienempi resistenssiriski), Watch (harkiten), Reserve (viimesijainen). Ryhmä ei kerro tästä potilaasta.",
+  "treat.how.aware":
+    "Merkinnät ovat WHO:n AWaRe-ryhmät: Access (pienempi resistenssiriski), Watch (harkiten), Reserve (viimesijainen). Ryhmä ei kerro tästä potilaasta.",
   "treat.how.live": "Päivittyy itsestään jokaisen uuden tuloksen myötä.",
 
   "treat.live.summary": "Paras vaihtoehto: {name}, tehosi {percent}.",

@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { formatShare } from "./index.ts";
 import { alerts } from "./messages/alerts.ts";
 import { common } from "./messages/common.ts";
 import { report } from "./messages/report.ts";
 import { timeline } from "./messages/timeline.ts";
 import { treat } from "./messages/treat.ts";
-import { formatShare } from "./index.ts";
 
 describe("i18n", () => {
   it("has every key in Finnish and English, with the same placeholders", () => {

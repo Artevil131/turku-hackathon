@@ -1,6 +1,6 @@
+import type { FeedClock, FeedCommand } from "@aei/feed";
 import { useEffect, useState } from "react";
-import type { FeedClock, FeedCommand } from "../feed/types.ts";
-import { formatDate, t, type Locale } from "../i18n/index.ts";
+import { formatDate, type Locale, t } from "../i18n/index.ts";
 import { Icon } from "./Icon.tsx";
 import { Segmented } from "./Segmented.tsx";
 import { Sheet } from "./Sheet.tsx";
@@ -132,6 +132,7 @@ export function SimControl({
         <Icon name="calendar" size={16} />
         <input
           type="date"
+          aria-label={t(locale, "common.sim.jump")}
           value={date}
           min={clock.start}
           max={clock.end}
@@ -185,7 +186,9 @@ export function SimControl({
           <div className="app-sim-group">{speedControl}</div>
           <div className="app-sim-group">{jump}</div>
           {error}
-          <span className="app-sim-note">{t(locale, "common.sim.range", { start: formatDate(locale, clock.start, "long"), end: formatDate(locale, clock.end, "long") })}</span>
+          <span className="app-sim-note">
+            {t(locale, "common.sim.range", { start: formatDate(locale, clock.start, "long"), end: formatDate(locale, clock.end, "long") })}
+          </span>
         </div>
       </section>
     );

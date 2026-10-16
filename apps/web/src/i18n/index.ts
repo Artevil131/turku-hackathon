@@ -1,4 +1,4 @@
-import type { Named } from "../feed/types.ts";
+import type { Named } from "@aei/feed";
 import { alerts } from "./messages/alerts.ts";
 import { common } from "./messages/common.ts";
 import { report } from "./messages/report.ts";

@@ -1,4 +1,4 @@
-import { useId, type ReactNode } from "react";
+import { type ReactNode, useId } from "react";
 
 /*
   Switch: an on/off setting with a label and an optional one-line reason.

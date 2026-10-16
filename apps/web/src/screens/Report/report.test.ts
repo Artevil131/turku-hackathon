@@ -1,27 +1,24 @@
+import type { PatientQuery } from "@aei/empiric";
+import type { FeedMeta, Result } from "@aei/feed";
+import type { Catalog } from "@aei/isolates";
 import { createElement as h } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { EVERY_UNIT } from "../../engine/coverage.ts";
-import type { Catalog } from "../../engine/types.ts";
-import type { FeedMeta, Result } from "../../feed/types.ts";
-import { ReportScreen, type ReportPrefs } from "./index.tsx";
+import { EVERY_UNIT } from "../../analytics/helpers.ts";
+import { localSource } from "../../analytics/local.ts";
+import { type ReportPrefs, ReportScreen } from "./index.tsx";
 import {
-  buildMatrix,
-  buildTable,
-  cellFromShare,
-  csvField,
   CSV_FI,
+  type CsvLabels,
+  csvField,
   csvFilename,
   largestDrop,
   matrixCsv,
-  MIN,
-  RECENT_DAYS,
   sortRows,
   tableCsv,
   tintOf,
   toCsv,
   YEAR_DAYS,
-  type CsvLabels,
 } from "./model.ts";
 
 // A small invented feed (test data only): two units, one specimen, two
@@ -91,40 +88,17 @@ function feed(): Result[] {
 
 const results = feed();
 
-describe("report model: antibiotics", () => {
-  const model = buildTable(results, asOf, { ward: "U1", specimen: "urine" }, catalog);
+// The tables come through the app's analysis door, as the screen gets them.
+const door = localSource().sync;
+if (!door) throw new Error("the local analysis source answers synchronously");
+const reportTable = (query: PatientQuery) => door.reportTable({ results, asOf, catalog }, query);
+const reportMatrix = (query: PatientQuery, days: number) => door.reportMatrix({ results, asOf, catalog }, query, days);
 
-  it("counts first isolates per window exactly as filtered, without widening", () => {
-    expect(model.recentN).toBe(40);
-    expect(model.yearN).toBe(90);
-    expect(model.hospitalN).toBe(120);
-    const a1 = model.rows.find((r) => r.code === "A1");
-    expect(a1?.recent).toEqual({ state: "ok", share: { works: 36, n: 40 } });
-    expect(a1?.year).toEqual({ state: "ok", share: { works: 76, n: 90 } });
-    expect(a1?.hospital).toEqual({ state: "ok", share: { works: 106, n: 120 } });
-    // 90 % vs 84.4 %: +6 points.
-    expect(a1?.change).toBe(6);
-    expect(a1?.months).toHaveLength(12);
-  });
+// The tables' own counting is tested with the gear (@aei/empiric report.test.ts);
+// here: how the report sorts, shades and writes them.
 
-  it("leaves out screens and antibiotics tested in fewer than half of the isolates", () => {
-    expect(model.rows.map((r) => r.code)).toEqual(["A1"]);
-    expect(model.hidden).toEqual(["A2"]);
-  });
-
-  it("never shows a percentage under the floor, and no change from thin figures", () => {
-    const thin = buildTable(results, asOf, { ward: "U1", specimen: "urine", sex: "F", age: "65plus" }, catalog);
-    expect(thin.yearN).toBe(0);
-    const men = buildTable(results, asOf, { ward: EVERY_UNIT, specimen: "urine", sex: "M" }, catalog);
-    const a1 = men.rows.find((r) => r.code === "A1");
-    expect(men.hospitalN).toBeNull();
-    expect(a1?.year.state).toBe("ok");
-    expect(a1?.recent.state).toBe("none");
-    expect(a1?.change).toBeNull();
-    expect(cellFromShare({ works: 29, n: 29 }).state).toBe("few");
-    expect(cellFromShare({ works: MIN, n: MIN }).state).toBe("ok");
-    expect(cellFromShare({ works: 0, n: 0 }).state).toBe("none");
-  });
+describe("report presentation", () => {
+  const model = reportTable({ ward: "U1", specimen: "urine" });
 
   it("sorts by the lab list, the 12-month figure or the largest drop", () => {
     const rows = [
@@ -136,26 +110,6 @@ describe("report model: antibiotics", () => {
     expect(sortRows(rows, "list").map((r) => r.code)).toEqual(["X", "Y", "Z"]);
     expect(largestDrop(rows)?.code).toBe("Y");
     expect(largestDrop(model.rows)).toBeNull();
-  });
-});
-
-describe("report model: compare units", () => {
-  it("has one row per unit plus every unit, with the same counting", () => {
-    const m = buildMatrix(results, asOf, { ward: EVERY_UNIT, specimen: "urine" }, catalog, YEAR_DAYS);
-    expect(m.columns.map((c) => c.code)).toEqual(["A1"]);
-    expect(m.rows.map((r) => [r.ward, r.n])).toEqual([
-      ["U1", 90],
-      ["U2", 30],
-    ]);
-    expect(m.rows[1]!.cells.get("A1")).toEqual({ state: "ok", share: { works: 30, n: 30 } });
-    expect(m.all.n).toBe(120);
-    expect(m.organisms[0]?.organism).toBe("Genus one");
-  });
-
-  it("marks thin and empty cells instead of giving a percentage", () => {
-    const m = buildMatrix(results, asOf, { ward: EVERY_UNIT, specimen: "urine" }, catalog, RECENT_DAYS);
-    expect(m.rows[0]!.cells.get("A1")?.state).toBe("ok");
-    expect(m.rows[1]!.cells.get("A1")?.state).toBe("none");
   });
 
   it("shades less effective cells more strongly", () => {
@@ -181,13 +135,26 @@ describe("report CSV", () => {
     expect(csvField("=SUM(A1)")).toBe("'=SUM(A1)");
     expect(csvField(-12)).toBe("-12");
     expect(csvField(null)).toBe("");
-    expect(toCsv([["a", 1], ["b", null]])).toBe("a,1\r\nb,\r\n");
+    expect(
+      toCsv([
+        ["a", 1],
+        ["b", null],
+      ]),
+    ).toBe("a,1\r\nb,\r\n");
     // Finnish spreadsheets: semicolons and a decimal comma.
-    expect(toCsv([["a;b", 87.5], ["c, d", null]], CSV_FI)).toBe('"a;b";87,5\r\nc, d;\r\n');
+    expect(
+      toCsv(
+        [
+          ["a;b", 87.5],
+          ["c, d", null],
+        ],
+        CSV_FI,
+      ),
+    ).toBe('"a;b";87,5\r\nc, d;\r\n');
   });
 
   it("writes the antibiotics table with counts, and a percentage only from the floor", () => {
-    const thin = buildTable(results, asOf, { ward: "U1", specimen: "urine", sex: "F" }, catalog);
+    const thin = reportTable({ ward: "U1", specimen: "urine", sex: "F" });
     const lines = tableCsv(thin, labels).trim().split("\r\n");
     const head = lines[0]!.split(",");
     const row = lines[1]!.split(",");
@@ -200,13 +167,13 @@ describe("report CSV", () => {
     expect(get("year_percent_works")).toBe("84.4");
     expect(get("all_units_year_n")).toBe("90");
 
-    const men = buildTable(results, asOf, { ward: "U2", specimen: "urine", age: "65plus" }, catalog);
+    const men = reportTable({ ward: "U2", specimen: "urine", age: "65plus" });
     const mline = tableCsv(men, labels).trim().split("\r\n")[1]!.split(",");
     expect(mline[head.indexOf("recent_status")]).toBe("no_results");
   });
 
   it("writes the unit comparison in long form, every unit included", () => {
-    const m = buildMatrix(results, asOf, { ward: EVERY_UNIT, specimen: "urine" }, catalog, YEAR_DAYS);
+    const m = reportMatrix({ ward: EVERY_UNIT, specimen: "urine" }, YEAR_DAYS);
     const lines = matrixCsv(m, labels).trim().split("\r\n");
     expect(lines).toHaveLength(1 + 3);
     expect(lines[3]).toContain("All units");

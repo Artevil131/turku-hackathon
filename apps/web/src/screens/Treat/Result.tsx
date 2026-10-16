@@ -1,19 +1,21 @@
-import { useId, useMemo, useState, type ReactNode } from "react";
-import { DEFAULT_COVERAGE, EVERY_UNIT, monthly } from "../../engine/coverage.ts";
-import type { Catalog, CoverageResult, DrugFigure, PatientQuery, Share } from "../../engine/types.ts";
-import type { FeedMeta, IsoDate, Result } from "../../feed/types.ts";
-import { formatDate, formatMonth, formatNumber, formatShare, t, type Locale } from "../../i18n/index.ts";
+import type { CoverageResult, DrugFigure, MonthPoint, PatientQuery } from "@aei/empiric";
+import type { FeedMeta } from "@aei/feed";
+import type { Share } from "@aei/isolates";
+import { type ReactNode, useId, useState } from "react";
+import { DEFAULT_COVERAGE, EVERY_UNIT } from "../../analytics/helpers.ts";
+import { type Rank, type Released, useMonthly } from "../../analytics/index.ts";
+import { formatDate, formatMonth, formatNumber, formatShare, type Locale, t } from "../../i18n/index.ts";
 import {
   AwareBadge,
+  antibioticName,
   Card,
   Disclosure,
   EmptyState,
   Icon,
   Org,
+  onsetLabel,
   ShareBar,
   Sparkline,
-  antibioticName,
-  onsetLabel,
   sexLabel,
   specimenName,
   unitName,
@@ -21,14 +23,14 @@ import {
 import { capFirst, coverGap, reliable, STRONG_SHARE } from "./model.ts";
 import { coverText, drugName, figText, MONTHS, WEEKS, widenedText } from "./text.tsx";
 
+const NO_POINTS: readonly MonthPoint[] = [];
+
 // The answer: what it rests on, the top match, then every other antibiotic.
 
 export function ResultView({
   locale,
   meta,
-  results,
-  asOf,
-  catalog,
+  at,
   asked,
   cov,
   rank,
@@ -41,12 +43,10 @@ export function ResultView({
 }: {
   locale: Locale;
   meta: FeedMeta;
-  results: readonly Result[];
-  asOf: IsoDate;
-  catalog: Catalog;
+  at: Released;
   asked: PatientQuery;
   cov: CoverageResult;
-  rank: "access-first" | "coverage";
+  rank: Rank;
   min: number;
   onClearDetails: () => void;
   canClear: boolean;
@@ -113,9 +113,7 @@ export function ResultView({
             <DrugList
               locale={locale}
               meta={meta}
-              results={results}
-              asOf={asOf}
-              catalog={catalog}
+              at={at}
               cov={cov}
               drugs={rest}
               min={min}
@@ -134,7 +132,19 @@ export function ResultView({
 
 // ---------- Basis ----------
 
-function Basis({ locale, meta, asked, cov, min }: { locale: Locale; meta: FeedMeta; asked: PatientQuery; cov: CoverageResult; min: number }) {
+function Basis({
+  locale,
+  meta,
+  asked,
+  cov,
+  min,
+}: {
+  locale: Locale;
+  meta: FeedMeta;
+  asked: PatientQuery;
+  cov: CoverageResult;
+  min: number;
+}) {
   const { basis } = cov;
   const q = basis.query;
   const parts: ReactNode[] = [capFirst(specimenName(locale, meta, q.specimen))];
@@ -158,6 +168,7 @@ function Basis({ locale, meta, asked, cov, min }: { locale: Locale; meta: FeedMe
           {basis.n === 1 ? t(locale, "treat.basis.leadOne") : t(locale, "treat.basis.lead", { n: formatNumber(locale, basis.n) })}
         </strong>
         {parts.map((p, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: basis parts are positional and never reorder
           <span key={i} className="treat-basis-part">
             <span className="treat-basis-dot" aria-hidden="true">
               ·
@@ -195,7 +206,8 @@ function Change({ locale, change, long = false }: { locale: Locale; change: numb
         : t(locale, change < 0 ? "treat.change.down" : "treat.change.up", vars);
   const glyph = change < 0 ? "▼" : change > 0 ? "▲" : "●";
   const tone = change <= -10 ? "is-drop" : change < 0 ? "is-down" : change > 0 ? "is-up" : "is-same";
-  const signed = change > 0 ? `+${formatNumber(locale, change)}` : change < 0 ? `−${formatNumber(locale, -change)}` : formatNumber(locale, 0);
+  const signed =
+    change > 0 ? `+${formatNumber(locale, change)}` : change < 0 ? `−${formatNumber(locale, -change)}` : formatNumber(locale, 0);
   if (long) {
     return (
       <p className={`treat-change is-long ${tone}`}>
@@ -285,7 +297,11 @@ function TopMatch({
         share={drug.main}
         min={min}
         size="lg"
-        caption={ok ? t(locale, "treat.top.worked", { works: formatNumber(locale, drug.main.works), n: formatNumber(locale, drug.main.n) }) : undefined}
+        caption={
+          ok
+            ? t(locale, "treat.top.worked", { works: formatNumber(locale, drug.main.works), n: formatNumber(locale, drug.main.n) })
+            : undefined
+        }
         reference={wardWidened ? undefined : { share: drug.hospitalYear, label: t(locale, "treat.top.allUnitsRef") }}
       />
       {gap && ok ? (
@@ -309,7 +325,10 @@ function TopMatch({
           <span>
             {t(locale, "treat.top.access", {
               strongest,
-              share: strongestShare.n >= min ? formatShare(locale, strongestShare.works / strongestShare.n) : figText(locale, strongestShare, min),
+              share:
+                strongestShare.n >= min
+                  ? formatShare(locale, strongestShare.works / strongestShare.n)
+                  : figText(locale, strongestShare, min),
             })}
           </span>
         </p>
@@ -324,9 +343,7 @@ function TopMatch({
 function DrugList({
   locale,
   meta,
-  results,
-  asOf,
-  catalog,
+  at,
   cov,
   drugs,
   min,
@@ -336,14 +353,12 @@ function DrugList({
 }: {
   locale: Locale;
   meta: FeedMeta;
-  results: readonly Result[];
-  asOf: IsoDate;
-  catalog: Catalog;
+  at: Released;
   cov: CoverageResult;
   drugs: readonly DrugFigure[];
   min: number;
   wardWidened: boolean;
-  rank: "access-first" | "coverage";
+  rank: Rank;
   falling: ReadonlyMap<string, string>;
 }) {
   const strong: DrugFigure[] = [];
@@ -374,9 +389,7 @@ function DrugList({
                   key={d.antibiotic}
                   locale={locale}
                   meta={meta}
-                  results={results}
-                  asOf={asOf}
-                  catalog={catalog}
+                  at={at}
                   query={cov.basis.query}
                   drug={d}
                   min={min}
@@ -396,9 +409,7 @@ function DrugList({
 function DrugRow({
   locale,
   meta,
-  results,
-  asOf,
-  catalog,
+  at,
   query,
   drug,
   min,
@@ -408,9 +419,7 @@ function DrugRow({
 }: {
   locale: Locale;
   meta: FeedMeta;
-  results: readonly Result[];
-  asOf: IsoDate;
-  catalog: Catalog;
+  at: Released;
   query: PatientQuery;
   drug: DrugFigure;
   min: number;
@@ -447,22 +456,17 @@ function DrugRow({
           <AwareBadge locale={locale} group={drug.aware} />
           <Icon name="chevron-down" size={18} className="treat-row-chev" />
         </div>
-        <ShareBar locale={locale} share={drug.main} min={min} size="sm" aside={<Change locale={locale} change={drug.change} />} caption={caption} />
+        <ShareBar
+          locale={locale}
+          share={drug.main}
+          min={min}
+          size="sm"
+          aside={<Change locale={locale} change={drug.change} />}
+          caption={caption}
+        />
       </div>
       <div id={bodyId} className="treat-row-body" hidden={!open}>
-        {open ? (
-          <RowDetail
-            locale={locale}
-            name={name}
-            results={results}
-            asOf={asOf}
-            catalog={catalog}
-            query={query}
-            drug={drug}
-            min={min}
-            wardWidened={wardWidened}
-          />
-        ) : null}
+        {open ? <RowDetail locale={locale} name={name} at={at} query={query} drug={drug} min={min} wardWidened={wardWidened} /> : null}
       </div>
     </li>
   );
@@ -471,9 +475,7 @@ function DrugRow({
 function RowDetail({
   locale,
   name,
-  results,
-  asOf,
-  catalog,
+  at,
   query,
   drug,
   min,
@@ -481,18 +483,14 @@ function RowDetail({
 }: {
   locale: Locale;
   name: string;
-  results: readonly Result[];
-  asOf: IsoDate;
-  catalog: Catalog;
+  at: Released;
   query: PatientQuery;
   drug: DrugFigure;
   min: number;
   wardWidened: boolean;
 }) {
-  const points = useMemo(
-    () => monthly(results, asOf, query, drug.antibiotic, MONTHS, catalog),
-    [results, asOf, query, drug.antibiotic, catalog],
-  );
+  const answer = useMonthly(at, query, drug.antibiotic, MONTHS);
+  const points = answer ?? NO_POINTS;
   // No percentage from fewer than `min`: thinner months are gaps, not points.
   const values = points.map((p) => reliable(p.share, min));
   const known = values.filter((v): v is number => v !== null);
@@ -509,7 +507,10 @@ function RowDetail({
       <Facts locale={locale} min={min} items={facts} />
       <div className="treat-trend">
         <p className="treat-trend-title">{t(locale, "treat.row.trend", { months: MONTHS })}</p>
-        {known.length >= 2 ? (
+        {!answer ? (
+          // Only while a server is computing it (never with the analysis in this browser).
+          <p className="treat-trend-note">{t(locale, "common.loading.short")}</p>
+        ) : known.length >= 2 ? (
           <>
             <div className="treat-trend-chart">
               <span className="treat-trend-axis u-num" aria-hidden="true">
@@ -548,7 +549,7 @@ function RowDetail({
 
 // ---------- How it is counted ----------
 
-function HowCounted({ locale, rank, min }: { locale: Locale; rank: "access-first" | "coverage"; min: number }) {
+function HowCounted({ locale, rank, min }: { locale: Locale; rank: Rank; min: number }) {
   return (
     <Disclosure summary={t(locale, "treat.how.title")} className="treat-how">
       <ul className="treat-how-list">
@@ -566,4 +567,3 @@ function HowCounted({ locale, rank, min }: { locale: Locale; rank: "access-first
     </Disclosure>
   );
 }
-

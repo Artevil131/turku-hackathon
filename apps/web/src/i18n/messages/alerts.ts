@@ -79,7 +79,8 @@ const en = {
   "alerts.when.daysAgo": "{count} days ago",
 
   "alerts.how.surge": "{observed} patients with {flag} in {days} days. Normally {expected} in the same time on this unit.",
-  "alerts.how.cluster": "{observed} patients with this same pattern in {weeks} weeks. Normally {expected} on this unit, given how common the pattern is in the hospital.",
+  "alerts.how.cluster":
+    "{observed} patients with this same pattern in {weeks} weeks. Normally {expected} on this unit, given how common the pattern is in the hospital.",
   "alerts.how.gap": "{observed} results in the last {days} days. Normally {expected}.",
   "alerts.how.shift": "Worked in {recent} in the last {weeks} weeks, against {base} in the {months} months before.",
   "alerts.how.trend": "Didn't work in {recent} in the last {months} months, against {base} before. A steady rise, not a one-off.",
@@ -154,13 +155,20 @@ const en = {
   "alerts.cmp.sparkScreen": "Positive, by quarter: {from} to {to}",
   "alerts.cmp.sparkNote": "By quarter, {first} to {last}. Gaps: fewer than {min} isolates.",
 
-  "alerts.m.sentinel": "Raised on the first find: {flag} is on the always-alert list. Finds of the same organism on this unit within {gap} days join this alert.",
-  "alerts.m.back": "Raised when the lab's {flag} flag appears on a unit after at least {quiet} days without it. Finds within {gap} days join this alert.",
-  "alerts.m.surge": "Patients with {flag} on this unit in the last {days} days, compared with the unit's own previous year (Poisson test). Raised from {min} patients up, when p < {alpha}.",
-  "alerts.m.cluster": "Patients on this unit in the last {days} days with the same organism, sample type and resistance pattern, compared with how common that pattern was hospital-wide in the year before (Poisson test). Raised from {min} patients up, when p < {alpha}.",
-  "alerts.m.gap": "Results from this unit in the last {days} days, compared with its previous {base} days (Poisson test, p < {alpha}), or {run} days in a row with none.",
-  "alerts.m.shift": "First isolates on this unit: the last {days} days against the {base} days before (one-sided Fisher test, p < {alpha}). Both figures rest on at least {min} isolates.",
-  "alerts.m.trend": "Hospital-wide first isolates in {bin}-day blocks, tested for a steady rise (Cochran–Armitage test, p < {alpha}). The last {recent} blocks must also be at least {rise} percentage points higher.",
+  "alerts.m.sentinel":
+    "Raised on the first find: {flag} is on the always-alert list. Finds of the same organism on this unit within {gap} days join this alert.",
+  "alerts.m.back":
+    "Raised when the lab's {flag} flag appears on a unit after at least {quiet} days without it. Finds within {gap} days join this alert.",
+  "alerts.m.surge":
+    "Patients with {flag} on this unit in the last {days} days, compared with the unit's own previous year (Poisson test). Raised from {min} patients up, when p < {alpha}.",
+  "alerts.m.cluster":
+    "Patients on this unit in the last {days} days with the same organism, sample type and resistance pattern, compared with how common that pattern was hospital-wide in the year before (Poisson test). Raised from {min} patients up, when p < {alpha}.",
+  "alerts.m.gap":
+    "Results from this unit in the last {days} days, compared with its previous {base} days (Poisson test, p < {alpha}), or {run} days in a row with none.",
+  "alerts.m.shift":
+    "First isolates on this unit: the last {days} days against the {base} days before (one-sided Fisher test, p < {alpha}). Both figures rest on at least {min} isolates.",
+  "alerts.m.trend":
+    "Hospital-wide first isolates in {bin}-day blocks, tested for a steady rise (Cochran–Armitage test, p < {alpha}). The last {recent} blocks must also be at least {rise} percentage points higher.",
   "alerts.m.p": "How likely a result this extreme is by chance alone: p {p}.",
   "alerts.m.counting": "Counting: the first isolate per patient, organism and sample type.",
 } as const;
@@ -240,12 +248,14 @@ const fi: Record<keyof typeof en, string> = {
   "alerts.when.daysAgo": "{count} päivää sitten",
 
   "alerts.how.surge": "{observed} potilasta, joilla {flag}, {days} päivässä. Tässä yksikössä tavallisesti {expected} samassa ajassa.",
-  "alerts.how.cluster": "{observed} potilasta, joilla sama löydös, {weeks} viikossa. Tässä yksikössä tavallisesti {expected}, kun huomioidaan löydöksen yleisyys sairaalassa.",
+  "alerts.how.cluster":
+    "{observed} potilasta, joilla sama löydös, {weeks} viikossa. Tässä yksikössä tavallisesti {expected}, kun huomioidaan löydöksen yleisyys sairaalassa.",
   "alerts.how.gap": "{observed} tulosta viimeisten {days} päivän aikana. Tavallisesti {expected}.",
   "alerts.how.shift": "Tehosi {recent} viimeisten {weeks} viikon aikana, edeltävien {months} kuukauden aikana {base}.",
   "alerts.how.trend": "Ei tehonnut {recent} viimeisten {months} kuukauden aikana, aiemmin {base}. Tasainen nousu, ei kertaluonteinen.",
   "alerts.how.screen": "Positiivinen {recent} viimeisten {weeks} viikon aikana, edeltävien {months} kuukauden aikana {base}.",
-  "alerts.how.trendScreen": "Positiivinen {recent} viimeisten {months} kuukauden aikana, aiemmin {base}. Tasainen nousu, ei kertaluonteinen.",
+  "alerts.how.trendScreen":
+    "Positiivinen {recent} viimeisten {months} kuukauden aikana, aiemmin {base}. Tasainen nousu, ei kertaluonteinen.",
   "alerts.how.sentinel": "{flag} on harvinainen ja vaikeasti hoidettava: jo yksi löydös on tärkeä.",
   "alerts.how.back": "Yksikössä ei ollut {flag}-löydöksiä edeltävien {days} päivän aikana.",
   "alerts.chance.very": "Tilastollisesti hyvin epätodennäköisesti sattumaa.",
@@ -315,13 +325,20 @@ const fi: Record<keyof typeof en, string> = {
   "alerts.cmp.sparkScreen": "Positiivinen, vuosineljänneksittäin: {from} – {to}",
   "alerts.cmp.sparkNote": "Vuosineljänneksittäin {first} – {last}. Aukot: alle {min} kantaa.",
 
-  "alerts.m.sentinel": "Hälyttää heti ensimmäisestä löydöksestä: {flag} on aina hälyttävien listalla. Saman bakteerin löydökset tässä yksikössä {gap} päivän sisällä kuuluvat tähän hälytykseen.",
-  "alerts.m.back": "Hälyttää, kun laboratorion {flag}-merkintä ilmaantuu yksikköön vähintään {quiet} päivän tauon jälkeen. Löydökset {gap} päivän sisällä kuuluvat tähän hälytykseen.",
-  "alerts.m.surge": "Potilaat, joilla {flag}, tässä yksikössä viimeisten {days} päivän aikana verrattuna yksikön omaan edelliseen vuoteen (Poisson-testi). Hälyttää vähintään {min} potilaasta, kun p < {alpha}.",
-  "alerts.m.cluster": "Tämän yksikön potilaat viimeisten {days} päivän aikana, joilla sama bakteeri, näytetyyppi ja resistenssiprofiili, verrattuna profiilin yleisyyteen koko sairaalassa edellisen vuoden aikana (Poisson-testi). Hälyttää vähintään {min} potilaasta, kun p < {alpha}.",
-  "alerts.m.gap": "Yksikön tulokset viimeisten {days} päivän aikana verrattuna sen edeltäviin {base} päivään (Poisson-testi, p < {alpha}) tai {run} päivää peräkkäin ilman tuloksia.",
-  "alerts.m.shift": "Yksikön ensimmäiset kannat: viimeiset {days} päivää verrattuna edeltäviin {base} päivään (yksisuuntainen Fisherin testi, p < {alpha}). Molemmat luvut perustuvat vähintään {min} kantaan.",
-  "alerts.m.trend": "Koko sairaalan ensimmäiset kannat {bin} päivän jaksoissa, testattu tasaisen nousun varalta (Cochran–Armitage-testi, p < {alpha}). Viimeisten {recent} jakson pitää myös olla vähintään {rise} prosenttiyksikköä korkeammalla.",
+  "alerts.m.sentinel":
+    "Hälyttää heti ensimmäisestä löydöksestä: {flag} on aina hälyttävien listalla. Saman bakteerin löydökset tässä yksikössä {gap} päivän sisällä kuuluvat tähän hälytykseen.",
+  "alerts.m.back":
+    "Hälyttää, kun laboratorion {flag}-merkintä ilmaantuu yksikköön vähintään {quiet} päivän tauon jälkeen. Löydökset {gap} päivän sisällä kuuluvat tähän hälytykseen.",
+  "alerts.m.surge":
+    "Potilaat, joilla {flag}, tässä yksikössä viimeisten {days} päivän aikana verrattuna yksikön omaan edelliseen vuoteen (Poisson-testi). Hälyttää vähintään {min} potilaasta, kun p < {alpha}.",
+  "alerts.m.cluster":
+    "Tämän yksikön potilaat viimeisten {days} päivän aikana, joilla sama bakteeri, näytetyyppi ja resistenssiprofiili, verrattuna profiilin yleisyyteen koko sairaalassa edellisen vuoden aikana (Poisson-testi). Hälyttää vähintään {min} potilaasta, kun p < {alpha}.",
+  "alerts.m.gap":
+    "Yksikön tulokset viimeisten {days} päivän aikana verrattuna sen edeltäviin {base} päivään (Poisson-testi, p < {alpha}) tai {run} päivää peräkkäin ilman tuloksia.",
+  "alerts.m.shift":
+    "Yksikön ensimmäiset kannat: viimeiset {days} päivää verrattuna edeltäviin {base} päivään (yksisuuntainen Fisherin testi, p < {alpha}). Molemmat luvut perustuvat vähintään {min} kantaan.",
+  "alerts.m.trend":
+    "Koko sairaalan ensimmäiset kannat {bin} päivän jaksoissa, testattu tasaisen nousun varalta (Cochran–Armitage-testi, p < {alpha}). Viimeisten {recent} jakson pitää myös olla vähintään {rise} prosenttiyksikköä korkeammalla.",
   "alerts.m.p": "Kuinka todennäköisesti näin poikkeava tulos syntyisi pelkästä sattumasta: p {p}.",
   "alerts.m.counting": "Laskenta: ensimmäinen kanta potilasta, bakteeria ja näytetyyppiä kohden.",
 };

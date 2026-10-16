@@ -1,6 +1,6 @@
+import type { FeedMeta, IsoDate, Result } from "@aei/feed";
+import type { Signal } from "@aei/signals";
 import { describe, expect, it } from "vitest";
-import type { Signal } from "../../engine/types.ts";
-import type { FeedMeta, IsoDate, Result } from "../../feed/types.ts";
 import { byMonth, laneOrder, packSegments, updateStore, visibleSignals, weekly } from "./aggregate.ts";
 
 // Week-by-week numbers for the Timeline: counted only up to asOf, extended in

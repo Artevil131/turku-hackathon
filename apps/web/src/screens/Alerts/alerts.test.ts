@@ -1,8 +1,8 @@
+import type { FeedMeta, Result } from "@aei/feed";
+import type { Signal } from "@aei/signals";
 import { createElement as h } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe as group, expect, it } from "vitest";
-import type { Signal } from "../../engine/types.ts";
-import type { FeedMeta, Result } from "../../feed/types.ts";
+import { expect, describe as group, it } from "vitest";
 import { describe } from "./describe.tsx";
 import { DEFAULT_FILTERS, isActive, passes, reveal, sortAlerts, unseenActive, unseenEpisodes } from "./filters.ts";
 import { AlertsScreen } from "./index.tsx";
@@ -97,7 +97,16 @@ const sentinel = sig({
   lastDate: "2025-06-29",
   isolateIds: ["i1"],
 });
-const old = sig({ id: "old", kind: "surge", severity: "high", firstDate: "2025-01-01", lastDate: "2025-01-10", phenotype: "abc", observed: 4, expected: 1.2 });
+const old = sig({
+  id: "old",
+  kind: "surge",
+  severity: "high",
+  firstDate: "2025-01-01",
+  lastDate: "2025-01-10",
+  phenotype: "abc",
+  observed: 4,
+  expected: 1.2,
+});
 const low = sig({ id: "low", kind: "shift", severity: "low" });
 
 const result = (over: Partial<Result>): Result => ({
@@ -185,7 +194,14 @@ group("alert wording", () => {
     expect(describe("fi", meta, gap, asOf).title.text).toBe("Tuloksia ei enää tule yksiköstä Klinikka Yhdeksän");
   });
   it("words a screening test as positive, not as a treatment that works", () => {
-    const screen = { ...shiftFew, id: "shift|C9", ward: "C9", antibiotic: "SC", recent: { works: 5, n: 9 }, baseline: { works: 49, n: 50 } };
+    const screen = {
+      ...shiftFew,
+      id: "shift|C9",
+      ward: "C9",
+      antibiotic: "SC",
+      recent: { works: 5, n: 9 },
+      baseline: { works: 49, n: 50 },
+    };
     const d = describe("en", meta, screen, asOf);
     expect(d.title.text).toBe("Clinic Nine: betoxin (screen) positive more often for G. species (fluid)");
     expect(d.how).toBe("Positive in 4 of 9 in the last 4 weeks, against 2% (1 of 50) in the 11 months before.");
@@ -229,9 +245,7 @@ group("alerts screen", () => {
   });
   it("shows cases without identifying the patient", () => {
     const d = describe("en", meta, cluster, asOf);
-    const html = renderToStaticMarkup(
-      h(Body, { ...props, s: cluster, d, seen: false, casesOpen: true }),
-    );
+    const html = renderToStaticMarkup(h(Body, { ...props, s: cluster, d, seen: false, casesOpen: true }));
     expect(html).toContain("Patient •••2345");
     expect(html).not.toContain("PX0012345");
     expect(html).toContain("day 5 of stay");
@@ -244,7 +258,9 @@ group("alerts screen", () => {
   });
   it("shows a data gap as results per week, for the laboratory, without a treatment link", () => {
     const d = describe("en", meta, gap, asOf);
-    const html = renderToStaticMarkup(h(Body, { ...props, results: [result({ ward: "C9", sampleDate: "2025-05-01" })], s: gap, d, seen: true }));
+    const html = renderToStaticMarkup(
+      h(Body, { ...props, results: [result({ ward: "C9", sampleDate: "2025-05-01" })], s: gap, d, seen: true }),
+    );
     expect(html).toContain("Results per week from this unit");
     expect(html).toContain("7 days to 30 Jun: 0");
     expect(html).toContain("The laboratory");

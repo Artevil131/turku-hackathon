@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { AiError, askAi, type AgeGroup, type AiErrorCode, type ResolvedPeriod } from "../ai/index.ts";
-import type { AgeBand, Onset } from "../engine/types.ts";
-import type { FeedMeta, IsoDate } from "../feed/types.ts";
-import { formatDate, named, t, type Locale } from "../i18n/index.ts";
+import type { FeedMeta, IsoDate } from "@aei/feed";
+import type { AgeBand, Onset } from "@aei/isolates";
+import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { type AgeGroup, AiError, type AiErrorCode, askAi, type ResolvedPeriod } from "../ai/index.ts";
+import { formatDate, type Locale, named, t } from "../i18n/index.ts";
 import type { ReportPrefs } from "../screens/Report/index.tsx";
 import type { TreatPrefs } from "../screens/Treat/index.tsx";
 import { RemovableChip } from "./Chips.tsx";
@@ -38,11 +38,16 @@ interface Chosen {
   period?: ResolvedPeriod;
 }
 
-type Phase = { kind: "idle" } | { kind: "thinking" } | { kind: "answer"; chosen: Chosen; unmatched: string[]; intent?: string } | { kind: "error"; code: AiErrorCode };
+type Phase =
+  | { kind: "idle" }
+  | { kind: "thinking" }
+  | { kind: "answer"; chosen: Chosen; unmatched: string[]; intent?: string }
+  | { kind: "error"; code: AiErrorCode };
 
 const capFirst = (locale: Locale, x: string) => (x ? x.charAt(0).toLocaleUpperCase(locale) + x.slice(1) : x);
 
-const toBand = (g: AgeGroup | undefined): AgeBand | undefined => (g === undefined ? undefined : g === "older" || g === "very_old" ? "65plus" : "under65");
+const toBand = (g: AgeGroup | undefined): AgeBand | undefined =>
+  g === undefined ? undefined : g === "older" || g === "very_old" ? "65plus" : "under65";
 
 export function AskSheet({
   open,

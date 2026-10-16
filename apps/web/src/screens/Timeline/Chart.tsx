@@ -1,4 +1,10 @@
+import type { FeedMeta, IsoDate } from "@aei/feed";
+import { addDays, maxDate, minDate, toDayNumber } from "@aei/isolates";
+import type { Signal } from "@aei/signals";
 import {
+  type KeyboardEvent,
+  type ReactNode,
+  type PointerEvent as ReactPointerEvent,
   useCallback,
   useEffect,
   useId,
@@ -6,22 +12,16 @@ import {
   useMemo,
   useRef,
   useState,
-  type KeyboardEvent,
-  type PointerEvent as ReactPointerEvent,
-  type ReactNode,
 } from "react";
-import { addDays, maxDate, minDate, toDayNumber } from "../../engine/dates.ts";
-import type { Signal } from "../../engine/types.ts";
-import type { FeedMeta, IsoDate } from "../../feed/types.ts";
-import { formatDate, formatMonth, formatNumber, formatShare, t, type Locale } from "../../i18n/index.ts";
+import { formatDate, formatMonth, formatNumber, formatShare, type Locale, t } from "../../i18n/index.ts";
 import { SeverityBadge } from "../../ui/Badge.tsx";
 import { unitName } from "../../ui/defaults.ts";
 import { Icon } from "../../ui/Icon.tsx";
-import { Sheet } from "../../ui/Sheet.tsx";
 import { MIN_ISOLATES } from "../../ui/ShareBar.tsx";
-import { packSegments, type Lane, type Packed, type WeeklyView } from "./aggregate.ts";
+import { Sheet } from "../../ui/Sheet.tsx";
+import { type Lane, type Packed, packSegments, type WeeklyView } from "./aggregate.ts";
 import { GlyphMark, KindGlyph, SEVERITY_FILL } from "./Glyph.tsx";
-import { basisText, institutionLabel, signalTitle, signalWhen, signalWhere, Summary } from "./words.tsx";
+import { basisText, institutionLabel, Summary, signalTitle, signalWhen, signalWhere } from "./words.tsx";
 
 /*
   The timeline chart: x = weeks from the feed's first to its last day; one row
@@ -55,7 +55,17 @@ export interface Group {
 type Row =
   | { kind: "all"; key: string; y: number; h: number; label: string }
   | { kind: "group"; key: string; y: number; h: number; label: string }
-  | { kind: "unit" | "hospital"; key: string; y: number; h: number; label: string; sub?: string; lane: Lane | null; packed: Packed[]; tracks: number };
+  | {
+      kind: "unit" | "hospital";
+      key: string;
+      y: number;
+      h: number;
+      label: string;
+      sub?: string;
+      lane: Lane | null;
+      packed: Packed[];
+      tracks: number;
+    };
 
 type LaneRow = Extract<Row, { kind: "unit" | "hospital" }>;
 type CursorRow = Exclude<Row, { kind: "group" }>;
@@ -160,7 +170,14 @@ export function TimelineChart({
       }
     }
     y += 10;
-    const hosp = laneRow("hospital", "hospital", t(locale, "timeline.lane.hospital"), byLane.get(null) ?? [], null, t(locale, "timeline.lane.hospitalSub"));
+    const hosp = laneRow(
+      "hospital",
+      "hospital",
+      t(locale, "timeline.lane.hospital"),
+      byLane.get(null) ?? [],
+      null,
+      t(locale, "timeline.lane.hospitalSub"),
+    );
     out.push(hosp);
     y += hosp.h;
     return { rows: out, height: y + FOOT_H };
@@ -217,7 +234,9 @@ export function TimelineChart({
 
     for (const row of rows) {
       if (row.kind === "group") {
-        parts.push(<line key={row.key} x1={0} x2={xEnd} y1={row.y + row.h - 0.5} y2={row.y + row.h - 0.5} className="timeline-groupline" />);
+        parts.push(
+          <line key={row.key} x1={0} x2={xEnd} y1={row.y + row.h - 0.5} y2={row.y + row.h - 0.5} className="timeline-groupline" />,
+        );
         continue;
       }
       if (row.kind === "all") {
@@ -231,7 +250,17 @@ export function TimelineChart({
           const x = w * colW + gap / 2;
           const bw = Math.max(1, Math.min(colW - gap, xNow - x));
           const partial = view.weeks[w]!.released < 7;
-          bars.push(<rect key={w} x={x} y={base - h} width={bw} height={h} rx={Math.min(1.5, bw / 2)} className={partial ? "timeline-bar is-partial" : "timeline-bar"} />);
+          bars.push(
+            <rect
+              key={w}
+              x={x}
+              y={base - h}
+              width={bw}
+              height={h}
+              rx={Math.min(1.5, bw / 2)}
+              className={partial ? "timeline-bar is-partial" : "timeline-bar"}
+            />,
+          );
         }
         parts.push(<line key="base" x1={0} x2={xNow} y1={base + 0.5} y2={base + 0.5} className="timeline-baseline" />);
         parts.push(<g key="bars">{bars}</g>);
@@ -255,7 +284,9 @@ export function TimelineChart({
         }
         if (d) parts.push(<path key="flag" d={d} className="timeline-flagline" />);
         if (lastPt) parts.push(<circle key="flagdot" cx={lastPt[0]} cy={lastPt[1]} r={2.6} className="timeline-flagdot" />);
-        parts.push(<line key={`sep-${row.key}`} x1={0} x2={xEnd} y1={row.y + row.h - 0.5} y2={row.y + row.h - 0.5} className="timeline-laneline" />);
+        parts.push(
+          <line key={`sep-${row.key}`} x1={0} x2={xEnd} y1={row.y + row.h - 0.5} y2={row.y + row.h - 0.5} className="timeline-laneline" />,
+        );
         continue;
       }
       // Unit lanes: heat strip of weekly volume.
@@ -267,11 +298,15 @@ export function TimelineChart({
           const x = w * colW;
           const bw = Math.min(colW - gap, xNow - x);
           if (bw <= 0) continue;
-          cells.push(<rect key={w} x={x} y={row.y + 3} width={bw} height={row.h - 6} fillOpacity={0.1 + 0.62 * v} className="timeline-heat" />);
+          cells.push(
+            <rect key={w} x={x} y={row.y + 3} width={bw} height={row.h - 6} fillOpacity={0.1 + 0.62 * v} className="timeline-heat" />,
+          );
         }
         parts.push(<g key={`h-${row.key}`}>{cells}</g>);
       }
-      parts.push(<line key={`sep-${row.key}`} x1={0} x2={xEnd} y1={row.y + row.h - 0.5} y2={row.y + row.h - 0.5} className="timeline-laneline" />);
+      parts.push(
+        <line key={`sep-${row.key}`} x1={0} x2={xEnd} y1={row.y + row.h - 0.5} y2={row.y + row.h - 0.5} className="timeline-laneline" />,
+      );
       // Signal segments.
       const segs: ReactNode[] = [];
       const stackH = row.tracks * SEG_H + Math.max(0, row.tracks - 1) * TRACK_GAP;
@@ -281,7 +316,15 @@ export function TimelineChart({
         const w = p.x2 - p.x1;
         segs.push(
           <g key={p.signal.id} className={`timeline-seg is-${p.signal.severity}`}>
-            <rect x={p.x1} y={y} width={w} height={SEG_H} rx={SEG_H / 2} fill={SEVERITY_FILL[p.signal.severity]} className="timeline-seg-body" />
+            <rect
+              x={p.x1}
+              y={y}
+              width={w}
+              height={SEG_H}
+              rx={SEG_H / 2}
+              fill={SEVERITY_FILL[p.signal.severity]}
+              className="timeline-seg-body"
+            />
             <GlyphMark kind={p.signal.kind} x={p.x1 + SEG_H / 2} y={y + SEG_H / 2} color="var(--surface)" />
           </g>,
         );
@@ -291,7 +334,17 @@ export function TimelineChart({
 
     // Not yet arrived: hatched, nothing drawn or computed in it.
     if (xEnd - xNow > 0.5) {
-      parts.push(<rect key="future" x={xNow} y={AXIS_H} width={xEnd - xNow + PAD_R / 2} height={contentBottom - AXIS_H} fill={`url(#${uid}-hatch)`} className="timeline-future" />);
+      parts.push(
+        <rect
+          key="future"
+          x={xNow}
+          y={AXIS_H}
+          width={xEnd - xNow + PAD_R / 2}
+          height={contentBottom - AXIS_H}
+          fill={`url(#${uid}-hatch)`}
+          className="timeline-future"
+        />,
+      );
       const label = t(locale, "timeline.notYet");
       const lw = label.length * 6.4 + 20;
       if (xEnd - xNow > lw + 16) {
@@ -618,6 +671,7 @@ export function TimelineChart({
   };
   // Spoken when the keyboard cursor moves, not on every simulation tick (the counts in it change daily).
   const [liveText, setLiveText] = useState("");
+  // biome-ignore lint/correctness/useExhaustiveDependencies: announce only when the cursor cell or the locale changes
   useEffect(() => {
     setLiveText(cursor ? cellText(cursor.week, cursor.row) : "");
   }, [cursor?.week, cursor?.row, locale]);
@@ -628,7 +682,9 @@ export function TimelineChart({
   const markWeek = (week: number, cls: string, label: boolean) => {
     const wk = view.weeks[week];
     if (!wk) return;
-    overlay.push(<rect key={`col-${cls}`} x={week * colW} y={AXIS_H} width={colW} height={contentBottom - AXIS_H} className={`timeline-col ${cls}`} />);
+    overlay.push(
+      <rect key={`col-${cls}`} x={week * colW} y={AXIS_H} width={colW} height={contentBottom - AXIS_H} className={`timeline-col ${cls}`} />,
+    );
     if (label) {
       const text = formatDate(locale, wk.start);
       const lw = text.length * 6.6 + 16;
@@ -647,12 +703,20 @@ export function TimelineChart({
   if (cursor) {
     markWeek(cursor.week, "is-cursor", true);
     const row = cursorRows[cursor.row];
-    if (row) overlay.push(<rect key="cell" x={cursor.week * colW - 1} y={row.y + 1} width={colW + 2} height={row.h - 3} rx={3} className="timeline-cell" />);
+    if (row)
+      overlay.push(
+        <rect key="cell" x={cursor.week * colW - 1} y={row.y + 1} width={colW + 2} height={row.h - 3} rx={3} className="timeline-cell" />,
+      );
   }
   if (pinned?.type === "week") {
     const row = cursorRows[pinned.row];
-    overlay.push(<rect key="pcol" x={pinned.week * colW} y={AXIS_H} width={colW} height={contentBottom - AXIS_H} className="timeline-col is-pinned" />);
-    if (row) overlay.push(<rect key="pcell" x={pinned.week * colW - 1} y={row.y + 1} width={colW + 2} height={row.h - 3} rx={3} className="timeline-cell" />);
+    overlay.push(
+      <rect key="pcol" x={pinned.week * colW} y={AXIS_H} width={colW} height={contentBottom - AXIS_H} className="timeline-col is-pinned" />,
+    );
+    if (row)
+      overlay.push(
+        <rect key="pcell" x={pinned.week * colW - 1} y={row.y + 1} width={colW + 2} height={row.h - 3} rx={3} className="timeline-cell" />,
+      );
   }
   const ringIds = new Set<string>();
   if (highlight) ringIds.add(highlight);
@@ -666,7 +730,17 @@ export function TimelineChart({
       for (const p of row.packed) {
         if (!ringIds.has(p.signal.id)) continue;
         const y = top0 + p.track * (SEG_H + TRACK_GAP);
-        overlay.push(<rect key={`ring-${p.signal.id}`} x={p.x1 - 3} y={y - 3} width={p.x2 - p.x1 + 6} height={SEG_H + 6} rx={(SEG_H + 6) / 2} className="timeline-ring" />);
+        overlay.push(
+          <rect
+            key={`ring-${p.signal.id}`}
+            x={p.x1 - 3}
+            y={y - 3}
+            width={p.x2 - p.x1 + 6}
+            height={SEG_H + 6}
+            rx={(SEG_H + 6) / 2}
+            className="timeline-ring"
+          />,
+        );
       }
     }
   }
@@ -691,7 +765,9 @@ export function TimelineChart({
             <dt>{t(locale, "timeline.detail.when")}</dt>
             <dd className="u-num">
               {signalWhen(locale, s)}
-              {still ? <span className="u-muted"> · {t(locale, "timeline.detail.still", { date: formatDate(locale, s.lastDate) })}</span> : null}
+              {still ? (
+                <span className="u-muted"> · {t(locale, "timeline.detail.still", { date: formatDate(locale, s.lastDate) })}</span>
+              ) : null}
             </dd>
           </div>
         </dl>
@@ -754,7 +830,9 @@ export function TimelineChart({
     const title = t(locale, "timeline.week.title", { date: formatDate(locale, from, "long") });
     const body = (
       <div className="timeline-detail">
-        <p className="u-small u-muted u-num">{t(locale, "timeline.week.range", { from: formatDate(locale, from), to: formatDate(locale, to, "long") })}</p>
+        <p className="u-small u-muted u-num">
+          {t(locale, "timeline.week.range", { from: formatDate(locale, from), to: formatDate(locale, to, "long") })}
+        </p>
         {future ? (
           <p className="u-small">{t(locale, "timeline.week.future")}</p>
         ) : (
@@ -810,7 +888,11 @@ export function TimelineChart({
             <p className="u-small u-muted">{t(locale, "timeline.week.none")}</p>
           )
         ) : null}
-        {isNow ? <p className="u-small u-muted">{t(locale, "timeline.week.isNow")}</p> : goingBack ? <p className="u-small u-muted">{t(locale, "timeline.week.past")}</p> : null}
+        {isNow ? (
+          <p className="u-small u-muted">{t(locale, "timeline.week.isNow")}</p>
+        ) : goingBack ? (
+          <p className="u-small u-muted">{t(locale, "timeline.week.past")}</p>
+        ) : null}
       </div>
     );
     const actions = (
@@ -931,9 +1013,17 @@ export function TimelineChart({
     }
   } else if (hover && desktop) {
     // A light, non-interactive tooltip; a click pins the full popover.
-    const pos = place(hover.signal ? (segmentAnchor(hover.signal)?.x ?? hover.x) : (hover.week + 0.5) * colW, hover.signal ? (segmentAnchor(hover.signal)?.y ?? hover.y) : hover.y + 14, 300);
+    const pos = place(
+      hover.signal ? (segmentAnchor(hover.signal)?.x ?? hover.x) : (hover.week + 0.5) * colW,
+      hover.signal ? (segmentAnchor(hover.signal)?.y ?? hover.y) : hover.y + 14,
+      300,
+    );
     floating = (
-      <div className={`timeline-tip${pos.above ? " is-above" : ""}`} style={{ left: pos.left, top: pos.top, width: 300 }} aria-hidden="true">
+      <div
+        className={`timeline-tip${pos.above ? " is-above" : ""}`}
+        style={{ left: pos.left, top: pos.top, width: 300 }}
+        aria-hidden="true"
+      >
         {hoverSignal ? (
           <>
             {signalHead(hoverSignal)}
@@ -947,7 +1037,9 @@ export function TimelineChart({
         ) : (
           <>
             <p className="u-small u-num">{cellText(hover.week, hover.row < 0 ? 0 : hover.row)}</p>
-            <p className="u-xs timeline-tip-sim">{t(locale, "timeline.week.jump", { date: formatDate(locale, maxDate(view.weeks[hover.week]!.start, meta.start)) })}</p>
+            <p className="u-xs timeline-tip-sim">
+              {t(locale, "timeline.week.jump", { date: formatDate(locale, maxDate(view.weeks[hover.week]!.start, meta.start)) })}
+            </p>
           </>
         )}
       </div>
@@ -1022,60 +1114,61 @@ export function TimelineChart({
         ) : null}
       </div>
       <div className={`timeline-scrollbox${scrollable ? " is-scrollable" : ""}`}>
-      <div
-        className="timeline-scroll"
-        ref={scrollRef}
-        onScroll={onScroll}
-        tabIndex={0}
-        role="application"
-        aria-label={t(locale, "timeline.chart.label", {
-          start: formatDate(locale, meta.start, "long"),
-          end: formatDate(locale, meta.end, "long"),
-          now: formatDate(locale, view.asOf, "long"),
-        })}
-        onKeyDown={onKeyDown}
-        onFocus={(e) => {
-          if (e.target !== e.currentTarget) return;
-          let keyboard = true;
-          try {
-            keyboard = e.currentTarget.matches(":focus-visible");
-          } catch {
-            /* older browsers: assume keyboard */
-          }
-          if (keyboard && !cursor) setCursor({ week: Math.max(0, view.nowWeek), row: 0 });
-        }}
-        onBlur={(e) => {
-          const next = e.relatedTarget as Node | null;
-          if (next && (popRef.current?.contains(next) || e.currentTarget.contains(next))) return;
-          if (!pinned) setCursor(null);
-        }}
-      >
-        <div className="timeline-canvas" style={{ width: labelW + plotW, height }}>
-          <div className="timeline-labels" style={{ width: labelW, height }} aria-hidden="true">
-            {labels}
+        <div
+          className="timeline-scroll"
+          ref={scrollRef}
+          onScroll={onScroll}
+          // biome-ignore lint/a11y/noNoninteractiveTabindex: the scrollable chart takes keyboard focus for arrow-key navigation (role application)
+          tabIndex={0}
+          role="application"
+          aria-label={t(locale, "timeline.chart.label", {
+            start: formatDate(locale, meta.start, "long"),
+            end: formatDate(locale, meta.end, "long"),
+            now: formatDate(locale, view.asOf, "long"),
+          })}
+          onKeyDown={onKeyDown}
+          onFocus={(e) => {
+            if (e.target !== e.currentTarget) return;
+            let keyboard = true;
+            try {
+              keyboard = e.currentTarget.matches(":focus-visible");
+            } catch {
+              /* older browsers: assume keyboard */
+            }
+            if (keyboard && !cursor) setCursor({ week: Math.max(0, view.nowWeek), row: 0 });
+          }}
+          onBlur={(e) => {
+            const next = e.relatedTarget as Node | null;
+            if (next && (popRef.current?.contains(next) || e.currentTarget.contains(next))) return;
+            if (!pinned) setCursor(null);
+          }}
+        >
+          <div className="timeline-canvas" style={{ width: labelW + plotW, height }}>
+            <div className="timeline-labels" style={{ width: labelW, height }} aria-hidden="true">
+              {labels}
+            </div>
+            <svg
+              className="timeline-svg"
+              width={plotW}
+              height={height}
+              viewBox={`${-PAD_L} 0 ${plotW} ${height}`}
+              aria-hidden="true"
+              focusable="false"
+              onPointerMove={onPointerMove}
+              onPointerLeave={() => setHover(null)}
+              onClick={(e) => onClick(e as unknown as ReactPointerEvent<SVGSVGElement>)}
+            >
+              <defs>
+                <pattern id={`${uid}-hatch`} width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                  <rect width="7" height="7" className="timeline-hatch-bg" />
+                  <line x1="0" y1="0" x2="0" y2="7" className="timeline-hatch-line" />
+                </pattern>
+              </defs>
+              {staticLayer}
+              <g className="timeline-overlay">{overlay}</g>
+            </svg>
           </div>
-          <svg
-            className="timeline-svg"
-            width={plotW}
-            height={height}
-            viewBox={`${-PAD_L} 0 ${plotW} ${height}`}
-            aria-hidden="true"
-            focusable="false"
-            onPointerMove={onPointerMove}
-            onPointerLeave={() => setHover(null)}
-            onClick={(e) => onClick(e as unknown as ReactPointerEvent<SVGSVGElement>)}
-          >
-            <defs>
-              <pattern id={`${uid}-hatch`} width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-                <rect width="7" height="7" className="timeline-hatch-bg" />
-                <line x1="0" y1="0" x2="0" y2="7" className="timeline-hatch-line" />
-              </pattern>
-            </defs>
-            {staticLayer}
-            <g className="timeline-overlay">{overlay}</g>
-          </svg>
         </div>
-      </div>
       </div>
       <p className="u-sr" aria-live="polite" aria-atomic="true">
         {liveText}

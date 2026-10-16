@@ -110,6 +110,7 @@ export function Sparkline({
       <g clipPath={`url(#${clip})`}>
         {bandPath ? <path className="k-spark-band" d={bandPath} /> : null}
         {segments.map((d, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: segments are positional and never reorder
           <path key={i} className="k-spark-line" d={d} vectorEffect="non-scaling-stroke" />
         ))}
         {!fluid && marks

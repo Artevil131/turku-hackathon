@@ -1,10 +1,11 @@
+import type { LikelyOrganism } from "@aei/empiric";
+import type { FeedMeta } from "@aei/feed";
+import type { AgeBand } from "@aei/isolates";
 import { useMemo } from "react";
-import type { AgeBand, LikelyOrganism } from "../../engine/types.ts";
-import type { FeedMeta } from "../../feed/types.ts";
-import { formatNumber, named, t, type Locale } from "../../i18n/index.ts";
-import { ageLabel, Org, Picker, Segmented, sexLabel, ToggleChip, type PickerGroup } from "../../ui/index.ts";
-import { cap } from "./parts.tsx";
+import { formatNumber, type Locale, named, t } from "../../i18n/index.ts";
+import { ageLabel, Org, Picker, type PickerGroup, Segmented, sexLabel, ToggleChip } from "../../ui/index.ts";
 import type { ReportPrefs } from "./index.tsx";
+import { cap } from "./parts.tsx";
 
 /*
   The report's filters, compact and wrapping on phones: infection site,
@@ -55,7 +56,12 @@ export function Filters({
     if (found.length) {
       groups.push({
         label: t(locale, "report.filter.found"),
-        options: found.map((o) => ({ value: o.organism, label: <Org name={o.organism} />, text: o.organism, hint: formatNumber(locale, o.n) })),
+        options: found.map((o) => ({
+          value: o.organism,
+          label: <Org name={o.organism} />,
+          text: o.organism,
+          hint: formatNumber(locale, o.n),
+        })),
       });
     }
     if (missing.length) {

@@ -1,6 +1,7 @@
+import type { AwareGroup } from "@aei/empiric";
+import type { Severity } from "@aei/signals";
 import type { ReactNode } from "react";
-import type { AwareGroup, Severity } from "../engine/types.ts";
-import { t, type Locale } from "../i18n/index.ts";
+import { type Locale, t } from "../i18n/index.ts";
 
 /*
   Badge: a small label. Colour is never the only cue: status tones draw a

@@ -1,8 +1,8 @@
+import type { FeedClock, FeedMeta, Result } from "@aei/feed";
+import type { Signal } from "@aei/signals";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import type { Signal } from "../../engine/types.ts";
-import type { FeedClock, FeedMeta, Result } from "../../feed/types.ts";
 import { TimelineScreen } from "./index.tsx";
 
 // Smoke test: the screen renders from feed data alone, in both languages,
@@ -43,8 +43,35 @@ for (let d = 1; d <= 28; d++) {
 }
 
 const signals: Signal[] = [
-  { id: "s1", kind: "cluster", severity: "high", firstDate: "2024-02-10", lastDate: "2024-02-20", ward: "W1", organism: "Genus species", resists: ["AB"], observed: 5, expected: 0.4, isolateIds: ["a", "b", "c"] },
-  { id: "s2", kind: "trend", severity: "medium", firstDate: "2024-02-01", lastDate: "2024-02-28", ward: null, organism: "Genus species", specimen: "s1", antibiotic: "AB", observed: 30, expected: 20, isolateIds: [], recent: { works: 20, n: 25 }, baseline: { works: 80, n: 100 } },
+  {
+    id: "s1",
+    kind: "cluster",
+    severity: "high",
+    firstDate: "2024-02-10",
+    lastDate: "2024-02-20",
+    ward: "W1",
+    organism: "Genus species",
+    resists: ["AB"],
+    observed: 5,
+    expected: 0.4,
+    isolateIds: ["a", "b", "c"],
+  },
+  {
+    id: "s2",
+    kind: "trend",
+    severity: "medium",
+    firstDate: "2024-02-01",
+    lastDate: "2024-02-28",
+    ward: null,
+    organism: "Genus species",
+    specimen: "s1",
+    antibiotic: "AB",
+    observed: 30,
+    expected: 20,
+    isolateIds: [],
+    recent: { works: 20, n: 25 },
+    baseline: { works: 80, n: 100 },
+  },
   { id: "late", kind: "surge", severity: "high", firstDate: "2024-03-10", lastDate: "2024-03-12", ward: "W1", observed: 4, isolateIds: [] },
 ];
 
@@ -54,12 +81,21 @@ describe("Timeline screen", () => {
   for (const locale of ["en", "fi"] as const) {
     it(`renders in ${locale}`, () => {
       const html = renderToStaticMarkup(
-        createElement(TimelineScreen, { locale, meta, results, asOf: "2024-02-28", clock, signals, onSeek: () => {}, onOpenSignal: () => {} }),
+        createElement(TimelineScreen, {
+          locale,
+          meta,
+          results,
+          asOf: "2024-02-28",
+          clock,
+          signals,
+          onSeek: () => {},
+          onOpenSignal: () => {},
+        }),
       );
       expect(html).toContain(locale === "en" ? "Ward one" : "Osasto yksi");
       expect(html).toContain("timeline-now");
       expect(html).toContain("timeline-future");
-      expect(html).toContain("<i class=\"k-org\"");
+      expect(html).toContain('<i class="k-org"');
       // The signal that starts after asOf is not drawn or listed.
       expect(html).not.toContain("10 Mar");
       expect(html).not.toContain("10.3.");

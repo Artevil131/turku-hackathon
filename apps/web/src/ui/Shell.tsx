@@ -1,8 +1,8 @@
+import type { IsoDate } from "@aei/feed";
 import type { ReactNode } from "react";
 import type { FeedStatus } from "../feed/useFeed.ts";
-import type { IsoDate } from "../feed/types.ts";
-import { formatDate, formatNumber, t, type Locale, type MessageKey } from "../i18n/index.ts";
-import { Icon, Mark, type IconName } from "./Icon.tsx";
+import { formatDate, formatNumber, type Locale, type MessageKey, t } from "../i18n/index.ts";
+import { Icon, type IconName, Mark } from "./Icon.tsx";
 
 /*
   The shell's parts (used only by App.tsx):
@@ -37,7 +37,11 @@ export function FreshChip({
   short: boolean;
 }) {
   const stateText =
-    status === "live" ? t(locale, "common.fresh.live") : status === "connecting" ? t(locale, "common.fresh.connecting") : t(locale, "common.fresh.offline");
+    status === "live"
+      ? t(locale, "common.fresh.live")
+      : status === "connecting"
+        ? t(locale, "common.fresh.connecting")
+        : t(locale, "common.fresh.offline");
   return (
     <div className={`app-fresh is-${status}`} title={checking ? `${stateText}. ${t(locale, "common.fresh.checking")}` : stateText}>
       <span key={arrivalSeq} className="app-fresh-dot" aria-hidden="true" />
@@ -87,7 +91,17 @@ function TabLink({
   );
 }
 
-export function Tabs({ locale, route, alertsBadge, variant }: { locale: Locale; route: Route; alertsBadge: number; variant: "top" | "bottom" }) {
+export function Tabs({
+  locale,
+  route,
+  alertsBadge,
+  variant,
+}: {
+  locale: Locale;
+  route: Route;
+  alertsBadge: number;
+  variant: "top" | "bottom";
+}) {
   return (
     <nav className={`app-tabs is-${variant}`} aria-label={t(locale, "common.tab.nav")}>
       {TABS.map((tab) => (

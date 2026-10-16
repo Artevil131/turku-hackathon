@@ -1,5 +1,5 @@
-import { useEffect, useRef, type ReactNode } from "react";
-import { t, type Locale } from "../i18n/index.ts";
+import { type ReactNode, useEffect, useRef } from "react";
+import { type Locale, t } from "../i18n/index.ts";
 import { Icon } from "./Icon.tsx";
 
 /*
@@ -48,6 +48,7 @@ function ToastView({ item, onDismiss, locale }: { item: ToastItem; onDismiss: (i
   const hovering = useRef(false);
   const timeout = item.timeout ?? DEFAULT_TIMEOUT[item.tone];
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the timer restarts only for a new or replaced toast (id, stamp)
   useEffect(() => {
     if (!timeout) return;
     let timer = window.setTimeout(function tick() {
@@ -62,6 +63,7 @@ function ToastView({ item, onDismiss, locale }: { item: ToastItem; onDismiss: (i
   }, [item.id, item.stamp, timeout]);
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: pointer and focus only pause the auto-hide timer
     <div
       className={`k-toast is-${item.tone}`}
       onPointerEnter={() => (hovering.current = true)}
@@ -90,7 +92,12 @@ function ToastView({ item, onDismiss, locale }: { item: ToastItem; onDismiss: (i
         </button>
       ) : null}
       {item.tone !== "quiet" ? (
-        <button type="button" className="k-iconbtn is-sm k-toast-x" onClick={() => dismiss.current(item.id)} aria-label={t(locale, "common.toast.dismiss")}>
+        <button
+          type="button"
+          className="k-iconbtn is-sm k-toast-x"
+          onClick={() => dismiss.current(item.id)}
+          aria-label={t(locale, "common.toast.dismiss")}
+        >
           <Icon name="close" size={16} />
         </button>
       ) : null}

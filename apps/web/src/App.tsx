@@ -1,25 +1,24 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { FeedCommand, FeedMeta, IsoDate } from "@aei/feed";
+import type { Catalog } from "@aei/isolates";
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { aiStatus, forgetAiStatus } from "./ai/index.ts";
-import { visibleSignals } from "./engine/rules.ts";
-import type { Catalog, Signal } from "./engine/types.ts";
-import type { FeedCommand, FeedMeta, IsoDate } from "./feed/types.ts";
+import { analytics, type Rank, retryAnalysis, useAnalysisFailure, useSignals } from "./analytics/index.ts";
 import { useFeed } from "./feed/useFeed.ts";
-import { formatDate, formatNumber, LOCALES, t, type Locale } from "./i18n/index.ts";
+import { formatDate, formatNumber, LOCALES, type Locale, t } from "./i18n/index.ts";
 import { unseenEpisodes } from "./screens/Alerts/filters.ts";
 import { AlertsScreen } from "./screens/Alerts/index.tsx";
-import { ReportScreen, type ReportPrefs } from "./screens/Report/index.tsx";
+import { type ReportPrefs, ReportScreen } from "./screens/Report/index.tsx";
 import { TimelineScreen } from "./screens/Timeline/index.tsx";
-import { TreatScreen, type TreatPrefs } from "./screens/Treat/index.tsx";
+import { type TreatPrefs, TreatScreen } from "./screens/Treat/index.tsx";
 import { AskSheet } from "./ui/AskSheet.tsx";
 import { defaultSpecimen, defaultWard, signalKindLabel, unitName } from "./ui/defaults.ts";
 import { EmptyState } from "./ui/EmptyState.tsx";
 import { store, useIsDesktop, useMedia, useStored } from "./ui/hooks.ts";
 import { Icon } from "./ui/Icon.tsx";
-import { Settings, type AiState } from "./ui/Settings.tsx";
-import { FreshChip, Header, Tabs, type Route } from "./ui/Shell.tsx";
+import { type AiState, Settings } from "./ui/Settings.tsx";
+import { FreshChip, Header, type Route, Tabs } from "./ui/Shell.tsx";
 import { SimControl } from "./ui/SimControl.tsx";
 import { Toaster, type ToastItem } from "./ui/Toast.tsx";
-import { useSignals } from "./ui/useSignals.ts";
 
 // The app shell: one feed, one set of signals, hash routes, remembered
 // choices, global notices. Screens get plain data and callbacks.
@@ -28,14 +27,13 @@ const ROUTES: readonly Route[] = ["treat", "alerts", "report", "timeline", "sett
 const REMEMBERED_ROUTES: readonly Route[] = ["treat", "alerts", "report", "timeline"];
 const isRoute = (v: unknown): v is Route => typeof v === "string" && (ROUTES as readonly string[]).includes(v);
 const isLocale = (v: unknown): v is Locale => typeof v === "string" && (LOCALES as readonly string[]).includes(v);
-const isRank = (v: unknown): v is "access-first" | "coverage" => v === "access-first" || v === "coverage";
+const isRank = (v: unknown): v is Rank => v === "access-first" || v === "coverage";
 const isStringArray = (v: unknown): v is string[] => Array.isArray(v) && v.every((x) => typeof x === "string");
 
 /** Seen alert ids kept at most (oldest forgotten first). */
 const SEEN_MAX = 600;
 /** Arrival notices are skipped when the replay runs faster than this (they would flicker). */
 const ARRIVAL_TOAST_MIN_TICK_MS = 1000;
-const NO_SIGNALS: readonly Signal[] = [];
 
 /** A request from another screen, e.g. "show this alert on the timeline"; `seq` makes a repeat count. */
 export interface Nudge<T> {
@@ -79,7 +77,7 @@ export function App() {
 
   // ---------- Remembered choices ----------
   const [locale, setLocale] = useStored<Locale>("locale", "fi", isLocale);
-  const [rank, setRank] = useStored<"access-first" | "coverage">("rank", "access-first", isRank);
+  const [rank, setRank] = useStored<Rank>("rank", "access-first", isRank);
   const [seenList, setSeenList] = useStored<string[]>("seen", [], isStringArray);
   const seen = useMemo(() => new Set(seenList), [seenList]);
 
@@ -98,6 +96,7 @@ export function App() {
   const mainRef = useRef<HTMLElement>(null);
   const userNavigated = useRef(false);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: once on mount: set the first hash and listen for changes
   useEffect(() => {
     if (!routeFromHash()) window.history.replaceState(null, "", `#${route}`);
     const onHash = () => {
@@ -176,14 +175,9 @@ export function App() {
 
   // ---------- Signals ----------
   const catalog = useMemo<Catalog | null>(() => (meta ? { units: meta.units, antibiotics: meta.antibiotics } : null), [meta]);
-  const computed = useSignals(results, asOf, generation, catalog);
-  const { signalsAsOf, signalsGen, pending } = computed;
   // Only signals computed for the results on screen, and none past the day shown:
   // right after a rewind the old list (from a later day) is never shown.
-  const signals = useMemo(
-    () => (asOf && signalsGen === generation ? visibleSignals(computed.signals, asOf) : NO_SIGNALS),
-    [computed.signals, signalsGen, generation, asOf],
-  );
+  const { signals, signalsAsOf, signalsGen, pending } = useSignals(results, asOf, generation, catalog);
   const [focus, setFocus] = useState<string | null>(null);
   const openSignal = useCallback(
     (id: string) => {
@@ -220,6 +214,7 @@ export function App() {
   // A new HIGH signal: a toast that opens it. The first computation after a
   // (re)load only sets the baseline: what was already there is not "new".
   const knownHigh = useRef<{ gen: number; ids: Set<string> } | null>(null);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs when a new signal list arrives, not when the locale or callbacks change
   useEffect(() => {
     if (!signalsAsOf || !meta) return;
     const high = signals.filter((s) => s.severity === "high");
@@ -250,11 +245,13 @@ export function App() {
   }, [signals, signalsAsOf]);
 
   // A pause, a rewind or the end of the data ends "play to next alert".
+  // biome-ignore lint/correctness/useExhaustiveDependencies: only a change of clock.running ends play-to-next-alert
   useEffect(() => {
     if (untilAlert && clock && !clock.running) setUntilAlert(false);
   }, [clock?.running]);
 
   // New results: a quiet counter, replaced in place.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: one toast per arrival (seq), not on locale or clock changes
   useEffect(() => {
     if (!lastArrival || lastArrival.count === 0) return;
     if (clock?.running && clock.tickMs < ARRIVAL_TOAST_MIN_TICK_MS) return;
@@ -264,9 +261,29 @@ export function App() {
       text:
         lastArrival.count === 1
           ? t(locale, "common.toast.arrivalsOne", { date: formatDate(locale, lastArrival.to) })
-          : t(locale, "common.toast.arrivals", { count: formatNumber(locale, lastArrival.count), date: formatDate(locale, lastArrival.to) }),
+          : t(locale, "common.toast.arrivals", {
+              count: formatNumber(locale, lastArrival.count),
+              date: formatDate(locale, lastArrival.to),
+            }),
     });
   }, [lastArrival?.seq]);
+
+  // The server did not answer an analysis request (remote analysis only): the
+  // screens keep waiting, so say so, with a way to ask again.
+  const analysisFailure = useAnalysisFailure();
+  useEffect(() => {
+    if (!analysisFailure) {
+      dismissToast("analysis");
+      return;
+    }
+    pushToast({
+      id: "analysis",
+      tone: "info",
+      text: t(locale, "common.toast.analysisFailed"),
+      action: { label: t(locale, "common.toast.retry"), onClick: retryAnalysis },
+      timeout: 0,
+    });
+  }, [analysisFailure, locale, pushToast, dismissToast]);
 
   // ---------- Optional AI ----------
   const [ai, setAi] = useState<AiState>({ available: false, model: null, checking: true });
@@ -320,13 +337,13 @@ export function App() {
   );
   const askButton =
     ai.available && meta && asOf ? (
-      <button type="button" className="k-btn is-ask" onClick={() => setAskOpen(true)}>
+      <button type="button" className="k-btn is-ask" aria-label={t(locale, "common.ask.button")} onClick={() => setAskOpen(true)}>
         <Icon name="sparkle" size={18} />
         <span className="app-ask-label">{t(locale, "common.ask.button")}</span>
       </button>
     ) : null;
 
-  let body;
+  let body: ReactNode;
   if (route === "settings") {
     body = (
       <Settings
@@ -338,6 +355,7 @@ export function App() {
         asOf={asOf}
         resultCount={results.length}
         feedSource={`${window.location.host}/api`}
+        analysisWhere={analytics.where}
         ai={ai}
         onCheckAi={() => void checkAi(true)}
         onForget={forget}
@@ -414,10 +432,15 @@ export function App() {
 
   return (
     <div className={`app${desktop ? " is-desktop" : " is-phone"}`}>
-      <a className="app-skip" href="#main" onClick={(e) => {
-        e.preventDefault();
-        mainRef.current?.focus();
-      }}>
+      {/* biome-ignore lint/a11y/useValidAnchor: skip link: keeps href for no-JS and moves focus to main */}
+      <a
+        className="app-skip"
+        href="#main"
+        onClick={(e) => {
+          e.preventDefault();
+          mainRef.current?.focus();
+        }}
+      >
         {t(locale, "common.skip")}
       </a>
       {/* Desktop: the simulation band stays with the header. Phones: only the header sticks, the band scrolls away. */}
@@ -436,7 +459,14 @@ export function App() {
         ) : null}
       </div>
       {clock && !desktop ? (
-        <SimControl locale={locale} clock={clock} onControl={control} onPlayUntil={playUntilAlert} untilAlert={untilAlert} desktop={false} />
+        <SimControl
+          locale={locale}
+          clock={clock}
+          onControl={control}
+          onPlayUntil={playUntilAlert}
+          untilAlert={untilAlert}
+          desktop={false}
+        />
       ) : null}
       {status === "offline" && ready ? (
         <div className="app-banner" role="status">

@@ -53,6 +53,21 @@ importers:
 
   apps/web:
     dependencies:
+      '@aei/empiric':
+        specifier: workspace:*
+        version: link:../../libs/utils/empiric
+      '@aei/feed':
+        specifier: workspace:*
+        version: link:../../libs/utils/feed
+      '@aei/isolates':
+        specifier: workspace:*
+        version: link:../../libs/utils/isolates
+      '@aei/question-filters':
+        specifier: workspace:*
+        version: link:../../libs/utils/question-filters
+      '@aei/signals':
+        specifier: workspace:*
+        version: link:../../libs/utils/signals
       react:
         specifier: ^19.3.1
         version: 19.3.1
@@ -165,11 +180,22 @@ importers:
 
   libs/utils/domain: {}
 
+  libs/utils/empiric:
+    dependencies:
+      '@aei/feed':
+        specifier: workspace:*
+        version: link:../feed
+      '@aei/isolates':
+        specifier: workspace:*
+        version: link:../isolates
+
   libs/utils/eucast:
     dependencies:
       '@aei/domain':
         specifier: workspace:*
         version: link:../domain
+
+  libs/utils/feed: {}
 
   libs/utils/i18n:
     dependencies:
@@ -177,7 +203,22 @@ importers:
         specifier: workspace:*
         version: link:../domain
 
+  libs/utils/isolates:
+    dependencies:
+      '@aei/feed':
+        specifier: workspace:*
+        version: link:../feed
+
   libs/utils/logistic: {}
+
+  libs/utils/question-filters:
+    dependencies:
+      '@aei/feed':
+        specifier: workspace:*
+        version: link:../feed
+      '@aei/isolates':
+        specifier: workspace:*
+        version: link:../isolates
 
   libs/utils/relations:
     dependencies:
@@ -189,6 +230,15 @@ importers:
         version: link:../replay
 
   libs/utils/replay: {}
+
+  libs/utils/signals:
+    dependencies:
+      '@aei/feed':
+        specifier: workspace:*
+        version: link:../feed
+      '@aei/isolates':
+        specifier: workspace:*
+        version: link:../isolates
 
 packages:
 

@@ -1,6 +1,6 @@
+import type { Feed, FeedClock, FeedEvent, FeedMeta, IsoDate, Result } from "@aei/feed";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { Feed, FeedClock, FeedEvent, FeedMeta, IsoDate, Result } from "./types.ts";
-import { BACKOFF_MS, CATCH_UP_MS, startFeedSync, type SyncState } from "./useFeed.ts";
+import { BACKOFF_MS, CATCH_UP_MS, type SyncState, startFeedSync } from "./useFeed.ts";
 
 // The feed sync against a fake feed: first load, arrivals, reset, gaps, drops.
 
@@ -44,7 +44,9 @@ class FakeFeed implements Feed {
   async history(range: { from?: IsoDate; to?: IsoDate } = {}) {
     if (this.down) throw new Error("down");
     this.historyCalls.push(range);
-    return this.all.filter((r) => r.sampleDate <= this.asOf && (!range.from || r.sampleDate >= range.from) && (!range.to || r.sampleDate <= range.to));
+    return this.all.filter(
+      (r) => r.sampleDate <= this.asOf && (!range.from || r.sampleDate >= range.from) && (!range.to || r.sampleDate <= range.to),
+    );
   }
   subscribe(onEvent: (e: FeedEvent) => void, onError?: () => void) {
     const l = { onEvent, onError, open: true };
@@ -76,7 +78,13 @@ describe("startFeedSync", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     feed = new FakeFeed();
-    feed.all = [result("a", "2024-01-01"), result("b", "2024-01-02"), result("c", "2024-01-03"), result("d", "2024-01-04"), result("e", "2024-01-06")];
+    feed.all = [
+      result("a", "2024-01-01"),
+      result("b", "2024-01-02"),
+      result("c", "2024-01-03"),
+      result("d", "2024-01-04"),
+      result("e", "2024-01-06"),
+    ];
   });
   afterEach(() => {
     stop?.();

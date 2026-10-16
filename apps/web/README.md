@@ -27,12 +27,12 @@ from the feed in both languages.
 
 The app reads one feed and nothing else (it never reads the dataset's CSV files).
 
-- **Format**: `src/feed/types.ts`. `FeedMeta` (code lists: units with
+- **Format**: `@aei/feed` (`libs/utils/feed`, types only). `FeedMeta` (code lists: units with
   inpatient/outpatient type, antibiotics with class and the specimen they are
   reported for, organisms, specimens, the date range), `Result` (one isolate:
   sample date, admission date, unit, specimen, organism, sex, age, resistance
   flags, and antibiotic → S/R), `FeedClock` and the live `FeedEvent`s.
-- **Transport**: `src/feed/http.ts`, HTTP plus server-sent events, relative to
+- **Transport**: `@aei/feed/http` (`libs/utils/feed/src/http.ts`), HTTP plus server-sent events, relative to
   the page's origin:
 
   | Route | |
@@ -54,8 +54,8 @@ The app reads one feed and nothing else (it never reads the dataset's CSV files)
   (default `http://localhost:8787`). Any laboratory system that serves these
   routes drives the app. Nothing in the app names a unit, organism, antibiotic,
   specimen or date; the only public tables are the WHO AWaRe classification
-  (`engine/aware.ts`), EUCAST expected resistant phenotypes (`engine/eucast.ts`)
-  and the always-alert resistance flags CPE and VRE (`engine/phenotypes.ts`).
+  (`@aei/empiric` `aware.ts`), EUCAST expected resistant phenotypes (`@aei/empiric` `eucast.ts`)
+  and the always-alert resistance flags CPE and VRE (`@aei/signals` `phenotypes.ts`).
   Anything not in those tables simply gets no badge or no special rule.
 
 ## Run it
@@ -67,12 +67,14 @@ Start the feed first, then the app.
 cd apps/api && node src/main.ts
 
 # 2. this app, http://localhost:5173
-cd apps/web
-npm install
-npm run dev                                   # or: AEI_FEED_URL=http://other-host:8787 npm run dev
+# (the app's engines are workspace gears, so install from the repository root)
+pnpm install
+pnpm dev:web                                  # or: AEI_FEED_URL=http://other-host:8787 pnpm dev:web
 ```
 
-Checks: `npx tsc -p tsconfig.json` (types) and `npx vitest run` (tests).
+`pnpm dev` from the root starts both. Checks: `pnpm -r typecheck` (types),
+`pnpm test` (every test) and `pnpm check` (Biome) from the root; inside
+`apps/web`, `npx vitest run` runs this app's tests only.
 
 Optional AI layer (Ask): put `AEI_LLM_URL`, `AEI_LLM_MODEL`,
 `AEI_LLM_ACCESS_ID`, `AEI_LLM_ACCESS_SECRET` in `../../.env.ai` (gitignored).
@@ -81,10 +83,11 @@ the credentials (see `vite.config.ts`). With `vite --host` the proxy is off
 unless `AEI_LLM_ALLOW_LAN=1`. Without the variables, Ask is simply not shown.
 
 Dev tooling over a feed export (`GET /api/isolates` at the end date and `GET /api/meta`):
-`node scripts/check-signals.ts isolates.json meta.json` replays every day through
-the alert engine and measures it against `benchmarks/planted-events`;
-`node scripts/check-screens.ts isolates.json meta.json 2025-06-20` prints what
-the screens would show on given days.
+`node benchmarks/planted-events/check-signals.ts isolates.json meta.json` (from the
+repository root) replays every day through `@aei/signals` and measures it against
+the planted events; `node scripts/check-screens.ts isolates.json meta.json 2025-06-20`
+(from `apps/web`) prints what the screens would show on given days, asked through
+the same analysis door as the app (`src/analytics`, local source).
 
 ## The demo simulation
 
@@ -93,21 +96,56 @@ months into the data and releases results day by day (1 day per 2 s, 0.5 s or
 0.1 s), or jumps to a date. The violet **Simulation** band is the only place
 this shows; a live hospital feed would have no such control. **Play to next
 alert** plays and pauses by itself on the next new high alert. Everything AEI
-shows is computed in the browser from the results released so far: when
+shows is computed from the results released so far (in the browser by
+default, see "Where the analysis runs"): when
 something happens in the data, the app notices it by itself on the day the
 data would have shown it. Going back reloads everything up to that day, and
 no screen ever shows an alert or a figure from after the day shown.
 
+## Where the analysis runs
+
+The screens never call an engine. They ask one door, `src/analytics`
+(`useCoverage`, `useMonthly`, `useReportTable`, `useReportMatrix`,
+`useSignals`), and an `AnalyticsSource` answers. Which source is chosen once,
+at build time, by `VITE_AEI_ANALYTICS`:
+
+| `VITE_AEI_ANALYTICS` | Source | |
+|---|---|---|
+| `local` (default; also when unset or unknown, with a console warning) | `src/analytics/local.ts` | The gears run in this browser on the results `useFeed` holds; signals in a Web Worker |
+| `remote` | `src/analytics/remote.ts` | The server answers; the app sends only the question and the day |
+
+Settings says which ("Analysis runs in: this browser / the server"). Every
+answer is exactly a gear type, so a server answers by running the same gears
+over its own copy of the same feed, up to `asOf`. The routes a server
+implements for `remote` (all `GET`, filters left out when not set, `ward`
+always sent, empty = every unit):
+
+| Route | Returns | Same as |
+|---|---|---|
+| `/api/analytics/coverage?asOf&ward&specimen[&sex&age&onset&organism]&rank` | `CoverageResult` | `@aei/empiric` `coverage(released, asOf, query, catalog, { rank })` |
+| `/api/analytics/monthly?asOf&ward&specimen[&...]&antibiotic&months` | `MonthPoint[]` | `@aei/empiric` `monthly(...)` |
+| `/api/analytics/signals?asOf` | `Signal[]` | `@aei/signals` `detectSignals(released, asOf, catalog)`; the app cuts it to `asOf` |
+| `/api/analytics/report/table?asOf&ward&specimen[&...]` | `ReportTable` | `@aei/empiric` `reportTable(...)` |
+| `/api/analytics/report/units?asOf&specimen[&...]&days` | `ReportMatrix` | `@aei/empiric` `reportMatrix(...)` |
+
+An `asOf` after the server's clock should be refused (e.g. 409), not answered
+from fewer results. While an answer is missing the screen waits; when the
+server fails, a notice says so and offers "Try again". Answers are cached for
+the session and forgotten when the feed reloads. These routes are not yet in
+`@aei/contract` (whose `/api/coverage` is a different, `@aei/coverage`
+answer); the contract's owner adds them when the server implements them.
+
 ## Engine rules
 
-Pure functions in `src/engine/`, run on the results released so far.
+Pure functions in the gears `@aei/isolates`, `@aei/empiric` and
+`@aei/signals` (`libs/utils`), run on the results released so far.
 
 - **Counting** (organiser's rule): the first isolate per patient, per
-  organism, per specimen in each window (`counting.ts`). Filters (unit, sex,
+  organism, per specimen in each window (`@aei/isolates` `counting.ts`). Filters (unit, sex,
   age, onset) are applied before the de-duplication, so a figure answers
   "patients like this" (see open question 1 below).
 - **Floor** (organiser's rule): no percentage from fewer than 30 isolates
-  (`rules.ts`, `MIN_ISOLATES`); below it the screen shows the count and says
+  (`@aei/isolates` `rules.ts`, `MIN_ISOLATES`); below it the screen shows the count and says
   "too few". Every figure shows the count it rests on.
 - **Windows**: last 28 days and last 365 days, both ending on the day shown.
   The doctor's screen leads with the 4 weeks when they reach the floor,
@@ -127,7 +165,7 @@ Pure functions in `src/engine/`, run on the results released so far.
   none; within each, how often it worked. With "prefer Access" (default), a WHO
   Access antibiotic within 10 percentage points of the best goes first, and the
   screen names the stronger one it was preferred over.
-- **Alerts** (`signals.ts`): each day is tested on data up to that day only;
+- **Alerts** (`@aei/signals` `signals.ts`): each day is tested on data up to that day only;
   hits of the same kind and key within 28 days form one episode with a stable
   id. Kinds: rare resistance (sentinel), surge, cluster, results missing (data
   gap), working less often (shift), resistance slowly rising (trend). For the
@@ -138,9 +176,9 @@ Pure functions in `src/engine/`, run on the results released so far.
 
 Each is one constant; the file is given.
 
-- [ ] `coverage.ts`: half-known rule `MIN_KNOWN_SHARE` = 0.5; Access margin 10 points; widening order age → sex → onset → unit.
-- [ ] `signals.ts`: a unit's own history is trusted after 182 days (`minHistoryDays`); episode gap 28 days; first-isolate look-back for alert baselines 365 days.
-- [ ] Sentinel: CPE and VRE alert on every find (`phenotypes.ts`); any other flag alerts when it reappears on a unit after 90 quiet days; finds within 28 days join one episode.
+- [ ] `@aei/empiric` `coverage.ts`: half-known rule `MIN_KNOWN_SHARE` = 0.5; Access margin 10 points; widening order age → sex → onset → unit.
+- [ ] `@aei/signals` `signals.ts`: a unit's own history is trusted after 182 days (`minHistoryDays`); episode gap 28 days; first-isolate look-back for alert baselines 365 days.
+- [ ] Sentinel: CPE and VRE alert on every find (`@aei/signals` `phenotypes.ts`); any other flag alerts when it reappears on a unit after 90 quiet days; finds within 28 days join one episode.
 - [ ] Surge: patients with a flag on a unit, last 14 days vs the unit's previous 365 days, Poisson p < 0.001, at least 3 patients.
 - [ ] Cluster: same organism, specimen and resistance profile on a unit, last 28 days vs how common the profile was hospital-wide in the year before, Poisson p < 0.0001, at least 3 patients, the profile includes an antibiotic that most of that organism does not resist (not wild type), smoothing 0.5.
 - [ ] Data gap: results from a unit, last 7 days vs its previous 84 days, Poisson p < 0.0001, or 5 days in a row with none when the unit usually sends at least 2 a day.

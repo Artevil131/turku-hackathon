@@ -1,13 +1,12 @@
-import { useMemo, useState, type ReactNode } from "react";
-import { ageBandOf } from "../../engine/coverage.ts";
-import { addDays, daysBetween, maxDate, minDate } from "../../engine/dates.ts";
-import { CLUSTER_WINDOW_DAYS, SHIFT_WINDOW_DAYS, SURGE_WINDOW_DAYS } from "../../engine/signals.ts";
-import type { Share, Signal } from "../../engine/types.ts";
-import type { FeedMeta, IsoDate, Result } from "../../feed/types.ts";
-import { formatMonth, formatNumber, formatShare, t, type Locale } from "../../i18n/index.ts";
-import { Disclosure, Icon, MIN_ISOLATES, Org, SeverityBadge, signalKindLabel, Sparkline, specimenName, unitName } from "../../ui/index.ts";
+import type { FeedMeta, IsoDate, Result } from "@aei/feed";
+import { addDays, ageBandOf, daysBetween, maxDate, minDate, type Share } from "@aei/isolates";
+import type { Signal } from "@aei/signals";
+import { type ReactNode, useMemo, useState } from "react";
+import { CLUSTER_WINDOW_DAYS, SHIFT_WINDOW_DAYS, SURGE_WINDOW_DAYS } from "../../analytics/helpers.ts";
+import { formatMonth, formatNumber, formatShare, type Locale, t } from "../../i18n/index.ts";
+import { Disclosure, Icon, MIN_ISOLATES, Org, SeverityBadge, Sparkline, signalKindLabel, specimenName, unitName } from "../../ui/index.ts";
 import type { TreatPrefs } from "../Treat/index.tsx";
-import { AUDIENCE_ICON, dateText, KIND_ICON, SPAN, type Described } from "./describe.tsx";
+import { AUDIENCE_ICON, type Described, dateText, KIND_ICON, SPAN } from "./describe.tsx";
 
 // The pieces of one alert: its tags and summary (list), and its body (what
 // it rests on, who should act, the actions, the cases, how it was found).
@@ -82,10 +81,13 @@ export function StoryLine({ locale, asOf, members }: { locale: Locale; asOf: Iso
               {" → "}
             </span>
           ) : null}
-          <span className="alerts-storyline-date">{dateText(locale, s.firstDate, asOf)}</span> {signalKindLabel(locale, s.kind).toLocaleLowerCase(locale)}
+          <span className="alerts-storyline-date">{dateText(locale, s.firstDate, asOf)}</span>{" "}
+          {signalKindLabel(locale, s.kind).toLocaleLowerCase(locale)}
         </span>
       ))}
-      {rest > 0 ? <span className="alerts-storyline-more"> {t(locale, "alerts.story.more", { count: formatNumber(locale, rest) })}</span> : null}
+      {rest > 0 ? (
+        <span className="alerts-storyline-more"> {t(locale, "alerts.story.more", { count: formatNumber(locale, rest) })}</span>
+      ) : null}
     </p>
   );
 }
@@ -115,7 +117,12 @@ export function Story({
           const on = s.id === current;
           return (
             <li key={s.id}>
-              <button type="button" className={`alerts-story-step is-${s.severity}${on ? " is-on" : ""}`} aria-pressed={on} onClick={() => onPick(s.id)}>
+              <button
+                type="button"
+                className={`alerts-story-step is-${s.severity}${on ? " is-on" : ""}`}
+                aria-pressed={on}
+                onClick={() => onPick(s.id)}
+              >
                 <span className="alerts-story-dot" aria-hidden="true">
                   {STEP_GLYPH[s.severity]}
                 </span>
@@ -240,12 +247,19 @@ function CaseStrip({ locale, s, asOf, cases }: { locale: Locale; s: Signal; asOf
       <p className="u-eyebrow" aria-hidden="true">
         {t(locale, bin === 7 ? "alerts.case.byWeek" : "alerts.case.byDay")}
       </p>
-      <div className={`alerts-strip-plot is-${s.severity}`} role="img" aria-label={label} style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
+      <div
+        className={`alerts-strip-plot is-${s.severity}`}
+        role="img"
+        aria-label={label}
+        style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
+      >
         {counts.map((c, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: one column per week, positional
           <span key={i} className="alerts-strip-col">
             {c > 6 ? (
               <span className="alerts-strip-more u-num">{formatNumber(locale, c)}</span>
             ) : (
+              // biome-ignore lint/suspicious/noArrayIndexKey: identical dots, positional
               Array.from({ length: c }, (_, k) => <span key={k} className="alerts-strip-dot" />)
             )}
           </span>
@@ -268,7 +282,19 @@ const GAP_WEEKS = 13;
  * is exactly the alert's "{observed} in 7 days" (a block ending on today would
  * mix the gap with the normal days after it).
  */
-function GapChart({ locale, results, ward, to, asOf }: { locale: Locale; results: readonly Result[]; ward: string; to: IsoDate; asOf: IsoDate }) {
+function GapChart({
+  locale,
+  results,
+  ward,
+  to,
+  asOf,
+}: {
+  locale: Locale;
+  results: readonly Result[];
+  ward: string;
+  to: IsoDate;
+  asOf: IsoDate;
+}) {
   const weeks = useMemo(() => {
     const counts = new Array<number>(GAP_WEEKS).fill(0);
     const from = addDays(to, -(GAP_WEEKS * 7 - 1));
@@ -325,6 +351,7 @@ function CompareRow({ locale, label, share, mode }: { locale: Locale; label: str
         // Below the organiser's 30 isolates: no percentage, one dot per isolate.
         <div className="alerts-dots" role="img" aria-label={count}>
           {Array.from({ length: share.n }, (_, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: identical dots, positional
             <span key={i} className={`alerts-dot${i < k ? " is-on" : ""}`} />
           ))}
         </div>
@@ -346,7 +373,12 @@ function Compare({ locale, s, screen }: { locale: Locale; s: Signal; screen: boo
       <section className="alerts-cmp" aria-label={heading}>
         <p className="alerts-cmp-h u-eyebrow">{heading}</p>
         <CompareRow locale={locale} label={t(locale, "alerts.cmp.recentWeeks", { weeks: SPAN.shiftWeeks })} share={s.recent} mode={mode} />
-        <CompareRow locale={locale} label={t(locale, "alerts.cmp.beforeMonths", { months: SPAN.shiftBeforeMonths })} share={s.baseline} mode={mode} />
+        <CompareRow
+          locale={locale}
+          label={t(locale, "alerts.cmp.beforeMonths", { months: SPAN.shiftBeforeMonths })}
+          share={s.baseline}
+          mode={mode}
+        />
       </section>
     );
   }
@@ -492,6 +524,7 @@ export function Body({
           {methodOpen ? (
             <div className="alerts-method">
               {d.method.map((line, i) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: method lines are positional and never reorder
                 <p key={i}>{line}</p>
               ))}
             </div>

@@ -9,4 +9,4 @@ the commit hash they were measured on.
 
 | Benchmark | What it measures | Run |
 |---|---|---|
-| `planted-events/` | The four events in the synthetic dataset the tool must detect and show, with how detection is scored (delay, alert volume, attribution) | `python3 scripts/planted_events_check.py` re-measures the events |
+| `planted-events/` | The four events in the synthetic dataset the tool must detect and show, with how detection is scored (delay, alert volume, attribution) | `python3 scripts/planted_events_check.py` re-measures the events; `node benchmarks/planted-events/check-signals.ts` scores `@aei/signals` |

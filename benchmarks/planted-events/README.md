@@ -92,3 +92,12 @@ the raw counts behind each one.
 From the repository root:
 
     python3 scripts/planted_events_check.py
+
+How the web app's detector set (`@aei/signals`) scores against these events,
+replayed day by day, with the episodes per kind and per year and the daily
+timing, from a feed export (`GET /api/isolates` at the feed's end date and
+`GET /api/meta`):
+
+    node benchmarks/planted-events/check-signals.ts isolates.json meta.json
+
+The events are named in that script, never in the gear.

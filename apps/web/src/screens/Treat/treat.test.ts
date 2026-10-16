@@ -1,9 +1,9 @@
+import type { FeedMeta, Result } from "@aei/feed";
+import type { Signal } from "@aei/signals";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import type { Signal } from "../../engine/types.ts";
-import type { FeedMeta, Result } from "../../feed/types.ts";
-import { TreatScreen, type TreatPrefs } from "./index.tsx";
+import { type TreatPrefs, TreatScreen } from "./index.tsx";
 import { capFirst, hasDetails, humanize, midSentence, queryOf, sexesIn, signalsFor, unitGroups } from "./model.ts";
 import { whoPhrase } from "./text.tsx";
 

@@ -15,7 +15,8 @@ const en = {
   "timeline.chart.title": "Week by week",
   "timeline.chart.tapHint": "Tap a week to move the simulation there. Tap a coloured bar to see a signal.",
   "timeline.chart.clickHint": "Click a week to move the simulation there. Point at a coloured bar to see a signal.",
-  "timeline.chart.label": "Timeline from {start} to {end}, now {now}. Arrow keys move one week or one row, Home and End go to the start and to now, Enter opens, Esc closes.",
+  "timeline.chart.label":
+    "Timeline from {start} to {end}, now {now}. Arrow keys move one week or one row, Home and End go to the start and to now, Enter opens, Esc closes.",
   "timeline.chart.scroll": "Swipe sideways for the whole period",
   "timeline.chart.toNow": "Back to now",
 
@@ -107,7 +108,8 @@ const en = {
   "timeline.about.title": "How this is counted",
   "timeline.about.future": "Nothing after {date} is shown or computed: those results have not arrived.",
   "timeline.about.volume": "Volume counts every released result.",
-  "timeline.about.flag": "The flag line counts the first isolate per patient, organism and specimen in each week ({flags}), and is drawn only from {min} isolates.",
+  "timeline.about.flag":
+    "The flag line counts the first isolate per patient, organism and specimen in each week ({flags}), and is drawn only from {min} isolates.",
   "timeline.about.flagNone": "No result so far carries a resistance flag.",
 
   "timeline.sr.title": "Each row in words",
@@ -132,7 +134,8 @@ const fi: Record<keyof typeof en, string> = {
   "timeline.chart.title": "Viikko viikolta",
   "timeline.chart.tapHint": "Napauta viikkoa siirtääksesi simulaation sinne. Napauta värillistä palkkia nähdäksesi signaalin.",
   "timeline.chart.clickHint": "Napsauta viikkoa siirtääksesi simulaation sinne. Osoita värillistä palkkia nähdäksesi signaalin.",
-  "timeline.chart.label": "Aikajana {start}–{end}, nyt {now}. Nuolinäppäimet siirtävät viikon tai rivin, Home ja End vievät alkuun ja nykyhetkeen, Enter avaa, Esc sulkee.",
+  "timeline.chart.label":
+    "Aikajana {start}–{end}, nyt {now}. Nuolinäppäimet siirtävät viikon tai rivin, Home ja End vievät alkuun ja nykyhetkeen, Enter avaa, Esc sulkee.",
   "timeline.chart.scroll": "Pyyhkäise sivuttain nähdäksesi koko jakson",
   "timeline.chart.toNow": "Takaisin nykyhetkeen",
 
@@ -224,7 +227,8 @@ const fi: Record<keyof typeof en, string> = {
   "timeline.about.title": "Näin tämä lasketaan",
   "timeline.about.future": "Päivän {date} jälkeen ei näytetä eikä lasketa mitään: niitä tuloksia ei ole vielä saapunut.",
   "timeline.about.volume": "Määrä laskee jokaisen julkaistun tuloksen.",
-  "timeline.about.flag": "Merkintäviiva laskee ensimmäisen löydöksen potilasta, mikrobia ja näytettä kohden kultakin viikolta ({flags}), ja se piirretään vasta {min} löydöksestä.",
+  "timeline.about.flag":
+    "Merkintäviiva laskee ensimmäisen löydöksen potilasta, mikrobia ja näytettä kohden kultakin viikolta ({flags}), ja se piirretään vasta {min} löydöksestä.",
   "timeline.about.flagNone": "Yhdessäkään tähänastisessa tuloksessa ei ole resistenssimerkintää.",
 
   "timeline.sr.title": "Rivit sanoin",
