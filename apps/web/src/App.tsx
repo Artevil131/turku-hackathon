@@ -4,6 +4,7 @@ import { type Locale, t } from "@aei/i18n";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DoctorPage } from "./components/doctor/DoctorPage.tsx";
 import { Home, type Role } from "./components/Home.tsx";
+import { PitchIntro } from "./components/intro/PitchIntro.tsx";
 import { ResearchBoard } from "./components/research/ResearchBoard.tsx";
 import { Settings } from "./components/Settings.tsx";
 import { Timeline } from "./components/Timeline.tsx";
@@ -18,7 +19,7 @@ const NO_FLOWS: readonly Flow[] = [];
 // [data-theme="dark"]; switch this (or add a toggle) to bring them back.
 const THEME: "light" | "dark" = "light";
 
-const PAGES: readonly Page[] = ["home", "doctor", "research", "settings"];
+const PAGES: readonly Page[] = ["home", "doctor", "research", "settings", "intro"];
 
 function stored<T extends string>(key: string, fallback: T, valid: (v: string) => boolean): T {
   try {
@@ -95,6 +96,18 @@ export function App() {
     history.pushState(null, "", `#research?unit=${ward}`);
     setPage("research");
   }, []);
+
+  // The pitch intro is full screen, without the working tool's chrome.
+  if (page === "intro")
+    return (
+      <PitchIntro
+        client={live.client}
+        locale={locale}
+        asOf={live.clock?.asOf ?? null}
+        onEnter={() => setPage("home")}
+        reducedMotion={reducedMotion}
+      />
+    );
 
   return (
     <FlowsContext.Provider value={live.relations?.flows ?? NO_FLOWS}>

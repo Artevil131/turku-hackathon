@@ -2,7 +2,7 @@ import { type Locale, t } from "@aei/i18n";
 import type { ReactNode } from "react";
 import { Gear, Mark } from "./Icons.tsx";
 
-export type Page = "home" | "doctor" | "research" | "settings";
+export type Page = "home" | "doctor" | "research" | "settings" | "intro";
 
 interface Props {
   locale: Locale;

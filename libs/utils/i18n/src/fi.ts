@@ -4,6 +4,7 @@ import { doctorFi } from "./surfaces/doctor.ts";
 import { feedFi } from "./surfaces/feed.ts";
 import { gridFi } from "./surfaces/grid.ts";
 import { homeFi } from "./surfaces/home.ts";
+import { introFi } from "./surfaces/intro.ts";
 import { mapFi } from "./surfaces/map.ts";
 import { networkFi } from "./surfaces/network.ts";
 
@@ -257,4 +258,5 @@ export const fi: Record<keyof typeof en, string> = {
   ...networkFi,
   ...mapFi,
   ...homeFi,
+  ...introFi,
 };

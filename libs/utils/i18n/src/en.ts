@@ -3,6 +3,7 @@ import { doctorEn } from "./surfaces/doctor.ts";
 import { feedEn } from "./surfaces/feed.ts";
 import { gridEn } from "./surfaces/grid.ts";
 import { homeEn } from "./surfaces/home.ts";
+import { introEn } from "./surfaces/intro.ts";
 import { mapEn } from "./surfaces/map.ts";
 import { networkEn } from "./surfaces/network.ts";
 
@@ -255,4 +256,5 @@ export const en = {
   ...networkEn,
   ...mapEn,
   ...homeEn,
+  ...introEn,
 } as const;
