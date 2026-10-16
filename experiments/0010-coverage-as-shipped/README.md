@@ -1,5 +1,5 @@
 ---
-status: proposed    # proposed, then accepted, rejected or superseded
+status: accepted    # proposed, then accepted, rejected or superseded
 by: Claude Code, operated by Aapo
 data: [synthetic_microbiology_dataset, seed 2026, 2023-10-02 to 2026-09-27, as received 2026-10-09]
 parent: 0004
@@ -97,4 +97,99 @@ Predictions, stated before the run:
 
 ## Result
 
+`node experiments/0010-coverage-as-shipped/backtest.ts && uv run python
+experiments/0010-coverage-as-shipped/analysis.py` (10 s and 5 s on a
+laptop) writes `out/results.md`; `out/rows.json` (2.5 MB, one row per
+query-month and antibiotic) is regenerated, not committed. 24 target
+months, 529 unit × specimen × month queries with target isolates (each
+judged mild and severe), 16,139 target first isolates. Realised shares are
+measured on the dataset; predicted shares, intervals and bootstrap
+intervals computed; deterministic (bootstrap seed 2026, 1,000 resamples of
+target months).
+
+1. **Claims hold on the list's own basis.** Top pick "clears": mild 218
+   query-months, predicted 95.8 % on average, realised 96.6 % within
+   spectrum (9,866 isolates; monthly 95.2 / 96.2 / 98.1 % min / median /
+   max); severe 327 query-months, predicted 95.6 %, realised 95.4 %
+   (14,473 isolates; monthly 93.6 / 95.6 / 96.8 %). Both above their
+   thresholds (80 %, 90 %). Mild clears is almost only urinary mecillinam
+   (214 of 218; ciprofloxacin also cleared in 204 of those but is Watch,
+   so mecillinam came first as designed); severe clears is
+   piperacillin-tazobactam (all 327 but 5).
+   **But the mild pick covers far less of what actually grows:** over all
+   organisms the realised share of mild "clears" picks is 77.4 %, below
+   80 % (urinary mecillinam misses the organisms it has no breakpoint for).
+   Over all mild top picks it is 75.4 %: urine 77.4 %, blood 73.9 %,
+   wound 68.2 % (cefuroxime in blood and wound).
+2. **Calibration holds.** Query-months with ≥ 10 target isolates whose
+   realised share fell below the threshold: mild 0 of 175 (0.3 expected
+   from binomial sampling at the predicted share), severe 23 of 269
+   (19.6 expected, ratio 1.17, within the 1.5 allowed). Every antibiotic
+   with an interval: 959 of 4,285 cells realised below the Wilson lower
+   bound against 1,079 expected (0.89; the bounds are slightly
+   conservative).
+3. **Against the hospital antibiogram (on the planned metric):** severe:
+   the same pick in 94 % of query-months, shipped − baseline −0.1 points
+   (−0.1 to −0.0): not worse. **Mild: refuted,** shipped 88.9 % against
+   91.6 %, −2.7 points (−3.6 to −1.9). The baseline picks ciprofloxacin
+   (Watch) everywhere for mild; the list picks mecillinam for urine and
+   cefuroxime for blood and wound (41 % Access against 0 %).
+   That metric favours the baseline: ciprofloxacin has a result for only
+   85 % of urinary, 60 % of blood and 46 % of wound target isolates, and
+   untested isolates are left out of its realised share. Dividing by
+   every target isolate instead (untested as not covered), mild shipped
+   75.4 % against baseline 69.7 %; severe 93.7 % against 93.9 %.
+4. Context: blood fell back to the ward type in 49 of 145 unit-months;
+   urine and wound always had the unit. No single antibiotic clears in
+   58.8 % of mild and 38.2 % of severe query-months. When none clears for
+   severe, the first pair (191 query-months) is meropenem + vancomycin in
+   144; pairs that clear realised 99.3 % against 99.6 % predicted (1,216
+   isolates). Without the planted outbreak months (URO 2025-06/07, ICU
+   2026-02/03) every figure moves by at most 0.3 points (mild − baseline
+   −2.9, −3.6 to −2.2).
+
+Deviations from plan: the "untested as not covered" columns in table 3
+and the tested shares of the baseline's ciprofloxacin were added after the
+first run, once the planned metric turned out to leave out up to half of
+the baseline's isolates. The planned metric and its verdict are reported
+unchanged. The month loop in `backtest.ts` was rewritten for the linter
+after the first run; the output was byte-identical.
+
 ## Interpretation
+
+Hypotheses 1 and 2 hold: when the list says an antibiotic clears, the next
+month's patients bear it out on the list's own terms, and the interval is
+honest (if anything cautious). Hypothesis 3 holds for severe infections
+and is refuted for mild ones as planned, by 2.7 points against the
+antibiogram's ciprofloxacin. That loss buys Access drugs (mecillinam) in
+41 % of mild picks, and it reverses when untested isolates count against
+ciprofloxacin, so the comparison does not show the antibiogram is better;
+it shows the two are close and the answer turns on how untested results
+are counted.
+
+The finding that matters for the tool is the gap between the mild basis
+and reality: "clears 80 %" for a mild infection is a statement about the
+organisms the drug is meant for (D-027), and the patients' actual
+organisms were covered 77 % of the time by the clearing pick and 68–74 %
+for blood and wound picks. A doctor reading "clears" will take it as
+"covers four in five patients" unless the all-organism share beside it
+(D-033) is prominent. Options for the team: show the all-organism share
+as the headline for mild too; or judge mild on all organisms, which would
+make the list's mild suggestions match the baseline's broader drugs.
+Mild blood is not a real clinical query; the doctor view could offer only
+severe for blood.
+
+Two shipped behaviours to review: for severe infections Access never
+leads (no Access drug clears 90 %), and the combination order puts
+coverage before Access, so the first pair is usually meropenem +
+vancomycin, two reserve-type Watch drugs, where a narrower pair might
+also clear.
+
+Strongest alternative explanation: synthetic data. The generator gives
+units little lasting difference (0004), so the list's level choice and
+interval have little to beat; real data may reward or punish them more.
+The realised counts share the dataset's testing patterns (untested left
+out), so "realised" here inherits the same blind spots as "predicted".
+Next: per-antibiotic realised coverage of the mild list over all
+organisms with the organism mix shown, and the combination order with
+Access before coverage among pairs that clear.
