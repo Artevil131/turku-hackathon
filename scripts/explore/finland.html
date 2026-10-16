@@ -63,7 +63,7 @@
   <label>Month <span id="month"></span>
     <input type="range" id="c-month" min="0" max="45" value="40">
   </label>
-  <button class="small" id="play">▶ play</button>
+  <button type="button" class="small" id="play">▶ play</button>
 </div>
 <main>
   <div>
@@ -142,7 +142,7 @@ async function init() {
   for (const f of GEO.features) f._path = pathOf(f.geometry);
   $('c-month').max = D.months.length - 1; $('c-month').value = D.months.length - 3;
   $('status').textContent = `${D.areas.length} counties, ${D.months[0]} – ${D.months[D.months.length - 1]}, five phenotypes`;
-  document.querySelectorAll('#controls select, #controls input').forEach(el => el.addEventListener('input', render));
+  document.querySelectorAll('#controls select, #controls input').forEach(el => { el.addEventListener('input', render); });
   $('play').onclick = () => {
     if (timer) { clearInterval(timer); timer = null; $('play').textContent = '▶ play'; return; }
     $('play').textContent = '❚❚ pause';

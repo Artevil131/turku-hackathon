@@ -52,7 +52,7 @@
   <label>Window <select id="c-window"><option value="12">12 months</option><option value="6">6 months</option><option value="3">3 months</option></select></label>
   <label>Borrowed strength <select id="c-prior"><option value="0">none</option><option value="50000" selected>50,000 person-years</option><option value="200000">200,000</option></select></label>
   <label>Month <span id="month"></span><input type="range" id="c-month" min="0" max="45" value="40"></label>
-  <button class="small" id="play">▶ play</button>
+  <button type="button" class="small" id="play">▶ play</button>
   <label>Smoothing (km) <input type="range" id="c-bw" min="40" max="300" value="120"></label>
   <label>Height <input type="range" id="c-h" min="0" max="400" value="220"></label>
   <label class="check"><input type="checkbox" id="c-contours" checked> contours</label>
@@ -200,7 +200,7 @@ function contours(levels) {
 }
 
 // ---------- drawing ----------
-let t0 = performance.now();
+const t0 = performance.now();
 function draw(now) {
   const time = (now - t0) / 1000;
   ctx.clearRect(0, 0, cv.width, cv.height);
@@ -299,7 +299,7 @@ async function init() {
   buildGrid();
   $('c-month').max = D.months.length - 1; $('c-month').value = D.months.length - 3;
   $('status').textContent = `${D.areas.length} counties, ${D.months[0]} – ${D.months[D.months.length - 1]}, ${HOSP.length} hospitals`;
-  document.querySelectorAll('#controls select, #controls input').forEach(el => el.addEventListener('input', refresh));
+  document.querySelectorAll('#controls select, #controls input').forEach(el => { el.addEventListener('input', refresh); });
   $('play').onclick = () => { if (timer) { clearInterval(timer); timer = null; $('play').textContent = '▶ play'; return; } $('play').textContent = '❚❚ pause'; timer = setInterval(() => { const s = $('c-month'); s.value = (+s.value + 1) % (D.months.length - 2); refresh(); }, 600); };
   refresh();
   requestAnimationFrame(draw);
