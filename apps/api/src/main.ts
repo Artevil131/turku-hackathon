@@ -11,7 +11,7 @@ import {
   type RelationsResponse,
   ROUTES,
 } from "@aei/contract";
-import { coverage, suggest } from "@aei/coverage";
+import { type CoverageResult, coverage, suggest, suggestCombinations } from "@aei/coverage";
 import { joinIsolates, loadDataset } from "@aei/dataset";
 import { ANTIBIOTICS, type IsolateRecord, ORGANISMS, SPECIMENS, type Specimen, WARDS, type WardCode } from "@aei/domain";
 import { phenotypeName, specimenName, wardName } from "@aei/i18n";
@@ -27,6 +27,8 @@ const llmConfig = llmConfigFromEnv();
 const llm = llmConfig && createLlm(llmConfig);
 console.log(`[aei-api] AI ${llm ? `on; model ${llmConfig.model}` : "off"}`);
 const explanations = new Map<string, ExplainResponse>();
+// coverage() takes about 0.25 s (pairs over three levels), so cache by query and replay date.
+const coverages = new Map<string, CoverageResult>();
 const config = {
   port: Number(env.AEI_PORT ?? 8787),
   dataDir: resolve(env.AEI_DATA_DIR ?? "../../data/synthetic_microbiology_dataset"),
@@ -198,14 +200,26 @@ export const server = createServer(async (req, res) => {
         return send(res, 400, { error: "windowDays must be a positive integer" });
       const asOf = clock.state().asOf;
       // Only released records, so nothing after the replay date leaks in.
-      const result = coverage(released.upTo(asOf), {
+      const key = JSON.stringify([asOf, ward, specimen, sex, days]);
+      let result = coverages.get(key);
+      if (!result) {
+        if (coverages.size > 500) coverages.clear();
+        result = coverage(released.upTo(asOf), {
+          asOf,
+          ward: ward as WardCode,
+          specimen: specimen as Specimen,
+          ...(sex ? { sex } : {}),
+          ...(days ? { windowDays: days } : {}),
+        });
+        coverages.set(key, result);
+      }
+      return send(res, 200, {
         asOf,
-        ward: ward as WardCode,
-        specimen: specimen as Specimen,
-        ...(sex ? { sex } : {}),
-        ...(days ? { windowDays: days } : {}),
+        severity,
+        coverage: result,
+        suggestions: suggest(result, severity),
+        combinationSuggestions: suggestCombinations(result, severity),
       });
-      return send(res, 200, { asOf, severity, coverage: result, suggestions: suggest(result, severity) });
     }
     if (url.pathname === ROUTES.meta) return send(res, 200, meta);
     if (url.pathname === ROUTES.clock && req.method === "GET") return send(res, 200, clock.state());

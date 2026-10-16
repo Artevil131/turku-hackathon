@@ -1,6 +1,6 @@
 import type { Alert } from "@aei/alerts";
 import type { AgeGroup } from "@aei/ask";
-import type { CoverageResult, CoverageQuery as GearCoverageQuery, Severity, Suggestion } from "@aei/coverage";
+import type { CombinationSuggestion, CoverageResult, CoverageQuery as GearCoverageQuery, Severity, Suggestion } from "@aei/coverage";
 import type { Antibiotic, IsoDate, IsolateRecord, Organism, Sex, Specimen, Ward, WardCode } from "@aei/domain";
 import type { Flow, TrailLink } from "@aei/relations";
 import type { ClockState } from "@aei/replay";
@@ -52,7 +52,7 @@ export interface IsolateQuery {
   ageMax?: number;
 }
 
-export type { AntibioticCoverage, Counts, CoverageResult, Level, Severity, Suggestion } from "@aei/coverage";
+export type { AntibioticCoverage, CombinationSuggestion, Counts, CoverageResult, Level, Severity, Suggestion } from "@aei/coverage";
 
 /** The doctor's coverage list (D-023). The server sets the as-of date from its clock. */
 export type CoverageQuery = Omit<GearCoverageQuery, "asOf" | "minTested"> & {
@@ -66,6 +66,8 @@ export interface CoverageResponse {
   coverage: CoverageResult;
   /** Ordered: clears, borderline, below, not assessable. Decision support only. */
   suggestions: Suggestion[];
+  /** Pairs, only when no single antibiotic clears (D-028). */
+  combinationSuggestions: CombinationSuggestion[];
 }
 
 export interface AskResponse {
