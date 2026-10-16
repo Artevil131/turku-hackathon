@@ -70,7 +70,7 @@ not in git. Then, for each session or demo:
 | Access app | `AEI LLM` | self-hosted, one Service Auth policy |
 | Service tokens | `aei-vaishnav`, `aei-aapo` | 90 days, expire 2027-01-14 |
 
-To add a teammate, create a service token in Zero Trust → Access → Service
+Teammate quick start: `VAISHNAV.md`. To add a teammate, create a service token in Zero Trust → Access → Service
 credentials and add it to the `AEI service tokens` policy. To cut someone
 off, revoke their token. To take everything down, delete the Access app,
 the DNS record and the tunnel.
