@@ -1,6 +1,6 @@
 # Design night, 2026-10-17: morning report
 
-Status: **interim, written 01:20**. Refreshed every three hours and
+Status: **interim, refreshed 02:11; the run stopped here on a usage limit**. Refreshed every three hours and
 finished between 08:30 and 09:00 (Artem's addendum of 01:15). Everything
 below is what holds at the time written; the log
 (`design-log.md`) has the minute-by-minute record.
@@ -21,7 +21,18 @@ Chrome (`design/shoot.sh`), in `design/`.
 
 ## 2. The doctor's list and the researcher's board as they stand
 
-Pending wave 1.
+Doctor (`#doctor`): opens on the remembered unit with defaults (urine,
+any sex, mild 80 % bar, last year); one-click filters for specimen, sex,
+age group, day 3+, severity and period (age group and day 3+ are shown
+"not applied yet": the API has no such filter). Each row: covers %,
+95 % interval band against the bar, n, the level the data came from,
+result as glyph and word, and a "moved down because" line; likely
+organisms beside the list; prints as one A4 page. Researcher (`#research`):
+signal feed (incidents, pinned sentinels, one click to the isolates
+behind an alert) beside a unit grid, hospital network and THL county map.
+Judge walk-through: home → Doctor (list in 1 click) → F, 65+, severe (4
+clicks) → Research → open the MED-A ESBL cluster (isolates in 1 click) →
+Map → scrub the timeline to 10 Feb 2026 (ICU MRSA).
 
 ## 3. U metrics, before and after
 
@@ -29,13 +40,13 @@ From `design/u-metrics.md`. Before (clean build of ec23f01):
 
 | Metric | Before | After |
 |---|---|---|
-| U1 clicks to the doctor's list, named context | not reachable (sex, age, onset could not be entered; figures were examples) | pending |
-| U2 clicks from the feed to an alert's isolates | not reachable | pending |
-| U3 count and as-of on every number | no | pending |
-| U4 Lighthouse accessibility home / doctor / research; contrast | 100 / 96 / 100; doctor fails one contrast item | pending |
-| U5 missing i18n keys | 0 | pending |
-| U6 LCP, 4G phone, production build | 3.6 s on all three (target 2.5 s); noisy tonight, CPU shared with the experiments night | pending |
-| U7 timeline features | 2 of 5 (play, pause) | pending |
+| U1 clicks to the doctor's list, named context | not reachable | 4 clicks, about 8–10 s, laptop and phone (wave 2 review) |
+| U2 clicks from the feed to an alert's isolates | not reachable | 1, no scroll at 1280×860 |
+| U3 count and as-of on every number | no | yes on doctor, feed, grid, map, settings; badge fixed after wave 2; organisms rail and signals block lack as-of (states audit) |
+| U4 Lighthouse accessibility home / doctor / research; contrast | 100 / 96 / 100; doctor fails one contrast item | 100 / 100 / 100; contrast passes |
+| U5 missing i18n keys | 0 | 0 |
+| U6 LCP, 4G phone, production build | 3.6 s on all three | 3.3 / 3.9 / 6.9 s; noisy (CPU shared), recorded only; home FCP 2.3 → 1.4 s |
+| U7 timeline features | 2 of 5 | 5 of 5 |
 
 ## 4. Design decisions and alternatives rejected
 
@@ -77,4 +88,9 @@ voice is plain and clinical; no brand voice was written.
 
 ## 8. With another night
 
-Pending.
+Fix the states audit's list (review-states.md): loading/empty/error and
+as-of on the organisms rail and signals block, clinical offline copy,
+recovery in live.ts, stale-while-updating on grid/network/map, grid
+weeks in the URL, a shorter tab order. Then the Ask field for research,
+the Impeccable pass per surface and the two final Fable reviews, which
+did not run before the usage limit.
