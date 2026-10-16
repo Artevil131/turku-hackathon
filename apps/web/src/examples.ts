@@ -173,11 +173,6 @@ export function stripsFor(ward: WardCode, specimen: Specimen | "all"): Strip[] {
     .map(({ weight: _weight, ...strip }) => strip);
 }
 
-/** Example isolate count per unit in four weeks, for the unit rail. */
-export function unitVolume(ward: WardCode): number {
-  return UNIT_PER_4WK[ward];
-}
-
 /** Organisms on a unit for one specimen, most common first (example shares). */
 export function organismsFor(ward: WardCode, specimen: Specimen): { organism: Organism; n: number; share: number }[] {
   const strips = stripsFor(ward, specimen);
