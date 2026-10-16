@@ -1,7 +1,7 @@
 import type { IsolateRecord } from "@aei/domain";
 import { addDays } from "@aei/replay";
 import { describe, expect, it } from "vitest";
-import { coverage, suggest, wilson } from "./index.ts";
+import { coverage, suggest, suggestCombinations, wilson } from "./index.ts";
 
 let n = 0;
 const iso = (extra: Partial<IsolateRecord>): IsolateRecord => {
@@ -95,5 +95,24 @@ describe("spectrum", () => {
     expect(mec?.share).toBeCloseTo(30 / 50, 10); // all organisms: Enterococcus counts as not covered
     expect(mec?.spectrum.share).toBeCloseTo(30 / 40, 10); // within spectrum: Enterococcus left out
     expect(mec?.outsideSpectrum).toEqual([{ organism: "Enterococcus faecalis", share: 0.2 }]);
+  });
+});
+
+describe("combinations", () => {
+  it("covers an isolate when either antibiotic does, and is suggested only when no single one clears", () => {
+    const records = [
+      ...Array.from({ length: 40 }, () => iso({ specimen: "blood", results: { TZP: "S", VAN: undefined } })), // E. coli: VAN intrinsic R
+      ...Array.from(
+        { length: 20 },
+        () => iso({ specimen: "blood", organism: "Staphylococcus aureus", results: { FOX: "R", VAN: "S" } }), // MRSA: TZP inferred R
+      ),
+    ];
+    const result = coverage(records, { asOf: "2026-06-30", ward: "ICU", specimen: "blood" });
+    const pair = result.combinations.find((c) => c.antibiotics.includes("TZP") && c.antibiotics.includes("VAN"));
+    expect(pair?.share).toBe(1);
+    expect(result.antibiotics.find((a) => a.antibiotic === "TZP")?.share).toBeCloseTo(40 / 60, 10);
+    const combos = suggestCombinations(result, "severe");
+    expect(combos[0]?.standing).toBe("clears");
+    expect(combos.some((c) => c.antibiotics.includes("TZP") && c.antibiotics.includes("VAN"))).toBe(true);
   });
 });

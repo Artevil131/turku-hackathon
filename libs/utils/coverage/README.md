@@ -3,6 +3,7 @@
 The doctor's empirical coverage list (D-023, provisional).
 
     coverage(records, { asOf, ward, specimen, sex?, windowDays = 365, minTested = 30 })
+    wilson(k, n)   // the 95 % Wilson interval it uses, cross-checked by scripts/crosscheck-stats
 
 For each antibiotic that suits the specimen: the share of first isolates
 it covered over the window, at the unit if it has at least `minTested`
@@ -34,3 +35,16 @@ experiments/0005 (urinary *E. coli* ciprofloxacin, men OR 1.9). Informs;
 does not prescribe.
 
 Relies on: D-004, D-023, D-026, D-027. Tests: `src/coverage.test.ts`.
+
+## Combinations (D-028)
+
+    result.combinations                         // every pair, over all organisms, most covering first
+    suggestCombinations(result, "severe")       // only when no single antibiotic clears
+
+A pair covers an isolate if either antibiotic does, counted only on
+isolates with a known result for both (keeping "covered by the tested
+one" while dropping "missed by the tested one" would bias the share up).
+Pairs with an antibiotic untested on over a fifth of the pool are not
+assessable. For ICU blood, severe: meropenem + vancomycin clears (100 %,
+91–100, 38 results), piperacillin-tazobactam + vancomycin is borderline
+(97 %, 87–100). About 0.25 s per `coverage` call on the full data.
