@@ -1,0 +1,293 @@
+/* Home: a calm column. The change strip first, the two role entries second. */
+
+.hm {
+  display: grid;
+  align-content: start;
+  gap: 18px;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 8px 2px 24px;
+}
+
+.hm-since,
+.hm-roles {
+  min-width: 0;
+}
+
+.hm-since {
+  padding: 16px 20px;
+  border: 1px solid var(--glass-edge);
+  border-radius: var(--radius-panel);
+  background: var(--glass-2);
+  box-shadow: var(--glass-shadow);
+}
+
+.hm-since-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 4px 16px;
+}
+
+.hm-since-head h2 {
+  margin: 0;
+  font-size: var(--step-1);
+  font-weight: 650;
+}
+
+.hm-since .asof,
+.hm-role-detail .asof {
+  font-size: var(--step--1);
+  color: var(--ink-3);
+}
+
+.hm-note {
+  margin: 10px 0 0;
+  color: var(--ink-2);
+}
+
+.hm-note p {
+  margin: 0;
+}
+
+.hm-nothing {
+  font-size: var(--step-1);
+  color: var(--ink);
+}
+
+.hm-sub {
+  margin-top: 2px;
+  font-size: var(--step-0);
+  color: var(--ink-3);
+}
+
+.hm-offline {
+  padding-left: 10px;
+  border-left: 3px solid var(--st-watch);
+  color: var(--ink);
+}
+
+.hm-items {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hm-item {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  padding: 2px 16px;
+  border-left: 1px solid var(--line);
+}
+
+.hm-item:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+
+.hm-item-label {
+  font-size: var(--step--1);
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.hm-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.hm-zero {
+  color: var(--ink-3);
+  font-size: var(--step-0);
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.hm-link {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  min-height: 44px;
+  padding: 8px 12px;
+  align-content: center;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control);
+  background: var(--glass-3);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.hm-link:hover {
+  border-color: var(--live);
+}
+
+.hm-link b {
+  font-size: var(--step-2);
+  font-weight: 650;
+  line-height: 1;
+}
+
+.hm-date {
+  font-size: var(--step--1);
+  color: var(--ink-3);
+}
+
+.hm-roles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.hm-role {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 14px;
+  padding: 22px;
+  border: 1px solid var(--glass-edge);
+  border-radius: 20px;
+  background: var(--glass-3);
+  box-shadow: var(--glass-shadow);
+  color: var(--ink);
+  text-decoration: none;
+  transition:
+    border-color 200ms var(--ease-out),
+    box-shadow 200ms var(--ease-out);
+}
+
+.hm-role:hover {
+  border-color: var(--live);
+}
+
+.hm-role[data-last="true"] {
+  border-color: var(--live);
+  box-shadow:
+    var(--glass-shadow),
+    0 0 0 1px var(--live);
+}
+
+.hm-role-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: var(--live-soft);
+  color: var(--live);
+}
+
+.hm-role-icon svg {
+  width: 26px;
+  height: 26px;
+}
+
+.hm-role-body {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+}
+
+.hm-role-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  font-size: var(--step-3);
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+.hm-role-lead {
+  color: var(--ink-2);
+}
+
+.hm-role-detail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  margin-top: 4px;
+  font-size: var(--step-1);
+  font-weight: 550;
+  color: var(--ink);
+}
+
+.hm-role-action {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  min-height: 44px;
+  padding: 0 20px;
+  border-radius: var(--radius-control);
+  background: var(--live);
+  color: var(--live-ink);
+  font-weight: 650;
+}
+
+.hm-intro {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  margin: 0;
+  padding: 0 4px;
+  font-size: var(--step-0);
+  color: var(--ink-3);
+}
+
+.hm-intro a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--ink-2);
+}
+
+.hm-intro span {
+  align-self: center;
+}
+
+@media (max-width: 860px) {
+  .hm-roles {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* The strip becomes a compact list: label left, links right. */
+  .hm-items {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .hm-item {
+    grid-template-columns: minmax(0, 8.5rem) minmax(0, 1fr);
+    align-items: center;
+    padding: 6px 0;
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+  .hm-item:first-child {
+    border-top: 0;
+  }
+  .hm-since {
+    padding: 14px 14px;
+  }
+  .hm-role {
+    padding: 16px;
+    gap: 12px;
+  }
+  .hm-role-action {
+    justify-self: stretch;
+    justify-content: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hm-role {
+    transition: none;
+  }
+}

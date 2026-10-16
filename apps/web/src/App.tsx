@@ -123,7 +123,18 @@ export function App() {
           reducedMotion={reducedMotion}
         />
 
-        {page === "home" ? <Home locale={locale} clock={live.clock} findings={live.findings} lastRole={lastRole} onRole={setPage} /> : null}
+        {page === "home" ? (
+          <Home
+            locale={locale}
+            clock={live.clock}
+            findings={live.findings}
+            lastRole={lastRole}
+            onRole={setPage}
+            connection={live.connection}
+            alerts={live.alerts}
+            records={live.records}
+          />
+        ) : null}
         {page === "doctor" ? (
           <DoctorPage
             client={live.client}

@@ -62,6 +62,8 @@ export interface IsolateQuery {
 }
 
 export type { AntibioticCoverage, CombinationSuggestion, Counts, CoverageResult, Level, Severity, Suggestion } from "@aei/coverage";
+/** The bar each severity is judged against (D-026, D-027), so clients label it from the same source. */
+export { THRESHOLDS } from "@aei/coverage";
 
 /** The doctor's coverage list (D-023). The server sets the as-of date from its clock. */
 export type CoverageQuery = Omit<GearCoverageQuery, "asOf" | "minTested"> & {
