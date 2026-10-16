@@ -246,16 +246,19 @@ function TopMatch({
 
   return (
     <article className={`treat-top${ok ? "" : " is-few"}`} aria-labelledby={headingId}>
-      <div className="treat-top-eyebrow">
-        <span className="treat-top-label">
-          {ok ? <Icon name="check" size={16} /> : <Icon name="info" size={16} />}
-          {ok ? t(locale, "treat.top.label") : t(locale, "treat.top.labelFew")}
-        </span>
+      <div className="treat-top-head">
+        <h2 id={headingId} className="treat-top-name">
+          {ok ? <span className="u-sr">{t(locale, "treat.top.label")}: </span> : null}
+          {name}
+        </h2>
         <AwareBadge locale={locale} group={drug.aware} size="md" />
       </div>
-      <h2 id={headingId} className="treat-top-name">
-        {name}
-      </h2>
+      {ok ? null : (
+        <p className="treat-top-label">
+          <Icon name="info" size={16} />
+          {t(locale, "treat.top.labelFew")}
+        </p>
+      )}
       <ShareBar
         locale={locale}
         share={drug.main}

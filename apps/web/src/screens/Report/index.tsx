@@ -168,9 +168,6 @@ export function ReportScreen(p: {
     <section className="report" aria-labelledby="report-title">
       <header className="report-head">
         <div className="report-head-titles">
-          <p className="u-eyebrow">
-            {t(locale, "report.eyebrow")} · {t(locale, "report.upTo", { date: formatDate(locale, asOf, "long") })}
-          </p>
           <h1 id="report-title" className="report-title">
             {site} · {view === "units" ? t(locale, "common.unit.all") : unitLabel}
           </h1>
@@ -178,6 +175,8 @@ export function ReportScreen(p: {
             {organism ? <Org name={organism} /> : t(locale, "report.filter.organismAll")}
             {" · "}
             {patientParts.length ? patientParts.join(" · ") : t(locale, "report.allPatients")}
+            {" · "}
+            {t(locale, "report.upTo", { date: formatDate(locale, asOf, "long") })}
           </p>
         </div>
         <div className="report-view">

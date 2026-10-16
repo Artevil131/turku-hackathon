@@ -52,8 +52,8 @@ export function Card({
       {head ? (
         <div className="k-card-head">
           <div className="k-card-titles">
-            {eyebrow !== undefined ? <div className="u-eyebrow">{eyebrow}</div> : null}
             {title !== undefined ? <H className="k-card-title">{title}</H> : null}
+            {eyebrow !== undefined ? <p className="k-card-sub">{eyebrow}</p> : null}
           </div>
           {actions !== undefined ? <div className="k-card-actions">{actions}</div> : null}
         </div>

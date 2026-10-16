@@ -4,6 +4,7 @@ import type { Catalog } from "./engine/types.ts";
 import type { FeedCommand, FeedMeta } from "./feed/types.ts";
 import { useFeed } from "./feed/useFeed.ts";
 import { formatDate, formatNumber, LOCALES, t, type Locale } from "./i18n/index.ts";
+import { isActive } from "./screens/Alerts/filters.ts";
 import { AlertsScreen } from "./screens/Alerts/index.tsx";
 import { ReportScreen, type ReportPrefs } from "./screens/Report/index.tsx";
 import { TimelineScreen } from "./screens/Timeline/index.tsx";
@@ -162,7 +163,10 @@ export function App() {
     },
     [seen, seenList, setSeenList],
   );
-  const alertsBadge = useMemo(() => signals.filter((s) => s.severity !== "low" && !seen.has(s.id)).length, [signals, seen]);
+  const alertsBadge = useMemo(
+    () => (asOf ? signals.filter((s) => s.severity !== "low" && !seen.has(s.id) && isActive(s, asOf)).length : 0),
+    [signals, seen, asOf],
+  );
 
   // ---------- Notices ----------
   const [toasts, setToasts] = useState<ToastItem[]>([]);

@@ -94,11 +94,9 @@ table { border-collapse: collapse; }
 .u-row { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
 .u-spread { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); }
 .u-eyebrow {
-  font-size: var(--fs-xs);
+  font-size: var(--fs-sm);
   font-weight: var(--fw-semibold);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--ink-3);
+  color: var(--ink-2);
 }
 
 .sr-only,

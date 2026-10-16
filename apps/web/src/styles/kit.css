@@ -240,7 +240,7 @@ button.k-chip:hover:not(:disabled):not(.is-on) { border-color: var(--blue); colo
 .k-pick-search:focus-within { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-soft-2); }
 .k-pick-options { display: flex; flex-direction: column; }
 .k-pick-group + .k-pick-group { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--line); }
-.k-pick-group-label { padding: 6px 12px 4px; font-size: var(--fs-xs); font-weight: var(--fw-semibold); color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.05em; }
+.k-pick-group-label { padding: 6px 12px 4px; font-size: var(--fs-sm); font-weight: var(--fw-semibold); color: var(--ink-2); }
 .k-pick-opt {
   display: flex;
   align-items: center;
@@ -351,13 +351,11 @@ button.k-chip:hover:not(:disabled):not(.is-on) { border-color: var(--blue); colo
   backdrop-filter: var(--blur-1);
   border: 1px solid var(--glass-edge);
   box-shadow: var(--shadow-1), var(--inner-glass);
-  border-left: 4px solid var(--low-dot);
 }
-.k-card.is-high { border-left-color: var(--high-dot); }
-.k-card.is-medium { border-left-color: var(--medium-dot); }
 .k-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-3); margin-bottom: var(--sp-3); }
 .k-card-titles { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .k-card-title { font-size: var(--fs-md); }
+.k-card-sub { margin: 0; font-size: var(--fs-sm); color: var(--ink-3); }
 .k-card-actions { flex-shrink: 0; display: flex; gap: var(--sp-2); align-items: center; }
 .k-card-foot { margin-top: var(--sp-3); padding-top: var(--sp-3); border-top: 1px solid var(--line); font-size: var(--fs-sm); color: var(--ink-3); }
 
@@ -388,7 +386,7 @@ button.k-chip:hover:not(:disabled):not(.is-on) { border-color: var(--blue); colo
 .k-badge.is-watch { background: var(--watch-bg); color: var(--watch-ink); border-color: var(--watch-line); }
 .k-badge.is-reserve { background: var(--reserve-bg); color: var(--reserve-ink); border-color: var(--reserve-line); }
 .k-badge.is-live { background: var(--access-bg); color: var(--access-ink); border-color: var(--access-line); }
-.k-badge.is-sim { background: var(--sim-bg); color: var(--sim); border-color: var(--sim-line); text-transform: uppercase; letter-spacing: 0.06em; font-size: var(--fs-xs); }
+.k-badge.is-sim { background: var(--sim-bg); color: var(--sim); border-color: var(--sim-line); }
 
 /* ---------- Organism ---------- */
 .k-org { font-style: italic; }
@@ -573,7 +571,6 @@ button.k-chip:hover:not(:disabled):not(.is-on) { border-color: var(--blue); colo
   font-size: var(--fs-sm);
   animation: k-toast-in var(--t-slow) var(--ease-out);
 }
-.k-toast.is-alert { border-left: 4px solid var(--high-dot); }
 .k-toast-glyph { color: var(--high-ink); font-size: 12px; }
 .k-toast-text { flex: 1; min-width: 0; font-weight: var(--fw-medium); }
 .k-toast-action {

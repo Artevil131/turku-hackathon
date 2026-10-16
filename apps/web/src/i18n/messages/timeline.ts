@@ -2,7 +2,6 @@
 // Names of units, antibiotics and specimens come from the feed, never from here.
 
 const en = {
-  "timeline.eyebrow": "Timeline",
   "timeline.period": "{start} – {end}",
   "timeline.lede": "The whole period of the feed. Results arrive day by day; the hatched part has not arrived yet.",
   "timeline.stat.results": "Results so far",
@@ -115,7 +114,6 @@ const en = {
 } as const;
 
 const fi: Record<keyof typeof en, string> = {
-  "timeline.eyebrow": "Aikajana",
   "timeline.period": "{start} – {end}",
   "timeline.lede": "Syötteen koko jakso. Tulokset saapuvat päivä kerrallaan; viivoitettu osa ei ole vielä saapunut.",
   "timeline.stat.results": "Tuloksia tähän mennessä",

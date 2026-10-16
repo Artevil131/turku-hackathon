@@ -208,10 +208,8 @@
   align-items: center;
   gap: 6px;
   color: var(--sim);
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-bold);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
   white-space: nowrap;
 }
 .app-sim-group { display: flex; align-items: center; gap: var(--sp-1); }

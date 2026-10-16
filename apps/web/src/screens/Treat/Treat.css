@@ -26,15 +26,12 @@
   -webkit-backdrop-filter: var(--blur-1);
   backdrop-filter: var(--blur-1);
   border: 1px solid var(--glass-edge);
-  border-left: 4px solid var(--high-dot);
   box-shadow: var(--shadow-1);
   text-align: left;
   color: var(--ink);
   transition: background var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
 }
 .treat-signal:hover { background: var(--surface); }
-.treat-signal.is-medium { border-left-color: var(--medium-dot); }
-.treat-signal.is-low { border-left-color: var(--low-dot); }
 .treat-signal-glyph { font-size: 0.8rem; line-height: 1; color: var(--high-ink); width: 14px; text-align: center; flex-shrink: 0; }
 .treat-signal.is-medium .treat-signal-glyph { color: var(--medium-ink); }
 .treat-signal.is-low .treat-signal-glyph { color: var(--low-ink); }
@@ -104,15 +101,15 @@
   box-shadow: var(--shadow-2), var(--inner-glass);
 }
 .treat-top.is-few { border: 1px solid var(--line-strong); background: var(--glass-1); box-shadow: var(--shadow-1), var(--inner-glass); }
-.treat-top-eyebrow { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); flex-wrap: wrap; }
+.treat-top-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-3); }
+.treat-top-head .k-badge { flex-shrink: 0; margin-top: 6px; }
 .treat-top-label {
+  margin: 0;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-bold);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
   color: var(--blue);
 }
 .treat-top.is-few .treat-top-label { color: var(--ink-3); }
@@ -131,11 +128,7 @@
   align-items: flex-start;
   gap: var(--sp-2);
   margin: 0;
-  padding: var(--sp-2) var(--sp-3);
-  border-radius: var(--r-md);
-  background: var(--access-bg);
   color: var(--access-ink);
-  border: 1px solid var(--access-line);
   font-size: var(--fs-sm);
   line-height: 1.45;
 }
@@ -173,15 +166,14 @@
 
 /* ---------- The other antibiotics ---------- */
 .treat-list .k-card-head { margin-bottom: var(--sp-1); }
+.treat-list .k-card-title { font-size: var(--fs-lg); }
 .treat-group + .treat-group { margin-top: var(--sp-4); }
 .treat-group-title {
   margin: 0;
   padding: var(--sp-2) 0 var(--sp-1);
-  font-size: var(--fs-xs);
+  font-size: var(--fs-base);
   font-weight: var(--fw-semibold);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--ink-3);
+  color: var(--ink-2);
 }
 .treat-rows { list-style: none; margin: 0; padding: 0; }
 .treat-row + .treat-row { border-top: 1px solid var(--line); }
@@ -234,6 +226,6 @@
   .treat-top-name { font-size: var(--fs-2xl); }
 }
 /* The patient card stays in view while the answer scrolls, when the window is tall enough to hold it. */
-@media (min-width: 1024px) and (min-height: 820px) {
+@media (min-width: 1024px) and (min-height: 760px) {
   .treat-side { position: sticky; top: calc(var(--header-h) + 64px); }
 }

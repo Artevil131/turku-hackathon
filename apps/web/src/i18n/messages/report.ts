@@ -2,7 +2,6 @@
 // Names of units, antibiotics, specimens and organisms come from the feed.
 
 const en = {
-  "report.eyebrow": "Antibiotic report",
   "report.upTo": "Results up to {date}",
   "report.allPatients": "All patients",
 
@@ -105,7 +104,6 @@ const en = {
 } as const;
 
 const fi: Record<keyof typeof en, string> = {
-  "report.eyebrow": "Antibioottiraportti",
   "report.upTo": "Tulokset {date} asti",
   "report.allPatients": "Kaikki potilaat",
 

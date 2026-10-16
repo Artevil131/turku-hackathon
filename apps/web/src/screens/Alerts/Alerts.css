@@ -175,22 +175,11 @@
   display: flex;
   gap: var(--sp-3);
   align-items: flex-start;
-  padding: var(--sp-3);
-  border-radius: var(--r-md);
-  background: var(--surface-2);
-  border: 1px solid var(--line);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--line);
 }
-.alerts-who-icon {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  flex-shrink: 0;
-  border-radius: var(--r-sm);
-  background: var(--blue-soft);
-  color: var(--blue);
-}
-.alerts-who.is-lab .alerts-who-icon { background: var(--surface-3); color: var(--ink-2); }
+.alerts-who-icon { display: flex; flex-shrink: 0; padding-top: 2px; color: var(--blue); }
+.alerts-who.is-lab .alerts-who-icon { color: var(--ink-2); }
 .alerts-who-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .alerts-who-name { font-weight: var(--fw-semibold); }
 .alerts-who-why { font-size: var(--fs-sm); color: var(--ink-2); }
