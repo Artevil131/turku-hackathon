@@ -71,8 +71,13 @@ def verify(number: str, scripts: str | list[str]) -> bool:
     ignored = set(subprocess.run(["git", "check-ignore", *map(str, after)], cwd=ROOT, capture_output=True, text=True).stdout.split())
     diffs = []
     for p in sorted((set(before) | set(after)) - {q for q in after if str(q) in ignored}):
-        a = normalise(before.get(p, b"").decode("utf-8"))
-        b = normalise(after.get(p, b"").decode("utf-8"))
+        try:
+            a = normalise(before.get(p, b"").decode("utf-8"))
+            b = normalise(after.get(p, b"").decode("utf-8"))
+        except UnicodeDecodeError:  # figures and other binary files: compared byte for byte
+            if before.get(p) != after.get(p):
+                diffs.append(f"{p.name}: binary file differs")
+            continue
         if a != b:
             diffs.append("\n".join(difflib.unified_diff(a, b, f"committed {p.name}", f"rerun {p.name}", lineterm="", n=1)))
     print(f"{number}: {'reproduces' if not diffs else 'DIFFERS'} ({len(before)} files, {took:.0f} s)")
