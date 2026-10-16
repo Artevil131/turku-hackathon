@@ -23,6 +23,11 @@ export const ROUTES = {
   ingest: "/api/ingest",
   /** THL county series of MRSA, ESBL, VRE and CPE and their regional signals (D-025, D-037). */
   regional: "/api/regional",
+  /**
+   * Wellbeing services county polygons (Statistics Finland, CC BY 4.0) for the regional map, as
+   * GeoJSON. Optional: 404 when the server has no geometry file. Proposed by Claude Code, pending Artem.
+   */
+  counties: "/api/counties",
 } as const;
 
 export interface Meta {
@@ -201,6 +206,19 @@ export function regionalUpTo(data: RegionalData, asOf: IsoDate, query: RegionalQ
   };
 }
 
+/** One county polygon as `scripts/fetch_county_geometry.py` writes it; `name` matches `RegionalSeries.region`. */
+export interface CountyFeature {
+  type: "Feature";
+  id?: string | number;
+  properties: { hyvinvointialue: string; nimi: string; namn?: string; name: string };
+  geometry: { type: "Polygon"; coordinates: number[][][] } | { type: "MultiPolygon"; coordinates: number[][][][] };
+}
+
+export interface CountiesResponse {
+  type: "FeatureCollection";
+  features: CountyFeature[];
+}
+
 /** Server-sent events on ROUTES.live. The event name is the `type`. */
 export type LiveEvent =
   | { type: "clock"; clock: ClockState }
@@ -245,6 +263,8 @@ export interface AeiClient {
   alerts(query: AlertsQuery): Promise<AlertsResponse>;
   /** 404 when the server has no regional file. */
   regional(query: RegionalQuery): Promise<RegionalResponse>;
+  /** County polygons for the regional map; 404 when the server has no geometry file. */
+  counties(): Promise<CountiesResponse>;
   /** Opens the live stream; returns a function that closes it. */
   live(onEvent: (event: LiveEvent) => void, onError?: (error: Event) => void): () => void;
 }
@@ -290,6 +310,7 @@ export function createAeiClient(options: AeiClientOptions): AeiClient {
     relations: (query) => json<RelationsResponse>(withQuery(ROUTES.relations, query)),
     alerts: (query) => json<AlertsResponse>(withQuery(ROUTES.alerts, query)),
     regional: (query) => json<RegionalResponse>(withQuery(ROUTES.regional, query)),
+    counties: () => json<CountiesResponse>(ROUTES.counties),
     live(onEvent, onError) {
       const source = new ES(url(ROUTES.live));
       for (const type of LIVE_EVENT_TYPES) {

@@ -19,3 +19,4 @@ Screenshots come from headless Chrome through
 | 01:08 | orchestrator (Opus 5.5) | Web app reads the API origin from VITE_AEI_API_URL (empty = same origin) instead of a fixed default |
 | 01:08 | orchestrator (Opus 5.5) | `pnpm check` already fails on main with 6 errors, all in scripts/explore (surface.html, thl.js), outside tonight's bounds; the commit gate is Biome over apps/web, libs/utils/i18n and benchmarks/overnight-2026-10-17, plus pnpm typecheck and pnpm test:ts |
 | 01:09 | orchestrator (Opus 5.5) | Branding slots: --brand-accent, -soft, -ink, fonts and radius feed the existing tokens; rendering unchanged (checked in browser) |
+| 01:10 | orchestrator (Opus 5.5) | Additive optional route GET /api/counties (contract, client, API wiring, test, AEI_COUNTIES); DECISIONS.md D-040 proposed, pending Artem |

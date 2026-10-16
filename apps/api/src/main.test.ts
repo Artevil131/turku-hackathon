@@ -55,6 +55,18 @@ async function startApi() {
   return origin(api);
 }
 
+describe("county geometry route", () => {
+  it("serves the polygons when the file exists and answers 404 without it", async () => {
+    const file = join(dir, "counties.geojson");
+    vi.stubEnv("AEI_COUNTIES", file);
+    const base = await startApi();
+    expect((await fetch(`${base}/api/counties`)).status).toBe(404);
+    const geo = { type: "FeatureCollection", features: [{ type: "Feature", properties: { name: "X" }, geometry: null }] };
+    await writeFile(file, JSON.stringify(geo));
+    expect(await (await fetch(`${base}/api/counties`)).json()).toEqual(geo);
+  });
+});
+
 // Tiny synthetic fixtures and a local fake model only: no dataset sweep or paid calls.
 describe("assistant HTTP routes", () => {
   it("disables Ask, filters inclusive ages/sex, and explains released alerts without AI", async () => {
