@@ -2682,7 +2682,7 @@ button {
 @media (max-width: 1279px) {
   .section-doctor {
     grid-template-columns: 290px minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
     overflow: auto;
   }
   .section-doctor .spread {

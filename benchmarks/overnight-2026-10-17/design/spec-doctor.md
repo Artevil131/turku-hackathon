@@ -121,7 +121,7 @@ D-027, D-033." plus "Example data" chip only if any slot is an example
 File `apps/web/src/components/doctor/UnitContext.tsx` + `UnitContext.css`.
 - Likely organisms: `coverage.organisms[]` as name, `isolates`, `share` bar; tapping sets the suspected-organism chip (presentation only).
 - Active signals in this unit: alerts (as above) with `AlertExplanation` from the shared component; button "Open in research" → `#research?unit=`.
-- Last 28 days total: sum of `antibiotics[0].recent.known` is wrong; use `records` from `useLive` filtered by ward and specimen for "{n} isolates in 28 d".
+- Last 28 days: "{n} {site} isolates in 28 d" counted from `useLive().records` filtered by ward and specimen (counts only, no shares).
 
 ## States (every panel)
 

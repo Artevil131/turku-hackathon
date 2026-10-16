@@ -48,6 +48,20 @@ export const StepDay = (p: P) => (
   </svg>
 );
 
+export const StepWeek = (p: P) => (
+  <svg {...base} {...p}>
+    <path d="M3.5 6l6 6-6 6" />
+    <path d="M11 6l6 6-6 6" />
+    <path d="M20.5 6v12" />
+  </svg>
+);
+
+export const Chevron = (p: P) => (
+  <svg {...base} {...p}>
+    <path d="M6 14.5l6-6 6 6" />
+  </svg>
+);
+
 export const Sun = (p: P) => (
   <svg {...base} {...p}>
     <circle cx="12" cy="12" r="4" />

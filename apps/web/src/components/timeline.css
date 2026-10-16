@@ -1,0 +1,606 @@
+/* Replay timeline: a second glass row under the top bar (laptop), a sticky strip plus bottom sheet (phone). */
+
+.console:has(.timeline) {
+  grid-template-rows: auto auto minmax(0, 1fr);
+}
+
+.timeline {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 6px 12px;
+  min-width: 0;
+}
+
+.timeline :focus-visible,
+.tl-backdrop :focus-visible {
+  outline: 2px solid var(--live);
+  outline-offset: 2px;
+}
+
+.tl-chip {
+  flex: none;
+  padding: 3px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--st-watch-bg);
+  color: var(--st-watch);
+  font-size: var(--step--1);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tl-btn,
+.tl-seg {
+  display: inline-grid;
+  place-items: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: color-mix(in oklab, var(--chassis) 50%, transparent);
+  color: var(--ink-2);
+  font-size: var(--step--1);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tl-btn:hover:not(:disabled),
+.tl-seg:hover:not(:disabled) {
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+
+.tl-btn:disabled,
+.tl-seg:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.tl-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.tl-play {
+  background: var(--live);
+  color: var(--live-ink);
+  border-color: var(--live);
+}
+
+.tl-play:hover:not(:disabled) {
+  color: var(--live-ink);
+  border-color: var(--live);
+}
+
+.tl-steps,
+.tl-speed {
+  display: flex;
+  gap: 4px;
+  flex: none;
+}
+
+.tl-seg[aria-pressed="true"],
+.tl-events-btn[aria-expanded="true"] {
+  background: var(--live-soft);
+  color: var(--live);
+  border-color: var(--live);
+  box-shadow: inset 0 -2px 0 var(--live);
+}
+
+.tl-read {
+  display: grid;
+  flex: none;
+  min-width: 0;
+}
+
+.tl-read-sub {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.tl-read .tl-readout {
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.tl-readout {
+  font-weight: 650;
+  font-size: var(--step-1);
+}
+
+.tl-arrivals,
+.tl-reason {
+  color: var(--ink-3);
+  font-size: var(--step--1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 24ch;
+}
+
+.tl-reason {
+  color: var(--st-alert);
+  font-weight: 600;
+}
+
+.tl-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--step--1);
+  font-weight: 600;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+.tl-state[data-kind="playing"] {
+  color: var(--live);
+}
+
+.tl-state[data-kind="offline"] {
+  color: var(--st-alert);
+}
+
+.tl-glyph {
+  width: 14px;
+  height: 14px;
+}
+
+.tl-dot,
+.tl-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ink-3);
+  flex: none;
+}
+
+.tl-pulse {
+  background: var(--live);
+  animation: tl-pulse 2s var(--ease-out) infinite;
+}
+
+.tl-pulse[data-still] {
+  animation: none;
+}
+
+@keyframes tl-pulse {
+  0% {
+    box-shadow: 0 0 0 0 var(--live-glow);
+  }
+  70% {
+    box-shadow: 0 0 0 7px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+/* Track: native range, event markers under it. */
+
+.tl-track {
+  position: relative;
+  flex: 1 1 160px;
+  min-width: 120px;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.tl-range {
+  width: 100%;
+  height: 24px;
+  margin: 0;
+  background: transparent;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.tl-range:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.tl-range::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(to right, var(--live) calc(var(--f) * 100%), var(--line-strong) calc(var(--f) * 100%));
+}
+
+.tl-range::-moz-range-track {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--line-strong);
+}
+
+.tl-range::-moz-range-progress {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--live);
+}
+
+.tl-range::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  margin-top: -6px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  background: var(--live);
+  box-shadow: 0 1px 4px rgb(16 42 67 / 0.4);
+  transition: transform 120ms var(--ease-out);
+}
+
+.tl-range::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  background: var(--live);
+  box-shadow: 0 1px 4px rgb(16 42 67 / 0.4);
+}
+
+.tl-range:active::-webkit-slider-thumb {
+  transform: scale(1.15);
+}
+
+.tl-range:focus-visible {
+  outline: 2px solid var(--live);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.tl-tip {
+  position: absolute;
+  top: -4px;
+  left: calc(9px + (100% - 18px) * var(--f));
+  transform: translate(-50%, -100%);
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--ink);
+  color: #fff;
+  font-size: var(--step--1);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.tl-markers {
+  position: relative;
+  height: 0;
+}
+
+.tl-marker {
+  position: absolute;
+  top: -2px;
+  left: calc(9px + (100% - 18px) * var(--f));
+  transform: translateX(-50%);
+  width: 44px;
+  height: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2px 0 0;
+  border: 0;
+  background: none;
+  color: var(--ink-2);
+  z-index: 1;
+}
+
+.tl-marker:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.tl-marker:hover:not(:disabled) {
+  color: var(--live);
+}
+
+.tl-marker:focus-visible {
+  outline: 2px solid var(--live);
+  outline-offset: -2px;
+  border-radius: 6px;
+}
+
+.tl-diamond {
+  display: block;
+  flex: none;
+  width: 9px;
+  height: 9px;
+  background: currentColor;
+  transform: rotate(45deg);
+  margin-top: 3px;
+}
+
+.tl-marker-cap {
+  margin-top: 6px;
+  max-width: 120px;
+  width: max-content;
+  font-size: 0.68rem;
+  line-height: 1.15;
+  text-align: center;
+  white-space: normal;
+  pointer-events: none;
+}
+
+/* Events menu (laptop) and list (phone sheet). */
+
+.tl-menu-wrap {
+  position: relative;
+  flex: none;
+}
+
+.tl-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 30;
+  width: max-content;
+  max-width: 340px;
+  padding: 6px;
+}
+
+.tl-event-list {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tl-event {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 4px 10px;
+  border-radius: var(--radius-control);
+  color: var(--ink);
+  text-align: left;
+  border: 0;
+  background: none;
+}
+
+.tl-event:hover:not(:disabled) {
+  background: var(--live-soft);
+}
+
+.tl-event:disabled {
+  opacity: 0.45;
+}
+
+.tl-event-text {
+  flex: 1;
+}
+
+.tl-event-date {
+  color: var(--ink-3);
+  font-size: var(--step--1);
+  white-space: nowrap;
+}
+
+/* Laptop widths where the row gets tight. */
+
+@media (max-width: 1500px) {
+  /* Three years on a ~300 px track: captions would collide, the Events menu and aria-label carry the names. */
+  .timeline:not(.timeline-phone) .tl-marker-cap {
+    display: none;
+  }
+}
+
+@media (max-width: 1279px) {
+  .tl-chip {
+    max-width: 17ch;
+    white-space: normal;
+    line-height: 1.15;
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 1500px) {
+  .tl-read .tl-arrivals {
+    display: none;
+  }
+}
+
+@media (max-width: 1180px) {
+  /* Narrow laptops: the track takes its own line below the controls rather than pushing Events off screen. */
+  .timeline:not(.timeline-phone) {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+  .timeline:not(.timeline-phone) .tl-track {
+    order: 10;
+    flex-basis: 100%;
+  }
+}
+
+@media (max-width: 980px) {
+  .tl-arrivals {
+    display: none;
+  }
+}
+
+/* Phone: sticky strip and bottom sheet. */
+
+.timeline-phone {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding: 4px 8px;
+}
+
+.tl-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+}
+
+.tl-strip .tl-btn {
+  width: 44px;
+  height: 44px;
+  flex: none;
+}
+
+.tl-strip .tl-state-word {
+  max-width: 11ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tl-date {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  text-align: left;
+  border: 0;
+  background: none;
+  font-weight: 650;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tl-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: flex-end;
+  background: rgb(16 34 46 / 0.4);
+}
+
+.tl-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-height: 92dvh;
+  overflow-y: auto;
+  padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  border-radius: 16px 16px 0 0;
+  background: var(--glass-3);
+  animation: tl-slide 220ms var(--ease-out);
+}
+
+.tl-backdrop[data-still] .tl-sheet {
+  animation: none;
+}
+
+@keyframes tl-slide {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+
+.tl-sheet-title {
+  margin: 0;
+  font-size: var(--step--1);
+  color: var(--ink-3);
+  font-weight: 600;
+}
+
+.tl-sheet .tl-chip {
+  align-self: flex-start;
+  max-width: none;
+  white-space: normal;
+  font-size: var(--step--1);
+}
+
+.tl-sheet-read {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.tl-sheet .tl-arrivals,
+.tl-sheet .tl-reason {
+  display: block;
+  max-width: none;
+  white-space: normal;
+}
+
+.tl-sheet .tl-track {
+  flex: none;
+  min-width: 0;
+  padding-bottom: 40px;
+}
+
+.tl-sheet .tl-marker-cap {
+  display: none;
+}
+
+.tl-sheet .tl-steps,
+.tl-sheet .tl-speed {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.tl-sheet .tl-step-back-week {
+  display: inline-grid;
+}
+
+.tl-sheet .tl-btn,
+.tl-sheet .tl-seg {
+  height: 44px;
+}
+
+.tl-sheet .tl-tip {
+  top: -2px;
+}
+
+.tl-close {
+  min-height: 44px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tl-pulse,
+  .tl-sheet {
+    animation: none;
+  }
+  .tl-range::-webkit-slider-thumb {
+    transition: none;
+  }
+}
+
+/* With the clock gone from the top bar, the settings button sits beside the mark instead of on its own row. */
+@media (max-width: 980px) {
+  .topbar .mark {
+    order: 0;
+  }
+  .topbar .top-tools {
+    order: 1;
+    width: auto;
+    margin-left: auto;
+  }
+  .topbar .sections {
+    order: 2;
+    width: 100%;
+  }
+}
+
+.tl-step-back svg,
+.tl-step-back-week svg {
+  transform: scaleX(-1);
+}

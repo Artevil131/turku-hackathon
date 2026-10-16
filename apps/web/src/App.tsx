@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Home, type Role } from "./components/Home.tsx";
 import { Research, type ResearchState } from "./components/Research.tsx";
 import { Settings } from "./components/Settings.tsx";
+import { Timeline } from "./components/Timeline.tsx";
 import { type Page, TopBar } from "./components/TopBar.tsx";
 import { Treat, type TreatState } from "./components/Treat.tsx";
 import { type Finding, useLive } from "./live.ts";
@@ -127,15 +128,14 @@ export function App() {
     <FlowsContext.Provider value={live.relations?.flows ?? NO_FLOWS}>
       <div className="chassis" aria-hidden="true" />
       <div className="console">
-        <TopBar
+        <TopBar locale={locale} page={page} onPage={setPage} unseen={unseen} />
+        <Timeline
           locale={locale}
-          page={page}
-          onPage={setPage}
-          unseen={unseen}
           clock={live.clock}
           connection={live.connection}
           lastArrivals={live.lastArrivals}
           command={live.command}
+          reducedMotion={reducedMotion}
         />
 
         {page === "home" ? <Home locale={locale} clock={live.clock} findings={live.findings} lastRole={lastRole} onRole={setPage} /> : null}
