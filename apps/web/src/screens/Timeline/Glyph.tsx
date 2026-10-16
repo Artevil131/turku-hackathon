@@ -13,29 +13,18 @@ const PATH: Record<SignalKind, string> = {
   trend: "M-3.7 2.7L-1 0L0.8 1.6L3.7 -2.5 M1.3 -2.6H3.8V-0.2",
 };
 
-/** Draws inside an SVG; `color` is a CSS colour value (a token). */
+/** Draws inside an SVG, whose own aria-hidden keeps it out of the accessibility tree; `color` is a CSS colour value (a token). */
 export function GlyphMark({ kind, x, y, color, scale = 1 }: { kind: SignalKind; x: number; y: number; color: string; scale?: number }) {
   const tr = `translate(${x} ${y})${scale !== 1 ? ` scale(${scale})` : ""}`;
   if (kind === "cluster")
     return (
-      <g transform={tr} fill={color} aria-hidden="true">
+      <g transform={tr} fill={color}>
         <circle cx={-2.3} cy={1.6} r={1.35} />
         <circle cx={2.3} cy={1.6} r={1.35} />
         <circle cx={0} cy={-2.2} r={1.35} />
       </g>
     );
-  return (
-    <path
-      transform={tr}
-      d={PATH[kind]}
-      fill="none"
-      stroke={color}
-      strokeWidth={1.6}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    />
-  );
+  return <path transform={tr} d={PATH[kind]} fill="none" stroke={color} strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" />;
 }
 
 export const SEVERITY_FILL: Record<Severity, string> = {

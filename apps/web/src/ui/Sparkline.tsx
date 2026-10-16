@@ -109,8 +109,8 @@ export function Sparkline({
       </defs>
       <g clipPath={`url(#${clip})`}>
         {bandPath ? <path className="k-spark-band" d={bandPath} /> : null}
-        {segments.map((d, i) => (
-          <path key={i} className="k-spark-line" d={d} vectorEffect="non-scaling-stroke" />
+        {segments.map((d) => (
+          <path key={d} className="k-spark-line" d={d} vectorEffect="non-scaling-stroke" />
         ))}
         {!fluid && marks
           ? marks.map((i) => {

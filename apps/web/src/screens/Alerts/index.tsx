@@ -152,7 +152,7 @@ export function AlertsScreen(p: {
     setFlash(s.id);
     scrollTarget.current = s.id;
     onFocus(null);
-  }, [focus, signals]);
+  }, [focus, signals, asOf, onFocus]);
 
   // Scroll once the card is on the page, on a later frame: after the shell's own
   // route change has scrolled to the top and after the widened filters have rendered.
@@ -212,6 +212,7 @@ export function AlertsScreen(p: {
   }, [entering]);
 
   // The detail pane starts at the top for each alert.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the shown alert's id is the trigger; the body only scrolls the pane.
   useEffect(() => {
     detailRef.current?.scrollTo?.({ top: 0 });
   }, [current?.id]);

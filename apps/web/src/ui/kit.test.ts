@@ -62,11 +62,11 @@ describe("kit", () => {
     expect(renderToStaticMarkup(h(SeverityBadge, { locale: "en", severity: "high" }))).toContain("High");
     expect(renderToStaticMarkup(h(AwareBadge, { locale: "fi", group: "access" }))).toContain("Ensisijainen");
     expect(renderToStaticMarkup(h(AwareBadge, { locale: "en", group: null }))).toBe("");
-    expect(renderToStaticMarkup(h(Badge, { tone: "medium", children: "x" }))).toContain("◆");
+    expect(renderToStaticMarkup(h(Badge, { tone: "medium" } as Parameters<typeof Badge>[0], "x"))).toContain("◆");
   });
   it("renders the remaining components", () => {
     const parts = [
-      h(Card, { title: "T", footer: "f", children: "c" }),
+      h(Card, { title: "T", footer: "f" }, "c"),
       h(Segmented, {
         label: "L",
         value: "a",

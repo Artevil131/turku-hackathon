@@ -1094,6 +1094,7 @@ export function TimelineChart({
           className="timeline-scroll"
           ref={scrollRef}
           onScroll={onScroll}
+          // biome-ignore lint/a11y/noNoninteractiveTabindex: a scrollable chart must be reachable by keyboard (WCAG 2.1.1); it takes arrow keys to move week by week.
           tabIndex={0}
           role="application"
           aria-label={t(locale, "timeline.chart.label", {

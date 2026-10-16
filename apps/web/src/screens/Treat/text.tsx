@@ -14,11 +14,11 @@ export const MONTHS = 12;
 /** A message whose {placeholders} may be React nodes (e.g. an italic organism name). */
 export function tn(locale: Locale, key: MessageKey, vars: Record<string, ReactNode>): ReactNode {
   const parts = t(locale, key).split(/(\{\w+\})/);
-  return parts.map((part, i) => {
+  return parts.map((part) => {
     const m = /^\{(\w+)\}$/.exec(part);
     if (!m) return part;
     const v = vars[m[1]!];
-    return <Fragment key={i}>{v === undefined ? part : v}</Fragment>;
+    return <Fragment key={part}>{v === undefined ? part : v}</Fragment>;
   });
 }
 

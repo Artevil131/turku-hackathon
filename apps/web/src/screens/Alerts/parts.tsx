@@ -169,15 +169,18 @@ function CaseStrip({ locale, s, asOf, cases }: { locale: Locale; s: Signal; asOf
         aria-label={label}
         style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
       >
-        {counts.map((c, i) => (
-          <span key={i} className="alerts-strip-col">
-            {c > 6 ? (
-              <span className="alerts-strip-more u-num">{formatNumber(locale, c)}</span>
-            ) : (
-              Array.from({ length: c }, (_, k) => <span key={k} className="alerts-strip-dot" />)
-            )}
-          </span>
-        ))}
+        {counts
+          .map((c, i) => ({ c, start: addDays(from, i * bin) }))
+          .map(({ c, start }) => (
+            <span key={start} className="alerts-strip-col">
+              {c > 6 ? (
+                <span className="alerts-strip-more u-num">{formatNumber(locale, c)}</span>
+              ) : (
+                // biome-ignore lint/suspicious/noArrayIndexKey: identical dots; the k-th dot is only a position in the column.
+                Array.from({ length: c }, (_, k) => <span key={k} className="alerts-strip-dot" />)
+              )}
+            </span>
+          ))}
       </div>
       <figcaption className="alerts-strip-axis u-num" aria-hidden="true">
         <span>{dateText(locale, from, asOf)}</span>
@@ -243,6 +246,7 @@ function CompareRow({ locale, label, share, mode }: { locale: Locale; label: str
         // Below the organiser's 30 isolates: no percentage, one dot per isolate.
         <div className="alerts-dots" role="img" aria-label={count}>
           {Array.from({ length: share.n }, (_, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: one dot per isolate counted, identified only by its position.
             <span key={i} className={`alerts-dot${i < k ? " is-on" : ""}`} />
           ))}
         </div>
@@ -420,8 +424,8 @@ export function Body({
         <Disclosure summary={t(locale, "alerts.act.method")} open={methodOpen} onToggle={setMethodOpen} className="alerts-disc">
           {methodOpen ? (
             <div className="alerts-method">
-              {d.method.map((line, i) => (
-                <p key={i}>{line}</p>
+              {d.method.map((line) => (
+                <p key={line}>{line}</p>
               ))}
             </div>
           ) : null}

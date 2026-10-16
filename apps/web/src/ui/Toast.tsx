@@ -48,6 +48,7 @@ function ToastView({ item, onDismiss, locale }: { item: ToastItem; onDismiss: (i
   const hovering = useRef(false);
   const timeout = item.timeout ?? DEFAULT_TIMEOUT[item.tone];
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `stamp` changes when a toast with the same id is replaced, which restarts its timer.
   useEffect(() => {
     if (!timeout) return;
     let timer = window.setTimeout(function tick() {
@@ -62,6 +63,7 @@ function ToastView({ item, onDismiss, locale }: { item: ToastItem; onDismiss: (i
   }, [item.id, item.stamp, timeout]);
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: pointer and focus only pause the auto-dismiss; the toast's buttons carry the actions.
     <div
       className={`k-toast is-${item.tone}`}
       onPointerEnter={() => (hovering.current = true)}

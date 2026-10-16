@@ -40,6 +40,11 @@ export interface PickerGroup<T extends string> {
 
 const NULL = "\u0000null";
 
+/** What the search box matches an option against. */
+function searchText<T extends string>(o: PickerOption<T>): string {
+  return (o.text ?? (typeof o.label === "string" ? o.label : String(o.value))).toLowerCase();
+}
+
 export function Picker<T extends string>({
   locale,
   label,
@@ -78,12 +83,11 @@ export function Picker<T extends string>({
   const chosen = value === null ? undefined : all.find((o) => o.value === value);
   const searchable = all.length > 8;
 
-  const textOf = (o: PickerOption<T>) => (o.text ?? (typeof o.label === "string" ? o.label : String(o.value))).toLowerCase();
   const q = query.trim().toLowerCase();
   const shown = useMemo(
     () =>
       groups
-        .map((g) => ({ ...g, options: q ? g.options.filter((o) => textOf(o).includes(q)) : g.options }))
+        .map((g) => ({ ...g, options: q ? g.options.filter((o) => searchText(o).includes(q)) : g.options }))
         .filter((g) => g.options.length > 0),
     [groups, q],
   );
@@ -134,6 +138,7 @@ export function Picker<T extends string>({
   }
 
   const list = (
+    // biome-ignore lint/a11y/noStaticElementInteractions: arrow keys delegated from the search field and the option buttons inside; the container itself never takes focus.
     <div className="k-pick-list" onKeyDown={onListKey}>
       {searchable ? (
         <label className="k-pick-search">

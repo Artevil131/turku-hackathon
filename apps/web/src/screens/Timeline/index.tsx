@@ -47,6 +47,8 @@ export function TimelineScreen(p: {
 
   const shown = useMemo(() => visibleSignals(signals, asOf), [signals, asOf]);
 
+  // The store is extended in place (same object), so `results`, not its identity, says there is new data.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: see above.
   const wardKey = useMemo(() => {
     const codes = new Set(store.byWard.keys());
     for (const s of shown) if (s.ward) codes.add(s.ward);
@@ -54,6 +56,7 @@ export function TimelineScreen(p: {
   }, [store, results, shown]);
   const groups = useMemo(() => laneOrder(meta, wardKey ? wardKey.split("|") : []), [meta, wardKey]);
   const laneCodes = useMemo(() => groups.flatMap((g) => g.codes), [groups]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the store is extended in place; `results` marks new data.
   const view = useMemo(() => weekly(store, asOf, laneCodes), [store, results, asOf, laneCodes]);
 
   const [highlight, setHighlight] = useState<string | null>(null);
@@ -225,7 +228,7 @@ export function TimelineScreen(p: {
           {months.length === 0 ? (
             <EmptyState compact icon="shield" title={t(locale, "timeline.list.empty")} />
           ) : (
-            <div className="timeline-months" onMouseLeave={() => setHighlight(null)}>
+            <div className="timeline-months">
               {visibleMonths.map(({ month, items }) => (
                 <section key={month} className="timeline-month" aria-labelledby={`timeline-m-${month}`}>
                   <h3 className="timeline-month-head" id={`timeline-m-${month}`}>
@@ -242,6 +245,7 @@ export function TimelineScreen(p: {
                           className={`timeline-item is-${s.severity}`}
                           onClick={() => onOpenSignal(s.id)}
                           onMouseEnter={() => setHighlight(s.id)}
+                          onMouseLeave={() => setHighlight(null)}
                           onFocus={() => setHighlight(s.id)}
                           onBlur={() => setHighlight(null)}
                           aria-label={t(locale, "timeline.list.open", {

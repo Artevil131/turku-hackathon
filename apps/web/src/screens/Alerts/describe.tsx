@@ -115,7 +115,7 @@ export function compose(locale: Locale, key: MessageKey, vars: Record<string, Va
       nodes.push(`{${part}}`);
       texts.push(`{${part}}`);
     } else if (typeof v === "object") {
-      nodes.push(<Fragment key={i}>{v.node}</Fragment>);
+      nodes.push(<Fragment key={part}>{v.node}</Fragment>);
       texts.push(v.text);
     } else {
       nodes.push(String(v));

@@ -1,5 +1,5 @@
 import type { CombinationSuggestion, CoverageResponse, Suggestion } from "@aei/contract";
-import { type ReactNode, useId, useState } from "react";
+import { useId, useState } from "react";
 import type { FeedMeta } from "../../feed/types.ts";
 import { formatDate, formatNumber, formatShare, type Locale, t } from "../../i18n/index.ts";
 import type { AwareGroup, Share } from "../../model/types.ts";
@@ -124,7 +124,7 @@ function Basis({
       : c.level === "ward type"
         ? t(locale, type === "in" ? "treat.basis.inUnits" : "treat.basis.outUnits")
         : t(locale, "treat.basis.hospital");
-  const parts: ReactNode[] = [capFirst(specimenName(locale, meta, prefs.specimen))];
+  const parts: string[] = [capFirst(specimenName(locale, meta, prefs.specimen))];
   if (c.sexApplied && prefs.sex) parts.push(sexLabel(locale, prefs.sex));
   parts.push(levelText);
   parts.push(
@@ -137,8 +137,8 @@ function Basis({
         <strong className="u-num">
           {c.isolates === 1 ? t(locale, "treat.basis.leadOne") : t(locale, "treat.basis.lead", { n: formatNumber(locale, c.isolates) })}
         </strong>
-        {parts.map((p, i) => (
-          <span key={i} className="treat-basis-part">
+        {parts.map((p) => (
+          <span key={p} className="treat-basis-part">
             <span className="treat-basis-dot" aria-hidden="true">
               ·
             </span>{" "}

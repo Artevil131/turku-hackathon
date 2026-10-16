@@ -94,6 +94,7 @@ export function UnitMatrix({
     setEdge((prev) => (prev.overflow === overflow && prev.start === start && prev.end === end ? prev : { overflow, start, end }));
   }, []);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a new model changes the table's width, so the scroll edges are measured again.
   useEffect(() => {
     measure();
     const el = scrollRef.current;

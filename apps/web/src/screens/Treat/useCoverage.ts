@@ -22,6 +22,7 @@ export function useCoverage(choice: TreatChoice, asOf: IsoDate, base = ""): Cove
   const latest = useRef(0);
   const url = coverageUrl(base, choice);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `asOf` is not in the URL but the server's list moves with its clock, so a new date refetches.
   useEffect(() => {
     const id = ++latest.current;
     const ctrl = new AbortController();
