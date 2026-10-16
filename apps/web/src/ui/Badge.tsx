@@ -11,8 +11,10 @@ import { t, type Locale } from "../i18n/index.ts";
     title?     string      longer explanation (shown on hover, also read by screen readers)
     size?      "sm" | "md" (default)
 
-  AwareBadge: the WHO AWaRe group of an antibiotic as a word ("First choice",
-  "Use with care", "Last resort"). Renders nothing for null (unknown antibiotic).
+  AwareBadge: the WHO AWaRe group of an antibiotic under WHO's own name
+  ("Access", "Watch", "Reserve"), with what it means as its title. It is a
+  stewardship class, not a verdict on this patient: "Access" never reads as
+  "first choice here". Renders nothing for null (unknown antibiotic).
     locale, group: AwareGroup | null, size?
 
   SeverityBadge: a signal's severity with its word.
@@ -58,12 +60,10 @@ export function Badge({
   );
 }
 
-const AWARE_WHO: Record<AwareGroup, string> = { access: "Access", watch: "Watch", reserve: "Reserve" };
-
 export function AwareBadge({ locale, group, size = "sm" }: { locale: Locale; group: AwareGroup | null; size?: "sm" | "md" }) {
   if (!group) return null;
   return (
-    <Badge tone={group} size={size} title={`${t(locale, "common.aware.about")}: ${AWARE_WHO[group]}`}>
+    <Badge tone={group} size={size} title={`${t(locale, "common.aware.about")}: ${t(locale, `common.aware.${group}Why`)}`}>
       {t(locale, `common.aware.${group}`)}
     </Badge>
   );

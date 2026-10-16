@@ -7,7 +7,10 @@
   left: var(--sp-3);
   top: -60px;
   z-index: 100;
-  padding: var(--sp-2) var(--sp-4);
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  padding: 0 var(--sp-4);
   border-radius: var(--r-pill);
   background: var(--blue);
   color: var(--ink-on-blue);
@@ -52,6 +55,7 @@
 }
 .app-header-tools { display: flex; align-items: center; gap: var(--sp-1); margin-left: auto; }
 .app-gear { color: var(--ink-2); }
+.app-lang { font-size: var(--fs-sm); font-weight: var(--fw-bold); letter-spacing: 0.04em; color: var(--ink-2); }
 @media (max-width: 1023px) {
   .app-ask-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .k-btn.is-ask { width: var(--tap); height: var(--tap); min-height: var(--tap); padding: 0; justify-content: center; }
@@ -127,7 +131,9 @@
 }
 .app-tab.is-top { min-height: 40px; padding: 0 16px 0 14px; border-radius: var(--r-pill); font-size: var(--fs-sm); }
 .app-tab.is-top::after { content: ""; position: absolute; inset: -2px 0; }
-.app-tab.is-top:hover:not(.is-on) { color: var(--ink); background: rgba(255, 255, 255, 0.6); }
+@media (hover: hover) {
+  .app-tab.is-top:hover:not(.is-on) { color: var(--ink); background: rgba(255, 255, 255, 0.6); }
+}
 .app-tab.is-top.is-on {
   background: var(--surface);
   color: var(--blue);
@@ -250,14 +256,21 @@
 .k-btn.is-sim::after,
 .k-btn.is-sim-ghost::after { content: ""; position: absolute; inset: -4px 0; }
 .k-btn.is-sim { background: var(--sim); color: #fff; }
-.k-btn.is-sim:hover:not(:disabled) { background: #5a40a6; }
 .k-btn.is-sim.is-on { background: var(--surface); color: var(--sim); border-color: var(--sim); }
 .k-btn.is-sim-ghost { background: var(--surface); color: var(--sim); border-color: var(--sim-line); }
-.k-btn.is-sim-ghost:hover:not(:disabled) { border-color: var(--sim); }
+.k-btn.is-sim-ghost.is-until { background: var(--sim-bg); border-color: var(--sim); }
+/* Hover never overrides "Pause" (is-on), and touch screens get no sticky hover at all. */
+@media (hover: hover) {
+  .k-btn.is-sim:not(.is-on):hover:not(:disabled) { background: #5a40a6; }
+  .k-btn.is-sim.is-on:hover:not(:disabled) { background: var(--sim-bg); }
+  .k-btn.is-sim-ghost:hover:not(:disabled) { border-color: var(--sim); }
+}
 .k-sheet .k-btn.is-sim,
 .k-sheet .k-btn.is-sim-ghost { min-height: var(--tap); }
-.k-iconbtn.is-sim-more { color: var(--sim); }
-.k-iconbtn.is-sim-more:hover { background: var(--sim-bg); }
+.k-iconbtn.is-sim-more { color: var(--sim); flex-shrink: 0; min-width: var(--tap); }
+@media (hover: hover) {
+  .k-iconbtn.is-sim-more:hover { background: var(--sim-bg); }
+}
 @media (max-width: 360px) {
   .app-sim.is-phone .app-sim-label { font-size: 10.5px; letter-spacing: 0.05em; }
 }

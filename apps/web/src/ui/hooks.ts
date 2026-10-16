@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type Dispatch, type SetStateAction } from "react";
 
 /*
   Small shared hooks and storage helpers.
@@ -6,7 +6,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
     useIsDesktop()         >= 1024 px (two columns, popovers, top tabs)
     useReducedMotion()     prefers-reduced-motion
     store.get/set/remove   localStorage that never throws (private mode, blocked storage)
-    useStored(key, init, valid?)  state remembered in localStorage under "aei.<key>"
+    useStored(key, init, valid?)  state remembered in localStorage under "aei.<key>" (the setter takes a value or an updater)
 */
 
 export const DESKTOP_QUERY = "(min-width: 1024px)";
@@ -68,7 +68,7 @@ export const store = {
 };
 
 /** State remembered on this device. `valid` rejects stale values (e.g. a unit no longer in the feed). */
-export function useStored<T>(key: string, initial: T, valid?: (v: unknown) => v is T): [T, (v: T) => void] {
+export function useStored<T>(key: string, initial: T, valid?: (v: unknown) => v is T): [T, Dispatch<SetStateAction<T>>] {
   const [value, setValue] = useState<T>(() => {
     const saved = store.get<unknown>(key);
     if (saved === undefined) return initial;

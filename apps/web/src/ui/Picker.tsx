@@ -209,7 +209,7 @@ export function Picker<T extends string>({
         </div>
       ) : null}
       {!desktop ? (
-        <Sheet open={open} onClose={close} title={label} locale={locale} size="sm" initialFocus={searchable ? ".k-pick-search input" : '[aria-selected="true"]'}>
+        <Sheet open={open} onClose={close} title={label} locale={locale} size="sm" initialFocus='[aria-selected="true"]'>
           {list}
         </Sheet>
       ) : null}

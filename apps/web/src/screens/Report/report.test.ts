@@ -10,6 +10,7 @@ import {
   buildTable,
   cellFromShare,
   csvField,
+  CSV_FI,
   csvFilename,
   largestDrop,
   matrixCsv,
@@ -181,6 +182,8 @@ describe("report CSV", () => {
     expect(csvField(-12)).toBe("-12");
     expect(csvField(null)).toBe("");
     expect(toCsv([["a", 1], ["b", null]])).toBe("a,1\r\nb,\r\n");
+    // Finnish spreadsheets: semicolons and a decimal comma.
+    expect(toCsv([["a;b", 87.5], ["c, d", null]], CSV_FI)).toBe('"a;b";87,5\r\nc, d;\r\n');
   });
 
   it("writes the antibiotics table with counts, and a percentage only from the floor", () => {

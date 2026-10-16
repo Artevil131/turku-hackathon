@@ -67,7 +67,15 @@ function llmConfig(): LlmConfig | null {
   };
 }
 
-const llm = llmConfig();
+// `vite --host` (e.g. to try the app on a phone) serves on every network the
+// machine is on. The /llm proxy adds the Access token to whatever reaches it,
+// so it stays off then unless AEI_LLM_ALLOW_LAN=1 says the network is trusted.
+const servesLan = process.argv.some((a) => a === "--host" || a.startsWith("--host="));
+const lanAllowed = process.env.AEI_LLM_ALLOW_LAN === "1";
+if (servesLan && !lanAllowed && llmConfig()) {
+  console.warn("[aei] --host: the AI proxy (/llm) is off on a shared network. Set AEI_LLM_ALLOW_LAN=1 to allow it.");
+}
+const llm = servesLan && !lanAllowed ? null : llmConfig();
 
 /** Only the two calls the app makes go through; anything else under /llm is a 404. */
 function allowedLlmCall(req: IncomingMessage): boolean {

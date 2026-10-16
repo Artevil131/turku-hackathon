@@ -47,6 +47,10 @@ export interface DrugFigure {
   hospitalYear: Share;
   /** Percentage points, recent minus year, when both reach minIsolates; else null. */
   change: number | null;
+  /** First isolates in the main window (main.n can be smaller: isolates the lab did not test for it are left out). */
+  isolates: number;
+  /** Main window: first isolates with no result for it (and not expected resistant), by organism, most first. */
+  untested: { organism: string; n: number }[];
 }
 
 export type Widening = "age" | "sex" | "onset" | "ward";

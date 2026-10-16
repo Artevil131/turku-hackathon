@@ -1,4 +1,6 @@
 import type { IsoDate, Result } from "../feed/types.ts";
+import { ALWAYS_ALERT_FLAGS } from "./phenotypes.ts";
+import { MIN_ISOLATES } from "./rules.ts";
 import { cochranArmitageUp, fisherMidPGreater, poissonLower, poissonUpper } from "./stats.ts";
 import type { Catalog, Severity, Share, Signal, SignalKind, SignalOptions } from "./types.ts";
 
@@ -50,7 +52,16 @@ export const SHIFT_BASELINE_DAYS = 336;
 export const SHIFT_ALPHA = 0.001;
 export const SHIFT_MIN_RESISTANT = 3;
 /** provisional — the team confirms: the baseline share must rest on the organiser's 30 isolates. */
-export const SHIFT_MIN_BASELINE = 30;
+export const SHIFT_MIN_BASELINE = MIN_ISOLATES;
+/**
+ * provisional — the team confirms: so must the recent share (a shift compares
+ * two percentages, and the organiser allows none from fewer than 30). Measured
+ * on the full replay: 22 shift episodes become 10; the 12 dropped rested on 3
+ * to 26 isolates (9 on fewer than 10, e.g. "works 3 of 6"); every planted
+ * Urology shift (36 to 48 isolates) is kept; the ICU MRSA outbreak is still
+ * raised by its sentinel, surge and clusters.
+ */
+export const SHIFT_MIN_RECENT = MIN_ISOLATES;
 
 /** provisional — the team confirms: trend = hospital-wide Cochran-Armitage over 28-day bins. */
 export const TREND_BIN_DAYS = 28;
@@ -60,12 +71,13 @@ export const TREND_ALPHA = 0.001;
 /** Rise in percentage points: last 13 bins vs the bins before them. */
 export const TREND_MIN_RISE = 2;
 export const TREND_RECENT_BINS = 13;
-export const TREND_MIN_ISOLATES = 30;
+export const TREND_MIN_ISOLATES = MIN_ISOLATES;
 
 /** First-isolate rule for baselines: one isolate per patient, organism and specimen per this many days. */
 export const FIRST_ISOLATE_DAYS = 365;
 
-export const DEFAULT_SIGNALS: SignalOptions = { minHistoryDays: 182, sentinelPhenotypes: ["cpe", "vre"] };
+/** provisional — the team confirms: a unit's own baseline is trusted after 182 days of history. Always-alert flags: phenotypes.ts. */
+export const DEFAULT_SIGNALS: SignalOptions = { minHistoryDays: 182, sentinelPhenotypes: [...ALWAYS_ALERT_FLAGS] };
 
 // ---------- Dates ----------
 
@@ -566,7 +578,7 @@ function shiftTest(ix: Index, d: number, u: number, os: number, list: Iso[], hit
   if (!unitOs) return;
   for (let a = 0; a < nAbx; a++) {
     const c = { r: cr[a]!, n: cn[a]! };
-    if (c.r < SHIFT_MIN_RESISTANT) continue;
+    if (c.r < SHIFT_MIN_RESISTANT || c.n < SHIFT_MIN_RECENT) continue;
     const ua = unitOs[a];
     if (!ua) continue;
     const bn = countIn(ua.n, bFrom, bTo);

@@ -23,6 +23,9 @@ import { Sheet } from "./Sheet.tsx";
     sexes        string[]          sex codes present in the released results
     onShowTreat  (patch: Partial<TreatPrefs>) => void   "Show what works"
     onOpenReport (patch: Partial<ReportPrefs>) => void  "Open in report"
+    onOpenAlerts (unit: string | null) => void         "Show alerts" (a question about something unusual)
+  Every action sends the whole answer: a filter the question did not mention
+  is cleared (null), so the screen answers this question, not an earlier one.
 */
 
 interface Chosen {
@@ -37,6 +40,8 @@ interface Chosen {
 
 type Phase = { kind: "idle" } | { kind: "thinking" } | { kind: "answer"; chosen: Chosen; unmatched: string[]; intent?: string } | { kind: "error"; code: AiErrorCode };
 
+const capFirst = (locale: Locale, x: string) => (x ? x.charAt(0).toLocaleUpperCase(locale) + x.slice(1) : x);
+
 const toBand = (g: AgeGroup | undefined): AgeBand | undefined => (g === undefined ? undefined : g === "older" || g === "very_old" ? "65plus" : "under65");
 
 export function AskSheet({
@@ -48,6 +53,7 @@ export function AskSheet({
   sexes,
   onShowTreat,
   onOpenReport,
+  onOpenAlerts,
 }: {
   open: boolean;
   onClose: () => void;
@@ -57,6 +63,7 @@ export function AskSheet({
   sexes: readonly string[];
   onShowTreat: (patch: Partial<TreatPrefs>) => void;
   onOpenReport: (patch: Partial<ReportPrefs>) => void;
+  onOpenAlerts: (unit: string | null) => void;
 }) {
   const [text, setText] = useState("");
   const [phase, setPhase] = useState<Phase>({ kind: "idle" });
@@ -78,7 +85,8 @@ export function AskSheet({
     const organism = meta.organisms[0] ? shortOrganism(meta.organisms[0]) : "";
     const list = [t(locale, "common.ask.exUnit", { specimen, unit }), t(locale, "common.ask.exGroup", { specimen })];
     if (organism) list.splice(1, 0, t(locale, "common.ask.exOrganism", { organism }));
-    return list;
+    // Feed names are lower case ("urine"); a chip starts with a capital like any sentence.
+    return list.map((x) => (x ? x.charAt(0).toLocaleUpperCase(locale) + x.slice(1) : x));
   }, [locale, meta]);
   const placeholder = useMemo(
     () =>
@@ -147,33 +155,50 @@ export function AskSheet({
   const chosen = answer?.chosen ?? {};
   const hasFilters = Object.keys(chosen).some((k) => k !== "period");
 
+  // Unit and infection site keep the screen's own choice when the question names none (they are never empty);
+  // every patient detail the question did not mention is cleared.
   function treatPatch(): Partial<TreatPrefs> {
-    const p: Partial<TreatPrefs> = {};
+    const p: Partial<TreatPrefs> = {
+      organism: chosen.organism ?? null,
+      sex: chosen.sex ?? null,
+      age: chosen.age ?? null,
+      onset: chosen.onset ?? null,
+    };
     if (chosen.ward) p.ward = chosen.ward;
     if (chosen.specimen) p.specimen = chosen.specimen;
-    if (chosen.organism) p.organism = chosen.organism;
-    if (chosen.sex) p.sex = chosen.sex;
-    if (chosen.age) p.age = chosen.age;
-    if (chosen.onset) p.onset = chosen.onset;
     return p;
   }
   function reportPatch(): Partial<ReportPrefs> {
-    const p: Partial<ReportPrefs> = {};
-    if (chosen.ward) p.ward = chosen.ward;
+    const p: Partial<ReportPrefs> = {
+      ward: chosen.ward ?? "all",
+      organism: chosen.organism ?? null,
+      sex: chosen.sex ?? null,
+      age: chosen.age ?? null,
+    };
     if (chosen.specimen) p.specimen = chosen.specimen;
-    if (chosen.organism) p.organism = chosen.organism;
-    if (chosen.sex) p.sex = chosen.sex;
-    if (chosen.age) p.age = chosen.age;
     return p;
   }
 
-  const reportFirst = answer?.intent === "signals";
+  // "Is something unusual happening?" is answered by the alerts, not by a list of antibiotics.
+  const aboutSignals = answer?.intent === "signals";
 
   const footer = answer ? (
     <div className="k-ask-actions">
+      {aboutSignals ? (
+        <button
+          type="button"
+          className="k-btn is-primary"
+          onClick={() => {
+            onOpenAlerts(chosen.ward ?? null);
+            onClose();
+          }}
+        >
+          {t(locale, "common.ask.showAlerts")}
+        </button>
+      ) : null}
       <button
         type="button"
-        className={`k-btn ${reportFirst ? "is-secondary" : "is-primary"}`}
+        className={`k-btn ${aboutSignals ? "is-secondary" : "is-primary"}`}
         disabled={!hasFilters}
         onClick={() => {
           onShowTreat(treatPatch());
@@ -184,7 +209,7 @@ export function AskSheet({
       </button>
       <button
         type="button"
-        className={`k-btn ${reportFirst ? "is-primary" : "is-secondary"}`}
+        className="k-btn is-secondary"
         disabled={!hasFilters}
         onClick={() => {
           onOpenReport(reportPatch());
@@ -210,6 +235,7 @@ export function AskSheet({
       subtitle={t(locale, "common.ask.note")}
       size="md"
       footer={footer}
+      initialFocus="#k-ask-input"
     >
       <form className="k-ask-form" onSubmit={onSubmit}>
         <label className="u-sr" htmlFor="k-ask-input">
@@ -306,7 +332,7 @@ export function AskSheet({
                   locale={locale}
                   label={t(locale, "common.ask.site")}
                   value={chosen.specimen}
-                  groups={[{ options: meta.specimens.map((s) => ({ value: s.code, label: named(locale, s) })) }]}
+                  groups={[{ options: meta.specimens.map((s) => ({ value: s.code, label: capFirst(locale, named(locale, s)) })) }]}
                   nullLabel={t(locale, "common.chip.any")}
                   onChange={(v) => update({ specimen: v ?? undefined })}
                 />

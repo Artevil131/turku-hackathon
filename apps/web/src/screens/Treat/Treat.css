@@ -32,7 +32,9 @@
   color: var(--ink);
   transition: background var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
 }
-.treat-signal:hover { background: var(--surface); }
+@media (hover: hover) {
+  .treat-signal:hover { background: var(--surface); }
+}
 .treat-signal.is-medium { border-left-color: var(--medium-dot); }
 .treat-signal.is-low { border-left-color: var(--low-dot); }
 .treat-signal-glyph { font-size: 0.8rem; line-height: 1; color: var(--high-ink); width: 14px; text-align: center; flex-shrink: 0; }
@@ -69,6 +71,33 @@
 .treat-org-share { color: var(--ink-3); font-weight: var(--fw-regular); font-size: var(--fs-xs); margin-left: 2px; }
 .k-chip.is-on .treat-org-share { color: var(--blue); }
 .treat-orgs .k-pick { flex-shrink: 0; }
+
+.treat-details { display: flex; flex-direction: column; gap: var(--sp-4); }
+
+/* ---------- Phones: unit and site above the answer, details in a sheet ---------- */
+.treat.is-phone { gap: var(--sp-3); }
+.treat-bar { display: flex; flex-direction: column; gap: var(--sp-2); }
+.treat-bar-row { display: flex; align-items: stretch; gap: var(--sp-2); }
+.treat-bar-unit { flex: 1; min-width: 0; }
+.treat-bar-unit .k-pick-trigger { background: var(--glass-2); }
+.treat-bar-more { flex-shrink: 0; padding: 0 var(--sp-3); gap: 6px; font-size: var(--fs-sm); }
+.treat-bar-more.has-value { background: var(--blue-soft); border-color: var(--blue); }
+.treat-bar-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--r-pill);
+  background: var(--blue);
+  color: var(--ink-on-blue);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+}
+.treat-sheet-actions { display: flex; gap: var(--sp-2); }
+.treat-sheet-actions .k-btn { flex: 1 1 0; }
+.treat.is-phone .treat-top { padding: var(--sp-4); gap: var(--sp-2); }
+.treat.is-phone .treat-basis-line { line-height: 1.45; }
 
 /* ---------- Basis ---------- */
 .treat-result { display: flex; flex-direction: column; gap: var(--sp-4); }
@@ -149,6 +178,50 @@
   line-height: 1.45;
 }
 
+/* What a figure leaves out ("rests on 418 of 523 · not tested for ...") */
+.treat-cover {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  line-height: 1.45;
+}
+.treat-cover .k-icon { flex-shrink: 0; margin-top: 2px; color: var(--ink-3); }
+.treat-row-caption { display: inline; }
+.treat-row-cover { color: var(--ink-3); }
+
+/* An active "working less often" alert for this antibiotic here (always a word and a glyph) */
+.treat-falling {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: var(--r-pill);
+  background: var(--medium-bg);
+  color: var(--medium-ink);
+  border: 1px solid var(--medium-line);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  white-space: nowrap;
+}
+.treat-falling.is-button {
+  align-self: flex-start;
+  height: auto;
+  min-height: var(--tap);
+  padding: 0 var(--sp-3);
+  font-size: var(--fs-sm);
+  white-space: normal;
+  text-align: left;
+  border-radius: var(--r-md);
+}
+@media (hover: hover) {
+  .treat-falling.is-button:hover { border-color: var(--medium-dot); }
+}
+
 /* ---------- Figures side by side ---------- */
 .treat-facts { margin: 0; display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-5); }
 .treat-fact { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
@@ -200,7 +273,9 @@
 .treat-row-btn:focus-visible { outline: none; }
 .treat-row-btn:focus-visible::after { outline: 3px solid var(--blue-ring); outline-offset: 0; }
 .treat-row-name { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.treat-row-main:hover .treat-row-name { color: var(--blue); }
+@media (hover: hover) {
+  .treat-row-main:hover .treat-row-name { color: var(--blue); }
+}
 .treat-row-chev { color: var(--ink-3); transition: transform var(--t) var(--ease); }
 .treat-row.is-open .treat-row-chev { transform: rotate(180deg); }
 .treat-row.is-weak .treat-row-btn { color: var(--ink-2); font-weight: var(--fw-medium); }

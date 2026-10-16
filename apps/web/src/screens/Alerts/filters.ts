@@ -1,4 +1,5 @@
 import { addDays } from "../../engine/dates.ts";
+import { groupEpisodes, type Episode } from "../../engine/episodes.ts";
 import type { Severity, Signal, SignalKind } from "../../engine/types.ts";
 import type { IsoDate } from "../../feed/types.ts";
 
@@ -70,4 +71,17 @@ export function reveal(f: AlertFilters, s: Signal, asOf: IsoDate): AlertFilters 
 /** Unseen alerts worth a badge: active, high or medium, not yet marked seen. */
 export function unseenActive(signals: readonly Signal[], asOf: IsoDate, seen: ReadonlySet<string>): Signal[] {
   return signals.filter((s) => s.severity !== "low" && isActive(s, asOf) && !seen.has(s.id));
+}
+
+/**
+ * What the Alerts tab badge counts and what the Alerts screen calls "new"
+ * under its default filters: active high and medium alerts, grouped into
+ * episodes (one outbreak = one card), with at least one signal not yet seen.
+ */
+export function unseenEpisodes(signals: readonly Signal[], asOf: IsoDate, seen: ReadonlySet<string>): Episode[] {
+  const listed = sortAlerts(
+    signals.filter((s) => passes(s, DEFAULT_FILTERS, asOf)),
+    asOf,
+  );
+  return groupEpisodes(listed).filter((e) => e.members.some((s) => !seen.has(s.id)));
 }

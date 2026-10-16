@@ -43,7 +43,10 @@
   --blue-press: #143f76;
   --blue-soft: #e7f0fb;
   --blue-soft-2: #d3e3f7;
-  --blue-ring: rgba(31, 95, 174, 0.45);
+  /* Focus ring: solid, 5.3:1 on white and 4.7:1 on --bg (WCAG 1.4.11 needs 3:1). */
+  --blue-ring: #2c6bbd;
+  /* A soft halo for "opened from elsewhere" highlights (decoration, never the only cue). */
+  --blue-glow: rgba(31, 95, 174, 0.35);
 
   /* ---- Status (always with a word or glyph) ---- */
   --high-ink: #a3161b;

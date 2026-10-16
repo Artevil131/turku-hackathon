@@ -133,7 +133,10 @@ describe("TreatScreen", () => {
     expect(html).toContain("Alphacillin");
     expect(html).toContain("Betamycin");
     expect(html).not.toContain("Screen test");
-    expect(html).toContain("Not known yet");
+    // Phones (and the server render): unit and site above the answer, the optional details behind "Patient".
+    expect(html).toContain("treat-bar");
+    expect(html).toContain("Patient");
+    expect(html.indexOf("treat-bar")).toBeLessThan(html.indexOf("Best match here"));
   });
 
   it("says when the group was widened and never shows a percentage from too few", () => {

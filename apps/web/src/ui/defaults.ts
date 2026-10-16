@@ -4,7 +4,7 @@ import { named, t, type Locale } from "../i18n/index.ts";
 
 /*
   Defaults and labels derived from the feed's own code lists (never hard-coded):
-    defaultWard(meta)        first hospital inpatient unit, else the first unit
+    defaultWard(meta)        first inpatient unit in the feed's order, else the first unit
     defaultSpecimen(meta)    first specimen
     unitByCode(meta, code), specimenByCode(meta, code), antibioticByCode(meta, code)
     unitName / specimenName / antibioticName (locale, meta, code)   via named(); falls back to the code
@@ -14,7 +14,8 @@ import { named, t, type Locale } from "../i18n/index.ts";
 */
 
 export function defaultWard(meta: FeedMeta): string {
-  const unit: Unit | undefined = meta.units.find((u) => u.institution === "hospital" && u.type === "in") ?? meta.units[0];
+  // The first inpatient unit the feed lists (a ward where patients stay), else the first unit.
+  const unit: Unit | undefined = meta.units.find((u) => u.type === "in") ?? meta.units[0];
   return unit?.code ?? "";
 }
 

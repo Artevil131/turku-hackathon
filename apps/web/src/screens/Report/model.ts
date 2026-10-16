@@ -46,7 +46,8 @@ export function windowCoverage(
   catalog: Catalog,
   days: number,
 ): CoverageResult {
-  return coverage(results, asOf, query, catalog, { minIsolates: 0, recentDays: days, yearDays: days });
+  // One window (counted once), no widening, and no every-unit figure: the report computes that itself where it shows it.
+  return coverage(results, asOf, query, catalog, { minIsolates: 0, recentDays: days, yearDays: days, withHospital: false });
 }
 
 export function cellFromShare(share: Share): Cell {
@@ -242,17 +243,30 @@ export function tintOf(value: number): number {
 
 export type CsvValue = string | number | null | undefined;
 
+/**
+ * How a spreadsheet in the reader's language opens a CSV: comma-separated
+ * with a decimal point (English), or semicolon-separated with a decimal comma
+ * (Finnish Excel reads "," as a decimal mark and puts a comma file in one column).
+ */
+export interface CsvDialect {
+  sep: "," | ";";
+  decimal: "." | ",";
+}
+export const CSV_EN: CsvDialect = { sep: ",", decimal: "." };
+export const CSV_FI: CsvDialect = { sep: ";", decimal: "," };
+
 /** One field, RFC 4180 quoting; text that a spreadsheet would run as a formula is prefixed with '. */
-export function csvField(value: CsvValue): string {
+export function csvField(value: CsvValue, dialect: CsvDialect = CSV_EN): string {
   if (value === null || value === undefined) return "";
-  if (typeof value === "number") return Number.isFinite(value) ? String(value) : "";
+  if (typeof value === "number") return Number.isFinite(value) ? String(value).replace(".", dialect.decimal) : "";
   let s = value;
   if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
-  return /[",\r\n]/.test(s) || s !== s.trim() ? `"${s.replace(/"/g, '""')}"` : s;
+  const special = dialect.sep === ";" ? /[";\r\n]/ : /[",\r\n]/;
+  return special.test(s) || s !== s.trim() ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
-export function toCsv(rows: readonly (readonly CsvValue[])[]): string {
-  return rows.map((r) => r.map(csvField).join(",")).join("\r\n") + "\r\n";
+export function toCsv(rows: readonly (readonly CsvValue[])[], dialect: CsvDialect = CSV_EN): string {
+  return rows.map((r) => r.map((v) => csvField(v, dialect)).join(dialect.sep)).join("\r\n") + "\r\n";
 }
 
 /** Percentage with one decimal, only from MIN or more. */
@@ -275,7 +289,7 @@ export interface CsvLabels {
 }
 
 // Column names are machine-readable identifiers (the same in every language), so scripts can rely on them.
-export function tableCsv(model: TableModel, labels: CsvLabels): string {
+export function tableCsv(model: TableModel, labels: CsvLabels, dialect: CsvDialect = CSV_EN): string {
   const recentFrom = windowStart(model.asOf, RECENT_DAYS);
   const yearFrom = windowStart(model.asOf, YEAR_DAYS);
   const ward = model.query.ward;
@@ -347,10 +361,10 @@ export function tableCsv(model: TableModel, labels: CsvLabels): string {
       r.change,
     ]);
   }
-  return toCsv(lines);
+  return toCsv(lines, dialect);
 }
 
-export function matrixCsv(model: MatrixModel, labels: CsvLabels): string {
+export function matrixCsv(model: MatrixModel, labels: CsvLabels, dialect: CsvDialect = CSV_EN): string {
   const from = windowStart(model.asOf, model.days);
   const head = [
     "as_of",
@@ -396,7 +410,7 @@ export function matrixCsv(model: MatrixModel, labels: CsvLabels): string {
       ]);
     }
   }
-  return toCsv(lines);
+  return toCsv(lines, dialect);
 }
 
 /** A file-name-safe piece: letters, digits and dashes. */

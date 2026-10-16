@@ -119,3 +119,34 @@ export function midSentence(s: string): string {
   const second = s.charAt(1);
   return second === second.toLowerCase() && second !== second.toUpperCase() ? s.charAt(0).toLowerCase() + s.slice(1) : s;
 }
+
+/**
+ * Antibiotics with an active "working less often" alert for this unit and
+ * infection site (and this bacterium, when one is chosen): antibiotic code ->
+ * the alert's id. Links the doctor's list to what infection control sees.
+ */
+export function fallingHere(signals: readonly Signal[], ward: string, specimen: string, organism: string | null): Map<string, string> {
+  const out = new Map<string, string>();
+  for (const s of signals) {
+    if (s.kind !== "shift" || !s.antibiotic || s.ward !== ward || s.specimen !== specimen) continue;
+    if (organism !== null && s.organism !== organism) continue;
+    if (!out.has(s.antibiotic)) out.set(s.antibiotic, s.id);
+  }
+  return out;
+}
+
+/** At least this share of the window's isolates must have an answer before a figure goes without "rests on X of Y". */
+export const COVER_NOTE_BELOW = 0.95;
+/** Organisms named in "not tested for ..." before "+N more". */
+export const COVER_NAMES = 2;
+
+/** The isolates a figure leaves out, when they are enough to mention (else null). */
+export function coverGap(d: { main: Share; isolates: number; untested: { organism: string; n: number }[] }): { known: number; total: number; names: string[]; more: number } | null {
+  if (d.isolates <= 0 || d.untested.length === 0 || d.main.n >= COVER_NOTE_BELOW * d.isolates) return null;
+  return {
+    known: d.main.n,
+    total: d.isolates,
+    names: d.untested.slice(0, COVER_NAMES).map((u) => u.organism),
+    more: Math.max(0, d.untested.length - COVER_NAMES),
+  };
+}

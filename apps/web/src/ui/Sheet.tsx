@@ -14,7 +14,9 @@ import { Icon } from "./Icon.tsx";
     subtitle?   ReactNode             one quiet line under the title
     size?       "sm" | "md" | "lg"    desktop width (360 / 520 / 720 px), default "md"
     tone?       "default" | "sim"     "sim" marks the simulation controls
-    initialFocus?  CSS selector inside the sheet to focus on open (default: first field, else the close button)
+    initialFocus?  CSS selector inside the sheet to focus on open. Default: the first field with a keyboard
+                   and mouse; on a touch screen the sheet's heading, so the on-screen keyboard does not
+                   cover the list (a sheet whose point is typing, like Ask, passes its field here).
 */
 
 export function Sheet({
@@ -52,11 +54,13 @@ export function Sheet({
       const before = document.activeElement as HTMLElement | null;
       if (typeof dialog.showModal === "function") dialog.showModal();
       else dialog.setAttribute("open", "");
+      const touch = typeof window.matchMedia === "function" && window.matchMedia("(pointer: coarse)").matches;
       const target =
         (initialFocus ? dialog.querySelector<HTMLElement>(initialFocus) : null) ??
-        dialog.querySelector<HTMLElement>("input:not([type=hidden]), textarea, select") ??
-        dialog.querySelector<HTMLElement>(".k-sheet-close");
-      target?.focus();
+        (touch
+          ? dialog.querySelector<HTMLElement>(".k-sheet-title")
+          : (dialog.querySelector<HTMLElement>("input:not([type=hidden]), textarea, select") ?? dialog.querySelector<HTMLElement>(".k-sheet-close")));
+      target?.focus({ preventScroll: true });
       return () => {
         if (dialog.open) dialog.close();
         before?.focus?.();
@@ -85,7 +89,7 @@ export function Sheet({
         <div className="k-sheet-grip" aria-hidden="true" />
         <header className="k-sheet-head">
           <div className="k-sheet-titles">
-            <h2 id={titleId} className="k-sheet-title">
+            <h2 id={titleId} className="k-sheet-title" tabIndex={-1}>
               {title}
             </h2>
             {subtitle ? <p className="k-sheet-sub">{subtitle}</p> : null}

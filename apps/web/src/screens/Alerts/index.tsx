@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { episodeOf, groupEpisodes, type Episode } from "../../engine/episodes.ts";
 import type { Severity, Signal, SignalKind } from "../../engine/types.ts";
 import type { FeedMeta, IsoDate, Result } from "../../feed/types.ts";
 import { formatDate, formatNumber, named, t, type Locale } from "../../i18n/index.ts";
@@ -6,7 +7,7 @@ import { Card, ChipGroup, EmptyState, Icon, Picker, Segmented, signalKindLabel, 
 import type { TreatPrefs } from "../Treat/index.tsx";
 import { compose, describe, type Described } from "./describe.tsx";
 import { ACTIVE_DAYS, DEFAULT_FILTERS, isActive, KINDS, passes, reveal, SEVERITIES, sortAlerts, type AlertFilters, type Period } from "./filters.ts";
-import { Body, Summary, Tags } from "./parts.tsx";
+import { Body, Story, StoryLine, Summary, Tags } from "./parts.tsx";
 import "./Alerts.css";
 
 /*
@@ -17,6 +18,8 @@ import "./Alerts.css";
   Each alert says what happened, where and since when, how unusual it is
   (observed against what the unit's own history predicts), who should act,
   and offers the cases, "what still works here" and the timeline.
+  Signals of one outbreak (same unit, same organism or flag, close in time)
+  share one card with a dated story; each step keeps its own evidence.
 */
 
 const GLYPH: Record<Severity, string> = { high: "▲", medium: "◆", low: "●" };
@@ -54,9 +57,13 @@ export function AlertsScreen(p: {
   focus: string | null;
   onFocus: (id: string | null) => void;
   onOpenTreat: (patch: Partial<TreatPrefs>) => void;
-  onOpenTimeline: (date: IsoDate) => void;
+  onOpenTimeline: (date: IsoDate, id: string) => void;
+  /** Opened for one unit from elsewhere (e.g. a question about something unusual there); `seq` counts each request. */
+  preset?: { value: string | null; seq: number } | null;
+  /** The released results were just (re)loaded and their alerts are still being computed. */
+  computing?: boolean;
 }) {
-  const { locale, meta, results, asOf, signals, seen, onSeen, focus, onFocus, onOpenTreat, onOpenTimeline } = p;
+  const { locale, meta, results, asOf, signals, seen, onSeen, focus, onFocus, onOpenTreat, onOpenTimeline, preset, computing = false } = p;
   const desktop = useIsDesktop();
   const reduced = useReducedMotion();
 
@@ -65,8 +72,19 @@ export function AlertsScreen(p: {
     remembered = filters;
   }, [filters]);
 
+  // A request for one unit's alerts: every alert so far on that unit, any severity.
+  const presetSeq = useRef(0);
+  useEffect(() => {
+    if (!preset || preset.seq === presetSeq.current) return;
+    presetSeq.current = preset.seq;
+    const unit = preset.value && meta.units.some((u) => u.code === preset.value) ? preset.value : null;
+    setFilters(unit ? { ...DEFAULT_FILTERS, unit, period: "all", severities: [...SEVERITIES] } : DEFAULT_FILTERS);
+  }, [preset, meta.units]);
+
+  /** Expanded cards (phones) and the selected card (desktop), by episode id; the step each card shows, by episode id. */
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(EMPTY_SET);
   const [selected, setSelected] = useState<string | null>(null);
+  const [step, setStep] = useState<Readonly<Record<string, string>>>({});
   const [flash, setFlash] = useState<string | null>(null);
   const [entering, setEntering] = useState<ReadonlySet<string>>(EMPTY_SET);
   const scrollTarget = useRef<string | null>(null);
@@ -82,13 +100,15 @@ export function AlertsScreen(p: {
     const timer = window.setTimeout(() => setGraceOver(true), Math.max(0, CHECKING_GRACE_MS - (now() - (firstMountAt ?? 0))));
     return () => window.clearTimeout(timer);
   }, [graceOver, signals.length]);
-  const checking = signals.length === 0 && !graceOver;
+  const checking = signals.length === 0 && (!graceOver || computing);
 
   // ---------- What is listed ----------
   const sorted = useMemo(() => sortAlerts(signals.filter((s) => passes(s, filters, asOf)), asOf), [signals, filters, asOf]);
+  const episodes = useMemo(() => groupEpisodes(sorted), [sorted]);
   const inPeriod = useMemo(() => signals.filter((s) => filters.period === "all" || isActive(s, asOf)).length, [signals, filters.period, asOf]);
   const hiddenCount = inPeriod - sorted.length;
-  const newCount = sorted.reduce((k, s) => k + (seen.has(s.id) ? 0 : 1), 0);
+  const isNewEp = (e: Episode) => e.members.some((s) => !seen.has(s.id));
+  const newCount = episodes.reduce((k, e) => k + (isNewEp(e) ? 1 : 0), 0);
   const counts = useMemo(() => {
     const sev: Record<Severity, number> = { high: 0, medium: 0, low: 0 };
     const kind = new Map<SignalKind, number>();
@@ -101,7 +121,9 @@ export function AlertsScreen(p: {
     return { sev, kind, unit };
   }, [signals, filters, asOf]);
   const described = useMemo(() => new Map<string, Described>(sorted.map((s) => [s.id, describe(locale, meta, s, asOf)])), [sorted, locale, meta, asOf]);
-  const current = desktop ? (sorted.find((s) => s.id === selected) ?? sorted[0] ?? null) : null;
+  const current = desktop ? (episodes.find((e) => e.id === selected) ?? episodes[0] ?? null) : null;
+  /** The step a card's body shows: the one picked in its story, else its lead. */
+  const stepOf = (e: Episode): Signal => e.members.find((s) => s.id === step[e.id]) ?? e.lead;
 
   // ---------- Opened from elsewhere (a toast, the Treat or Timeline screen) ----------
   useEffect(() => {
@@ -111,11 +133,16 @@ export function AlertsScreen(p: {
       if (signals.length > 0) onFocus(null); // gone (e.g. after a rewind)
       return; // still computing: wait for it
     }
-    setFilters((f) => reveal(f, s, asOf));
-    setExpanded((e) => new Set(e).add(s.id));
-    setSelected(s.id);
-    setFlash(s.id);
-    scrollTarget.current = s.id;
+    const f = reveal(filters, s, asOf);
+    setFilters(f);
+    // The card that holds it once the filters are widened.
+    const ep = episodeOf(groupEpisodes(sortAlerts(signals.filter((x) => passes(x, f, asOf)), asOf)), s.id);
+    const key = ep?.id ?? s.id;
+    setExpanded((e) => new Set(e).add(key));
+    setSelected(key);
+    setStep((m) => ({ ...m, [key]: s.id }));
+    setFlash(key);
+    scrollTarget.current = key;
     onFocus(null);
   }, [focus, signals]);
 
@@ -170,6 +197,7 @@ export function AlertsScreen(p: {
     for (const id of fresh) before.add(id);
     setEntering(new Set(fresh));
   }, [signals]);
+  const isEntering = (e: Episode) => entering.size > 0 && e.members.some((s) => entering.has(s.id));
   useEffect(() => {
     if (entering.size === 0) return;
     const timer = window.setTimeout(() => setEntering(EMPTY_SET), ENTER_MS);
@@ -189,6 +217,7 @@ export function AlertsScreen(p: {
     }));
   const showAll = () => setFilters((f) => ({ ...f, severities: [...SEVERITIES], kind: null, unit: null }));
   const markAll = () => onSeen(sorted.filter((s) => !seen.has(s.id)).map((s) => s.id));
+  const pickStep = (episodeId: string, signalId: string) => setStep((m) => ({ ...m, [episodeId]: signalId }));
   const toggle = (id: string) =>
     setExpanded((e) => {
       const next = new Set(e);
@@ -204,12 +233,12 @@ export function AlertsScreen(p: {
     filters.period === "active"
       ? compose(locale, "alerts.summary.active", {
           new: { node: <strong className="alerts-newcount">{num(newCount)}</strong>, text: num(newCount) },
-          count: num(sorted.length),
+          count: num(episodes.length),
           weeks: num(ACTIVE_DAYS / 7),
         })
       : compose(locale, "alerts.summary.all", {
           new: { node: <strong className="alerts-newcount">{num(newCount)}</strong>, text: num(newCount) },
-          count: num(sorted.length),
+          count: num(episodes.length),
           date: formatDate(locale, meta.start, "long"),
         });
 
@@ -345,30 +374,36 @@ export function AlertsScreen(p: {
   // ---------- The list ----------
   const bodyProps = { locale, meta, results, asOf, onSeen, onOpenTreat, onOpenTimeline };
 
-  const item = (s: Signal) => {
-    const d = described.get(s.id);
-    if (!d) return null;
-    const id = domId(s.id);
-    const isNew = !seen.has(s.id);
-    const cls = `${flash === s.id ? " is-flash" : ""}${entering.has(s.id) ? " is-entering" : ""}${isNew ? " is-new" : ""}`;
+  const item = (e: Episode) => {
+    const lead = described.get(e.lead.id);
+    const shown = stepOf(e);
+    const d = described.get(shown.id);
+    if (!lead || !d) return null;
+    const id = domId(e.id);
+    const isNew = isNewEp(e);
+    const ids = e.members.map((s) => s.id);
+    const many = e.members.length > 1;
+    const cls = `${flash === e.id ? " is-flash" : ""}${isEntering(e) ? " is-entering" : ""}${isNew ? " is-new" : ""}`;
+    const storyLine = many ? <StoryLine locale={locale} asOf={asOf} members={e.members} /> : null;
     if (desktop) {
-      const on = current?.id === s.id;
+      const on = current?.id === e.id;
       return (
-        <li key={s.id}>
-          <Card as="article" tone={s.severity} pad="sm" id={id} className={`alerts-row${on ? " is-selected" : ""}${cls}`}>
+        <li key={e.id}>
+          <Card as="article" tone={e.severity} pad="sm" id={id} className={`alerts-row${on ? " is-selected" : ""}${cls}`}>
             <div className="alerts-sum">
-              <Tags locale={locale} s={s} isNew={isNew} />
+              <Tags locale={locale} s={e.lead} isNew={isNew} steps={e.members.length} />
               <Summary
-                d={d}
+                d={lead}
+                extra={storyLine}
                 control={
                   <button
                     type="button"
                     className="alerts-toggle"
                     aria-current={on ? "true" : undefined}
                     aria-controls="alerts-detail"
-                    onClick={() => setSelected(s.id)}
+                    onClick={() => setSelected(e.id)}
                   >
-                    {d.title.node}
+                    {lead.title.node}
                   </button>
                 }
               />
@@ -377,32 +412,41 @@ export function AlertsScreen(p: {
         </li>
       );
     }
-    const open = expanded.has(s.id);
+    const open = expanded.has(e.id);
     return (
-      <li key={s.id}>
-        <Card as="article" tone={s.severity} pad="md" id={id} className={`alerts-card${open ? " is-open" : ""}${cls}`}>
+      <li key={e.id}>
+        <Card as="article" tone={e.severity} pad="md" id={id} className={`alerts-card${open ? " is-open" : ""}${cls}`}>
           <div className="alerts-sum">
-            <Tags locale={locale} s={s} isNew={isNew} />
+            <Tags locale={locale} s={e.lead} isNew={isNew} steps={e.members.length} />
             <Summary
-              d={d}
+              d={lead}
+              extra={open ? null : storyLine}
               control={
-                <button type="button" className="alerts-toggle" aria-expanded={open} aria-controls={`${id}-body`} onClick={() => toggle(s.id)}>
-                  {d.title.node}
+                <button type="button" className="alerts-toggle" aria-expanded={open} aria-controls={`${id}-body`} onClick={() => toggle(e.id)}>
+                  {lead.title.node}
                 </button>
               }
             />
             <Icon name="chevron-down" size={20} className="alerts-chev" />
           </div>
           <div id={`${id}-body`} hidden={!open}>
-            {open ? <Body {...bodyProps} s={s} d={d} seen={!isNew} /> : null}
+            {open ? (
+              <>
+                {many ? (
+                  <Story locale={locale} asOf={asOf} members={e.members} described={described} current={shown.id} onPick={(sid) => pickStep(e.id, sid)} />
+                ) : null}
+                <Body key={shown.id} {...bodyProps} s={shown} d={d} seen={ids.every((x) => seen.has(x))} seenIds={ids} />
+              </>
+            ) : null}
           </div>
         </Card>
       </li>
     );
   };
 
-  const activeItems = filters.period === "all" ? sorted.filter((s) => isActive(s, asOf)) : sorted;
-  const olderItems = filters.period === "all" ? sorted.filter((s) => !isActive(s, asOf)) : [];
+  const epActive = (e: Episode) => e.members.some((s) => isActive(s, asOf));
+  const activeItems = filters.period === "all" ? episodes.filter(epActive) : episodes;
+  const olderItems = filters.period === "all" ? episodes.filter((e) => !epActive(e)) : [];
 
   const hiddenLine =
     hiddenCount > 0 && sorted.length > 0 ? (
@@ -435,15 +479,34 @@ export function AlertsScreen(p: {
     </div>
   );
 
-  const currentD = current ? described.get(current.id) : undefined;
+  const currentStep = current ? stepOf(current) : null;
+  const currentD = currentStep ? described.get(currentStep.id) : undefined;
+  const currentLead = current ? described.get(current.lead.id) : undefined;
   const detail =
-    current && currentD ? (
+    current && currentStep && currentD && currentLead ? (
       <section id="alerts-detail" className="alerts-detail" aria-label={t(locale, "alerts.detail")}>
         <div className="alerts-detail-scroll" ref={detailRef}>
           <Card key={current.id} tone={current.severity} pad="md" className={`alerts-pane${flash === current.id ? " is-flash" : ""}`}>
-            <Tags locale={locale} s={current} isNew={!seen.has(current.id)} />
-            <Summary d={currentD} control={currentD.title.node} level={2} short={false} />
-            <Body {...bodyProps} s={current} d={currentD} seen={seen.has(current.id)} />
+            <Tags locale={locale} s={current.lead} isNew={isNewEp(current)} steps={current.members.length} />
+            <Summary d={currentLead} control={currentLead.title.node} level={2} short={false} />
+            {current.members.length > 1 ? (
+              <Story
+                locale={locale}
+                asOf={asOf}
+                members={current.members}
+                described={described}
+                current={currentStep.id}
+                onPick={(sid) => pickStep(current.id, sid)}
+              />
+            ) : null}
+            <Body
+              key={currentStep.id}
+              {...bodyProps}
+              s={currentStep}
+              d={currentD}
+              seen={current.members.every((x) => seen.has(x.id))}
+              seenIds={current.members.map((x) => x.id)}
+            />
           </Card>
         </div>
       </section>

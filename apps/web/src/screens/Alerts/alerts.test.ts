@@ -4,7 +4,7 @@ import { describe as group, expect, it } from "vitest";
 import type { Signal } from "../../engine/types.ts";
 import type { FeedMeta, Result } from "../../feed/types.ts";
 import { describe } from "./describe.tsx";
-import { DEFAULT_FILTERS, isActive, passes, reveal, sortAlerts, unseenActive } from "./filters.ts";
+import { DEFAULT_FILTERS, isActive, passes, reveal, sortAlerts, unseenActive, unseenEpisodes } from "./filters.ts";
 import { AlertsScreen } from "./index.tsx";
 import { Body, patientTag } from "./parts.tsx";
 
@@ -140,12 +140,18 @@ group("alert filters", () => {
   it("badges only unseen, active, high and medium alerts", () => {
     expect(unseenActive([cluster, old, low, gap], asOf, new Set(["gap|C9"])).map((s) => s.id)).toEqual(["cluster|W1"]);
   });
+  it("counts one outbreak once: signals on one unit with the same organism, close in time, are one episode", () => {
+    const eps = unseenEpisodes([cluster, shiftFew, sentinel, gap, old, low], asOf, new Set(["gap|C9"]));
+    expect(eps).toHaveLength(1);
+    expect(eps[0]!.members.map((s) => s.id).sort()).toEqual([cluster.id, sentinel.id, shiftFew.id].sort());
+    expect(eps[0]!.lead.severity).toBe("high");
+  });
 });
 
 group("alert wording", () => {
   it("says what, where, who, in both languages, from the feed's own names", () => {
     const en = describe("en", meta, cluster, asOf);
-    expect(en.title.text).toBe("Same resistant G. species (fluid) in 6 patients on Ward One in 4 weeks");
+    expect(en.title.text).toBe("Ward One: same resistant G. species (fluid) in 6 patients in 4 weeks");
     expect(renderToStaticMarkup(h("p", null, en.title.node))).toContain("<i");
     expect(en.audience).toBe("infection");
     expect(en.how).toContain("Normally fewer than 1");
@@ -153,11 +159,11 @@ group("alert wording", () => {
     // Resistance profile in the feed's order, as names, not codes.
     expect(renderToStaticMarkup(h("p", null, en.sub))).toContain("Resists zetamycin, alphacillin");
     const fi = describe("fi", meta, cluster, asOf);
-    expect(fi.title.text).toBe("Sama resistentti G. species (neste) 6 potilaalla yksikössä Osasto Yksi 4 viikossa");
+    expect(fi.title.text).toBe("Osasto Yksi: sama resistentti G. species (neste) 6 potilaalla 4 viikossa");
   });
   it("never gives a percentage from fewer than 30 isolates", () => {
     const d = describe("en", meta, shiftFew, asOf);
-    expect(d.title.text).toBe("Zetamycin works less often for G. species in fluid on Ward One");
+    expect(d.title.text).toBe("Ward One: zetamycin works less often for G. species (fluid)");
     expect(d.how).toBe("Worked in 4 of 9 in the last 4 weeks, against 96% (48 of 50) in the 11 months before.");
     expect(d.short).toBe("Works 4 of 9 now · 96% before");
     expect(d.audience).toBe("stewardship");
@@ -165,7 +171,7 @@ group("alert wording", () => {
   });
   it("words a hospital-wide trend with its figures", () => {
     const d = describe("en", meta, trend, asOf);
-    expect(d.title.text).toBe("Alphacillin resistance in G. species from fluid rising hospital-wide: 17% → 20%");
+    expect(d.title.text).toBe("Whole hospital: alphacillin resistance in G. species (fluid) rising, 17% → 20%");
     expect(d.where).toBe("Whole hospital · fluid");
     expect(d.casesLabel).toBeNull();
     expect(d.treat).toEqual({ organism: "Genus species", specimen: "s1" });
@@ -181,7 +187,7 @@ group("alert wording", () => {
   it("words a screening test as positive, not as a treatment that works", () => {
     const screen = { ...shiftFew, id: "shift|C9", ward: "C9", antibiotic: "SC", recent: { works: 5, n: 9 }, baseline: { works: 49, n: 50 } };
     const d = describe("en", meta, screen, asOf);
-    expect(d.title.text).toBe("Betoxin (screen) positive more often for G. species in fluid at Clinic Nine");
+    expect(d.title.text).toBe("Clinic Nine: betoxin (screen) positive more often for G. species (fluid)");
     expect(d.how).toBe("Positive in 4 of 9 in the last 4 weeks, against 2% (1 of 50) in the 11 months before.");
     expect(d.audience).toBe("infection");
     expect(d.screen).toBe(true);
@@ -189,7 +195,7 @@ group("alert wording", () => {
   });
   it("names a rare find with its flag and organism", () => {
     const d = describe("en", meta, sentinel, asOf);
-    expect(d.title.text).toBe("QRX found: G. species on Ward One");
+    expect(d.title.text).toBe("Ward One: QRX found in G. species");
     expect(d.when).toBe("On 29 Jun · yesterday");
     expect(d.treat).toEqual({ organism: "Genus species", ward: "W1", specimen: "s1" });
   });
@@ -211,7 +217,10 @@ group("alerts screen", () => {
   };
   it("lists the active alerts with a summary line and the filters", () => {
     const html = renderToStaticMarkup(h(AlertsScreen, props));
-    expect(html).toContain("4</strong> new · 5 active in the last 4 weeks");
+    // The cluster, the shift and the rare find on Ward One are one outbreak: one card with a story.
+    expect(html).toContain("2</strong> new · 3 active in the last 4 weeks");
+    expect(html).toContain("3 linked");
+    expect(html).toContain("alerts-storyline");
     expect(html).toContain("Checked up to 30 June 2025");
     expect(html).toContain("Results stopped arriving from Clinic Nine");
     expect(html).not.toContain("4 patients in 14 days"); // ended in January: not active
@@ -237,7 +246,7 @@ group("alerts screen", () => {
     const d = describe("en", meta, gap, asOf);
     const html = renderToStaticMarkup(h(Body, { ...props, results: [result({ ward: "C9", sampleDate: "2025-05-01" })], s: gap, d, seen: true }));
     expect(html).toContain("Results per week from this unit");
-    expect(html).toContain("Last 7 days: 0");
+    expect(html).toContain("7 days to 30 Jun: 0");
     expect(html).toContain("The laboratory");
     expect(html).not.toContain("What still works here");
     expect(html).toContain("Seen");

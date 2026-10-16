@@ -18,8 +18,8 @@ import {
   specimenName,
   unitName,
 } from "../../ui/index.ts";
-import { capFirst, reliable, STRONG_SHARE } from "./model.ts";
-import { drugName, figText, MONTHS, WEEKS, widenedText } from "./text.tsx";
+import { capFirst, coverGap, reliable, STRONG_SHARE } from "./model.ts";
+import { coverText, drugName, figText, MONTHS, WEEKS, widenedText } from "./text.tsx";
 
 // The answer: what it rests on, the top match, then every other antibiotic.
 
@@ -35,6 +35,9 @@ export function ResultView({
   min,
   onClearDetails,
   canClear,
+  falling,
+  onOpenSignal,
+  afterTop = null,
 }: {
   locale: Locale;
   meta: FeedMeta;
@@ -47,6 +50,11 @@ export function ResultView({
   min: number;
   onClearDetails: () => void;
   canClear: boolean;
+  /** Antibiotics with an active "working less often" alert here: code -> alert id. */
+  falling: ReadonlyMap<string, string>;
+  onOpenSignal: (id: string) => void;
+  /** Shown right after the best match (phones: this unit's alerts). */
+  afterTop?: ReactNode;
 }) {
   const top = cov.drugs[0];
   const rest = cov.drugs.slice(1);
@@ -90,7 +98,17 @@ export function ResultView({
         </Card>
       ) : (
         <>
-          <TopMatch locale={locale} meta={meta} cov={cov} drug={top} min={min} wardWidened={wardWidened} />
+          <TopMatch
+            locale={locale}
+            meta={meta}
+            cov={cov}
+            drug={top}
+            min={min}
+            wardWidened={wardWidened}
+            fallingId={falling.get(top.antibiotic) ?? null}
+            onOpenSignal={onOpenSignal}
+          />
+          {afterTop}
           {rest.length > 0 ? (
             <DrugList
               locale={locale}
@@ -103,6 +121,7 @@ export function ResultView({
               min={min}
               wardWidened={wardWidened}
               rank={rank}
+              falling={falling}
             />
           ) : (
             <HowCounted locale={locale} rank={rank} min={min} />
@@ -224,6 +243,8 @@ function TopMatch({
   drug,
   min,
   wardWidened,
+  fallingId,
+  onOpenSignal,
 }: {
   locale: Locale;
   meta: FeedMeta;
@@ -231,7 +252,10 @@ function TopMatch({
   drug: DrugFigure;
   min: number;
   wardWidened: boolean;
+  fallingId: string | null;
+  onOpenSignal: (id: string) => void;
 }) {
+  const gap = coverGap(drug);
   const ok = drug.main.n >= min;
   const name = drugName(locale, meta, drug.antibiotic);
   const other =
@@ -264,6 +288,19 @@ function TopMatch({
         caption={ok ? t(locale, "treat.top.worked", { works: formatNumber(locale, drug.main.works), n: formatNumber(locale, drug.main.n) }) : undefined}
         reference={wardWidened ? undefined : { share: drug.hospitalYear, label: t(locale, "treat.top.allUnitsRef") }}
       />
+      {gap && ok ? (
+        <p className="treat-cover">
+          <Icon name="info" size={16} />
+          <span>{coverText(locale, gap)}</span>
+        </p>
+      ) : null}
+      {fallingId ? (
+        <button type="button" className="treat-falling is-button" onClick={() => onOpenSignal(fallingId)}>
+          <span aria-hidden="true">▼</span>
+          <span>{t(locale, "treat.falling.long")}</span>
+          <Icon name="chevron-right" size={16} />
+        </button>
+      ) : null}
       <Facts locale={locale} min={min} items={[other]} />
       <Change locale={locale} change={drug.change} long />
       {strongest && strongestShare ? (
@@ -295,6 +332,7 @@ function DrugList({
   min,
   wardWidened,
   rank,
+  falling,
 }: {
   locale: Locale;
   meta: FeedMeta;
@@ -306,6 +344,7 @@ function DrugList({
   min: number;
   wardWidened: boolean;
   rank: "access-first" | "coverage";
+  falling: ReadonlyMap<string, string>;
 }) {
   const strong: DrugFigure[] = [];
   const weak: DrugFigure[] = [];
@@ -343,6 +382,7 @@ function DrugList({
                   min={min}
                   weak={g.tone !== "strong"}
                   wardWidened={wardWidened}
+                  falling={falling.has(d.antibiotic)}
                 />
               ))}
             </ul>
@@ -364,6 +404,7 @@ function DrugRow({
   min,
   weak,
   wardWidened,
+  falling,
 }: {
   locale: Locale;
   meta: FeedMeta;
@@ -375,10 +416,21 @@ function DrugRow({
   min: number;
   weak: boolean;
   wardWidened: boolean;
+  falling: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const bodyId = useId();
   const name = drugName(locale, meta, drug.antibiotic);
+  const gap = coverGap(drug);
+  const enough = drug.main.n >= min;
+  const caption =
+    enough && gap ? (
+      <span className="treat-row-caption">
+        {t(locale, "common.share.works", { works: formatNumber(locale, drug.main.works), n: formatNumber(locale, drug.main.n) })}
+        <span aria-hidden="true"> · </span>
+        <span className="treat-row-cover">{coverText(locale, gap)}</span>
+      </span>
+    ) : undefined;
   return (
     <li className={`treat-row${weak ? " is-weak" : ""}${open ? " is-open" : ""}`}>
       <div className="treat-row-main">
@@ -387,10 +439,15 @@ function DrugRow({
             <span className="treat-row-name">{name}</span>
             <span className="u-sr">{t(locale, "treat.row.details")}</span>
           </button>
+          {falling ? (
+            <span className="treat-falling">
+              <span aria-hidden="true">▼</span> {t(locale, "treat.falling.short")}
+            </span>
+          ) : null}
           <AwareBadge locale={locale} group={drug.aware} />
           <Icon name="chevron-down" size={18} className="treat-row-chev" />
         </div>
-        <ShareBar locale={locale} share={drug.main} min={min} size="sm" aside={<Change locale={locale} change={drug.change} />} />
+        <ShareBar locale={locale} share={drug.main} min={min} size="sm" aside={<Change locale={locale} change={drug.change} />} caption={caption} />
       </div>
       <div id={bodyId} className="treat-row-body" hidden={!open}>
         {open ? (

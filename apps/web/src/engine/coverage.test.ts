@@ -426,3 +426,53 @@ describe("monthly: untested antibiotics", () => {
     expect(monthly(rs, asOf, q, "MEM", 1, panel)).toEqual([{ month: "2026-03-01", share: { works: 2, n: 2 } }]);
   });
 });
+
+describe("coverage: what a figure leaves out, and the engine's own verdict", () => {
+  const q = { ward: "W1", specimen: "urine" };
+
+  it("names the organisms a figure has no answer for, most first (rests on X of Y)", () => {
+    const rs = [
+      ...[1, 2, 3, 4].map(() => iso({ organism: ECOLI, res: { MEM: "S" } })),
+      ...[1, 2].map(() => iso({ organism: SAUR, res: { VAN: "S" } })),
+      iso({ organism: EFAE, res: { VAN: "S" } }),
+    ];
+    const r = coverage(rs, asOf, q, panel, { minIsolates: 1, rank: "coverage" });
+    const mem = drug(r.drugs, "MEM");
+    expect(mem.isolates).toBe(7);
+    expect(mem.main.n).toBe(4);
+    expect(mem.untested).toEqual([
+      { organism: SAUR, n: 2 },
+      { organism: EFAE, n: 1 },
+    ]);
+  });
+
+  it("says 'not enough' whenever the engine's own test fails, not only on the isolate count", () => {
+    // Six first isolates (>= 4), but meropenem, shown (known for half), rests on only 3 answers.
+    const rs = [
+      ...[1, 2, 3].map(() => iso({ organism: ECOLI, sampleDate: ago(50), res: { MEM: "S" } })),
+      ...[1, 2, 3].map(() => iso({ organism: SAUR, sampleDate: ago(50), res: { VAN: "S" } })),
+    ];
+    const r = coverage(rs, asOf, { ...q, ward: EVERY_UNIT }, panel, { minIsolates: 4 });
+    expect(r.basis.n).toBe(6);
+    expect(r.basis.enough).toBe(false);
+  });
+
+  it("applies the half-tested rule to the every-unit figure too", () => {
+    const rs = [
+      // W1: meropenem known for all.
+      ...[1, 2, 3].map(() => iso({ ward: "W1", organism: ECOLI, res: { MEM: "S" } })),
+      // W2: many isolates without a meropenem answer, so every unit together is under half known.
+      ...[1, 2, 3, 4, 5, 6, 7].map(() => iso({ ward: "W2", organism: SAUR, res: { VAN: "S" } })),
+    ];
+    const r = coverage(rs, asOf, q, panel, { minIsolates: 1, rank: "coverage" });
+    expect(drug(r.drugs, "MEM").main).toEqual({ works: 3, n: 3 });
+    expect(drug(r.drugs, "MEM").hospitalYear).toEqual({ works: 0, n: 0 });
+  });
+
+  it("can skip the every-unit figure, and counts one window once", () => {
+    const rs = [1, 2, 3].map(() => iso({ organism: ECOLI, res: { MEM: "S" } }));
+    const r = coverage(rs, asOf, q, panel, { minIsolates: 0, recentDays: 365, yearDays: 365, withHospital: false });
+    expect(drug(r.drugs, "MEM").hospitalYear).toEqual({ works: 0, n: 0 });
+    expect(r.basis).toMatchObject({ recentN: 3, yearN: 3 });
+  });
+});

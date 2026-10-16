@@ -23,6 +23,8 @@ import { Filters } from "./Filters.tsx";
 import {
   buildMatrix,
   buildTable,
+  CSV_EN,
+  CSV_FI,
   csvFilename,
   matrixCsv,
   MIN,
@@ -113,7 +115,9 @@ export function ReportScreen(p: {
   const patientParts = [sex ? sexLabel(locale, sex) : null, age ? ageLabel(locale, age) : null].filter((x): x is string => !!x);
   const drugName = (code: string) => antibioticName(locale, meta, code);
 
-  const treatPatch = (w: string): Partial<TreatPrefs> => ({ ward: w, specimen, organism, sex, age });
+  // The whole group the report shows (onset is not a report filter, so it is cleared).
+  const treatPatch = (w: string): Partial<TreatPrefs> => ({ ward: w, specimen, organism, sex, age, onset: null });
+  const dialect = locale === "fi" ? CSV_FI : CSV_EN;
 
   const labels: CsvLabels = {
     unitName: (code) => unitName(locale, meta, code),
@@ -127,13 +131,13 @@ export function ReportScreen(p: {
 
   function downloadTable() {
     if (!table) return;
-    downloadCsv(csvFilename([ward ?? "all-units", specimen, organism, sex, age], asOf), tableCsv(table, labels));
+    downloadCsv(csvFilename([ward ?? "all-units", specimen, organism, sex, age], asOf), tableCsv(table, labels, dialect));
   }
   function downloadMatrix() {
     if (!matrix) return;
     downloadCsv(
       csvFilename(["units", specimen, organism, sex, age, period === "recent" ? "4-weeks" : "12-months"], asOf),
-      matrixCsv(matrix, labels),
+      matrixCsv(matrix, labels, dialect),
     );
   }
 
@@ -200,6 +204,7 @@ export function ReportScreen(p: {
         sexes={sexes}
         organisms={table?.organisms ?? matrix?.organisms ?? []}
         onPrefs={onPrefs}
+        unitFilter={view === "table"}
       />
 
       {table ? (

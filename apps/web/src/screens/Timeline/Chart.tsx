@@ -85,6 +85,7 @@ export function TimelineChart({
   signals,
   desktop,
   highlight,
+  focus = null,
   onSeek,
   onOpenSignal,
 }: {
@@ -96,6 +97,8 @@ export function TimelineChart({
   desktop: boolean;
   /** A signal to ring (e.g. the list item under the pointer). */
   highlight: string | null;
+  /** Bring this signal's weeks into view (opened from another screen); `seq` counts each request. */
+  focus?: { id: string; seq: number } | null;
   onSeek: (date: IsoDate) => void;
   onOpenSignal: (id: string) => void;
 }) {
@@ -376,6 +379,22 @@ export function TimelineChart({
     syncScrollState();
   }, [width, xNow, scrollToX, nowVisible, syncScrollState]);
 
+  // Opened for one signal: scroll so its first weeks sit a third of the way in, and stop following NOW.
+  const focusDone = useRef(0);
+  useLayoutEffect(() => {
+    if (!focus || focus.seq === focusDone.current || !width) return;
+    for (const row of rows) {
+      if (row.kind !== "unit" && row.kind !== "hospital") continue;
+      const p = row.packed.find((q) => q.signal.id === focus.id);
+      if (!p) continue;
+      focusDone.current = focus.seq;
+      follow.current = false;
+      scrollToX(p.x1, 0.3);
+      syncScrollState();
+      return;
+    }
+  }, [focus, width, rows, scrollToX, syncScrollState]);
+
   const onScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
@@ -597,7 +616,11 @@ export function TimelineChart({
       })}`;
     return text;
   };
-  const liveText = cursor ? cellText(cursor.week, cursor.row) : "";
+  // Spoken when the keyboard cursor moves, not on every simulation tick (the counts in it change daily).
+  const [liveText, setLiveText] = useState("");
+  useEffect(() => {
+    setLiveText(cursor ? cellText(cursor.week, cursor.row) : "");
+  }, [cursor?.week, cursor?.row, locale]);
 
   // ---------- Overlay ----------
   const overlay: ReactNode[] = [];

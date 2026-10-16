@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toDayNumber } from "../../engine/dates.ts";
 import type { Severity, Signal, SignalKind } from "../../engine/types.ts";
 import type { FeedClock, FeedMeta, IsoDate, Result } from "../../feed/types.ts";
@@ -7,10 +7,10 @@ import { Badge, SeverityBadge } from "../../ui/Badge.tsx";
 import { Card } from "../../ui/Card.tsx";
 import { signalKindLabel, unitName } from "../../ui/defaults.ts";
 import { EmptyState } from "../../ui/EmptyState.tsx";
-import { useIsDesktop } from "../../ui/hooks.ts";
+import { useIsDesktop, useReducedMotion } from "../../ui/hooks.ts";
 import { Icon } from "../../ui/Icon.tsx";
-import { MIN_ISOLATES } from "../../ui/ShareBar.tsx";
-import { byMonth, laneOrder, updateStore, visibleSignals, weekly, type DailyStore } from "./aggregate.ts";
+import { MIN_ISOLATES, visibleSignals } from "../../engine/rules.ts";
+import { byMonth, laneOrder, updateStore, weekly, type DailyStore } from "./aggregate.ts";
 import { TimelineChart } from "./Chart.tsx";
 import { KindGlyph } from "./Glyph.tsx";
 import { flagLabel, signalTitle, signalWhen, signalWhere, Summary, summaryText } from "./words.tsx";
@@ -34,9 +34,13 @@ export function TimelineScreen(p: {
   signals: readonly Signal[];
   onSeek: (date: IsoDate) => void;
   onOpenSignal: (id: string) => void;
+  /** "Show on timeline" from another screen: ring this signal and bring its weeks into view; `seq` counts each request. */
+  focus?: { value: { id: string; date: IsoDate }; seq: number } | null;
 }) {
-  const { locale, meta, results, asOf, signals, onSeek, onOpenSignal } = p;
+  const { locale, meta, results, asOf, signals, onSeek, onOpenSignal, focus } = p;
   const desktop = useIsDesktop();
+  const reduced = useReducedMotion();
+  const chartRef = useRef<HTMLDivElement>(null);
 
   // Weekly aggregation: once per change of the results, extended in place as results arrive.
   const storeRef = useRef<DailyStore | null>(null);
@@ -58,6 +62,21 @@ export function TimelineScreen(p: {
 
   const [highlight, setHighlight] = useState<string | null>(null);
   const [allMonths, setAllMonths] = useState(false);
+
+  // Opened for one signal: ring it, scroll the chart to its weeks and the page to the chart.
+  const [focused, setFocused] = useState<{ id: string; seq: number } | null>(null);
+  const focusSeq = useRef(0);
+  useEffect(() => {
+    if (!focus || focus.seq === focusSeq.current) return;
+    focusSeq.current = focus.seq;
+    setFocused({ id: focus.value.id, seq: focus.seq });
+    setHighlight(focus.value.id);
+    const frame = window.requestAnimationFrame(() =>
+      chartRef.current?.scrollIntoView({ block: "start", behavior: reduced ? "auto" : "smooth" }),
+    );
+    return () => window.cancelAnimationFrame(frame);
+  }, [focus]);
+  const focusedSignal = focused ? shown.find((s) => s.id === focused.id) : undefined;
 
   // ---------- Header numbers ----------
   const totalDays = toDayNumber(meta.end) - toDayNumber(meta.start) + 1;
@@ -88,12 +107,19 @@ export function TimelineScreen(p: {
   const latestFlag = useMemo(() => {
     for (let w = Math.min(view.nowWeek, view.flag.length - 1); w >= 0; w--) {
       const f = view.flag[w]!;
-      if (f.n >= MIN_ISOLATES) return formatShare(locale, f.flagged / f.n);
+      if (f.n >= MIN_ISOLATES)
+        return t(locale, "timeline.share.pct", {
+          percent: formatShare(locale, f.flagged / f.n),
+          r: formatNumber(locale, f.flagged),
+          n: formatNumber(locale, f.n),
+        });
     }
     return null;
   }, [view, locale]);
 
   const flagNames = view.phenotypes.map(flagLabel).join(", ");
+  const signalCount = (n: number) =>
+    n === 1 ? t(locale, "timeline.signals.one") : t(locale, "timeline.signals.many", { count: formatNumber(locale, n) });
 
   return (
     <div className="timeline u-stack-lg">
@@ -151,6 +177,7 @@ export function TimelineScreen(p: {
       </Card>
 
       {/* 2–3. The chart */}
+      <div ref={chartRef} className="timeline-anchor" />
       <Card
         title={t(locale, "timeline.chart.title")}
         className="timeline-chart-card"
@@ -200,13 +227,23 @@ export function TimelineScreen(p: {
                   lane: unitName(locale, meta, lane.code),
                   count: formatNumber(locale, lane.totalSoFar),
                   empty: formatNumber(locale, lane.emptyWeeks),
-                  signals: formatNumber(locale, signalsPerLane.get(lane.code) ?? 0),
+                  signals: signalCount(signalsPerLane.get(lane.code) ?? 0),
                 })}
               </li>
             ))}
-            <li>{t(locale, "timeline.sr.hospital", { signals: formatNumber(locale, signalsPerLane.get(null) ?? 0) })}</li>
+            <li>{t(locale, "timeline.sr.hospital", { signals: signalCount(signalsPerLane.get(null) ?? 0) })}</li>
           </ul>
         </div>
+        {focusedSignal ? (
+          <p className="timeline-focus u-small" role="status">
+            <KindGlyph kind={focusedSignal.kind} severity={focusedSignal.severity} size={18} />
+            <span>
+              {t(locale, "timeline.focus", {
+                title: `${signalTitle(locale, focusedSignal)} · ${signalWhere(locale, meta, focusedSignal)} · ${signalWhen(locale, focusedSignal)}`,
+              })}
+            </span>
+          </p>
+        ) : null}
         <TimelineChart
           locale={locale}
           meta={meta}
@@ -214,7 +251,8 @@ export function TimelineScreen(p: {
           groups={groups}
           signals={shown}
           desktop={desktop}
-          highlight={highlight}
+          highlight={highlight ?? focused?.id ?? null}
+          focus={focused}
           onSeek={onSeek}
           onOpenSignal={onOpenSignal}
         />
@@ -283,7 +321,9 @@ export function TimelineScreen(p: {
         <div className="u-stack u-sticky">
           <Card title={t(locale, "timeline.volume.title")} level={2}>
             <p className="u-small u-soft u-num">
-              {shown.length
+              {shown.length === 1
+                ? t(locale, "timeline.volume.bodyOne", { months: formatNumber(locale, monthsOfData, 0) })
+                : shown.length
                 ? t(locale, "timeline.volume.body", {
                     count: formatNumber(locale, shown.length),
                     months: formatNumber(locale, monthsOfData, 0),

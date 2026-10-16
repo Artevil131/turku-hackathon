@@ -3,6 +3,7 @@ import { awareOf } from "./aware.ts";
 import { firstPositions, indexResults, type ResultIndex } from "./counting.ts";
 import { addDays, addMonths, minDate, monthEnd, monthStart, toDayNumber } from "./dates.ts";
 import { isIntrinsicallyResistant } from "./eucast.ts";
+import { MIN_ISOLATES } from "./rules.ts";
 import type {
   AgeBand,
   Catalog,
@@ -50,23 +51,26 @@ export interface CoverageTuning extends CoverageOptions {
    * more than half of the isolates were tested).
    */
   minKnownShare: number;
+  /** Also compute the every-unit year figure (DrugFigure.hospitalYear). Off saves time where it is not shown. */
+  withHospital: boolean;
 }
 
 export const MIN_KNOWN_SHARE = 0.5;
 
 export const DEFAULT_COVERAGE: CoverageTuning = {
-  minIsolates: 30,
+  minIsolates: MIN_ISOLATES,
   recentDays: 28,
   yearDays: 365,
   rank: "access-first",
   accessMargin: 10,
   minKnownShare: MIN_KNOWN_SHARE,
+  withHospital: true,
 };
 
 /** PatientQuery.ward for every unit (what widening sets when the unit's own results are too few). */
 export const EVERY_UNIT = "";
 
-/** The order filters are dropped in when the year window is not enough (rule 3 above). Organism and specimen are never dropped. */
+/** The order filters are dropped in when the year window is not enough (see `enough` in coverage()). Organism and specimen are never dropped. */
 export const WIDENING_ORDER: readonly Widening[] = ["age", "sex", "onset", "ward"];
 
 export function ageBandOf(age: number): AgeBand {
@@ -244,6 +248,35 @@ function knownEnough(t: Tally, j: number, minKnownShare: number): boolean {
   return t.isolates > 0 && t.tested[j]! + t.resistant[j]! >= minKnownShare * t.isolates - 1e-9;
 }
 
+/**
+ * Per antibiotic: first isolates with no result that do not count as expected
+ * resistant, by organism (most first). This is what a figure leaves out: "the
+ * lab did not test it for E. faecalis".
+ */
+function untestedOf(
+  sorted: readonly Result[],
+  positions: readonly number[],
+  codes: readonly string[],
+  expected?: ExpectedResistance,
+): { organism: string; n: number }[][] {
+  const maps = codes.map(() => new Map<string, number>());
+  for (const p of positions) {
+    const r = sorted[p]!;
+    let row: Uint8Array | undefined;
+    for (let j = 0; j < codes.length; j++) {
+      if (r.results[codes[j]!] !== undefined) continue;
+      if (expected && (row ??= expected(r.organism))[j]) continue;
+      const m = maps[j]!;
+      m.set(r.organism, (m.get(r.organism) ?? 0) + 1);
+    }
+  }
+  return maps.map((m) =>
+    [...m]
+      .map(([organism, n]) => ({ organism, n }))
+      .sort((a, b) => b.n - a.n || (a.organism < b.organism ? -1 : a.organism > b.organism ? 1 : 0)),
+  );
+}
+
 // ---------- coverage ----------
 
 export function coverage(
@@ -293,13 +326,16 @@ export function coverage(
     year = select(ctx, yearFrom, asOf, q);
     tYear = tallyOf(year);
   }
-  const recent = select(ctx, recentFrom, asOf, q);
-  const tRecent = tallyOf(recent);
+  // One window asked twice (a report over a single period): counted once.
+  const recent = o.recentDays === o.yearDays ? year : select(ctx, recentFrom, asOf, q);
+  const tRecent = recent === year ? tYear : tallyOf(recent);
   const window = enough(tRecent, tYear) ? "recent" : "year";
   const hospitalQuery = isSet(q, "ward") ? without(q, "ward") : q;
-  const hospital = hospitalQuery === q ? year : select(ctx, yearFrom, asOf, hospitalQuery);
-  const tHospital = hospital === year ? tYear : tallyOf(hospital);
+  const hospital = !o.withHospital ? null : hospitalQuery === q ? year : select(ctx, yearFrom, asOf, hospitalQuery);
+  const tHospital = hospital === null ? null : hospital === year ? tYear : tallyOf(hospital);
   const tMain = window === "recent" ? tRecent : tYear;
+  const mainPositions = window === "recent" ? recent : year;
+  const untested = untestedOf(sorted, mainPositions, codes, expected);
 
   const figures: DrugFigure[] = [];
   const catalogOrder = new Map<string, number>();
@@ -319,8 +355,12 @@ export function coverage(
       main: window === "recent" ? r : y,
       recent: r,
       year: y,
-      hospitalYear: shareOf(tHospital, j, organismKnown),
+      // The every-unit figure follows the same half-tested rule as the figure itself.
+      hospitalYear:
+        tHospital && (organismKnown || knownEnough(tHospital, j, o.minKnownShare)) ? shareOf(tHospital, j, organismKnown) : { works: 0, n: 0 },
       change: r.n >= min && y.n >= min && ry !== null && yy !== null ? Math.round(100 * (ry - yy)) : null,
+      isolates: tMain.isolates,
+      untested: untested[j] ?? [],
     });
   });
 
@@ -329,7 +369,9 @@ export function coverage(
 
   return {
     asOf,
-    basis: { query: q, widened, window, n, recentN: recent.length, yearN: year.length, enough: n >= min },
+    // `enough` is the engine's own verdict (with the organism not known it also
+    // needs every shown antibiotic to rest on minIsolates known answers).
+    basis: { query: q, widened, window, n, recentN: recent.length, yearN: year.length, enough: enough(tMain, tYear) },
     drugs,
     topReason,
     organisms: organismsOf(ctx, yearFrom, asOf, q, year),

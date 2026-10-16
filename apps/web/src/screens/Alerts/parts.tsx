@@ -12,7 +12,7 @@ import { AUDIENCE_ICON, dateText, KIND_ICON, SPAN, type Described } from "./desc
 // The pieces of one alert: its tags and summary (list), and its body (what
 // it rests on, who should act, the actions, the cases, how it was found).
 
-export function Tags({ locale, s, isNew }: { locale: Locale; s: Signal; isNew: boolean }) {
+export function Tags({ locale, s, isNew, steps = 1 }: { locale: Locale; s: Signal; isNew: boolean; steps?: number }) {
   return (
     <div className="alerts-tags">
       <SeverityBadge locale={locale} severity={s.severity} size="sm" />
@@ -20,6 +20,9 @@ export function Tags({ locale, s, isNew }: { locale: Locale; s: Signal; isNew: b
         <Icon name={KIND_ICON[s.kind]} size={16} />
         {signalKindLabel(locale, s.kind)}
       </span>
+      {steps > 1 ? (
+        <span className="alerts-steps u-num">{t(locale, "alerts.story.linked", { count: formatNumber(locale, steps) })}</span>
+      ) : null}
       {isNew ? (
         <span className="alerts-new">
           <span className="alerts-new-dot" aria-hidden="true" />
@@ -30,8 +33,20 @@ export function Tags({ locale, s, isNew }: { locale: Locale; s: Signal; isNew: b
   );
 }
 
-/** Title (as the given control), second line, where · when, and the one-line evidence. */
-export function Summary({ d, control, level = 3, short = true }: { d: Described; control: ReactNode; level?: 2 | 3; short?: boolean }) {
+/** Title (as the given control), second line, where · when, the one-line evidence and (an episode) its story in one line. */
+export function Summary({
+  d,
+  control,
+  level = 3,
+  short = true,
+  extra = null,
+}: {
+  d: Described;
+  control: ReactNode;
+  level?: 2 | 3;
+  short?: boolean;
+  extra?: ReactNode;
+}) {
   const H = level === 2 ? "h2" : "h3";
   return (
     <>
@@ -43,7 +58,81 @@ export function Summary({ d, control, level = 3, short = true }: { d: Described;
         <span>{d.when}</span>
       </p>
       {short && d.short ? <p className="alerts-short u-num">{d.short}</p> : null}
+      {extra}
     </>
+  );
+}
+
+// ---------- Episode story ----------
+
+const STEP_GLYPH = { high: "▲", medium: "◆", low: "●" } as const;
+/** Steps named in the one-line story before "+N". */
+const STORY_LINE_STEPS = 3;
+
+/** "4 Jun Possible cluster → 7 Jun More resistant finds → 10 Jun Working less often +2": the episode at a glance. */
+export function StoryLine({ locale, asOf, members }: { locale: Locale; asOf: IsoDate; members: readonly Signal[] }) {
+  const shown = members.slice(0, STORY_LINE_STEPS);
+  const rest = members.length - shown.length;
+  return (
+    <p className="alerts-storyline u-num">
+      {shown.map((s, i) => (
+        <span key={s.id} className="alerts-storyline-step">
+          {i > 0 ? (
+            <span className="alerts-storyline-arrow" aria-hidden="true">
+              {" → "}
+            </span>
+          ) : null}
+          <span className="alerts-storyline-date">{dateText(locale, s.firstDate, asOf)}</span> {signalKindLabel(locale, s.kind).toLocaleLowerCase(locale)}
+        </span>
+      ))}
+      {rest > 0 ? <span className="alerts-storyline-more"> {t(locale, "alerts.story.more", { count: formatNumber(locale, rest) })}</span> : null}
+    </p>
+  );
+}
+
+/** The episode's steps, oldest first; each opens its own evidence below. */
+export function Story({
+  locale,
+  asOf,
+  members,
+  described,
+  current,
+  onPick,
+}: {
+  locale: Locale;
+  asOf: IsoDate;
+  members: readonly Signal[];
+  described: ReadonlyMap<string, Described>;
+  current: string;
+  onPick: (id: string) => void;
+}) {
+  return (
+    <section className="alerts-story" aria-label={t(locale, "alerts.story.title")}>
+      <p className="u-eyebrow">{t(locale, "alerts.story.title")}</p>
+      <ol className="alerts-story-list">
+        {members.map((s) => {
+          const d = described.get(s.id);
+          const on = s.id === current;
+          return (
+            <li key={s.id}>
+              <button type="button" className={`alerts-story-step is-${s.severity}${on ? " is-on" : ""}`} aria-pressed={on} onClick={() => onPick(s.id)}>
+                <span className="alerts-story-dot" aria-hidden="true">
+                  {STEP_GLYPH[s.severity]}
+                </span>
+                <span className="alerts-story-text">
+                  <span className="alerts-story-head u-num">
+                    <span className="alerts-story-date">{dateText(locale, s.firstDate, asOf)}</span>
+                    <span>{signalKindLabel(locale, s.kind)}</span>
+                  </span>
+                  <span className="alerts-story-what">{d ? (d.short ?? d.title.node) : null}</span>
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+      <p className="u-small u-muted">{t(locale, "alerts.story.note")}</p>
+    </section>
   );
 }
 
@@ -174,29 +263,39 @@ function CaseStrip({ locale, s, asOf, cases }: { locale: Locale; s: Signal; asOf
 
 const GAP_WEEKS = 13;
 
-function GapChart({ locale, results, ward, asOf }: { locale: Locale; results: readonly Result[]; ward: string; asOf: IsoDate }) {
+/**
+ * Seven-day blocks ending on the day the alert last fired, so the last point
+ * is exactly the alert's "{observed} in 7 days" (a block ending on today would
+ * mix the gap with the normal days after it).
+ */
+function GapChart({ locale, results, ward, to, asOf }: { locale: Locale; results: readonly Result[]; ward: string; to: IsoDate; asOf: IsoDate }) {
   const weeks = useMemo(() => {
     const counts = new Array<number>(GAP_WEEKS).fill(0);
-    const from = addDays(asOf, -(GAP_WEEKS * 7 - 1));
+    const from = addDays(to, -(GAP_WEEKS * 7 - 1));
     for (const r of results) {
-      if (r.ward !== ward || r.sampleDate < from || r.sampleDate > asOf) continue;
+      if (r.ward !== ward || r.sampleDate < from || r.sampleDate > to) continue;
       const i = Math.floor(daysBetween(from, r.sampleDate) / 7);
       counts[i] = (counts[i] ?? 0) + 1;
     }
     return { from, counts };
-  }, [results, ward, asOf]);
+  }, [results, ward, to]);
   const first = weeks.counts[0] ?? 0;
   const last = weeks.counts[GAP_WEEKS - 1] ?? 0;
-  const label = t(locale, "alerts.gap.spark", { weeks: GAP_WEEKS, from: formatNumber(locale, first), to: formatNumber(locale, last) });
+  const label = t(locale, "alerts.gap.spark", {
+    weeks: GAP_WEEKS,
+    from: formatNumber(locale, first),
+    to: formatNumber(locale, last),
+    date: dateText(locale, to, asOf),
+  });
   return (
     <figure className="alerts-gap">
       <p className="u-eyebrow" aria-hidden="true">
         {t(locale, "alerts.gap.title")}
       </p>
-      <Sparkline values={weeks.counts} min={0} fluid height={44} tone="medium" label={label} />
+      <Sparkline values={weeks.counts} min={0} fluid height={56} tone="medium" label={label} />
       <figcaption className="alerts-strip-axis u-num" aria-hidden="true">
         <span>{dateText(locale, weeks.from, asOf)}</span>
-        <span>{t(locale, "alerts.gap.thisWeek", { count: formatNumber(locale, last) })}</span>
+        <span>{t(locale, "alerts.gap.thisWeek", { count: formatNumber(locale, last), date: dateText(locale, to, asOf) })}</span>
       </figcaption>
     </figure>
   );
@@ -298,6 +397,7 @@ export function Body({
   s,
   d,
   seen,
+  seenIds,
   onSeen,
   onOpenTreat,
   onOpenTimeline,
@@ -310,10 +410,13 @@ export function Body({
   asOf: IsoDate;
   s: Signal;
   d: Described;
+  /** Every signal of the card has been marked seen. */
   seen: boolean;
+  /** What "Mark seen" marks (every step of an episode); default this signal. */
+  seenIds?: readonly string[];
   onSeen: (ids: string[]) => void;
   onOpenTreat: (patch: Partial<TreatPrefs>) => void;
-  onOpenTimeline: (date: IsoDate) => void;
+  onOpenTimeline: (date: IsoDate, id: string) => void;
   casesOpen?: boolean;
   onCasesOpen?: (open: boolean) => void;
 }) {
@@ -341,7 +444,7 @@ export function Body({
 
       {showCompare ? <Compare locale={locale} s={s} screen={d.screen} /> : null}
       {!showCompare && cases.length > 0 ? <CaseStrip locale={locale} s={s} asOf={asOf} cases={cases} /> : null}
-      {s.kind === "data-gap" && s.ward ? <GapChart locale={locale} results={results} ward={s.ward} asOf={asOf} /> : null}
+      {s.kind === "data-gap" && s.ward ? <GapChart locale={locale} results={results} ward={s.ward} to={s.lastDate} asOf={asOf} /> : null}
 
       <div className={`alerts-who is-${d.audience}`}>
         <span className="alerts-who-icon" aria-hidden="true">
@@ -361,11 +464,19 @@ export function Body({
             {t(locale, "alerts.act.treat")}
           </button>
         ) : null}
-        <button type="button" className="k-btn is-ghost" onClick={() => onOpenTimeline(s.firstDate)}>
+        <button type="button" className="k-btn is-ghost" onClick={() => onOpenTimeline(s.firstDate, s.id)}>
           <Icon name="timeline" size={18} />
           {t(locale, "alerts.act.timeline")}
         </button>
-        <button type="button" className="k-btn is-ghost" onClick={() => onSeen([s.id])} disabled={seen}>
+        {/* Stays a focusable button once seen (aria-disabled), so keyboard focus is not lost. */}
+        <button
+          type="button"
+          className={`k-btn is-ghost alerts-seen${seen ? " is-done" : ""}`}
+          onClick={() => {
+            if (!seen) onSeen([...(seenIds ?? [s.id])]);
+          }}
+          aria-disabled={seen}
+        >
           <Icon name="check" size={18} />
           {seen ? t(locale, "alerts.seen") : t(locale, "alerts.markSeen")}
         </button>

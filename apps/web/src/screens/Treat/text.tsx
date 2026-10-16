@@ -1,10 +1,10 @@
 import { Fragment, type ReactNode } from "react";
-import { DEFAULT_COVERAGE, EVERY_UNIT } from "../../engine/coverage.ts";
+import { DEFAULT_COVERAGE, EVERY_UNIT, isScreen } from "../../engine/coverage.ts";
 import type { PatientQuery, Share, Signal, Widening } from "../../engine/types.ts";
 import type { FeedMeta } from "../../feed/types.ts";
 import { formatNumber, formatShare, t, type Locale, type MessageKey } from "../../i18n/index.ts";
-import { antibioticName, Org, signalKindLabel, specimenName, unitName } from "../../ui/index.ts";
-import { capFirst, humanize, midSentence } from "./model.ts";
+import { antibioticByCode, antibioticName, Org, signalKindLabel, specimenName, unitName } from "../../ui/index.ts";
+import { capFirst, humanize, midSentence, type coverGap } from "./model.ts";
 
 // Words for the Treat screen, built from t() and the feed's own names.
 
@@ -116,6 +116,30 @@ export function drugName(locale: Locale, meta: FeedMeta, code: string): string {
   return capFirst(antibioticName(locale, meta, code));
 }
 
+/** "Rests on 418 of 523 · not tested for E. faecalis, P. aeruginosa": what a figure leaves out. */
+export function coverText(locale: Locale, gap: NonNullable<ReturnType<typeof coverGap>>): ReactNode {
+  const names = gap.names.map((o, i) => (
+    <Fragment key={o}>
+      {i > 0 ? ", " : ""}
+      <Org name={o} short />
+    </Fragment>
+  ));
+  return tn(locale, gap.more > 0 ? "treat.cover.more" : "treat.cover.line", {
+    known: formatNumber(locale, gap.known),
+    total: formatNumber(locale, gap.total),
+    list: <>{names}</>,
+    more: formatNumber(locale, gap.more),
+  });
+}
+
+/** "doesn't work" share (positives, for a screening test) inside a sentence: a percentage from `min`, else "4/9". */
+function failShare(locale: Locale, share: Share | undefined, min: number): string {
+  if (!share || share.n === 0) return "–";
+  const r = share.n - share.works;
+  if (share.n < min) return `${formatNumber(locale, r)}/${formatNumber(locale, share.n)}`;
+  return formatShare(locale, r / share.n);
+}
+
 /** One plain sentence for a signal on the doctor's screen. */
 export function signalSentence(locale: Locale, meta: FeedMeta, s: Signal, ward: string, min: number): ReactNode {
   const where =
@@ -130,9 +154,13 @@ export function signalSentence(locale: Locale, meta: FeedMeta, s: Signal, ward: 
   const organism = s.organism ? <Org name={s.organism} short /> : "–";
   const expected = formatNumber(locale, s.expected ?? 0, (s.expected ?? 0) >= 10 ? 0 : 1);
   const antibiotic = s.antibiotic ? drugName(locale, meta, s.antibiotic) : "";
-  const recent = shortShare(locale, s.recent, min);
-  const before = shortShare(locale, s.baseline, min);
-  return tn(locale, `treat.signal.${s.kind}`, {
+  // A screening test (e.g. an MRSA screen) is not a treatment: more positives, not "works less often".
+  const drug = antibioticByCode(meta, s.antibiotic);
+  const screen = drug ? isScreen(drug) : false;
+  const recent = screen ? failShare(locale, s.recent, min) : shortShare(locale, s.recent, min);
+  const before = screen ? failShare(locale, s.baseline, min) : shortShare(locale, s.baseline, min);
+  const key: MessageKey = screen && (s.kind === "shift" || s.kind === "trend") ? "treat.signal.screen" : `treat.signal.${s.kind}`;
+  return tn(locale, key, {
     where,
     patients,
     flag,

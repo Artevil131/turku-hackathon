@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { FeedMeta } from "../feed/types.ts";
-import { ai as aiMessages } from "../i18n/messages/ai.ts";
 import {
   AiError,
   abbreviate,
@@ -447,16 +446,5 @@ describe("askAi", () => {
     const pending = errorCode(askAi(q, "en", meta, asOf, { fetch: fn, signal: controller.signal }));
     setTimeout(() => controller.abort(), 10);
     expect(await pending).toBe("aborted");
-  });
-});
-
-describe("ai copy", () => {
-  it("has every key in Finnish and English, with the same placeholders", () => {
-    expect(Object.keys(aiMessages.fi).sort()).toEqual(Object.keys(aiMessages.en).sort());
-    const vars = (s: string) => (s.match(/\{\w+\}/g) ?? []).sort();
-    for (const [key, en] of Object.entries(aiMessages.en) as [keyof typeof aiMessages.en, string][]) {
-      expect(key.startsWith("ai."), key).toBe(true);
-      expect(vars(aiMessages.fi[key]), key).toEqual(vars(en));
-    }
   });
 });

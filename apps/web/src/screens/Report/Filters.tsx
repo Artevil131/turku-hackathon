@@ -26,6 +26,7 @@ export function Filters({
   sexes,
   organisms,
   onPrefs,
+  unitFilter = true,
 }: {
   locale: Locale;
   meta: FeedMeta;
@@ -38,6 +39,8 @@ export function Filters({
   /** Organisms found in the past 12 months for this selection, most common first. */
   organisms: readonly LikelyOrganism[];
   onPrefs: (patch: Partial<ReportPrefs>) => void;
+  /** Off in "Compare units", which shows every unit: a unit chip there would contradict the heading. */
+  unitFilter?: boolean;
 }) {
   const unitGroups = useMemo<PickerGroup<string>[]>(
     () => [{ options: meta.units.map((u) => ({ value: u.code, label: named(locale, u), text: `${u.en} ${u.fi} ${u.code}` })) }],
@@ -86,21 +89,23 @@ export function Filters({
       />
     );
 
-  const anySet = ward !== null || organism !== null || prefs.sex !== null || prefs.age !== null;
+  const anySet = (unitFilter && ward !== null) || organism !== null || prefs.sex !== null || prefs.age !== null;
 
   return (
     <div className="report-filters k-glass" role="group" aria-label={t(locale, "report.filter.label")}>
       <div className="report-filters-site">{site}</div>
       <div className="report-filters-row">
-        <Picker
-          locale={locale}
-          label={t(locale, "report.filter.unit")}
-          value={ward}
-          groups={unitGroups}
-          nullLabel={t(locale, "common.unit.all")}
-          onChange={(v) => onPrefs({ ward: v ?? "all" })}
-          variant="chip"
-        />
+        {unitFilter ? (
+          <Picker
+            locale={locale}
+            label={t(locale, "report.filter.unit")}
+            value={ward}
+            groups={unitGroups}
+            nullLabel={t(locale, "common.unit.all")}
+            onChange={(v) => onPrefs({ ward: v ?? "all" })}
+            variant="chip"
+          />
+        ) : null}
         <Picker
           locale={locale}
           label={t(locale, "report.filter.organism")}

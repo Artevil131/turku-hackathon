@@ -33,8 +33,9 @@ export function Fig({ locale, cell }: { locale: Locale; cell: Cell }) {
   if (cell.state === "rare") word = t(locale, "report.cell.rare");
   else if (cell.state === "none") word = t(locale, "report.cell.none");
   else {
+    // One way for every thin figure: "Too few · n < 30" (the exact count is in the cell's spoken label).
     word = t(locale, "report.cell.tooFew");
-    sub = cell.share ? t(locale, "report.n", { n: num(cell.share.n) }) : t(locale, "report.cell.under", { min: num(MIN) });
+    sub = t(locale, "report.cell.under", { min: num(MIN) });
   }
   return (
     <span className={`report-fig is-${cell.state}`}>
@@ -85,7 +86,7 @@ export function Change({ locale, change }: { locale: Locale; change: number | nu
     <span className={`report-change is-${dir}`}>
       <span aria-hidden="true" className="report-change-vis">
         <span className="report-change-glyph">{glyph}</span>
-        <span className="u-num">{t(locale, "report.change.points", { sign, points })}</span>
+        <span className="u-num">{t(locale, one ? "report.change.pointsOne" : "report.change.points", { sign, points })}</span>
       </span>
       <span className="u-sr">{aria}</span>
     </span>

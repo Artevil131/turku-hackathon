@@ -234,15 +234,8 @@ export function weekly(s: DailyStore, asOf: IsoDate, laneCodes: readonly string[
   return { asOf, weeks, nowWeek, nowDay, total, flag, maxTotal, lanes, totalSoFar, phenotypes };
 }
 
-/** Signals known on `asOf`: none that start after it, and none drawn past it. */
-export function visibleSignals(signals: readonly Signal[], asOf: IsoDate): Signal[] {
-  const out: Signal[] = [];
-  for (const sig of signals) {
-    if (sig.firstDate > asOf) continue;
-    out.push(sig.lastDate > asOf ? { ...sig, lastDate: asOf } : sig);
-  }
-  return out;
-}
+/** Signals known on `asOf` (defined once, in the engine). */
+export { visibleSignals } from "../../engine/rules.ts";
 
 export interface Packed {
   signal: Signal;

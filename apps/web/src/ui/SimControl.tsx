@@ -13,7 +13,10 @@ import { Sheet } from "./Sheet.tsx";
     locale    Locale
     clock     FeedClock
     onControl (command: FeedCommand) => Promise<unknown>
+    onPlayUntil () => Promise<unknown>   play, and pause by itself on the next new high alert
+    untilAlert  boolean   "play to next alert" is on
     desktop   boolean     full band (>= 1024 px) or the slim phone row
+  Play / pause answer the tap at once (the feed confirms a moment later).
 */
 
 const SPEEDS = [
@@ -26,11 +29,15 @@ export function SimControl({
   locale,
   clock,
   onControl,
+  onPlayUntil,
+  untilAlert,
   desktop,
 }: {
   locale: Locale;
   clock: FeedClock;
   onControl: (command: FeedCommand) => Promise<unknown>;
+  onPlayUntil: () => Promise<unknown>;
+  untilAlert: boolean;
   desktop: boolean;
 }) {
   const [busy, setBusy] = useState(false);
@@ -46,13 +53,23 @@ export function SimControl({
 
   const atEnd = clock.asOf >= clock.end;
 
-  async function run(command: FeedCommand) {
+  // The running state the user asked for, shown until the feed's clock agrees.
+  const [wanted, setWanted] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (wanted !== null && clock.running === wanted) setWanted(null);
+  }, [clock.running, wanted]);
+  const running = wanted ?? clock.running;
+
+  async function run(command: FeedCommand, call: () => Promise<unknown> = () => onControl(command)) {
     setBusy(true);
     setFailed(false);
+    if (command.action === "play") setWanted(true);
+    else if (command.action === "pause") setWanted(false);
     try {
-      await onControl(command);
+      await call();
     } catch {
       setFailed(true);
+      setWanted(null);
     } finally {
       setBusy(false);
     }
@@ -64,13 +81,25 @@ export function SimControl({
   const playPause = (
     <button
       type="button"
-      className={`k-btn is-sim${clock.running ? " is-on" : ""}`}
-      onClick={() => run(clock.running ? { action: "pause" } : { action: "play" })}
-      disabled={busy || (!clock.running && atEnd)}
-      aria-pressed={clock.running}
+      className={`k-btn is-sim${running ? " is-on" : ""}`}
+      onClick={() => run(running ? { action: "pause" } : { action: "play" })}
+      disabled={(!running && busy) || (!running && atEnd)}
+      aria-pressed={running}
     >
-      <Icon name={clock.running ? "pause" : "play"} size={16} />
-      {clock.running ? t(locale, "common.sim.pause") : t(locale, "common.sim.play")}
+      <Icon name={running ? "pause" : "play"} size={16} />
+      {running ? t(locale, "common.sim.pause") : t(locale, "common.sim.play")}
+    </button>
+  );
+  const playUntil = (
+    <button
+      type="button"
+      className={`k-btn is-sim-ghost${untilAlert ? " is-until" : ""}`}
+      onClick={() => run({ action: "play" }, onPlayUntil)}
+      disabled={busy || atEnd || untilAlert}
+      title={t(locale, "common.sim.playUntilHint")}
+    >
+      <Icon name="alerts" size={16} />
+      {t(locale, "common.sim.playUntil")}
     </button>
   );
   const step = (days: 1 | 7) => (
@@ -119,8 +148,14 @@ export function SimControl({
   );
   const status = (
     <span className="app-sim-state" aria-live="polite">
-      <span className={`app-sim-led${clock.running ? " is-on" : ""}`} aria-hidden="true" />
-      {atEnd ? t(locale, "common.sim.atEnd") : clock.running ? t(locale, "common.sim.running") : t(locale, "common.sim.paused")}
+      <span className={`app-sim-led${running ? " is-on" : ""}`} aria-hidden="true" />
+      {atEnd
+        ? t(locale, "common.sim.atEnd")
+        : running
+          ? untilAlert
+            ? t(locale, "common.sim.untilOn")
+            : t(locale, "common.sim.running")
+          : t(locale, "common.sim.paused")}
     </span>
   );
   const label = (
@@ -145,6 +180,7 @@ export function SimControl({
             {playPause}
             {step(1)}
             {step(7)}
+            {playUntil}
           </div>
           <div className="app-sim-group">{speedControl}</div>
           <div className="app-sim-group">{jump}</div>
@@ -192,6 +228,8 @@ export function SimControl({
             {step(1)}
             {step(7)}
           </div>
+          <div className="app-sim-sheet-row">{playUntil}</div>
+          <p className="u-muted u-small">{t(locale, "common.sim.playUntilHint")}</p>
           <div className="k-field">
             <span className="k-field-label" aria-hidden="true">
               {t(locale, "common.sim.speed")}

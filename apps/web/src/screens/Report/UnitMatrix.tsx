@@ -34,10 +34,10 @@ function CellBody({ locale, cell }: { locale: Locale; cell: Cell }) {
     );
   }
   let sub: string;
+  // One way for every thin figure: "n < 30" (the exact count is in the cell's spoken label).
   if (cell.state === "rare") sub = t(locale, "report.cell.rare");
-  else if (cell.share) sub = t(locale, "report.units.n", { n: num(cell.share.n) });
   else if (cell.state === "few") sub = t(locale, "report.cell.under", { min: num(MIN) });
-  else sub = t(locale, "report.units.n", { n: num(0) });
+  else sub = t(locale, "report.units.n", { n: num(cell.share?.n ?? 0) });
   return (
     <>
       <span className="report-mx-pct" aria-hidden="true">

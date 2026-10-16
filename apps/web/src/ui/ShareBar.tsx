@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { MIN_ISOLATES } from "../engine/rules.ts";
 import type { Share } from "../engine/types.ts";
 import { formatNumber, formatShare, t, type Locale } from "../i18n/index.ts";
 
@@ -19,7 +20,8 @@ import { formatNumber, formatShare, t, type Locale } from "../i18n/index.ts";
     caption?    ReactNode      replaces the default "works in X of N" line
 */
 
-export const MIN_ISOLATES = 30;
+// The organiser's 30, defined once in the engine and shared by every screen.
+export { MIN_ISOLATES } from "../engine/rules.ts";
 
 export function ShareBar({
   locale,

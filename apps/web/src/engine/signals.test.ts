@@ -153,14 +153,25 @@ describe("detectSignals", () => {
     const data: Result[] = [];
     for (let d = 0; d < 400; d++) {
       const pR = d >= 380 ? 0.7 : 0.05;
-      data.push(res({ day: d, results: { A1: rand() < pR ? "R" : "S", A2: "S", A3: "S" } }));
+      for (let k = 0; k < 2; k++) data.push(res({ day: d, results: { A1: rand() < pR ? "R" : "S", A2: "S", A3: "S" } }));
     }
     const s = of(detectSignals(data, iso(399), catalog), "shift");
     expect(s).toHaveLength(1);
     expect(s[0]).toMatchObject({ ward: "W1", antibiotic: "A1", severity: "medium" });
-    expect(s[0]!.recent!.n).toBeGreaterThan(0);
+    expect(s[0]!.recent!.n).toBeGreaterThanOrEqual(30);
     expect(s[0]!.baseline!.n).toBeGreaterThanOrEqual(30);
     expect(s[0]!.observed).toBeGreaterThan(s[0]!.expected!);
+  });
+
+  it("shift: never raised on fewer than 30 recent isolates (the organiser's floor)", () => {
+    const rand = rng(2);
+    const data: Result[] = [];
+    for (let d = 0; d < 400; d++) {
+      // One isolate a day: 28 in the window, however clearly it fails.
+      const pR = d >= 380 ? 0.9 : 0.05;
+      data.push(res({ day: d, results: { A1: rand() < pR ? "R" : "S", A2: "S", A3: "S" } }));
+    }
+    expect(of(detectSignals(data, iso(399), catalog), "shift")).toHaveLength(0);
   });
 
   it("trend: resistance rising hospital-wide over years", () => {

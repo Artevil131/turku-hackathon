@@ -6,7 +6,7 @@ import { Icon, Mark, type IconName } from "./Icon.tsx";
 
 /*
   The shell's parts (used only by App.tsx):
-    Header      wordmark + tagline, freshness chip, top tabs (>= 1024 px), Ask, settings
+    Header      wordmark + tagline, freshness chip, top tabs (>= 1024 px), Ask, FI/EN switch, settings
     TabBar      bottom tabs on phones (< 1024 px), labelled icons, Alerts badge, safe-area insets
     FreshChip   "Results up to 12 May 2025" with a live dot (green live, amber connecting, grey offline)
   Routes are hash links (#treat, #alerts, #report, #timeline, #settings).
@@ -113,6 +113,7 @@ export function Header({
   fresh,
   alertsBadge,
   ask,
+  onLocale,
 }: {
   locale: Locale;
   route: Route;
@@ -121,6 +122,7 @@ export function Header({
   alertsBadge: number;
   /** The Ask button, only when the AI layer is available. */
   ask: ReactNode;
+  onLocale: (locale: Locale) => void;
 }) {
   return (
     <header className="app-header">
@@ -136,6 +138,16 @@ export function Header({
         <div className="app-header-tools">
           {fresh}
           {ask}
+          <button
+            type="button"
+            className="k-iconbtn app-lang"
+            lang={locale === "fi" ? "en" : "fi"}
+            aria-label={t(locale, "common.lang.otherLabel")}
+            title={t(locale, "common.lang.otherLabel")}
+            onClick={() => onLocale(locale === "fi" ? "en" : "fi")}
+          >
+            {t(locale, "common.lang.other")}
+          </button>
           <a
             href="#settings"
             className={`k-iconbtn app-gear${route === "settings" ? " is-on" : ""}`}

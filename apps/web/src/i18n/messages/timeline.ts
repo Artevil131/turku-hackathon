@@ -92,6 +92,10 @@ const en = {
 
   "timeline.volume.title": "How many signals",
   "timeline.volume.body": "{count} signals in {months} months of results: about {rate} a month.",
+  "timeline.volume.bodyOne": "1 signal in {months} months of results.",
+  "timeline.signals.one": "1 signal",
+  "timeline.signals.many": "{count} signals",
+  "timeline.focus": "Showing: {title}",
   "timeline.volume.none": "No signals in {months} months of results.",
 
   "timeline.legend.title": "How to read it",
@@ -109,8 +113,8 @@ const en = {
   "timeline.sr.title": "Each row in words",
   "timeline.sr.all": "All units: {count} results so far, busiest week {max}.",
   "timeline.sr.flag": "Latest week with enough results: resistance flag in {value}.",
-  "timeline.sr.unit": "{lane}: {count} results so far, {empty} weeks without results, {signals} signals.",
-  "timeline.sr.hospital": "Hospital-wide: {signals} signals.",
+  "timeline.sr.unit": "{lane}: {count} results so far, {empty} weeks without results, {signals}.",
+  "timeline.sr.hospital": "Hospital-wide: {signals}.",
   "timeline.sr.signal": "{title}, {severity}, {when}.",
 } as const;
 
@@ -205,6 +209,10 @@ const fi: Record<keyof typeof en, string> = {
 
   "timeline.volume.title": "Kuinka monta signaalia",
   "timeline.volume.body": "{count} signaalia {months} kuukauden tuloksista: noin {rate} kuukaudessa.",
+  "timeline.volume.bodyOne": "1 signaali {months} kuukauden tuloksista.",
+  "timeline.signals.one": "1 signaali",
+  "timeline.signals.many": "{count} signaalia",
+  "timeline.focus": "Näytetään: {title}",
   "timeline.volume.none": "Ei signaaleja {months} kuukauden tuloksista.",
 
   "timeline.legend.title": "Näin luet sitä",
@@ -222,8 +230,8 @@ const fi: Record<keyof typeof en, string> = {
   "timeline.sr.title": "Rivit sanoin",
   "timeline.sr.all": "Kaikki yksiköt: {count} tulosta tähän mennessä, vilkkain viikko {max}.",
   "timeline.sr.flag": "Viimeisin viikko, jolla tarpeeksi tuloksia: resistenssimerkintä {value}.",
-  "timeline.sr.unit": "{lane}: {count} tulosta tähän mennessä, {empty} viikkoa ilman tuloksia, {signals} signaalia.",
-  "timeline.sr.hospital": "Koko sairaala: {signals} signaalia.",
+  "timeline.sr.unit": "{lane}: {count} tulosta tähän mennessä, {empty} viikkoa ilman tuloksia, {signals}.",
+  "timeline.sr.hospital": "Koko sairaala: {signals}.",
   "timeline.sr.signal": "{title}, {severity}, {when}.",
 };
 

@@ -33,18 +33,28 @@ export function httpFeed(base = ""): Feed {
   const post = <T>(path: string, body: unknown) =>
     json<T>(path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
 
+  // The code lists do not change while the app runs: fetched once (a reconnect or a
+  // remount reuses them; a failed fetch is forgotten so the next try asks again).
+  let metaOnce: Promise<FeedMeta> | null = null;
+
   const feed: Feed = {
-    async meta() {
-      const m = await json<ServerMeta>("/api/meta");
-      return {
-        start: m.datasetStart,
-        end: m.datasetEnd,
-        units: m.wards,
-        antibiotics: m.antibiotics,
-        organisms: m.organisms,
-        specimens: m.specimens,
-        ai: m.ai === true,
-      };
+    meta() {
+      metaOnce ??= json<ServerMeta>("/api/meta").then(
+        (m) => ({
+          start: m.datasetStart,
+          end: m.datasetEnd,
+          units: m.wards,
+          antibiotics: m.antibiotics,
+          organisms: m.organisms,
+          specimens: m.specimens,
+          ai: m.ai === true,
+        }),
+        (err: unknown) => {
+          metaOnce = null;
+          throw err;
+        },
+      );
+      return metaOnce;
     },
     clock: () => json<FeedClock>("/api/clock"),
     async history(range = {}) {

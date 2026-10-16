@@ -60,7 +60,7 @@ describe("ShareBar", () => {
 describe("kit", () => {
   it("badges always carry a word", () => {
     expect(renderToStaticMarkup(h(SeverityBadge, { locale: "en", severity: "high" }))).toContain("High");
-    expect(renderToStaticMarkup(h(AwareBadge, { locale: "fi", group: "access" }))).toContain("Ensisijainen");
+    expect(renderToStaticMarkup(h(AwareBadge, { locale: "fi", group: "access" }))).toContain("Access");
     expect(renderToStaticMarkup(h(AwareBadge, { locale: "en", group: null }))).toBe("");
     expect(renderToStaticMarkup(h(Badge, { tone: "medium", children: "x" }))).toContain("◆");
   });
@@ -75,8 +75,8 @@ describe("kit", () => {
       h(Org, { name: "Genus species", short: true }),
       h(FreshChip, { locale: "en", status: "live", asOf: "2025-05-12", arrivalSeq: 1, checking: false, short: false }),
       h(Tabs, { locale: "en", route: "alerts", alertsBadge: 3, variant: "bottom" }),
-      h(Header, { locale: "fi", route: "treat", desktop: true, fresh: null, alertsBadge: 0, ask: null }),
-      h(SimControl, { locale: "en", clock, onControl: async () => {}, desktop: true }),
+      h(Header, { locale: "fi", route: "treat", desktop: true, fresh: null, alertsBadge: 0, ask: null, onLocale: () => {} }),
+      h(SimControl, { locale: "en", clock, onControl: async () => {}, onPlayUntil: async () => {}, untilAlert: false, desktop: true }),
       h(Settings, {
         locale: "en",
         onLocale: () => {},

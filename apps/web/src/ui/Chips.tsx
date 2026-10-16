@@ -10,6 +10,7 @@ import { Icon, type IconName } from "./Icon.tsx";
     count?      number                  small trailing count (tabular)
     disabled?   boolean
     title?      string
+    ariaLabel?  string                  the chip's full name when its text is abbreviated (e.g. "E. coli 49%")
 
   ChipGroup: pick zero or one value from a short list, as a row of chips that
   wraps. Tapping the chosen chip again clears it (when clearable). With
@@ -38,6 +39,7 @@ export function ToggleChip({
   count,
   disabled,
   title,
+  ariaLabel,
 }: {
   pressed: boolean;
   onClick: () => void;
@@ -46,6 +48,7 @@ export function ToggleChip({
   count?: number;
   disabled?: boolean;
   title?: string;
+  ariaLabel?: string;
 }) {
   return (
     <button
@@ -55,6 +58,7 @@ export function ToggleChip({
       onClick={onClick}
       disabled={disabled}
       title={title}
+      aria-label={ariaLabel}
     >
       {pressed ? <Icon name="check" size={16} className="k-chip-check" /> : icon ? <Icon name={icon} size={16} /> : null}
       <span className="k-chip-text">{children}</span>

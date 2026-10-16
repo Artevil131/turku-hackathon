@@ -49,7 +49,13 @@ export function formatNumber(locale: Locale, value: number, digits = 0): string 
   return new Intl.NumberFormat(tag(locale), { maximumFractionDigits: digits }).format(value);
 }
 
-/** 0.873 -> "87 %" (fi) / "87%" (en). */
+/**
+ * 0.873 -> "87 %" (fi) / "87%" (en). Never "100 %" unless it is exactly all
+ * (293 of 294 reads 99 %, not "always works"), never "0 %" unless it is none.
+ */
 export function formatShare(locale: Locale, share: number): string {
-  return new Intl.NumberFormat(tag(locale), { style: "percent", maximumFractionDigits: 0 }).format(share);
+  let v = share;
+  if (v < 1 && v > 0.99) v = 0.99;
+  else if (v > 0 && v < 0.01) v = 0.01;
+  return new Intl.NumberFormat(tag(locale), { style: "percent", maximumFractionDigits: 0 }).format(v);
 }

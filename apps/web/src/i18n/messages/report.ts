@@ -49,6 +49,7 @@ const en = {
   "report.cell.ariaNone": "{period}: no results",
 
   "report.change.points": "{sign}{points} pts",
+  "report.change.pointsOne": "{sign}{points} pt",
   "report.change.ariaUp": "{points} percentage points higher in the last 4 weeks than over 12 months",
   "report.change.ariaDown": "{points} percentage points lower in the last 4 weeks than over 12 months",
   "report.change.ariaUpOne": "1 percentage point higher in the last 4 weeks than over 12 months",
@@ -100,7 +101,7 @@ const en = {
 
   "report.foot.rule": "First isolate per patient, organism and specimen in each period. Percentages only from {min} isolates.",
   "report.foot.unknown": "All bacteria together: an antibiotic counts the isolates tested for it, plus bacteria it never works on by nature (EUCAST expected resistance).",
-  "report.foot.aware": "First choice, use with care, last resort: the WHO AWaRe groups.",
+  "report.foot.aware": "Access, Watch, Reserve: the WHO AWaRe groups (lower resistance risk, use with care, last resort). A group says nothing about a patient.",
   "report.foot.decide": "AEI informs. The doctor decides.",
 } as const;
 
@@ -152,6 +153,7 @@ const fi: Record<keyof typeof en, string> = {
   "report.cell.ariaNone": "{period}: ei tuloksia",
 
   "report.change.points": "{sign}{points} %-yks.",
+  "report.change.pointsOne": "{sign}{points} %-yks.",
   "report.change.ariaUp": "{points} prosenttiyksikköä korkeampi viimeisen 4 viikon aikana kuin 12 kuukaudessa",
   "report.change.ariaDown": "{points} prosenttiyksikköä matalampi viimeisen 4 viikon aikana kuin 12 kuukaudessa",
   "report.change.ariaUpOne": "1 prosenttiyksikkö korkeampi viimeisen 4 viikon aikana kuin 12 kuukaudessa",
@@ -203,7 +205,7 @@ const fi: Record<keyof typeof en, string> = {
 
   "report.foot.rule": "Ensimmäinen kanta potilasta, bakteeria ja näytettä kohden kullakin jaksolla. Prosentit vain vähintään {min} kannasta.",
   "report.foot.unknown": "Kaikki bakteerit yhdessä: antibiootille lasketaan sille testatut kannat sekä bakteerit, joihin se ei luonnostaan tehoa (EUCAST:n odotettu resistenssi).",
-  "report.foot.aware": "Ensisijainen, harkiten, viimesijainen: WHO:n AWaRe-ryhmät.",
+  "report.foot.aware": "Access, Watch, Reserve: WHO:n AWaRe-ryhmät (pienempi resistenssiriski, harkiten, viimesijainen). Ryhmä ei kerro potilaasta.",
   "report.foot.decide": "AEI kertoo. Lääkäri päättää.",
 };
 
