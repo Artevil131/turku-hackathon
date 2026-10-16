@@ -6,6 +6,20 @@ the starting point for talking to the judges. Nothing technical,
 mathematical or statistical is decided here; those choices go in
 DECISIONS.md after the team (and the judges' answers) settle them.
 
+## What the judges told us (2026-10-16)
+
+The tool is for two audiences, described in AUDIENCE.md:
+
+- **Doctors** choosing empirical treatment: enter what they know about the
+  patient and get a quick list of antibiotics likely to work.
+- **Researchers** trying to stop harmful bacteria spreading: continuous
+  data from one hospital, plus a network view of hospitals at regional,
+  national, continental and worldwide level from open data, with odd
+  signals raised for them.
+
+This widens the brief: the tool should suggest antibiotics, not only show
+percentages, and it reaches beyond the one hospital in the dataset.
+
 ## The problem in one sentence
 
 A doctor choosing an antibiotic for a patient today has no up-to-date view
@@ -161,23 +175,23 @@ not stated.
 
 ## Questions for the judges
 
+Questions 1 (who the user is) and 3 (which decision the tool supports)
+are answered by the judges (AUDIENCE.md) and removed. Numbering is kept so
+earlier notes still match.
+
 **Users and use**
 
-1. Who is the primary user: the ward doctor choosing treatment, the
-   infection control team, the microbiologist, or hospital management?
 2. Where and when is it used: at the bedside, on a ward computer, on a
    phone, during rounds? Is a mobile app useful here?
-3. What decision should the tool support: choosing empirical treatment,
-   spotting a rising trend or outbreak, antibiotic stewardship, or all of
-   these?
 
 **Scope**
 
 4. "e.g. antimicrobial resistance surveillance": should the tool be
    general enough for other laboratory indicators, or is AMR the focus?
 5. Which organisms, antibiotics and specimens matter most to clinicians?
-6. Should the tool only inform, or may it suggest a treatment? (A
-   suggestion may bring it under medical-device regulation.)
+6. The judges want a suggested list of antibiotics. How should the tool
+   present it so it stays decision support, given that a recommendation
+   may count as a medical device under EU rules?
 
 **Data and statistics**
 
