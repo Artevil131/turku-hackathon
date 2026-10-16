@@ -80,6 +80,7 @@ const DETECTOR_LABELS = {
   "profile-excess": "alertProfileExcess",
   "phenotype-excess": "alertPhenotypeExcess",
   "sampling-drop": "alertSamplingDrop",
+  "empty-run": "alertEmptyRun",
   "rising-trend": "alertRisingTrend",
 } as const;
 

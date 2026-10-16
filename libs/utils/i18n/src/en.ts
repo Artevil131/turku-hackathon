@@ -31,6 +31,7 @@ export const en = {
   alertProfileExcess: "Resistance-profile cluster",
   alertPhenotypeExcess: "{phenotype} above expected",
   alertSamplingDrop: "Sampling drop",
+  alertEmptyRun: "No samples for days",
   alertRisingTrend: "Rising resistance",
   alertDetector: "Statistical signal",
 
