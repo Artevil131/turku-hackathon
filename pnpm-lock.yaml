@@ -44,6 +44,9 @@ importers:
       '@aei/i18n':
         specifier: workspace:*
         version: link:../../libs/utils/i18n
+      '@aei/ingest':
+        specifier: workspace:*
+        version: link:../../libs/utils/ingest
       '@aei/relations':
         specifier: workspace:*
         version: link:../../libs/utils/relations
@@ -177,7 +180,14 @@ importers:
         specifier: workspace:*
         version: link:../domain
 
-  libs/utils/logistic: {}
+  libs/utils/ingest:
+    dependencies:
+      '@aei/dataset':
+        specifier: workspace:*
+        version: link:../dataset
+      '@aei/domain':
+        specifier: workspace:*
+        version: link:../domain
 
   libs/utils/relations:
     dependencies:

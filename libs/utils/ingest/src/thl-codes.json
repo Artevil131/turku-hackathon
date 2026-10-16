@@ -1,0 +1,128 @@
+{
+  "source": "THL code lists on the Kanta code server (https://koodistopalvelu.kanta.fi/codeserver/csapi/v8/classifications), fetched 2026-10-16",
+  "microbes": {
+    "system": "1.2.246.537.6.241",
+    "codes": {
+      "7640-22": {
+        "abbreviation": "Escherichia coli",
+        "name": "Escherichia coli",
+        "aei": "Escherichia coli"
+      },
+      "8712-22": {
+        "abbreviation": "Klebsiella pneumoniae",
+        "name": "Klebsiella pneumoniae",
+        "aei": "Klebsiella pneumoniae"
+      },
+      "9416-57": {
+        "abbreviation": "Klebsiella oxytoca",
+        "name": "Klebsiella oxytoca",
+        "aei": "Klebsiella oxytoca"
+      },
+      "6986-58": {
+        "abbreviation": "Proteus mirabilis",
+        "name": "Proteus mirabilis",
+        "aei": "Proteus mirabilis"
+      },
+      "3517-03": {
+        "abbreviation": "Citrobacter freundii",
+        "name": "Citrobacter freundii",
+        "aei": "Citrobacter freundii"
+      },
+      "7093-79": {
+        "abbreviation": "Pseudomonas aeruginosa",
+        "name": "Pseudomonas aeruginosa",
+        "aei": "Pseudomonas aeruginosa"
+      },
+      "8864-83": {
+        "abbreviation": "Enterococcus faecalis",
+        "name": "Enterococcus faecalis",
+        "aei": "Enterococcus faecalis"
+      },
+      "2698-63": {
+        "abbreviation": "Staphylococcus aureus",
+        "name": "Staphylococcus aureus",
+        "aei": "Staphylococcus aureus"
+      },
+      "3722-64": {
+        "abbreviation": "Staphylococcus saprophyticus",
+        "name": "Staphylococcus saprophyticus",
+        "aei": "Staphylococcus saprophyticus"
+      }
+    }
+  },
+  "antimicrobials": {
+    "system": "1.2.246.537.6.249",
+    "codes": {
+      "2": {
+        "abbreviation": "AMP",
+        "name": "Ampisilliini",
+        "aei": "AMP"
+      },
+      "38": {
+        "abbreviation": "AMO",
+        "name": "Amoksisilliini",
+        "aei": "AMP"
+      },
+      "17": {
+        "abbreviation": "MEC",
+        "name": "Mesillinaami",
+        "aei": "MEC"
+      },
+      "27": {
+        "abbreviation": "PIT",
+        "name": "Piperasilliini-tatsobaktaami",
+        "aei": "TZP"
+      },
+      "67": {
+        "abbreviation": "CXI",
+        "name": "Kefoksitiini",
+        "aei": "FOX"
+      },
+      "13": {
+        "abbreviation": "CUR",
+        "name": "Kefuroksiimi",
+        "aei": "CXM"
+      },
+      "12": {
+        "abbreviation": "CTR",
+        "name": "Keftriaksoni",
+        "aei": "CRO"
+      },
+      "11": {
+        "abbreviation": "CTZ",
+        "name": "Keftatsidiimi",
+        "aei": "CAZ"
+      },
+      "16": {
+        "abbreviation": "MER",
+        "name": "Meropeneemi",
+        "aei": "MEM"
+      },
+      "29": {
+        "abbreviation": "CIP",
+        "name": "Siprofloksasiini",
+        "aei": "CIP"
+      },
+      "33": {
+        "abbreviation": "TRI",
+        "name": "Trimetopriimi",
+        "aei": "TMP"
+      },
+      "21": {
+        "abbreviation": "NIT",
+        "name": "Nitrofurantoiini",
+        "aei": "NIT"
+      },
+      "35": {
+        "abbreviation": "VAN",
+        "name": "Vankomysiini",
+        "aei": "VAN"
+      },
+      "14": {
+        "abbreviation": "CLI",
+        "name": "Klindamysiini",
+        "aei": "CLI"
+      }
+    }
+  }
+}

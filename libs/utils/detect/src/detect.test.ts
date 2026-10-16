@@ -1,25 +1,13 @@
 import type { Culture, IsolateRecord } from "@aei/domain";
 import { addDays } from "@aei/replay";
 import { describe, expect, it } from "vitest";
-import {
-  cochranArmitageRising,
-  episodes,
-  fisherMidPGreater,
-  normalUpper,
-  poissonLower,
-  poissonUpper,
-  profileRule,
-  risingTrend,
-  samplingDrop,
-} from "./index.ts";
+import { cochranArmitageRising, emptyRun, episodes, normalUpper, poissonLower, poissonUpper, risingTrend, samplingDrop } from "./index.ts";
 
 describe("stats", () => {
   it("matches hand-computed values", () => {
     expect(poissonUpper(3, 1)).toBeCloseTo(1 - 2.5 / Math.E, 10);
     expect(poissonUpper(0, 4)).toBe(1);
     expect(poissonLower(0, 7)).toBeCloseTo(Math.exp(-7), 12);
-    expect(fisherMidPGreater(3, 0, 0, 3)).toBeCloseTo(0.025, 12);
-    expect(fisherMidPGreater(0, 3, 3, 0)).toBeCloseTo(0.975, 12);
     expect(normalUpper(1.959964)).toBeCloseTo(0.025, 5);
     expect(normalUpper(-1.959964)).toBeCloseTo(0.975, 5);
   });
@@ -64,22 +52,6 @@ const rec = (id: string, patientId: string, sampleDate: string, extra: Partial<I
   ...extra,
 });
 
-describe("profileRule", () => {
-  it("fires on the third patient with the same resistant profile within the window", () => {
-    const records = [
-      rec("a", "P1", "2025-06-01"),
-      rec("b", "P2", "2025-06-10"),
-      rec("c", "P2", "2025-06-12"), // same patient again
-      rec("d", "P3", "2025-06-20"),
-      rec("e", "P4", "2025-09-01"),
-      rec("f", "P5", "2025-06-15", { results: { AMP: "S", CRO: "S", CIP: "S" } }), // no acquired R
-    ];
-    const signals = profileRule(records, { minPatients: 3, windowDays: 28, hospitalOnsetOnly: false });
-    expect(signals.map((s) => [s.date, s.observed])).toEqual([["2025-06-20", 3]]);
-    expect(episodes(signals)).toHaveLength(1);
-  });
-});
-
 describe("samplingDrop", () => {
   it("signals a week without samples and not normal weeks", () => {
     const cultures: Culture[] = [];
@@ -111,8 +83,8 @@ describe("samplingDrop", () => {
 });
 
 describe("risingTrend", () => {
-  it("tests a ward-type stratum on its own", () => {
-    // Inpatient (URO) resistance rises 0 % → 50 % over 20 bins; outpatient (ED) stays at 0 %.
+  it("signals a hospital-wide rise and not a flat series", () => {
+    // URO resistance rises 0 % → 50 % over 20 bins; ED stays at 0 %, so the hospital as a whole rises.
     const records: IsolateRecord[] = [];
     for (let bin = 0; bin < 20; bin++) {
       for (let i = 0; i < 10; i++) {
@@ -123,10 +95,41 @@ describe("risingTrend", () => {
       }
     }
     const opts = { binDays: 28, minBins: 13, alpha: 0.001 };
-    const inpatient = risingTrend(records, [{ organism: "Escherichia coli", antibiotic: "CIP", setting: "in" }], opts);
-    const outpatient = risingTrend(records, [{ organism: "Escherichia coli", antibiotic: "CIP", setting: "out" }], opts);
-    expect(inpatient.length).toBeGreaterThan(0);
-    expect(inpatient[0]?.key).toBe("Escherichia coli|CIP|all|in");
-    expect(outpatient).toEqual([]);
+    const rising = risingTrend(records, [{ organism: "Escherichia coli", antibiotic: "CIP" }], opts);
+    expect(rising.length).toBeGreaterThan(0);
+    expect(rising[0]?.key).toBe("Escherichia coli|CIP|all");
+    const flat = records.filter((r) => r.ward === "ED");
+    expect(risingTrend(flat, [{ organism: "Escherichia coli", antibiotic: "CIP" }], opts)).toEqual([]);
+  });
+});
+
+describe("emptyRun", () => {
+  it("signals once the run of empty days is improbable for the unit's volume", () => {
+    const cultures: Culture[] = [];
+    for (let d = 0; d < 120; d++) {
+      if (d >= 90 && d < 95) continue; // five empty days
+      for (let i = 0; i < 2; i++) {
+        cultures.push({
+          cultureId: `C${d}-${i}`,
+          patientId: `P${d}-${i}`,
+          ageYears: 50,
+          sampleDate: addDays("2025-10-01", d),
+          isoYear: 2025,
+          isoWeek: 1,
+          ward: "ICU",
+          wardType: "in",
+          admissionDate: null,
+          specimen: "urine",
+          result: "negative",
+          nIsolates: 0,
+        });
+      }
+    }
+    // 2 a day: exp(-2·3) = 0.0025, exp(-2·4) = 0.00034 < 0.001, so the fourth empty day signals.
+    const signals = emptyRun(cultures, { baselineDays: 56, alpha: 0.001 });
+    expect(signals.map((s) => [s.date, s.observed])).toEqual([
+      [addDays("2025-10-01", 93), 4],
+      [addDays("2025-10-01", 94), 5],
+    ]);
   });
 });

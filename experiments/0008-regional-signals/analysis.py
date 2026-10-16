@@ -10,12 +10,12 @@ import time
 import warnings
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
-import statsmodels.api as sm
 from scipy import stats
 
 from aei.dataset import join_isolates, load_dataset
+from aei.jscompat import table
+from aei.regional import regional_signals
 
 THL = Path("data/external/thl/ttr_monthly.csv")
 DATA = Path("data/synthetic_microbiology_dataset")
@@ -32,41 +32,9 @@ thl = pd.read_csv(THL)
 thl = thl[(thl["month"] >= "2021-01") & (thl["month"] <= LAST_TARGET)]
 national = thl.groupby(["group_sid", "group", "month"], as_index=False)["cases"].sum().assign(region=NATIONAL)
 series = pd.concat([thl[["group_sid", "group", "region", "month", "cases"]], national], ignore_index=True)
-months = sorted(series["month"].unique())
-index = {m: i for i, m in enumerate(months)}
 
 
-def upper_tail(observed: int, mu: float, phi: float) -> float:
-    if phi <= 1.0 + 1e-9:
-        return float(stats.poisson.sf(observed - 1, mu))
-    size = mu / (phi - 1.0)
-    return float(stats.nbinom.sf(observed - 1, size, size / (size + mu)))
-
-
-rows = []
-for (sid, group, region), s in series.groupby(["group_sid", "group", "region"]):
-    counts = s.set_index("month")["cases"].reindex(months, fill_value=0).to_numpy(dtype=float)
-    for m in months:
-        if m < FIRST_TARGET:
-            continue
-        t = index[m]
-        y = counts[t - BASELINE : t]
-        obs = int(counts[t])
-        if obs < MIN_CASES:
-            continue
-        x = np.arange(t - BASELINE, t, dtype=float)
-        X = np.column_stack([np.ones_like(x), x, np.sin(2 * np.pi * x / 12), np.cos(2 * np.pi * x / 12)])
-        xt = np.array([1.0, t, np.sin(2 * np.pi * t / 12), np.cos(2 * np.pi * t / 12)])
-        if y.sum() == 0:
-            mu, phi = 0.5 / BASELINE, 1.0
-        else:
-            fit = sm.GLM(y, X, family=sm.families.Poisson()).fit()
-            mu = float(np.exp(xt @ fit.params))
-            phi = max(1.0, float(fit.pearson_chi2 / fit.df_resid))
-        p = upper_tail(obs, mu, phi)
-        if p < ALPHA:
-            rows.append({"group": group, "region": region, "month": m, "cases": obs, "expected": mu, "dispersion": phi, "p": p})
-signals = pd.DataFrame(rows).sort_values("p") if rows else pd.DataFrame(columns=["group", "region", "month", "cases", "expected", "dispersion", "p"])
+signals = regional_signals(series, first_target=FIRST_TARGET, baseline=BASELINE, alpha=ALPHA, min_cases=MIN_CASES)
 tested = series[(series["month"] >= FIRST_TARGET)]
 n_series = tested.groupby(["group_sid", "region"]).ngroups
 n_months = tested["month"].nunique()
@@ -91,10 +59,6 @@ for label, group in pairs.items():
     b = county.reindex(ms).astype(float)
     r, p = stats.pearsonr(a, b)
     comparison.append([label, group, f"{a.mean():.1f}", f"{b.mean():.1f}", f"{a.sum() / b.sum():.2f}", f"{r:.2f}", f"{p:.2f}", len(ms)])
-
-
-def table(head: list[str], body: list[list]) -> str:
-    return "\n".join([f"| {' | '.join(head)} |", "|" + "|".join("---" for _ in head) + "|", *(f"| {' | '.join(str(c) for c in r)} |" for r in body)])
 
 
 by_group = signals.groupby("group").size().reindex(sorted(series["group"].unique()), fill_value=0)

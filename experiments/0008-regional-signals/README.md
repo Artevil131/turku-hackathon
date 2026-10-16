@@ -97,3 +97,33 @@ Next: show these county signals in the network view (one row per signal
 with cases, expected and the month), and decide with Artem whether to
 down-weight past outbreaks in the baseline (full Farrington) and to
 fit a negative binomial for sparse series.
+
+## Code moved to the shared package (2026-10-16, after close)
+
+The regional test now lives in `aei.regional` and the THL fetch in
+`aei.thl` (with a test in `libs/utils/py/tests/test_regional.py`);
+`analysis.py` and `scripts/fetch_thl_ttr.py` call them. Rerun after the
+move: every table identical, only the run time differs; the fetched data
+is identical up to 2026-09.
+
+## Notes from review round 2 (2026-10-16, after close)
+
+- Chance level: the 1.4 expected signals counted only months with 5 or
+  more cases. Over all 8,250 series-months about 6.7 are expected by
+  chance under the fitted model, so most of the 10 could be chance; 3
+  survive a Bonferroni correction. Only the strongest (VRE in
+  Länsi-Uusimaa, CPE *E. coli* in Varsinais-Suomi) should be quoted.
+- The test leaves out the uncertainty of the fitted mean; with it, the
+  Varsinais-Suomi MRSA-in-blood signal (June 2025) drops out.
+- The last months are incomplete (national MRSA carriage 94 in
+  2026-09 against 166 in 2026-08), and THL revises recent months, so a
+  re-fetch can change results.
+- The Varsinais-Suomi CPE *E. coli* claim checks out: 1, 3, 1, 8, 3
+  cases for June to October 2025.
+
+## Served to the app (2026-10-16, after close)
+
+`scripts/fetch_thl_ttr.py` now also writes `data/external/thl/regional.json`
+with this test's settings (`aei.regional.regional_view`), and the server
+serves it at `GET /api/regional`, cut at the replay clock (D-037). The
+fetch of 2026-10-16 gives the same 10 signals as the Result above.

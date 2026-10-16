@@ -80,3 +80,14 @@ twelve before, with counts) rather than raise an alert. A detector with
 more power for slow drifts (comparing rolling twelve-month windows, or
 pooling related antibiotics) is the next thing to try if the team wants
 an alert for it.
+
+## Port to Python (2026-10-16)
+
+`sweep.ts` was ported to `sweep.py` (D-024); the trend test and cluster
+exclusion are the Python mirrors of `@aei/detect`:
+
+    uv run python experiments/0006-trends-by-ward-type/sweep.py
+
+It reproduces `out/results.md` byte for byte (about 15 s on the laptop). The
+parity tests (`uv run pytest libs/utils/py/tests`) check the Python mirrors
+in `libs/utils/py/aei` against the TypeScript gears on the full dataset.

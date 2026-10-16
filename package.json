@@ -12,9 +12,10 @@
     "dev:api": "pnpm --filter @aei/api dev",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
-    "test": "vitest run",
+    "test": "vitest run && uv run pytest -q libs/utils/py/tests",
     "check": "biome check .",
-    "format": "biome check --write ."
+    "format": "biome check --write .",
+    "test:ts": "vitest run"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",

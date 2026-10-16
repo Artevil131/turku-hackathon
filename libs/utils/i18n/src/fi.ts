@@ -33,6 +33,7 @@ export const fi: Record<keyof typeof en, string> = {
   alertProfileExcess: "Resistenssiprofiilin ryväs",
   alertPhenotypeExcess: "{phenotype} odotettua enemmän",
   alertSamplingDrop: "Näytteenoton lasku",
+  alertEmptyRun: "Ei näytteitä päiviin",
   alertRisingTrend: "Resistenssi kasvaa",
   alertDetector: "Tilastollinen signaali",
 

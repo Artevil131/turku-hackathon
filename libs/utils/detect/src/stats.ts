@@ -32,26 +32,6 @@ export function poissonLower(k: number, mean: number): number {
   return Math.min(1, sum);
 }
 
-/**
- * One-sided mid-p Fisher exact test that the first row has a higher
- * proportion than the second: rows (a, b) and (c, d), first column the
- * events. Returns P(X > a) + P(X = a) / 2 under the hypergeometric null.
- */
-export function fisherMidPGreater(a: number, b: number, c: number, d: number): number {
-  const row1 = a + b;
-  const col1 = a + c;
-  const n = a + b + c + d;
-  const lo = Math.max(0, col1 - (n - row1));
-  const hi = Math.min(row1, col1);
-  const logDen = logFactorial(n) - logFactorial(row1) - logFactorial(n - row1) - logFactorial(col1) - logFactorial(n - col1);
-  const logP = (x: number) =>
-    -logDen - logFactorial(x) - logFactorial(row1 - x) - logFactorial(col1 - x) - logFactorial(n - row1 - col1 + x);
-  if (a < lo || a > hi) return a > hi ? 0 : 1;
-  let p = 0.5 * Math.exp(logP(a));
-  for (let x = a + 1; x <= hi; x++) p += Math.exp(logP(x));
-  return Math.min(1, p);
-}
-
 /** Standard normal upper tail, P(Z ≥ z). */
 export function normalUpper(z: number): number {
   // Abramowitz and Stegun 7.1.26 on erfc, absolute error below 1.5e-7.

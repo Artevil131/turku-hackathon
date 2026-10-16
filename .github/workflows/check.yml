@@ -1,0 +1,25 @@
+# Typecheck, lint and tests on every push and pull request. The organisers'
+# dataset is not in git, so tests that need it skip here; run
+# `pnpm test` and `uv run python scripts/verify_experiments.py` locally for those.
+name: check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: astral-sh/setup-uv@v10.3.0
+      - run: pnpm install --frozen-lockfile
+      - run: uv sync --frozen
+      - run: pnpm typecheck
+      - run: pnpm check
+      - run: pnpm test

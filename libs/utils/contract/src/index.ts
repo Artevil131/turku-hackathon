@@ -19,6 +19,10 @@ export const ROUTES = {
   relations: "/api/relations",
   alerts: "/api/alerts",
   live: "/api/live",
+  /** Lab results from a laboratory system: HL7 v2 ORU^R01, a FHIR R4 Bundle or CSV (D-035). */
+  ingest: "/api/ingest",
+  /** THL county series of MRSA, ESBL, VRE and CPE and their regional signals (D-025, D-037). */
+  regional: "/api/regional",
 } as const;
 
 export interface Meta {
@@ -117,6 +121,86 @@ export interface AlertsResponse {
   alerts: Alert[];
 }
 
+/** One county series: monthly notified cases, aligned with `RegionalResponse.months`. */
+export interface RegionalSeries {
+  /** THL report group, e.g. "CPE carriage, E. coli". */
+  group: string;
+  /** Wellbeing services county, or "Finland (all counties)". */
+  region: string;
+  cases: number[];
+  /** Null for the national total and for months THL gives no rate. */
+  incidencePer100k: (number | null)[] | null;
+}
+
+/** A month whose count is above what the county's previous 36 months predict (experiments/0008). */
+export interface RegionalSignal {
+  group: string;
+  region: string;
+  /** YYYY-MM */
+  month: string;
+  cases: number;
+  expected: number;
+  dispersion: number;
+  /** P(cases or more) under the fitted model; signals below `settings.alpha`. */
+  p: number;
+  /** Survives a Bonferroni correction: p below familyAlpha / testedSeriesMonths. Weaker signals may be chance. */
+  strong: boolean;
+}
+
+/** The regional view: the file `scripts/fetch_thl_ttr.py` writes, cut at the clock. */
+export interface RegionalData {
+  source: string;
+  /** When the series were fetched; THL revises the latest months. */
+  fetched: IsoDate;
+  settings: {
+    firstTarget: string;
+    baseline: number;
+    alpha: number;
+    minCases: number;
+    familyAlpha: number;
+    /** Series times months tested, the Bonferroni denominator. */
+    testedSeriesMonths: number;
+  };
+  /** YYYY-MM, oldest first. */
+  months: string[];
+  groups: string[];
+  regions: string[];
+  series: RegionalSeries[];
+  /** Strongest first. */
+  signals: RegionalSignal[];
+}
+
+/** Optional filters; omitted fields do not filter. */
+export interface RegionalQuery {
+  group?: string;
+  region?: string;
+}
+
+/** Months that ended before the clock's as-of date only, so the replay never shows later months. */
+export interface RegionalResponse extends RegionalData {
+  asOf: IsoDate;
+}
+
+/**
+ * The regional data as known on `asOf`: months before the as-of month, and
+ * series and signals matching the query. Group and region lists stay whole.
+ */
+export function regionalUpTo(data: RegionalData, asOf: IsoDate, query: RegionalQuery = {}): RegionalResponse {
+  const month = asOf.slice(0, 7);
+  const n = data.months.filter((m) => m < month).length;
+  const keep = (x: { group: string; region: string }) =>
+    (!query.group || x.group === query.group) && (!query.region || x.region === query.region);
+  return {
+    ...data,
+    asOf,
+    months: data.months.slice(0, n),
+    series: data.series
+      .filter(keep)
+      .map((s) => ({ ...s, cases: s.cases.slice(0, n), incidencePer100k: s.incidencePer100k?.slice(0, n) ?? null })),
+    signals: data.signals.filter((s) => keep(s) && s.month < month),
+  };
+}
+
 /** Server-sent events on ROUTES.live. The event name is the `type`. */
 export type LiveEvent =
   | { type: "clock"; clock: ClockState }
@@ -159,6 +243,8 @@ export interface AeiClient {
   isolates(query: IsolateQuery): Promise<IsolatesResponse>;
   relations(query: RelationsQuery): Promise<RelationsResponse>;
   alerts(query: AlertsQuery): Promise<AlertsResponse>;
+  /** 404 when the server has no regional file. */
+  regional(query: RegionalQuery): Promise<RegionalResponse>;
   /** Opens the live stream; returns a function that closes it. */
   live(onEvent: (event: LiveEvent) => void, onError?: (error: Event) => void): () => void;
 }
@@ -203,6 +289,7 @@ export function createAeiClient(options: AeiClientOptions): AeiClient {
     isolates: (query) => json<IsolatesResponse>(isolatesUrl(query)),
     relations: (query) => json<RelationsResponse>(withQuery(ROUTES.relations, query)),
     alerts: (query) => json<AlertsResponse>(withQuery(ROUTES.alerts, query)),
+    regional: (query) => json<RegionalResponse>(withQuery(ROUTES.regional, query)),
     live(onEvent, onError) {
       const source = new ES(url(ROUTES.live));
       for (const type of LIVE_EVENT_TYPES) {

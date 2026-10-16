@@ -1,5 +1,5 @@
 {
-  "name": "@aei/logistic",
+  "name": "@aei/ingest",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -8,5 +8,9 @@
   },
   "scripts": {
     "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@aei/dataset": "workspace:*",
+    "@aei/domain": "workspace:*"
   }
 }

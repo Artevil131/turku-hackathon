@@ -35,6 +35,12 @@ const DETECTORS: Record<string, { summary: string; en: string; fi: string }> = {
     en: "On {date}, only {observed} cultures came from {ward} in 7 days, where about {expected} are usual.",
     fi: "{date}: osastolta {ward} tuli vain {observed} viljelyä 7 päivässä, kun tavallisesti niitä tulee noin {expected}.",
   },
+  "empty-run": {
+    summary:
+      "No cultures at all have come from this unit for several days in a row, which its usual volume makes very unlikely. That is a data gap (a feed or sampling failure), not an infection.",
+    en: "As of {date}, no cultures have come from {ward} for {observed} days in a row, where about {expected} a day are usual.",
+    fi: "{date}: osastolta {ward} ei ole tullut yhtään viljelyä {observed} päivään, kun tavallisesti niitä tulee noin {expected} päivässä.",
+  },
   "rising-trend": {
     summary:
       "Resistance of an organism to an antibiotic has been rising across the hospital; observed is the latest 28-day resistant share.",
