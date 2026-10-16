@@ -43,6 +43,9 @@ the experiments use and the live tool does not; and
   (`regional_signals`, `expected_month`, `upper_tail`).
 - `aei.thl`: THL's register cube (D-025), `fetch_ttr_monthly()`, used by
   `scripts/fetch_thl_ttr.py`.
+- `aei.messages`: dataset cultures as HL7 v2 ORU^R01 messages, FHIR
+  Bundles or a flat export (D-035), for `scripts/send_lab_results.py` and
+  the ingest round-trip test.
 
 - `aei.jscompat`: JavaScript's `toFixed`, `toPrecision`,
   `toExponential`, `Math.round`, `String(number)`, the Markdown `table`

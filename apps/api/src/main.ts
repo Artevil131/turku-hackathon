@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { resolve } from "node:path";
 import { buildAlerts, sortAlerts } from "@aei/alerts";
@@ -12,15 +13,18 @@ import {
   ROUTES,
 } from "@aei/contract";
 import { type CoverageResult, coverage, suggest, suggestCombinations } from "@aei/coverage";
-import { joinIsolates, loadDataset } from "@aei/dataset";
+import { type Dataset, joinIsolates, loadDataset } from "@aei/dataset";
 import { ANTIBIOTICS, type IsolateRecord, ORGANISMS, SPECIMENS, type Specimen, WARDS, type WardCode } from "@aei/domain";
 import { antibioticName, phenotypeName, specimenName, wardName } from "@aei/i18n";
+import { asResult, type CodeMaps, DEFAULT_CODE_MAPS, detectFormat, extendCodeMaps, ingest, mergeResults } from "@aei/ingest";
 import { countFlows, patientMoves, phenotypeTrails, trailLinks } from "@aei/relations";
 import { addDays, createReleaseIndex, createReplayClock } from "@aei/replay";
 
 // Development server for the AEI contract (libs/utils/contract). It loads
 // the synthetic dataset, replays it day by day and pushes arrivals to
-// clients over server-sent events. Wiring only; the logic is in the gears.
+// clients over server-sent events, and takes lab results as they would come
+// from a laboratory system (HL7 v2, FHIR or a CSV export) on POST /api/ingest
+// (D-035). Wiring only; the logic is in the gears.
 
 const env = process.env;
 const llmConfig = llmConfigFromEnv();
@@ -38,33 +42,57 @@ const config = {
   startAt: env.AEI_REPLAY_START ?? "2025-05-12",
   tickMs: Number(env.AEI_TICK_MS ?? 2000),
   daysPerTick: Number(env.AEI_DAYS_PER_TICK ?? 1),
+  // Load only results sampled up to this date; later ones can then arrive through /api/ingest.
+  loadUntil: env.AEI_LOAD_UNTIL,
+  // A JSON file of the site's own codes (see @aei/ingest CodeMaps), merged over the defaults.
+  codeMapFile: env.AEI_CODE_MAP,
+  guideline: env.AEI_GUIDELINE ?? "",
 };
+const codeMaps: CodeMaps = config.codeMapFile
+  ? extendCodeMaps(JSON.parse(readFileSync(resolve(config.codeMapFile), "utf8")) as Partial<CodeMaps>)
+  : DEFAULT_CODE_MAPS;
 
 console.log(`[aei-api] loading ${config.dataDir}`);
-const dataset = await loadDataset(config.dataDir);
-const records = joinIsolates(dataset);
-// A result "arrives" on its culture's sample date, the only date the data has.
-const released = createReleaseIndex(records, (r) => r.sampleDate);
-const dates = records.map((r) => r.sampleDate).sort();
-const datasetStart = dates[0] ?? "";
-const datasetEnd = dates.at(-1) ?? "";
+const full = await loadDataset(config.dataDir);
+const fullDates = full.cultures.map((c) => c.sampleDate).sort();
+const datasetStart = fullDates[0] ?? "";
+const datasetEnd = fullDates.at(-1) ?? "";
+let dataset: Dataset = config.loadUntil ? until(full, config.loadUntil) : full;
 
-// Relation layers and alerts depend only on earlier samples, so they are
-// computed once over all data and cut to the window up to the clock.
-const moves = patientMoves(dataset.cultures);
-const trails = phenotypeTrails(dataset.cultures, records);
-const alerts = createReleaseIndex(buildAlerts(records, dataset.cultures), (a) => a.date);
+function until(d: Dataset, date: string): Dataset {
+  const cultures = d.cultures.filter((c) => c.sampleDate <= date);
+  const keep = new Set(cultures.map((c) => c.cultureId));
+  const isolates = d.isolates.filter((i) => keep.has(i.cultureId));
+  const ids = new Set(isolates.map((i) => i.isolateId));
+  return { patients: d.patients, cultures, isolates, susceptibility: d.susceptibility.filter((s) => ids.has(s.isolateId)) };
+}
+
+// Everything derived from the data, rebuilt when results are ingested. Relation layers and
+// alerts depend only on earlier samples, so they are computed over all data and cut to the
+// window up to the clock. A result "arrives" on its culture's sample date (D-005).
+function derive(d: Dataset) {
+  const records = joinIsolates(d);
+  const trails = phenotypeTrails(d.cultures, records);
+  return {
+    records,
+    released: createReleaseIndex(records, (r) => r.sampleDate),
+    moves: patientMoves(d.cultures),
+    trails,
+    alerts: createReleaseIndex(buildAlerts(records, d.cultures), (a) => a.date),
+  };
+}
+let state = derive(dataset);
 const DEFAULT_RELATION_DAYS = 28;
 
 function relations(asOf: string, days: number): RelationsResponse {
   const window = { from: addDays(asOf, 1 - days), to: asOf };
-  return { asOf, ...window, flows: countFlows(moves, window), links: trailLinks(trails, window) };
+  return { asOf, ...window, flows: countFlows(state.moves, window), links: trailLinks(state.trails, window) };
 }
 
 const clock = createReplayClock({
   start: datasetStart,
   end: datasetEnd,
-  asOf: config.startAt,
+  asOf: config.loadUntil ?? config.startAt,
   tickMs: config.tickMs,
   daysPerTick: config.daysPerTick,
 });
@@ -85,14 +113,14 @@ function broadcast(event: LiveEvent) {
   for (const res of streams) res.write(frame);
 }
 
-clock.subscribe((state, previous) => {
-  if (state.asOf > previous) {
-    broadcast({ type: "arrivals", from: previous, to: state.asOf, records: released.between(previous, state.asOf) });
-    const fresh = alerts.between(previous, state.asOf);
-    if (fresh.length) broadcast({ type: "alerts", from: previous, to: state.asOf, alerts: sortAlerts(fresh) });
-    broadcast({ type: "clock", clock: state });
-  } else if (state.asOf < previous) broadcast({ type: "reset", clock: state });
-  else broadcast({ type: "clock", clock: state });
+clock.subscribe((now, previous) => {
+  if (now.asOf > previous) {
+    broadcast({ type: "arrivals", from: previous, to: now.asOf, records: state.released.between(previous, now.asOf) });
+    const fresh = state.alerts.between(previous, now.asOf);
+    if (fresh.length) broadcast({ type: "alerts", from: previous, to: now.asOf, alerts: sortAlerts(fresh) });
+    broadcast({ type: "clock", clock: now });
+  } else if (now.asOf < previous) broadcast({ type: "reset", clock: now });
+  else broadcast({ type: "clock", clock: now });
 });
 
 function matches(r: IsolateRecord, q: IsolateQuery): boolean {
@@ -113,10 +141,60 @@ function send(res: ServerResponse, status: number, body: unknown) {
   res.end(JSON.stringify(body));
 }
 
-async function readJson(req: IncomingMessage): Promise<unknown> {
+async function readText(req: IncomingMessage): Promise<string> {
   let body = "";
   for await (const chunk of req) body += chunk;
-  return JSON.parse(body || "{}");
+  return body;
+}
+
+async function readJson(req: IncomingMessage): Promise<unknown> {
+  return JSON.parse((await readText(req)) || "{}");
+}
+
+/**
+ * Lab results from a laboratory system (D-035): HL7 v2 ORU^R01, a FHIR R4 Bundle
+ * or a flat isolate export, detected from the content type or the payload. A
+ * culture sent again replaces the earlier one (a corrected or final report).
+ * New results are pushed to open clients; if they are dated after the clock, the
+ * clock moves to them, as a live feed would.
+ */
+function ingestPayload(body: string, contentType: string) {
+  const format = detectFormat(body, contentType);
+  if (!format) return { status: 415, body: { error: "unknown format: send HL7 v2 (MSH...), a FHIR Bundle (JSON) or CSV" } };
+  const result = ingest(body, format, { maps: codeMaps, guideline: config.guideline });
+  if (!result.cultures.length) return { status: 422, body: { format, accepted: 0, warnings: result.warnings } };
+  const before = new Set(state.alerts.upTo(datasetEnd).map((a) => a.id));
+  dataset = mergeResults(asResult(dataset), result);
+  state = derive(dataset);
+  coverages.clear();
+  const ids = new Set(result.cultures.map((c) => c.cultureId));
+  const arrived = state.records.filter((r) => ids.has(r.cultureId));
+  const latest =
+    result.cultures
+      .map((c) => c.sampleDate)
+      .sort()
+      .at(-1) ?? "";
+  const asOf = clock.state().asOf;
+  if (latest > asOf) {
+    clock.seek(latest < datasetEnd ? latest : datasetEnd); // the subscription pushes arrivals and alerts
+  } else {
+    broadcast({ type: "arrivals", from: asOf, to: asOf, records: arrived });
+    const fresh = state.alerts.upTo(asOf).filter((a) => !before.has(a.id));
+    if (fresh.length) broadcast({ type: "alerts", from: asOf, to: asOf, alerts: sortAlerts(fresh) });
+  }
+  const newAlerts = state.alerts.upTo(clock.state().asOf).filter((a) => !before.has(a.id));
+  return {
+    status: 200,
+    body: {
+      format,
+      accepted: result.cultures.length,
+      isolates: result.isolates.length,
+      results: result.susceptibility.length,
+      asOf: clock.state().asOf,
+      newAlerts: newAlerts.map((a) => a.id),
+      warnings: result.warnings,
+    },
+  };
 }
 
 function runCommand(command: ClockCommand) {
@@ -169,7 +247,7 @@ export const server = createServer(async (req, res) => {
       // The template by default: small models write unreliable Finnish (experiments/0003, D-029).
       const wording = url.searchParams.get("wording") ?? "template";
       if (wording !== "template" && wording !== "model") return send(res, 400, { error: "wording must be template or model" });
-      const alert = alerts.upTo(clock.state().asOf).find((a) => a.id === id);
+      const alert = state.alerts.upTo(clock.state().asOf).find((a) => a.id === id);
       if (!alert) return send(res, 404, { error: "unknown alert" });
       const key = `${alert.id}:${lang}:${wording}`;
       let explanation = explanations.get(key);
@@ -209,7 +287,7 @@ export const server = createServer(async (req, res) => {
       let result = coverages.get(key);
       if (!result) {
         if (coverages.size > 500) coverages.clear();
-        result = coverage(released.upTo(asOf), {
+        result = coverage(state.released.upTo(asOf), {
           asOf,
           ward: ward as WardCode,
           specimen: specimen as Specimen,
@@ -225,6 +303,10 @@ export const server = createServer(async (req, res) => {
         suggestions: suggest(result, severity),
         combinationSuggestions: suggestCombinations(result, severity),
       });
+    }
+    if (url.pathname === ROUTES.ingest && req.method === "POST") {
+      const out = ingestPayload(await readText(req), req.headers["content-type"] ?? "");
+      return send(res, out.status, out.body);
     }
     if (url.pathname === ROUTES.meta) return send(res, 200, meta);
     if (url.pathname === ROUTES.clock && req.method === "GET") return send(res, 200, clock.state());
@@ -244,7 +326,7 @@ export const server = createServer(async (req, res) => {
       }
       const asOf = clock.state().asOf;
       const to = q.to && q.to < asOf ? q.to : asOf;
-      return send(res, 200, { asOf, records: released.upTo(to).filter((r) => matches(r, { ...q, to })) });
+      return send(res, 200, { asOf, records: state.released.upTo(to).filter((r) => matches(r, { ...q, to })) });
     }
     if (url.pathname === ROUTES.relations) {
       const days = Number(url.searchParams.get("days") ?? DEFAULT_RELATION_DAYS);
@@ -254,7 +336,7 @@ export const server = createServer(async (req, res) => {
     if (url.pathname === ROUTES.alerts) {
       const asOf = clock.state().asOf;
       const from = url.searchParams.get("from") ?? "";
-      return send(res, 200, { asOf, alerts: sortAlerts(alerts.upTo(asOf).filter((a) => a.date >= from)) });
+      return send(res, 200, { asOf, alerts: sortAlerts(state.alerts.upTo(asOf).filter((a) => a.date >= from)) });
     }
     if (url.pathname === ROUTES.live) {
       res.writeHead(200, { "content-type": "text/event-stream", "cache-control": "no-cache", connection: "keep-alive" });
@@ -270,7 +352,7 @@ export const server = createServer(async (req, res) => {
 });
 
 server.listen(config.port, () => {
-  console.log(`[aei-api] ${records.length} isolates, ${datasetStart} to ${datasetEnd}; replay at ${clock.state().asOf}`);
-  console.log(`[aei-api] ${moves.length} unit moves, ${trails.length} carrier trails, ${alerts.size} alerts`);
+  console.log(`[aei-api] ${state.records.length} isolates, ${datasetStart} to ${datasetEnd}; replay at ${clock.state().asOf}`);
+  console.log(`[aei-api] ${state.moves.length} unit moves, ${state.trails.length} carrier trails, ${state.alerts.size} alerts`);
   console.log(`[aei-api] http://localhost:${config.port}${ROUTES.meta}`);
 });

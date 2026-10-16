@@ -19,6 +19,8 @@ export const ROUTES = {
   relations: "/api/relations",
   alerts: "/api/alerts",
   live: "/api/live",
+  /** Lab results from a laboratory system: HL7 v2 ORU^R01, a FHIR R4 Bundle or CSV (D-035). */
+  ingest: "/api/ingest",
 } as const;
 
 export interface Meta {
