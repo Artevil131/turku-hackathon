@@ -14,6 +14,7 @@ export function AlertExplanation({ client, id, locale, ai = false }: { client: A
   const [result, setResult] = useState<ExplainResponse | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState(false);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `attempt` is the retry button's trigger; bumping it re-runs the request.
   useEffect(() => {
     setResult(null);
     if (!wording) return;
