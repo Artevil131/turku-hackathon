@@ -39,6 +39,10 @@ the experiments use and the live tool does not; and
 
 - `aei.logistic`: `fit_logistic`, `predict` (experiments/0005).
 - `aei.inject`: experiments/0007's injected clusters and sampling gaps.
+- `aei.regional`: the monthly regional outbreak test of experiments/0008
+  (`regional_signals`, `expected_month`, `upper_tail`).
+- `aei.thl`: THL's register cube (D-025), `fetch_ttr_monthly()`, used by
+  `scripts/fetch_thl_ttr.py`.
 
 - `aei.jscompat`: JavaScript's `toFixed`, `toPrecision`,
   `toExponential`, `Math.round`, `String(number)`, the Markdown `table`

@@ -97,3 +97,11 @@ Next: show these county signals in the network view (one row per signal
 with cases, expected and the month), and decide with Artem whether to
 down-weight past outbreaks in the baseline (full Farrington) and to
 fit a negative binomial for sparse series.
+
+## Code moved to the shared package (2026-10-16, after close)
+
+The regional test now lives in `aei.regional` and the THL fetch in
+`aei.thl` (with a test in `libs/utils/py/tests/test_regional.py`);
+`analysis.py` and `scripts/fetch_thl_ttr.py` call them. Rerun after the
+move: every table identical, only the run time differs; the fetched data
+is identical up to 2026-09.
