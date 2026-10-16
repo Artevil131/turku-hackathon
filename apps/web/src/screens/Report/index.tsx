@@ -16,6 +16,8 @@ import {
   useReducedMotion,
   useStored,
 } from "../../ui/index.ts";
+import { QualityLine } from "../../ui/Quality.tsx";
+import type { QualityState } from "../../ui/useQuality.ts";
 import type { TreatPrefs } from "../Treat/index.tsx";
 import { EVERY_UNIT } from "./count.ts";
 import { DrugTable } from "./DrugTable.tsx";
@@ -76,6 +78,8 @@ export function ReportScreen(p: {
   prefs: ReportPrefs;
   onPrefs: (patch: Partial<ReportPrefs>) => void;
   onOpenTreat: (patch: Partial<TreatPrefs>) => void;
+  /** The server's data checks (D-038), stated under the figures. */
+  quality: QualityState;
 }) {
   const { locale, meta, prefs, onPrefs, onOpenTreat } = p;
   // Arrivals during a fast replay must not block taps: the figures follow a moment later.
@@ -244,6 +248,9 @@ export function ReportScreen(p: {
         {organism ? null : <p>{t(locale, "report.foot.unknown")}</p>}
         {view === "table" ? <p>{t(locale, "report.foot.aware")}</p> : null}
         <p>{t(locale, "report.foot.decide")}</p>
+        <p>
+          <QualityLine locale={locale} quality={p.quality} />
+        </p>
       </footer>
     </section>
   );

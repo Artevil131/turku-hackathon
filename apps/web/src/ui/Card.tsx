@@ -4,13 +4,13 @@ import type { ElementType, ReactNode } from "react";
   Card: the frosted-glass surface every block of content sits on.
     children   ReactNode
     title?     ReactNode         card heading (h2 by default; see `level`)
-    eyebrow?   ReactNode         small uppercase line above the title
+    eyebrow?   ReactNode         a quiet subtitle under the title
     actions?   ReactNode         right side of the heading row (a link, a Segmented)
     footer?    ReactNode         quiet row at the bottom (evidence, "based on ...")
     level?     2 | 3             heading level, default 2
     as?        ElementType       "section" by default; "article", "div", "li"
     tone?      "glass" (default) | "solid" | "inset" | "high" | "medium" | "low"
-               high/medium/low add a coloured left edge for signal cards (pair with a Badge word)
+               high/medium/low are the frosted signal surface; the severity is said by a Badge word
     pad?       "md" (default) | "sm" | "none"
     className? string
     id?        string

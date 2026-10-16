@@ -1319,3 +1319,32 @@ button.k-chip:hover:not(:disabled):not(.is-on) {
 .k-ask-actions .k-btn {
   flex: 1 1 160px;
 }
+
+/* ---------- Data checks (ui/Quality.tsx) ---------- */
+.k-quality-status {
+  margin: 0 0 var(--sp-2);
+}
+.k-quality-list {
+  list-style: none;
+  margin: var(--sp-3) 0;
+  padding: 0;
+}
+.k-quality-list li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-2) 0;
+}
+.k-quality-list li + li {
+  border-top: 1px solid var(--line);
+}
+.k-quality-check {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+.k-quality .u-small + .u-small {
+  margin-top: var(--sp-2);
+}

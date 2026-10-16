@@ -4,8 +4,10 @@ import { formatDate, formatNumber, type Locale, t } from "../i18n/index.ts";
 import { Badge } from "./Badge.tsx";
 import { Card } from "./Card.tsx";
 import { Icon } from "./Icon.tsx";
+import { QualityLine } from "./Quality.tsx";
 import { Segmented } from "./Segmented.tsx";
 import { MIN_ISOLATES } from "./ShareBar.tsx";
+import type { QualityState } from "./useQuality.ts";
 
 /*
   Settings (route #settings): language, about the data, the optional AI's
@@ -13,6 +15,7 @@ import { MIN_ISOLATES } from "./ShareBar.tsx";
   order is the server's, D-026, so there is no ranking preference here.)
     locale, onLocale(locale)
     meta: FeedMeta | null, asOf: IsoDate | null, resultCount: number
+    quality: QualityState          the server's data checks (D-038)
     feedSource: string            where the feed is read from (shown to the user)
     ai: { available: boolean; model: string | null; checking: boolean }
     onCheckAi()                   check the language model again
@@ -31,6 +34,7 @@ export function Settings({
   meta,
   asOf,
   resultCount,
+  quality,
   feedSource,
   ai,
   onCheckAi,
@@ -41,6 +45,7 @@ export function Settings({
   meta: FeedMeta | null;
   asOf: IsoDate | null;
   resultCount: number;
+  quality: QualityState;
   feedSource: string;
   ai: AiState;
   onCheckAi: () => void;
@@ -81,6 +86,10 @@ export function Settings({
           <li>
             <Icon name="report" size={18} />
             <span className="u-num">{t(locale, "common.settings.count", { count: formatNumber(locale, resultCount) })}</span>
+          </li>
+          <li>
+            <Icon name="check" size={18} />
+            <QualityLine locale={locale} quality={quality} />
           </li>
           <li>
             <Icon name="play" size={18} />

@@ -221,14 +221,16 @@ describe("report CSV", () => {
 });
 
 describe("ReportScreen", () => {
+  const quality = { data: { checked: { patients: 3, cultures: 4, isolates: 4, results: 9 }, summary: [] }, failed: false, key: "1:0" };
   const prefs: ReportPrefs = { ward: "U1", specimen: "urine", organism: null, sex: null, age: null, view: "table" };
   const render = (p: Partial<ReportPrefs>, locale: "en" | "fi" = "en") =>
     renderToStaticMarkup(
-      h(ReportScreen, { locale, meta, results, asOf, prefs: { ...prefs, ...p }, onPrefs: () => {}, onOpenTreat: () => {} }),
+      h(ReportScreen, { locale, meta, results, asOf, prefs: { ...prefs, ...p }, onPrefs: () => {}, onOpenTreat: () => {}, quality }),
     );
 
   it("renders the antibiotics view with its evidence and the counting rule", () => {
     const html = render({});
+    expect(html).toContain("Data checks: every check passed over 3 patients, 4 cultures, 4 isolates and 9 results.");
     expect(html).toContain("Drug one");
     expect(html).toContain("n = 40");
     expect(html).toContain("First isolate per patient, organism and specimen in each period.");

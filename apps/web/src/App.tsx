@@ -17,6 +17,7 @@ import { type AiState, Settings } from "./ui/Settings.tsx";
 import { FreshChip, Header, type Route, Tabs } from "./ui/Shell.tsx";
 import { SimControl } from "./ui/SimControl.tsx";
 import { Toaster, type ToastItem } from "./ui/Toast.tsx";
+import { findingCount, useQuality } from "./ui/useQuality.ts";
 import { useSignals } from "./ui/useSignals.ts";
 
 // The app shell: one feed, one set of signals, hash routes, remembered
@@ -165,6 +166,10 @@ export function App() {
     },
     [seen, seenList, setSeenList],
   );
+  // ---------- Data checks (GET /api/quality, D-038): again after every reload and arrival ----------
+  const qualityKey = `${generation}:${lastArrival?.seq ?? 0}`;
+  const quality = useQuality(qualityKey);
+
   const alertsBadge = useMemo(
     () => (asOf ? signals.filter((s) => s.severity !== "low" && !seen.has(s.id) && isActive(s, asOf)).length : 0),
     [signals, seen, asOf],
@@ -203,24 +208,31 @@ export function App() {
     });
   }, [signals, signalsAsOf, signalsGen, meta, locale, pushToast, openSignal]);
 
-  // New results: a quiet counter, replaced in place, once per arrival.
+  // New results: a quiet counter, replaced in place, once per arrival, with the
+  // data checks run after it (it waits for that answer, or its failure).
   const toastedArrival = useRef(0);
   useEffect(() => {
     if (!lastArrival || lastArrival.count === 0 || lastArrival.seq === toastedArrival.current) return;
+    if (quality.key !== qualityKey) return;
     toastedArrival.current = lastArrival.seq;
     if (clock?.running && clock.tickMs < ARRIVAL_TOAST_MIN_TICK_MS) return;
-    pushToast({
-      id: "arrivals",
-      tone: "quiet",
-      text:
-        lastArrival.count === 1
-          ? t(locale, "common.toast.arrivalsOne", { date: formatDate(locale, lastArrival.to) })
-          : t(locale, "common.toast.arrivals", {
-              count: formatNumber(locale, lastArrival.count),
-              date: formatDate(locale, lastArrival.to),
-            }),
-    });
-  }, [lastArrival, clock, locale, pushToast]);
+    const arrived =
+      lastArrival.count === 1
+        ? t(locale, "common.toast.arrivalsOne", { date: formatDate(locale, lastArrival.to) })
+        : t(locale, "common.toast.arrivals", { count: formatNumber(locale, lastArrival.count), date: formatDate(locale, lastArrival.to) });
+    const findings = quality.data && !quality.failed ? findingCount(quality.data) : null;
+    const checks =
+      findings === null
+        ? ""
+        : ` · ${
+            findings === 0
+              ? t(locale, "common.toast.checksPassed")
+              : findings === 1
+                ? t(locale, "common.toast.checksFoundOne")
+                : t(locale, "common.toast.checksFound", { count: formatNumber(locale, findings) })
+          }`;
+    pushToast({ id: "arrivals", tone: "quiet", text: `${arrived}${checks}` });
+  }, [lastArrival, clock, locale, pushToast, quality, qualityKey]);
 
   // ---------- Optional AI ----------
   const [ai, setAi] = useState<AiState>({ available: false, model: null, checking: true });
@@ -279,6 +291,7 @@ export function App() {
         meta={meta}
         asOf={asOf}
         resultCount={results.length}
+        quality={quality}
         feedSource={`${window.location.host}/api`}
         ai={ai}
         onCheckAi={() => void checkAi(true)}
@@ -333,6 +346,7 @@ export function App() {
         prefs={reportPrefs}
         onPrefs={onReportPrefs}
         onOpenTreat={openTreat}
+        quality={quality}
       />
     );
   } else {
@@ -344,6 +358,7 @@ export function App() {
         asOf={asOf}
         clock={clock}
         signals={signals}
+        quality={quality}
         onSeek={seek}
         onOpenSignal={openSignal}
       />

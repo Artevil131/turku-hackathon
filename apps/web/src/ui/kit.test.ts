@@ -97,6 +97,7 @@ describe("kit", () => {
         meta,
         asOf: "2024-06-01",
         resultCount: 1234,
+        quality: { data: null, failed: true, key: "0:0" },
         feedSource: "localhost/api",
         ai: { available: false, model: null, checking: false },
         onCheckAi: () => {},
