@@ -71,6 +71,20 @@ export interface CoverageResult {
   /** First isolates of the unit and specimen in the window, per organism, most common first. */
   organisms: { organism: Organism; isolates: number; share: number }[];
   antibiotics: AntibioticCoverage[];
+  /**
+   * Every pair of antibiotics that suit the specimen, over all organisms: a
+   * pair covers an isolate if either antibiotic does (D-028). Most covering
+   * first.
+   */
+  combinations: CombinationCoverage[];
+}
+
+export interface CombinationCoverage {
+  antibiotics: [AntibioticCode, AntibioticCode];
+  share: number | null;
+  interval: [number, number] | null;
+  level: Level | null;
+  counts: Record<Level, Counts>;
 }
 
 const WARD_TYPE = new Map(WARDS.map((w) => [w.code, w.type]));
@@ -163,6 +177,43 @@ export function coverage(records: readonly IsolateRecord[], q: CoverageQuery): C
     };
   });
 
+  // A pair covers an isolate if either antibiotic does. Only isolates with a known result for both
+  // count: keeping "covered by the tested one" while dropping "missed by the tested one" would bias up.
+  const countPair = (list: readonly IsolateRecord[], a: AntibioticCode, b: AntibioticCode): Counts => {
+    let covered = 0;
+    let known = 0;
+    for (const r of list) {
+      const ea = effectiveResult(r, a);
+      const eb = effectiveResult(r, b);
+      if (ea.basis === "untested" || eb.basis === "untested") continue;
+      known++;
+      if (ea.result === "S" || eb.result === "S") covered++;
+    }
+    return { covered, known };
+  };
+  const codes = antibiotics.map((a) => a.antibiotic);
+  const combinations: CombinationCoverage[] = [];
+  for (let i = 0; i < codes.length; i++) {
+    for (let j = i + 1; j < codes.length; j++) {
+      const pair: [AntibioticCode, AntibioticCode] = [codes[i] as AntibioticCode, codes[j] as AntibioticCode];
+      const counts = {
+        unit: countPair(levels.unit, ...pair),
+        "ward type": countPair(levels["ward type"], ...pair),
+        hospital: countPair(levels.hospital, ...pair),
+      };
+      const level = (["unit", "ward type", "hospital"] as Level[]).find((l) => counts[l].known >= minTested) ?? null;
+      const c = level ? counts[level] : null;
+      combinations.push({
+        antibiotics: pair,
+        share: c ? c.covered / c.known : null,
+        interval: c ? wilson(c.covered, c.known) : null,
+        level,
+        counts,
+      });
+    }
+  }
+  combinations.sort((x, y) => (y.share ?? -1) - (x.share ?? -1));
+
   const byOrganism = new Map<Organism, number>();
   for (const r of unit) byOrganism.set(r.organism, (byOrganism.get(r.organism) ?? 0) + 1);
   return {
@@ -172,6 +223,7 @@ export function coverage(records: readonly IsolateRecord[], q: CoverageQuery): C
       .map(([organism, isolates]) => ({ organism, isolates, share: unit.length ? isolates / unit.length : 0 }))
       .sort((a, b) => b.isolates - a.isolates),
     antibiotics: antibiotics.sort((x, y) => (y.share ?? -1) - (x.share ?? -1)),
+    combinations,
   };
 }
 
@@ -248,4 +300,42 @@ export function suggest(result: CoverageResult, severity: Severity): Suggestion[
         (a.standing === "clears" ? (a.aware === b.aware ? 0 : a.aware === "Access" ? -1 : 1) : 0) ||
         (b.share ?? -1) - (a.share ?? -1),
     );
+}
+
+export interface CombinationSuggestion {
+  antibiotics: [AntibioticCode, AntibioticCode];
+  /** Access antibiotics in the pair (0 to 2). */
+  access: number;
+  standing: Standing;
+  coverage: CombinationCoverage;
+}
+
+/**
+ * Pairs worth considering when no single antibiotic clears the threshold
+ * (D-028): pairs whose 95 % interval clears it, then those whose estimate
+ * does, each with more Access antibiotics first, then by coverage. Empty
+ * when a single antibiotic already clears. Over all organisms, whatever the
+ * severity.
+ */
+export function suggestCombinations(result: CoverageResult, severity: Severity, limit = 5): CombinationSuggestion[] {
+  if (suggest(result, severity).some((s) => s.standing === "clears")) return [];
+  const threshold = THRESHOLDS[severity];
+  const rank: Record<Standing, number> = { clears: 0, borderline: 1, below: 2, "not assessable": 3 };
+  const untested = new Map(result.antibiotics.map((a) => [a.antibiotic, a.untested.reduce((s, u) => s + u.share, 0)]));
+  return result.combinations
+    .map((c): CombinationSuggestion => {
+      const standing: Standing =
+        c.share === null || c.interval === null || c.antibiotics.some((a) => (untested.get(a) ?? 0) > MAX_UNTESTED)
+          ? "not assessable"
+          : c.interval[0] >= threshold
+            ? "clears"
+            : c.share >= threshold
+              ? "borderline"
+              : "below";
+      const access = c.antibiotics.filter((a) => AWARE[a] === "Access").length;
+      return { antibiotics: c.antibiotics, access, standing, coverage: c };
+    })
+    .filter((c) => c.standing === "clears" || c.standing === "borderline")
+    .sort((a, b) => rank[a.standing] - rank[b.standing] || b.access - a.access || (b.coverage.share ?? -1) - (a.coverage.share ?? -1))
+    .slice(0, limit);
 }
