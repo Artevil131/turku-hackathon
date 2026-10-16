@@ -14,7 +14,19 @@ Rules for a module:
   environment, never hard-coded.
 - Has tests next to it.
 
-No language is chosen yet (DECISIONS.md). If the website and the iPhone
-app end up in different languages, a gear lives either behind a service
-the apps call or once per language with the same interface; that choice
-is the team's.
+Each module is a pnpm workspace package `@aei/<name>` exporting TypeScript
+source (D-004). A Rust gear, when one comes, sits behind the same
+interface or behind the API contract (D-006).
+
+| Module | Job |
+|---|---|
+| `domain/` | Types and code lists of the dataset |
+| `dataset/` | Load the CSVs into typed, joined records (Node) |
+| `replay/` | Replay clock and release index: the dataset as a live feed |
+| `contract/` | API and live-event contract, typed client |
+| `i18n/` | Finnish and English copy, dataset names |
+
+Not here yet, waiting for team decisions: the resistance counting method
+(CONTEXT.md questions 7–8), deviation detection (question 11) and the
+relation models (D-009). The web app draws those from labelled example
+data until then.
