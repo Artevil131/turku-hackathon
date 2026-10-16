@@ -1,10 +1,31 @@
 import type { en } from "./en.ts";
 
 export const fi: Record<keyof typeof en, string> = {
+  askSubmit: "Kysy",
+  askLoading: "Tulkitaan…",
+  askUnavailable: "Avustaja ei ole käytettävissä. Käytä rajauksia.",
+  askUnmatched: "Ei ymmärretty: {words}",
+  removeFilter: "Poista rajaus: {filter}",
+  clearQuestion: "Poista kysymyksen rajaukset",
+  askResults: "Kysymyksen tulokset",
+  dataLoading: "Ladataan rajattuja tietoja…",
+  dataLoadError: "Tietoja ei voitu ladata. Yritä uudelleen muuttamalla rajausta.",
+  noQueryRecords: "Rajauksiin ei osu isolaatteja.",
+  queryCountNote:
+    "Ensimmäinen isolaatti potilasta, mikrobia ja näytetyyppiä kohti rajatuissa tiedoissa. Ei vuosivertailua tai rajauksen ulkopuolisia tietoja.",
+  queryFindings: "{n} resistenttiä löydöstä rajauksessa",
+  explain: "Selitä",
+  hideExplanation: "Piilota selitys",
+  explainLoading: "Ladataan selitystä…",
+  explainError: "Selitystä ei voitu ladata.",
+  retry: "Yritä uudelleen",
+  templateMarker: "mallipohja",
+  releasedAlerts: "Infektioidentorjuntahälytykset",
+
   appName: "AEI",
   appTagline: "Antibioottien tehoindikaattori",
   askLabel: "Kysy aineistolta",
-  askPlaceholder: "Mikä tehoaa E. coliin virtsassa urologialla tässä kuussa?",
+  askPlaceholder: "esim. virtsan E. coli iäkkäillä miehillä, viimeiset 3 kuukautta",
   askPending: "Kysymykset omin sanoin ovat tulossa. Niihin vastaavaa mallia ei ole vielä valittu.",
   units: "Yksiköt",
   hospital: "Sairaala",

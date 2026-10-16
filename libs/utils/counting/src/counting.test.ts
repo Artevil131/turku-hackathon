@@ -1,6 +1,6 @@
 import type { IsolateRecord } from "@aei/domain";
 import { describe, expect, it } from "vitest";
-import { firstIsolates } from "./index.ts";
+import { firstIsolates, susceptibilityCounts } from "./index.ts";
 
 const iso = (isolateId: string, patientId: string, sampleDate: string, extra: Partial<IsolateRecord> = {}) => ({
   isolateId,
@@ -32,5 +32,41 @@ describe("firstIsolates", () => {
     const records = [iso("C9-1", "P1", "2026-01-01"), iso("C8-1", "P1", "2026-01-01")];
     expect(firstIsolates(records).map((r) => r.isolateId)).toEqual(["C8-1"]);
     expect(records.map((r) => r.isolateId)).toEqual(["C9-1", "C8-1"]);
+  });
+});
+
+describe("susceptibilityCounts", () => {
+  const record = (isolateId: string, patientId: string, sampleDate: string, extra: Partial<IsolateRecord> = {}): IsolateRecord => ({
+    cultureId: isolateId,
+    admissionDate: null,
+    ward: "ICU",
+    sex: "M",
+    ageYears: 75,
+    homeArea: "North",
+    phenotypes: [],
+    results: { AMP: "S" },
+    ...iso(isolateId, patientId, sampleDate, extra),
+  });
+  it("uses the existing first-isolate rule before counting tested S and R results", () => {
+    const records = [
+      record("i2", "p1", "2025-01-02", { results: { AMP: "R" } }),
+      record("i1", "p1", "2025-01-01"),
+      record("i3", "p2", "2025-01-02", { results: { AMP: "R" } }),
+      record("i4", "p3", "2025-01-02", { results: {} }),
+    ];
+    expect(susceptibilityCounts(records)).toEqual([
+      { organism: "Escherichia coli", specimen: "urine", antibiotic: "AMP", susceptible: 1, resistant: 1, n: 2 },
+    ]);
+    expect(records[0]?.isolateId).toBe("i2");
+  });
+  it("keeps organisms and specimens separate and handles empty selections", () => {
+    const counts = susceptibilityCounts([
+      record("i1", "p1", "2025-01-01"),
+      record("i2", "p1", "2025-01-02", { specimen: "blood" }),
+      record("i3", "p1", "2025-01-03", { organism: "Klebsiella pneumoniae" }),
+    ]);
+    expect(counts).toHaveLength(3);
+    expect(counts.every((c) => c.n === 1)).toBe(true);
+    expect(susceptibilityCounts([])).toEqual([]);
   });
 });

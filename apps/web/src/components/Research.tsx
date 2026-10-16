@@ -1,10 +1,14 @@
+import type { AeiClient, Alert, IsolateQuery } from "@aei/contract";
 import { type Organism, PHENOTYPES, type Phenotype, type Specimen, shortOrganism, WARDS, type WardCode } from "@aei/domain";
 import { antibioticName, formatDate, type Locale, phenotypeName, specimenName, t, wardName } from "@aei/i18n";
 import { useMemo } from "react";
+import { useQuestion } from "../ai.ts";
 import { EXAMPLE_DEVIATION, historyFor, organismsFor, stripsFor } from "../examples.ts";
 import type { Finding } from "../live.ts";
 import { nextUnits, useFlows } from "../relations.ts";
+import { AlertList } from "./AlertExplanation.tsx";
 import { AntibiogramGrid } from "./Analyzer.tsx";
+import { Ask, AskedResults } from "./Ask.tsx";
 import { Check, Flask, Open, Rise } from "./Icons.tsx";
 import { Network } from "./Network.tsx";
 import { Seg } from "./Treat.tsx";
@@ -29,6 +33,9 @@ export interface ResearchState {
 }
 
 interface Props {
+  client: AeiClient;
+  ai: boolean;
+  alerts: Alert[];
   locale: Locale;
   state: ResearchState;
   onChange: (patch: Partial<ResearchState>) => void;
@@ -43,7 +50,34 @@ interface Props {
 const SPECIMENS: Specimen[] = ["urine", "blood", "wound"];
 
 export function Research(props: Props) {
-  const { locale, state, onChange, findings, asOf, minIsolates } = props;
+  const { locale, state, onChange, asOf, minIsolates } = props;
+  const question = useQuestion(
+    props.client,
+    props.ai,
+    asOf,
+    {
+      ward: state.ward === "all" ? undefined : state.ward,
+      ...(state.tab === "antibiogram" || state.tab === "trends" ? { specimen: state.specimen, organism: state.organism ?? undefined } : {}),
+    },
+    (filters: IsolateQuery) => {
+      onChange({
+        ...("ward" in filters ? { ward: filters.ward ?? "all" } : {}),
+        ...(filters.specimen ? { specimen: filters.specimen } : {}),
+        ...("organism" in filters ? { organism: filters.organism ?? null } : {}),
+      });
+    },
+  );
+  const findings = question.active
+    ? question.records.flatMap((record) =>
+        record.phenotypes.map((phenotype) => ({
+          id: `${record.isolateId}:${phenotype}`,
+          phenotype,
+          record,
+          arrivedAt: record.sampleDate,
+          seen: props.findings.find((f) => f.id === `${record.isolateId}:${phenotype}`)?.seen ?? true,
+        })),
+      )
+    : props.findings;
   // The grid and trend views are per unit; "all units" falls back to the emergency department, the hub.
   const unit: WardCode = state.ward === "all" ? "ED" : state.ward;
   const perUnit = state.tab === "antibiogram" || state.tab === "trends";
@@ -52,7 +86,7 @@ export function Research(props: Props) {
     state.organism && organisms.some((o) => o.organism === state.organism) ? state.organism : (organisms[0]?.organism ?? null);
 
   const from = asOf ? shiftDays(asOf, -state.days) : null;
-  const inPeriod = useMemo(() => findings.filter((f) => !from || f.arrivedAt > from), [findings, from]);
+  const inPeriod = useMemo(() => findings.filter((f) => question.active || !from || f.arrivedAt > from), [findings, from, question.active]);
   const shown = inPeriod.filter(
     (f) =>
       (state.ward === "all" || f.record.ward === state.ward) &&
@@ -73,6 +107,7 @@ export function Research(props: Props) {
     <div className="section">
       <form className="context glass ply-1" onSubmit={(e) => e.preventDefault()} aria-label={t(locale, "filters")}>
         <h2 className="context-title">{t(locale, "filters")}</h2>
+        <Ask locale={locale} question={question} />
 
         <label className="field" htmlFor="research-unit">
           <span className="field-label">{t(locale, "unit")}</span>
@@ -106,13 +141,16 @@ export function Research(props: Props) {
                       aria-pressed={on}
                       onClick={() => onChange({ phenotypes: on ? state.phenotypes.filter((x) => x !== p) : [...state.phenotypes, p] })}
                     >
-                      {phenotypeName(p)} <span className="choice-count num">{counts.get(p)}</span>
+                      {phenotypeName(p)}{" "}
+                      <span className="choice-count num">
+                        {question.active && (question.loading || question.loadError) ? "–" : counts.get(p)}
+                      </span>
                     </button>
                   );
                 })}
               </div>
             </fieldset>
-            <fieldset className="field">
+            <fieldset className="field" disabled={question.active}>
               <legend className="field-label">{t(locale, "period")}</legend>
               <Seg
                 label={t(locale, "period")}
@@ -156,7 +194,7 @@ export function Research(props: Props) {
           </fieldset>
         ) : null}
 
-        {state.tab === "antibiogram" ? (
+        {!question.active && state.tab === "antibiogram" ? (
           <fieldset className="field">
             <legend className="field-label">{t(locale, "windowLabel")}</legend>
             <Seg
@@ -171,7 +209,7 @@ export function Research(props: Props) {
           </fieldset>
         ) : null}
 
-        {state.tab === "trends" ? (
+        {!question.active && state.tab === "trends" ? (
           <fieldset className="field">
             <legend className="field-label">{t(locale, "organism")}</legend>
             <div className="org-list">
@@ -201,12 +239,20 @@ export function Research(props: Props) {
         <header className="result-head">
           <div>
             <h1 className="result-title" id="research-title">
-              {titles[state.tab]}
+              {question.active && state.tab !== "signals" ? t(locale, "askResults") : titles[state.tab]}
             </h1>
             <p className="result-sub">
-              {state.tab === "signals" ? t(locale, "signalsSub", { n: shown.length, days: state.days }) : null}
+              {state.tab === "signals"
+                ? question.active
+                  ? question.loading
+                    ? t(locale, "dataLoading")
+                    : question.loadError
+                      ? t(locale, "dataLoadError")
+                      : t(locale, "queryFindings", { n: shown.length })
+                  : t(locale, "signalsSub", { n: shown.length, days: state.days })
+                : null}
               {state.tab === "relations" ? t(locale, "networkSub") : null}
-              {perUnit ? (
+              {perUnit && !question.active ? (
                 <>
                   {wardName(locale, unit)} · {specimenName(locale, state.specimen)}
                   {state.tab === "trends" && organism ? (
@@ -215,10 +261,12 @@ export function Research(props: Props) {
                       · <em>{organism}</em>
                     </>
                   ) : null}
-                  <span className="chip chip-example" title={t(locale, "exampleDataNote")}>
-                    <Flask />
-                    {t(locale, "exampleData")}
-                  </span>
+                  {!question.active ? (
+                    <span className="chip chip-example" title={t(locale, "exampleDataNote")}>
+                      <Flask />
+                      {t(locale, "exampleData")}
+                    </span>
+                  ) : null}
                 </>
               ) : null}
             </p>
@@ -242,8 +290,15 @@ export function Research(props: Props) {
 
         {state.tab === "signals" ? (
           <div className="signals">
-            <ExampleChange locale={locale} />
-            {shown.length === 0 ? (
+            {!question.active ? <ExampleChange locale={locale} /> : null}
+            <AlertList
+              client={props.client}
+              alerts={props.alerts.filter((a) => state.ward === "all" || a.ward === state.ward)}
+              locale={locale}
+            />
+            {question.active && question.loading ? <p role="status">{t(locale, "dataLoading")}</p> : null}
+            {question.active && question.loadError ? <p role="alert">{t(locale, "dataLoadError")}</p> : null}
+            {question.active && (question.loading || question.loadError) ? null : shown.length === 0 ? (
               <p className="empty">{t(locale, "noSignals")}</p>
             ) : (
               <table className="signal-table">
@@ -279,7 +334,16 @@ export function Research(props: Props) {
           </div>
         ) : null}
 
-        {state.tab === "antibiogram" ? (
+        {question.active && state.tab !== "signals" ? (
+          <AskedResults
+            locale={locale}
+            records={question.records}
+            loading={question.loading}
+            error={question.loadError}
+            minIsolates={minIsolates}
+          />
+        ) : null}
+        {!question.active && state.tab === "antibiogram" ? (
           <AntibiogramGrid
             locale={locale}
             ward={unit}
@@ -291,11 +355,11 @@ export function Research(props: Props) {
           />
         ) : null}
 
-        {state.tab === "trends" ? (
+        {!question.active && state.tab === "trends" ? (
           <Trends locale={locale} unit={unit} specimen={state.specimen} organism={organism} asOf={asOf} minIsolates={minIsolates} />
         ) : null}
 
-        {state.tab === "relations" ? (
+        {!question.active && state.tab === "relations" ? (
           <Network
             locale={locale}
             findings={findings}
