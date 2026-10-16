@@ -18,3 +18,4 @@ Code, Opus 5.5, operated by Artem).
 | 01:22 | 0020 county forecasts (method 24: persistence, seasonal naive, Poisson GLM) | plan start | Sonnet 5.5 | | plan then implement, one agent |
 | 01:25 | plans 0012, 0015 | committed | Fable 5.1 | 15 min | CUSUM and county plans not started by Fable (scope change); Sonnet writes them |
 | 01:26 | plans 0018 (BOCPD, m13), 0019 (exposure, m22) | start | Fable 5.1 | | the two Fable foundations Artem assigned besides 8 and 21 |
+| 01:32 | 0020 | plan committed | Sonnet 5.5 | 10 min | tuning targets 2024-01..2024-09, 198 cells, one-SE rule |
