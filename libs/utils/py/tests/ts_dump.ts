@@ -11,6 +11,7 @@ import { wilson } from "../../coverage/src/index.ts";
 import { joinIsolates, loadDataset } from "../../dataset/src/index.ts";
 import {
   cochranArmitageRising,
+  emptyRun,
   episodes,
   fisherMidPGreater,
   hasAcquiredResistance,
@@ -229,6 +230,7 @@ const out = {
     profileExcessSpecimen: profileExcess(records, { windowDays: 28, baselineDays: 365, alpha: 0.01, minObserved: 3, sameSpecimen: true }),
     phenotypeExcess: phenotypeExcess(records, PHENOTYPES, { windowDays: 28, baselineDays: 365, alpha: 0.01, minObserved: 2 }),
     samplingDrop: samplingDrop(data.cultures, { windowDays: 7, baselineDays: 56, alpha: 0.01 }),
+    emptyRun: emptyRun(data.cultures, { baselineDays: 56, alpha: 0.05 }),
     resistanceShift: resistanceShift(records, SURVEILLANCE_PAIRS, {
       windowDays: 28,
       baselineDays: 336,

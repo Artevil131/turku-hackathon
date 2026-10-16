@@ -18,7 +18,14 @@ import { cochranArmitageRising, fisherMidPGreater, poissonLower, poissonUpper } 
 // Thresholds are parameters; which detectors and thresholds the tool uses
 // is decided from experiments/0002.
 
-export type DetectorName = "profile-rule" | "profile-excess" | "phenotype-excess" | "sampling-drop" | "resistance-shift" | "rising-trend";
+export type DetectorName =
+  | "profile-rule"
+  | "profile-excess"
+  | "phenotype-excess"
+  | "sampling-drop"
+  | "empty-run"
+  | "resistance-shift"
+  | "rising-trend";
 
 export interface Signal {
   detector: DetectorName;
@@ -271,6 +278,51 @@ export function samplingDrop(cultures: readonly Culture[], o: DropOptions): Sign
       const expected = (baseline / o.baselineDays) * o.windowDays;
       const p = poissonLower(observed, expected);
       if (p < o.alpha) signals.push({ detector: "sampling-drop", key: ward, date: addDays(start, t), ward, observed, expected, p });
+    }
+  }
+  return signals;
+}
+
+// ---------- 4b. empty run ----------
+
+export interface EmptyRunOptions {
+  baselineDays: number;
+  alpha: number;
+}
+
+/**
+ * A run of consecutive days with no cultures from a unit (D-031): with
+ * lambda the unit's mean daily cultures over the `baselineDays` before the
+ * run began, L empty days in a row have probability exp(-lambda·L) under
+ * Poisson sampling; signal on each empty day where that is below alpha.
+ * `observed` is the run length in days, `expected` lambda per day.
+ */
+export function emptyRun(cultures: readonly Culture[], o: EmptyRunOptions): Signal[] {
+  if (cultures.length === 0) return [];
+  const dates = cultures.map((c) => c.sampleDate).sort();
+  const start = dates[0] as IsoDate;
+  const nDays = daysBetween(start, dates.at(-1) as IsoDate) + 1;
+  const counts = new Map<WardCode, number[]>();
+  for (const c of cultures) {
+    const arr = counts.get(c.ward) ?? new Array<number>(nDays).fill(0);
+    const i = daysBetween(start, c.sampleDate);
+    arr[i] = (arr[i] ?? 0) + 1;
+    counts.set(c.ward, arr);
+  }
+  const signals: Signal[] = [];
+  for (const [ward, arr] of counts) {
+    const prefix = [0];
+    for (const n of arr) prefix.push((prefix.at(-1) as number) + n);
+    let run = 0;
+    for (let t = 0; t < nDays; t++) {
+      run = arr[t] === 0 ? run + 1 : 0;
+      if (run === 0) continue;
+      const firstEmpty = t - run + 1;
+      if (firstEmpty - o.baselineDays < 0) continue;
+      const lambda = ((prefix[firstEmpty] as number) - (prefix[firstEmpty - o.baselineDays] as number)) / o.baselineDays;
+      const p = Math.exp(-lambda * run);
+      if (p < o.alpha)
+        signals.push({ detector: "empty-run", key: ward, date: addDays(start, t), ward, observed: run, expected: lambda, p });
     }
   }
   return signals;

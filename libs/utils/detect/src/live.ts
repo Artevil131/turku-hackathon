@@ -1,6 +1,6 @@
 import type { Culture, IsoDate, IsolateRecord } from "@aei/domain";
 import { addDays } from "@aei/replay";
-import { episodes, type Pair, phenotypeExcess, profileExcess, risingTrend, type Signal, samplingDrop } from "./detectors.ts";
+import { emptyRun, episodes, type Pair, phenotypeExcess, profileExcess, risingTrend, type Signal, samplingDrop } from "./detectors.ts";
 
 // The detectors and thresholds the tool runs live (D-020): the best setting
 // of each detector in experiments/0002, provisional until the team reviews
@@ -37,6 +37,7 @@ export const LIVE_SETTINGS = {
   profileExcess: { windowDays: 28, baselineDays: 365, alpha: 0.0001, minObserved: 3, sameSpecimen: true },
   phenotypeExcess: { windowDays: 28, baselineDays: 365, alpha: 0.001, minObserved: 2 },
   samplingDrop: { windowDays: 7, baselineDays: 56, alpha: 0.0001 },
+  emptyRun: { baselineDays: 56, alpha: 0.001 },
   risingTrend: { binDays: 28, minBins: 13, alpha: 0.001 },
 } as const;
 
@@ -51,6 +52,7 @@ export function liveSignals(records: readonly IsolateRecord[], cultures: readonl
   return [
     ...clusters,
     ...samplingDrop(cultures, LIVE_SETTINGS.samplingDrop),
+    ...emptyRun(cultures, LIVE_SETTINGS.emptyRun),
     ...risingTrend(records, SURVEILLANCE_PAIRS, { ...LIVE_SETTINGS.risingTrend, exclude: inDetectedCluster(clusters) }),
   ];
 }

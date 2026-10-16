@@ -126,6 +126,7 @@ def py(dataset) -> dict:
             ),
             "phenotypeExcess": signals(detect.phenotype_excess(records, PHENOTYPES, window_days=28, baseline_days=365, alpha=0.01, min_observed=2)),
             "samplingDrop": signals(detect.sampling_drop(cultures, window_days=7, baseline_days=56, alpha=0.01)),
+            "emptyRun": signals(detect.empty_run(cultures, baseline_days=56, alpha=0.05)),
             "resistanceShift": signals(
                 detect.resistance_shift(records, SURVEILLANCE_PAIRS, window_days=28, baseline_days=336, step_days=7, alpha=0.01, min_resistant=3)
             ),
@@ -184,6 +185,7 @@ def test_profiles(py, ts):
         "profileExcessSpecimen",
         "phenotypeExcess",
         "samplingDrop",
+        "emptyRun",
         "resistanceShift",
         "risingTrend",
         "risingTrendBySetting",

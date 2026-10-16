@@ -91,3 +91,10 @@ And a live feed's newest days are incomplete until results arrive, so in
 production the rule should run on days whose results are complete. If
 adopted, it should share the 7-day rule's alert key so one gap raises one
 alert, not two.
+
+## Rule moved to the shared code (2026-10-16, after close)
+
+The run rule now lives in `aei.detect.empty_run` (Python) and `emptyRun`
+in `@aei/detect` (TypeScript, in the live set, D-031), with a parity
+test; `analysis.py` calls the shared function. Rerun after the move: every
+table identical, only the run time differs.

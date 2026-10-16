@@ -5,16 +5,14 @@ Run from the repository root:  uv run python experiments/0009-empty-day-runs/ana
 
 from __future__ import annotations
 
-import math
+import dataclasses
 import time
 from pathlib import Path
-
-import numpy as np
 
 from aei.coverage import wilson
 from aei.dataset import Culture, load_records
 from aei.dates import add_days, days_between
-from aei.detect import LIVE_SETTINGS, Signal, episodes, sampling_drop
+from aei.detect import LIVE_SETTINGS, Signal, empty_run, episodes, sampling_drop
 from aei.domain import UNITS
 from aei.inject import CLUSTER_AVOID, GAP_AVOID, _pick_int, clones, draw_start
 from aei.jscompat import mulberry32
@@ -29,33 +27,9 @@ SIZE = {"ED": "large", "PHC-N": "large", "PHC-S": "large", "MED-A": "medium", "S
 
 
 def empty_runs(cultures: list[Culture], alpha: float, baseline_days: int = BASELINE_DAYS) -> list[Signal]:
-    """Per unit and empty day t: L consecutive empty days ending at t, lambda the mean daily cultures over the
-    `baseline_days` before the run began; signal when exp(-lambda * L) < alpha."""
-    if not cultures:
-        return []
-    dates = sorted(c.sample_date for c in cultures)
-    start, end = dates[0], dates[-1]
-    n = days_between(start, end) + 1
-    out: list[Signal] = []
-    by_unit: dict[str, np.ndarray] = {}
-    for c in cultures:
-        arr = by_unit.setdefault(c.ward, np.zeros(n, dtype=np.int64))
-        arr[days_between(start, c.sample_date)] += 1
-    for unit, arr in by_unit.items():
-        prefix = np.concatenate([[0], np.cumsum(arr)])
-        run = 0
-        for t in range(n):
-            run = run + 1 if arr[t] == 0 else 0
-            if run == 0:
-                continue
-            first_empty = t - run + 1
-            if first_empty - baseline_days < 0:
-                continue
-            lam = (prefix[first_empty] - prefix[first_empty - baseline_days]) / baseline_days
-            p = math.exp(-lam * run)
-            if p < alpha:
-                out.append(Signal("sampling-drop", f"run|{unit}", add_days(start, t), unit, run, expected=lam, p=p))
-    return out
+    """The run rule as tested here, now `aei.detect.empty_run` (D-031); keys prefixed so its episodes stay
+    apart from the 7-day rule's when the two are counted together."""
+    return [dataclasses.replace(s, key=f"run|{s.key}") for s in empty_run(cultures, baseline_days=baseline_days, alpha=alpha)]
 
 
 t0 = time.time()

@@ -327,6 +327,42 @@ def sampling_drop(cultures: Sequence[Culture], *, window_days: int, baseline_day
     return signals
 
 
+# ---------- 4b. empty run ----------
+
+
+def empty_run(cultures: Sequence[Culture], *, baseline_days: int, alpha: float) -> list[Signal]:
+    """A run of days with no cultures from a unit (D-031): lambda is the unit's mean daily cultures over the
+    `baseline_days` before the run began; signal on each empty day where exp(-lambda * run) < alpha. `observed` is
+    the run length in days, `expected` lambda per day."""
+    if not cultures:
+        return []
+    dates = sorted(c.sample_date for c in cultures)
+    start = dates[0]
+    n_days = days_between(start, dates[-1]) + 1
+    counts: dict[str, np.ndarray] = {}
+    for c in cultures:
+        arr = counts.get(c.ward)
+        if arr is None:
+            arr = counts[c.ward] = np.zeros(n_days, dtype=np.int64)
+        arr[days_between(start, c.sample_date)] += 1
+    signals = []
+    for ward, arr in counts.items():
+        prefix = np.concatenate([[0], np.cumsum(arr)])
+        run = 0
+        for t in range(n_days):
+            run = run + 1 if arr[t] == 0 else 0
+            if run == 0:
+                continue
+            first_empty = t - run + 1
+            if first_empty - baseline_days < 0:
+                continue
+            lam = float(prefix[first_empty] - prefix[first_empty - baseline_days]) / baseline_days
+            p = math.exp(-lam * run)
+            if p < alpha:
+                signals.append(Signal("empty-run", ward, add_days(start, t), ward, run, expected=lam, p=p))
+    return signals
+
+
 # ---------- 5. resistance shift ----------
 
 
@@ -514,6 +550,7 @@ LIVE_SETTINGS: dict[str, dict] = {
     "profile_excess": {"window_days": 28, "baseline_days": 365, "alpha": 0.0001, "min_observed": 3, "same_specimen": True},
     "phenotype_excess": {"window_days": 28, "baseline_days": 365, "alpha": 0.001, "min_observed": 2},
     "sampling_drop": {"window_days": 7, "baseline_days": 56, "alpha": 0.0001},
+    "empty_run": {"baseline_days": 56, "alpha": 0.001},
     "rising_trend": {"bin_days": 28, "min_bins": 13, "alpha": 0.001},
 }
 
@@ -565,5 +602,6 @@ def live_signals(records: Sequence[IsolateRecord], cultures: Sequence[Culture]) 
     return [
         *clusters,
         *sampling_drop(cultures, **LIVE_SETTINGS["sampling_drop"]),
+        *empty_run(cultures, **LIVE_SETTINGS["empty_run"]),
         *rising_trend(records, SURVEILLANCE_PAIRS, **LIVE_SETTINGS["rising_trend"], exclude=in_detected_cluster(clusters)),
     ]

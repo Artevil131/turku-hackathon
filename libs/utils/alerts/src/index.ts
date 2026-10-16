@@ -132,22 +132,34 @@ export function carrierAlerts(arrivals: readonly CarrierArrival[], window?: Date
     .map((a) => ({ kind: "carrier", id: `carrier:${a.cultureId}:${a.phenotype}`, ...a }));
 }
 
-/** One alert per signal episode (signals for the same detector and key within 28 days), on the episode's first day. */
+/**
+ * One alert per signal episode (signals for the same detector and key within
+ * 28 days), on the episode's first day. A 7-day sampling-drop episode that
+ * starts within 14 days after an empty-run alert for the same unit is the
+ * same gap seen later and raises no second alert (D-031).
+ */
 export function detectorAlerts(signals: readonly Signal[]): DetectorAlert[] {
-  return episodes(signals).map(({ first: s }) => ({
-    kind: "detector",
-    id: `detector:${s.detector}:${s.key}:${s.date}`,
-    date: s.date,
-    ward: s.ward,
-    detector: s.detector,
-    ...(s.organism ? { organism: s.organism } : {}),
-    ...(s.antibiotic ? { antibiotic: s.antibiotic } : {}),
-    ...(s.phenotype ? { phenotype: s.phenotype } : {}),
-    ...(s.profile ? { profile: s.profile } : {}),
-    observed: s.observed,
-    ...(s.expected !== undefined ? { expected: s.expected } : {}),
-    ...(s.p !== undefined ? { p: s.p } : {}),
-  }));
+  const eps = episodes(signals);
+  const runs = eps.filter((e) => e.detector === "empty-run");
+  const sameGap = (e: (typeof eps)[number]) =>
+    e.detector === "sampling-drop" &&
+    runs.some((r) => r.first.ward === e.first.ward && r.first.date <= e.first.date && daysBetween(r.first.date, e.first.date) <= 14);
+  return eps
+    .filter((e) => !sameGap(e))
+    .map(({ first: s }) => ({
+      kind: "detector",
+      id: `detector:${s.detector}:${s.key}:${s.date}`,
+      date: s.date,
+      ward: s.ward,
+      detector: s.detector,
+      ...(s.organism ? { organism: s.organism } : {}),
+      ...(s.antibiotic ? { antibiotic: s.antibiotic } : {}),
+      ...(s.phenotype ? { phenotype: s.phenotype } : {}),
+      ...(s.profile ? { profile: s.profile } : {}),
+      observed: s.observed,
+      ...(s.expected !== undefined ? { expected: s.expected } : {}),
+      ...(s.p !== undefined ? { p: s.p } : {}),
+    }));
 }
 
 /**

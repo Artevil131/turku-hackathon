@@ -89,3 +89,24 @@ describe("newInUnitAlerts", () => {
     ]);
   });
 });
+
+describe("gap alerts", () => {
+  it("raises one alert for a gap seen first by the empty-run rule and later by the 7-day rule", () => {
+    const sig = (detector: "empty-run" | "sampling-drop", date: string, ward: "ICU" | "GER" = "ICU") => ({
+      detector,
+      key: ward,
+      date,
+      ward,
+      observed: 3,
+    });
+    const alerts = detectorAlerts([
+      sig("empty-run", "2025-05-14"),
+      sig("sampling-drop", "2025-05-17"),
+      sig("sampling-drop", "2025-05-17", "GER"),
+    ]);
+    expect(alerts.map((a) => [a.detector, a.ward])).toEqual([
+      ["empty-run", "ICU"],
+      ["sampling-drop", "GER"],
+    ]);
+  });
+});

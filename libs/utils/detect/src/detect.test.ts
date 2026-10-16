@@ -3,6 +3,7 @@ import { addDays } from "@aei/replay";
 import { describe, expect, it } from "vitest";
 import {
   cochranArmitageRising,
+  emptyRun,
   episodes,
   fisherMidPGreater,
   normalUpper,
@@ -128,5 +129,36 @@ describe("risingTrend", () => {
     expect(inpatient.length).toBeGreaterThan(0);
     expect(inpatient[0]?.key).toBe("Escherichia coli|CIP|all|in");
     expect(outpatient).toEqual([]);
+  });
+});
+
+describe("emptyRun", () => {
+  it("signals once the run of empty days is improbable for the unit's volume", () => {
+    const cultures: Culture[] = [];
+    for (let d = 0; d < 120; d++) {
+      if (d >= 90 && d < 95) continue; // five empty days
+      for (let i = 0; i < 2; i++) {
+        cultures.push({
+          cultureId: `C${d}-${i}`,
+          patientId: `P${d}-${i}`,
+          ageYears: 50,
+          sampleDate: addDays("2025-10-01", d),
+          isoYear: 2025,
+          isoWeek: 1,
+          ward: "ICU",
+          wardType: "in",
+          admissionDate: null,
+          specimen: "urine",
+          result: "negative",
+          nIsolates: 0,
+        });
+      }
+    }
+    // 2 a day: exp(-2·3) = 0.0025, exp(-2·4) = 0.00034 < 0.001, so the fourth empty day signals.
+    const signals = emptyRun(cultures, { baselineDays: 56, alpha: 0.001 });
+    expect(signals.map((s) => [s.date, s.observed])).toEqual([
+      [addDays("2025-10-01", 93), 4],
+      [addDays("2025-10-01", 94), 5],
+    ]);
   });
 });
