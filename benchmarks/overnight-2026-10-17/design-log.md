@@ -34,3 +34,5 @@ Screenshots come from headless Chrome through
 | 01:25 | orchestrator (Opus 5.5) | #intro route mount point (full screen, no chrome). Started (Sonnet 5.5): hospital network panel; pitch intro (terraced contour surface) |
 | 01:26 | builder (Sonnet 5.5) | Finished signal feed: incidents grouped, sentinels pinned, unit/kind/phenotype chips with counts in the URL, one-click card shows the isolates behind the alert (U2 = 1), first step as a labelled template |
 | 01:26 | orchestrator (Opus 5.5) | Verified feed at 1280 in the browser. The API was restarted by an agent again at 01:25; the agents' park date is now the default 2025-05-12 |
+| 01:26 | builder (Sonnet 5.5) | Started: home page (what changed since yesterday, role entries, zero-input doctor entry) |
+| 01:29 | builder (Sonnet 5.5) | Finished hospital network: flow tubes, alert-lit units with text badges, downstream share of patient flow (labelled not exposure), trail layer toggle, focus card. Phone legibility of in-SVG text left for the UX review |
