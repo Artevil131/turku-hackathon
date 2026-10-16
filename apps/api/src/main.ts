@@ -11,7 +11,7 @@ import {
   type RelationsResponse,
   ROUTES,
 } from "@aei/contract";
-import { coverage } from "@aei/coverage";
+import { coverage, suggest } from "@aei/coverage";
 import { joinIsolates, loadDataset } from "@aei/dataset";
 import { ANTIBIOTICS, type IsolateRecord, ORGANISMS, SPECIMENS, type Specimen, WARDS, type WardCode } from "@aei/domain";
 import { phenotypeName, specimenName, wardName } from "@aei/i18n";
@@ -188,6 +188,8 @@ export const server = createServer(async (req, res) => {
       const specimen = url.searchParams.get("specimen");
       const sex = url.searchParams.get("sex");
       const windowDays = url.searchParams.get("windowDays");
+      const severity = url.searchParams.get("severity") ?? "mild";
+      if (severity !== "mild" && severity !== "severe") return send(res, 400, { error: "severity must be mild or severe" });
       if (!meta.wards.some((w) => w.code === ward)) return send(res, 400, { error: "ward is required and must be a ward code" });
       if (!meta.specimens.some((x) => x.code === specimen)) return send(res, 400, { error: "specimen is required" });
       if (sex !== null && sex !== "F" && sex !== "M") return send(res, 400, { error: "sex must be F or M" });
@@ -203,7 +205,7 @@ export const server = createServer(async (req, res) => {
         ...(sex ? { sex } : {}),
         ...(days ? { windowDays: days } : {}),
       });
-      return send(res, 200, { asOf, coverage: result });
+      return send(res, 200, { asOf, severity, coverage: result, suggestions: suggest(result, severity) });
     }
     if (url.pathname === ROUTES.meta) return send(res, 200, meta);
     if (url.pathname === ROUTES.clock && req.method === "GET") return send(res, 200, clock.state());
