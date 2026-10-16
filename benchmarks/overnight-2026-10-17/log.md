@@ -23,3 +23,4 @@ Code, Opus 5.5, operated by Artem).
 | 01:42 | 0020 | result committed | Sonnet 5.5 | 19 min agent, 2.3 s CPU | chosen on 2024-01..09: 24-month rolling mean, pooled NB width; pooled log skill +0.402 (0.309–0.482), MAE skill +0.144 (0.063–0.213) vs persistence; reproduces; Fable review queued (beats baseline) |
 | 01:42 | 0012 discounted Beta-binomial (m1) | implement start | Sonnet 5.5 | | plan by Fable (committed) |
 | 01:42 | 0013 Dirichlet-multinomial × Beta, WISCA (m3) | plan start | Sonnet 5.5 | | plan then implement |
+| 01:43 | plans 0018, 0019 | committed | Fable 5.1 | 14 min | 0019 treats flow-partner injections as a positive control only (circular) |
