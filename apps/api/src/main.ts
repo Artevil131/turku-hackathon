@@ -11,8 +11,9 @@ import {
   type RelationsResponse,
   ROUTES,
 } from "@aei/contract";
+import { coverage } from "@aei/coverage";
 import { joinIsolates, loadDataset } from "@aei/dataset";
-import { ANTIBIOTICS, type IsolateRecord, ORGANISMS, SPECIMENS, WARDS } from "@aei/domain";
+import { ANTIBIOTICS, type IsolateRecord, ORGANISMS, SPECIMENS, type Specimen, WARDS, type WardCode } from "@aei/domain";
 import { phenotypeName, specimenName, wardName } from "@aei/i18n";
 import { countFlows, patientMoves, phenotypeTrails, trailLinks } from "@aei/relations";
 import { addDays, createReleaseIndex, createReplayClock } from "@aei/replay";
@@ -181,6 +182,28 @@ export const server = createServer(async (req, res) => {
         explanations.set(key, explanation);
       }
       return send(res, 200, explanation);
+    }
+    if (url.pathname === ROUTES.coverage) {
+      const ward = url.searchParams.get("ward");
+      const specimen = url.searchParams.get("specimen");
+      const sex = url.searchParams.get("sex");
+      const windowDays = url.searchParams.get("windowDays");
+      if (!meta.wards.some((w) => w.code === ward)) return send(res, 400, { error: "ward is required and must be a ward code" });
+      if (!meta.specimens.some((x) => x.code === specimen)) return send(res, 400, { error: "specimen is required" });
+      if (sex !== null && sex !== "F" && sex !== "M") return send(res, 400, { error: "sex must be F or M" });
+      const days = windowDays === null ? undefined : Number(windowDays);
+      if (days !== undefined && (!Number.isInteger(days) || days < 1))
+        return send(res, 400, { error: "windowDays must be a positive integer" });
+      const asOf = clock.state().asOf;
+      // Only released records, so nothing after the replay date leaks in.
+      const result = coverage(released.upTo(asOf), {
+        asOf,
+        ward: ward as WardCode,
+        specimen: specimen as Specimen,
+        ...(sex ? { sex } : {}),
+        ...(days ? { windowDays: days } : {}),
+      });
+      return send(res, 200, { asOf, coverage: result });
     }
     if (url.pathname === ROUTES.meta) return send(res, 200, meta);
     if (url.pathname === ROUTES.clock && req.method === "GET") return send(res, 200, clock.state());

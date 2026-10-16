@@ -81,7 +81,8 @@ describe("alertExplainInput for every kind", () => {
 
   it("fills a detector template whose every slot has a fact", () => {
     const input = alertExplainInput(detector({}), "en", names);
-    expect(input.facts).toMatchObject({ observed: 9, expected: 2.3, p: "< 0.001", ward: "Ward URO" });
+    expect(input.facts).toMatchObject({ observed: 9, expected: 2.3, ward: "Ward URO" });
+    expect(input.facts).not.toHaveProperty("p");
     const text = fillSlots(input.fallback, input.facts, "en");
     expect(text).toContain("9 patients in Ward URO");
     expect(text).not.toMatch(/[{}]/);

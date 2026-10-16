@@ -1,5 +1,6 @@
 import type { Alert } from "@aei/alerts";
 import type { AgeGroup } from "@aei/ask";
+import type { CoverageResult, CoverageQuery as GearCoverageQuery } from "@aei/coverage";
 import type { Antibiotic, IsoDate, IsolateRecord, Organism, Sex, Specimen, Ward, WardCode } from "@aei/domain";
 import type { Flow, TrailLink } from "@aei/relations";
 import type { ClockState } from "@aei/replay";
@@ -11,6 +12,7 @@ import type { ClockState } from "@aei/replay";
 export const ROUTES = {
   ask: "/api/ask",
   explain: "/api/explain",
+  coverage: "/api/coverage",
   meta: "/api/meta",
   clock: "/api/clock",
   isolates: "/api/isolates",
@@ -48,6 +50,16 @@ export interface IsolateQuery {
   sex?: Sex;
   ageMin?: number;
   ageMax?: number;
+}
+
+export type { AntibioticCoverage, Counts, CoverageResult, Level } from "@aei/coverage";
+
+/** The doctor's coverage list (D-023). The server sets the as-of date from its clock. */
+export type CoverageQuery = Omit<GearCoverageQuery, "asOf" | "minTested">;
+
+export interface CoverageResponse {
+  asOf: IsoDate;
+  coverage: CoverageResult;
 }
 
 export interface AskResponse {
@@ -129,6 +141,7 @@ export interface AeiClientOptions {
 export interface AeiClient {
   ask(text: string, lang: "en" | "fi"): Promise<AskResponse>;
   explain(id: string, lang: "en" | "fi"): Promise<ExplainResponse>;
+  coverage(query: CoverageQuery): Promise<CoverageResponse>;
   meta(): Promise<Meta>;
   clock(): Promise<ClockState>;
   command(command: ClockCommand): Promise<ClockState>;
@@ -167,6 +180,7 @@ export function createAeiClient(options: AeiClientOptions): AeiClient {
         body: JSON.stringify({ text, lang }),
       }),
     explain: (id, lang) => json<ExplainResponse>(withQuery(ROUTES.explain, { id, lang })),
+    coverage: (query) => json<CoverageResponse>(withQuery(ROUTES.coverage, query)),
     meta: () => json<Meta>(ROUTES.meta),
     clock: () => json<ClockState>(ROUTES.clock),
     command: (command) =>

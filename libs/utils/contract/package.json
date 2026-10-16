@@ -12,6 +12,7 @@
   "dependencies": {
     "@aei/alerts": "workspace:*",
     "@aei/ask": "workspace:*",
+    "@aei/coverage": "workspace:*",
     "@aei/domain": "workspace:*",
     "@aei/relations": "workspace:*",
     "@aei/replay": "workspace:*"

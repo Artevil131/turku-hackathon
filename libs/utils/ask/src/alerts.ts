@@ -53,7 +53,8 @@ function detector(alert: DetectorAlert, lang: Lang, names: AlertNames): ExplainI
     observed: trend ? `${Math.round(alert.observed * 100)} %` : alert.observed,
   };
   if (alert.expected !== undefined) facts.expected = Math.round(alert.expected * 10) / 10;
-  if (alert.p !== undefined) facts.p = alert.p < 0.001 ? "< 0.001" : alert.p.toFixed(3);
+  // No p-value: a small model reads it as a ratio ("exceeding by a factor of < 0.001",
+  // experiments/0003), and a doctor needs observed against expected, not p.
   if (alert.organism) facts.organism = names.organism(alert.organism);
   if (alert.phenotype) facts.phenotype = names.phenotype(alert.phenotype);
   if (alert.antibiotic) facts.antibiotic = names.antibiotic?.(alert.antibiotic) ?? alert.antibiotic;

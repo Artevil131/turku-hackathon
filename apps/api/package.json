@@ -12,6 +12,7 @@
     "@aei/alerts": "workspace:*",
     "@aei/ask": "workspace:*",
     "@aei/contract": "workspace:*",
+    "@aei/coverage": "workspace:*",
     "@aei/dataset": "workspace:*",
     "@aei/domain": "workspace:*",
     "@aei/i18n": "workspace:*",

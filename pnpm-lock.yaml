@@ -32,6 +32,9 @@ importers:
       '@aei/contract':
         specifier: workspace:*
         version: link:../../libs/utils/contract
+      '@aei/coverage':
+        specifier: workspace:*
+        version: link:../../libs/utils/coverage
       '@aei/dataset':
         specifier: workspace:*
         version: link:../../libs/utils/dataset
@@ -117,6 +120,9 @@ importers:
       '@aei/ask':
         specifier: workspace:*
         version: link:../ask
+      '@aei/coverage':
+        specifier: workspace:*
+        version: link:../coverage
       '@aei/domain':
         specifier: workspace:*
         version: link:../domain
