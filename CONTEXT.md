@@ -51,6 +51,23 @@ So the problem we are solving is not "chart the data", but: how does the
 right resistance information reach the right clinician, at the moment of
 the decision, in a form they trust and can act on?
 
+## How it is judged
+
+Four criteria, weighted equally:
+
+| Criterion                                                                  | Weight |
+|----------------------------------------------------------------------------|--------|
+| Demonstrated understanding of the challenge                                | 25%    |
+| Overall suitability of the solution to the challenge description and insight | 25%  |
+| Usability of the solution                                                  | 25%    |
+| The solution can detect deviations and anomalies in the data               | 25%    |
+
+The last criterion is not in the challenge text, and it is worth as much
+as each of the others. Monitoring alone scores at most three quarters: the
+tool must also notice when something changes or looks wrong and bring it
+to the user's attention. What counts as a deviation or an anomaly, and how
+it is detected, is not decided (see the questions below).
+
 ## What we are given
 
 A fully synthetic microbiology laboratory dataset
@@ -124,11 +141,21 @@ one we want the judges' view on before we pick an approach.
     laboratory information system, a daily export, something else?
 11. How fresh is fresh enough: hourly, daily?
 
+**Deviations and anomalies**
+
+12. Which deviations matter most: resistance rising in a ward, a cluster
+    or outbreak of one organism, an unusual resistance pattern in a single
+    isolate, a ward differing from the rest of the hospital, or data
+    problems (missing results, implausible values, a sudden drop in
+    sampling)?
+13. Who should be told about a deviation, and how: shown in the tool, or
+    pushed as an alert to the ward or the infection control team?
+14. Does the synthetic dataset contain planted deviations we are expected
+    to find?
+
 **Judging**
 
-12. What weighs most in the judging: clinical usefulness, usability,
-    technical depth, novelty, path to real deployment?
-13. Are AI or language-model components welcome, and under what
+15. Are AI or language-model components welcome, and under what
     constraints on data (even synthetic)?
 
 ## Glossary
