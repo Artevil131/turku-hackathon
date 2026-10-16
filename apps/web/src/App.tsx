@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { aiStatus, forgetAiStatus } from "./ai/index.ts";
 import type { FeedCommand, FeedMeta } from "./feed/types.ts";
 import { useFeed } from "./feed/useFeed.ts";
@@ -59,6 +59,9 @@ function validTreatPatch(meta: FeedMeta, patch: Partial<TreatPrefs>): Partial<Tr
   return out;
 }
 
+/** Whether a language model sits behind /llm (vite.config.ts); without one the app does not probe for it. */
+const LLM_PROXY = typeof __AEI_LLM__ !== "undefined" && __AEI_LLM__;
+
 export function App() {
   const feed = useFeed();
   const { meta, clock, results, asOf, status, generation, lastArrival, control: feedControl } = feed;
@@ -86,6 +89,7 @@ export function App() {
   const mainRef = useRef<HTMLElement>(null);
   const userNavigated = useRef(false);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs once on mount; `route` there is the initial route written into an empty hash, and later routes come from the hash itself.
   useEffect(() => {
     if (!routeFromHash()) window.history.replaceState(null, "", `#${route}`);
     const onHash = () => {
@@ -197,11 +201,13 @@ export function App() {
       text: `${t(locale, "common.toast.newAlert", { title })}${more}`,
       action: { label: t(locale, "common.toast.open"), onClick: () => openSignal(first.id) },
     });
-  }, [signals, signalsAsOf]);
+  }, [signals, signalsAsOf, signalsGen, meta, locale, pushToast, openSignal]);
 
-  // New results: a quiet counter, replaced in place.
+  // New results: a quiet counter, replaced in place, once per arrival.
+  const toastedArrival = useRef(0);
   useEffect(() => {
-    if (!lastArrival || lastArrival.count === 0) return;
+    if (!lastArrival || lastArrival.count === 0 || lastArrival.seq === toastedArrival.current) return;
+    toastedArrival.current = lastArrival.seq;
     if (clock?.running && clock.tickMs < ARRIVAL_TOAST_MIN_TICK_MS) return;
     pushToast({
       id: "arrivals",
@@ -214,11 +220,15 @@ export function App() {
               date: formatDate(locale, lastArrival.to),
             }),
     });
-  }, [lastArrival?.seq]);
+  }, [lastArrival, clock, locale, pushToast]);
 
   // ---------- Optional AI ----------
   const [ai, setAi] = useState<AiState>({ available: false, model: null, checking: true });
   const checkAi = useCallback(async (fresh: boolean) => {
+    if (!LLM_PROXY) {
+      setAi({ available: false, model: null, checking: false });
+      return;
+    }
     setAi((a) => ({ ...a, checking: true }));
     if (fresh) forgetAiStatus();
     const s = await aiStatus();
@@ -260,7 +270,7 @@ export function App() {
       </button>
     ) : null;
 
-  let body;
+  let body: ReactNode;
   if (route === "settings") {
     body = (
       <Settings
@@ -342,16 +352,10 @@ export function App() {
 
   return (
     <div className={`app${desktop ? " is-desktop" : " is-phone"}`}>
-      <a
-        className="app-skip"
-        href="#main"
-        onClick={(e) => {
-          e.preventDefault();
-          mainRef.current?.focus();
-        }}
-      >
+      {/* A button, not a link: the hash is the route, so "#main" would navigate. */}
+      <button type="button" className="app-skip" onClick={() => mainRef.current?.focus()}>
         {t(locale, "common.skip")}
-      </a>
+      </button>
       {/* Desktop: the simulation band stays with the header. Phones: only the header sticks, the band scrolls away. */}
       <div className="app-top">
         <Header locale={locale} route={route} desktop={desktop} fresh={fresh} alertsBadge={alertsBadge} ask={askButton} />

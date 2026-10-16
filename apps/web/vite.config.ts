@@ -12,16 +12,18 @@ import { defineConfig } from "vitest/config";
 // (llama.cpp server) behind Cloudflare Access. Its URL, model name and the
 // Access service token are secrets: they are read here, on the dev server,
 // from ../../.env.ai (gitignored) or from the same variables in the
-// environment, and never reach the browser (no VITE_ prefix, no `define`).
-// The browser calls /llm/v1/...; the proxy adds the Access headers on the
-// server side. Without the variables there is no /llm route and the app
-// reports the AI layer as off.
+// environment, and never reach the browser (no VITE_ prefix). Only whether
+// /llm exists is compiled in (`__AEI_LLM__`), so an app without a model does
+// not ask for one on every page. The browser calls /llm/v1/...; the proxy adds
+// the Access headers on the server side. Without the variables there is no
+// /llm route and the app reports the AI layer as off.
 //
 // Production: a static build has no dev server, so a deployment that wants
 // the AI layer needs the same small server-side proxy (any reverse proxy or
 // serverless function): forward only GET /llm/v1/models and
 // POST /llm/v1/chat/completions to AEI_LLM_URL/v1/..., adding the
-// CF-Access-Client-Id and CF-Access-Client-Secret headers there.
+// CF-Access-Client-Id and CF-Access-Client-Secret headers there, and the
+// build sets AEI_LLM_PROXY=1 so the app looks for it.
 
 interface LlmConfig {
   url: string;
@@ -87,6 +89,7 @@ if (llm?.accessSecret) accessHeaders["CF-Access-Client-Secret"] = llm.accessSecr
 
 export default defineConfig({
   plugins: [react()],
+  define: { __AEI_LLM__: JSON.stringify(Boolean(llm) || process.env.AEI_LLM_PROXY === "1") },
   server: {
     port: 5173,
     proxy: {
