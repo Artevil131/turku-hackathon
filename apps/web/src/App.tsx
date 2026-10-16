@@ -1,7 +1,7 @@
 import type { Flow } from "@aei/contract";
 import type { WardCode } from "@aei/domain";
 import { type Locale, t } from "@aei/i18n";
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { DoctorPage } from "./components/doctor/DoctorPage.tsx";
 import { Home, type Role } from "./components/Home.tsx";
 import { Timeline } from "./components/Timeline.tsx";
