@@ -490,3 +490,65 @@ button.feed-chip:hover {
     min-height: 44px;
   }
 }
+
+.feed-sumrow {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .feed-header {
+    gap: 4px;
+  }
+  .feed-sumrow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .feed-sum {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 10px;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-control);
+    background: var(--glass-3);
+    color: var(--ink);
+    font-size: var(--step--1);
+    font-weight: 600;
+    text-align: left;
+  }
+  .feed-sum-text {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 4px 0;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+  }
+  .feed-sum-label {
+    color: var(--ink-2);
+    font-weight: 650;
+  }
+  .feed-sum-count {
+    flex: none;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: var(--live-soft);
+    color: var(--live);
+    font-weight: 650;
+  }
+  .feed-sum[aria-expanded="true"] .feed-chev {
+    transform: rotate(180deg);
+  }
+  .feed-sum-clear {
+    flex: none;
+    min-height: 44px;
+    padding: 0 6px;
+    font-size: var(--step--1);
+  }
+  .feed-filters:empty {
+    display: none;
+  }
+}

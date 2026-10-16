@@ -57,3 +57,4 @@ Screenshots come from headless Chrome through
 | 01:47 | orchestrator (Opus 5.5) | Wave 2 loops started: quality (Haiku 5.5) on 2b12f36, UX review (Sonnet 5.5). Builders started (Sonnet 5.5): dead CSS prune in styles.css; feed filters collapsed on phone |
 | 01:48 | quality (Haiku 5.5) | Wave 2 on 2b12f36: U4 100/100/100, contrast pass on all; U5 0 missing (223 keys); U6 LCP 3.3/3.9/6.9 s, FCP home 2.3 → 1.4 s (noisy, recorded) |
 | 01:48 | orchestrator (Opus 5.5) | Language switch's accessible name now starts with its visible text (last zero-weight audit) |
+| 01:49 | builder (Sonnet 5.5) | Feed filters collapse to one summary row on phones; pinned sentinels now in the first screen at 390 px (checked by the orchestrator) |

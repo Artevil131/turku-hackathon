@@ -3,6 +3,7 @@ import { type Phenotype, WARDS } from "@aei/domain";
 import { formatDate, phenotypeName, t, wardName } from "@aei/i18n";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AsOf } from "../AsOf.tsx";
+import { useMedia } from "../doctor/useMedia.ts";
 import { type FeedProps, KINDS, type SignalKind } from "./board.ts";
 import { Check, Chevron, KindGlyph } from "./feed/glyphs.tsx";
 import { IncidentCard, kindLabel } from "./feed/IncidentCard.tsx";
@@ -22,6 +23,8 @@ export function SignalFeed(props: FeedProps) {
   const [load, setLoad] = useState<Load>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
   const [pinnedOpen, setPinnedOpen] = useState(true);
+  const phone = useMedia("(max-width: 760px)");
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: `attempt` is the retry trigger.
   useEffect(() => {
@@ -53,6 +56,15 @@ export function SignalFeed(props: FeedProps) {
   const units = WARDS.map((w) => w.code).filter((c) => unitCounts.has(c) || state.unit === c);
   const phenotypes = [...new Set<Phenotype>([...phenoCounts.keys(), ...(state.phenotype ? [state.phenotype] : [])])].sort();
   const filtered = state.unit !== null || state.kinds.length > 0 || state.phenotype !== null;
+
+  const activeCount = (state.unit !== null ? 1 : 0) + (state.kinds.length > 0 ? 1 : 0) + (state.phenotype !== null ? 1 : 0);
+  const summary = [
+    state.unit !== null ? wardName(locale, state.unit) : t(locale, "feedAllUnits"),
+    state.kinds.length > 0 ? state.kinds.map((k) => kindLabel(locale, k)).join(", ") : t(locale, "feedAllKinds"),
+    state.phenotype !== null ? phenotypeName(state.phenotype) : t(locale, "feedAllPhenotypes"),
+  ].join(" · ");
+  const clearAll = () => onChange({ unit: null, kinds: [], phenotype: null });
+  const showRows = !phone || filtersOpen;
 
   // After a filter change keep the open incident in view (its list position moves).
   const rootRef = useRef<HTMLElement>(null);
@@ -96,8 +108,31 @@ export function SignalFeed(props: FeedProps) {
         {readyAsOf ? (
           <p className="feed-count">{t(locale, incidents.length === 1 ? "feedWindowOne" : "feedWindow", { n: incidents.length })}</p>
         ) : null}
-        <div className="feed-filters" role="group" aria-label={t(locale, "feedFilters")}>
-          {readyAsOf ? (
+        {readyAsOf && phone ? (
+          <div className="feed-sumrow">
+            <button
+              type="button"
+              className="feed-sum"
+              aria-expanded={filtersOpen}
+              aria-controls="feed-filter-rows"
+              title={t(locale, filtersOpen ? "feedFiltersCollapseHint" : "feedFiltersExpandHint")}
+              onClick={() => setFiltersOpen(!filtersOpen)}
+            >
+              <span className="feed-sum-text">
+                <span className="feed-sum-label">{t(locale, "feedFiltersLabel")}</span> {summary}
+              </span>
+              {activeCount > 0 ? <span className="feed-sum-count">{t(locale, "feedFiltersActive", { n: activeCount })}</span> : null}
+              <Chevron />
+            </button>
+            {filtered ? (
+              <button type="button" className="link feed-sum-clear" onClick={clearAll}>
+                {t(locale, "feedFiltersClear")}
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+        <div id="feed-filter-rows" className="feed-filters" role="group" aria-label={t(locale, "feedFilters")}>
+          {readyAsOf && showRows ? (
             <>
               <ChipRow label={t(locale, "feedFilterUnit")}>
                 {units.map((c) => (
@@ -140,7 +175,7 @@ export function SignalFeed(props: FeedProps) {
                 ))}
               </ChipRow>
               {filtered ? (
-                <button type="button" className="link feed-clear" onClick={() => onChange({ unit: null, kinds: [], phenotype: null })}>
+                <button type="button" className="link feed-clear" onClick={clearAll}>
                   {t(locale, "feedClearFilters")}
                 </button>
               ) : null}
