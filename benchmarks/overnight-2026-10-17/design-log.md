@@ -67,3 +67,6 @@ Screenshots come from headless Chrome through
 | 02:01 | orchestrator (Opus 5.5) | Map checked at 1280. Finnish AWaRe tier kept as 'Watch' (WHO tier names are not translated) |
 | 02:02 | orchestrator (Opus 5.5) | Printing the doctor's list was blank after the main landmark wrapper (print CSS hid every console child but the doctor page); fixed and checked with a real PDF (shoot.mjs --pdf). Left: footer spills to a second page, name and figure columns overlap in print |
 | 02:04 | orchestrator (Opus 5.5) | Board tabs fit a 390 px phone (short names); a link naming a panel opens it on phones; the default panel stays out of the URL |
+| 02:11 | builder (Sonnet 5.5) | Doctor's list prints as one A4 page (checked as PDF); Finnish home copy says löydökset |
+| 02:11 | QA (Sonnet 5.5) | Production-states audit (review-states.md): error+retry pass on feed, grid, network, map, doctor; URL state, remembered unit and language pass; open: organisms rail and signals block states, developer offline copy, live.ts recovery, stale-while-updating on grid/network/map, grid weeks in URL, tab order |
+| 02:11 | orchestrator (Opus 5.5) | Usage limit reached: run stopped here; report refreshed |
