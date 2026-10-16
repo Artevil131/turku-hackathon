@@ -6,6 +6,9 @@ export const boardEn = {
   boardGrid: "Unit grid",
   boardNetwork: "Hospital network",
   boardMap: "Regional map",
+  boardGridShort: "Grid",
+  boardNetworkShort: "Network",
+  boardMapShort: "Map",
 } as const;
 
 export const boardFi: Record<keyof typeof boardEn, string> = {
@@ -14,4 +17,7 @@ export const boardFi: Record<keyof typeof boardEn, string> = {
   boardGrid: "Yksikköruudukko",
   boardNetwork: "Sairaalaverkosto",
   boardMap: "Aluekartta",
+  boardGridShort: "Ruudukko",
+  boardNetworkShort: "Verkosto",
+  boardMapShort: "Kartta",
 };

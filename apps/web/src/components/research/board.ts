@@ -59,7 +59,15 @@ export function boardFromUrl(): BoardState {
 }
 
 export function boardToParams(s: BoardState): Record<string, string | null> {
-  return { panel: s.panel, unit: s.unit, kind: s.kinds.join(",") || null, ph: s.phenotype, inc: s.incident, focus: s.focus };
+  // The default panel stays out of the URL, so a link that names one is a deliberate choice.
+  return {
+    panel: s.panel === "grid" ? null : s.panel,
+    unit: s.unit,
+    kind: s.kinds.join(",") || null,
+    ph: s.phenotype,
+    inc: s.incident,
+    focus: s.focus,
+  };
 }
 
 /** What every panel receives. */

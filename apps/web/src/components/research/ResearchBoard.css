@@ -92,3 +92,25 @@
     display: none;
   }
 }
+
+.board-tab-short {
+  display: none;
+}
+
+/* Phones: short names so the four tabs fit without scrolling sideways. */
+@media (max-width: 560px) {
+  .board-tab {
+    padding: 0 10px;
+  }
+  .board-tab-long {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .board-tab-short {
+    display: inline;
+  }
+}

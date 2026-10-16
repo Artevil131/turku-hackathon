@@ -1,6 +1,6 @@
 import { t } from "@aei/i18n";
 import { useCallback, useEffect, useState } from "react";
-import { writeHashParams } from "../../url.ts";
+import { hashParams, writeHashParams } from "../../url.ts";
 import { type BoardState, boardFromUrl, boardToParams, type FeedProps, PANELS, type Panel } from "./board.ts";
 import { HospitalNetwork } from "./HospitalNetwork.tsx";
 import { RegionalMap } from "./RegionalMap.tsx";
@@ -18,6 +18,7 @@ type Tab = "feed" | Panel;
 type Props = Omit<FeedProps, "state" | "onChange">;
 
 const PANEL_LABEL = { grid: "boardGrid", network: "boardNetwork", map: "boardMap" } as const;
+const PANEL_SHORT = { grid: "boardGridShort", network: "boardNetworkShort", map: "boardMapShort" } as const;
 
 const WIDE = "(min-width: 1100px)";
 
@@ -36,7 +37,11 @@ export function ResearchBoard(props: Props) {
   const { locale } = props;
   const [state, setState] = useState<BoardState>(boardFromUrl);
   // Narrow screens only: which tab is showing. Wide screens show the feed and `state.panel`.
-  const [tab, setTab] = useState<Tab>("feed");
+  // Narrow screens open the panel a link names, unless it also names an incident (that lives in the feed).
+  const [tab, setTab] = useState<Tab>(() => {
+    const p = hashParams();
+    return p.has("panel") && !p.has("inc") ? boardFromUrl().panel : "feed";
+  });
   const onChange = useCallback((patch: Partial<BoardState>) => setState((s) => ({ ...s, ...patch })), []);
   useEffect(() => writeHashParams(boardToParams(state)), [state]);
   // A link followed inside the app (or the back button) changes the hash without remounting.
@@ -68,7 +73,16 @@ export function ResearchBoard(props: Props) {
             aria-selected={wide ? state.panel === x : tab === x}
             onClick={() => choose(x)}
           >
-            {label(x)}
+            {x === "feed" ? (
+              label(x)
+            ) : (
+              <>
+                <span className="board-tab-long">{label(x)}</span>
+                <span className="board-tab-short" aria-hidden="true">
+                  {t(locale, PANEL_SHORT[x])}
+                </span>
+              </>
+            )}
           </button>
         ))}
       </div>
