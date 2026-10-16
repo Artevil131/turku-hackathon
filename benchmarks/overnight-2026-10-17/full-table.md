@@ -4,161 +4,161 @@ Every flattened metric key (dotted path into `metrics`) for every row, by family
 
 ## Coverage
 
-| key | [baseline-coverage-hospital-365](baselines/coverage-hospital-365.json) | [baseline-coverage-shipped](baselines/coverage-shipped.json) |
-|---|---|---|
-| mark | baseline | baseline, tuned on test |
-| method | Hospital, same specimen, last 365 days, first isolates per 365-day window (0004's estimator 3, the annual report); intervals are Jeffreys Beta(k + 0.5, n - k + 0.5) on the hospital cell (a harness choice) | The coverage list as shipped (D-023, D-033): unit if its pool has 30 first isolates, else ward type, else hospital; 365 days; Wilson intervals (95 % for C4, z = 1.644854 for 90 %); no estimate with fewer than 30 results (scored with the baseline's p on C1 to C3(a), C5 and C8) |
-| runtime_s | 5.3 | 11.7 |
-| cpu_s | 5.2 | 11.5 |
-| C1.all | 0.141 (0.140–0.143) | 0.142 (0.140–0.143) |
-| C1.all_counted | 0.145 (0.144–0.147) | 0.146 (0.144–0.147) |
-| C1.small | 0.161 (0.158–0.164) | 0.161 (0.158–0.165) |
-| C1.small_counted | 0.142 (0.139–0.144) | 0.142 (0.140–0.145) |
-| C1_diff.all | 0 (0–0) | 0.000299 (0.000138–0.000464) |
-| C1_diff.all_counted | 0 (0–0) | 0.000334 (0.000169–0.000508) |
-| C1_diff.small | 0 (0–0) | 0.000837 (0.000353–0.0013) |
-| C1_diff.small_counted | 0 (0–0) | 0.00074 (0.000337–0.00114) |
-| C2.all | 0.443 (0.439–0.448) | 0.444 (0.440–0.449) |
-| C2.all_counted | 0.453 (0.449–0.456) | 0.454 (0.450–0.458) |
-| C2.small | 0.489 (0.482–0.497) | 0.493 (0.484–0.501) |
-| C2.small_counted | 0.439 (0.433–0.446) | 0.442 (0.435–0.449) |
-| C2_diff.all | 0 (0–0) | 0.00113 (0.000627–0.00166) |
-| C2_diff.all_counted | 0 (0–0) | 0.00121 (0.000718–0.0017) |
-| C2_diff.small | 0 (0–0) | 0.00316 (0.00169–0.00465) |
-| C2_diff.small_counted | 0 (0–0) | 0.00276 (0.00154–0.00399) |
-| C3a.intercept | 0.0232 (0.00527–0.0387) | 0.0313 (0.0135–0.0466) |
-| C3a.slope | 1.04 (1.02–1.05) | 1.03 (1.01–1.04) |
-| C3b.mild_exp | 0.128 | 0.309 |
-| C3b.mild_obs | 0 | 0 |
-| C3b.mild_ratio | 0 | 0 |
-| C3b.pass | yes | yes |
-| C3b.severe_exp | 26.2 | 19.6 |
-| C3b.severe_obs | 29 | 23 |
-| C3b.severe_ratio | 1.11 | 1.17 |
-| C3b_bb.mild_exp | 0.133 | 0.469 |
-| C3b_bb.mild_obs | 0 | 0 |
-| C3b_bb.mild_ratio | 0 | 0 |
-| C3b_bb.pass | yes | yes |
-| C3b_bb.severe_exp | 26.7 | 21.3 |
-| C3b_bb.severe_obs | 29 | 23 |
-| C3b_bb.severe_ratio | 1.08 | 1.08 |
-| C4.mild_all | 0.754 (0.747–0.761) | 0.754 (0.747–0.761) |
-| C4.mild_all_counted | 0.754 (0.747–0.761) | 0.754 (0.747–0.761) |
-| C4.mild_spectrum | 0.966 (0.963–0.970) | 0.966 (0.962–0.969) |
-| C4.mild_spectrum_counted | 0.966 (0.963–0.970) | 0.966 (0.962–0.969) |
-| C4.severe | 0.953 (0.950–0.956) | 0.954 (0.951–0.957) |
-| C4.severe_counted | 0.938 (0.935–0.941) | 0.939 (0.936–0.941) |
-| C5.Citrobacter freundii\|AMP | 0.249 | 0.252 |
-| C5.Citrobacter freundii\|CIP | 0.0578 | 0.0587 |
-| C5.Citrobacter freundii\|CLI | 0.0472 | 0.0469 |
-| C5.Citrobacter freundii\|CRO | 0.127 | 0.127 |
-| C5.Citrobacter freundii\|CXM | 0.269 | 0.270 |
-| C5.Citrobacter freundii\|MEC | 0.119 | 0.118 |
-| C5.Citrobacter freundii\|MEM | 0.0182 | 0.0184 |
-| C5.Citrobacter freundii\|NIT | 0.0577 | 0.0579 |
-| C5.Citrobacter freundii\|TMP | 0.142 | 0.140 |
-| C5.Citrobacter freundii\|TZP | 0.173 | 0.173 |
-| C5.Citrobacter freundii\|VAN | 0.0945 | 0.0947 |
-| C5.Enterococcus faecalis\|AMP | 0.250 | 0.251 |
-| C5.Enterococcus faecalis\|CAZ | 0.0454 | 0.0469 |
-| C5.Enterococcus faecalis\|CLI | 0.0395 | 0.0396 |
-| C5.Enterococcus faecalis\|CRO | 0.607 | 0.608 |
-| C5.Enterococcus faecalis\|CXM | 0.545 | 0.546 |
-| C5.Enterococcus faecalis\|MEC | 0.560 | 0.560 |
-| C5.Enterococcus faecalis\|MEM | 0.777 | 0.778 |
-| C5.Enterococcus faecalis\|NIT | 0.0399 | 0.0403 |
-| C5.Enterococcus faecalis\|TMP | 0.492 | 0.494 |
-| C5.Enterococcus faecalis\|TZP | 0.00683 | 0.00697 |
-| C5.Enterococcus faecalis\|VAN | 0.600 | 0.602 |
-| C5.Escherichia coli\|AMP | 0.245 | 0.244 |
-| C5.Escherichia coli\|CIP | 0.0751 | 0.0751 |
-| C5.Escherichia coli\|CLI | 0.0122 | 0.0124 |
-| C5.Escherichia coli\|CRO | 0.0677 | 0.0679 |
-| C5.Escherichia coli\|CXM | 0.107 | 0.107 |
-| C5.Escherichia coli\|MEC | 0.0757 | 0.0764 |
-| C5.Escherichia coli\|MEM | 0.0140 | 0.0142 |
-| C5.Escherichia coli\|NIT | 0.0357 | 0.0361 |
-| C5.Escherichia coli\|TMP | 0.167 | 0.166 |
-| C5.Escherichia coli\|TZP | 0.0377 | 0.0378 |
-| C5.Escherichia coli\|VAN | 0.0400 | 0.0405 |
-| C5.Klebsiella oxytoca\|AMP | 0.272 | 0.275 |
-| C5.Klebsiella oxytoca\|CIP | 0.0566 | 0.0564 |
-| C5.Klebsiella oxytoca\|CLI | 0.00653 | 0.00592 |
-| C5.Klebsiella oxytoca\|CRO | 0.0534 | 0.0540 |
-| C5.Klebsiella oxytoca\|CXM | 0.112 | 0.112 |
-| C5.Klebsiella oxytoca\|MEC | 0.0942 | 0.0943 |
-| C5.Klebsiella oxytoca\|MEM | 0.0156 | 0.0159 |
-| C5.Klebsiella oxytoca\|NIT | 0.0820 | 0.0828 |
-| C5.Klebsiella oxytoca\|TMP | 0.121 | 0.121 |
-| C5.Klebsiella oxytoca\|TZP | 0.0471 | 0.0473 |
-| C5.Klebsiella oxytoca\|VAN | 0.0320 | 0.0310 |
-| C5.Klebsiella pneumoniae\|AMP | 0.264 | 0.266 |
-| C5.Klebsiella pneumoniae\|CIP | 0.0938 | 0.0943 |
-| C5.Klebsiella pneumoniae\|CLI | 0.0205 | 0.0205 |
-| C5.Klebsiella pneumoniae\|CRO | 0.0879 | 0.0884 |
-| C5.Klebsiella pneumoniae\|CXM | 0.127 | 0.127 |
-| C5.Klebsiella pneumoniae\|MEC | 0.0873 | 0.0880 |
-| C5.Klebsiella pneumoniae\|MEM | 0.0149 | 0.0153 |
-| C5.Klebsiella pneumoniae\|NIT | 0.253 | 0.252 |
-| C5.Klebsiella pneumoniae\|TMP | 0.151 | 0.151 |
-| C5.Klebsiella pneumoniae\|TZP | 0.0701 | 0.0702 |
-| C5.Klebsiella pneumoniae\|VAN | 0.0529 | 0.0533 |
-| C5.Proteus mirabilis\|AMP | 0.251 | 0.251 |
-| C5.Proteus mirabilis\|CIP | 0.0584 | 0.0580 |
-| C5.Proteus mirabilis\|CLI | 0.0428 | 0.0437 |
-| C5.Proteus mirabilis\|CRO | 0.0589 | 0.0590 |
-| C5.Proteus mirabilis\|CXM | 0.0876 | 0.0871 |
-| C5.Proteus mirabilis\|MEC | 0.0760 | 0.0764 |
-| C5.Proteus mirabilis\|MEM | 0.0150 | 0.0151 |
-| C5.Proteus mirabilis\|NIT | 0.670 | 0.670 |
-| C5.Proteus mirabilis\|TMP | 0.168 | 0.167 |
-| C5.Proteus mirabilis\|TZP | 0.0135 | 0.0136 |
-| C5.Proteus mirabilis\|VAN | 0.0874 | 0.0885 |
-| C5.Pseudomonas aeruginosa\|AMP | 0.232 | 0.234 |
-| C5.Pseudomonas aeruginosa\|CAZ | 0.583 | 0.582 |
-| C5.Pseudomonas aeruginosa\|CIP | 0.0999 | 0.0997 |
-| C5.Pseudomonas aeruginosa\|CLI | 0.0757 | 0.0759 |
-| C5.Pseudomonas aeruginosa\|CRO | 0.577 | 0.578 |
-| C5.Pseudomonas aeruginosa\|CXM | 0.523 | 0.524 |
-| C5.Pseudomonas aeruginosa\|MEC | 0.559 | 0.560 |
-| C5.Pseudomonas aeruginosa\|MEM | 0.0633 | 0.0638 |
-| C5.Pseudomonas aeruginosa\|NIT | 0.670 | 0.670 |
-| C5.Pseudomonas aeruginosa\|TMP | 0.491 | 0.495 |
-| C5.Pseudomonas aeruginosa\|TZP | 0.0887 | 0.0888 |
-| C5.Pseudomonas aeruginosa\|VAN | 0.139 | 0.139 |
-| C5.Staphylococcus aureus\|AMP | 0.201 | 0.199 |
-| C5.Staphylococcus aureus\|CAZ | 0.0394 | 0.0400 |
-| C5.Staphylococcus aureus\|CLI | 0.467 | 0.468 |
-| C5.Staphylococcus aureus\|CRO | 0.0892 | 0.0903 |
-| C5.Staphylococcus aureus\|CXM | 0.103 | 0.105 |
-| C5.Staphylococcus aureus\|MEC | 0.559 | 0.559 |
-| C5.Staphylococcus aureus\|MEM | 0.0435 | 0.0437 |
-| C5.Staphylococcus aureus\|NIT | 0.0378 | 0.0377 |
-| C5.Staphylococcus aureus\|TMP | 0.105 | 0.106 |
-| C5.Staphylococcus aureus\|TZP | 0.0360 | 0.0363 |
-| C5.Staphylococcus aureus\|VAN | 0.339 | 0.340 |
-| C5.Staphylococcus saprophyticus\|CAZ | 0.0482 | 0.0492 |
-| C5.Staphylococcus saprophyticus\|MEC | 0.559 | 0.561 |
-| C5.Staphylococcus saprophyticus\|NIT | 0.0432 | 0.0440 |
-| C5.Staphylococcus saprophyticus\|TMP | 0.105 | 0.105 |
-| C6.E1_CRO | n/a | 47 |
-| C6.E1_CXM | n/a | n/a |
-| C6.E2_CXM | n/a | n/a |
-| C7.a | 0.899 (0.875–0.923) | 0.902 (0.877–0.925) |
-| C7.a_literal | 0.147 (0.130–0.165) | 0.343 (0.319–0.370) |
-| C7.b | 0.556 | 0.741 |
-| C7.b_literal | 0.0741 | 0.333 |
-| C7.pass_a | yes | yes |
-| C7_lower_bound.cells | 4285 | 4285 |
-| C7_lower_bound.exp | 1691 | 1079 |
-| C7_lower_bound.exp_bb | 1695 | 1114 |
-| C7_lower_bound.obs | 1501 | 959 |
-| C7_lower_bound.ratio | 0.888 | 0.889 |
-| C7_lower_bound.ratio_bb | 0.885 | 0.861 |
-| C8.C1 | 0.167 (0.154–0.193) | 0.166 (0.153–0.193) |
-| C8.C1_diff | 0 (0–0) | -0.00131 (-0.00405 to 0.0026) |
-| C8.C4_mild_spectrum | 0.964 (0.909–0.983) | 0.964 (0.909–0.983) |
-| C8.C4_severe | 0.906 (0.743–0.981) | 0.915 (0.756–0.973) |
+| key | [baseline-coverage-hospital-365](baselines/coverage-hospital-365.json) | [baseline-coverage-shipped](baselines/coverage-shipped.json) | [0012-discounted-beta-binomial](../../experiments/0012-discounted-beta-binomial/) | [0013-dirichlet-organism-mix](../../experiments/0013-dirichlet-organism-mix/) |
+|---|---|---|---|---|
+| mark | baseline | baseline, tuned on test |  | proposed |
+| method | Hospital, same specimen, last 365 days, first isolates per 365-day window (0004's estimator 3, the annual report); intervals are Jeffreys Beta(k + 0.5, n - k + 0.5) on the hospital cell (a harness choice) | The coverage list as shipped (D-023, D-033): unit if its pool has 30 first isolates, else ward type, else hospital; 365 days; Wilson intervals (95 % for C4, z = 1.644854 for 90 %); no estimate with fewer than 30 results (scored with the baseline's p on C1 to C3(a), C5 and C8) | Discounted Beta-binomial (ENGINE.md 2.2), delta 0.95 per week, M 10, per unit x specimen x onset x antibiotic, parent: hospital, same specimen and onset, 52 weeks before, own unit left out, Jeffreys; isolate-level p by the isolate's onset, cell-level Beta by mixing the onset strata by effective own count; untested results do not enter the filter. Chosen on the TUNE windows 2023-12-25 to 2024-09-29 only | Two-layer coverage: Dirichlet organism mix (M_pi 100) times per-organism Beta (M 30), one Dirichlet per drug over the organisms with an outcome, unit year shrunk to the hospital year with the unit left out, closed-form variance (ENGINE.md 2.4) and a matched Beta; setting chosen on TUNE windows only |
+| runtime_s | 5.3 | 11.7 | 32.8 | 34.1 |
+| cpu_s | 5.2 | 11.5 | 32.5 | 33 |
+| C1.all | 0.141 (0.140–0.143) | 0.142 (0.140–0.143) | 0.142 (0.140–0.143) | 0.142 (0.140–0.143) |
+| C1.all_counted | 0.145 (0.144–0.147) | 0.146 (0.144–0.147) | 0.154 (0.152–0.156) | 0.145 (0.144–0.147) |
+| C1.small | 0.161 (0.158–0.164) | 0.161 (0.158–0.165) | 0.161 (0.158–0.165) | 0.161 (0.158–0.164) |
+| C1.small_counted | 0.142 (0.139–0.144) | 0.142 (0.140–0.145) | 0.169 (0.166–0.172) | 0.142 (0.139–0.144) |
+| C1_diff.all | 0 (0–0) | 0.000299 (0.000138–0.000464) | 0.000182 (-6.62e-06 to 0.000357) | 9.97e-05 (-8.00e-06 to 0.00021) |
+| C1_diff.all_counted | 0 (0–0) | 0.000334 (0.000169–0.000508) | 0.00905 (0.0086–0.00956) | 0.00012 (1.01e-05 to 0.000235) |
+| C1_diff.small | 0 (0–0) | 0.000837 (0.000353–0.0013) | 0.000891 (0.000396–0.00134) | 0.000152 (-1.00e-04 to 0.000383) |
+| C1_diff.small_counted | 0 (0–0) | 0.00074 (0.000337–0.00114) | 0.0272 (0.0254–0.0289) | 0.000142 (-6.23e-05 to 0.000335) |
+| C2.all | 0.443 (0.439–0.448) | 0.444 (0.440–0.449) | 0.444 (0.440–0.449) | 0.444 (0.440–0.448) |
+| C2.all_counted | 0.453 (0.449–0.456) | 0.454 (0.450–0.458) | 0.485 (0.481–0.490) | 0.453 (0.449–0.457) |
+| C2.small | 0.489 (0.482–0.497) | 0.493 (0.484–0.501) | 0.492 (0.484–0.501) | 0.490 (0.482–0.498) |
+| C2.small_counted | 0.439 (0.433–0.446) | 0.442 (0.435–0.449) | 0.531 (0.523–0.539) | 0.440 (0.433–0.447) |
+| C2_diff.all | 0 (0–0) | 0.00113 (0.000627–0.00166) | 0.000762 (0.000154–0.00134) | 0.000365 (2.94e-05 to 0.000691) |
+| C2_diff.all_counted | 0 (0–0) | 0.00121 (0.000718–0.0017) | 0.0327 (0.0312–0.0343) | 0.00042 (0.00012–0.000741) |
+| C2_diff.small | 0 (0–0) | 0.00316 (0.00169–0.00465) | 0.0029 (0.00148–0.00428) | 0.000441 (-0.000248 to 0.00109) |
+| C2_diff.small_counted | 0 (0–0) | 0.00276 (0.00154–0.00399) | 0.0921 (0.0863–0.0975) | 0.00046 (-0.000113 to 0.00104) |
+| C3a.intercept | 0.0232 (0.00527–0.0387) | 0.0313 (0.0135–0.0466) | 0.000526 (-0.0177 to 0.0162) | 0.0264 (0.00823–0.0416) |
+| C3a.slope | 1.04 (1.02–1.05) | 1.03 (1.01–1.04) | 0.977 (0.964–0.990) | 1.04 (1.02–1.05) |
+| C3b.mild_exp | 0.128 | 0.309 | 0.231 | 0.217 |
+| C3b.mild_obs | 0 | 0 | 0 | 0 |
+| C3b.mild_ratio | 0 | 0 | 0 | 0 |
+| C3b.pass | yes | yes | no | yes |
+| C3b.severe_exp | 26.2 | 19.6 | 7.28 | 27.8 |
+| C3b.severe_obs | 29 | 23 | 14 | 29 |
+| C3b.severe_ratio | 1.11 | 1.17 | 1.92 | 1.04 |
+| C3b_bb.mild_exp | 0.133 | 0.469 | 0.778 | 0.287 |
+| C3b_bb.mild_obs | 0 | 0 | 0 | 0 |
+| C3b_bb.mild_ratio | 0 | 0 | 0 | 0 |
+| C3b_bb.pass | yes | yes | yes | yes |
+| C3b_bb.severe_exp | 26.7 | 21.3 | 9.57 | 29.1 |
+| C3b_bb.severe_obs | 29 | 23 | 14 | 29 |
+| C3b_bb.severe_ratio | 1.08 | 1.08 | 1.46 | 0.998 |
+| C4.mild_all | 0.754 (0.747–0.761) | 0.754 (0.747–0.761) | 0.754 (0.747–0.760) | 0.754 (0.747–0.761) |
+| C4.mild_all_counted | 0.754 (0.747–0.761) | 0.754 (0.747–0.761) | 0.754 (0.747–0.760) | 0.754 (0.747–0.761) |
+| C4.mild_spectrum | 0.966 (0.963–0.970) | 0.966 (0.962–0.969) | 0.966 (0.963–0.970) | 0.966 (0.963–0.970) |
+| C4.mild_spectrum_counted | 0.966 (0.963–0.970) | 0.966 (0.962–0.969) | 0.966 (0.963–0.969) | 0.966 (0.963–0.970) |
+| C4.severe | 0.953 (0.950–0.956) | 0.954 (0.951–0.957) | 0.955 (0.951–0.958) | 0.954 (0.950–0.956) |
+| C4.severe_counted | 0.938 (0.935–0.941) | 0.939 (0.936–0.941) | 0.938 (0.935–0.941) | 0.938 (0.935–0.941) |
+| C5.Citrobacter freundii\|AMP | 0.249 | 0.252 | 0.266 | 0.250 |
+| C5.Citrobacter freundii\|CIP | 0.0578 | 0.0587 | 0.0593 | 0.0582 |
+| C5.Citrobacter freundii\|CLI | 0.0472 | 0.0469 | 0.0485 | 0.0471 |
+| C5.Citrobacter freundii\|CRO | 0.127 | 0.127 | 0.126 | 0.127 |
+| C5.Citrobacter freundii\|CXM | 0.269 | 0.270 | 0.276 | 0.269 |
+| C5.Citrobacter freundii\|MEC | 0.119 | 0.118 | 0.110 | 0.118 |
+| C5.Citrobacter freundii\|MEM | 0.0182 | 0.0184 | 0.0167 | 0.0186 |
+| C5.Citrobacter freundii\|NIT | 0.0577 | 0.0579 | 0.0519 | 0.0578 |
+| C5.Citrobacter freundii\|TMP | 0.142 | 0.140 | 0.137 | 0.140 |
+| C5.Citrobacter freundii\|TZP | 0.173 | 0.173 | 0.173 | 0.173 |
+| C5.Citrobacter freundii\|VAN | 0.0945 | 0.0947 | 0.0931 | 0.0947 |
+| C5.Enterococcus faecalis\|AMP | 0.250 | 0.251 | 0.238 | 0.251 |
+| C5.Enterococcus faecalis\|CAZ | 0.0454 | 0.0469 | 0.0464 | 0.0460 |
+| C5.Enterococcus faecalis\|CLI | 0.0395 | 0.0396 | 0.0410 | 0.0395 |
+| C5.Enterococcus faecalis\|CRO | 0.607 | 0.608 | 0.632 | 0.606 |
+| C5.Enterococcus faecalis\|CXM | 0.545 | 0.546 | 0.569 | 0.544 |
+| C5.Enterococcus faecalis\|MEC | 0.560 | 0.560 | 0.608 | 0.559 |
+| C5.Enterococcus faecalis\|MEM | 0.777 | 0.778 | 0.795 | 0.776 |
+| C5.Enterococcus faecalis\|NIT | 0.0399 | 0.0403 | 0.0322 | 0.0401 |
+| C5.Enterococcus faecalis\|TMP | 0.492 | 0.494 | 0.513 | 0.494 |
+| C5.Enterococcus faecalis\|TZP | 0.00683 | 0.00697 | 0.00699 | 0.00696 |
+| C5.Enterococcus faecalis\|VAN | 0.600 | 0.602 | 0.624 | 0.601 |
+| C5.Escherichia coli\|AMP | 0.245 | 0.244 | 0.240 | 0.244 |
+| C5.Escherichia coli\|CIP | 0.0751 | 0.0751 | 0.0751 | 0.0750 |
+| C5.Escherichia coli\|CLI | 0.0122 | 0.0124 | 0.0124 | 0.0123 |
+| C5.Escherichia coli\|CRO | 0.0677 | 0.0679 | 0.0622 | 0.0681 |
+| C5.Escherichia coli\|CXM | 0.107 | 0.107 | 0.101 | 0.107 |
+| C5.Escherichia coli\|MEC | 0.0757 | 0.0764 | 0.0630 | 0.0763 |
+| C5.Escherichia coli\|MEM | 0.0140 | 0.0142 | 0.0115 | 0.0143 |
+| C5.Escherichia coli\|NIT | 0.0357 | 0.0361 | 0.0279 | 0.0359 |
+| C5.Escherichia coli\|TMP | 0.167 | 0.166 | 0.164 | 0.166 |
+| C5.Escherichia coli\|TZP | 0.0377 | 0.0378 | 0.0379 | 0.0377 |
+| C5.Escherichia coli\|VAN | 0.0400 | 0.0405 | 0.0358 | 0.0402 |
+| C5.Klebsiella oxytoca\|AMP | 0.272 | 0.275 | 0.295 | 0.275 |
+| C5.Klebsiella oxytoca\|CIP | 0.0566 | 0.0564 | 0.0566 | 0.0568 |
+| C5.Klebsiella oxytoca\|CLI | 0.00653 | 0.00592 | 0.00606 | 0.0063 |
+| C5.Klebsiella oxytoca\|CRO | 0.0534 | 0.0540 | 0.0481 | 0.0542 |
+| C5.Klebsiella oxytoca\|CXM | 0.112 | 0.112 | 0.107 | 0.112 |
+| C5.Klebsiella oxytoca\|MEC | 0.0942 | 0.0943 | 0.0833 | 0.0945 |
+| C5.Klebsiella oxytoca\|MEM | 0.0156 | 0.0159 | 0.0133 | 0.0161 |
+| C5.Klebsiella oxytoca\|NIT | 0.0820 | 0.0828 | 0.0784 | 0.0824 |
+| C5.Klebsiella oxytoca\|TMP | 0.121 | 0.121 | 0.115 | 0.120 |
+| C5.Klebsiella oxytoca\|TZP | 0.0471 | 0.0473 | 0.0472 | 0.0474 |
+| C5.Klebsiella oxytoca\|VAN | 0.0320 | 0.0310 | 0.0269 | 0.0317 |
+| C5.Klebsiella pneumoniae\|AMP | 0.264 | 0.266 | 0.285 | 0.266 |
+| C5.Klebsiella pneumoniae\|CIP | 0.0938 | 0.0943 | 0.0941 | 0.0941 |
+| C5.Klebsiella pneumoniae\|CLI | 0.0205 | 0.0205 | 0.0212 | 0.0205 |
+| C5.Klebsiella pneumoniae\|CRO | 0.0879 | 0.0884 | 0.0839 | 0.0884 |
+| C5.Klebsiella pneumoniae\|CXM | 0.127 | 0.127 | 0.123 | 0.127 |
+| C5.Klebsiella pneumoniae\|MEC | 0.0873 | 0.0880 | 0.0766 | 0.0880 |
+| C5.Klebsiella pneumoniae\|MEM | 0.0149 | 0.0153 | 0.0125 | 0.0153 |
+| C5.Klebsiella pneumoniae\|NIT | 0.253 | 0.252 | 0.262 | 0.253 |
+| C5.Klebsiella pneumoniae\|TMP | 0.151 | 0.151 | 0.147 | 0.150 |
+| C5.Klebsiella pneumoniae\|TZP | 0.0701 | 0.0702 | 0.0703 | 0.0701 |
+| C5.Klebsiella pneumoniae\|VAN | 0.0529 | 0.0533 | 0.0493 | 0.0531 |
+| C5.Proteus mirabilis\|AMP | 0.251 | 0.251 | 0.243 | 0.251 |
+| C5.Proteus mirabilis\|CIP | 0.0584 | 0.0580 | 0.0579 | 0.0582 |
+| C5.Proteus mirabilis\|CLI | 0.0428 | 0.0437 | 0.0451 | 0.0433 |
+| C5.Proteus mirabilis\|CRO | 0.0589 | 0.0590 | 0.0539 | 0.0593 |
+| C5.Proteus mirabilis\|CXM | 0.0876 | 0.0871 | 0.0808 | 0.0878 |
+| C5.Proteus mirabilis\|MEC | 0.0760 | 0.0764 | 0.0628 | 0.0766 |
+| C5.Proteus mirabilis\|MEM | 0.0150 | 0.0151 | 0.0131 | 0.0153 |
+| C5.Proteus mirabilis\|NIT | 0.670 | 0.670 | 0.711 | 0.670 |
+| C5.Proteus mirabilis\|TMP | 0.168 | 0.167 | 0.165 | 0.167 |
+| C5.Proteus mirabilis\|TZP | 0.0135 | 0.0136 | 0.0137 | 0.0136 |
+| C5.Proteus mirabilis\|VAN | 0.0874 | 0.0885 | 0.0867 | 0.0880 |
+| C5.Pseudomonas aeruginosa\|AMP | 0.232 | 0.234 | 0.245 | 0.233 |
+| C5.Pseudomonas aeruginosa\|CAZ | 0.583 | 0.582 | 0.584 | 0.581 |
+| C5.Pseudomonas aeruginosa\|CIP | 0.0999 | 0.0997 | 0.100 | 0.1000 |
+| C5.Pseudomonas aeruginosa\|CLI | 0.0757 | 0.0759 | 0.0796 | 0.0758 |
+| C5.Pseudomonas aeruginosa\|CRO | 0.577 | 0.578 | 0.597 | 0.575 |
+| C5.Pseudomonas aeruginosa\|CXM | 0.523 | 0.524 | 0.543 | 0.522 |
+| C5.Pseudomonas aeruginosa\|MEC | 0.559 | 0.560 | 0.607 | 0.559 |
+| C5.Pseudomonas aeruginosa\|MEM | 0.0633 | 0.0638 | 0.0632 | 0.0636 |
+| C5.Pseudomonas aeruginosa\|NIT | 0.670 | 0.670 | 0.711 | 0.670 |
+| C5.Pseudomonas aeruginosa\|TMP | 0.491 | 0.495 | 0.516 | 0.495 |
+| C5.Pseudomonas aeruginosa\|TZP | 0.0887 | 0.0888 | 0.0887 | 0.0886 |
+| C5.Pseudomonas aeruginosa\|VAN | 0.139 | 0.139 | 0.141 | 0.139 |
+| C5.Staphylococcus aureus\|AMP | 0.201 | 0.199 | 0.200 | 0.198 |
+| C5.Staphylococcus aureus\|CAZ | 0.0394 | 0.0400 | 0.0407 | 0.0397 |
+| C5.Staphylococcus aureus\|CLI | 0.467 | 0.468 | 0.463 | 0.467 |
+| C5.Staphylococcus aureus\|CRO | 0.0892 | 0.0903 | 0.0885 | 0.0905 |
+| C5.Staphylococcus aureus\|CXM | 0.103 | 0.105 | 0.102 | 0.105 |
+| C5.Staphylococcus aureus\|MEC | 0.559 | 0.559 | 0.608 | 0.558 |
+| C5.Staphylococcus aureus\|MEM | 0.0435 | 0.0437 | 0.0432 | 0.0438 |
+| C5.Staphylococcus aureus\|NIT | 0.0378 | 0.0377 | 0.0296 | 0.0377 |
+| C5.Staphylococcus aureus\|TMP | 0.105 | 0.106 | 0.1000 | 0.105 |
+| C5.Staphylococcus aureus\|TZP | 0.0360 | 0.0363 | 0.0362 | 0.0361 |
+| C5.Staphylococcus aureus\|VAN | 0.339 | 0.340 | 0.342 | 0.339 |
+| C5.Staphylococcus saprophyticus\|CAZ | 0.0482 | 0.0492 | 0.0493 | 0.0485 |
+| C5.Staphylococcus saprophyticus\|MEC | 0.559 | 0.561 | 0.609 | 0.559 |
+| C5.Staphylococcus saprophyticus\|NIT | 0.0432 | 0.0440 | 0.0365 | 0.0436 |
+| C5.Staphylococcus saprophyticus\|TMP | 0.105 | 0.105 | 0.0987 | 0.105 |
+| C6.E1_CRO | n/a | 47 | 48 | 48 |
+| C6.E1_CXM | n/a | n/a | n/a | 117 |
+| C6.E2_CXM | n/a | n/a | n/a | n/a |
+| C7.a | 0.899 (0.875–0.923) | 0.902 (0.877–0.925) | 0.929 (0.908–0.948) | 0.905 (0.884–0.926) |
+| C7.a_literal | 0.147 (0.130–0.165) | 0.343 (0.319–0.370) | 0.612 (0.574–0.647) | 0.314 (0.291–0.339) |
+| C7.b | 0.556 | 0.741 | 0.815 | 0.741 |
+| C7.b_literal | 0.0741 | 0.333 | 0.630 | 0.296 |
+| C7.pass_a | yes | yes | yes | yes |
+| C7_lower_bound.cells | 4285 | 4285 | 4285 | 4285 |
+| C7_lower_bound.exp | 1691 | 1079 | 583 | 1243 |
+| C7_lower_bound.exp_bb | 1695 | 1114 | 707 | 1264 |
+| C7_lower_bound.obs | 1501 | 959 | 689 | 1106 |
+| C7_lower_bound.ratio | 0.888 | 0.889 | 1.18 | 0.890 |
+| C7_lower_bound.ratio_bb | 0.885 | 0.861 | 0.975 | 0.875 |
+| C8.C1 | 0.167 (0.154–0.193) | 0.166 (0.153–0.193) | 0.167 (0.154–0.194) | 0.165 (0.153–0.192) |
+| C8.C1_diff | 0 (0–0) | -0.00131 (-0.00405 to 0.0026) | -0.000251 (-0.0026 to 0.00317) | -0.00158 (-0.00349 to 0.000492) |
+| C8.C4_mild_spectrum | 0.964 (0.909–0.983) | 0.964 (0.909–0.983) | 0.958 (0.800–0.979) | 0.964 (0.909–0.983) |
+| C8.C4_severe | 0.906 (0.743–0.981) | 0.915 (0.756–0.973) | – | 0.920 (0.784–0.980) |
 
 ## Detection
 
@@ -321,35 +321,35 @@ Every flattened metric key (dotted path into `metrics`) for every row, by family
 
 ## Prediction
 
-| key | [baseline-county-persistence](baselines/county-persistence.json) | [baseline-county-seasonal-naive](baselines/county-seasonal-naive.json) | [baseline-exposure-e1](baselines/exposure-e1.json) | [0020-county-forecasts](../../experiments/0020-county-forecasts/) |
-|---|---|---|---|---|
-| mark | baseline | baseline | baseline |  |
-| method | County forecast baseline: Poisson at last month's count (floor 0.5), one month ahead, 4 phenotypes x 23 counties + national, targets 2024-10 to 2026-09 | County forecast baseline: Poisson at the same month last year's count (floor 0.5), one month ahead, 4 phenotypes x 23 counties + national, targets 2024-10 to 2026-09 | Exposure ranking after E1 (ESBL E. coli in URO, onset 2025-05-30): time-ordered patient-flow graph over the 365 days before onset, exposure of the other eight units from URO as share and raw, AUC against units whose ESBL E. coli patients in the 8 weeks from onset exceed their 26-week baseline, 1,000 label-permutation rewirings | County one-month-ahead forecast: rolling Poisson GLM with annual harmonics per series, negative binomial predictive, cell chosen on targets 2024-01 to 2024-09 (W24 K0 trend=off rho=0 quasi_pooled floor=0.1); 4 phenotypes x 23 counties + national, targets 2024-10 to 2026-09 |
-| runtime_s | 0.3 | 0.1 | 0.3 | 2.4 |
-| cpu_s | 0.3 | 0.1 | 0.3 | 2.3 |
-| P1.auc_raw_a001 | – | – | n/a | – |
-| P1.auc_raw_a05 | – | – | n/a | – |
-| P1.auc_share_a001 | – | – | n/a | – |
-| P1.auc_share_a05 | – | – | n/a | – |
-| P1.null_p_raw_a05 | – | – | n/a | – |
-| P1.null_p_share_a05 | – | – | n/a | – |
-| P1.positives_a001 | – | – | 0 | – |
-| P1.positives_a05 | – | – | 0 | – |
-| P2.CPE_log_skill | 0 (0–0) | -0.0374 (-0.0900 to 0.0155) | – | 0.219 (0.160–0.276) |
-| P2.CPE_mae_skill | 0 (0–0) | -0.0750 (-0.176 to 0.0312) | – | 0.286 (0.192–0.376) |
-| P2.ESBL_log_skill | 0 (0–0) | -1.21 (-1.86 to -0.602) | – | 0.519 (0.280–0.742) |
-| P2.ESBL_mae_skill | 0 (0–0) | -0.135 (-0.268 to -0.0139) | – | 0.0919 (-0.0335 to 0.189) |
-| P2.MRSA_log_skill | 0 (0–0) | -0.237 (-0.469 to -0.000153) | – | 0.620 (0.453–0.804) |
-| P2.MRSA_mae_skill | 0 (0–0) | -0.0302 (-0.134 to 0.0563) | – | 0.217 (0.145–0.276) |
-| P2.VRE_log_skill | 0 (0–0) | -0.0773 (-0.226 to 0.0383) | – | 0.250 (0.165–0.332) |
-| P2.VRE_mae_skill | 0 (0–0) | 0 (-0.224 to 0.242) | – | 0.200 (-0.00721 to 0.429) |
-| P2.log_score | -2.13 (-2.23 to -2.04) | -2.52 (-2.68 to -2.36) | – | -1.73 (-1.80 to -1.67) |
-| P2.log_skill | 0 (0–0) | -0.391 (-0.551 to -0.233) | – | 0.402 (0.309–0.482) |
-| P2.log_skill_no_last2 | 0 (0–0) | -0.370 (-0.550 to -0.207) | – | 0.408 (0.313–0.501) |
-| P2.log_skill_seasonal | 0.391 (0.233–0.551) | 0 (0–0) | – | 0.793 (0.660–0.933) |
-| P2.mae | 2.53 (2.37–2.70) | 2.77 (2.60–2.98) | – | 2.17 (2.00–2.38) |
-| P2.mae_skill | 0 (0–0) | -0.0949 (-0.183 to -0.0138) | – | 0.144 (0.0628–0.213) |
-| P2.mae_skill_no_last2 | 0 (0–0) | -0.0649 (-0.150 to 0.0103) | – | 0.150 (0.0643–0.226) |
-| P2.mae_skill_seasonal | 0.0867 (0.0136–0.155) | 0 (0–0) | – | 0.219 (0.159–0.272) |
-| P2.national_log_skill | 0 (0–0) | -1.97 (-3.13 to -0.872) | – | 1.55 (0.809–2.33) |
-| P2.national_mae_skill | 0 (0–0) | -0.397 (-0.887 to -0.0713) | – | -0.126 (-0.489 to 0.134) |
+| key | [baseline-county-persistence](baselines/county-persistence.json) | [baseline-county-seasonal-naive](baselines/county-seasonal-naive.json) | [baseline-exposure-e1](baselines/exposure-e1.json) | [0019-exposure-ranking](../../experiments/0019-exposure-ranking/) | [0020-county-forecasts](../../experiments/0020-county-forecasts/) |
+|---|---|---|---|---|---|
+| mark | baseline | baseline | baseline | proposed |  |
+| method | County forecast baseline: Poisson at last month's count (floor 0.5), one month ahead, 4 phenotypes x 23 counties + national, targets 2024-10 to 2026-09 | County forecast baseline: Poisson at the same month last year's count (floor 0.5), one month ahead, 4 phenotypes x 23 counties + national, targets 2024-10 to 2026-09 | Exposure ranking after E1 (ESBL E. coli in URO, onset 2025-05-30): time-ordered patient-flow graph over the 365 days before onset, exposure of the other eight units from URO as share and raw, AUC against units whose ESBL E. coli patients in the 8 weeks from onset exceed their 26-week baseline, 1,000 label-permutation rewirings | Exposure ranking on the time-ordered patient-flow graph (P1) over real ESBL E. coli and MRSA source episodes of the scoring period, pooled by within-event Mann-Whitney pairs against 1,000 label-permutation rewirings; E1 and E2 as descriptions; flow-partner (B1, positive) and uniform-partner (B2, negative) injected two-unit clusters as controls | County one-month-ahead forecast: rolling Poisson GLM with annual harmonics per series, negative binomial predictive, cell chosen on targets 2024-01 to 2024-09 (W24 K0 trend=off rho=0 quasi_pooled floor=0.1); 4 phenotypes x 23 counties + national, targets 2024-10 to 2026-09 |
+| runtime_s | 0.3 | 0.1 | 0.3 | 87.5 | 2.4 |
+| cpu_s | 0.3 | 0.1 | 0.3 | 86.8 | 2.3 |
+| P1.auc_raw_a001 | – | – | n/a | 0.457 (0.257–0.629) | – |
+| P1.auc_raw_a05 | – | – | n/a | 0.657 (0.449–0.806) | – |
+| P1.auc_share_a001 | – | – | n/a | 0.457 (0.314–0.600) | – |
+| P1.auc_share_a05 | – | – | n/a | 0.627 (0.516–0.719) | – |
+| P1.null_p_raw_a05 | – | – | n/a | 0.143 | – |
+| P1.null_p_share_a05 | – | – | n/a | 0.218 | – |
+| P1.positives_a001 | – | – | 0 | 5 | – |
+| P1.positives_a05 | – | – | 0 | 11 | – |
+| P2.CPE_log_skill | 0 (0–0) | -0.0374 (-0.0900 to 0.0155) | – | – | 0.219 (0.160–0.276) |
+| P2.CPE_mae_skill | 0 (0–0) | -0.0750 (-0.176 to 0.0312) | – | – | 0.286 (0.192–0.376) |
+| P2.ESBL_log_skill | 0 (0–0) | -1.21 (-1.86 to -0.602) | – | – | 0.519 (0.280–0.742) |
+| P2.ESBL_mae_skill | 0 (0–0) | -0.135 (-0.268 to -0.0139) | – | – | 0.0919 (-0.0335 to 0.189) |
+| P2.MRSA_log_skill | 0 (0–0) | -0.237 (-0.469 to -0.000153) | – | – | 0.620 (0.453–0.804) |
+| P2.MRSA_mae_skill | 0 (0–0) | -0.0302 (-0.134 to 0.0563) | – | – | 0.217 (0.145–0.276) |
+| P2.VRE_log_skill | 0 (0–0) | -0.0773 (-0.226 to 0.0383) | – | – | 0.250 (0.165–0.332) |
+| P2.VRE_mae_skill | 0 (0–0) | 0 (-0.224 to 0.242) | – | – | 0.200 (-0.00721 to 0.429) |
+| P2.log_score | -2.13 (-2.23 to -2.04) | -2.52 (-2.68 to -2.36) | – | – | -1.73 (-1.80 to -1.67) |
+| P2.log_skill | 0 (0–0) | -0.391 (-0.551 to -0.233) | – | – | 0.402 (0.309–0.482) |
+| P2.log_skill_no_last2 | 0 (0–0) | -0.370 (-0.550 to -0.207) | – | – | 0.408 (0.313–0.501) |
+| P2.log_skill_seasonal | 0.391 (0.233–0.551) | 0 (0–0) | – | – | 0.793 (0.660–0.933) |
+| P2.mae | 2.53 (2.37–2.70) | 2.77 (2.60–2.98) | – | – | 2.17 (2.00–2.38) |
+| P2.mae_skill | 0 (0–0) | -0.0949 (-0.183 to -0.0138) | – | – | 0.144 (0.0628–0.213) |
+| P2.mae_skill_no_last2 | 0 (0–0) | -0.0649 (-0.150 to 0.0103) | – | – | 0.150 (0.0643–0.226) |
+| P2.mae_skill_seasonal | 0.0867 (0.0136–0.155) | 0 (0–0) | – | – | 0.219 (0.159–0.272) |
+| P2.national_log_skill | 0 (0–0) | -1.97 (-3.13 to -0.872) | – | – | 1.55 (0.809–2.33) |
+| P2.national_mae_skill | 0 (0–0) | -0.397 (-0.887 to -0.0713) | – | – | -0.126 (-0.489 to 0.134) |
