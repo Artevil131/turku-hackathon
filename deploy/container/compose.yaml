@@ -9,6 +9,10 @@ services:
       context: ../..
       dockerfile: deploy/container/Containerfile.api
     image: localhost/aei-api:dev
+    # The dataset files are often private to their owner (mode 600). Under rootless podman,
+    # AEI_API_USER=root runs the server as your own host user, who can read them; the default
+    # is the image's unprivileged user `node`.
+    user: ${AEI_API_USER:-node}
     environment:
       AEI_REPLAY_START: ${AEI_REPLAY_START:-2025-05-12}
       AEI_LOAD_UNTIL: ${AEI_LOAD_UNTIL:-}
@@ -32,6 +36,13 @@ services:
     ports:
       # Published on the host's loopback only, for scripts/send_lab_results.py.
       - "127.0.0.1:${AEI_API_PORT:-8787}:8787"
+    # Also here, not only in the image: podman-compose builds OCI images, which drop HEALTHCHECK.
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8787/api/meta').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 60s
+      retries: 3
     restart: unless-stopped
 
   web:
