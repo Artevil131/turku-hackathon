@@ -72,8 +72,8 @@ steady noise around a fixed level.
    and clindamycin, susceptible to vancomycin: 25 isolates in three years,
    12 of them in the ICU in March 2026 (12 patients within 28 days from
    2026-03-03, 9 on day 3+ of their stay). ICU *S. aureus* cefoxitin R is
-   42 % (n = 31) in 2026-Q1 against 0–11 % in other quarters; 10 of the 17
-   ICU MRSA isolates fall in 2026-W10 to W13.
+   42 % (n = 31) in 2026-Q1 against 0–11 % in other quarters; weekly ICU
+   MRSA isolates reach 3–4 in 2026-W10, W11 and W13 against a median of 0.
 3. **Health centre South, no samples for a week, 2025-12-08 to
    2025-12-14.** Zero cultures for seven consecutive days in a unit whose
    median week has 55; the days before and after look normal. No other
@@ -100,7 +100,8 @@ Deviations from plan: none.
 ## Interpretation
 
 The dataset contains at least three deliberate events, each of a
-different kind from Artem's taxonomy (README "Deviations and anomalies"):
+different kind in the infection-control taxonomy of Artem's notes
+(section C, "Deviations and anomalies"):
 a clonal ward cluster (Urology ESBL *E. coli*), a ward outbreak of an
 MDRO (ICU MRSA), and a data artefact (a week without samples from one
 health centre), plus a slow rising trend (trimethoprim). They are far
