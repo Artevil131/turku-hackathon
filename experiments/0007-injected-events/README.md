@@ -1,5 +1,5 @@
 ---
-status: proposed    # proposed, then accepted, rejected or superseded
+status: accepted    # proposed, then accepted, rejected or superseded
 by: Claude Code, operated by Aapo
 data: [synthetic_microbiology_dataset, seed 2026, 2023-10-02 to 2026-09-27, as received 2026-10-09]
 parent: 0002
@@ -57,4 +57,56 @@ and a unit sending no samples for 3 or more days is detected in at least
 
 ## Result
 
+`node experiments/0007-injected-events/inject.ts` (66 s on a laptop, one
+run, seed 2026) writes `out/results.md`. All computed; 40 trials per
+setting; detection rate with 95 % Wilson interval.
+
+| setting | detected | median delay (days) |
+|---|---|---|
+| control, nothing injected | 0/40 (0–9 %) | – |
+| cluster of 2 patients | 5/40 (5–26 %) | 6 |
+| cluster of 3 | 22/40 (40–69 %) | 8 |
+| cluster of 4 | 38/40 (83–99 %) | 5 |
+| cluster of 6 | 40/40 (91–100 %) | 4 |
+| control, nothing removed | 0/40 (0–9 %) | – |
+| no cultures for 2 days | 1/40 (0–13 %) | 3 |
+| no cultures for 3 days | 10/40 (14–40 %) | 2 |
+| no cultures for 5 days | 33/40 (68–91 %) | 3 |
+| no cultures for 7 days | 40/40 (91–100 %) | 4 |
+| half the cultures for 7 days | 18/40 (31–60 %) | 5 |
+
+Every detected cluster of 4 or more was found within 12 days of its first
+case. Short gaps are found mainly in the large units (3 days: 5 of 7
+trials in ED and the health centres, 0 of 9 in MED-B and the ICU); a
+halved week is found in 16 of 20 trials in large units and 2 of 20
+elsewhere.
+
+Deviations from plan: control trials (nothing injected or removed, 40
+each) were added before the run to measure chance matches; they matched
+0 of 40 each. The run took 66 s on the laptop, slightly over the one
+minute budget, and was not moved to chili.
+
 ## Interpretation
+
+The hypothesis is half refuted. Clusters: an outbreak of 4 or more
+patients with one resistant clone in one unit within two weeks is caught
+in 95 % of trials (78 of 80 for 4 and 6), median 4 to 5 days after its
+first case, plus 2 to 3 days of lab turnaround in practice; 3 patients
+are caught about half the time and 2 rarely. Sampling gaps: 3 days
+without samples is caught in only a quarter of trials, so the 80 %
+claim fails there; 5 days is caught in 83 %, 7 days always. Small units
+send too few cultures for a few silent days to stand out against Poisson
+noise.
+
+These are the numbers to quote to the judges instead of 0002's delays:
+"a clone reaching 4 patients in a unit within two weeks is flagged in 95
+% of simulated outbreaks, about 5 days after the first case; a unit going
+silent for 5 days is flagged in 83 %". Caveats: injected clones copy real
+ESBL or MRSA profiles, which are rare and so easy to spot; a cluster of a
+common profile would be harder. Each trial holds one event against real
+background, and false alarms are measured separately (0002, about 5 other
+episodes a year).
+
+For short gaps in small units a different rule would do better: a run of
+consecutive days with no cultures, compared with how often the unit has
+such runs, rather than a 7-day count.
