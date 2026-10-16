@@ -711,10 +711,11 @@
   color: var(--ink-4);
 }
 
-/* Long words (Finnish compounds) never spill out of the narrow label column */
+/* Long words (Finnish compounds) never spill out of the narrow label column:
+   hyphenated at syllables where the browser can (the page's lang is set), broken only as a last resort. */
 .timeline-label-sub,
 .timeline-label-name {
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
   hyphens: auto;
 }
 .timeline-label.is-group .u-eyebrow {
