@@ -10,6 +10,7 @@
       "*.json",
       "!**/node_modules",
       "!**/dist",
+      "!apps/web/smoke-out",
       "!!.claude/worktrees"
     ]
   },

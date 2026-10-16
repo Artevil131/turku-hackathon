@@ -136,7 +136,8 @@ const fi: Record<keyof typeof en, string> = {
 
   "timeline.lane.all": "Kaikki yksiköt",
   "timeline.lane.results": "Tuloksia viikossa",
-  "timeline.lane.flag": "Resistenssimerkintä",
+  // A soft hyphen: the phone's narrow label column breaks it as "Resistenssi-merkintä", not mid-syllable.
+  "timeline.lane.flag": "Resistenssi\u00admerkintä",
   "timeline.lane.flagScale": "0–{max}",
   "timeline.lane.max": "enintään {count}",
   "timeline.lane.hospital": "Koko sairaala",
