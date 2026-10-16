@@ -1,52 +1,43 @@
-import { coverage, DEFAULT_COVERAGE, EVERY_UNIT, MIN_KNOWN_SHARE, monthly, shareValue, treatmentsFor } from "../../engine/coverage.ts";
-import { addDays } from "../../engine/dates.ts";
-import type { AwareGroup, Catalog, CoverageResult, LikelyOrganism, MonthPoint, PatientQuery, Share } from "../../engine/types.ts";
+import { MAX_UNTESTED } from "@aei/coverage";
+import { addDays } from "../../model/dates.ts";
+import { MIN_ISOLATES } from "../../model/rules.ts";
+import type { AwareGroup, Catalog, LikelyOrganism, MonthPoint, PatientQuery, Share } from "../../model/types.ts";
 import type { IsoDate, Result } from "../../feed/types.ts";
+import { EVERY_UNIT, monthly, shareValue, treatmentsFor, type WindowCounts, windowCoverage } from "./count.ts";
 
 /*
   The report's numbers. Pure functions over the released results; every
-  figure comes from engine/coverage.ts, so the report and the Treat screen
-  count the same way (first isolate per patient, organism and specimen in the
-  window; missing results handled by the engine's EUCAST rule).
-
-  A report shows the filters exactly as chosen. coverage() widens a thin
-  query on its own (drops age, sex, then the unit) for the doctor's screen;
-  here minIsolates 0 turns that off, and the organiser's floor is applied
-  when a figure is shown: no percentage from fewer than MIN first isolates.
+  count comes from count.ts, which uses the team's gears (first isolates,
+  EUCAST rules, offered antibiotics), so the report and the doctor's list
+  count the same way. A report shows the filters exactly as chosen, and the
+  organiser's floor is applied when a figure is shown: no percentage from
+  fewer than MIN first isolates.
 */
 
-export const MIN = DEFAULT_COVERAGE.minIsolates;
-export const RECENT_DAYS = DEFAULT_COVERAGE.recentDays;
-export const YEAR_DAYS = DEFAULT_COVERAGE.yearDays;
+export { EVERY_UNIT, windowCoverage } from "./count.ts";
+export const MIN = MIN_ISOLATES;
+export const RECENT_DAYS = 28;
+export const YEAR_DAYS = 365;
 export const MONTHS = 12;
+/** An antibiotic with results for fewer than this share of a window's isolates is "rarely tested" (libs/utils/coverage MAX_UNTESTED). */
+const MIN_KNOWN_SHARE = 1 - MAX_UNTESTED;
 
 /** How one figure can be shown. */
 export type CellState =
   | "ok" // a percentage: at least MIN first isolates with a known answer
-  | "few" // fewer than MIN (share given when the engine returned one; else fewer than MIN for sure)
-  | "rare" // enough isolates, but the antibiotic was tested in fewer than half of them (engine rule)
+  | "few" // fewer than MIN (share given when there is one; else fewer than MIN for sure)
+  | "rare" // enough isolates, but over a fifth of them were not tested for the antibiotic
   | "none"; // no isolates in the window, or none with a result for this antibiotic
 
 export interface Cell {
   state: CellState;
-  /** The engine's figure, when it returned one for this antibiotic in this window. */
+  /** The window's figure, when there is one for this antibiotic. */
   share: Share | null;
 }
 
-/** The window's first day as shown (the engine's window is from < date <= asOf). */
+/** The window's first day as shown (the window is first day <= date <= asOf). */
 export function windowStart(asOf: IsoDate, days: number): IsoDate {
   return addDays(asOf, -days + 1);
-}
-
-/** coverage() over one window of `days`, for exactly this query (no widening). */
-export function windowCoverage(
-  results: readonly Result[],
-  asOf: IsoDate,
-  query: PatientQuery,
-  catalog: Catalog,
-  days: number,
-): CoverageResult {
-  return coverage(results, asOf, query, catalog, { minIsolates: 0, recentDays: days, yearDays: days });
 }
 
 export function cellFromShare(share: Share): Cell {
@@ -56,12 +47,13 @@ export function cellFromShare(share: Share): Cell {
 }
 
 /**
- * The figure for one antibiotic in a window. The engine leaves an antibiotic
- * out when it has no result in the window or (organism not known) when fewer
- * than half of the window's isolates have a known answer for it; below 2 x MIN
- * isolates that also means fewer than MIN answers, so it reads "too few".
+ * The figure for one antibiotic in a window. count.ts leaves an antibiotic
+ * out when it has no result in the window or when over a fifth of the
+ * window's isolates have no answer for it; when the isolates times the known
+ * share needed is still under MIN, that means fewer than MIN answers, so it
+ * reads "too few".
  */
-export function cellOf(cov: CoverageResult, antibiotic: string, organismKnown: boolean): Cell {
+export function cellOf(cov: WindowCounts, antibiotic: string, organismKnown: boolean): Cell {
   const d = cov.drugs.find((x) => x.antibiotic === antibiotic);
   if (d) return cellFromShare(d.main);
   const isolates = cov.basis.n;
@@ -132,7 +124,7 @@ export function buildTable(results: readonly Result[], asOf: IsoDate, query: Pat
       year: y,
       hospital: hospital ? cellOf(hospital, d.antibiotic, organismKnown) : null,
       change: changeOf(r, y),
-      months: monthly(results, asOf, query, d.antibiotic, MONTHS, catalog),
+      months: monthly(results, asOf, query, d.antibiotic, MONTHS),
     };
   });
   rows.sort((a, b) => a.order - b.order);
@@ -216,7 +208,7 @@ export function buildMatrix(
     .filter((a) => used.has(a.code))
     .map((a) => ({ code: a.code, aware: used.get(a.code) ?? null }));
 
-  const rowOf = (ward: string, cov: CoverageResult): MatrixRow => ({
+  const rowOf = (ward: string, cov: WindowCounts): MatrixRow => ({
     ward,
     n: cov.basis.n,
     cells: new Map(columns.map((c) => [c.code, cellOf(cov, c.code, organismKnown)])),

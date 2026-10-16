@@ -59,6 +59,27 @@ importers:
 
   apps/web:
     dependencies:
+      '@aei/alerts':
+        specifier: workspace:*
+        version: link:../../libs/utils/alerts
+      '@aei/contract':
+        specifier: workspace:*
+        version: link:../../libs/utils/contract
+      '@aei/counting':
+        specifier: workspace:*
+        version: link:../../libs/utils/counting
+      '@aei/coverage':
+        specifier: workspace:*
+        version: link:../../libs/utils/coverage
+      '@aei/detect':
+        specifier: workspace:*
+        version: link:../../libs/utils/detect
+      '@aei/domain':
+        specifier: workspace:*
+        version: link:../../libs/utils/domain
+      '@aei/eucast':
+        specifier: workspace:*
+        version: link:../../libs/utils/eucast
       react:
         specifier: ^19.3.1
         version: 19.3.1

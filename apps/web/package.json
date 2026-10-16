@@ -11,6 +11,13 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@aei/alerts": "workspace:*",
+    "@aei/contract": "workspace:*",
+    "@aei/counting": "workspace:*",
+    "@aei/coverage": "workspace:*",
+    "@aei/detect": "workspace:*",
+    "@aei/domain": "workspace:*",
+    "@aei/eucast": "workspace:*",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },

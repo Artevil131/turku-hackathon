@@ -1,6 +1,6 @@
 import { useDeferredValue, useMemo } from "react";
-import { EVERY_UNIT } from "../../engine/coverage.ts";
-import type { AgeBand, Catalog, PatientQuery } from "../../engine/types.ts";
+import { EVERY_UNIT } from "./count.ts";
+import type { AgeBand, Catalog, PatientQuery } from "../../model/types.ts";
 import type { FeedMeta, IsoDate, Result } from "../../feed/types.ts";
 import { formatDate, formatNumber, t, type Locale } from "../../i18n/index.ts";
 import {
@@ -43,7 +43,7 @@ import "./Report.css";
   by the data's own parameters (unit, infection site, bacteria, sex, age),
   updated as each day's results arrive. Two views: one row per antibiotic, or
   every unit side by side. Both download as CSV with the counting rules
-  applied. Every number comes from engine/coverage.ts.
+  applied. Every number comes from count.ts (the team's gears).
 */
 
 export interface ReportPrefs {
@@ -113,7 +113,7 @@ export function ReportScreen(p: {
   const patientParts = [sex ? sexLabel(locale, sex) : null, age ? ageLabel(locale, age) : null].filter((x): x is string => !!x);
   const drugName = (code: string) => antibioticName(locale, meta, code);
 
-  const treatPatch = (w: string): Partial<TreatPrefs> => ({ ward: w, specimen, organism, sex, age });
+  const treatPatch = (w: string): Partial<TreatPrefs> => ({ ward: w, specimen, sex });
 
   const labels: CsvLabels = {
     unitName: (code) => unitName(locale, meta, code),
