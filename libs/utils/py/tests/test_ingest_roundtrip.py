@@ -17,6 +17,7 @@ from aei.messages import lab_reports, to_csv, to_fhir, to_hl7
 
 DATA = Path("data/synthetic_microbiology_dataset")
 START, END = "2025-06-01", "2025-06-14"
+pytestmark = pytest.mark.skipif(not DATA.exists(), reason=f"dataset not found at {DATA}")
 
 
 @pytest.fixture(scope="module")
