@@ -1,0 +1,23 @@
+[project]
+name = "aei-analysis"
+version = "0.0.0"
+description = "Data analysis for the AEI challenge (D-024): experiments, scripts and cross-checks in Python"
+requires-python = ">=3.12"
+dependencies = [
+  "numpy",
+  "pandas",
+  "scipy",
+  "statsmodels",
+  "matplotlib",
+]
+
+[dependency-groups]
+dev = ["pytest"]
+
+[build-system]
+requires = ["uv_build>=0.8,<0.11"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "aei"
+module-root = "libs/utils/py"

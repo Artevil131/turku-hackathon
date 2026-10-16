@@ -4,8 +4,9 @@ Our challenge is the Antibiotic Efficacy Indicator (AEI) by Tyks
 Laboratories: a continuously updated, ward-level view of antibiotic
 resistance, for doctors choosing empirical treatment and for researchers
 watching for spread. The problem, the data and the open questions are in
-CONTEXT.md; who we build for and what they need is in AUDIENCE.md. This repository lays the foundation so that whatever we build,
-a website and an iPhone app among it, sits on one structure.
+CONTEXT.md; who we build for and what they need is in AUDIENCE.md. This
+repository lays the foundation so that whatever we build, a website and an
+iPhone app among it, sits on one structure.
 
 The architecture tries to generalise and keep everything as untangled as
 possible. Each piece of logic is written once, in one place, behind a small
@@ -27,8 +28,10 @@ experiment, it belongs in `libs/utils`, from the start.
 
 ## Layout
 
-    libs/utils/     reusable building blocks, one module per job (the gears)
+    libs/utils/     reusable building blocks, one module per job (the gears);
+                    py/ holds the Python analysis helpers
     apps/           thin products that combine utils (the mechanisms)
+      api/          development server implementing the API contract
       web/          the website
       ios/          the iPhone app
     deploy/         everything about deployment: infrastructure, containers,
@@ -40,13 +43,17 @@ experiment, it belongs in `libs/utils`, from the start.
                     open data); describes the field, decides nothing
     experiments/    one directory per experiment, NNNN-slug/README.md,
                     started from experiments/TEMPLATE.md
+    data/           datasets, git-ignored (PROTOCOL.md)
     CONTEXT.md      the challenge: problem, data, open questions
-    AUDIENCE.md     the audiences, what each needs from the data, and who on the team does what
+    AUDIENCE.md     the audiences, what each needs from the data, and who on
+                    the team does what
+    PRODUCT.md      product context for design work
     PROTOCOL.md     how an experiment is planned, run and recorded in git,
                     and the rules for claims
     DECISIONS.md    every technical, mathematical or statistical choice the
                     team has made, with who made it and why
     AGENTS.md       rules for AI agents working here
+    pyproject.toml  the Python analysis environment, managed by uv (D-024)
 
 ## Dependency direction
 
@@ -67,6 +74,28 @@ Dependencies point one way:
 
 ## Stack
 
-No language, framework, model, database or hosting provider is chosen
-yet. Each choice is made by the team and recorded in DECISIONS.md before
-code depends on it.
+TypeScript on the web (React + Vite) in a pnpm workspace; Rust is planned
+for some gears later. Data analysis (experiments, scripts, cross-checks)
+is in Python with uv (D-024); anything the app runs stays in TypeScript.
+The full list of choices, with who made them, is in DECISIONS.md. The data
+store is not chosen yet.
+
+## Running
+
+Needs Node 22 or newer and pnpm. Unzip the organiser's dataset into
+`data/synthetic_microbiology_dataset/`, then:
+
+    pnpm install
+    pnpm dev          # API on :8787 and the website on :5173
+    pnpm test         # unit tests (Vitest)
+    pnpm typecheck
+    pnpm check        # lint and format (Biome)
+
+For Python analysis, with uv installed:
+
+    uv sync
+    uv run python scripts/crosscheck-stats/check.py   # TypeScript statistics against scipy
+
+Design work goes through the Impeccable skill (`/impeccable`), installed in
+the repo for Claude Code and Codex; PRODUCT.md holds the product context it
+reads.

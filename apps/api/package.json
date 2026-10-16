@@ -1,0 +1,23 @@
+{
+  "name": "@aei/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/main.ts",
+    "start": "node src/main.ts",
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@aei/alerts": "workspace:*",
+    "@aei/ask": "workspace:*",
+    "@aei/contract": "workspace:*",
+    "@aei/coverage": "workspace:*",
+    "@aei/dataset": "workspace:*",
+    "@aei/domain": "workspace:*",
+    "@aei/i18n": "workspace:*",
+    "@aei/ingest": "workspace:*",
+    "@aei/relations": "workspace:*",
+    "@aei/replay": "workspace:*"
+  }
+}

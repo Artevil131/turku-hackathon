@@ -1,0 +1,20 @@
+{
+  "name": "@aei/contract",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@aei/alerts": "workspace:*",
+    "@aei/ask": "workspace:*",
+    "@aei/coverage": "workspace:*",
+    "@aei/domain": "workspace:*",
+    "@aei/relations": "workspace:*",
+    "@aei/replay": "workspace:*"
+  }
+}

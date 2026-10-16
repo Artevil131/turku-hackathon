@@ -223,8 +223,11 @@ earlier notes still match.
     ESBL *E. coli* cluster in urology, an MRSA outbreak in the ICU, a
     week with no samples from health centre South, and slow rises in two
     resistance series); they are measured and listed in
-    `benchmarks/planted-events/README.md`. Still to confirm with the
-    organiser whether that is the full list.
+    `benchmarks/planted-events/README.md`. Experiments 0001 and 0002 found
+    the same four and two smaller candidates (a week with few samples in
+    internal medicine A, 2025-05-12 to 05-18, and a possible *E. coli*
+    cluster there in September 2025). Still to confirm with the organiser
+    whether that is the full list.
 
 **Other**
 
