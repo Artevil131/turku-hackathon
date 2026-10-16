@@ -21,7 +21,7 @@ export function TopBar(props: Props) {
   );
   return (
     <header className="topbar glass ply-1">
-      <button type="button" className="mark" onClick={() => props.onPage("home")} aria-label={t(locale, "home")}>
+      <button type="button" className="mark" onClick={() => props.onPage("home")} title={t(locale, "home")}>
         <Mark className="mark-glyph" />
         <span>
           <span className="mark-name">{t(locale, "appName")}</span>

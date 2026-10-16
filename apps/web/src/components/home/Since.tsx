@@ -53,11 +53,8 @@ function Items({ locale, changes }: { locale: Locale; changes: Changes }) {
       {changes.isolates !== null ? (
         <li className="hm-item">
           <span className="hm-item-label">{t(locale, "homeIsolates")}</span>
-          <a
-            className="hm-link"
-            href="#research"
-            aria-label={`${t(locale, "homeIsolates")}: ${t(locale, "homeCount", { n: changes.isolates, date })}`}
-          >
+          <a className="hm-link" href="#research">
+            <span className="visually-hidden">{t(locale, "homeIsolates")}: </span>
             <b className="num">{changes.isolates}</b>
             <span className="hm-date">{date}</span>
           </a>
@@ -70,12 +67,7 @@ function Items({ locale, changes }: { locale: Locale; changes: Changes }) {
         ) : (
           <span className="hm-links">
             {changes.finds.map((f) => (
-              <a
-                key={f.phenotype}
-                className="hm-link"
-                href={`#research?ph=${f.phenotype}`}
-                aria-label={`${phenotypeName(f.phenotype)}: ${t(locale, "homeCount", { n: f.count, date })}`}
-              >
+              <a key={f.phenotype} className="hm-link" href={`#research?ph=${f.phenotype}`}>
                 <b className="num">{f.count}</b>
                 <span>{phenotypeName(f.phenotype)}</span>
                 <span className="hm-date">{date}</span>
@@ -91,12 +83,7 @@ function Items({ locale, changes }: { locale: Locale; changes: Changes }) {
         ) : (
           <span className="hm-links">
             {changes.alerts.map((a) => (
-              <a
-                key={a.kind}
-                className="hm-link"
-                href={`#research?inc=${encodeURIComponent(a.incident)}`}
-                aria-label={`${t(locale, KIND_KEY[a.kind])}: ${t(locale, "homeCount", { n: a.count, date })}`}
-              >
+              <a key={a.kind} className="hm-link" href={`#research?inc=${encodeURIComponent(a.incident)}`}>
                 <b className="num">{a.count}</b>
                 <span>{t(locale, KIND_KEY[a.kind])}</span>
                 <span className="hm-date">{date}</span>

@@ -210,14 +210,7 @@ function Chip({
   children: React.ReactNode;
 }) {
   return (
-    <button
-      type="button"
-      className="feed-chip"
-      aria-pressed={on}
-      title={title}
-      aria-label={title ? `${title}, ${count}` : undefined}
-      onClick={onClick}
-    >
+    <button type="button" className="feed-chip" aria-pressed={on} title={title} onClick={onClick}>
       {on ? <Check /> : null}
       {children}
       <span className="feed-chip-count">{count}</span>

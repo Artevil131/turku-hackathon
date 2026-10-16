@@ -380,8 +380,7 @@ function RowWithDivider({ divider, children }: { divider: string | null; childre
   return (
     <>
       {divider ? (
-        // biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: the spec asks for a list separator inside the ranked list
-        <li role="separator" className="cl-divider">
+        <li className="cl-divider">
           <span>{divider}</span>
         </li>
       ) : null}

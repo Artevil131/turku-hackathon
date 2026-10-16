@@ -91,6 +91,8 @@ export function useLive(baseUrl = API_BASE_URL) {
         setClock(c);
         await loadBacklog(c.asOf);
         if (closed) return;
+        // The HTTP API answered, so the controls work; the stream's first event may lag behind a proxy.
+        setConnection("open");
         close = client.live(
           (event) => {
             setConnection("open");
