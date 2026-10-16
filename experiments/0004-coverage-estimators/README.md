@@ -140,5 +140,6 @@ of `@aei/counting` and `@aei/eucast` and the same mulberry32 generator
 
     uv run python experiments/0004-coverage-estimators/backtest.py
 
-It reproduces `out/results.md` byte for byte (about 27 s on the laptop).
-The parity tests (`uv run pytest libs/utils/py/tests`) check the Python mirrors in `libs/utils/py/aei` against the TypeScript gears on the full dataset.
+It reproduces `out/results.md` byte for byte (about 27 s on the laptop). The
+parity tests (`uv run pytest libs/utils/py/tests`) check the Python mirrors
+in `libs/utils/py/aei` against the TypeScript gears on the full dataset.

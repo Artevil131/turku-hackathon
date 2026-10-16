@@ -213,6 +213,9 @@ mirrors of `@aei/detect` in `libs/utils/py/aei/detect.py`:
 It reproduces `out/other-episodes.md` byte for byte and every table of
 `out/summary.md`. The one line that differs is the measured "Sweep time"
 (8.0 s in Python against the 15.0 s recorded), so the committed file keeps
-the original run's line. The parity tests (`uv run pytest libs/utils/py/tests`) check the Python mirrors in `libs/utils/py/aei` against the TypeScript gears on the full dataset. Signals, episodes, observed and expected values
-are identical; p-values agree within 3e-12 relative (scipy's Poisson and
-hypergeometric tails against the TypeScript's sums).
+the original run's line. The parity tests (`uv run pytest
+libs/utils/py/tests`) check the Python mirrors in `libs/utils/py/aei`
+against the TypeScript gears on the full dataset. Signals, episodes,
+observed and expected values are identical; p-values agree within 3e-12
+relative (scipy's Poisson and hypergeometric tails against the TypeScript's
+sums).

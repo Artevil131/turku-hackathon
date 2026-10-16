@@ -131,5 +131,7 @@ Urology outbreak strain (trimethoprim R); see 0002, corrections.
 
     uv run python experiments/0001-planted-events/scan.py
 
-It reproduces `out/1-weekly.md` to `out/5-carriers.md` byte for byte
-(about 14 s on the laptop). The parity tests (`uv run pytest libs/utils/py/tests`) check the Python mirrors in `libs/utils/py/aei` against the TypeScript gears on the full dataset.
+It reproduces `out/1-weekly.md` to `out/5-carriers.md` byte for byte (about
+14 s on the laptop). The parity tests (`uv run pytest libs/utils/py/tests`)
+check the Python mirrors in `libs/utils/py/aei` against the TypeScript gears
+on the full dataset.

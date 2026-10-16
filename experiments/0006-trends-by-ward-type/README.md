@@ -88,5 +88,6 @@ exclusion are the Python mirrors of `@aei/detect`:
 
     uv run python experiments/0006-trends-by-ward-type/sweep.py
 
-It reproduces `out/results.md` byte for byte (about 15 s on the laptop).
-The parity tests (`uv run pytest libs/utils/py/tests`) check the Python mirrors in `libs/utils/py/aei` against the TypeScript gears on the full dataset.
+It reproduces `out/results.md` byte for byte (about 15 s on the laptop). The
+parity tests (`uv run pytest libs/utils/py/tests`) check the Python mirrors
+in `libs/utils/py/aei` against the TypeScript gears on the full dataset.
