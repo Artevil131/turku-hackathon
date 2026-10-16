@@ -50,3 +50,4 @@ Screenshots come from headless Chrome through
 | 01:43 | builder (Sonnet 5.5) | Wave 2 network/map/timeline: every flow share with its count in a readable list; map month browser labelled as independent of the replay with a way back; Finnish decimals; timeline date entry in the Events menu and phone sheet (U7 jump to any date) |
 | 01:43 | builder (Sonnet 5.5) | Wave 2 home/top bar/settings: Research badge labelled (unseen resistant finds, 3 days, as-of), doctor card first, FI/EN switch in the top bar, truthful about-the-data text, dead recommendation-era keys removed |
 | 01:43 | orchestrator (Opus 5.5) | Doctor named-context view checked at true 390 px; App passes asOf and onLocale to TopBar |
+| 01:44 | orchestrator (Opus 5.5) | Tested the timeline date entry in the browser (seek to 2026-02-10, doctor's list followed with its as-of); doctor page now follows hash changes while mounted. Clock back to 2025-05-12 |

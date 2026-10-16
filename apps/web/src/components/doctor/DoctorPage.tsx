@@ -4,7 +4,7 @@ import type { Locale } from "@aei/i18n";
 import { t } from "@aei/i18n";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { previousUnits, useFlows } from "../../relations.ts";
-import { hashParams, writeHashParams } from "../../url.ts";
+import { hashPage, hashParams, writeHashParams } from "../../url.ts";
 import { CoverageList, type ListStatus } from "./CoverageList.tsx";
 import "./DoctorPage.css";
 import { type DoctorFilters, filtersFromUrl, filtersToParams, storeUnit } from "./filters.ts";
@@ -40,6 +40,14 @@ export function DoctorPage({ client, locale, asOf, alerts, onOpenSignals }: Doct
     storeUnit(filters.unit);
     writeHashParams(filtersToParams(filters));
   }, [filters]);
+  // A link followed inside the app (search, home, back button) changes the hash without remounting.
+  useEffect(() => {
+    const onHash = () => {
+      if (hashPage() === "doctor") setFilters(filtersFromUrl(hashParams()));
+    };
+    addEventListener("hashchange", onHash);
+    return () => removeEventListener("hashchange", onHash);
+  }, []);
 
   const key = queryKey(filters);
   // biome-ignore lint/correctness/useExhaustiveDependencies: `attempt` is the retry button's trigger; `key` stands for the filters it covers.
