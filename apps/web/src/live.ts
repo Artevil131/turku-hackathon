@@ -1,4 +1,12 @@
-import { type AeiClient, type ClockCommand, type ClockState, createAeiClient, type Meta } from "@aei/contract";
+import {
+  type AeiClient,
+  type Alert,
+  type ClockCommand,
+  type ClockState,
+  createAeiClient,
+  type Meta,
+  type RelationsResponse,
+} from "@aei/contract";
 import type { IsolateRecord, Phenotype } from "@aei/domain";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -21,6 +29,7 @@ export interface Finding {
 const BACKLOG_DAYS = 28;
 const UNSEEN_DAYS = 3;
 const MAX_FINDINGS = 200;
+const RELATION_DAYS = 28;
 
 const shift = (iso: string, days: number) => new Date(Date.parse(`${iso}T00:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10);
 
@@ -46,13 +55,20 @@ export function useLive(baseUrl = "") {
   const [findings, setFindings] = useState<Finding[]>([]);
   // Every isolate of the loaded period, flagged or not, for spread counts.
   const [records, setRecords] = useState<IsolateRecord[]>([]);
+  // Alerts that need no statistics (D-014) and the relation layers for the last four weeks (D-013).
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [relations, setRelations] = useState<RelationsResponse | null>(null);
   const [lastArrivals, setLastArrivals] = useState<{ to: string; count: number } | null>(null);
   const retry = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const loadBacklog = useCallback(
     async (asOf: string) => {
-      const { records } = await client.isolates({ from: shift(asOf, -BACKLOG_DAYS) });
+      const [{ records }, recent] = await Promise.all([
+        client.isolates({ from: shift(asOf, -BACKLOG_DAYS) }),
+        client.alerts({ from: shift(asOf, 1 - BACKLOG_DAYS) }),
+      ]);
       setRecords(records);
+      setAlerts(recent.alerts);
       setFindings(toFindings(records, shift(asOf, -UNSEEN_DAYS)).slice(0, MAX_FINDINGS));
     },
     [client],
@@ -85,6 +101,10 @@ export function useLive(baseUrl = "") {
               const fresh = toFindings(event.records, null);
               if (fresh.length) setFindings((list) => [...fresh, ...list].slice(0, MAX_FINDINGS));
             }
+            if (event.type === "alerts") {
+              const cutoff = shift(event.to, 1 - BACKLOG_DAYS);
+              setAlerts((list) => [...event.alerts, ...list.filter((a) => a.date >= cutoff)]);
+            }
           },
           () => setConnection("offline"),
         );
@@ -103,6 +123,21 @@ export function useLive(baseUrl = "") {
     };
   }, [client, loadBacklog]);
 
+  const asOf = clock?.asOf;
+  useEffect(() => {
+    if (!asOf) return;
+    let stale = false;
+    client
+      .relations({ days: RELATION_DAYS })
+      .then((r) => {
+        if (!stale) setRelations(r);
+      })
+      .catch(() => setConnection("offline"));
+    return () => {
+      stale = true;
+    };
+  }, [client, asOf]);
+
   const command = useCallback(
     (c: ClockCommand) =>
       client
@@ -117,5 +152,5 @@ export function useLive(baseUrl = "") {
     setFindings((list) => list.map((f) => (set.has(f.id) ? { ...f, seen: true } : f)));
   }, []);
 
-  return { meta, clock, connection, findings, records, lastArrivals, command, acknowledge };
+  return { meta, clock, connection, findings, records, alerts, relations, lastArrivals, command, acknowledge };
 }

@@ -12,7 +12,7 @@ import { antibioticName, formatDate, type Locale, phenotypeName, specimenName, t
 import { type ReactNode, useMemo } from "react";
 import { type Cell, type Figure, historyFor, organismsFor, stripsFor } from "../examples.ts";
 import type { Finding } from "../live.ts";
-import { previousUnits } from "../relations.ts";
+import { previousUnits, useFlows } from "../relations.ts";
 import { AlertTri, Flask, Tri } from "./Icons.tsx";
 import { Spread } from "./Spread.tsx";
 import { TrendChart } from "./TrendChart.tsx";
@@ -55,7 +55,7 @@ export function Treat({ locale, state, onChange, findings, records, asOf, minIso
   );
 
   // Resistant-phenotype findings here or in the units that send most patients here, last 14 days.
-  const feeders = previousUnits(state.ward, 3).map((p) => p.ward);
+  const feeders = previousUnits(useFlows(), state.ward, 3).map((p) => p.ward);
   const nearby = findings.filter(
     (f) => (f.record.ward === state.ward || feeders.includes(f.record.ward)) && (!asOf || f.arrivedAt >= shiftDays(asOf, -14)),
   );

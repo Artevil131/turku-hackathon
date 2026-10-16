@@ -1,3 +1,4 @@
+import type { Flow } from "@aei/contract";
 import { isWardCode, type WardCode } from "@aei/domain";
 import { type Locale, t } from "@aei/i18n";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -7,6 +8,9 @@ import { Settings } from "./components/Settings.tsx";
 import { type Page, TopBar } from "./components/TopBar.tsx";
 import { Treat, type TreatState } from "./components/Treat.tsx";
 import { type Finding, useLive } from "./live.ts";
+import { FlowsContext } from "./relations.ts";
+
+const NO_FLOWS: readonly Flow[] = [];
 
 // The organiser's reporting floor (CONTEXT.md): no percentage from fewer
 // than 30 isolates. Passed down so it is set in one place.
@@ -120,7 +124,7 @@ export function App() {
   }, []);
 
   return (
-    <>
+    <FlowsContext.Provider value={live.relations?.flows ?? NO_FLOWS}>
       <div className="chassis" aria-hidden="true" />
       <div className="console">
         <TopBar
@@ -167,6 +171,6 @@ export function App() {
           {t(locale, "offline")}
         </p>
       ) : null}
-    </>
+    </FlowsContext.Provider>
   );
 }

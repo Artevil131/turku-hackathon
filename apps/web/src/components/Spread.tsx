@@ -2,7 +2,7 @@ import { HOME_AREAS, type IsolateRecord, type Organism, PHENOTYPES, type Specime
 import { homeAreaName, type Locale, phenotypeName, specimenName, t, wardName } from "@aei/i18n";
 import { useMemo } from "react";
 import type { Finding } from "../live.ts";
-import { previousUnits, undirectedFlows } from "../relations.ts";
+import { previousUnits, undirectedFlows, useFlows } from "../relations.ts";
 import { curve, H, POS, tubeWidth, W } from "./Network.tsx";
 
 // What is going around, for the doctor: where resistant finds turned up in
@@ -43,7 +43,10 @@ export function Spread({ locale, ward, specimen, organism, records, findings, on
 
   const finds = new Map<WardCode, number>();
   for (const f of findings) finds.set(f.record.ward, (finds.get(f.record.ward) ?? 0) + 1);
-  const feeders = new Set(previousUnits(ward, 3).map((p) => p.ward));
+  const directed = useFlows();
+  const flows = undirectedFlows(directed);
+  const max = flows[0]?.patients ?? 0;
+  const feeders = new Set(previousUnits(directed, ward, 3).map((p) => p.ward));
   const maxArea = Math.max(1, ...rows.flatMap((r) => [...r.areas.values()]));
 
   return (
@@ -57,16 +60,16 @@ export function Spread({ locale, ward, specimen, organism, records, findings, on
 
       <figure className="minimap">
         <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={t(locale, "minimapLabel", { unit: wardName(locale, ward) })}>
-          {undirectedFlows().map(({ a, b, patients }) => {
+          {flows.map(({ a, b, patients }) => {
             const intoUnit = (a === ward && feeders.has(b)) || (b === ward && feeders.has(a));
-            if (!intoUnit && patients < 1000) return null;
+            if (!intoUnit && patients < 0.5 * max) return null;
             return (
               <path
                 key={`${a}|${b}`}
                 d={curve(a, b)}
                 className="mini-tube"
                 data-active={intoUnit}
-                strokeWidth={tubeWidth(patients) * 1.6}
+                strokeWidth={tubeWidth(patients, max) * 1.6}
               />
             );
           })}

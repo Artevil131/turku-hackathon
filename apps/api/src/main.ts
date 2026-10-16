@@ -1,9 +1,11 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { resolve } from "node:path";
-import { type ClockCommand, type IsolateQuery, type LiveEvent, type Meta, ROUTES } from "@aei/contract";
+import { type Alert, carrierAlerts, cpeAlerts, sortAlerts } from "@aei/alerts";
+import { type ClockCommand, type IsolateQuery, type LiveEvent, type Meta, type RelationsResponse, ROUTES } from "@aei/contract";
 import { joinIsolates, loadDataset } from "@aei/dataset";
 import { ANTIBIOTICS, type IsolateRecord, ORGANISMS, SPECIMENS, WARDS } from "@aei/domain";
-import { createReleaseIndex, createReplayClock } from "@aei/replay";
+import { carrierArrivals, countFlows, patientMoves, phenotypeTrails, trailLinks } from "@aei/relations";
+import { addDays, createReleaseIndex, createReplayClock } from "@aei/replay";
 
 // Development server for the AEI contract (libs/utils/contract). It loads
 // the synthetic dataset, replays it day by day and pushes arrivals to
@@ -13,26 +15,39 @@ const env = process.env;
 const config = {
   port: Number(env.AEI_PORT ?? 8787),
   dataDir: resolve(env.AEI_DATA_DIR ?? "../../data/synthetic_microbiology_dataset"),
-  // Where the replay starts; by default eight weeks before the data ends,
-  // so the four-week window is full from the first screen.
-  startAt: env.AEI_REPLAY_START,
+  // Where the replay starts (D-015): by default three weeks before the
+  // Urology ESBL E. coli cluster of June 2025 (experiments/0001), so the
+  // demo shows a normal ward first and then the outbreak arriving.
+  startAt: env.AEI_REPLAY_START ?? "2025-05-12",
   tickMs: Number(env.AEI_TICK_MS ?? 2000),
   daysPerTick: Number(env.AEI_DAYS_PER_TICK ?? 1),
 };
 
 console.log(`[aei-api] loading ${config.dataDir}`);
-const records = joinIsolates(await loadDataset(config.dataDir));
+const dataset = await loadDataset(config.dataDir);
+const records = joinIsolates(dataset);
 // A result "arrives" on its culture's sample date, the only date the data has.
 const released = createReleaseIndex(records, (r) => r.sampleDate);
 const dates = records.map((r) => r.sampleDate).sort();
 const datasetStart = dates[0] ?? "";
 const datasetEnd = dates.at(-1) ?? "";
-const defaultStart = new Date(Date.parse(`${datasetEnd}T00:00:00Z`) - 56 * 86_400_000).toISOString().slice(0, 10);
+
+// Relation layers and alerts depend only on earlier samples, so they are
+// computed once over all data and cut to the window up to the clock.
+const moves = patientMoves(dataset.cultures);
+const trails = phenotypeTrails(dataset.cultures, records);
+const alerts = createReleaseIndex(sortAlerts<Alert>([...cpeAlerts(records), ...carrierAlerts(carrierArrivals(trails))]), (a) => a.date);
+const DEFAULT_RELATION_DAYS = 28;
+
+function relations(asOf: string, days: number): RelationsResponse {
+  const window = { from: addDays(asOf, 1 - days), to: asOf };
+  return { asOf, ...window, flows: countFlows(moves, window), links: trailLinks(trails, window) };
+}
 
 const clock = createReplayClock({
   start: datasetStart,
   end: datasetEnd,
-  asOf: config.startAt ?? defaultStart,
+  asOf: config.startAt,
   tickMs: config.tickMs,
   daysPerTick: config.daysPerTick,
 });
@@ -48,6 +63,8 @@ function broadcast(event: LiveEvent) {
 clock.subscribe((state, previous) => {
   if (state.asOf > previous) {
     broadcast({ type: "arrivals", from: previous, to: state.asOf, records: released.between(previous, state.asOf) });
+    const fresh = alerts.between(previous, state.asOf);
+    if (fresh.length) broadcast({ type: "alerts", from: previous, to: state.asOf, alerts: sortAlerts(fresh) });
     broadcast({ type: "clock", clock: state });
   } else if (state.asOf < previous) broadcast({ type: "reset", clock: state });
   else broadcast({ type: "clock", clock: state });
@@ -111,6 +128,16 @@ const server = createServer(async (req, res) => {
       const to = q.to && q.to < asOf ? q.to : asOf;
       return send(res, 200, { asOf, records: released.upTo(to).filter((r) => matches(r, { ...q, to })) });
     }
+    if (url.pathname === ROUTES.relations) {
+      const days = Number(url.searchParams.get("days") ?? DEFAULT_RELATION_DAYS);
+      if (!Number.isInteger(days) || days < 1) return send(res, 400, { error: "days must be a positive integer" });
+      return send(res, 200, relations(clock.state().asOf, days));
+    }
+    if (url.pathname === ROUTES.alerts) {
+      const asOf = clock.state().asOf;
+      const from = url.searchParams.get("from") ?? "";
+      return send(res, 200, { asOf, alerts: sortAlerts(alerts.upTo(asOf).filter((a) => a.date >= from)) });
+    }
     if (url.pathname === ROUTES.live) {
       res.writeHead(200, { "content-type": "text/event-stream", "cache-control": "no-cache", connection: "keep-alive" });
       res.write(`event: clock\ndata: ${JSON.stringify({ type: "clock", clock: clock.state() })}\n\n`);
@@ -126,5 +153,6 @@ const server = createServer(async (req, res) => {
 
 server.listen(config.port, () => {
   console.log(`[aei-api] ${records.length} isolates, ${datasetStart} to ${datasetEnd}; replay at ${clock.state().asOf}`);
+  console.log(`[aei-api] ${moves.length} unit moves, ${trails.length} carrier trails, ${alerts.size} alerts`);
   console.log(`[aei-api] http://localhost:${config.port}${ROUTES.meta}`);
 });

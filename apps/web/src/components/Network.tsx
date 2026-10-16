@@ -2,7 +2,7 @@ import { PHENOTYPES, type Phenotype, WARDS, type WardCode } from "@aei/domain";
 import { type Locale, phenotypeName, t, wardName } from "@aei/i18n";
 import { useMemo, useState } from "react";
 import type { Finding } from "../live.ts";
-import { nextUnits, previousUnits, undirectedFlows } from "../relations.ts";
+import { nextUnits, previousUnits, undirectedFlows, useFlows } from "../relations.ts";
 import { Open } from "./Icons.tsx";
 
 // The home screen: the analyzer's routing schematic. Units are cassette
@@ -37,12 +37,14 @@ export function curve(a: WardCode, b: WardCode): string {
   return `M${x1},${y1} Q${mx - dy * bend},${my + dx * bend} ${x2},${y2}`;
 }
 
-// Fixed flow ramp (patients over three years, both directions).
-export function tubeWidth(patients: number): number {
-  if (patients >= 1500) return 7;
-  if (patients >= 1000) return 5;
-  if (patients >= 600) return 3.4;
-  if (patients >= 400) return 2.2;
+// Flow ramp relative to the busiest pair in the window (both directions),
+// so four weeks and a year read alike.
+export function tubeWidth(patients: number, max: number): number {
+  const share = max > 0 ? patients / max : 0;
+  if (share >= 0.75) return 7;
+  if (share >= 0.5) return 5;
+  if (share >= 0.3) return 3.4;
+  if (share >= 0.2) return 2.2;
   return 1.2;
 }
 
@@ -55,7 +57,9 @@ interface Props {
 
 export function Network({ locale, findings, onOpenWard, reducedMotion }: Props) {
   const [focus, setFocus] = useState<WardCode>("ED");
-  const flows = useMemo(() => undirectedFlows(), []);
+  const directed = useFlows();
+  const flows = useMemo(() => undirectedFlows(directed), [directed]);
+  const max = flows[0]?.patients ?? 0;
   const unseen = findings.filter((f) => !f.seen);
 
   const sightings = useMemo(() => {
@@ -71,10 +75,12 @@ export function Network({ locale, findings, onOpenWard, reducedMotion }: Props) 
   // One pulse per recent unseen finding towards its two strongest next units.
   const pulses = unseen
     .slice(0, 6)
-    .flatMap((f) => nextUnits(f.record.ward, 2).map((next) => ({ id: `${f.id}>${next.ward}`, from: f.record.ward, to: next.ward })));
+    .flatMap((f) =>
+      nextUnits(directed, f.record.ward, 2).map((next) => ({ id: `${f.id}>${next.ward}`, from: f.record.ward, to: next.ward })),
+    );
 
-  const next = nextUnits(focus, 4);
-  const prev = previousUnits(focus, 3);
+  const next = nextUnits(directed, focus, 4);
+  const prev = previousUnits(directed, focus, 3);
   const focusSightings = sightings.get(focus);
 
   return (
@@ -94,7 +100,7 @@ export function Network({ locale, findings, onOpenWard, reducedMotion }: Props) 
           <svg viewBox={`0 0 ${W} ${H}`} className="map-tubes" aria-hidden="true">
             {flows.map(({ a, b, patients }) => {
               const active = a === focus || b === focus;
-              if (patients < 400 && !active) return null;
+              if (patients < 0.2 * max && !active) return null;
               return (
                 <path
                   key={`${a}|${b}`}
@@ -102,7 +108,7 @@ export function Network({ locale, findings, onOpenWard, reducedMotion }: Props) 
                   d={curve(a, b)}
                   className="tube"
                   data-active={active}
-                  strokeWidth={tubeWidth(patients)}
+                  strokeWidth={tubeWidth(patients, max)}
                 />
               );
             })}

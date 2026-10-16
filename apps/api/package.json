@@ -9,9 +9,11 @@
     "typecheck": "tsc -p ."
   },
   "dependencies": {
+    "@aei/alerts": "workspace:*",
     "@aei/contract": "workspace:*",
     "@aei/dataset": "workspace:*",
     "@aei/domain": "workspace:*",
+    "@aei/relations": "workspace:*",
     "@aei/replay": "workspace:*"
   }
 }

@@ -1,4 +1,6 @@
+import type { Alert } from "@aei/alerts";
 import type { Antibiotic, IsoDate, IsolateRecord, Organism, Specimen, Ward, WardCode } from "@aei/domain";
+import type { Flow, TrailLink } from "@aei/relations";
 import type { ClockState } from "@aei/replay";
 
 // The contract between the AEI server and its clients (web, later the
@@ -9,6 +11,8 @@ export const ROUTES = {
   meta: "/api/meta",
   clock: "/api/clock",
   isolates: "/api/isolates",
+  relations: "/api/relations",
+  alerts: "/api/alerts",
   live: "/api/live",
 } as const;
 
@@ -44,21 +48,54 @@ export interface IsolatesResponse {
   records: IsolateRecord[];
 }
 
+export type { Alert, CarrierAlert, CpeAlert } from "@aei/alerts";
+export type { Flow, TrailLink } from "@aei/relations";
+
+/** Relation layers for the `days` days up to the clock's as-of date (D-011 to D-013). */
+export interface RelationsQuery {
+  days?: number;
+}
+
+export interface RelationsResponse {
+  asOf: IsoDate;
+  /** The window, inclusive. */
+  from: IsoDate;
+  to: IsoDate;
+  flows: Flow[];
+  links: TrailLink[];
+}
+
+/** Alerts dated from `from` (inclusive) up to the clock's as-of date. */
+export interface AlertsQuery {
+  from?: IsoDate;
+}
+
+export interface AlertsResponse {
+  asOf: IsoDate;
+  alerts: Alert[];
+}
+
 /** Server-sent events on ROUTES.live. The event name is the `type`. */
 export type LiveEvent =
   | { type: "clock"; clock: ClockState }
   /** Isolates that arrived when the clock moved from `from` (exclusive) to `to`. */
   | { type: "arrivals"; from: IsoDate; to: IsoDate; records: IsolateRecord[] }
+  /** Alerts dated after `from` up to `to`, newest first (D-014). */
+  | { type: "alerts"; from: IsoDate; to: IsoDate; alerts: Alert[] }
   /** The clock moved backwards; clients should refetch what they show. */
   | { type: "reset"; clock: ClockState };
 
-export const LIVE_EVENT_TYPES = ["clock", "arrivals", "reset"] as const satisfies readonly LiveEvent["type"][];
+export const LIVE_EVENT_TYPES = ["clock", "arrivals", "alerts", "reset"] as const satisfies readonly LiveEvent["type"][];
 
 export function isolatesUrl(query: IsolateQuery): string {
+  return withQuery(ROUTES.isolates, query);
+}
+
+function withQuery(path: string, query: object): string {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(query)) if (value) params.set(key, String(value));
   const qs = params.toString();
-  return qs ? `${ROUTES.isolates}?${qs}` : ROUTES.isolates;
+  return qs ? `${path}?${qs}` : path;
 }
 
 export interface AeiClientOptions {
@@ -73,6 +110,8 @@ export interface AeiClient {
   clock(): Promise<ClockState>;
   command(command: ClockCommand): Promise<ClockState>;
   isolates(query: IsolateQuery): Promise<IsolatesResponse>;
+  relations(query: RelationsQuery): Promise<RelationsResponse>;
+  alerts(query: AlertsQuery): Promise<AlertsResponse>;
   /** Opens the live stream; returns a function that closes it. */
   live(onEvent: (event: LiveEvent) => void, onError?: (error: Event) => void): () => void;
 }
@@ -98,6 +137,8 @@ export function createAeiClient(options: AeiClientOptions): AeiClient {
         body: JSON.stringify(command),
       }),
     isolates: (query) => json<IsolatesResponse>(isolatesUrl(query)),
+    relations: (query) => json<RelationsResponse>(withQuery(ROUTES.relations, query)),
+    alerts: (query) => json<AlertsResponse>(withQuery(ROUTES.alerts, query)),
     live(onEvent, onError) {
       const source = new ES(url(ROUTES.live));
       for (const type of LIVE_EVENT_TYPES) {

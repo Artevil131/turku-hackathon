@@ -13,6 +13,6 @@ Configuration (environment):
 |---|---|---|
 | `AEI_PORT` | 8787 | Port |
 | `AEI_DATA_DIR` | `../../data/synthetic_microbiology_dataset` | Unzipped dataset |
-| `AEI_REPLAY_START` | 56 days before the data ends | Where the clock starts |
+| `AEI_REPLAY_START` | `2025-05-12` | Where the clock starts (D-015): three weeks before the Urology outbreak. `2026-02-10` shows the ICU MRSA cluster, `2025-11-17` the week without samples at Health centre South |
 | `AEI_TICK_MS` | 2000 | Real milliseconds per tick while playing |
 | `AEI_DAYS_PER_TICK` | 1 | Days the clock moves per tick |

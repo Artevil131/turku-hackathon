@@ -3,7 +3,7 @@ import { antibioticName, formatDate, type Locale, phenotypeName, specimenName, t
 import { useMemo } from "react";
 import { EXAMPLE_DEVIATION, historyFor, organismsFor, stripsFor } from "../examples.ts";
 import type { Finding } from "../live.ts";
-import { nextUnits } from "../relations.ts";
+import { nextUnits, useFlows } from "../relations.ts";
 import { AntibiogramGrid } from "./Analyzer.tsx";
 import { Check, Flask, Open, Rise } from "./Icons.tsx";
 import { Network } from "./Network.tsx";
@@ -354,7 +354,7 @@ function SignalRow(props: {
 }) {
   const { locale, f, open } = props;
   const day = stayDay(f);
-  const next = nextUnits(f.record.ward, 3);
+  const next = nextUnits(useFlows(), f.record.ward, 3);
   // The phenotype trail as far as the loaded findings reach: the same patient's other resistant finds.
   const trail = props.findings.filter((x) => x.record.patientId === f.record.patientId && x.id !== f.id);
   return (
