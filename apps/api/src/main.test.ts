@@ -121,14 +121,19 @@ describe("assistant HTTP routes", () => {
     });
     expect(requests[0]?.messages[0]?.content).toContain("Teho-osasto");
     expect(requests[0]?.messages[0]?.content).toContain("2025-05-01");
-    const en = await (await fetch(`${base}/api/explain?id=cpe:i2&lang=en`)).json();
+    // The template by default, without asking the model (D-029).
+    const plain = await (await fetch(`${base}/api/explain?id=cpe:i2&lang=en`)).json();
+    expect(plain).toMatchObject({ source: "template" });
+    expect(requests).toHaveLength(1);
+    const en = await (await fetch(`${base}/api/explain?id=cpe:i2&lang=en&wording=model`)).json();
     expect(en).toMatchObject({ source: "model" });
-    await fetch(`${base}/api/explain?id=cpe:i2&lang=en`);
+    await fetch(`${base}/api/explain?id=cpe:i2&lang=en&wording=model`);
     expect(requests).toHaveLength(2);
+    expect((await fetch(`${base}/api/explain?id=cpe:i2&lang=en&wording=poem`)).status).toBe(400);
     fail = true;
     expect((await fetch(`${base}/api/ask`, { method: "POST", body: JSON.stringify({ text: "anything", lang: "fi" }) })).status).toBe(502);
     // Cached by language: Finnish is a new request, and a failing model gives the template.
-    const fallback = await (await fetch(`${base}/api/explain?id=cpe:i2&lang=fi`)).json();
+    const fallback = await (await fetch(`${base}/api/explain?id=cpe:i2&lang=fi&wording=model`)).json();
     expect(fallback.source).toBe("template");
     expect(fallback.text).toContain("Teho-osasto");
   });

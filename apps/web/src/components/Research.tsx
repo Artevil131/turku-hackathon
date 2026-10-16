@@ -295,6 +295,7 @@ export function Research(props: Props) {
               client={props.client}
               alerts={props.alerts.filter((a) => state.ward === "all" || a.ward === state.ward || a.ward === null)}
               locale={locale}
+              ai={props.ai}
             />
             {question.active && question.loading ? <p role="status">{t(locale, "dataLoading")}</p> : null}
             {question.active && question.loadError ? <p role="alert">{t(locale, "dataLoadError")}</p> : null}

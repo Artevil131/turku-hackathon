@@ -77,6 +77,8 @@ export interface AskResponse {
   unmatched: string[];
 }
 
+export type ExplainWording = "template" | "model";
+
 export interface ExplainResponse {
   id: string;
   text: string;
@@ -148,7 +150,8 @@ export interface AeiClientOptions {
 
 export interface AeiClient {
   ask(text: string, lang: "en" | "fi"): Promise<AskResponse>;
-  explain(id: string, lang: "en" | "fi"): Promise<ExplainResponse>;
+  /** The code's template by default; `wording: "model"` asks the AI to reword it (D-029). */
+  explain(id: string, lang: "en" | "fi", wording?: ExplainWording): Promise<ExplainResponse>;
   coverage(query: CoverageQuery): Promise<CoverageResponse>;
   meta(): Promise<Meta>;
   clock(): Promise<ClockState>;
@@ -187,7 +190,7 @@ export function createAeiClient(options: AeiClientOptions): AeiClient {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ text, lang }),
       }),
-    explain: (id, lang) => json<ExplainResponse>(withQuery(ROUTES.explain, { id, lang })),
+    explain: (id, lang, wording) => json<ExplainResponse>(withQuery(ROUTES.explain, { id, lang, wording })),
     coverage: (query) => json<CoverageResponse>(withQuery(ROUTES.coverage, query)),
     meta: () => json<Meta>(ROUTES.meta),
     clock: () => json<ClockState>(ROUTES.clock),

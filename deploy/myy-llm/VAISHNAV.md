@@ -29,12 +29,17 @@ Without the file loaded, everything still runs; the AI parts are just off.
   `IsolateQuery`: pass it to `client.isolates()` and show it as chips.
   `unmatched` lists words it couldn't use.
 - `client.explain(alertId, lang)` returns `{ text, source }`: a short
-  plain-language explanation of an alert. `source` is `"template"` when the
-  model's text was rejected and a fixed one was used.
+  plain-language explanation of an alert, written by code (a template).
+  `client.explain(alertId, lang, "model")` asks the AI to reword it. That's
+  opt-in and experimental (D-029): its Finnish is unreliable. `source` says
+  which one you got. A rejected AI text comes back as the template.
+- `client.coverage({ ward, specimen, sex?, severity? })` is the doctor's
+  list of what covers the likely organisms (D-023 to D-028): per-antibiotic
+  shares with intervals, `suggestions`, and `combinationSuggestions` when
+  no single drug is enough. Pure statistics, no AI.
 
 The AI never produces numbers on screen. All counts come from the
-existing code. Some of these routes are still landing on `ui/web-app`;
-pull before using them.
+existing code. All of these are on `ui/web-app`.
 
 ## If it doesn't answer
 

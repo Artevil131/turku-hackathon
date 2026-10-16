@@ -166,7 +166,7 @@ export function Treat({ locale, state, onChange, findings, records, asOf, minIso
         </fieldset>
 
         {!question.active ? <p className="field-hint">{t(locale, "moreFiltersLater")}</p> : null}
-        <AlertList client={client} alerts={alerts.filter((a) => a.ward === state.ward || a.ward === null)} locale={locale} />
+        <AlertList client={client} alerts={alerts.filter((a) => a.ward === state.ward || a.ward === null)} locale={locale} ai={ai} />
 
         {nearby.length > 0 ? (
           <div className="nearby">

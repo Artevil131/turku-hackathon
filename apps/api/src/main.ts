@@ -14,7 +14,7 @@ import {
 import { type CoverageResult, coverage, suggest, suggestCombinations } from "@aei/coverage";
 import { joinIsolates, loadDataset } from "@aei/dataset";
 import { ANTIBIOTICS, type IsolateRecord, ORGANISMS, SPECIMENS, type Specimen, WARDS, type WardCode } from "@aei/domain";
-import { phenotypeName, specimenName, wardName } from "@aei/i18n";
+import { antibioticName, phenotypeName, specimenName, wardName } from "@aei/i18n";
 import { countFlows, patientMoves, phenotypeTrails, trailLinks } from "@aei/relations";
 import { addDays, createReleaseIndex, createReplayClock } from "@aei/replay";
 
@@ -166,9 +166,12 @@ export const server = createServer(async (req, res) => {
       const id = url.searchParams.get("id");
       const lang = url.searchParams.get("lang");
       if (lang !== "en" && lang !== "fi") return send(res, 400, { error: "lang must be en or fi" });
+      // The template by default: small models write unreliable Finnish (experiments/0003, D-029).
+      const wording = url.searchParams.get("wording") ?? "template";
+      if (wording !== "template" && wording !== "model") return send(res, 400, { error: "wording must be template or model" });
       const alert = alerts.upTo(clock.state().asOf).find((a) => a.id === id);
       if (!alert) return send(res, 404, { error: "unknown alert" });
-      const key = `${alert.id}:${lang}`;
+      const key = `${alert.id}:${lang}:${wording}`;
       let explanation = explanations.get(key);
       if (!explanation) {
         const input = alertExplainInput(alert, lang, {
@@ -176,10 +179,12 @@ export const server = createServer(async (req, res) => {
           phenotype: phenotypeName,
           organism: (name) => name,
           specimen: (code) => specimenName(lang, code),
+          antibiotic: (code) => antibioticName(lang, code),
         });
-        const result = llm
-          ? await explainAlert(llm, input)
-          : { text: fillSlots(input.fallback, input.facts, lang), source: "template" as const };
+        const result =
+          llm && wording === "model"
+            ? await explainAlert(llm, input)
+            : { text: fillSlots(input.fallback, input.facts, lang), source: "template" as const };
         explanation = { id: alert.id, ...result };
         explanations.set(key, explanation);
       }
