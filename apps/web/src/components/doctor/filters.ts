@@ -129,3 +129,8 @@ export function rowN(row: Row): number {
 export function sexLabel(locale: Locale, sex: Sex | "any"): string {
   return t(locale, sex === "any" ? "drSexAny" : sex === "F" ? "drSexF" : "drSexM");
 }
+
+/** The sex spelled out for sentences and print: "female" / "male", Finnish "nainen" / "mies". */
+export function sexWord(locale: Locale, sex: Sex | "any"): string {
+  return t(locale, sex === "any" ? "drSexAny" : sex === "F" ? "drSexFWord" : "drSexMWord");
+}

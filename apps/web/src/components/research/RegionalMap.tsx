@@ -33,7 +33,8 @@ function useLoad<T>(fetcher: () => Promise<T>, deps: unknown[], attempt: number)
   return res;
 }
 
-const shortName = (region: string) => region.replace(/ hyvinvointialue$/, "");
+// Region names exactly as THL and Statistics Finland give them (Finnish genitive forms are official names, not cut).
+const shortName = (region: string) => region;
 const monthDate = (m: string) => `${m}-01`;
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 
@@ -193,77 +194,83 @@ export function RegionalMap({ client, locale, asOf }: PanelProps) {
     { cls: "s4", label: `>${fmt(locale, edges[2] as number)}` },
   ];
 
+  const controls = (
+    <div className="map-controls">
+      <label className="map-field">
+        <span>{t(locale, "mapGroup")}</span>
+        <select
+          value={group}
+          onChange={(e) => {
+            setGroup(e.target.value);
+            setChosen(null);
+          }}
+        >
+          {(data?.groups ?? [DEFAULT_GROUP]).map((g) => (
+            <option key={g} value={g}>
+              {g}
+            </option>
+          ))}
+        </select>
+      </label>
+      <div className="map-field">
+        <span id="map-view-label">{t(locale, "mapViewLabel")}</span>
+        <div className="map-seg" role="radiogroup" aria-labelledby="map-view-label">
+          {(["rate", "certainty"] as const).map((v) => (
+            <button key={v} type="button" role="radio" aria-checked={view === v} className="map-seg-btn" onClick={() => setView(v)}>
+              {t(locale, v === "rate" ? "mapViewRate" : "mapViewCertainty")}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+  const slider = (
+    <>
+      <div className="map-slider" data-browsing={idx !== latest}>
+        <p className="map-slider-hint" id="map-month-hint">
+          {t(locale, "mapBrowseHint", { month: months[latest] ? monthLong(months[latest] as string) : "…" })}
+        </p>
+        <label htmlFor="map-month">
+          <span className="map-slider-label">{t(locale, "mapMonth")}</span>
+          <strong className="map-slider-value">{month ? monthLong(month) : "…"}</strong>
+        </label>
+        <input
+          id="map-month"
+          type="range"
+          min={0}
+          max={Math.max(0, latest)}
+          step={1}
+          value={Math.max(0, idx)}
+          disabled={!data}
+          aria-label={t(locale, "mapSlider")}
+          aria-describedby="map-month-hint"
+          aria-valuetext={month ? monthLong(month) : undefined}
+          onChange={(e) => {
+            const i = Number(e.target.value);
+            setPick(i >= latest ? null : (months[i] ?? null));
+          }}
+        />
+        {idx !== latest ? (
+          <button type="button" className="map-btn map-back" onClick={() => setPick(null)}>
+            {t(locale, "mapBackToReplay")}
+          </button>
+        ) : null}
+      </div>
+    </>
+  );
+
   return (
     <section className="board-panel map" aria-label={t(locale, "mapTitle")} aria-busy={loading}>
       {header}
       {quantity}
 
-      <div className="map-controls">
-        <label className="map-field">
-          <span>{t(locale, "mapGroup")}</span>
-          <select
-            value={group}
-            onChange={(e) => {
-              setGroup(e.target.value);
-              setChosen(null);
-            }}
-          >
-            {(data?.groups ?? [DEFAULT_GROUP]).map((g) => (
-              <option key={g} value={g}>
-                {g}
-              </option>
-            ))}
-          </select>
-        </label>
-        <div className="map-field">
-          <span id="map-view-label">{t(locale, "mapViewLabel")}</span>
-          <div className="map-seg" role="radiogroup" aria-labelledby="map-view-label">
-            {(["rate", "certainty"] as const).map((v) => (
-              <button key={v} type="button" role="radio" aria-checked={view === v} className="map-seg-btn" onClick={() => setView(v)}>
-                {t(locale, v === "rate" ? "mapViewRate" : "mapViewCertainty")}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
       {noMonths ? (
         <div className="map-state">
+          {controls}
           <p>{t(locale, "mapNoMonths", { date: formatDate(locale, data?.asOf ?? asOf ?? "", "long") })}</p>
         </div>
       ) : (
         <>
-          <div className="map-slider" data-browsing={idx !== latest}>
-            <p className="map-slider-hint" id="map-month-hint">
-              {t(locale, "mapBrowseHint", { month: months[latest] ? monthLong(months[latest] as string) : "…" })}
-            </p>
-            <label htmlFor="map-month">
-              <span className="map-slider-label">{t(locale, "mapMonth")}</span>
-              <strong className="map-slider-value">{month ? monthLong(month) : "…"}</strong>
-            </label>
-            <input
-              id="map-month"
-              type="range"
-              min={0}
-              max={Math.max(0, latest)}
-              step={1}
-              value={Math.max(0, idx)}
-              disabled={!data}
-              aria-label={t(locale, "mapSlider")}
-              aria-describedby="map-month-hint"
-              aria-valuetext={month ? monthLong(month) : undefined}
-              onChange={(e) => {
-                const i = Number(e.target.value);
-                setPick(i >= latest ? null : (months[i] ?? null));
-              }}
-            />
-            {idx !== latest ? (
-              <button type="button" className="map-btn map-back" onClick={() => setPick(null)}>
-                {t(locale, "mapBackToReplay")}
-              </button>
-            ) : null}
-          </div>
-
           <div className="map-body">
             <figure className="map-figure">
               <svg
@@ -343,6 +350,8 @@ export function RegionalMap({ client, locale, asOf }: PanelProps) {
             </figure>
 
             <div className="map-side">
+              {controls}
+              {slider}
               <div className="map-legend">
                 {view === "rate" ? (
                   <>

@@ -242,7 +242,12 @@ export function UnitGrid({ client, locale, asOf, state, onChange }: PanelProps) 
                       data-selected={state.unit === w.code}
                       aria-label={state.unit === w.code ? `${w[locale]}, ${t(locale, "gridSelectedUnit")}` : w[locale]}
                     >
-                      {w.code}
+                      <span className="ugrid-code" aria-hidden="true">
+                        {w.code}
+                      </span>
+                      <span className="ugrid-name" aria-hidden="true">
+                        {w[locale].replace("Terveysasema", "Terveys\u00ADasema")}
+                      </span>
                     </th>
                   ))}
                   <th scope="col" className="ugrid-total">

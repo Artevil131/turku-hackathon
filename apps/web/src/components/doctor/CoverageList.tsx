@@ -5,7 +5,7 @@ import { useState } from "react";
 import { AsOf } from "../AsOf.tsx";
 import { AlertTri } from "../Icons.tsx";
 import "./CoverageList.css";
-import { BAR, certaintyOf, type DoctorFilters, halfWidth, num, pct, type Row, rowN, sexLabel } from "./filters.ts";
+import { AGE_KEYS, BAR, certaintyOf, type DoctorFilters, halfWidth, num, pct, type Row, rowN, sexWord } from "./filters.ts";
 import { signalDate, type UnitSignal } from "./signals.ts";
 
 export type ListStatus = "loading" | "error" | "ready";
@@ -279,8 +279,19 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, onR
           </p>
         )}
         <p className="cl-print-record print-only">
-          {unit} · {site} · {sexLabel(locale, filters.sex)} · {t(locale, filters.sev === "mild" ? "drSevMild" : "drSevSevere")} ·{" "}
-          {t(locale, filters.period === 365 ? "drPeriodYear" : "drPeriodMonth")}
+          {[
+            unit,
+            site,
+            filters.sex === "any" ? `${t(locale, "drSex").toLowerCase()} ${sexWord(locale, "any")}` : sexWord(locale, filters.sex),
+            ageChosen ? `${t(locale, "drPrintAge", { age: t(locale, AGE_KEYS[filters.age]) })} (${t(locale, "drNotApplied")})` : null,
+            filters.onset ? `${t(locale, "drOnset")} (${t(locale, "drNotApplied")})` : null,
+            t(locale, filters.sev === "mild" ? "drSevMild" : "drSevSevere"),
+            t(locale, filters.period === 365 ? "drPeriodYear" : "drPeriodMonth"),
+            asOf ? t(locale, "drPrintAsOf", { date: formatDate(locale, data?.asOf ?? asOf, "long") }) : null,
+          ]
+            .filter(Boolean)
+            .join(" · ")}
+          . {t(locale, "drPrintDisclaimer")}
         </p>
         {notAppliedKey ? (
           <p className="cl-note">

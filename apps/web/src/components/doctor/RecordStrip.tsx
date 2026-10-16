@@ -2,7 +2,7 @@ import type { Severity } from "@aei/contract";
 import type { Sex, Specimen, WardCode } from "@aei/domain";
 import { type Locale, type MessageKey, specimenName, t, wardName } from "@aei/i18n";
 import { type ReactNode, useState } from "react";
-import { AGE_GROUPS, AGE_KEYS, type AgeGroup, type DoctorFilters, type Period, SITES, sexLabel, unitGroups } from "./filters.ts";
+import { AGE_GROUPS, AGE_KEYS, type AgeGroup, type DoctorFilters, type Period, SITES, sexWord, unitGroups } from "./filters.ts";
 import { useMedia } from "./useMedia.ts";
 import "./RecordStrip.css";
 
@@ -24,11 +24,22 @@ function Group({ label, tag, inline, children }: { label: string; tag?: string |
   );
 }
 
-function Choices<T extends string | number>(props: { options: readonly (readonly [T, string])[]; value: T; onPick: (v: T) => void }) {
+function Choices<T extends string | number>(props: {
+  options: readonly (readonly [T, string, string?])[];
+  value: T;
+  onPick: (v: T) => void;
+}) {
   return (
     <div className="rs-choices">
-      {props.options.map(([value, text]) => (
-        <button key={value} type="button" className="rs-choice" aria-pressed={props.value === value} onClick={() => props.onPick(value)}>
+      {props.options.map(([value, text, title]) => (
+        <button
+          key={value}
+          type="button"
+          className="rs-choice"
+          title={title}
+          aria-pressed={props.value === value}
+          onClick={() => props.onPick(value)}
+        >
           {text}
         </button>
       ))}
@@ -42,10 +53,15 @@ export function RecordStrip({ locale, filters, onChange }: Props) {
   const notApplied = tr("drNotApplied");
   const wide = useMedia("(min-width: 701px)");
   const [more, setMore] = useState(false);
+  // On the phone a change made behind "More filters" folds the panel again, so the list stays in view.
+  const change = (patch: Partial<DoctorFilters>) => {
+    onChange(patch);
+    if (!wide) setMore(false);
+  };
   const summary = [
     wardName(locale, filters.unit),
     specimenName(locale, filters.site),
-    sexLabel(locale, filters.sex),
+    sexWord(locale, filters.sex),
     tr(filters.sev === "mild" ? "drSevMildShort" : "drSevSevereShort"),
     tr(filters.period === 365 ? "drPeriodYear" : "drPeriodMonth"),
     filters.age !== "any" ? tr(AGE_KEYS[filters.age]) : null,
@@ -57,7 +73,7 @@ export function RecordStrip({ locale, filters, onChange }: Props) {
   const unit = (
     <label className="rs-group rs-unit">
       <span className="rs-label">{tr("drUnit")}</span>
-      <select className="rs-select" value={filters.unit} onChange={(e) => onChange({ unit: e.target.value as WardCode })}>
+      <select className="rs-select" value={filters.unit} onChange={(e) => change({ unit: e.target.value as WardCode })}>
         <optgroup label={tr("hospital")}>
           {unitGroups.hospital.map((w) => (
             <option key={w.code} value={w.code}>
@@ -80,7 +96,7 @@ export function RecordStrip({ locale, filters, onChange }: Props) {
       <Choices<Specimen>
         options={SITES.map((s) => [s, specimenName(locale, s)] as const)}
         value={filters.site}
-        onPick={(s) => onChange({ site: s })}
+        onPick={(s) => change({ site: s })}
       />
     </Group>
   );
@@ -89,8 +105,8 @@ export function RecordStrip({ locale, filters, onChange }: Props) {
       <Choices<Sex | "any">
         options={[
           ["any", tr("drSexAny")],
-          ["F", tr("drSexF")],
-          ["M", tr("drSexM")],
+          ["F", tr("drSexF"), tr("drSexFWord")],
+          ["M", tr("drSexM"), tr("drSexMWord")],
         ]}
         value={filters.sex}
         onPick={(v) => onChange({ sex: v })}
@@ -117,7 +133,7 @@ export function RecordStrip({ locale, filters, onChange }: Props) {
           [28, tr("drPeriodMonth")],
         ]}
         value={filters.period}
-        onPick={(v) => onChange({ period: v })}
+        onPick={(v) => change({ period: v })}
       />
     </Group>
   );
@@ -138,7 +154,7 @@ export function RecordStrip({ locale, filters, onChange }: Props) {
           ["1", tr("drOn")],
         ]}
         value={filters.onset ? "1" : "0"}
-        onPick={(v) => onChange({ onset: v === "1" })}
+        onPick={(v) => change({ onset: v === "1" })}
       />
     </Group>
   );

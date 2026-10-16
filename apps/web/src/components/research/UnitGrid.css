@@ -129,6 +129,29 @@
   border-bottom: 1px solid var(--line-strong);
 }
 
+.ugrid-name {
+  display: none;
+}
+
+@media (min-width: 760px) {
+  .ugrid-colhead {
+    height: 52px;
+    min-width: 54px;
+    white-space: normal;
+    line-height: 1.15;
+    vertical-align: bottom;
+    padding-bottom: 4px;
+  }
+  .ugrid-code {
+    display: none;
+  }
+  .ugrid-name {
+    display: block;
+    font-size: 11px;
+    hyphens: manual;
+  }
+}
+
 .ugrid-colhead[data-selected="true"] {
   background: var(--live-soft);
   color: var(--live);
