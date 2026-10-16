@@ -58,3 +58,5 @@ Screenshots come from headless Chrome through
 | 01:48 | quality (Haiku 5.5) | Wave 2 on 2b12f36: U4 100/100/100, contrast pass on all; U5 0 missing (223 keys); U6 LCP 3.3/3.9/6.9 s, FCP home 2.3 → 1.4 s (noisy, recorded) |
 | 01:48 | orchestrator (Opus 5.5) | Language switch's accessible name now starts with its visible text (last zero-weight audit) |
 | 01:49 | builder (Sonnet 5.5) | Feed filters collapse to one summary row on phones; pinned sentinels now in the first screen at 390 px (checked by the orchestrator) |
+| 01:54 | UX reviewer (Sonnet 5.5) | Wave 2 review (review-wave2.md): U1 4 clicks laptop and phone (~8–10 s), U2 1, U3 fails only on the home badge and network n, U7 5 of 5. Wave-1 items 1–5, 7, 8 fixed |
+| 01:56 | builder (Sonnet 5.5) | Dead rules pruned from styles.css (45.6 → 23.3 kB source; built CSS 63.8 → 45.7 kB); before/after shots identical where data did not differ |
