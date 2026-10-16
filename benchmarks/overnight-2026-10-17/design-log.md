@@ -54,3 +54,6 @@ Screenshots come from headless Chrome through
 | 01:45 | orchestrator (Opus 5.5) | U6: typeface stylesheet no longer render-blocking; research board, settings and intro load on demand (main bundle 385 → 336 kB, research 50 kB, intro 16 kB) |
 | 01:46 | builder (Sonnet 5.5) | Search field in the top bar (/ or Ctrl+K): units, antibiotics, organisms, phenotypes, recent alerts and pages in Finnish and English, diacritics-insensitive, combobox keyboard pattern; matcher with 14 unit tests |
 | 01:46 | orchestrator (Opus 5.5) | Search wired to the live alerts; its hash workaround removed (pages follow hash changes). Checked in the browser at 1280. The API was restarted by an agent once more (brief 502s) |
+| 01:47 | orchestrator (Opus 5.5) | Wave 2 loops started: quality (Haiku 5.5) on 2b12f36, UX review (Sonnet 5.5). Builders started (Sonnet 5.5): dead CSS prune in styles.css; feed filters collapsed on phone |
+| 01:48 | quality (Haiku 5.5) | Wave 2 on 2b12f36: U4 100/100/100, contrast pass on all; U5 0 missing (223 keys); U6 LCP 3.3/3.9/6.9 s, FCP home 2.3 → 1.4 s (noisy, recorded) |
+| 01:48 | orchestrator (Opus 5.5) | Language switch's accessible name now starts with its visible text (last zero-weight audit) |

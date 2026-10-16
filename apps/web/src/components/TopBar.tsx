@@ -62,10 +62,10 @@ export function TopBar(props: Props) {
             style={{ width: "auto", minWidth: 36, padding: "0 8px", fontSize: "0.78rem", fontWeight: 700, letterSpacing: "0.04em" }}
             lang={other}
             onClick={() => props.onLocale?.(other)}
-            aria-label={t(locale, "switchLanguage")}
             title={t(locale, "switchLanguage")}
           >
             {other.toUpperCase()}
+            <span className="visually-hidden"> · {t(locale, "switchLanguage")}</span>
           </button>
         ) : null}
         <button
