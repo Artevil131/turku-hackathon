@@ -1,17 +1,19 @@
 import type { Flow } from "@aei/contract";
 import type { WardCode } from "@aei/domain";
 import { type Locale, t } from "@aei/i18n";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { DoctorPage } from "./components/doctor/DoctorPage.tsx";
 import { Home, type Role } from "./components/Home.tsx";
-import { PitchIntro } from "./components/intro/PitchIntro.tsx";
-import { ResearchBoard } from "./components/research/ResearchBoard.tsx";
-import { Settings } from "./components/Settings.tsx";
 import { Timeline } from "./components/Timeline.tsx";
 import { type Page, TopBar } from "./components/TopBar.tsx";
 import { useLive } from "./live.ts";
 import { FlowsContext } from "./relations.ts";
 import { hashPage } from "./url.ts";
+
+// Pages a first visit rarely opens load on demand, so home and the doctor's list paint sooner.
+const ResearchBoard = lazy(() => import("./components/research/ResearchBoard.tsx").then((m) => ({ default: m.ResearchBoard })));
+const Settings = lazy(() => import("./components/Settings.tsx").then((m) => ({ default: m.Settings })));
+const PitchIntro = lazy(() => import("./components/intro/PitchIntro.tsx").then((m) => ({ default: m.PitchIntro })));
 
 const NO_FLOWS: readonly Flow[] = [];
 
@@ -100,13 +102,15 @@ export function App() {
   // The pitch intro is full screen, without the working tool's chrome.
   if (page === "intro")
     return (
-      <PitchIntro
-        client={live.client}
-        locale={locale}
-        asOf={live.clock?.asOf ?? null}
-        onEnter={() => setPage("home")}
-        reducedMotion={reducedMotion}
-      />
+      <Suspense fallback={null}>
+        <PitchIntro
+          client={live.client}
+          locale={locale}
+          asOf={live.clock?.asOf ?? null}
+          onEnter={() => setPage("home")}
+          reducedMotion={reducedMotion}
+        />
+      </Suspense>
     );
 
   return (
@@ -144,17 +148,19 @@ export function App() {
             onOpenSignals={openSignals}
           />
         ) : null}
-        {page === "research" ? (
-          <ResearchBoard
-            client={live.client}
-            locale={locale}
-            asOf={live.clock?.asOf ?? null}
-            findings={live.findings}
-            acknowledge={live.acknowledge}
-            reducedMotion={reducedMotion}
-          />
-        ) : null}
-        {page === "settings" ? <Settings locale={locale} onLocale={setLocale} onResetRole={() => setLastRole(null)} /> : null}
+        <Suspense fallback={<div className="section" aria-busy="true" />}>
+          {page === "research" ? (
+            <ResearchBoard
+              client={live.client}
+              locale={locale}
+              asOf={live.clock?.asOf ?? null}
+              findings={live.findings}
+              acknowledge={live.acknowledge}
+              reducedMotion={reducedMotion}
+            />
+          ) : null}
+          {page === "settings" ? <Settings locale={locale} onLocale={setLocale} onResetRole={() => setLastRole(null)} /> : null}
+        </Suspense>
       </div>
       {live.connection === "offline" ? (
         <p className="banner" role="status">

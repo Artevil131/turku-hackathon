@@ -8,9 +8,12 @@
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- The typeface loads without blocking first paint; system fonts show until it arrives. -->
     <link
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&display=swap"
+      media="print"
+      onload="this.media='all'"
     />
   </head>
   <body>

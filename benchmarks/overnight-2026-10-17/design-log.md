@@ -51,3 +51,4 @@ Screenshots come from headless Chrome through
 | 01:43 | builder (Sonnet 5.5) | Wave 2 home/top bar/settings: Research badge labelled (unseen resistant finds, 3 days, as-of), doctor card first, FI/EN switch in the top bar, truthful about-the-data text, dead recommendation-era keys removed |
 | 01:43 | orchestrator (Opus 5.5) | Doctor named-context view checked at true 390 px; App passes asOf and onLocale to TopBar |
 | 01:44 | orchestrator (Opus 5.5) | Tested the timeline date entry in the browser (seek to 2026-02-10, doctor's list followed with its as-of); doctor page now follows hash changes while mounted. Clock back to 2025-05-12 |
+| 01:45 | orchestrator (Opus 5.5) | U6: typeface stylesheet no longer render-blocking; research board, settings and intro load on demand (main bundle 385 → 336 kB, research 50 kB, intro 16 kB) |
