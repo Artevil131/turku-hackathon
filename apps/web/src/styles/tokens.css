@@ -1,0 +1,154 @@
+/*
+  AEI design tokens. White and clinical, partly frosted glass, one calm
+  hospital blue for selection and primary actions. Status colours are never
+  used alone: every one is paired with a word or a glyph (see Badge).
+
+  Contrast (WCAG AA) is checked against white and against --bg:
+  --ink 17.2:1, --ink-2 9.1:1, --ink-3 5.5:1 (4.9:1 on --bg), --blue 6.4:1
+  (5.5:1 on --blue-soft), --sim 6.1:1; every *-ink status colour >= 6.2:1 on
+  its own *-bg. --ink-4 (3:1) is for decoration only, never text.
+*/
+:root {
+  color-scheme: light;
+
+  /* ---- Surfaces ---- */
+  --bg: #eef2f6;
+  --bg-tint-a: #dfeaf6; /* soft blue wash behind the glass */
+  --bg-tint-b: #e3f1ef; /* soft teal wash */
+  --surface: #ffffff;
+  --surface-2: #f6f8fb; /* inset rows, table stripes */
+  --surface-3: #edf1f6; /* pressed, tracks */
+  --line: rgba(17, 38, 66, 0.1);
+  --line-strong: rgba(17, 38, 66, 0.18);
+
+  /* Glass plies: 1 = cards, 2 = header and tab bar, 3 = sheets and popovers. */
+  --glass-1: rgba(255, 255, 255, 0.72);
+  --glass-2: rgba(255, 255, 255, 0.8);
+  --glass-3: rgba(255, 255, 255, 0.92);
+  --glass-edge: rgba(255, 255, 255, 0.85);
+  --blur-1: blur(14px) saturate(1.35);
+  --blur-2: blur(22px) saturate(1.5);
+  --blur-3: blur(30px) saturate(1.6);
+
+  /* ---- Ink ---- */
+  --ink: #0f1c2b;
+  --ink-2: #3a4a5c;
+  --ink-3: #5a6a7d;
+  --ink-4: #8696a8; /* decorative only (never for text that must be read) */
+  --ink-on-blue: #ffffff;
+
+  /* ---- The one blue ---- */
+  --blue: #1f5fae;
+  --blue-hover: #194f93;
+  --blue-press: #143f76;
+  --blue-soft: #e7f0fb;
+  --blue-soft-2: #d3e3f7;
+  --blue-ring: rgba(31, 95, 174, 0.45);
+
+  /* ---- Status (always with a word or glyph) ---- */
+  --high-ink: #a3161b;
+  --high-bg: #fdecec;
+  --high-line: #f3c2c2;
+  --high-dot: #d1242f;
+
+  --medium-ink: #8a4300;
+  --medium-bg: #fff1e2;
+  --medium-line: #f6d2ab;
+  --medium-dot: #e07b16;
+
+  --low-ink: #2f4d6e;
+  --low-bg: #eaf1f8;
+  --low-line: #cddcec;
+  --low-dot: #6d8fb4;
+
+  /* WHO AWaRe (green / amber / crimson, as WHO draws it) */
+  --access-ink: #12663b;
+  --access-bg: #e5f5ec;
+  --access-line: #bfe3cd;
+  --watch-ink: #765400;
+  --watch-bg: #fdf4d6;
+  --watch-line: #efdc9c;
+  --reserve-ink: #8f1239;
+  --reserve-bg: #fbe7ee;
+  --reserve-line: #f0bfd0;
+
+  /* "works" share bars */
+  --works: #2b6cb5;
+  --works-track: #e3eaf3;
+  --works-good: #1f7a4a;
+  --works-fair: #b26a00;
+  --works-poor: #b4232a;
+
+  --live: #1f9d57;
+  --sim: #6b4fbb; /* the simulation band: deliberately not the product blue */
+  --sim-bg: #f2eefc;
+  --sim-line: #d8cdf4;
+
+  /* ---- Type ---- */
+  --font: "Inter", "Inter var", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  --fs-xs: 0.75rem; /* 12 */
+  --fs-sm: 0.8125rem; /* 13 */
+  --fs-base: 0.9375rem; /* 15 */
+  --fs-md: 1.0625rem; /* 17 */
+  --fs-lg: 1.25rem; /* 20 */
+  --fs-xl: 1.625rem; /* 26 */
+  --fs-2xl: 2.125rem; /* 34: the figure a doctor reads first */
+  --lh-tight: 1.2;
+  --lh: 1.45;
+  --fw-regular: 400;
+  --fw-medium: 520;
+  --fw-semibold: 620;
+  --fw-bold: 700;
+
+  /* ---- Space (4 px grid) ---- */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-7: 32px;
+  --sp-8: 48px;
+  --gutter: 16px;
+
+  /* ---- Shape ---- */
+  --r-xs: 6px;
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 20px;
+  --r-xl: 26px;
+  --r-pill: 999px;
+
+  --shadow-1: 0 1px 2px rgba(16, 40, 70, 0.05), 0 6px 20px -8px rgba(16, 40, 70, 0.12);
+  --shadow-2: 0 2px 6px rgba(16, 40, 70, 0.06), 0 18px 40px -12px rgba(16, 40, 70, 0.22);
+  --shadow-3: 0 30px 80px -20px rgba(16, 40, 70, 0.35);
+  --inner-glass: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+
+  /* ---- Sizes ---- */
+  --tap: 44px;
+  --header-h: 60px;
+  --tabbar-h: 64px;
+  --content-max: 1240px;
+
+  /* ---- Motion ---- */
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --t-fast: 120ms;
+  --t: 200ms;
+  --t-slow: 320ms;
+
+  /* ---- Layers ---- */
+  --z-header: 30;
+  --z-tabbar: 30;
+  --z-popover: 50;
+  --z-toast: 60;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --t-fast: 0ms;
+    --t: 0ms;
+    --t-slow: 0ms;
+  }
+}

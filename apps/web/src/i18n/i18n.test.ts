@@ -1,0 +1,24 @@
+import { describe, expect, it } from "vitest";
+import { alerts } from "./messages/alerts.ts";
+import { common } from "./messages/common.ts";
+import { report } from "./messages/report.ts";
+import { timeline } from "./messages/timeline.ts";
+import { treat } from "./messages/treat.ts";
+
+describe("i18n", () => {
+  it("has every key in Finnish and English, with the same placeholders", () => {
+    for (const area of [common, treat, alerts, report, timeline]) {
+      expect(Object.keys(area.fi).sort()).toEqual(Object.keys(area.en).sort());
+      for (const [key, en] of Object.entries(area.en) as [string, string][]) {
+        const fi = (area.fi as Record<string, string>)[key] ?? "";
+        const vars = (s: string) => (s.match(/\{\w+\}/g) ?? []).sort();
+        expect(vars(fi), key).toEqual(vars(en));
+      }
+    }
+  });
+
+  it("has no key in two areas", () => {
+    const keys = [common, treat, alerts, report, timeline].flatMap((a) => Object.keys(a.en));
+    expect(new Set(keys).size).toBe(keys.length);
+  });
+});
