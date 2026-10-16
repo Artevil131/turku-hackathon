@@ -70,23 +70,52 @@ it is detected, is not decided (see the questions below).
 
 ## What we are given
 
-A fully synthetic microbiology laboratory dataset
-(`synthetic_microbiology_dataset.zip`, not yet in this repository):
+A fully synthetic microbiology laboratory dataset, kept locally in
+`data/synthetic_microbiology_dataset/` (git ignores it). Figures below are
+from its README (measured, as stated by the organiser) unless tagged.
 
-- 10,000 invented patients, about 47,000 urine, blood and wound cultures,
-  three years, nine wards or health centres.
-- Structure: patients → cultures (samples) → isolates (organisms found) →
-  susceptibility results (S/R). Joined on `patient_id`, `culture_id`,
-  `isolate_id`.
-- CSV, UTF-8, comma-separated. A README inside the zip has more detail;
-  we have not read it yet.
+- **Size:** 10,000 patients, 46,792 cultures, 24,571 isolates, 172,381
+  susceptibility results, 2023-10-02 to 2026-09-27 (156 weeks).
+- **Structure:** culture → 0–2 isolates → susceptibility results, joined on
+  `patient_id`, `culture_id`, `isolate_id`. CSV, UTF-8, ISO dates.
+- **Files:** `cultures.csv` (date, ISO week, age, ward, inpatient or
+  outpatient, admission date, specimen, result positive / negative /
+  mixed growth), `isolates.csv` (organism, quantity, ESBL / MRSA / VRE / CPE
+  flags), `susceptibility.csv` (antibiotic, WHONET code, S/R, EUCAST
+  guideline and year), `patients.csv` (sex, birth year, home area), and
+  code lists `antibiotics.csv`, `wards.csv`.
+- **Units:** nine. Hospital: emergency department (outpatient), internal
+  medicine A and B, surgery, urology, ICU, geriatrics. Primary care: health
+  centres North and South.
+- **Specimens:** urine, blood, wound.
+- **Antibiotics:** 13. Mecillinam, trimethoprim and nitrofurantoin are
+  reported for urine only.
+- **Organisms:** nine species, as Latin names. *E. coli* is close to half
+  of all isolates (11,534 of 24,571, computed).
 
-Organiser's guidance, as stated in the brief:
+How the data was made: urinary and blood *E. coli* resistance and the ESBL
+and MRSA shares are roughly calibrated to THL's Finres 2023 report;
+intrinsic resistances follow EUCAST Expected Resistant Phenotypes v1.2;
+other levels are illustrative. Generated with a fixed seed.
 
-- Compute resistance percentages from the **first isolate per patient**.
-- Use **at least 30 isolates** for a percentage.
+Simplifications: S/R only (no I category, no MIC or zone diameters), no
+diagnoses, medication or other clinical data.
 
-Reference surveillance systems named in the brief:
+### Counting rules the organiser points to
+
+Surveillance programmes (THL Finres, WHO GLASS, CLSI M39) count:
+
+- only the **first isolate per patient, per species, per specimen type,
+  per period**, since one patient appears many times;
+- a percentage only when there are **at least 30 isolates**.
+
+The README also notes two things that change the numbers:
+
+- urinary *E. coli* resistance differs between women and men;
+- a finding is often counted as **hospital-acquired** when the sample was
+  taken on the third day of the stay or later (`admission_date`).
+
+### Reference systems
 
 - European: [EARS-Net data (ECDC)](https://www.ecdc.europa.eu/en/about-us/networks/disease-networks-and-laboratory-networks/ears-net-data)
 - Finnish: [THL antimicrobial resistance data](https://thl.fi/en/data-and-statistics/infectious-diseases/antimicrobial-resistance#development-of-antimicrobial-resistance-in-finland)
@@ -95,15 +124,40 @@ Reference surveillance systems named in the brief:
 
 The brief asks for two things that pull against each other: **recent and
 local** (four weeks, one ward) and **reliable** (at least 30 first
-isolates per figure). As a rough order of magnitude, 47,000 cultures over
-three years and nine units is about 130 cultures per unit per four weeks
-(derived, assuming an even spread, which the real data will not have). Not
-every culture grows an organism, the first-isolate rule removes repeats,
-and the count splits again by organism, sample type and antibiotic. So
-most ward × organism × antibiotic combinations will likely fall below 30
-in a four-week window. How the tool behaves there, without hiding the
-problem or showing misleading numbers, is a central design question, and
-one we want the judges' view on before we pick an approach.
+isolates per figure).
+
+Raw isolate counts per unit in a 28-day window (computed: all isolates, no
+first-isolate filtering, 39 consecutive windows from 2023-10-02):
+
+| Unit   | Median | Range    |
+|--------|--------|----------|
+| PHC-S  | 132    | 86–162   |
+| PHC-N  | 128    | 99–165   |
+| ED     | 122    | 95–168   |
+| SURG   | 56     | 35–76    |
+| URO    | 51     | 34–70    |
+| MED-A  | 49     | 35–68    |
+| GER    | 44     | 27–68    |
+| MED-B  | 31     | 16–48    |
+| ICU    | 17     | 9–27     |
+
+These are totals across all organisms and specimens. Split by unit,
+window, organism and specimen, only 141 of the 4,400 combinations that
+have any isolate reach 30 (computed), and that is before the first-isolate
+rule removes repeats. So a four-week figure for one ward and one organism
+can almost never be reported under the organiser's own rule; the ICU never
+reaches 30 isolates in four weeks even with everything pooled. How the
+tool stays useful here, without hiding the problem or showing misleading
+numbers, is the central design question.
+
+## "Continuously updated" with a fixed dataset
+
+The dataset is a snapshot that ends on 2026-09-27. "Rolling, real-time"
+describes how the tool behaves as results keep arriving, which the
+snapshot cannot show by itself. A demo has to show the tool updating as if
+new results came in. The README describes the data as generated from
+rules and probabilities; whether it also contains planted deviations is
+not stated.
 
 ## Questions for the judges
 
@@ -121,41 +175,40 @@ one we want the judges' view on before we pick an approach.
 
 4. "e.g. antimicrobial resistance surveillance": should the tool be
    general enough for other laboratory indicators, or is AMR the focus?
-5. Which organisms, antibiotics and sample types matter most to
-   clinicians?
+5. Which organisms, antibiotics and specimens matter most to clinicians?
 6. Should the tool only inform, or may it suggest a treatment? (A
    suggestion may bring it under medical-device regulation.)
 
 **Data and statistics**
 
-7. What should be shown when a ward and time window have fewer than 30
-   first isolates?
-8. Is "first isolate per patient" counted per year, per window, or over the
-   whole history, and per organism or per organism and sample type?
-9. The brief mentions S/R. Does the data or the clinical practice use the
-   "I" category (susceptible, increased exposure) too?
+7. Most ward-level four-week figures fall below 30 isolates. What would a
+   clinician rather see there?
+8. "Per period" in the first-isolate rule: is the period the display
+   window (four weeks, one year), or a fixed one?
 
 **"Continuously updated" in practice**
 
-10. How would the tool get data in a real deployment: a live feed from the
-    laboratory information system, a daily export, something else?
-11. How fresh is fresh enough: hourly, daily?
+9. In a real deployment, how would results reach the tool from the
+   laboratory information system (Mylab): a live feed, a daily export,
+   something else? How fresh is fresh enough?
+10. For the demo, is replaying the dataset as if results arrived over time
+    an acceptable way to show "continuously updated"?
 
 **Deviations and anomalies**
 
-12. Which deviations matter most: resistance rising in a ward, a cluster
+11. Which deviations matter most: resistance rising in a ward, a cluster
     or outbreak of one organism, an unusual resistance pattern in a single
-    isolate, a ward differing from the rest of the hospital, or data
-    problems (missing results, implausible values, a sudden drop in
+    isolate (for example a new CPE), a ward differing from the rest of the
+    hospital, or data problems (missing results, a sudden drop in
     sampling)?
-13. Who should be told about a deviation, and how: shown in the tool, or
+12. Who should be told about a deviation, and how: shown in the tool, or
     pushed as an alert to the ward or the infection control team?
-14. Does the synthetic dataset contain planted deviations we are expected
+13. Does the synthetic dataset contain planted deviations we are expected
     to find?
 
-**Judging**
+**Other**
 
-15. Are AI or language-model components welcome, and under what
+14. Are AI or language-model components welcome, and under what
     constraints on data (even synthetic)?
 
 ## Glossary
@@ -166,8 +219,15 @@ one we want the judges' view on before we pick an approach.
 - **Isolate**: one organism identified in a culture.
 - **Susceptibility testing (AST)**: testing whether an isolate is
   susceptible (S) or resistant (R) to each antibiotic.
-- **First isolate**: the first isolate of an organism from a patient in a
-  period, so one patient sampled many times does not dominate the figure.
+- **First isolate**: the first isolate of a species from one specimen type
+  of a patient in a period, so one patient sampled many times does not
+  dominate the figure.
+- **ESBL, MRSA, VRE, CPE**: resistant phenotypes flagged per isolate:
+  extended-spectrum beta-lactamase producers, methicillin-resistant
+  *S. aureus*, vancomycin-resistant enterococci, carbapenemase-producing
+  Enterobacterales.
+- **Hospital-acquired**: here, a finding from a sample taken on day 3 of
+  the stay or later.
 - **Antibiogram**: the table of resistance percentages per organism and
   antibiotic that hospitals publish, today yearly.
 - **Empirical treatment**: antibiotics started before the patient's own
