@@ -3,6 +3,19 @@
    ply 1 (rail, readout) frosts most, ply 2 (main view) is clearer, ply 3
    (detail panels, popovers) is nearly opaque. Dark is a night-shift option. */
 
+/* Branding slots. A hospital's identity attaches here and nowhere else:
+   one accent (and its soft and on-accent shades), the typefaces, the
+   corner radius, and the mark in TopBar (the `brand-mark` slot). Every
+   other colour is neutral or a reserved status colour. */
+:root {
+  --brand-accent: #0a63a8;
+  --brand-accent-soft: #e3effa;
+  --brand-accent-ink: #ffffff;
+  --brand-font-ui: "Geist", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --brand-font-data: "Geist", "Segoe UI", system-ui, sans-serif;
+  --brand-radius: 16px;
+}
+
 :root {
   color-scheme: light;
   --chassis: #eef3f6;
@@ -26,9 +39,9 @@
   --line: rgb(16 42 67 / 0.1);
   --line-strong: rgb(16 42 67 / 0.18);
 
-  --live: #0a63a8;
-  --live-soft: #e3effa;
-  --live-ink: #ffffff;
+  --live: var(--brand-accent);
+  --live-soft: var(--brand-accent-soft);
+  --live-ink: var(--brand-accent-ink);
   --live-glow: rgb(10 99 168 / 0.18);
 
   /* Resistance shading: one hue, continuous; white means fully susceptible. */
@@ -42,8 +55,8 @@
   --st-watch-bg: #fdf3e2;
   --st-ok: #17784a;
 
-  --font-ui: "Geist", "Segoe UI", system-ui, -apple-system, sans-serif;
-  --font-data: "Geist", "Segoe UI", system-ui, sans-serif;
+  --font-ui: var(--brand-font-ui);
+  --font-data: var(--brand-font-data);
 
   --step--1: 0.78rem;
   --step-0: 0.9rem;
@@ -52,7 +65,7 @@
   --step-3: 1.5rem;
   --step-4: 1.85rem;
 
-  --radius-panel: 16px;
+  --radius-panel: var(--brand-radius);
   --radius-control: 9px;
   --well: 44px;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
