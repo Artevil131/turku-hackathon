@@ -1,7 +1,7 @@
 import type { IsolateRecord } from "@aei/domain";
 import { addDays } from "@aei/replay";
 import { describe, expect, it } from "vitest";
-import { coverage, wilson } from "./index.ts";
+import { coverage, suggest, wilson } from "./index.ts";
 
 let n = 0;
 const iso = (extra: Partial<IsolateRecord>): IsolateRecord => {
@@ -66,5 +66,34 @@ describe("coverage", () => {
     ]);
     const blood = coverage(records, { asOf: "2026-06-30", ward: "URO", specimen: "blood" });
     expect(blood.antibiotics.map((a) => a.antibiotic)).not.toContain("NIT");
+  });
+});
+
+describe("suggest", () => {
+  it("puts Access before Watch among those that clear, and marks borderline and untested", () => {
+    const records = Array.from({ length: 200 }, (_, i) =>
+      iso({ results: { NIT: i < 196 ? "S" : "R", CIP: i < 198 ? "S" : "R", TMP: i < 170 ? "S" : "R", MEC: i < 184 ? "S" : "R" } }),
+    );
+    const list = suggest(coverage(records, { asOf: "2026-06-30", ward: "URO", specimen: "urine" }), "severe");
+    const standing = Object.fromEntries(list.map((s) => [s.antibiotic, s.standing]));
+    expect(list[0]?.antibiotic).toBe("NIT"); // Access, 98 %, clears 90 %
+    expect(list.findIndex((s) => s.antibiotic === "NIT")).toBeLessThan(list.findIndex((s) => s.antibiotic === "CIP")); // CIP is Watch
+    expect(standing.MEC).toBe("borderline"); // 92 %, interval reaches below 90 %
+    expect(standing.TMP).toBe("below"); // 85 %
+    expect(standing.CAZ).toBe("not assessable"); // never tested on E. coli
+  });
+});
+
+describe("spectrum", () => {
+  it("leaves organisms with no breakpoint out of the spectrum share, but keeps resistance by nature against it", () => {
+    const records = [
+      ...Array.from({ length: 30 }, () => iso({ results: { MEC: "S" } })), // E. coli, covered
+      ...Array.from({ length: 10 }, () => iso({ organism: "Enterococcus faecalis", results: {} })), // mecillinam: no breakpoint
+      ...Array.from({ length: 10 }, () => iso({ organism: "Klebsiella pneumoniae", results: { MEC: "R" } })),
+    ];
+    const mec = coverage(records, { asOf: "2026-06-30", ward: "URO", specimen: "urine" }).antibiotics.find((a) => a.antibiotic === "MEC");
+    expect(mec?.share).toBeCloseTo(30 / 50, 10); // all organisms: Enterococcus counts as not covered
+    expect(mec?.spectrum.share).toBeCloseTo(30 / 40, 10); // within spectrum: Enterococcus left out
+    expect(mec?.outsideSpectrum).toEqual([{ organism: "Enterococcus faecalis", share: 0.2 }]);
   });
 });
