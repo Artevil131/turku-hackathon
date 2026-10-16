@@ -138,3 +138,14 @@ tests also run the original trial code (copied into
 - Units were drawn uniformly, so small units are overrepresented (15 of
   40 trials against about 9 by isolate volume). In large units: 8 of 9
   for 4 patients, 5 of 14 for 3.
+
+## Scope of the cluster result (2026-10-17, after close)
+
+The clusters here copied isolates drawn at random from rare resistant
+strains (ESBL, MRSA and the like). experiments/0011 injected the
+commonest profiles instead: clusters of the unit's commonest resistant
+strain (urinary *E. coli* resistant to ampicillin only) were caught in
+1 of 180 trials of 4 to 8 patients, fully susceptible ones never (the
+profile test skips them by design), and the hospital's commonest ESBL
+*E. coli* in 33 of 60 at 4 patients and 56 of 60 at 6. "Clusters of 4
+or more caught in 95 %" holds for rare strains only.

@@ -1,7 +1,7 @@
 """Rerun the experiments and check that each reproduces its committed `out/` files, so the numbers quoted in the
 READMEs and the pitch cannot drift from the code.
 
-    uv run python scripts/verify_experiments.py                 # every experiment (about 2 minutes; 0007 alone about 1)
+    uv run python scripts/verify_experiments.py                 # every experiment (under a minute)
     uv run python scripts/verify_experiments.py --only 0002,0009
 
 Run-time lines ("Run time 10 s", "Sweep time: 15.0 s") are ignored. The committed files are put back afterwards, so
