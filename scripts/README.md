@@ -4,3 +4,12 @@ Every script: setup, data downloads, maintenance, one-off jobs. A script
 is a thin entry point; logic worth reusing goes in `libs/utils` and the
 script calls it. Each script states at the top what it does and how to
 run it.
+
+Run every script from the repository root.
+
+| Script | What it does | Run |
+|---|---|---|
+| `explore/` | Static page for browsing the dataset (antibiogram, counts, timeline, records); a team tool, not the product | `python3 -m http.server 8765 --bind 127.0.0.1`, open `/scripts/explore/` |
+| `crosscheck-stats/` | Compares the TypeScript statistics in `libs/utils` with scipy and statsmodels | `uv run python scripts/crosscheck-stats/check.py` |
+| `planted_events_check.py` | Re-measures the numbers in `benchmarks/planted-events/README.md` (standard library only) | `python3 scripts/planted_events_check.py` |
+| `fetch_thl_ttr.py` | Fetches THL monthly MRSA, ESBL, VRE and CPE cases by county into `data/external/thl/` (D-025) | `uv run python scripts/fetch_thl_ttr.py` |
