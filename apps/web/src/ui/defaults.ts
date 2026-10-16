@@ -1,5 +1,5 @@
 import type { FeedMeta, Unit } from "../feed/types.ts";
-import type { AgeBand, Onset, SignalKind } from "../engine/types.ts";
+import type { AgeBand, Onset, SignalKind } from "../model/types.ts";
 import { named, t, type Locale } from "../i18n/index.ts";
 
 /*

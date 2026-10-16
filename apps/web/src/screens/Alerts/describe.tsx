@@ -1,31 +1,28 @@
 import { Fragment, type ReactNode } from "react";
-import { daysBetween } from "../../engine/dates.ts";
+import { SCREEN_ONLY } from "@aei/eucast";
+import { daysBetween } from "../../model/dates.ts";
 import {
   CLUSTER_ALPHA,
+  CLUSTER_BASELINE_DAYS,
   CLUSTER_MIN_PATIENTS,
   CLUSTER_WINDOW_DAYS,
+  EMPTY_RUN_ALPHA,
   GAP_ALPHA,
   GAP_BASELINE_DAYS,
   GAP_WINDOW_DAYS,
-  GAP_ZERO_RUN_DAYS,
+  INCIDENT_GAP_DAYS,
   NEW_FLAG_QUIET_DAYS,
-  SENTINEL_GAP_DAYS,
-  SHIFT_ALPHA,
-  SHIFT_BASELINE_DAYS,
-  SHIFT_MIN_BASELINE,
-  SHIFT_WINDOW_DAYS,
   SURGE_ALPHA,
+  SURGE_BASELINE_DAYS,
   SURGE_MIN_PATIENTS,
   SURGE_WINDOW_DAYS,
   TREND_ALPHA,
   TREND_BIN_DAYS,
-  TREND_MIN_RISE,
-  TREND_RECENT_BINS,
-} from "../../engine/signals.ts";
-import type { Share, Signal } from "../../engine/types.ts";
+  TREND_MIN_BINS,
+} from "../../model/rules.ts";
+import type { Share, Signal } from "../../model/types.ts";
 import type { FeedMeta, IsoDate } from "../../feed/types.ts";
 import { formatDate, formatNumber, formatShare, t, type Locale, type MessageKey } from "../../i18n/index.ts";
-import { isScreen } from "../../engine/coverage.ts";
 import {
   antibioticByCode,
   antibioticName,
@@ -40,10 +37,11 @@ import {
 import type { IconName } from "../../ui/index.ts";
 import type { TreatPrefs } from "../Treat/index.tsx";
 
-// Turns one signal into plain clinical words: what happened, where and when,
-// how unusual it is (observed against expected, never a bare p-value), who
-// should act, and how it was found. Every name comes from the feed or the
-// results; every figure from the signal itself.
+// Turns one server alert (see model/alerts.ts) into plain clinical words:
+// what happened, where and when, how unusual it is (observed against
+// expected, never a bare p-value), who should act, and how it was found.
+// Every name comes from the feed; every figure from the alert itself; every
+// rule setting from the gears the server runs (model/rules.ts).
 
 /** Text that may carry markup (italic organism names) plus the same as plain text. */
 export interface Rich {
@@ -86,13 +84,16 @@ export const KIND_ICON: Record<Signal["kind"], IconName> = {
 
 export const AUDIENCE_ICON: Record<Audience, IconName> = { infection: "shield", lab: "flask", stewardship: "treat" };
 
-/** Window lengths in words, from the engine's own settings. */
+/** Window lengths in words, from the server's detector settings. */
 export const SPAN = {
-  shiftWeeks: Math.round(SHIFT_WINDOW_DAYS / 7),
-  shiftBeforeMonths: Math.round(SHIFT_BASELINE_DAYS / 30.44),
+  shiftWeeks: 4,
+  shiftBeforeMonths: 12,
   clusterWeeks: Math.round(CLUSTER_WINDOW_DAYS / 7),
-  trendMonths: Math.round((TREND_RECENT_BINS * TREND_BIN_DAYS) / 30.44),
+  trendMonths: Math.round((TREND_MIN_BINS * TREND_BIN_DAYS) / 30.44),
 };
+
+/** A screening test (e.g. the MRSA screen): resistant means positive, not a treatment that failed. */
+const isScreen = (code: string | undefined) => !!code && (SCREEN_ONLY as readonly string[]).includes(code);
 
 const cap = (s: string) => (s ? s.charAt(0).toLocaleUpperCase() + s.slice(1) : s);
 
@@ -214,8 +215,7 @@ export function describe(locale: Locale, meta: FeedMeta, s: Signal, asOf: IsoDat
   const n = (x: number) => formatNumber(locale, x);
   const unit = whereName(locale, meta, s.ward);
   const at = atPhrase(locale, meta, s.ward);
-  const drug = antibioticByCode(meta, s.antibiotic);
-  const screen = drug ? isScreen(drug) : false;
+  const screen = isScreen(antibioticByCode(meta, s.antibiotic)?.code);
   const flag = flagName(locale, s);
   const specimen = s.specimen ? specimenName(locale, meta, s.specimen) : "";
   const antibiotic = s.antibiotic ? antibioticName(locale, meta, s.antibiotic) : "";
@@ -237,18 +237,19 @@ export function describe(locale: Locale, meta: FeedMeta, s: Signal, asOf: IsoDat
 
   switch (s.kind) {
     case "sentinel": {
-      const always = s.severity === "high";
+      // Every CPE is reported (D-014); MRSA or VRE when new on an inpatient unit (D-021).
+      const always = s.source === "cpe";
       audience = "infection";
       if (always) {
         title = compose(locale, s.organism ? "alerts.t.sentinel" : "alerts.t.sentinelAny", { flag, organism, where: at });
         how = t(locale, "alerts.how.sentinel", { flag });
         short = patientsLine(s.patients ?? s.observed);
-        method.push(t(locale, "alerts.m.sentinel", { flag, gap: n(SENTINEL_GAP_DAYS) }));
+        method.push(t(locale, "alerts.m.sentinel", { flag, gap: n(INCIDENT_GAP_DAYS) }));
       } else {
         title = compose(locale, s.organism ? "alerts.t.back" : "alerts.t.backAny", { flag, organism, where: at });
         how = t(locale, "alerts.how.back", { flag, days: n(NEW_FLAG_QUIET_DAYS) });
         short = t(locale, "alerts.short.back", { days: n(NEW_FLAG_QUIET_DAYS) });
-        method.push(t(locale, "alerts.m.back", { flag, quiet: n(NEW_FLAG_QUIET_DAYS), gap: n(SENTINEL_GAP_DAYS) }));
+        method.push(t(locale, "alerts.m.back", { flag, quiet: n(NEW_FLAG_QUIET_DAYS), gap: n(INCIDENT_GAP_DAYS) }));
         if ((s.patients ?? s.observed) > 1) sub = patientsLine(s.patients ?? s.observed);
       }
       break;
@@ -261,7 +262,15 @@ export function describe(locale: Locale, meta: FeedMeta, s: Signal, asOf: IsoDat
         ? t(locale, "alerts.how.surge", { observed: n(s.observed), flag, days: n(SURGE_WINDOW_DAYS), expected: exp })
         : patientsLine(s.observed);
       short = exp ? t(locale, "alerts.short.patients", { count: n(s.observed), expected: exp }) : patientsLine(s.observed);
-      method.push(t(locale, "alerts.m.surge", { flag, days: n(SURGE_WINDOW_DAYS), min: n(SURGE_MIN_PATIENTS), alpha: alpha(locale, SURGE_ALPHA) }));
+      method.push(
+        t(locale, "alerts.m.surge", {
+          flag,
+          days: n(SURGE_WINDOW_DAYS),
+          base: n(SURGE_BASELINE_DAYS),
+          min: n(SURGE_MIN_PATIENTS),
+          alpha: alpha(locale, SURGE_ALPHA),
+        }),
+      );
       break;
     }
     case "cluster": {
@@ -273,17 +282,28 @@ export function describe(locale: Locale, meta: FeedMeta, s: Signal, asOf: IsoDat
         : patientsLine(s.observed);
       short = exp ? t(locale, "alerts.short.patients", { count: n(s.observed), expected: exp }) : patientsLine(s.observed);
       method.push(
-        t(locale, "alerts.m.cluster", { days: n(CLUSTER_WINDOW_DAYS), min: n(CLUSTER_MIN_PATIENTS), alpha: alpha(locale, CLUSTER_ALPHA) }),
+        t(locale, "alerts.m.cluster", {
+          days: n(CLUSTER_WINDOW_DAYS),
+          base: n(CLUSTER_BASELINE_DAYS),
+          min: n(CLUSTER_MIN_PATIENTS),
+          alpha: alpha(locale, CLUSTER_ALPHA),
+        }),
       );
       break;
     }
     case "data-gap": {
       audience = "lab";
       title = compose(locale, s.observed === 0 ? "alerts.t.gapNone" : "alerts.t.gapFew", { unit });
-      how = t(locale, "alerts.how.gap", { observed: n(s.observed), days: n(GAP_WINDOW_DAYS), expected: exp ?? "–" });
-      short = exp ? t(locale, "alerts.short.results", { count: n(s.observed), days: n(GAP_WINDOW_DAYS), expected: exp }) : null;
+      const days = s.windowDays ?? GAP_WINDOW_DAYS;
+      how = t(locale, "alerts.how.gap", { observed: n(s.observed), days: n(days), expected: exp ?? "–" });
+      short = exp ? t(locale, "alerts.short.results", { count: n(s.observed), days: n(days), expected: exp }) : null;
       method.push(
-        t(locale, "alerts.m.gap", { days: n(GAP_WINDOW_DAYS), base: n(GAP_BASELINE_DAYS), alpha: alpha(locale, GAP_ALPHA), run: n(GAP_ZERO_RUN_DAYS) }),
+        t(locale, "alerts.m.gap", {
+          days: n(GAP_WINDOW_DAYS),
+          base: n(GAP_BASELINE_DAYS),
+          alpha: alpha(locale, GAP_ALPHA),
+          runAlpha: alpha(locale, EMPTY_RUN_ALPHA),
+        }),
       );
       break;
     }
@@ -306,14 +326,7 @@ export function describe(locale: Locale, meta: FeedMeta, s: Signal, asOf: IsoDat
       } else {
         how = "";
       }
-      method.push(
-        t(locale, "alerts.m.shift", {
-          days: n(SHIFT_WINDOW_DAYS),
-          base: n(SHIFT_BASELINE_DAYS),
-          alpha: alpha(locale, SHIFT_ALPHA),
-          min: n(SHIFT_MIN_BASELINE),
-        }),
-      );
+      // No server detector raises a shift (D-032); the case stays so older links still read.
       break;
     }
     case "trend": {
@@ -336,14 +349,13 @@ export function describe(locale: Locale, meta: FeedMeta, s: Signal, asOf: IsoDat
               months: n(SPAN.trendMonths),
               base: shareText(locale, s.baseline, "fails"),
             })
-          : "";
+          : t(locale, "alerts.how.trendBlock", { percent: formatShare(locale, s.observed), bin: n(TREND_BIN_DAYS) });
       short = figures ? t(locale, screen ? "alerts.short.trendScreen" : "alerts.short.trend", { from, to }) : null;
       method.push(
         t(locale, "alerts.m.trend", {
           bin: n(TREND_BIN_DAYS),
           alpha: alpha(locale, TREND_ALPHA),
-          recent: n(TREND_RECENT_BINS),
-          rise: n(TREND_MIN_RISE),
+          bins: n(TREND_MIN_BINS),
         }),
       );
       break;
@@ -366,9 +378,10 @@ export function describe(locale: Locale, meta: FeedMeta, s: Signal, asOf: IsoDat
 
   let treat: Partial<TreatPrefs> | null = null;
   if (s.kind !== "data-gap") {
-    treat = { organism: s.organism ?? null };
-    if (s.ward) treat.ward = s.ward;
-    if (s.specimen) treat.specimen = s.specimen;
+    const patch: Partial<TreatPrefs> = {};
+    if (s.ward) patch.ward = s.ward;
+    if (s.specimen) patch.specimen = s.specimen;
+    treat = patch;
   }
 
   return { title, sub, where, when, short, how, chance, audience, screen, method, casesLabel, treat };

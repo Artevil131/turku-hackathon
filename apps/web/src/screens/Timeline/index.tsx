@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from "react";
-import { toDayNumber } from "../../engine/dates.ts";
-import type { Severity, Signal, SignalKind } from "../../engine/types.ts";
+import { toDayNumber } from "../../model/dates.ts";
+import type { Severity, Signal, SignalKind } from "../../model/types.ts";
 import type { FeedClock, FeedMeta, IsoDate, Result } from "../../feed/types.ts";
 import { formatDate, formatMonth, formatNumber, formatShare, t, type Locale } from "../../i18n/index.ts";
 import { Badge, SeverityBadge } from "../../ui/Badge.tsx";

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { Share } from "../engine/types.ts";
+import type { Share } from "../model/types.ts";
 import { formatNumber, formatShare, t, type Locale } from "../i18n/index.ts";
 
 /*

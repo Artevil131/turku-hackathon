@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import type { Severity, Signal, SignalKind } from "../../engine/types.ts";
+import type { Severity, Signal, SignalKind } from "../../model/types.ts";
 import type { FeedMeta, IsoDate, Result } from "../../feed/types.ts";
 import { formatDate, formatNumber, named, t, type Locale } from "../../i18n/index.ts";
 import { Card, ChipGroup, EmptyState, Icon, Picker, Segmented, signalKindLabel, ToggleChip, useIsDesktop, useReducedMotion } from "../../ui/index.ts";

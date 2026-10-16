@@ -170,6 +170,9 @@
 .alerts-fact { display: flex; flex-direction: column; gap: 4px; }
 .alerts-how { font-size: var(--fs-base); color: var(--ink); }
 .alerts-chance { color: var(--ink-2); }
+.alerts-how-more { font-size: var(--fs-sm); color: var(--ink-2); }
+.alerts-related { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-1); font-size: var(--fs-sm); }
+.alerts-related-date { color: var(--ink-3); margin-right: var(--sp-1); }
 
 .alerts-who {
   display: flex;

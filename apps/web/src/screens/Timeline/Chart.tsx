@@ -10,8 +10,8 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
-import { addDays, maxDate, minDate, toDayNumber } from "../../engine/dates.ts";
-import type { Signal } from "../../engine/types.ts";
+import { addDays, maxDate, minDate, toDayNumber } from "../../model/dates.ts";
+import type { Signal } from "../../model/types.ts";
 import type { FeedMeta, IsoDate } from "../../feed/types.ts";
 import { formatDate, formatMonth, formatNumber, formatShare, t, type Locale } from "../../i18n/index.ts";
 import { SeverityBadge } from "../../ui/Badge.tsx";

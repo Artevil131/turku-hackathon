@@ -1,6 +1,5 @@
-import { addDays, fromDayNumber, toDayNumber, weekStart } from "../../engine/dates.ts";
-import { isolateKey } from "../../engine/counting.ts";
-import type { Signal } from "../../engine/types.ts";
+import { addDays, fromDayNumber, toDayNumber, weekStart } from "../../model/dates.ts";
+import type { Signal } from "../../model/types.ts";
 import type { FeedMeta, IsoDate, Result } from "../../feed/types.ts";
 
 /*
@@ -75,7 +74,8 @@ function ingestOne(s: DailyStore, r: Result): void {
   }
   const w = Math.floor(d / 7);
   const firsts = s.firsts[w]!;
-  const key = isolateKey(r);
+  // The first isolate per patient, organism and specimen (the @aei/counting rule), here per week.
+  const key = `${r.patientId}\u0000${r.organism}\u0000${r.specimen}`;
   const prev = firsts.get(key);
   if (!prev || d < prev.day) firsts.set(key, { day: d, flagged });
 }

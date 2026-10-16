@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Signal } from "../../engine/types.ts";
+import type { Signal } from "../../model/types.ts";
 import type { FeedMeta, IsoDate, Result } from "../../feed/types.ts";
 import { byMonth, laneOrder, packSegments, updateStore, visibleSignals, weekly } from "./aggregate.ts";
 
@@ -40,7 +40,7 @@ function r(day: IsoDate, ward: string, patient = `p${seq}`, flags: string[] = []
 }
 
 function sig(id: string, firstDate: IsoDate, lastDate: IsoDate, extra: Partial<Signal> = {}): Signal {
-  return { id, kind: "surge", severity: "high", firstDate, lastDate, ward: "A", observed: 3, isolateIds: [], ...extra };
+  return { id, kind: "surge", source: "phenotype-excess", severity: "high", firstDate, lastDate, ward: "A", observed: 3, isolateIds: [], related: [], ...extra };
 }
 
 describe("timeline aggregation", () => {

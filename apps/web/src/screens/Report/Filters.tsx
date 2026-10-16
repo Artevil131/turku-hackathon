@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { AgeBand, LikelyOrganism } from "../../engine/types.ts";
+import type { AgeBand, LikelyOrganism } from "../../model/types.ts";
 import type { FeedMeta } from "../../feed/types.ts";
 import { formatNumber, named, t, type Locale } from "../../i18n/index.ts";
 import { ageLabel, Org, Picker, Segmented, sexLabel, ToggleChip, type PickerGroup } from "../../ui/index.ts";

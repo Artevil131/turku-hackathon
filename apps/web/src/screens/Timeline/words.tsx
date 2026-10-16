@@ -1,6 +1,6 @@
 import { Fragment, type ReactNode } from "react";
-import { CLUSTER_WINDOW_DAYS, GAP_WINDOW_DAYS, NEW_FLAG_QUIET_DAYS, SURGE_WINDOW_DAYS } from "../../engine/signals.ts";
-import type { Share, Signal } from "../../engine/types.ts";
+import { CLUSTER_WINDOW_DAYS, GAP_WINDOW_DAYS, NEW_FLAG_QUIET_DAYS, SURGE_WINDOW_DAYS, TREND_BIN_DAYS } from "../../model/rules.ts";
+import type { Share, Signal } from "../../model/types.ts";
 import type { FeedMeta } from "../../feed/types.ts";
 import { formatDate, formatNumber, formatShare, t, type Locale, type MessageKey } from "../../i18n/index.ts";
 import { antibioticName, signalKindLabel, specimenName, unitName } from "../../ui/defaults.ts";
@@ -56,7 +56,7 @@ function parts(locale: Locale, meta: FeedMeta, s: Signal): Parts {
   const expected = approx(locale, s.expected);
   switch (s.kind) {
     case "sentinel":
-      return s.severity === "high"
+      return s.source === "cpe"
         ? { key: "timeline.sum.sentinelHigh", vars: { flag, patients: patientsText(locale, s.patients ?? s.observed) } }
         : {
             key: "timeline.sum.sentinelMedium",
@@ -78,7 +78,7 @@ function parts(locale: Locale, meta: FeedMeta, s: Signal): Parts {
         };
       break;
     case "data-gap":
-      return { key: "timeline.sum.gap", vars: { observed, expected, days: String(GAP_WINDOW_DAYS) } };
+      return { key: "timeline.sum.gap", vars: { observed, expected, days: String(s.windowDays ?? GAP_WINDOW_DAYS) } };
     case "shift":
       if (s.organism)
         return {
@@ -88,6 +88,17 @@ function parts(locale: Locale, meta: FeedMeta, s: Signal): Parts {
         };
       break;
     case "trend":
+      if (s.organism && !(s.recent && s.baseline))
+        return {
+          key: "timeline.sum.trendBlock",
+          vars: {
+            drug,
+            specimen: s.specimen ? specimenName(locale, meta, s.specimen) : "–",
+            percent: formatShare(locale, s.observed),
+            days: String(TREND_BIN_DAYS),
+          },
+          organism: s.organism,
+        };
       if (s.organism)
         return {
           key: "timeline.sum.trend",

@@ -1,4 +1,4 @@
-import type { MonthPoint } from "../../engine/types.ts";
+import type { MonthPoint } from "../../model/types.ts";
 import { formatNumber, formatShare, t, type Locale } from "../../i18n/index.ts";
 import { Sparkline } from "../../ui/index.ts";
 import { MIN, type Cell } from "./model.ts";

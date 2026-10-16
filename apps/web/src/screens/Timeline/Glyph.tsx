@@ -1,4 +1,4 @@
-import type { Severity, SignalKind } from "../../engine/types.ts";
+import type { Severity, SignalKind } from "../../model/types.ts";
 
 // The mark inside a signal segment: one small glyph per kind, drawn on a
 // 10 x 10 box centred on (0, 0). Kind is never shown by the glyph alone:

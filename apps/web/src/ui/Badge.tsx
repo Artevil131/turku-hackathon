@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { AwareGroup, Severity } from "../engine/types.ts";
+import type { AwareGroup, Severity } from "../model/types.ts";
 import { t, type Locale } from "../i18n/index.ts";
 
 /*

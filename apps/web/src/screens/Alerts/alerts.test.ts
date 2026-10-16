@@ -1,7 +1,7 @@
 import { createElement as h } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe as group, expect, it } from "vitest";
-import type { Signal } from "../../engine/types.ts";
+import type { Signal } from "../../model/types.ts";
 import type { FeedMeta, Result } from "../../feed/types.ts";
 import { describe } from "./describe.tsx";
 import { DEFAULT_FILTERS, isActive, passes, reveal, sortAlerts, unseenActive } from "./filters.ts";
@@ -28,6 +28,8 @@ const meta: FeedMeta = {
 const asOf = "2025-06-30";
 
 const sig = (over: Partial<Signal> & Pick<Signal, "id" | "kind" | "severity">): Signal => ({
+  source: "profile-excess",
+  related: [],
   isolateIds: [],
   observed: 0,
   firstDate: "2025-06-20",
@@ -87,6 +89,7 @@ const gap = sig({ id: "gap|C9", kind: "data-gap", severity: "medium", ward: "C9"
 const sentinel = sig({
   id: "sentinel|W1",
   kind: "sentinel",
+  source: "cpe",
   severity: "high",
   phenotype: "qrx",
   organism: "Genus species",
@@ -155,20 +158,12 @@ group("alert wording", () => {
     const fi = describe("fi", meta, cluster, asOf);
     expect(fi.title.text).toBe("Sama resistentti G. species (neste) 6 potilaalla yksikössä Osasto Yksi 4 viikossa");
   });
-  it("never gives a percentage from fewer than 30 isolates", () => {
-    const d = describe("en", meta, shiftFew, asOf);
-    expect(d.title.text).toBe("Zetamycin works less often for G. species in fluid on Ward One");
-    expect(d.how).toBe("Worked in 4 of 9 in the last 4 weeks, against 96% (48 of 50) in the 11 months before.");
-    expect(d.short).toBe("Works 4 of 9 now · 96% before");
-    expect(d.audience).toBe("stewardship");
-    expect(d.casesLabel).toBe("See the 1 where it didn't work");
-  });
   it("words a hospital-wide trend with its figures", () => {
     const d = describe("en", meta, trend, asOf);
     expect(d.title.text).toBe("Alphacillin resistance in G. species from fluid rising hospital-wide: 17% → 20%");
     expect(d.where).toBe("Whole hospital · fluid");
     expect(d.casesLabel).toBeNull();
-    expect(d.treat).toEqual({ organism: "Genus species", specimen: "s1" });
+    expect(d.treat).toEqual({ specimen: "s1" });
   });
   it("sends a data gap to the laboratory, not to treatment", () => {
     const d = describe("en", meta, gap, asOf);
@@ -178,20 +173,23 @@ group("alert wording", () => {
     expect(d.treat).toBeNull();
     expect(describe("fi", meta, gap, asOf).title.text).toBe("Tuloksia ei enää tule yksiköstä Klinikka Yhdeksän");
   });
-  it("words a screening test as positive, not as a treatment that works", () => {
-    const screen = { ...shiftFew, id: "shift|C9", ward: "C9", antibiotic: "SC", recent: { works: 5, n: 9 }, baseline: { works: 49, n: 50 } };
-    const d = describe("en", meta, screen, asOf);
-    expect(d.title.text).toBe("Betoxin (screen) positive more often for G. species in fluid at Clinic Nine");
-    expect(d.how).toBe("Positive in 4 of 9 in the last 4 weeks, against 2% (1 of 50) in the 11 months before.");
-    expect(d.audience).toBe("infection");
-    expect(d.screen).toBe(true);
-    expect(d.casesLabel).toBe("See the 1 positive");
+  it("words the server's trend from its latest block when no shares are sent", () => {
+    const server = { ...trend, id: "trend|y", source: "rising-trend" as const, observed: 0.2 };
+    delete (server as Partial<Signal>).recent;
+    delete (server as Partial<Signal>).baseline;
+    const d = describe("en", meta, server, asOf);
+    expect(d.title.text).toBe("Alphacillin resistance in G. species from fluid rising hospital-wide");
+    expect(d.how).toBe("20% resistant in the latest 28-day block; the rise over the blocks before it is unlikely to be chance.");
+  });
+  it("words an empty run as results that stopped, over the run's own days", () => {
+    const run = { ...gap, id: "gap|run", source: "empty-run" as const, observed: 0, expected: 12, windowDays: 4 };
+    expect(describe("en", meta, run, asOf).how).toBe("0 results in the last 4 days. Normally about 12.");
   });
   it("names a rare find with its flag and organism", () => {
     const d = describe("en", meta, sentinel, asOf);
     expect(d.title.text).toBe("QRX found: G. species on Ward One");
     expect(d.when).toBe("On 29 Jun · yesterday");
-    expect(d.treat).toEqual({ organism: "Genus species", ward: "W1", specimen: "s1" });
+    expect(d.treat).toEqual({ ward: "W1", specimen: "s1" });
   });
 });
 

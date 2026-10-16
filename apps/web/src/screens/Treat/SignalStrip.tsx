@@ -1,4 +1,4 @@
-import type { Severity, Signal } from "../../engine/types.ts";
+import type { Severity, Signal } from "../../model/types.ts";
 import type { FeedMeta } from "../../feed/types.ts";
 import { formatDate, formatNumber, t, type Locale } from "../../i18n/index.ts";
 import { Icon } from "../../ui/index.ts";

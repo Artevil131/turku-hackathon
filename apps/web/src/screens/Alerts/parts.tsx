@@ -1,16 +1,29 @@
-import { useMemo, useState, type ReactNode } from "react";
-import { ageBandOf } from "../../engine/coverage.ts";
-import { addDays, daysBetween, maxDate, minDate } from "../../engine/dates.ts";
-import { CLUSTER_WINDOW_DAYS, SHIFT_WINDOW_DAYS, SURGE_WINDOW_DAYS } from "../../engine/signals.ts";
-import type { Share, Signal } from "../../engine/types.ts";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { addDays, daysBetween, maxDate, minDate } from "../../model/dates.ts";
+import type { Share, Signal } from "../../model/types.ts";
 import type { FeedMeta, IsoDate, Result } from "../../feed/types.ts";
 import { formatMonth, formatNumber, formatShare, t, type Locale } from "../../i18n/index.ts";
 import { Disclosure, Icon, MIN_ISOLATES, Org, SeverityBadge, signalKindLabel, Sparkline, specimenName, unitName } from "../../ui/index.ts";
 import type { TreatPrefs } from "../Treat/index.tsx";
-import { AUDIENCE_ICON, dateText, KIND_ICON, SPAN, type Described } from "./describe.tsx";
+import { AUDIENCE_ICON, dateText, describe, KIND_ICON, SPAN, type Described } from "./describe.tsx";
 
 // The pieces of one alert: its tags and summary (list), and its body (what
 // it rests on, who should act, the actions, the cases, how it was found).
+
+/** The server's own wording of an alert (GET /api/explain, the code's template, D-029); null until it arrives. */
+function useExplanation(id: string, locale: Locale): string | null {
+  const [text, setText] = useState<{ key: string; text: string } | null>(null);
+  const key = `${locale}|${id}`;
+  useEffect(() => {
+    const ctrl = new AbortController();
+    fetch(`/api/explain?${new URLSearchParams({ id, lang: locale }).toString()}`, { signal: ctrl.signal })
+      .then((res) => (res.ok ? (res.json() as Promise<{ text: string }>) : Promise.reject(new Error(String(res.status)))))
+      .then((body) => setText({ key, text: body.text }))
+      .catch(() => {});
+    return () => ctrl.abort();
+  }, [id, locale, key]);
+  return text?.key === key ? text.text : null;
+}
 
 export function Tags({ locale, s, isNew }: { locale: Locale; s: Signal; isNew: boolean }) {
   return (
@@ -92,7 +105,7 @@ function CaseList({
           const stay = r.admissionDate
             ? t(locale, "alerts.case.day", { n: formatNumber(locale, daysBetween(r.admissionDate, r.sampleDate) + 1) })
             : t(locale, "alerts.case.outpatient");
-          const band = ageBandOf(r.ageYears) === "65plus" ? t(locale, "alerts.case.65plus") : t(locale, "alerts.case.under65");
+          const band = r.ageYears >= 65 ? t(locale, "alerts.case.65plus") : t(locale, "alerts.case.under65");
           return (
             <li key={r.isolateId} className="alerts-case">
               <span className="alerts-case-main">
@@ -129,8 +142,7 @@ function CaseStrip({ locale, s, asOf, cases }: { locale: Locale; s: Signal; asOf
   const first = cases[0];
   const last = cases[cases.length - 1];
   if (!first || !last) return null;
-  const window =
-    s.kind === "surge" ? SURGE_WINDOW_DAYS : s.kind === "cluster" ? CLUSTER_WINDOW_DAYS : s.kind === "shift" ? SHIFT_WINDOW_DAYS : 14;
+  const window = s.windowDays ?? 14;
   const to = maxDate(s.lastDate, last.sampleDate);
   const from = minDate(first.sampleDate, addDays(to, -(window - 1)));
   const span = daysBetween(from, to) + 1;
@@ -326,16 +338,33 @@ export function Body({
   };
   const { cases, missing } = useCases(results, s.isolateIds);
   const showCompare = (s.kind === "shift" || s.kind === "trend") && s.recent && s.baseline;
+  const explained = useExplanation(s.id, locale);
 
   return (
     <div className="alerts-body">
-      {d.how ? (
+      {d.how || explained ? (
         <div className="alerts-fact">
           <p className="u-eyebrow">{t(locale, "alerts.label.how")}</p>
-          <p className="alerts-how">
-            {d.how}
-            {d.chance ? <span className="alerts-chance"> {d.chance}</span> : null}
-          </p>
+          {explained ? <p className="alerts-how">{explained}</p> : null}
+          {d.how ? (
+            <p className={explained ? "alerts-how-more" : "alerts-how"}>
+              {d.how}
+              {d.chance ? <span className="alerts-chance"> {d.chance}</span> : null}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
+      {s.related.length > 0 ? (
+        <div className="alerts-fact">
+          <p className="u-eyebrow">{t(locale, "alerts.label.incident")}</p>
+          <ul className="alerts-related">
+            {s.related.map((r) => (
+              <li key={r.id}>
+                <span className="u-num alerts-related-date">{dateText(locale, r.firstDate, asOf)}</span> {describe(locale, meta, r, asOf).title.node}
+              </li>
+            ))}
+          </ul>
         </div>
       ) : null}
 

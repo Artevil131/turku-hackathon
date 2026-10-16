@@ -1,104 +1,57 @@
-import { useEffect, useRef, useState } from "react";
-import { detectSignals } from "../engine/signals.ts";
-import type { Catalog, Signal } from "../engine/types.ts";
+import type { Alert } from "@aei/alerts";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { IsoDate, Result } from "../feed/types.ts";
-import type { FromWorker, ToWorker } from "./signals.worker.ts";
+import { toSignals } from "../model/alerts.ts";
+import type { Signal } from "../model/types.ts";
 
 /*
-  useSignals(results, asOf, generation, catalog) -> { signals, signalsAsOf, signalsGen, pending }
-  The same data flow as useMemo(() => detectSignals(results, asOf, catalog)),
-  computed in a Web Worker. While a new day is being checked the previous
-  signals stay on screen (pending = true). Falls back to the main thread when
-  workers are unavailable.
+  useSignals(results, asOf, generation) -> { signals, signalsAsOf, signalsGen, pending }
+  The server's alerts up to the clock (GET /api/alerts, the live set of
+  D-014, D-020, D-021, D-031, grouped into incidents by D-034), shown as one
+  signal per incident. Fetched again whenever the clock moves; while a new
+  day is fetched the previous signals stay on screen (pending = true).
 */
 
 export interface SignalsState {
   signals: readonly Signal[];
-  /** The day `signals` were computed for (null before the first result). */
+  /** The day `signals` were fetched for (null before the first answer). */
   signalsAsOf: IsoDate | null;
   /** The feed generation `signals` belong to (see useFeed). */
   signalsGen: number;
   pending: boolean;
 }
 
-const EMPTY: readonly Signal[] = [];
+interface Fetched {
+  alerts: readonly Alert[];
+  asOf: IsoDate | null;
+  gen: number;
+}
 
-export function useSignals(results: readonly Result[], asOf: IsoDate | null, generation: number, catalog: Catalog | null): SignalsState {
-  const [state, setState] = useState<SignalsState>({ signals: EMPTY, signalsAsOf: null, signalsGen: -1, pending: false });
-  const worker = useRef<Worker | null>(null);
-  const broken = useRef(false);
-  const sent = useRef<{ gen: number; count: number; first: Result | undefined }>({ gen: -1, count: 0, first: undefined });
-  const lastId = useRef(0);
-  const applied = useRef(0);
-  const [fallback, setFallback] = useState(0);
+const NONE: Fetched = { alerts: [], asOf: null, gen: -1 };
 
-  // Start the worker once.
-  useEffect(() => {
-    if (typeof Worker === "undefined") {
-      broken.current = true;
-      return;
-    }
-    let w: Worker;
-    try {
-      w = new Worker(new URL("./signals.worker.ts", import.meta.url), { type: "module" });
-    } catch {
-      broken.current = true;
-      return;
-    }
-    w.onmessage = (event: MessageEvent<FromWorker>) => {
-      const msg = event.data;
-      if (msg.id < applied.current) return; // an older answer arriving late
-      applied.current = msg.id;
-      if (msg.type === "error") {
-        setState((s) => ({ ...s, pending: msg.id < lastId.current }));
-        return;
-      }
-      setState({ signals: msg.signals, signalsAsOf: msg.asOf, signalsGen: msg.gen, pending: msg.id < lastId.current });
-    };
-    w.onerror = () => {
-      // Fall back to the main thread and redo the last request there.
-      broken.current = true;
-      worker.current = null;
-      sent.current = { gen: -1, count: 0, first: undefined };
-      w.terminate();
-      setFallback((f) => f + 1);
-    };
-    worker.current = w;
-    return () => {
-      w.terminate();
-      worker.current = null;
-      sent.current = { gen: -1, count: 0, first: undefined };
-    };
-  }, []);
+export function useSignals(results: readonly Result[], asOf: IsoDate | null, generation: number, base = ""): SignalsState {
+  const [fetched, setFetched] = useState<Fetched>(NONE);
+  const [pending, setPending] = useState(false);
+  const latest = useRef(0);
 
   useEffect(() => {
-    if (!asOf || !catalog) return;
-    const id = ++lastId.current;
-    const w = worker.current;
-    if (w && !broken.current) {
-      const s = sent.current;
-      const msgs: ToWorker[] = [];
-      if (s.gen !== generation || results.length < s.count || results[0] !== s.first) {
-        msgs.push({ type: "load", gen: generation, results: results as Result[] });
-      } else if (results.length > s.count) {
-        msgs.push({ type: "append", gen: generation, results: results.slice(s.count) });
-      }
-      msgs.push({ type: "compute", id, gen: generation, asOf, catalog: { units: catalog.units, antibiotics: catalog.antibiotics } });
-      for (const m of msgs) w.postMessage(m);
-      sent.current = { gen: generation, count: results.length, first: results[0] };
-      setState((st) => (st.pending ? st : { ...st, pending: true }));
-      return;
-    }
-    // Main-thread fallback, deferred one tick so the frame paints first.
-    setState((st) => (st.pending ? st : { ...st, pending: true }));
-    const timer = window.setTimeout(() => {
-      if (id !== lastId.current) return;
-      const signals = detectSignals(results, asOf, catalog);
-      applied.current = id;
-      setState({ signals, signalsAsOf: asOf, signalsGen: generation, pending: false });
-    }, 0);
-    return () => window.clearTimeout(timer);
-  }, [results, asOf, generation, catalog, fallback]);
+    if (!asOf) return;
+    const id = ++latest.current;
+    const ctrl = new AbortController();
+    setPending(true);
+    fetch(`${base}/api/alerts`, { signal: ctrl.signal })
+      .then((res) => (res.ok ? (res.json() as Promise<{ asOf: IsoDate; alerts: Alert[] }>) : Promise.reject(new Error(String(res.status)))))
+      .then((body) => {
+        if (id !== latest.current) return;
+        setFetched({ alerts: body.alerts, asOf: body.asOf, gen: generation });
+        setPending(false);
+      })
+      .catch(() => {
+        if (id === latest.current) setPending(false);
+      });
+    return () => ctrl.abort();
+  }, [asOf, generation, base]);
 
-  return state;
+  const signals = useMemo(() => toSignals(fetched.alerts, results), [fetched.alerts, results]);
+  return { signals, signalsAsOf: fetched.asOf, signalsGen: fetched.gen, pending };
 }

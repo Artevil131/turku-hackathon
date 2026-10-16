@@ -1,5 +1,5 @@
-import { addDays, addMonths, isIsoDate, maxDate, weekStart } from "../engine/dates.ts";
-import type { Onset } from "../engine/types.ts";
+import { addDays, addMonths, isIsoDate, maxDate, weekStart } from "../model/dates.ts";
+import type { Onset } from "../model/types.ts";
 import type { AskAnswer, FeedMeta, IsoDate, Named } from "../feed/types.ts";
 
 // Pure parts of the optional AI layer: plain-language question -> filters.
