@@ -3,7 +3,8 @@
 // a real wait so live data has arrived. Node 22+ (built-in WebSocket), no
 // dependencies.
 //
-// usage: node shoot.mjs <base-url> <label> [surface...] [--wait=ms]
+// usage: node shoot.mjs <base-url> <label> [surface...] [--wait=ms] [--pdf]
+//   --pdf prints each surface to an A4 PDF (print stylesheet) instead of a screenshot
 //   surface is a hash route ("home" is the root), e.g. doctor "research?panel=map"
 // Writes <surface>-<label>-phone.png and -laptop.png next to this script;
 // "?", "=" and "&" in the surface become "-".
@@ -16,6 +17,7 @@ import { fileURLToPath } from "node:url";
 
 const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const args = process.argv.slice(2);
+const pdf = args.includes("--pdf");
 const wait = Number(args.find((a) => a.startsWith("--wait="))?.slice(7) ?? 6000);
 const [base, label, ...rest] = args.filter((a) => !a.startsWith("--"));
 const surfaces = rest.length ? rest : ["home", "doctor", "research", "settings"];
@@ -73,7 +75,7 @@ try {
     });
   await send("Page.enable");
   for (const surface of surfaces) {
-    for (const s of sizes) {
+    for (const s of pdf ? sizes.filter((x) => !x.mobile) : sizes) {
       await send("Emulation.setDeviceMetricsOverride", {
         width: s.width,
         height: s.height,
@@ -85,8 +87,11 @@ try {
       await send("Page.navigate", { url: "about:blank" });
       await send("Page.navigate", { url });
       await sleep(wait);
-      const { data } = await send("Page.captureScreenshot", { format: "png" });
-      const file = join(here, `${surface.replace(/[?=&]/g, "-")}-${label}-${s.name}.png`);
+      const shot = pdf
+        ? await send("Page.printToPDF", { paperWidth: 8.27, paperHeight: 11.69, printBackground: false })
+        : await send("Page.captureScreenshot", { format: "png" });
+      const { data } = shot;
+      const file = join(here, `${surface.replace(/[?=&]/g, "-")}-${label}-${s.name}.${pdf ? "pdf" : "png"}`);
       writeFileSync(file, Buffer.from(data, "base64"));
       console.log(file);
     }

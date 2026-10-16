@@ -590,10 +590,12 @@ button.cl-main:hover {
   }
   .chassis,
   .banner,
-  .console > :not(.doctor) {
+  .console > :not(.page),
+  .page > :not(.doctor) {
     display: none !important;
   }
   .console,
+  .page,
   .doctor,
   .doctor-main {
     display: block !important;

@@ -65,3 +65,4 @@ Screenshots come from headless Chrome through
 | 01:57 | orchestrator (Opus 5.5) | Skip link as the first tab stop on every page, focusing a main landmark (checked in the browser) |
 | 02:01 | builder (Sonnet 5.5) | Wave 3: doctor list stays in view after a filter change on phone; print context line (all filters, as-of, replayed synthetic data, the doctor decides); unit names in the grid header; map above the fold at 1280×860; THL region names as given; female/male spelled out in sentences |
 | 02:01 | orchestrator (Opus 5.5) | Map checked at 1280. Finnish AWaRe tier kept as 'Watch' (WHO tier names are not translated) |
+| 02:02 | orchestrator (Opus 5.5) | Printing the doctor's list was blank after the main landmark wrapper (print CSS hid every console child but the doctor page); fixed and checked with a real PDF (shoot.mjs --pdf). Left: footer spills to a second page, name and figure columns overlap in print |
