@@ -1,0 +1,79 @@
+{
+  "tuned_on": "targets 2024-01 to 2024-09 (windows from 2021-01); no scoring-period number used",
+  "tune_targets": [
+    "2024-01",
+    "2024-02",
+    "2024-03",
+    "2024-04",
+    "2024-05",
+    "2024-06",
+    "2024-07",
+    "2024-08",
+    "2024-09"
+  ],
+  "R1": {
+    "window": 24,
+    "k": 0,
+    "trend": false,
+    "rho": 0.0,
+    "dispersion": "quasi_pooled",
+    "floor": 0.1
+  },
+  "R2": {
+    "MRSA": {
+      "window": 24,
+      "k": 0,
+      "trend": false,
+      "rho": 0.0,
+      "dispersion": "quasi_pooled",
+      "floor": 0.5
+    },
+    "ESBL": {
+      "window": 24,
+      "k": 0,
+      "trend": false,
+      "rho": 0.0,
+      "dispersion": "poisson",
+      "floor": 0.5
+    },
+    "VRE": {
+      "window": 36,
+      "k": 0,
+      "trend": false,
+      "rho": 0.0,
+      "dispersion": "quasi",
+      "floor": 0.02
+    },
+    "CPE": {
+      "window": 36,
+      "k": 0,
+      "trend": false,
+      "rho": 0.0,
+      "dispersion": "poisson",
+      "floor": 0.1
+    }
+  },
+  "R3": {
+    "window": 24,
+    "k": 1,
+    "trend": false,
+    "rho": 0.0,
+    "dispersion": "quasi_pooled",
+    "floor": 0.1
+  },
+  "R4": {
+    "window": 24,
+    "k": 0,
+    "trend": false,
+    "rho": 0.0,
+    "dispersion": "poisson",
+    "floor": 0.1
+  },
+  "eligible_cells_pooled": 8,
+  "eligible_cells_by_phenotype": {
+    "MRSA": 9,
+    "ESBL": 30,
+    "VRE": 24,
+    "CPE": 24
+  }
+}

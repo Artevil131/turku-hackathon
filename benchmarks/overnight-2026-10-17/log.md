@@ -19,3 +19,5 @@ Code, Opus 5.5, operated by Artem).
 | 01:25 | plans 0012, 0015 | committed | Fable 5.1 | 15 min | CUSUM and county plans not started by Fable (scope change); Sonnet writes them |
 | 01:26 | plans 0018 (BOCPD, m13), 0019 (exposure, m22) | start | Fable 5.1 | | the two Fable foundations Artem assigned besides 8 and 21 |
 | 01:32 | 0020 | plan committed | Sonnet 5.5 | 10 min | tuning targets 2024-01..2024-09, 198 cells, one-SE rule |
+| 01:41 | harness: coverage | finish | Sonnet 5.5 | 37 min | reproduces 0004 (48 rows) and 0010 (7,525 rows) exactly; hospital-365 C1 0.1414/0.1605; shipped C4 96.6/75.4/95.4, C6 E1 CRO 47 d, E1 CXM and E2 not reached; full score 5–12 s CPU. The agent ran `uvx ruff` once, which downloaded the 8.8 MB linter outside the repo (not allowed by the brief's no-download rule; no repo file changed) |
+| 01:42 | 0020 | result committed | Sonnet 5.5 | 19 min agent, 2.3 s CPU | chosen on 2024-01..09: 24-month rolling mean, pooled NB width; pooled log skill +0.402 (0.309–0.482), MAE skill +0.144 (0.063–0.213) vs persistence; reproduces; Fable review queued (beats baseline) |

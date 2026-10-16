@@ -1,5 +1,5 @@
 ---
-status: proposed    # proposed, then accepted, rejected or superseded
+status: accepted    # proposed, then accepted, rejected or superseded
 by: Claude Code, operated by Artem (overnight run)
 data: [thl-ttr-cases fetched 2026-10-17 by scripts/fetch_thl_ttr.py, months 2021-01 to 2026-09]
 parent: 0008
@@ -461,4 +461,220 @@ observed ones.
 
 ## Result
 
+Command, from the repository root: `uv run python
+experiments/0020-county-forecasts/run.py`. Outputs in `out/`: `results.md`
+(everything below and more), `metrics.json` (R1, family `prediction`),
+`tuning.csv` (all 198 cells), `selected.json`, `skill_by_phenotype.svg`.
+`uv run python scripts/verify_experiments.py --only 0020` says
+"reproduces". CPU time 2.3 s, wall 2.4 s (measured, `harness.Clock`; the
+plan estimated about 2 minutes). Seeds: none in the model (the fit is
+deterministic); the bootstrap is 1,000 resamples of target months, seed
+2026. Every number below is computed by this run, except those marked
+as committed baseline rows (computed by the harness, and reproduced here
+to the 6 digits the rows store). `tuned_on_test` is false: no setting was
+chosen or changed after a scoring-period number had been seen (after the
+first full run I added the table of differences between rows and changed
+the figure format; neither is a model setting).
+
+**Tuning, targets 2024-01 to 2024-09** (828 county series-months). The best
+of the 198 cells scored −1.5642 nats per series-month (window 36, K = 0,
+trend on, ρ = 1, pooled quasi-Poisson, floor 0.1); 8 cells were within one
+standard error of it, and the rule chose **R1 = window 24, K = 0, no trend,
+ρ = 0, pooled quasi-Poisson, floor 0.1** (tuning score −1.5729). On the same
+months persistence scored −1.9503 and seasonal naive −2.1345. The table
+is flat: the top 12 cells span 0.020 nats. Best cell by K: K = 0 −1.5642,
+K = 1 −1.5755, K = 2 −1.5914; by dispersion: pooled −1.5642, per series
+−1.5722, Poisson −1.6059. R2, the per-phenotype cells: MRSA window 24, K = 0,
+pooled quasi, floor 0.5; ESBL window 24, K = 0, Poisson, floor 0.5; VRE
+window 36, K = 0, per-series quasi, floor 0.02; CPE window 36, K = 0,
+Poisson, floor 0.1 (9, 30, 24 and 24 eligible cells). No cell with
+harmonics or a trend was chosen anywhere.
+
+**P2 on the scoring targets 2024-10 to 2026-09, R1.** Skill against
+persistence (MAE: 1 − MAE / MAE of persistence; log score: difference in
+mean log score, nats per series-month; 95 % interval over target months).
+The seasonal naive columns are the committed baseline row's own skill
+against persistence; persistence is 0 by construction.
+
+| group | n | R1 MAE skill | R1 log-score skill | seasonal naive MAE skill | seasonal naive log-score skill |
+|---|---|---|---|---|---|
+| pooled | 2,208 | +0.144 (+0.063 to +0.213) | +0.402 (+0.309 to +0.482) | −0.095 (−0.183 to −0.014) | −0.391 (−0.551 to −0.233) |
+| MRSA | 552 | +0.217 (+0.145 to +0.276) | +0.620 (+0.453 to +0.804) | −0.030 (−0.134 to +0.056) | −0.237 (−0.469 to −0.000) |
+| ESBL | 552 | +0.092 (−0.034 to +0.189) | +0.519 (+0.280 to +0.742) | −0.135 (−0.268 to −0.014) | −1.211 (−1.859 to −0.602) |
+| VRE | 552 | +0.200 (−0.007 to +0.429) | +0.250 (+0.165 to +0.332) | +0.000 (−0.224 to +0.242) | −0.077 (−0.226 to +0.038) |
+| CPE | 552 | +0.286 (+0.192 to +0.376) | +0.219 (+0.160 to +0.276) | −0.075 (−0.176 to +0.031) | −0.037 (−0.090 to +0.016) |
+| national | 96 | −0.126 (−0.489 to +0.134) | +1.548 (+0.809 to +2.335) | −0.397 (−0.887 to −0.071) | −1.972 (−3.126 to −0.872) |
+| pooled without 2026-08 and 2026-09 | 2,024 | +0.150 (+0.064 to +0.226) | +0.408 (+0.313 to +0.501) | −0.065 (−0.150 to +0.010) | −0.370 (−0.550 to −0.207) |
+
+R1 against seasonal naive, pooled: MAE skill +0.219 (+0.158 to +0.272),
+log-score skill +0.793 (+0.660 to +0.933). Raw scores (MAE of the
+predictive median; mean log score per series-month), R1 against the two
+baselines:
+
+| group | n | MAE R1 | MAE persistence | MAE seasonal naive | log R1 | log persistence | log seasonal naive |
+|---|---|---|---|---|---|---|---|
+| pooled | 2,208 | 2.167 | 2.533 | 2.774 | −1.728 | −2.130 | −2.521 |
+| MRSA | 552 | 2.538 | 3.241 | 3.339 | −2.335 | −2.955 | −3.192 |
+| ESBL | 552 | 5.551 | 6.112 | 6.938 | −3.375 | −3.894 | −5.105 |
+| VRE | 552 | 0.217 | 0.272 | 0.272 | −0.477 | −0.728 | −0.805 |
+| CPE | 552 | 0.362 | 0.507 | 0.545 | −0.725 | −0.943 | −0.981 |
+| national | 96 | 24.010 | 21.323 | 29.792 | −4.160 | −5.708 | −7.679 |
+
+The pooled interval of both skills is above zero, with and without the
+last two months. R1 has the better raw MAE and log score than both
+baselines in every group except national MAE (24.0 against persistence's
+21.3).
+
+**Secondary rows** (descriptive; R1 is the record's row). Differences are
+R1 minus the row on the 92 county series, mean over the 24 target months
+with a 95 % bootstrap over months (seed 2026), computed here from the
+harness's per-series scores and not a P2 key.
+
+| row | pooled log-score skill | pooled MAE skill | log score, R1 minus row | MAE, R1 minus row |
+|---|---|---|---|---|
+| R1 | +0.402 (+0.309 to +0.482) | +0.144 (+0.063 to +0.213) | | |
+| R2 per-phenotype cells | +0.301 (+0.180 to +0.394) | +0.149 (+0.070 to +0.220) | +0.102 (+0.063 to +0.144) | +0.010 (−0.009 to +0.029) |
+| R3 R1 with K = 1 | +0.339 (+0.245 to +0.419) | +0.130 (+0.051 to +0.195) | +0.063 (+0.035 to +0.094) | −0.037 (−0.119 to +0.051) |
+| R4 R1 with Poisson predictive | +0.262 (+0.148 to +0.357) | +0.152 (+0.072 to +0.222) | +0.140 (+0.102 to +0.186) | +0.019 (−0.002 to +0.039) |
+
+Log-score skill by phenotype (MRSA, ESBL, VRE, CPE, national): R2 +0.618,
++0.119, +0.253, +0.211, +0.328; R3 +0.573, +0.407, +0.194, +0.182,
++1.483; R4 +0.513, +0.119, +0.199, +0.215, −0.342.
+
+**Diagnostics for R1** (descriptive, not P2 metrics). Share of observed
+counts inside the 90 % predictive interval: 0.939 over all county
+series-months, and 0.884 over the 691 whose window mean is at least 5
+cases a month (MRSA 0.867 of 173, ESBL 0.890 of 518; national 0.885,
+0.890 of 73); VRE and CPE 0.966 and 0.980, where the discrete interval
+over-covers because the mean is small. Fit status: in R1 (K = 0, no trend)
+there is nothing to fail; 134 of 2,208 county series-months had an empty
+window (114 VRE, 20 CPE) and took the floor 0.1. In R3 (K = 1), the
+harmonic fit did not converge in 167 county series-months (120 VRE, 47
+CPE, none in MRSA or ESBL) and fell back to the level; the 3-times-largest-
+count guard never fired in R3.
+
+**Checks.** The numpy fitter reproduces `aei.regional.expected_month`
+(statsmodels, W = 36, trend, K = 1) on 488 (series, target) pairs, to
+2.2e-10 relative in the forecast mean and 2.6e-10 in φ̂. The harness's
+baselines equal the committed rows (largest relative difference 2.3e-6
+against 6 significant digits stored). `audit_strict` passed for R1 to R4.
+
+**Deviations from plan.**
+
+1. CPU: 2.3 s against the estimate of about 2 minutes. The plan assumed one
+   Python-level fit per series at 0.3 to 1 ms; the Newton steps run
+   batched over the 24 series of a phenotype and the fits are shared
+   between the 9 predictive settings by a cache, which made the run about
+   50 times faster than the estimate. Nothing was cut, nothing was skipped.
+2. The figure is `skill_by_phenotype.svg`, not `.png`. `scripts/verify_experiments.py` decodes every
+   file in `out/` as UTF-8 and stops with a `UnicodeDecodeError` on a PNG,
+   so a PNG would make the record impossible to verify. The SVG has fixed
+   ids and no date, so reruns compare equal. Content as planned: log-score
+   skill against persistence with 95 % intervals per phenotype, pooled and
+   national, R1 and seasonal naive, n in the labels (national on its own
+   axis, its scale being larger).
+3. Check (1) ran on every qualifying pair (488), not on every 50th, since
+   it costs about a second.
+4. The pooled φ̂ leaves out series whose window is empty (they have no
+   residuals); the plan said "pooled over the 23 counties". Empty-window
+   series keep φ = 1 as planned.
+5. The baseline reproduction check is relative (3e-6), because the
+   committed rows keep 6 significant digits, not 6 decimals.
+6. Added, descriptive only: the persistence and seasonal naive scores on
+   the tuning months, the differences between rows, and the fit-status
+   table for R3. None feeds back into any setting.
+
 ## Interpretation
+
+**Against the hypothesis.** Supported, as an exploratory description: the
+pooled interval of log-score skill (+0.402, +0.309 to +0.482) and of MAE
+skill (+0.144, +0.063 to +0.213) against persistence lies wholly above
+zero, with and without the last two months. By the yardstick of
+METRICS.md "Decision rules" and OBJECTIVES.md, R1 beats the baseline on
+the 92 county series pooled. Per phenotype the log-score skill is above
+zero in all four and nationally; the MAE skill is above zero for MRSA and
+CPE and its interval includes zero for ESBL (−0.034 to +0.189) and VRE
+(−0.007 to +0.429); the national MAE is worse than persistence in the
+point estimate (−0.126, interval −0.489 to +0.134). Of the four
+expectations: the pooled log skill came out at twice the guessed +0.2
+(+0.40, the top of the stationary range derived in the plan); MAE +0.14
+against about +0.1; national had the largest log skill (+1.55) but ESBL
+(+0.52) fell below MRSA (+0.62), so the order guessed for ESBL was
+wrong; VRE and CPE had the smallest skill (+0.25, +0.22) and their
+intervals do not include zero, which the plan only allowed. R1 beats
+seasonal naive on both raw scores in every group, and pooled with the
+interval above zero. Nothing here is decided; Artem decides whether any
+phenotype's map layer ships.
+
+**What the skill is made of.** Not the harmonics. No cell with harmonics
+or a trend was chosen for R1 or for any phenotype; the selected cell is a
+24-month rolling mean with a pooled quasi-Poisson negative binomial
+predictive. With K = 1 (R3) the pooled log score is worse by 0.063 nats
+(0.035 to 0.094, R1 minus R3), the MAE difference is not distinguishable
+from zero, and in R3 the harmonic fit failed to converge in 167 sparse
+VRE and CPE series-months. The tuning table does not rule seasonality out
+(the best K = 1 cell is 0.011 nats behind the best cell, well inside the
+noise of nine months), but two years of counts per county are little to estimate
+a yearly cycle from, so this record cannot say whether annual seasonality
+is worth modelling here. The width of the predictive matters for
+the log score and not for MAE: with a Poisson predictive (R4) the pooled
+log skill falls by 0.140 (0.102 to 0.186), almost all of it in ESBL (+0.52
+to +0.12) and the national totals (+1.55 to −0.34), while the MAE
+difference is +0.019 (−0.002 to +0.039). So the MAE gain comes from the
+smoothed mean, and the log-score gain from the smoothed mean and the
+over-dispersed predictive together. Letting each phenotype pick its own
+cell (R2) was worse than one cell by 0.102 nats (0.063 to 0.144): on nine
+tuning months the parsimony rule chose a Poisson predictive for ESBL and
+CPE where over 20 cells were within one standard error, and ESBL paid for
+it. That is a statement about this rule on this amount of tuning data,
+not about per-phenotype tuning.
+
+**Strongest alternative explanation.** The baseline is weak, not the model
+strong. Persistence plugs one noisy count into a Poisson that ignores
+over-dispersion, and seasonal naive does the same with a count a year
+old; any smoother with any over-dispersion should beat both, and the
+winning cell is exactly that: a rolling mean. The result is "a 24-month
+mean with a pooled over-dispersed predictive beats last month's count",
+and it does not show that a seasonal GLM, or any structure beyond a
+level, forecasts these series. The plan's plug-in argument predicts most
+of the gain from this alone (+0.2 to +0.4 for stationary series). Other
+readings that this record cannot exclude: the series are THL's final
+values, while a real forecaster sees provisional recent months, which
+would hurt persistence and the window mean in different ways; the 24
+scoring months share their events across all series, so the bootstrap
+over months is the honest spread but 24 months is few; the tuning months
+(2024-01 to 2024-09) had a Poisson predictive nearly as good as the
+over-dispersed one (−1.6059 against −1.5642) while the scoring months did
+not (R4's 0.140), so the dispersion setting was chosen on a stretch where
+it mattered less than where it was scored; and the national totals, 4 series
+over 24 months, drive the largest numbers on the page and should not be
+read as county results.
+
+**What it means for the researcher's county map.** On this evidence a "next
+month" layer with a predictive interval is better than showing last month's
+count for MRSA and CPE on both measures, and on the log score for ESBL
+and VRE; for ESBL and VRE the expected count itself is not shown to be
+closer to the truth (MAE interval includes zero); the better log score
+credits the mean and the stated uncertainty together. The 90 % interval covered 0.88 to 0.89
+of the counts in series with a window mean of at least 5 a month, close
+to its nominal level, so it can be drawn as stated; for VRE and CPE it
+covers 0.97 to 0.98 and is conservative. The layer is a smoothed level,
+so it will never show a coming surge, and says so.
+
+**Next, named only, not run tonight.** Negative binomial INGARCH (an
+autoregressive term, so a surge in the last month can carry over, which a
+rolling mean cannot); the endemic-epidemic model with the
+university-hospital catchment tree as the neighbourhood, and gravity or
+radiation flow matrices as alternatives (the first test of whether
+neighbours add anything to this level); a hierarchical Bayesian Poisson
+with county random effects (partial pooling of the level and of the
+dispersion, the principled version of the pooled φ̂ and of the sparse VRE
+and CPE series); a Gaussian process over county × month with a separable
+kernel. Two things to run first, both cheap: the same grid with
+exponentially weighted levels and horizons of 2 and 3 months, and the
+same tuning with far more months, since the THL file holds years before
+the harness's 2021-01 start (earlier screening practice differs, so that
+is a question for Artem). Also worth one run: the harness's persistence
+baseline replaced by a trailing mean of the previous 12 months, so that
+"beats last month" and "beats a rolling mean" are separated by the
+scoring, not by an ablation.
