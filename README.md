@@ -44,10 +44,14 @@ experiment, it belongs in `libs/utils`, from the start.
     experiments/    one directory per experiment, NNNN-slug/README.md,
                     started from experiments/TEMPLATE.md
     data/           datasets, git-ignored (PROTOCOL.md)
+    prompts/        briefs for unattended agent sessions, dated; their reports go to benchmarks/
     CONTEXT.md      the challenge: problem, data, open questions
     AUDIENCE.md     the audiences, what each needs from the data, and who on
                     the team does what
     PRODUCT.md      product context for design work
+    OBJECTIVES.md   what we prove with the data, how it is measured, system design
+    ENGINE.md       the mathematical engine, draft: every formula and output
+    QUESTIONS.md    open machinery decisions with proposals, to be answered
     PROTOCOL.md     how an experiment is planned, run and recorded in git,
                     and the rules for claims
     DECISIONS.md    every technical, mathematical or statistical choice the

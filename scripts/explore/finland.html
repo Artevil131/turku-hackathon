@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Resistance around us</title>
+<style>
+  :root { --bg:#fff; --fg:#1a1a1a; --muted:#6b6b6b; --line:#e3e3e3; --panel:#f6f6f6; --accent:#1f5fbf; --r:#c0392b; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#141414; --fg:#e8e8e8; --muted:#9a9a9a; --line:#2c2c2c; --panel:#1e1e1e; --accent:#6ea0ff; } }
+  * { box-sizing:border-box; }
+  body { margin:0; font:14px/1.4 system-ui,-apple-system,sans-serif; background:var(--bg); color:var(--fg); }
+  header { padding:10px 16px; border-bottom:1px solid var(--line); display:flex; gap:16px; align-items:baseline; flex-wrap:wrap; }
+  header h1 { font-size:16px; margin:0; }
+  header .status { color:var(--muted); }
+  #controls { display:flex; flex-wrap:wrap; gap:10px 18px; padding:10px 16px; background:var(--panel); border-bottom:1px solid var(--line); align-items:end; }
+  #controls label { display:flex; flex-direction:column; font-size:12px; color:var(--muted); gap:2px; }
+  #controls select, #controls input[type=range] { font:inherit; }
+  #controls select { padding:3px 6px; border:1px solid var(--line); border-radius:4px; background:var(--bg); color:var(--fg); }
+  #controls input[type=range] { width:320px; }
+  #month { font-weight:600; color:var(--fg); font-size:14px; }
+  main { display:grid; grid-template-columns: minmax(360px, 520px) 1fr; gap:16px; padding:16px; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+  svg text { fill:var(--fg); font-size:11px; }
+  .county { stroke:var(--bg); stroke-width:0.8; cursor:pointer; }
+  .county.selected { stroke:var(--fg); stroke-width:2; }
+  .legend { color:var(--muted); font-size:12px; margin:6px 0; }
+  .card { border:1px solid var(--line); border-radius:8px; padding:12px; margin-bottom:12px; }
+  .card h2 { font-size:14px; margin:0 0 6px; }
+  .big { font-size:22px; font-weight:600; }
+  .muted { color:var(--muted); }
+  .warn { color:var(--r); }
+  table { border-collapse:collapse; font-variant-numeric:tabular-nums; width:100%; }
+  td, th { padding:2px 6px; text-align:right; border-bottom:1px solid var(--line); }
+  td:first-child, th:first-child { text-align:left; }
+  #tip { position:fixed; pointer-events:none; background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:6px 9px; font-size:12px; display:none; max-width:280px; }
+  .axis { stroke:var(--line); }
+  button.small { font:inherit; padding:3px 10px; border:1px solid var(--line); border-radius:4px; background:var(--panel); color:var(--fg); cursor:pointer; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Resistance around us</h1>
+  <span class="status" id="status">Loading…</span>
+</header>
+<div id="controls">
+  <label>Phenotype
+    <select id="c-flag">
+      <option value="ESBL_Ecoli">ESBL E. coli (carriage)</option>
+      <option value="MRSA">MRSA (carriage)</option>
+      <option value="VRE">VRE (carriage)</option>
+      <option value="CPE">CPE (K. pneumoniae + E. coli)</option>
+    </select>
+  </label>
+  <label>Window ending at the month
+    <select id="c-window"><option value="12">12 months</option><option value="6">6 months</option><option value="3">3 months</option><option value="1">1 month</option></select>
+  </label>
+  <label>Borrowed strength from the catchment
+    <select id="c-prior"><option value="0">none (raw rate)</option><option value="50000" selected>50,000 person-years</option><option value="200000">200,000 person-years</option></select>
+  </label>
+  <label>Colour by
+    <select id="c-view"><option value="mean">estimated rate</option><option value="unc">uncertainty (interval width)</option></select>
+  </label>
+  <label>Month <span id="month"></span>
+    <input type="range" id="c-month" min="0" max="45" value="40">
+  </label>
+  <button class="small" id="play">▶ play</button>
+</div>
+<main>
+  <div>
+    <div id="map"></div>
+    <div class="legend" id="legend"></div>
+    <div class="legend">Cases per 100,000 people per year, estimated from the window's counts. Each county's rate is shrunk toward its university-hospital catchment with the chosen pseudo-population, so a county with few cases does not flicker. Hover for the counts, click for the time series. The newest month or two of the register may still be incomplete (reporting lag). ● Tyks, our hospital, whose own isolate-level data is on the other page.</div>
+    <div class="legend muted">Sources: THL Tartuntatautirekisteri (fact_ttr_cases), Statistics Finland county polygons. Both CC BY 4.0.</div>
+  </div>
+  <div>
+    <div class="card" id="detail"><h2>Pick a county</h2><div class="muted">Click a county on the map.</div></div>
+    <div class="card"><h2>Time series</h2><div id="fan"></div></div>
+    <div class="card"><h2>All counties at this month</h2><div style="max-height:40vh;overflow:auto"><table id="table"></table></div></div>
+  </div>
+</main>
+<div id="tip"></div>
+
+<script src="thl.js"></script>
+<script>
+'use strict';
+// ---------- map ----------
+const W = 480, H = 720, LON0 = 19.0, LON1 = 31.8, LAT0 = 59.6, LAT1 = 70.2;
+const kx = W / ((LON1 - LON0) * Math.cos(65 * Math.PI / 180)), ky = H / (LAT1 - LAT0), k = Math.min(kx, ky);
+const px = (lon, lat) => [(lon - LON0) * Math.cos(65 * Math.PI / 180) * k + 10, (LAT1 - lat) * k + 10];
+function pathOf(geom) {
+  const polys = geom.type === 'Polygon' ? [geom.coordinates] : geom.coordinates;
+  return polys.map(rings => rings.map(ring => 'M' + ring.map(([lo, la]) => px(lo, la).map(v => v.toFixed(1)).join(',')).join('L') + 'Z').join('')).join('');
+}
+function colour(v, vmax, vmin = 0) { // light to dark red, scaled between the lowest and highest county
+  const t = Math.min(1, Math.max(0, (v - vmin) / Math.max(1e-9, vmax - vmin))); const l = 94 - 56 * t, s = 60 + 20 * t;
+  return `hsl(8,${s}%,${l}%)`;
+}
+function drawMap() {
+  const flag = $('c-flag').value, m = +$('c-month').value, Wn = +$('c-window').value, E0 = +$('c-prior').value, view = $('c-view').value;
+  const est = estimates(flag, m, Wn, E0); const byName = Object.fromEntries(est.map(e => [e.name, e]));
+  const val = e => view === 'mean' ? e.mean * 1e5 : (e.hi - e.lo) * 1e5;
+  const vals = est.map(val), vmax = Math.max(1e-9, ...vals), vmin = Math.min(...vals);
+  let svg = `<svg width="${W + 20}" height="${H + 20}" viewBox="0 0 ${W + 20} ${H + 20}">`;
+  for (const f of GEO.features) {
+    const name = f.properties.nimi || f.properties.name; const e = byName[name];
+    if (!e) continue;
+    svg += `<path class="county ${name === selected ? 'selected' : ''}" data-name="${name}" d="${f._path}" fill="${colour(val(e), vmax, vmin)}"></path>`;
+  }
+  const [tx, ty] = px(22.27, 60.45);
+  svg += `<circle cx="${tx}" cy="${ty}" r="5" fill="var(--accent)" stroke="var(--bg)" stroke-width="1.5"><title>Tyks, Turku</title></circle>`;
+  svg += '</svg>';
+  $('map').innerHTML = svg;
+  $('legend').innerHTML = (view === 'mean' ? 'Estimated rate' : 'Width of the 90% interval') + `: light = ${vmin.toFixed(1)}, dark = ${vmax.toFixed(1)} per 100,000 per year (scaled between the lowest and highest county)`;
+  document.querySelectorAll('.county').forEach(p => {
+    p.addEventListener('mousemove', ev => { const e = byName[p.dataset.name]; $('tip').style.display = 'block'; $('tip').style.left = (ev.clientX + 12) + 'px'; $('tip').style.top = (ev.clientY + 12) + 'px';
+      $('tip').innerHTML = `<b>${short(e.name)}</b><br>${e.c} cases in ${Wn} month${Wn > 1 ? 's' : ''}, population ${e.pop.toLocaleString()}<br>rate ${(e.mean * 1e5).toFixed(1)} (${(e.lo * 1e5).toFixed(1)}–${(e.hi * 1e5).toFixed(1)}) per 100,000/yr<br>${Math.round(e.w * 100)}% own data, rest from ${e.catch} catchment (${(e.r0 * 1e5).toFixed(1)})`; });
+    p.addEventListener('mouseleave', () => $('tip').style.display = 'none');
+    p.addEventListener('click', () => { selected = p.dataset.name; render(); });
+  });
+  return { est, byName };
+}
+
+// ---------- detail, fan chart, table ----------
+function drawTable(est, Wn) {
+  const rows = [...est].sort((a, b) => b.mean - a.mean);
+  $('table').innerHTML = '<tr><th>County</th><th>Catchment</th><th>Cases</th><th>Rate</th><th>90% interval</th><th>Own data</th></tr>' +
+    rows.map(e => `<tr style="${e.name === selected ? 'font-weight:600' : ''}"><td>${short(e.name)}</td><td>${e.catch}</td><td>${e.c}</td><td>${(e.mean * 1e5).toFixed(1)}</td><td>${(e.lo * 1e5).toFixed(1)}–${(e.hi * 1e5).toFixed(1)}</td><td>${Math.round(e.w * 100)}%</td></tr>`).join('');
+}
+
+function render() {
+  const m = +$('c-month').value; $('month').textContent = monthLabel(m) + (m >= D.months.length - 2 ? ' (incomplete)' : '');
+  const { est, byName } = drawMap();
+  const Wn = +$('c-window').value, E0 = +$('c-prior').value, flag = $('c-flag').value;
+  drawDetail(byName[selected], Wn);
+  drawFan(flag, selected, Wn, E0, m);
+  drawTable(est, Wn);
+}
+
+async function init() {
+  const { geo, data } = await loadOpenData();
+  GEO = geo; D = data;
+  for (const f of GEO.features) f._path = pathOf(f.geometry);
+  $('c-month').max = D.months.length - 1; $('c-month').value = D.months.length - 3;
+  $('status').textContent = `${D.areas.length} counties, ${D.months[0]} – ${D.months[D.months.length - 1]}, five phenotypes`;
+  document.querySelectorAll('#controls select, #controls input').forEach(el => el.addEventListener('input', render));
+  $('play').onclick = () => {
+    if (timer) { clearInterval(timer); timer = null; $('play').textContent = '▶ play'; return; }
+    $('play').textContent = '❚❚ pause';
+    timer = setInterval(() => { const s = $('c-month'); s.value = (+s.value + 1) % (D.months.length - 2); render(); }, 500);
+  };
+  render();
+}
+init().catch(e => { $('status').textContent = 'Failed to load: ' + e.message + '. Run uv run python scripts/fetch_thl_ttr.py and uv run python scripts/fetch_county_geometry.py from the repo root, then serve the root with python3 -m http.server 8765.'; $('status').classList.add('warn'); });
+</script>
+</body>
+</html>

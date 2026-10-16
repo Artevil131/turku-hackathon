@@ -12,6 +12,25 @@ level above, and tests the same counts against their own past to raise
 signals. The doctor reads the probabilities, the researcher reads the
 signals, and both come from the same table so they never disagree.
 
+## Status against the codebase (2026-10-17)
+
+Main now carries a working tool built by Aapo's sessions. Where this
+draft and the code meet:
+
+| Section here | In the code today | Decision |
+|---|---|---|
+| 1 table, first-isolate rule, masks | `@aei/counting`, `@aei/eucast`; Python mirrors in `libs/utils/py/aei` | D-023, D-033 |
+| 2.1–2.4 Beta-binomial, discount, Dirichlet mix | Not built. The shipped coverage list uses the raw share over 365 days at one level (unit, ward type, hospital) with a Wilson interval; experiments/0004 found blends no better than the hospital year | D-038 accepted the method; the overnight experiments test it (benchmarks/METRICS.md C1, C6) before it replaces D-023/D-033 |
+| 2.6 ranking | `@aei/coverage` `suggest`: thresholds 80/90, Access first, spectrum basis for mild, pairs for severe | D-026 to D-028, D-033 |
+| 3.1 data-quality | sampling-drop and empty-run detectors | D-020, D-031 |
+| 3.2 sentinel rules | CPE isolate; MRSA or VRE new in an inpatient unit after 180 days | D-014, D-021, D-034 |
+| 3.3 cluster test | profile excess and phenotype excess, Poisson, 365-day baseline, per-test alpha, no guard band, no multiplicity control | D-020 (provisional) |
+| 3.4 trend | Cochran-Armitage hospital-wide, alpha 0.001 | D-020 |
+| 3.6 naming | alerts carry a detector name and a template explanation; the five kinds are not yet a field | D-019, D-029 |
+| 4 network | patient flow and phenotype trail (`@aei/relations`); exposure not built | D-009, D-011 to D-013 |
+| 4 counties | THL series and a Farrington-style monthly test (`aei.regional`), served by `/api/regional` | D-025, D-037 |
+| 5 replay | the API's replay clock; experiments 0004, 0007, 0010 are the backtests | D-005 |
+
 ## 0. Notation
 
 | Symbol | Meaning |
@@ -23,6 +42,18 @@ signals, and both come from the same table so they never disagree.
 | x | what the doctor knows: unit, specimen, sex, age band, onset (hospital-acquired or not), optional organism, optional prior findings |
 | n, s, r | isolates tested, susceptible, resistant in a cell |
 | S | susceptible, R resistant, flag ∈ {ESBL, MRSA, VRE, CPE} |
+
+### Beta, Beta-binomial, Gamma, negative binomial
+
+| Belief about | Distribution of the unknown | Count it predicts |
+|---|---|---|
+| a proportion p in [0, 1] (share susceptible) | Beta(a, b) | Beta-binomial: successes in the next n draws |
+| a rate λ (cases per week) | Gamma(shape, rate) | negative binomial: cases in the next period |
+
+"Beta-binomial model" names the whole method: binomial counts with a
+Beta prior, updated by adding counts. The Beta is what we maintain and
+show; the Beta-binomial is what we check predictions against in replay.
+Accepted as the estimation method in DECISIONS.md D-003.
 
 ## 1. The one table everything reads from
 
@@ -90,20 +121,38 @@ Using the preceding period for the parent avoids counting the recent
 isolates twice. **Decision:** M (candidate 30, so that w = 0.5 exactly at
 the 30-isolate rule) and M_ext (candidate 30).
 
-### 2.2 Recency
+### 2.2 Recency: the discounted Beta-binomial
 
-Two options, both producing n, s, r for the formula above:
+The true susceptibility drifts, so old isolates should count for less.
+Keep the two Beta parameters per cell and, each week, discount them
+before adding the week's counts, with the hospital prior as a floor
+they relax toward:
 
-- **Windows** as the brief asks: last 28 days and last 365 days, each
-  isolate weight 1 inside and 0 outside.
-- **Decay**: each isolate weighs 2^(−age/h) with half-life h; n, s, r
-  become weighted sums. This is the exact filter for a model where the
-  log-odds drifts as a random walk, so it is principled, and it removes
-  the cliff at day 365.
+```
+a_t = δ·a_{t−1} + s_t + (1 − δ)·M·p0
+b_t = δ·b_{t−1} + r_t + (1 − δ)·M·(1 − p0)
 
-**Decision:** windows, decay, or windows for display and decay for the
-ranking. If decay, h (candidate 90 days). The reported count is always
-the raw isolates in the window, never including M.
+E[p] = a_t / (a_t + b_t)
+effective own count   n_eff = (a_t + b_t) − M
+own-data weight       w = n_eff / (n_eff + M)
+```
+
+An isolate k weeks old weighs δ^k. This is the exact conjugate filter
+for a log-odds that follows a random walk (West and Harrison), so it is
+the Beta-binomial for a drifting proportion, not an approximation. The
+four-week and twelve-month figures are then not two estimators but one
+estimator plus two displayed facts: the raw isolate counts in the last
+28 and 365 days are shown beside the probability so a decayed 28 is
+never mistaken for 28 recent isolates.
+
+Detection (section 3) never uses the filtered values; it works on raw
+weekly counts, because smoothing hides the jump it looks for.
+
+**Decision:** δ per week (proposal 0.95 for organism × drug cells,
+half-life about 13 weeks; 0.90 for flags such as ESBL, half-life about
+7 weeks). Alternative if the team prefers the brief's literal windows:
+hard 28-day and 365-day windows with the parent taken from the
+preceding period; simpler, but a cliff at day 365 and slower to react.
 
 ### 2.3 Which organism
 
@@ -361,12 +410,11 @@ Each one follows PROTOCOL.md: plan committed before the run.
 In the order the code needs them:
 
 1. First-isolate lookback (1).
-2. M and M_ext (2.1); windows or decay, and h (2.2); M_π (2.3).
+2. M and M_ext (2.1); the discount δ (2.2); M_π (2.3).
 3. τ per syndrome (2.6).
 4. Whether prior findings and exposure change numbers or annotate (2.5).
 5. Quality thresholds (3.1); sentinel list (3.2); baseline, guard band,
    q, B, θ, h (3.3); trend thresholds (3.4).
 6. Edge window and null (4).
 7. Language model: yes or no, and where it runs (3.6).
-8. Language, libraries and storage for libs/utils, which this draft
-   deliberately does not touch.
+8. Storage for the as-of table (the stack is D-003, D-004, D-024).
