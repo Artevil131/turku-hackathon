@@ -61,14 +61,7 @@ export type SignalKind = "sentinel" | "surge" | "cluster" | "data-gap" | "shift"
 export type Severity = "high" | "medium" | "low";
 
 /** Which server rule raised the alert (libs/utils/alerts kind, or the detector's name). */
-export type SignalSource =
-  | "cpe"
-  | "new-in-unit"
-  | "profile-excess"
-  | "phenotype-excess"
-  | "sampling-drop"
-  | "empty-run"
-  | "rising-trend";
+export type SignalSource = "cpe" | "new-in-unit" | "profile-excess" | "phenotype-excess" | "sampling-drop" | "empty-run" | "rising-trend";
 
 export interface Signal {
   /** The server alert's id (for an incident: its first alert's id, which is also the incident id). */

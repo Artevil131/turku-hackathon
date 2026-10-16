@@ -1,5 +1,5 @@
-import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import { t, type Locale } from "../i18n/index.ts";
+import { type KeyboardEvent, type ReactNode, useEffect, useId, useMemo, useRef, useState } from "react";
+import { type Locale, t } from "../i18n/index.ts";
 import { useIsDesktop } from "./hooks.ts";
 import { Icon } from "./Icon.tsx";
 import { Sheet } from "./Sheet.tsx";
@@ -164,7 +164,11 @@ export function Picker<T extends string>({
         ) : null}
         {shown.map((g, gi) => (
           <div role="group" aria-label={g.label} key={g.label ?? gi} className="k-pick-group">
-            {g.label ? <div className="k-pick-group-label" aria-hidden="true">{g.label}</div> : null}
+            {g.label ? (
+              <div className="k-pick-group-label" aria-hidden="true">
+                {g.label}
+              </div>
+            ) : null}
             {g.options.map((o) => (
               <PickerRow
                 key={o.value}
@@ -182,7 +186,13 @@ export function Picker<T extends string>({
     </div>
   );
 
-  const valueNode = chosen ? (renderValue ? renderValue(chosen) : chosen.label) : value === null && nullLabel !== undefined ? nullLabel : placeholder;
+  const valueNode = chosen
+    ? renderValue
+      ? renderValue(chosen)
+      : chosen.label
+    : value === null && nullLabel !== undefined
+      ? nullLabel
+      : placeholder;
 
   return (
     <div className={`k-pick${open ? " is-open" : ""}`}>
@@ -209,7 +219,14 @@ export function Picker<T extends string>({
         </div>
       ) : null}
       {!desktop ? (
-        <Sheet open={open} onClose={close} title={label} locale={locale} size="sm" initialFocus={searchable ? ".k-pick-search input" : '[aria-selected="true"]'}>
+        <Sheet
+          open={open}
+          onClose={close}
+          title={label}
+          locale={locale}
+          size="sm"
+          initialFocus={searchable ? ".k-pick-search input" : '[aria-selected="true"]'}
+        >
           {list}
         </Sheet>
       ) : null}
@@ -231,7 +248,14 @@ function PickerRow({
   disabled?: boolean;
 }) {
   return (
-    <button type="button" role="option" aria-selected={selected} className={`k-pick-opt${selected ? " is-on" : ""}`} onClick={onPick} disabled={disabled}>
+    <button
+      type="button"
+      role="option"
+      aria-selected={selected}
+      className={`k-pick-opt${selected ? " is-on" : ""}`}
+      onClick={onPick}
+      disabled={disabled}
+    >
       <span className="k-pick-opt-label">{label}</span>
       {hint !== undefined ? <span className="k-pick-opt-hint u-num">{hint}</span> : null}
       <Icon name="check" size={18} className="k-pick-opt-check" />

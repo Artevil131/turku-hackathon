@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useId, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
-import { formatNumber, formatShare, t, type Locale } from "../../i18n/index.ts";
+import { type CSSProperties, type KeyboardEvent, type ReactNode, useCallback, useEffect, useId, useRef, useState } from "react";
+import { formatNumber, formatShare, type Locale, t } from "../../i18n/index.ts";
 import { Card, EmptyState, Icon, Segmented } from "../../ui/index.ts";
-import { MIN, tintOf, type Cell, type MatrixModel, type MatrixRow } from "./model.ts";
+import { type Cell, type MatrixModel, type MatrixRow, MIN, tintOf } from "./model.ts";
 import { cap, cellAria } from "./parts.tsx";
 
 /*
@@ -271,7 +271,11 @@ export function UnitMatrix({
                     {rowHeader(model.all, false)}
                     {model.columns.map((c) => {
                       const cell = model.all.cells.get(c.code) ?? { state: "none" as const, share: null };
-                      const label = t(locale, "report.units.cell", { unit: allUnits, drug: drugName(c.code), value: cellAria(locale, periodLabel, cell) });
+                      const label = t(locale, "report.units.cell", {
+                        unit: allUnits,
+                        drug: drugName(c.code),
+                        value: cellAria(locale, periodLabel, cell),
+                      });
                       return (
                         <td key={c.code} className="report-mx-td">
                           <span className={`report-mx-cell is-static is-${cell.state}`} style={tintStyle(cell)} title={label}>

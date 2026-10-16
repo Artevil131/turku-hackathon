@@ -92,7 +92,8 @@ const en = {
 
   // ---- Combinations ----
   "treat.combo.title": "Pairs for a severe infection",
-  "treat.combo.lead": "No single antibiotic reaches {threshold}. Pairs that cover at least 2 points more than the better one alone, never two beta-lactams:",
+  "treat.combo.lead":
+    "No single antibiotic reaches {threshold}. Pairs that cover at least 2 points more than the better one alone, never two beta-lactams:",
   "treat.combo.gain": "+{points} points over {name} alone",
   "treat.combo.none": "No pair adds enough over a single antibiotic to be suggested.",
 
@@ -104,11 +105,16 @@ const en = {
 
   // ---- How it is counted ----
   "treat.how.title": "How this is counted",
-  "treat.how.first": "The first isolate per patient, bacterium and sample type in the last {months} months, so repeat samples don't tilt the figure.",
-  "treat.how.level": "Figures come from the unit when it has at least {min} first isolates, else from all units of its type, else from the whole hospital.",
-  "treat.how.severity": "Mild or moderate: judged against 80% of the bacteria each antibiotic is meant for, by mouth only. Severe: against 90% of everything that grows.",
-  "treat.how.untested": "Natural resistance (EUCAST) counts as not covered. An antibiotic is not assessed when over a fifth of the samples were not tested for it.",
-  "treat.how.aware": "Badges are the WHO AWaRe groups: first choice, use with care. First-choice antibiotics come first among those that reach the bar.",
+  "treat.how.first":
+    "The first isolate per patient, bacterium and sample type in the last {months} months, so repeat samples don't tilt the figure.",
+  "treat.how.level":
+    "Figures come from the unit when it has at least {min} first isolates, else from all units of its type, else from the whole hospital.",
+  "treat.how.severity":
+    "Mild or moderate: judged against 80% of the bacteria each antibiotic is meant for, by mouth only. Severe: against 90% of everything that grows.",
+  "treat.how.untested":
+    "Natural resistance (EUCAST) counts as not covered. An antibiotic is not assessed when over a fifth of the samples were not tested for it.",
+  "treat.how.aware":
+    "Badges are the WHO AWaRe groups: first choice, use with care. First-choice antibiotics come first among those that reach the bar.",
   "treat.how.live": "Updates by itself as each new result arrives. The team's backtest found these figures held the following month.",
 
   // ---- Screen reader summary ----
@@ -142,7 +148,8 @@ const fi: Record<keyof typeof en, string> = {
   "treat.patient.sex": "Sukupuoli",
   "treat.patient.hint": "Valinnainen. Napauta rajataksesi yhteen sukupuoleen, uudelleen poistaaksesi.",
   "treat.patient.bacteria": "Todennäköiset bakteerit",
-  "treat.patient.bacteriaHint": "Kuinka usein kukin kasvoi näissä näytteissä viimeisten {months} kuukauden aikana. Yllä oleva lista kattaa ne kaikki.",
+  "treat.patient.bacteriaHint":
+    "Kuinka usein kukin kasvoi näissä näytteissä viimeisten {months} kuukauden aikana. Yllä oleva lista kattaa ne kaikki.",
   "treat.patient.orgShare": "Löytyi {share} näytteistä ({n})",
   "treat.sex.F": "Nainen",
   "treat.sex.M": "Mies",
@@ -174,7 +181,8 @@ const fi: Record<keyof typeof en, string> = {
   "treat.top.allOrganismsFew": "Liian vähän tuloksia sanomaan, kuinka suureen osaan kaikista bakteereista se tehoaa",
   "treat.top.notFor": "Ei tehoa: {list}",
   "treat.top.none": "Mikään yksittäinen antibiootti ei yllä tähän: {threshold}.",
-  "treat.top.decide": "Kuinka usein kukin antibiootti on tehonnut vastaavissa näytteissä täällä. Sinä päätät – tarkista paikallinen hoito-ohje.",
+  "treat.top.decide":
+    "Kuinka usein kukin antibiootti on tehonnut vastaavissa näytteissä täällä. Sinä päätät – tarkista paikallinen hoito-ohje.",
   "treat.standing.clears": "Yltää tasoon {threshold}: koko 95 %:n vaihteluväli on sen yläpuolella",
   "treat.standing.borderline": "Noin {threshold}: arvio yltää, vaihteluväli ei",
   "treat.standing.below": "Alle {threshold}",
@@ -199,22 +207,29 @@ const fi: Record<keyof typeof en, string> = {
   "treat.row.notCovering": "Ei tehoa: {list}",
 
   "treat.combo.title": "Yhdistelmät vaikeaan infektioon",
-  "treat.combo.lead": "Mikään yksittäinen antibiootti ei yllä tasoon {threshold}. Parit, jotka kattavat vähintään 2 prosenttiyksikköä enemmän kuin parempi yksinään, eivät koskaan kaksi beetalaktaamia:",
+  "treat.combo.lead":
+    "Mikään yksittäinen antibiootti ei yllä tasoon {threshold}. Parit, jotka kattavat vähintään 2 prosenttiyksikköä enemmän kuin parempi yksinään, eivät koskaan kaksi beetalaktaamia:",
   "treat.combo.gain": "+{points} %-yks. verrattuna pelkkään: {name}",
   "treat.combo.none": "Mikään pari ei lisää tarpeeksi yksittäiseen antibioottiin verrattuna.",
 
   "treat.empty.title": "Näille potilaille ei ole vielä tuloksia",
-  "treat.empty.body": "Luvut tulevat näkyviin heti, kun laboratorio julkaisee tuloksia (näyte: {specimen}, {unit}). Kokeile toista infektiokohtaa tai yksikköä.",
+  "treat.empty.body":
+    "Luvut tulevat näkyviin heti, kun laboratorio julkaisee tuloksia (näyte: {specimen}, {unit}). Kokeile toista infektiokohtaa tai yksikköä.",
   "treat.error.title": "Tehoamislistaa ei saatu ladattua",
   "treat.error.body": "Palvelin ei vastannut. Yritetään uudelleen, kun seuraavat tulokset saapuvat.",
 
   "treat.how.title": "Miten tämä lasketaan",
-  "treat.how.first": "Ensimmäinen löydös potilasta, bakteeria ja näytetyyppiä kohden viimeisten {months} kuukauden aikana, jotta toistonäytteet eivät vääristä lukua.",
-  "treat.how.level": "Luvut ovat yksiköstä, kun siinä on vähintään {min} ensimmäistä löydöstä, muuten kaikista samantyyppisistä yksiköistä, muuten koko sairaalasta.",
-  "treat.how.severity": "Lievä tai keskivaikea: verrataan 80 %:iin niistä bakteereista, joihin kukin antibiootti on tarkoitettu, vain suun kautta annettavat. Vaikea: verrataan 90 %:iin kaikista kasvaneista.",
-  "treat.how.untested": "Luontainen resistenssi (EUCAST) lasketaan tehottomaksi. Antibioottia ei arvioida, jos yli viidennestä näytteistä ei ole testattu sille.",
+  "treat.how.first":
+    "Ensimmäinen löydös potilasta, bakteeria ja näytetyyppiä kohden viimeisten {months} kuukauden aikana, jotta toistonäytteet eivät vääristä lukua.",
+  "treat.how.level":
+    "Luvut ovat yksiköstä, kun siinä on vähintään {min} ensimmäistä löydöstä, muuten kaikista samantyyppisistä yksiköistä, muuten koko sairaalasta.",
+  "treat.how.severity":
+    "Lievä tai keskivaikea: verrataan 80 %:iin niistä bakteereista, joihin kukin antibiootti on tarkoitettu, vain suun kautta annettavat. Vaikea: verrataan 90 %:iin kaikista kasvaneista.",
+  "treat.how.untested":
+    "Luontainen resistenssi (EUCAST) lasketaan tehottomaksi. Antibioottia ei arvioida, jos yli viidennestä näytteistä ei ole testattu sille.",
   "treat.how.aware": "Merkinnät ovat WHO:n AWaRe-ryhmät: ensisijainen, harkiten. Tasoon yltävistä ensisijaiset näytetään ensin.",
-  "treat.how.live": "Päivittyy itsestään jokaisen uuden tuloksen myötä. Ryhmän takautuva testi osoitti lukujen pitäneen seuraavana kuukautena.",
+  "treat.how.live":
+    "Päivittyy itsestään jokaisen uuden tuloksen myötä. Ryhmän takautuva testi osoitti lukujen pitäneen seuraavana kuukautena.",
 
   "treat.live.summary": "Paras vaihtoehto: {name}, tehosi {percent}.",
   "treat.live.few": "Liian vähän tuloksia prosenttiin.",

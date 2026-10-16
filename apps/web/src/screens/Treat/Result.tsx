@@ -1,9 +1,21 @@
 import type { CombinationSuggestion, CoverageResponse, Suggestion } from "@aei/contract";
-import { useId, useState, type ReactNode } from "react";
+import { type ReactNode, useId, useState } from "react";
 import type { FeedMeta } from "../../feed/types.ts";
-import { formatDate, formatNumber, formatShare, t, type Locale } from "../../i18n/index.ts";
+import { formatDate, formatNumber, formatShare, type Locale, t } from "../../i18n/index.ts";
 import type { AwareGroup, Share } from "../../model/types.ts";
-import { AwareBadge, Card, Disclosure, EmptyState, Icon, ShareBar, sexLabel, shortOrganism, specimenName, unitByCode, unitName } from "../../ui/index.ts";
+import {
+  AwareBadge,
+  Card,
+  Disclosure,
+  EmptyState,
+  Icon,
+  ShareBar,
+  sexLabel,
+  shortOrganism,
+  specimenName,
+  unitByCode,
+  unitName,
+} from "../../ui/index.ts";
 import { capFirst, THRESHOLDS, type TreatChoice } from "./model.ts";
 import { drugName, figText, listText, MONTHS, WEEKS } from "./text.tsx";
 
@@ -77,7 +89,11 @@ export function ResultView({
           {severity === "severe" && top.standing !== "clears" ? (
             <Pairs locale={locale} meta={meta} pairs={combinationSuggestions} threshold={threshold} />
           ) : null}
-          {rest.length > 0 ? <DrugList locale={locale} meta={meta} rest={rest} threshold={threshold} min={min} /> : <HowCounted locale={locale} min={min} />}
+          {rest.length > 0 ? (
+            <DrugList locale={locale} meta={meta} rest={rest} threshold={threshold} min={min} />
+          ) : (
+            <HowCounted locale={locale} min={min} />
+          )}
         </>
       )}
     </section>
@@ -86,16 +102,34 @@ export function ResultView({
 
 // ---------- Basis ----------
 
-function Basis({ locale, meta, prefs, data, min }: { locale: Locale; meta: FeedMeta; prefs: TreatChoice; data: CoverageResponse; min: number }) {
+function Basis({
+  locale,
+  meta,
+  prefs,
+  data,
+  min,
+}: {
+  locale: Locale;
+  meta: FeedMeta;
+  prefs: TreatChoice;
+  data: CoverageResponse;
+  min: number;
+}) {
   const c = data.coverage;
   const unit = unitName(locale, meta, prefs.ward);
   const type = unitByCode(meta, prefs.ward)?.type;
   const levelText =
-    c.level === "unit" ? unit : c.level === "ward type" ? t(locale, type === "in" ? "treat.basis.inUnits" : "treat.basis.outUnits") : t(locale, "treat.basis.hospital");
+    c.level === "unit"
+      ? unit
+      : c.level === "ward type"
+        ? t(locale, type === "in" ? "treat.basis.inUnits" : "treat.basis.outUnits")
+        : t(locale, "treat.basis.hospital");
   const parts: ReactNode[] = [capFirst(specimenName(locale, meta, prefs.specimen))];
   if (c.sexApplied && prefs.sex) parts.push(sexLabel(locale, prefs.sex));
   parts.push(levelText);
-  parts.push(`${t(locale, "treat.basis.year", { months: MONTHS })}, ${t(locale, "treat.basis.upTo", { date: formatDate(locale, data.asOf, "long") })}`);
+  parts.push(
+    `${t(locale, "treat.basis.year", { months: MONTHS })}, ${t(locale, "treat.basis.upTo", { date: formatDate(locale, data.asOf, "long") })}`,
+  );
 
   return (
     <div className="treat-basis">
@@ -228,7 +262,17 @@ function TopMatch({ locale, meta, s, threshold, min }: { locale: Locale; meta: F
 
 // ---------- Pairs for a severe infection (D-028) ----------
 
-function Pairs({ locale, meta, pairs, threshold }: { locale: Locale; meta: FeedMeta; pairs: readonly CombinationSuggestion[]; threshold: string }) {
+function Pairs({
+  locale,
+  meta,
+  pairs,
+  threshold,
+}: {
+  locale: Locale;
+  meta: FeedMeta;
+  pairs: readonly CombinationSuggestion[];
+  threshold: string;
+}) {
   return (
     <Card className="treat-pairs" title={t(locale, "treat.combo.title")}>
       {pairs.length === 0 ? (
@@ -275,14 +319,29 @@ const GROUPS: { standing: Standing; key: "treat.list.clears" | "treat.list.borde
   { standing: "not assessable", key: "treat.list.na" },
 ];
 
-function DrugList({ locale, meta, rest, threshold, min }: { locale: Locale; meta: FeedMeta; rest: readonly Suggestion[]; threshold: string; min: number }) {
+function DrugList({
+  locale,
+  meta,
+  rest,
+  threshold,
+  min,
+}: {
+  locale: Locale;
+  meta: FeedMeta;
+  rest: readonly Suggestion[];
+  threshold: string;
+  min: number;
+}) {
   return (
     <Card className="treat-list" title={t(locale, "treat.list.title")} footer={<HowCounted locale={locale} min={min} />}>
       {GROUPS.map((g) => {
         const drugs = rest.filter((s) => s.standing === g.standing);
         if (drugs.length === 0) return null;
         return (
-          <div key={g.standing} className={`treat-group is-${g.standing === "clears" ? "strong" : g.standing === "not assessable" ? "few" : "weak"}`}>
+          <div
+            key={g.standing}
+            className={`treat-group is-${g.standing === "clears" ? "strong" : g.standing === "not assessable" ? "few" : "weak"}`}
+          >
             <h3 className="treat-group-title">{t(locale, g.key, { threshold })}</h3>
             <ul className="treat-rows">
               {drugs.map((s) => (
@@ -337,8 +396,12 @@ function DrugRow({ locale, meta, s, min, weak }: { locale: Locale; meta: FeedMet
                 { label: t(locale, "treat.fig.recent", { weeks: WEEKS }), share: asShare(c.recent) },
               ]}
             />
-            {c.notCovering.length > 0 ? <p className="treat-detail-note">{t(locale, "treat.row.notCovering", { list: organismList(locale, c.notCovering) })}</p> : null}
-            {c.untested.length > 0 ? <p className="treat-detail-note">{t(locale, "treat.row.untested", { list: organismList(locale, c.untested) })}</p> : null}
+            {c.notCovering.length > 0 ? (
+              <p className="treat-detail-note">{t(locale, "treat.row.notCovering", { list: organismList(locale, c.notCovering) })}</p>
+            ) : null}
+            {c.untested.length > 0 ? (
+              <p className="treat-detail-note">{t(locale, "treat.row.untested", { list: organismList(locale, c.untested) })}</p>
+            ) : null}
           </div>
         ) : null}
       </div>
@@ -362,4 +425,3 @@ function HowCounted({ locale, min }: { locale: Locale; min: number }) {
     </Disclosure>
   );
 }
-

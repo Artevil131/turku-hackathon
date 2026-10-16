@@ -15,9 +15,9 @@ import {
   forgetAiStatus,
   inAgeGroup,
   isEmptyAnswer,
+  MAX_QUESTION_CHARS,
   matchNamed,
   matchOrganism,
-  MAX_QUESTION_CHARS,
   organismInQuestion,
   parseReply,
   periodInQuestion,
@@ -200,7 +200,10 @@ describe("grounding in the question", () => {
     expect(organismInQuestion("kolibakteeri virtsassa", "Escherichia coli", meta.organisms).named).toBe(true);
     expect(organismInQuestion("stafylokokki haavoissa", "Staphylococcus aureus", meta.organisms).named).toBe(true);
     expect(organismInQuestion("Acinetobacter on ward 7", "Escherichia coli", meta.organisms).named).toBe(false);
-    expect(organismInQuestion("klebsiella in blood", "Klebsiella pneumoniae", meta.organisms)).toEqual({ named: false, genusOnly: "klebsiella" });
+    expect(organismInQuestion("klebsiella in blood", "Klebsiella pneumoniae", meta.organisms)).toEqual({
+      named: false,
+      genusOnly: "klebsiella",
+    });
     expect(organismInQuestion("K. pneumoniae in blood", "Klebsiella pneumoniae", meta.organisms).named).toBe(true);
   });
 
@@ -245,7 +248,16 @@ describe("validateAnswer", () => {
   it("keeps values the meta lists and the question names", () => {
     const q = "urine E. coli in older men at cardiology, nitrofurantoin, hospital-acquired, last 3 months";
     const a = validateAnswer(
-      reply({ unit: "CARD", specimen: "urine", organism: "Escherichia coli", antibiotic: "NIT", sex: "M", age: "older", onset: "hospital", period: { kind: "last", count: 3, unit: "month" } }),
+      reply({
+        unit: "CARD",
+        specimen: "urine",
+        organism: "Escherichia coli",
+        antibiotic: "NIT",
+        sex: "M",
+        age: "older",
+        onset: "hospital",
+        period: { kind: "last", count: 3, unit: "month" },
+      }),
       meta,
       asOf,
       q,
@@ -266,7 +278,15 @@ describe("validateAnswer", () => {
 
   it("sends unknown values to unmatched and drops what the question never said", () => {
     const a = validateAnswer(
-      reply({ unit: "Ward 7", organism: "Escherichia coli", antibiotic: "CXM", sex: "F", age: "older", period: { kind: "this", count: 1, unit: "month" }, unmatched: ["Acinetobacter", "Ward 7", "since March"] }),
+      reply({
+        unit: "Ward 7",
+        organism: "Escherichia coli",
+        antibiotic: "CXM",
+        sex: "F",
+        age: "older",
+        period: { kind: "this", count: 1, unit: "month" },
+        unmatched: ["Acinetobacter", "Ward 7", "since March"],
+      }),
       meta,
       asOf,
       "Acinetobacter on ward 7 since March",
@@ -284,17 +304,35 @@ describe("validateAnswer", () => {
 
   it("takes no number or date from the reply except the period length", () => {
     const a = validateAnswer(
-      { unit: "ICU", from: "2019-01-01", to: "2030-01-01", minAge: 3, period: { kind: "last", count: 2, unit: "week", from: "2019-01-01" } },
+      {
+        unit: "ICU",
+        from: "2019-01-01",
+        to: "2030-01-01",
+        minAge: 3,
+        period: { kind: "last", count: 2, unit: "week", from: "2019-01-01" },
+      },
       meta,
       asOf,
       "ICU last 2 weeks",
     );
-    expect(a.filters).toEqual({ ward: "ICU", period: { kind: "last", count: 2, unit: "week", from: "2025-04-29", to: asOf, clamped: false } });
+    expect(a.filters).toEqual({
+      ward: "ICU",
+      period: { kind: "last", count: 2, unit: "week", from: "2025-04-29", to: asOf, clamped: false },
+    });
   });
 
   it("accepts names and loose casing, ignores junk, and removes repeated words", () => {
     const a = validateAnswer(
-      { unit: "Teho-osasto", specimen: "Veri", organism: "S. aureus", sex: "f", age: "ancient", onset: "maybe", intent: "chat", unmatched: ["foo", "Foo", 3, ""] },
+      {
+        unit: "Teho-osasto",
+        specimen: "Veri",
+        organism: "S. aureus",
+        sex: "f",
+        age: "ancient",
+        onset: "maybe",
+        intent: "chat",
+        unmatched: ["foo", "Foo", 3, ""],
+      },
       meta,
       asOf,
     );
@@ -314,7 +352,12 @@ describe("validateAnswer", () => {
   });
 
   it("converts to the feed's older AskAnswer shape", () => {
-    const a = validateAnswer(reply({ unit: "ICU", age: "child", period: { kind: "this", count: 1, unit: "year" } }), meta, asOf, "children in ICU this year");
+    const a = validateAnswer(
+      reply({ unit: "ICU", age: "child", period: { kind: "this", count: 1, unit: "year" } }),
+      meta,
+      asOf,
+      "children in ICU this year",
+    );
     expect(toAskAnswer(a)).toEqual({ filters: { from: "2025-01-01", to: asOf, ward: "ICU" }, ageGroup: "child", unmatched: [] });
   });
 
@@ -394,10 +437,16 @@ describe("askAi", () => {
 
   it("asks the model and returns checked filters", async () => {
     const { fn, calls } = fakeFetch((url) =>
-      url.endsWith("/models") ? models() : completion({ unit: "ICU", specimen: "blood", period: { kind: "this", count: 1, unit: "year" }, unmatched: [] }),
+      url.endsWith("/models")
+        ? models()
+        : completion({ unit: "ICU", specimen: "blood", period: { kind: "this", count: 1, unit: "year" }, unmatched: [] }),
     );
     const result = await askAi(q, "en", meta, asOf, { fetch: fn });
-    expect(result.filters).toEqual({ ward: "ICU", specimen: "blood", period: { kind: "this", count: 1, unit: "year", from: "2025-01-01", to: asOf, clamped: false } });
+    expect(result.filters).toEqual({
+      ward: "ICU",
+      specimen: "blood",
+      period: { kind: "this", count: 1, unit: "year", from: "2025-01-01", to: asOf, clamped: false },
+    });
     expect(result.model).toBe("qwen3.5-4b");
     expect(result.ms).toBeGreaterThanOrEqual(0);
     const chat = calls.find((c) => c.url === "/llm/v1/chat/completions")!;
@@ -434,7 +483,9 @@ describe("askAi", () => {
     const slow = fakeFetch((url, init) => (url.endsWith("/models") ? models() : hanging(url, init)));
     expect(await errorCode(askAi(q, "en", meta, asOf, { fetch: slow.fn, timeoutMs: 20 }))).toBe("timeout");
 
-    const garbled = fakeFetch((url) => (url.endsWith("/models") ? models() : json({ choices: [{ message: { content: "Sorry, I can't." } }] })));
+    const garbled = fakeFetch((url) =>
+      url.endsWith("/models") ? models() : json({ choices: [{ message: { content: "Sorry, I can't." } }] }),
+    );
     expect(await errorCode(askAi(q, "en", meta, asOf, { fetch: garbled.fn }))).toBe("unreadable");
 
     const unreachable = fakeFetch((url) => (url.endsWith("/models") ? models() : Promise.reject(new TypeError("Failed to fetch"))));

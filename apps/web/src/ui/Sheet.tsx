@@ -1,5 +1,5 @@
-import { useEffect, useId, useRef, type ReactNode } from "react";
-import { t, type Locale } from "../i18n/index.ts";
+import { type ReactNode, useEffect, useId, useRef } from "react";
+import { type Locale, t } from "../i18n/index.ts";
 import { Icon } from "./Icon.tsx";
 
 /*
@@ -90,7 +90,12 @@ export function Sheet({
             </h2>
             {subtitle ? <p className="k-sheet-sub">{subtitle}</p> : null}
           </div>
-          <button type="button" className="k-iconbtn k-sheet-close" onClick={() => closeRef.current()} aria-label={t(locale, "common.close")}>
+          <button
+            type="button"
+            className="k-iconbtn k-sheet-close"
+            onClick={() => closeRef.current()}
+            aria-label={t(locale, "common.close")}
+          >
             <Icon name="close" />
           </button>
         </header>

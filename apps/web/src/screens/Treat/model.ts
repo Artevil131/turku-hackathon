@@ -1,6 +1,6 @@
 import type { IsoDate, Unit } from "../../feed/types.ts";
-import type { Severity, Share, Signal } from "../../model/types.ts";
 import { daysBetween } from "../../model/dates.ts";
+import type { Severity, Share, Signal } from "../../model/types.ts";
 
 // Pure helpers for the Treat screen: prefs -> the server's coverage query,
 // which signals the doctor sees, how units group. Nothing here knows any

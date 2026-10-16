@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
+import { formatNumber, formatShare, type Locale, t } from "../i18n/index.ts";
 import type { Share } from "../model/types.ts";
-import { formatNumber, formatShare, t, type Locale } from "../i18n/index.ts";
 
 /*
   ShareBar: "works in X of N" as a percentage, a bar and the count it rests on.

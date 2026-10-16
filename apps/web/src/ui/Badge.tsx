@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
+import { type Locale, t } from "../i18n/index.ts";
 import type { AwareGroup, Severity } from "../model/types.ts";
-import { t, type Locale } from "../i18n/index.ts";
 
 /*
   Badge: a small label. Colour is never the only cue: status tones draw a

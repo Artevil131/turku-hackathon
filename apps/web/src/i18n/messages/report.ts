@@ -68,7 +68,8 @@ const en = {
   "report.standout.drop": "Largest drop: {drug}, {recent} in the last 4 weeks (n = {rn}) against {year} over 12 months (n = {yn}).",
   "report.standout.none": "No antibiotic worked less often in the last 4 weeks than over 12 months.",
   "report.thin.recent": "Only {n} first isolates in the last 4 weeks: too few for percentages. Read the 12-month figures.",
-  "report.thin.year": "Fewer than {min} first isolates in 12 months with these filters, so no percentages. Remove a filter to widen the group.",
+  "report.thin.year":
+    "Fewer than {min} first isolates in 12 months with these filters, so no percentages. Remove a filter to widen the group.",
   "report.empty.title": "No results with these filters in the past 12 months",
   "report.empty.body": "Choose another unit or bacteria, or clear the filters.",
   "report.hidden.unknown": "Not shown, tested in fewer than half of these isolates: {list}",
@@ -98,7 +99,8 @@ const en = {
   "report.units.empty": "No antibiotic has results here in this period.",
 
   "report.foot.rule": "First isolate per patient, organism and specimen in each period. Percentages only from {min} isolates.",
-  "report.foot.unknown": "All bacteria together: an antibiotic counts the isolates tested for it, plus bacteria it never works on by nature (EUCAST expected resistance).",
+  "report.foot.unknown":
+    "All bacteria together: an antibiotic counts the isolates tested for it, plus bacteria it never works on by nature (EUCAST expected resistance).",
   "report.foot.aware": "First choice, use with care, last resort: the WHO AWaRe groups.",
   "report.foot.decide": "AEI informs. The doctor decides.",
 } as const;
@@ -170,7 +172,8 @@ const fi: Record<keyof typeof en, string> = {
   "report.standout.drop": "Suurin lasku: {drug}, {recent} viimeisen 4 viikon aikana (n = {rn}), 12 kuukaudessa {year} (n = {yn}).",
   "report.standout.none": "Mikään antibiootti ei tehonnut viimeisen 4 viikon aikana harvemmin kuin 12 kuukaudessa.",
   "report.thin.recent": "Viimeisen 4 viikon aikana vain {n} ensimmäistä kantaa: liian vähän prosentteihin. Katso 12 kuukauden lukuja.",
-  "report.thin.year": "Näillä rajauksilla alle {min} ensimmäistä kantaa 12 kuukaudessa, joten prosentteja ei näytetä. Poista rajaus laajentaaksesi joukkoa.",
+  "report.thin.year":
+    "Näillä rajauksilla alle {min} ensimmäistä kantaa 12 kuukaudessa, joten prosentteja ei näytetä. Poista rajaus laajentaaksesi joukkoa.",
   "report.empty.title": "Näillä rajauksilla ei ole tuloksia viimeisen 12 kuukauden ajalta",
   "report.empty.body": "Valitse toinen yksikkö tai bakteeri, tai tyhjennä rajaukset.",
   "report.hidden.unknown": "Ei näytetä, testattu alle puolesta näistä kannoista: {list}",
@@ -199,8 +202,10 @@ const fi: Record<keyof typeof en, string> = {
   "report.units.n": "n {n}",
   "report.units.empty": "Millään antibiootilla ei ole tällä jaksolla tuloksia.",
 
-  "report.foot.rule": "Ensimmäinen kanta potilasta, bakteeria ja näytettä kohden kullakin jaksolla. Prosentit vain vähintään {min} kannasta.",
-  "report.foot.unknown": "Kaikki bakteerit yhdessä: antibiootille lasketaan sille testatut kannat sekä bakteerit, joihin se ei luonnostaan tehoa (EUCAST:n odotettu resistenssi).",
+  "report.foot.rule":
+    "Ensimmäinen kanta potilasta, bakteeria ja näytettä kohden kullakin jaksolla. Prosentit vain vähintään {min} kannasta.",
+  "report.foot.unknown":
+    "Kaikki bakteerit yhdessä: antibiootille lasketaan sille testatut kannat sekä bakteerit, joihin se ei luonnostaan tehoa (EUCAST:n odotettu resistenssi).",
   "report.foot.aware": "Ensisijainen, harkiten, viimesijainen: WHO:n AWaRe-ryhmät.",
   "report.foot.decide": "AEI kertoo. Lääkäri päättää.",
 };

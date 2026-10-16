@@ -46,8 +46,14 @@ function readEnvFile(path: string): Record<string, string> {
     if (!line || line.startsWith("#")) continue;
     const eq = line.indexOf("=");
     if (eq <= 0) continue;
-    const key = line.slice(0, eq).trim().replace(/^export\s+/, "");
-    const value = line.slice(eq + 1).trim().replace(/^(['"])(.*)\1$/, "$2");
+    const key = line
+      .slice(0, eq)
+      .trim()
+      .replace(/^export\s+/, "");
+    const value = line
+      .slice(eq + 1)
+      .trim()
+      .replace(/^(['"])(.*)\1$/, "$2");
     if (value) out[key] = value;
   }
   return out;
@@ -72,10 +78,7 @@ const llm = llmConfig();
 /** Only the two calls the app makes go through; anything else under /llm is a 404. */
 function allowedLlmCall(req: IncomingMessage): boolean {
   const path = (req.url ?? "").split("?")[0];
-  return (
-    (req.method === "GET" && path === "/llm/v1/models") ||
-    (req.method === "POST" && path === "/llm/v1/chat/completions")
-  );
+  return (req.method === "GET" && path === "/llm/v1/models") || (req.method === "POST" && path === "/llm/v1/chat/completions");
 }
 
 const accessHeaders: Record<string, string> = {};

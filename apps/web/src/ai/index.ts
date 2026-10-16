@@ -1,5 +1,5 @@
 import type { FeedMeta, IsoDate } from "../feed/types.ts";
-import { answerSchema, buildMessages, cleanQuestion, parseReply, validateAnswer, type AiAnswer, type Lang } from "./core.ts";
+import { type AiAnswer, answerSchema, buildMessages, cleanQuestion, type Lang, parseReply, validateAnswer } from "./core.ts";
 
 export * from "./core.ts";
 
@@ -119,7 +119,8 @@ export function chatRequest(text: string, lang: Lang, meta: FeedMeta, model: str
     temperature: 0,
     max_tokens: 400,
     stream: false,
-    response_format: format === 0 ? { type: "json_schema", json_schema: { name: "aei_filters", strict: true, schema } } : { type: "json_object", schema },
+    response_format:
+      format === 0 ? { type: "json_schema", json_schema: { name: "aei_filters", strict: true, schema } } : { type: "json_object", schema },
     // Qwen3-family models think aloud unless told not to; that costs seconds and is not needed here.
     ...(model && /qwen-?3/i.test(model) ? { chat_template_kwargs: { enable_thinking: false } } : {}),
   };
@@ -166,7 +167,8 @@ export async function askAi(text: string, lang: Lang, meta: FeedMeta, asOf: IsoD
         format = format === 0 ? 1 : 0;
         continue;
       }
-      if (!res.ok) throw new AiError(res.status === 404 || res.status === 502 || res.status === 504 ? "off" : "network", String(res.status));
+      if (!res.ok)
+        throw new AiError(res.status === 404 || res.status === 502 || res.status === 504 ? "off" : "network", String(res.status));
       let body: { choices?: { message?: { content?: unknown } }[] };
       try {
         body = (await res.json()) as typeof body;

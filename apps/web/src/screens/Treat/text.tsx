@@ -1,7 +1,7 @@
 import { Fragment, type ReactNode } from "react";
-import type { Share, Signal } from "../../model/types.ts";
 import type { FeedMeta } from "../../feed/types.ts";
-import { formatNumber, formatShare, t, type Locale, type MessageKey } from "../../i18n/index.ts";
+import { formatNumber, formatShare, type Locale, type MessageKey, t } from "../../i18n/index.ts";
+import type { Share, Signal } from "../../model/types.ts";
 import { antibioticName, Org, signalKindLabel, unitName } from "../../ui/index.ts";
 import { capFirst, humanize } from "./model.ts";
 
@@ -47,7 +47,8 @@ export function listText(locale: Locale, items: string[]): string {
 /** "84 % · 110/131", "9 results — too few" or "No results". */
 export function figText(locale: Locale, share: Share, min: number): string {
   if (share.n === 0) return t(locale, "treat.fig.none");
-  if (share.n < min) return share.n === 1 ? t(locale, "treat.fig.tooFewOne") : t(locale, "treat.fig.tooFew", { n: formatNumber(locale, share.n) });
+  if (share.n < min)
+    return share.n === 1 ? t(locale, "treat.fig.tooFewOne") : t(locale, "treat.fig.tooFew", { n: formatNumber(locale, share.n) });
   return t(locale, "treat.fig.value", {
     percent: formatShare(locale, share.works / share.n),
     works: formatNumber(locale, share.works),
@@ -75,7 +76,8 @@ export function signalSentence(locale: Locale, meta: FeedMeta, s: Signal, ward: 
         ? t(locale, "treat.signal.thisUnit")
         : t(locale, "treat.signal.onUnit", { unit: unitName(locale, meta, s.ward) });
   const count = s.patients ?? s.observed;
-  const patients = count === 1 ? t(locale, "treat.signal.patientsOne") : t(locale, "treat.signal.patients", { count: formatNumber(locale, count) });
+  const patients =
+    count === 1 ? t(locale, "treat.signal.patientsOne") : t(locale, "treat.signal.patients", { count: formatNumber(locale, count) });
   const flag = s.phenotype ? s.phenotype.toUpperCase() : signalKindLabel(locale, s.kind);
   const organism = s.organism ? <Org name={s.organism} short /> : "–";
   const expected = formatNumber(locale, s.expected ?? 0, (s.expected ?? 0) >= 10 ? 0 : 1);

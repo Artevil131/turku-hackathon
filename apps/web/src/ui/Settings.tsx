@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { FeedMeta, IsoDate } from "../feed/types.ts";
-import { formatDate, formatNumber, t, type Locale } from "../i18n/index.ts";
+import { formatDate, formatNumber, type Locale, t } from "../i18n/index.ts";
 import { Badge } from "./Badge.tsx";
 import { Card } from "./Card.tsx";
 import { Icon } from "./Icon.tsx";

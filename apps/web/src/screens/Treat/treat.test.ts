@@ -1,12 +1,12 @@
+import type { CoverageResponse } from "@aei/contract";
 import { coverage, suggest, suggestCombinations } from "@aei/coverage";
 import { ANTIBIOTICS, type IsolateRecord } from "@aei/domain";
-import type { CoverageResponse } from "@aei/contract";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import type { Signal } from "../../model/types.ts";
 import type { FeedMeta, Result } from "../../feed/types.ts";
-import { TreatScreen, type TreatPrefs } from "./index.tsx";
+import type { Signal } from "../../model/types.ts";
+import { type TreatPrefs, TreatScreen } from "./index.tsx";
 import { capFirst, coverageUrl, humanize, midSentence, sexesIn, signalsFor, unitGroups } from "./model.ts";
 import { ResultView } from "./Result.tsx";
 
@@ -142,7 +142,13 @@ function pool(n: number, ward = "URO"): IsolateRecord[] {
 
 function response(records: IsolateRecord[], ward: "URO" | "MED-A", severity: "mild" | "severe"): CoverageResponse {
   const c = coverage(records, { asOf: "2025-06-01", ward, specimen: "urine" });
-  return { asOf: "2025-06-01", severity, coverage: c, suggestions: suggest(c, severity), combinationSuggestions: suggestCombinations(c, severity) };
+  return {
+    asOf: "2025-06-01",
+    severity,
+    coverage: c,
+    suggestions: suggest(c, severity),
+    combinationSuggestions: suggestCombinations(c, severity),
+  };
 }
 
 describe("ResultView (the server's coverage list)", () => {

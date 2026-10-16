@@ -1,8 +1,8 @@
 import { createElement as h } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe as group, expect, it } from "vitest";
-import type { Signal } from "../../model/types.ts";
+import { expect, describe as group, it } from "vitest";
 import type { FeedMeta, Result } from "../../feed/types.ts";
+import type { Signal } from "../../model/types.ts";
 import { describe } from "./describe.tsx";
 import { DEFAULT_FILTERS, isActive, passes, reveal, sortAlerts, unseenActive } from "./filters.ts";
 import { AlertsScreen } from "./index.tsx";
@@ -100,7 +100,16 @@ const sentinel = sig({
   lastDate: "2025-06-29",
   isolateIds: ["i1"],
 });
-const old = sig({ id: "old", kind: "surge", severity: "high", firstDate: "2025-01-01", lastDate: "2025-01-10", phenotype: "abc", observed: 4, expected: 1.2 });
+const old = sig({
+  id: "old",
+  kind: "surge",
+  severity: "high",
+  firstDate: "2025-01-01",
+  lastDate: "2025-01-10",
+  phenotype: "abc",
+  observed: 4,
+  expected: 1.2,
+});
 const low = sig({ id: "low", kind: "shift", severity: "low" });
 
 const result = (over: Partial<Result>): Result => ({
@@ -218,9 +227,7 @@ group("alerts screen", () => {
   });
   it("shows cases without identifying the patient", () => {
     const d = describe("en", meta, cluster, asOf);
-    const html = renderToStaticMarkup(
-      h(Body, { ...props, s: cluster, d, seen: false, casesOpen: true }),
-    );
+    const html = renderToStaticMarkup(h(Body, { ...props, s: cluster, d, seen: false, casesOpen: true }));
     expect(html).toContain("Patient •••2345");
     expect(html).not.toContain("PX0012345");
     expect(html).toContain("day 5 of stay");
@@ -233,7 +240,9 @@ group("alerts screen", () => {
   });
   it("shows a data gap as results per week, for the laboratory, without a treatment link", () => {
     const d = describe("en", meta, gap, asOf);
-    const html = renderToStaticMarkup(h(Body, { ...props, results: [result({ ward: "C9", sampleDate: "2025-05-01" })], s: gap, d, seen: true }));
+    const html = renderToStaticMarkup(
+      h(Body, { ...props, results: [result({ ward: "C9", sampleDate: "2025-05-01" })], s: gap, d, seen: true }),
+    );
     expect(html).toContain("Results per week from this unit");
     expect(html).toContain("Last 7 days: 0");
     expect(html).toContain("The laboratory");

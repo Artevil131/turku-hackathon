@@ -1,5 +1,7 @@
-import { Fragment, type ReactNode } from "react";
 import { SCREEN_ONLY } from "@aei/eucast";
+import { Fragment, type ReactNode } from "react";
+import type { FeedMeta, IsoDate } from "../../feed/types.ts";
+import { formatDate, formatNumber, formatShare, type Locale, type MessageKey, t } from "../../i18n/index.ts";
 import { daysBetween } from "../../model/dates.ts";
 import {
   CLUSTER_ALPHA,
@@ -21,8 +23,7 @@ import {
   TREND_MIN_BINS,
 } from "../../model/rules.ts";
 import type { Share, Signal } from "../../model/types.ts";
-import type { FeedMeta, IsoDate } from "../../feed/types.ts";
-import { formatDate, formatNumber, formatShare, t, type Locale, type MessageKey } from "../../i18n/index.ts";
+import type { IconName } from "../../ui/index.ts";
 import {
   antibioticByCode,
   antibioticName,
@@ -34,7 +35,6 @@ import {
   unitByCode,
   unitName,
 } from "../../ui/index.ts";
-import type { IconName } from "../../ui/index.ts";
 import type { TreatPrefs } from "../Treat/index.tsx";
 
 // Turns one server alert (see model/alerts.ts) into plain clinical words:
@@ -157,7 +157,8 @@ function ago(locale: Locale, iso: IsoDate, asOf: IsoDate): string {
 }
 
 export function whenText(locale: Locale, s: Signal, asOf: IsoDate): string {
-  if (s.firstDate === s.lastDate) return `${t(locale, "alerts.when.on", { date: dateText(locale, s.firstDate, asOf) })} · ${ago(locale, s.lastDate, asOf)}`;
+  if (s.firstDate === s.lastDate)
+    return `${t(locale, "alerts.when.on", { date: dateText(locale, s.firstDate, asOf) })} · ${ago(locale, s.lastDate, asOf)}`;
   const since = t(locale, "alerts.when.since", { date: dateText(locale, s.firstDate, asOf) });
   if (s.lastDate >= asOf) return `${since} · ${t(locale, "alerts.when.ongoing")}`;
   return `${since} · ${t(locale, "alerts.when.last", { date: dateText(locale, s.lastDate, asOf) })} (${ago(locale, s.lastDate, asOf)})`;

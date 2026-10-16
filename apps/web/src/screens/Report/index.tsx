@@ -1,8 +1,7 @@
 import { useDeferredValue, useMemo } from "react";
-import { EVERY_UNIT } from "./count.ts";
-import type { AgeBand, Catalog, PatientQuery } from "../../model/types.ts";
 import type { FeedMeta, IsoDate, Result } from "../../feed/types.ts";
-import { formatDate, formatNumber, t, type Locale } from "../../i18n/index.ts";
+import { formatDate, formatNumber, type Locale, t } from "../../i18n/index.ts";
+import type { AgeBand, Catalog, PatientQuery } from "../../model/types.ts";
 import {
   ageLabel,
   antibioticName,
@@ -18,23 +17,24 @@ import {
   useStored,
 } from "../../ui/index.ts";
 import type { TreatPrefs } from "../Treat/index.tsx";
+import { EVERY_UNIT } from "./count.ts";
 import { DrugTable } from "./DrugTable.tsx";
 import { Filters } from "./Filters.tsx";
 import {
   buildMatrix,
   buildTable,
+  type CsvLabels,
   csvFilename,
-  matrixCsv,
   MIN,
+  matrixCsv,
   RECENT_DAYS,
   SORT_KEYS,
+  type SortKey,
   tableCsv,
   YEAR_DAYS,
-  type CsvLabels,
-  type SortKey,
 } from "./model.ts";
-import { cap, CsvButton, downloadCsv } from "./parts.tsx";
-import { PERIODS, UnitMatrix, type Period } from "./UnitMatrix.tsx";
+import { CsvButton, cap, downloadCsv } from "./parts.tsx";
+import { PERIODS, type Period, UnitMatrix } from "./UnitMatrix.tsx";
 import "./Report.css";
 
 /*
@@ -106,7 +106,10 @@ export function ReportScreen(p: {
   const days = period === "recent" ? RECENT_DAYS : YEAR_DAYS;
 
   const table = useMemo(() => (view === "table" ? buildTable(results, asOf, query, catalog) : null), [view, results, asOf, query, catalog]);
-  const matrix = useMemo(() => (view === "units" ? buildMatrix(results, asOf, base, catalog, days) : null), [view, results, asOf, base, catalog, days]);
+  const matrix = useMemo(
+    () => (view === "units" ? buildMatrix(results, asOf, base, catalog, days) : null),
+    [view, results, asOf, base, catalog, days],
+  );
 
   const site = cap(locale, specimenName(locale, meta, specimen));
   const unitLabel = ward ? unitName(locale, meta, ward) : t(locale, "common.unit.all");

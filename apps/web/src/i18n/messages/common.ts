@@ -110,8 +110,10 @@ const en = {
   "common.settings.thisServer": "this server",
   "common.settings.range": "The feed covers {start} to {end}. Results are released up to {asOf}.",
   "common.settings.count": "{count} results released so far.",
-  "common.settings.sim": "This demo is a simulation: past laboratory results are released day by day, as if they were arriving now. AEI notices changes by itself.",
-  "common.settings.rules": "Counting: the first isolate per patient, organism and specimen in each period. No percentage from fewer than {min} isolates.",
+  "common.settings.sim":
+    "This demo is a simulation: past laboratory results are released day by day, as if they were arriving now. AEI notices changes by itself.",
+  "common.settings.rules":
+    "Counting: the first isolate per patient, organism and specimen in each period. No percentage from fewer than {min} isolates.",
   "common.settings.decide": "AEI informs. The doctor decides.",
   "common.settings.ai": "Questions in your own words (AI)",
   "common.settings.aiOn": "On, using {model}",
@@ -180,7 +182,8 @@ const fi: Record<keyof typeof en, string> = {
   "common.fresh.checking": "Tarkistetaan muutoksia…",
 
   "common.sim.label": "Simulaatio",
-  "common.sim.note": "Demo: aiempia laboratoriotuloksia julkaistaan päivä kerrallaan kuin ne saapuisivat nyt. Oikeassa sairaalan syötteessä tätä ohjainta ei ole.",
+  "common.sim.note":
+    "Demo: aiempia laboratoriotuloksia julkaistaan päivä kerrallaan kuin ne saapuisivat nyt. Oikeassa sairaalan syötteessä tätä ohjainta ei ole.",
   "common.sim.play": "Toista",
   "common.sim.pause": "Tauko",
   "common.sim.step1": "+1 päivä",
@@ -266,8 +269,10 @@ const fi: Record<keyof typeof en, string> = {
   "common.settings.thisServer": "tämä palvelin",
   "common.settings.range": "Syöte kattaa {start}–{end}. Tulokset on julkaistu {asOf} asti.",
   "common.settings.count": "{count} tulosta julkaistu tähän mennessä.",
-  "common.settings.sim": "Tämä demo on simulaatio: aiempia laboratoriotuloksia julkaistaan päivä kerrallaan kuin ne saapuisivat nyt. AEI huomaa muutokset itse.",
-  "common.settings.rules": "Laskenta: ensimmäinen kanta potilasta, bakteeria ja näytettä kohden kullakin jaksolla. Ei prosenttia alle {min} kannasta.",
+  "common.settings.sim":
+    "Tämä demo on simulaatio: aiempia laboratoriotuloksia julkaistaan päivä kerrallaan kuin ne saapuisivat nyt. AEI huomaa muutokset itse.",
+  "common.settings.rules":
+    "Laskenta: ensimmäinen kanta potilasta, bakteeria ja näytettä kohden kullakin jaksolla. Ei prosenttia alle {min} kannasta.",
   "common.settings.decide": "AEI kertoo. Lääkäri päättää.",
   "common.settings.ai": "Kysy omin sanoin (tekoäly)",
   "common.settings.aiOn": "Käytössä, malli {model}",

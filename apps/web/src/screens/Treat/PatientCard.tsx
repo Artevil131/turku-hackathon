@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import type { FeedMeta } from "../../feed/types.ts";
-import { formatNumber, formatShare, named, t, type Locale } from "../../i18n/index.ts";
-import { Card, Icon, Org, Picker, Segmented, ToggleChip, type PickerGroup } from "../../ui/index.ts";
+import { formatNumber, formatShare, type Locale, named, t } from "../../i18n/index.ts";
+import { Card, Icon, Org, Picker, type PickerGroup, Segmented, ToggleChip } from "../../ui/index.ts";
 import { capFirst, type InfectionSeverity, type TreatChoice, unitGroups } from "./model.ts";
 import { institutionLabel, MONTHS, sexChipLabel } from "./text.tsx";
 

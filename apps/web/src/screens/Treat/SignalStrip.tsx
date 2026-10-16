@@ -1,6 +1,6 @@
-import type { Severity, Signal } from "../../model/types.ts";
 import type { FeedMeta } from "../../feed/types.ts";
-import { formatDate, formatNumber, t, type Locale } from "../../i18n/index.ts";
+import { formatDate, formatNumber, type Locale, t } from "../../i18n/index.ts";
+import type { Severity, Signal } from "../../model/types.ts";
 import { Icon } from "../../ui/index.ts";
 import { SIGNAL_LINES } from "./model.ts";
 import { signalSentence } from "./text.tsx";
@@ -40,7 +40,9 @@ export function SignalStrip({
               <span className="u-sr">{t(locale, `common.severity.${s.severity}`)}: </span>
               <span className="treat-signal-text">
                 <span className="treat-signal-sentence">{signalSentence(locale, meta, s, ward, min)}</span>
-                <span className="treat-signal-when u-num">{t(locale, "treat.signals.since", { date: formatDate(locale, s.firstDate) })}</span>
+                <span className="treat-signal-when u-num">
+                  {t(locale, "treat.signals.since", { date: formatDate(locale, s.firstDate) })}
+                </span>
               </span>
               <Icon name="chevron-right" size={18} className="treat-signal-chev" />
             </button>

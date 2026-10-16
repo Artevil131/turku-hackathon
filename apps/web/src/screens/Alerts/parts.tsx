@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
+import type { FeedMeta, IsoDate, Result } from "../../feed/types.ts";
+import { formatMonth, formatNumber, formatShare, type Locale, t } from "../../i18n/index.ts";
 import { addDays, daysBetween, maxDate, minDate } from "../../model/dates.ts";
 import type { Share, Signal } from "../../model/types.ts";
-import type { FeedMeta, IsoDate, Result } from "../../feed/types.ts";
-import { formatMonth, formatNumber, formatShare, t, type Locale } from "../../i18n/index.ts";
-import { Disclosure, Icon, MIN_ISOLATES, Org, SeverityBadge, signalKindLabel, Sparkline, specimenName, unitName } from "../../ui/index.ts";
+import { Disclosure, Icon, MIN_ISOLATES, Org, SeverityBadge, Sparkline, signalKindLabel, specimenName, unitName } from "../../ui/index.ts";
 import type { TreatPrefs } from "../Treat/index.tsx";
-import { AUDIENCE_ICON, dateText, describe, KIND_ICON, SPAN, type Described } from "./describe.tsx";
+import { AUDIENCE_ICON, type Described, dateText, describe, KIND_ICON, SPAN } from "./describe.tsx";
 
 // The pieces of one alert: its tags and summary (list), and its body (what
 // it rests on, who should act, the actions, the cases, how it was found).
@@ -163,7 +163,12 @@ function CaseStrip({ locale, s, asOf, cases }: { locale: Locale; s: Signal; asOf
       <p className="u-eyebrow" aria-hidden="true">
         {t(locale, bin === 7 ? "alerts.case.byWeek" : "alerts.case.byDay")}
       </p>
-      <div className={`alerts-strip-plot is-${s.severity}`} role="img" aria-label={label} style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
+      <div
+        className={`alerts-strip-plot is-${s.severity}`}
+        role="img"
+        aria-label={label}
+        style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
+      >
         {counts.map((c, i) => (
           <span key={i} className="alerts-strip-col">
             {c > 6 ? (
@@ -259,7 +264,12 @@ function Compare({ locale, s, screen }: { locale: Locale; s: Signal; screen: boo
       <section className="alerts-cmp" aria-label={heading}>
         <p className="alerts-cmp-h u-eyebrow">{heading}</p>
         <CompareRow locale={locale} label={t(locale, "alerts.cmp.recentWeeks", { weeks: SPAN.shiftWeeks })} share={s.recent} mode={mode} />
-        <CompareRow locale={locale} label={t(locale, "alerts.cmp.beforeMonths", { months: SPAN.shiftBeforeMonths })} share={s.baseline} mode={mode} />
+        <CompareRow
+          locale={locale}
+          label={t(locale, "alerts.cmp.beforeMonths", { months: SPAN.shiftBeforeMonths })}
+          share={s.baseline}
+          mode={mode}
+        />
       </section>
     );
   }
@@ -361,7 +371,8 @@ export function Body({
           <ul className="alerts-related">
             {s.related.map((r) => (
               <li key={r.id}>
-                <span className="u-num alerts-related-date">{dateText(locale, r.firstDate, asOf)}</span> {describe(locale, meta, r, asOf).title.node}
+                <span className="u-num alerts-related-date">{dateText(locale, r.firstDate, asOf)}</span>{" "}
+                {describe(locale, meta, r, asOf).title.node}
               </li>
             ))}
           </ul>

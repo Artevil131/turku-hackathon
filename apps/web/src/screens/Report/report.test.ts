@@ -1,26 +1,26 @@
 import { createElement as h } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { EVERY_UNIT } from "./count.ts";
-import type { Catalog } from "../../model/types.ts";
 import type { FeedMeta, Result } from "../../feed/types.ts";
-import { ReportScreen, type ReportPrefs } from "./index.tsx";
+import type { Catalog } from "../../model/types.ts";
+import { EVERY_UNIT } from "./count.ts";
+import { type ReportPrefs, ReportScreen } from "./index.tsx";
 import {
   buildMatrix,
   buildTable,
+  type CsvLabels,
   cellFromShare,
   csvField,
   csvFilename,
   largestDrop,
-  matrixCsv,
   MIN,
+  matrixCsv,
   RECENT_DAYS,
   sortRows,
   tableCsv,
   tintOf,
   toCsv,
   YEAR_DAYS,
-  type CsvLabels,
 } from "./model.ts";
 
 // A small invented feed (test data only): two units, E. coli with
@@ -180,7 +180,12 @@ describe("report CSV", () => {
     expect(csvField("=SUM(CIP)")).toBe("'=SUM(CIP)");
     expect(csvField(-12)).toBe("-12");
     expect(csvField(null)).toBe("");
-    expect(toCsv([["a", 1], ["b", null]])).toBe("a,1\r\nb,\r\n");
+    expect(
+      toCsv([
+        ["a", 1],
+        ["b", null],
+      ]),
+    ).toBe("a,1\r\nb,\r\n");
   });
 
   it("writes the antibiotics table with counts, and a percentage only from the floor", () => {

@@ -1,4 +1,4 @@
-import { useRef, type KeyboardEvent, type ReactNode } from "react";
+import { type KeyboardEvent, type ReactNode, useRef } from "react";
 
 /*
   Segmented: one choice out of a few (2 to 5), always visible. A radio group:
@@ -60,12 +60,7 @@ export function Segmented<T extends string>({
   }
 
   const group = (
-    <div
-      role="radiogroup"
-      aria-label={label}
-      className={`k-seg is-${size}${stretch ? " is-stretch" : ""}`}
-      onKeyDown={onKey}
-    >
+    <div role="radiogroup" aria-label={label} className={`k-seg is-${size}${stretch ? " is-stretch" : ""}`} onKeyDown={onKey}>
       {options.map((o, i) => {
         const selected = o.value === value;
         return (

@@ -2,19 +2,19 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { aiStatus, forgetAiStatus } from "./ai/index.ts";
 import type { FeedCommand, FeedMeta } from "./feed/types.ts";
 import { useFeed } from "./feed/useFeed.ts";
-import { formatDate, formatNumber, LOCALES, t, type Locale } from "./i18n/index.ts";
+import { formatDate, formatNumber, LOCALES, type Locale, t } from "./i18n/index.ts";
 import { isActive } from "./screens/Alerts/filters.ts";
 import { AlertsScreen } from "./screens/Alerts/index.tsx";
-import { ReportScreen, type ReportPrefs } from "./screens/Report/index.tsx";
+import { type ReportPrefs, ReportScreen } from "./screens/Report/index.tsx";
 import { TimelineScreen } from "./screens/Timeline/index.tsx";
-import { TreatScreen, type TreatPrefs } from "./screens/Treat/index.tsx";
+import { type TreatPrefs, TreatScreen } from "./screens/Treat/index.tsx";
 import { AskSheet } from "./ui/AskSheet.tsx";
 import { defaultSpecimen, defaultWard, signalKindLabel, unitName } from "./ui/defaults.ts";
 import { EmptyState } from "./ui/EmptyState.tsx";
 import { store, useIsDesktop, useMedia, useStored } from "./ui/hooks.ts";
 import { Icon } from "./ui/Icon.tsx";
-import { Settings, type AiState } from "./ui/Settings.tsx";
-import { FreshChip, Header, Tabs, type Route } from "./ui/Shell.tsx";
+import { type AiState, Settings } from "./ui/Settings.tsx";
+import { FreshChip, Header, type Route, Tabs } from "./ui/Shell.tsx";
 import { SimControl } from "./ui/SimControl.tsx";
 import { Toaster, type ToastItem } from "./ui/Toast.tsx";
 import { useSignals } from "./ui/useSignals.ts";
@@ -209,7 +209,10 @@ export function App() {
       text:
         lastArrival.count === 1
           ? t(locale, "common.toast.arrivalsOne", { date: formatDate(locale, lastArrival.to) })
-          : t(locale, "common.toast.arrivals", { count: formatNumber(locale, lastArrival.count), date: formatDate(locale, lastArrival.to) }),
+          : t(locale, "common.toast.arrivals", {
+              count: formatNumber(locale, lastArrival.count),
+              date: formatDate(locale, lastArrival.to),
+            }),
     });
   }, [lastArrival?.seq]);
 
@@ -339,10 +342,14 @@ export function App() {
 
   return (
     <div className={`app${desktop ? " is-desktop" : " is-phone"}`}>
-      <a className="app-skip" href="#main" onClick={(e) => {
-        e.preventDefault();
-        mainRef.current?.focus();
-      }}>
+      <a
+        className="app-skip"
+        href="#main"
+        onClick={(e) => {
+          e.preventDefault();
+          mainRef.current?.focus();
+        }}
+      >
         {t(locale, "common.skip")}
       </a>
       {/* Desktop: the simulation band stays with the header. Phones: only the header sticks, the band scrolls away. */}

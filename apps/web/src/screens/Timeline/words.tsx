@@ -1,11 +1,11 @@
 import { Fragment, type ReactNode } from "react";
+import type { FeedMeta } from "../../feed/types.ts";
+import { formatDate, formatNumber, formatShare, type Locale, type MessageKey, t } from "../../i18n/index.ts";
 import { CLUSTER_WINDOW_DAYS, GAP_WINDOW_DAYS, NEW_FLAG_QUIET_DAYS, SURGE_WINDOW_DAYS, TREND_BIN_DAYS } from "../../model/rules.ts";
 import type { Share, Signal } from "../../model/types.ts";
-import type { FeedMeta } from "../../feed/types.ts";
-import { formatDate, formatNumber, formatShare, t, type Locale, type MessageKey } from "../../i18n/index.ts";
 import { antibioticName, signalKindLabel, specimenName, unitName } from "../../ui/defaults.ts";
-import { MIN_ISOLATES } from "../../ui/ShareBar.tsx";
 import { Org } from "../../ui/Org.tsx";
+import { MIN_ISOLATES } from "../../ui/ShareBar.tsx";
 
 // Plain words for one signal: its title, where, when, and a one-line summary
 // built from the signal's own numbers. Organism names come back in italics.
@@ -139,11 +139,13 @@ export function Summary({ locale, meta, signal, short = false }: { locale: Local
   return <>{out}</>;
 }
 
-
 /** How many results a signal rests on, in words. */
 export function basisText(locale: Locale, s: Signal): string {
   if ((s.kind === "shift" || s.kind === "trend") && s.recent && s.baseline)
-    return t(locale, "timeline.detail.basisShare", { recent: formatNumber(locale, s.recent.n), baseline: formatNumber(locale, s.baseline.n) });
+    return t(locale, "timeline.detail.basisShare", {
+      recent: formatNumber(locale, s.recent.n),
+      baseline: formatNumber(locale, s.baseline.n),
+    });
   if (s.kind === "data-gap") return t(locale, "timeline.detail.basisCount");
   const n = s.isolateIds.length;
   if (n === 1) return t(locale, "timeline.detail.basisOne");

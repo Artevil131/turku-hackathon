@@ -1,6 +1,6 @@
+import type { FeedMeta, IsoDate, Result } from "../../feed/types.ts";
 import { addDays, fromDayNumber, toDayNumber, weekStart } from "../../model/dates.ts";
 import type { Signal } from "../../model/types.ts";
-import type { FeedMeta, IsoDate, Result } from "../../feed/types.ts";
 
 /*
   Week-by-week numbers for the Timeline, from released results only.
@@ -304,7 +304,9 @@ export function byMonth(signals: readonly Signal[]): { month: IsoDate; items: Si
       month,
       items: items.sort(
         (a, b) =>
-          (a.firstDate < b.firstDate ? 1 : a.firstDate > b.firstDate ? -1 : 0) || rank[a.severity] - rank[b.severity] || (a.id < b.id ? -1 : 1),
+          (a.firstDate < b.firstDate ? 1 : a.firstDate > b.firstDate ? -1 : 0) ||
+          rank[a.severity] - rank[b.severity] ||
+          (a.id < b.id ? -1 : 1),
       ),
     }));
 }

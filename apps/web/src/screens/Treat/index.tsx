@@ -1,8 +1,8 @@
 import { useMemo } from "react";
 import type { FeedMeta, IsoDate, Result } from "../../feed/types.ts";
+import { type Locale, t } from "../../i18n/index.ts";
 import { MIN_ISOLATES } from "../../model/rules.ts";
 import type { Signal } from "../../model/types.ts";
-import { t, type Locale } from "../../i18n/index.ts";
 import { sexesIn, signalsFor, type TreatChoice } from "./model.ts";
 import { PatientCard } from "./PatientCard.tsx";
 import { ResultView } from "./Result.tsx";

@@ -1,8 +1,20 @@
 import type { ReactNode } from "react";
-import { formatDate, formatNumber, formatShare, t, type Locale } from "../../i18n/index.ts";
+import { formatDate, formatNumber, formatShare, type Locale, t } from "../../i18n/index.ts";
 import { AwareBadge, Card, EmptyState, Icon, Segmented } from "../../ui/index.ts";
-import { cellValue, largestDrop, MIN, RECENT_DAYS, SORT_KEYS, sortRows, windowStart, YEAR_DAYS, type DrugRow, type SortKey, type TableModel } from "./model.ts";
-import { cap, Change, Fig, MonthSpark } from "./parts.tsx";
+import {
+  cellValue,
+  type DrugRow,
+  largestDrop,
+  MIN,
+  RECENT_DAYS,
+  SORT_KEYS,
+  type SortKey,
+  sortRows,
+  type TableModel,
+  windowStart,
+  YEAR_DAYS,
+} from "./model.ts";
+import { Change, cap, Fig, MonthSpark } from "./parts.tsx";
 
 /*
   The antibiotics view: one row per treatment antibiotic for the chosen
@@ -86,7 +98,9 @@ export function DrugTable({
   return (
     <Card className="report-card" title={t(locale, "report.table.title")} actions={actions}>
       <div className="report-basis">
-        <p className="report-basis-counts u-num">{t(locale, "report.basis.counts", { year: num(model.yearN), recent: num(model.recentN) })}</p>
+        <p className="report-basis-counts u-num">
+          {t(locale, "report.basis.counts", { year: num(model.yearN), recent: num(model.recentN) })}
+        </p>
         {hasHospital && model.hospitalN !== null ? (
           <p className="report-basis-more u-num">{t(locale, "report.basis.hospital", { n: num(model.hospitalN) })}</p>
         ) : null}

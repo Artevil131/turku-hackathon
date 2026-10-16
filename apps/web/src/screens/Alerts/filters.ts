@@ -1,6 +1,6 @@
+import type { IsoDate } from "../../feed/types.ts";
 import { addDays } from "../../model/dates.ts";
 import type { Severity, Signal, SignalKind } from "../../model/types.ts";
-import type { IsoDate } from "../../feed/types.ts";
 
 // Which alerts the screen lists, and in what order. Pure, so the shell (e.g.
 // the Alerts tab badge) and tests can use the same rules as the screen.

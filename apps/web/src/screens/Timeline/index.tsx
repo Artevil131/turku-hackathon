@@ -1,8 +1,8 @@
 import { useMemo, useRef, useState } from "react";
+import type { FeedClock, FeedMeta, IsoDate, Result } from "../../feed/types.ts";
+import { formatDate, formatMonth, formatNumber, formatShare, type Locale, t } from "../../i18n/index.ts";
 import { toDayNumber } from "../../model/dates.ts";
 import type { Severity, Signal, SignalKind } from "../../model/types.ts";
-import type { FeedClock, FeedMeta, IsoDate, Result } from "../../feed/types.ts";
-import { formatDate, formatMonth, formatNumber, formatShare, t, type Locale } from "../../i18n/index.ts";
 import { Badge, SeverityBadge } from "../../ui/Badge.tsx";
 import { Card } from "../../ui/Card.tsx";
 import { signalKindLabel, unitName } from "../../ui/defaults.ts";
@@ -10,10 +10,10 @@ import { EmptyState } from "../../ui/EmptyState.tsx";
 import { useIsDesktop } from "../../ui/hooks.ts";
 import { Icon } from "../../ui/Icon.tsx";
 import { MIN_ISOLATES } from "../../ui/ShareBar.tsx";
-import { byMonth, laneOrder, updateStore, visibleSignals, weekly, type DailyStore } from "./aggregate.ts";
+import { byMonth, type DailyStore, laneOrder, updateStore, visibleSignals, weekly } from "./aggregate.ts";
 import { TimelineChart } from "./Chart.tsx";
 import { KindGlyph } from "./Glyph.tsx";
-import { flagLabel, signalTitle, signalWhen, signalWhere, Summary, summaryText } from "./words.tsx";
+import { flagLabel, Summary, signalTitle, signalWhen, signalWhere, summaryText } from "./words.tsx";
 import "./Timeline.css";
 
 // The Timeline: the feed's whole period on one view, the story so far, and the
@@ -270,7 +270,12 @@ export function TimelineScreen(p: {
                 </section>
               ))}
               {months.length > MONTHS_SHOWN ? (
-                <button type="button" className="k-btn is-ghost timeline-more" onClick={() => setAllMonths(!allMonths)} aria-expanded={allMonths}>
+                <button
+                  type="button"
+                  className="k-btn is-ghost timeline-more"
+                  onClick={() => setAllMonths(!allMonths)}
+                  aria-expanded={allMonths}
+                >
                   <Icon name={allMonths ? "chevron-down" : "chevron-right"} size={18} />
                   {allMonths ? t(locale, "timeline.list.fewer") : t(locale, "timeline.list.older", { count: months.length - MONTHS_SHOWN })}
                 </button>

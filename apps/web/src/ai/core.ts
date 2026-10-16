@@ -1,6 +1,6 @@
+import type { AskAnswer, FeedMeta, IsoDate, Named } from "../feed/types.ts";
 import { addDays, addMonths, isIsoDate, maxDate, weekStart } from "../model/dates.ts";
 import type { Onset } from "../model/types.ts";
-import type { AskAnswer, FeedMeta, IsoDate, Named } from "../feed/types.ts";
 
 // Pure parts of the optional AI layer: plain-language question -> filters.
 // The language model only picks from the code lists in FeedMeta and names a
@@ -171,23 +171,52 @@ export function exampleTurns(meta: FeedMeta): { role: "user" | "assistant"; cont
   const specimen = meta.specimens[0];
   const specimen2 = meta.specimens[1] ?? meta.specimens[0];
   const organism = meta.organisms[0];
-  const empty = { unit: null, specimen: null, organism: null, antibiotic: null, sex: null, age: null, onset: null, period: null, intent: null, unmatched: [] as string[] };
+  const empty = {
+    unit: null,
+    specimen: null,
+    organism: null,
+    antibiotic: null,
+    sex: null,
+    age: null,
+    onset: null,
+    period: null,
+    intent: null,
+    unmatched: [] as string[],
+  };
   const turns: { role: "user" | "assistant"; content: string }[] = [];
   if (unit && specimen && organism) {
     turns.push(
       { role: "user", content: `${specimen.en} ${abbreviate(organism)} in women over 80 at ${unit.en.toLowerCase()}, last 2 weeks` },
       {
         role: "assistant",
-        content: JSON.stringify({ ...empty, unit: unit.code, specimen: specimen.code, organism, sex: "F", age: "very_old", period: { kind: "last", count: 2, unit: "week" } }),
+        content: JSON.stringify({
+          ...empty,
+          unit: unit.code,
+          specimen: specimen.code,
+          organism,
+          sex: "F",
+          age: "very_old",
+          period: { kind: "last", count: 2, unit: "week" },
+        }),
       },
     );
   }
   if (unit2 && specimen2) {
     turns.push(
-      { role: "user", content: `mikä tehoaa nyt? ${unit2.fi.toLowerCase()}, ${specimen2.fi.toLowerCase()}näytteet tänä vuonna, Atlantiksen sairaala` },
+      {
+        role: "user",
+        content: `mikä tehoaa nyt? ${unit2.fi.toLowerCase()}, ${specimen2.fi.toLowerCase()}näytteet tänä vuonna, Atlantiksen sairaala`,
+      },
       {
         role: "assistant",
-        content: JSON.stringify({ ...empty, unit: unit2.code, specimen: specimen2.code, period: { kind: "this", count: 1, unit: "year" }, intent: "treatment", unmatched: ["Atlantiksen sairaala"] }),
+        content: JSON.stringify({
+          ...empty,
+          unit: unit2.code,
+          specimen: specimen2.code,
+          period: { kind: "this", count: 1, unit: "year" },
+          intent: "treatment",
+          unmatched: ["Atlantiksen sairaala"],
+        }),
       },
     );
   }
@@ -224,7 +253,12 @@ export function parseReply(content: string): unknown {
   return null;
 }
 
-const norm = (s: string) => s.normalize("NFKC").toLowerCase().replace(/[\s._-]+/g, " ").trim();
+const norm = (s: string) =>
+  s
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/[\s._-]+/g, " ")
+    .trim();
 
 /** A Named item by code, or by its English or Finnish name (case and spacing ignored). */
 export function matchNamed<T extends Named>(value: string, items: readonly T[]): T | undefined {
@@ -299,7 +333,11 @@ export function resolvePeriod(period: unknown, asOf: IsoDate, earliest?: IsoDate
 
 /** Lower-case letter/digit words of a text. */
 export function questionWords(text: string): string[] {
-  return text.normalize("NFKC").toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+  return text
+    .normalize("NFKC")
+    .toLowerCase()
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter(Boolean);
 }
 
 /** Spelling variants so Latin and Finnish forms meet: Staphylococcus ~ stafylokokki, Citrobacter ~ sitrobakteeri. */
@@ -327,7 +365,11 @@ function findWord(words: readonly string[], name: string): string | undefined {
  * species word, or its genus when no other listed organism shares that genus.
  * `genusOnly` is the question's word when the genus fits several organisms.
  */
-export function organismInQuestion(question: string, organism: string, organisms: readonly string[]): { named: boolean; genusOnly?: string } {
+export function organismInQuestion(
+  question: string,
+  organism: string,
+  organisms: readonly string[],
+): { named: boolean; genusOnly?: string } {
   const words = questionWords(question);
   const [genus = "", ...rest] = questionWords(organism);
   const species = rest.join(" ");
@@ -344,12 +386,82 @@ export function organismInQuestion(question: string, organism: string, organisms
 }
 
 // Words that show the question is about a sample type or an infection (prefixes).
-const SPECIMEN_HINTS = ["infect", "infekt", "uti", "sepsi", "bacter", "bakter", "culture", "viljel", "sample", "näyt", "specimen", "cystit", "kystiit", "pyelo", "tulehd", "abscess", "absess", "absce"];
-const SEX_HINTS = ["men", "man", "male", "boy", "women", "woman", "female", "girl", "mies", "miehe", "miehi", "miest", "nais", "nain", "poik", "poja", "tytt", "tytö"];
-const AGE_HINTS = ["child", "kid", "paediatr", "pediatr", "infant", "baby", "newborn", "teen", "adolesc", "adult", "old", "older", "oldest", "elder", "aged", "senior", "over", "under", "laps", "lasten", "vauva", "nuor", "aikui", "iäk", "vanh", "ikä", "ikäi", "vuotia", "yli", "alle"];
+const SPECIMEN_HINTS = [
+  "infect",
+  "infekt",
+  "uti",
+  "sepsi",
+  "bacter",
+  "bakter",
+  "culture",
+  "viljel",
+  "sample",
+  "näyt",
+  "specimen",
+  "cystit",
+  "kystiit",
+  "pyelo",
+  "tulehd",
+  "abscess",
+  "absess",
+  "absce",
+];
+const SEX_HINTS = [
+  "men",
+  "man",
+  "male",
+  "boy",
+  "women",
+  "woman",
+  "female",
+  "girl",
+  "mies",
+  "miehe",
+  "miehi",
+  "miest",
+  "nais",
+  "nain",
+  "poik",
+  "poja",
+  "tytt",
+  "tytö",
+];
+const AGE_HINTS = [
+  "child",
+  "kid",
+  "paediatr",
+  "pediatr",
+  "infant",
+  "baby",
+  "newborn",
+  "teen",
+  "adolesc",
+  "adult",
+  "old",
+  "older",
+  "oldest",
+  "elder",
+  "aged",
+  "senior",
+  "over",
+  "under",
+  "laps",
+  "lasten",
+  "vauva",
+  "nuor",
+  "aikui",
+  "iäk",
+  "vanh",
+  "ikä",
+  "ikäi",
+  "vuotia",
+  "yli",
+  "alle",
+];
 const ONSET_HINTS = ["hospital", "nosocom", "acquired", "community", "onset", "sairaala", "avohoi", "kotoa"];
 
-const hinted = (words: readonly string[], hints: readonly string[]) => words.some((w) => hints.some((h) => (h.length <= 3 ? w === h || w === `${h}s` : w.startsWith(h))));
+const hinted = (words: readonly string[], hints: readonly string[]) =>
+  words.some((w) => hints.some((h) => (h.length <= 3 ? w === h || w === `${h}s` : w.startsWith(h))));
 
 /** Whether the question has a word for this kind of filter (sex, age, onset, or a sample/infection word for the specimen). */
 export function fieldInQuestion(question: string, field: "specimen" | "sex" | "age" | "onset", specimen?: Named): boolean {
@@ -357,7 +469,8 @@ export function fieldInQuestion(question: string, field: "specimen" | "sex" | "a
   if (field === "sex") return hinted(words, SEX_HINTS);
   if (field === "onset") return hinted(words, ONSET_HINTS);
   if (field === "age") return hinted(words, AGE_HINTS);
-  if (specimen && (words.includes(specimen.code.toLowerCase()) || findWord(words, specimen.en) || findWord(words, specimen.fi))) return true;
+  if (specimen && (words.includes(specimen.code.toLowerCase()) || findWord(words, specimen.en) || findWord(words, specimen.fi)))
+    return true;
   return hinted(words, SPECIMEN_HINTS);
 }
 
@@ -371,7 +484,9 @@ export function unitInQuestion<T extends Named>(question: string, units: readonl
   const firstWords = units.map((u) => [u.en, u.fi].map((n) => questionWords(n)[0] ?? "").filter((w) => w.length >= 4));
   const hits = units.filter((u, i) => {
     if (u.code.length >= 3 && words.includes(u.code.toLowerCase())) return true;
-    return firstWords[i]!.some((fw) => !firstWords.some((other, j) => j !== i && other.includes(fw)) && words.some((q) => wordsMeet(q, fw)));
+    return firstWords[i]!.some(
+      (fw) => !firstWords.some((other, j) => j !== i && other.includes(fw)) && words.some((q) => wordsMeet(q, fw)),
+    );
   });
   return hits.length === 1 ? hits[0] : undefined;
 }
@@ -413,7 +528,8 @@ const NUMBER_WORDS: [number, string[]][] = [
  */
 export function periodInQuestion(question: string, period: RelativePeriod): boolean {
   const words = questionWords(question).flatMap((w) => w.match(/\p{L}+|\p{N}+/gu) ?? []);
-  const hasUnit = (u: PeriodUnit) => words.some((w) => UNIT_WORDS[u].exact.includes(w) || UNIT_WORDS[u].prefixes.some((p) => w.startsWith(p)));
+  const hasUnit = (u: PeriodUnit) =>
+    words.some((w) => UNIT_WORDS[u].exact.includes(w) || UNIT_WORDS[u].prefixes.some((p) => w.startsWith(p)));
   // "half a year" / "a quarter" are stated in months by the model.
   const halfOrQuarter = period.unit === "month" && (period.count === 6 || period.count === 3) && hasUnit("year");
   if (!hasUnit(period.unit) && !halfOrQuarter) return false;
@@ -439,7 +555,8 @@ export function validateAnswer(raw: unknown, meta: FeedMeta, asOf: IsoDate, ques
     if (typeof v === "string" && v.trim()) unmatched.push(v.trim());
   };
 
-  const traced = (field: "specimen" | "sex" | "age" | "onset", specimen?: Named) => question === undefined || fieldInQuestion(question, field, specimen);
+  const traced = (field: "specimen" | "sex" | "age" | "onset", specimen?: Named) =>
+    question === undefined || fieldInQuestion(question, field, specimen);
 
   const unit = str(r.unit ?? r.ward);
   if (unit) {

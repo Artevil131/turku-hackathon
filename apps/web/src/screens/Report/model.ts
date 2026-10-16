@@ -1,8 +1,8 @@
 import { MAX_UNTESTED } from "@aei/coverage";
+import type { IsoDate, Result } from "../../feed/types.ts";
 import { addDays } from "../../model/dates.ts";
 import { MIN_ISOLATES } from "../../model/rules.ts";
 import type { AwareGroup, Catalog, LikelyOrganism, MonthPoint, PatientQuery, Share } from "../../model/types.ts";
-import type { IsoDate, Result } from "../../feed/types.ts";
 import { EVERY_UNIT, monthly, shareValue, treatmentsFor, type WindowCounts, windowCoverage } from "./count.ts";
 
 /*
@@ -189,17 +189,14 @@ export interface MatrixModel {
   organisms: LikelyOrganism[];
 }
 
-export function buildMatrix(
-  results: readonly Result[],
-  asOf: IsoDate,
-  query: PatientQuery,
-  catalog: Catalog,
-  days: number,
-): MatrixModel {
+export function buildMatrix(results: readonly Result[], asOf: IsoDate, query: PatientQuery, catalog: Catalog, days: number): MatrixModel {
   const organismKnown = !!query.organism;
   const base: PatientQuery = { ...query, ward: EVERY_UNIT };
   const allCov = windowCoverage(results, asOf, base, catalog, days);
-  const unitCovs = catalog.units.map((u) => ({ ward: u.code, cov: windowCoverage(results, asOf, { ...base, ward: u.code }, catalog, days) }));
+  const unitCovs = catalog.units.map((u) => ({
+    ward: u.code,
+    cov: windowCoverage(results, asOf, { ...base, ward: u.code }, catalog, days),
+  }));
   const organisms = days === YEAR_DAYS ? allCov.organisms : windowCoverage(results, asOf, base, catalog, YEAR_DAYS).organisms;
 
   const used = new Map<string, AwareGroup | null>();

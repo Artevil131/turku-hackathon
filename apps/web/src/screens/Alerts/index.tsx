@@ -1,11 +1,33 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import type { Severity, Signal, SignalKind } from "../../model/types.ts";
+import { type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { FeedMeta, IsoDate, Result } from "../../feed/types.ts";
-import { formatDate, formatNumber, named, t, type Locale } from "../../i18n/index.ts";
-import { Card, ChipGroup, EmptyState, Icon, Picker, Segmented, signalKindLabel, ToggleChip, useIsDesktop, useReducedMotion } from "../../ui/index.ts";
+import { formatDate, formatNumber, type Locale, named, t } from "../../i18n/index.ts";
+import type { Severity, Signal, SignalKind } from "../../model/types.ts";
+import {
+  Card,
+  ChipGroup,
+  EmptyState,
+  Icon,
+  Picker,
+  Segmented,
+  signalKindLabel,
+  ToggleChip,
+  useIsDesktop,
+  useReducedMotion,
+} from "../../ui/index.ts";
 import type { TreatPrefs } from "../Treat/index.tsx";
-import { compose, describe, type Described } from "./describe.tsx";
-import { ACTIVE_DAYS, DEFAULT_FILTERS, isActive, KINDS, passes, reveal, SEVERITIES, sortAlerts, type AlertFilters, type Period } from "./filters.ts";
+import { compose, type Described, describe } from "./describe.tsx";
+import {
+  ACTIVE_DAYS,
+  type AlertFilters,
+  DEFAULT_FILTERS,
+  isActive,
+  KINDS,
+  type Period,
+  passes,
+  reveal,
+  SEVERITIES,
+  sortAlerts,
+} from "./filters.ts";
 import { Body, Summary, Tags } from "./parts.tsx";
 import "./Alerts.css";
 
@@ -85,8 +107,18 @@ export function AlertsScreen(p: {
   const checking = signals.length === 0 && !graceOver;
 
   // ---------- What is listed ----------
-  const sorted = useMemo(() => sortAlerts(signals.filter((s) => passes(s, filters, asOf)), asOf), [signals, filters, asOf]);
-  const inPeriod = useMemo(() => signals.filter((s) => filters.period === "all" || isActive(s, asOf)).length, [signals, filters.period, asOf]);
+  const sorted = useMemo(
+    () =>
+      sortAlerts(
+        signals.filter((s) => passes(s, filters, asOf)),
+        asOf,
+      ),
+    [signals, filters, asOf],
+  );
+  const inPeriod = useMemo(
+    () => signals.filter((s) => filters.period === "all" || isActive(s, asOf)).length,
+    [signals, filters.period, asOf],
+  );
   const hiddenCount = inPeriod - sorted.length;
   const newCount = sorted.reduce((k, s) => k + (seen.has(s.id) ? 0 : 1), 0);
   const counts = useMemo(() => {
@@ -100,7 +132,10 @@ export function AlertsScreen(p: {
     }
     return { sev, kind, unit };
   }, [signals, filters, asOf]);
-  const described = useMemo(() => new Map<string, Described>(sorted.map((s) => [s.id, describe(locale, meta, s, asOf)])), [sorted, locale, meta, asOf]);
+  const described = useMemo(
+    () => new Map<string, Described>(sorted.map((s) => [s.id, describe(locale, meta, s, asOf)])),
+    [sorted, locale, meta, asOf],
+  );
   const current = desktop ? (sorted.find((s) => s.id === selected) ?? sorted[0] ?? null) : null;
 
   // ---------- Opened from elsewhere (a toast, the Treat or Timeline screen) ----------
@@ -185,7 +220,9 @@ export function AlertsScreen(p: {
   const toggleSeverity = (sev: Severity) =>
     setFilters((f) => ({
       ...f,
-      severities: f.severities.includes(sev) ? f.severities.filter((x) => x !== sev) : SEVERITIES.filter((x) => x === sev || f.severities.includes(x)),
+      severities: f.severities.includes(sev)
+        ? f.severities.filter((x) => x !== sev)
+        : SEVERITIES.filter((x) => x === sev || f.severities.includes(x)),
     }));
   const showAll = () => setFilters((f) => ({ ...f, severities: [...SEVERITIES], kind: null, unit: null }));
   const markAll = () => onSeen(sorted.filter((s) => !seen.has(s.id)).map((s) => s.id));
@@ -249,7 +286,11 @@ export function AlertsScreen(p: {
           onChange={(period) => setFilters((f) => ({ ...f, period }))}
           stretch={!desktop}
           options={[
-            { value: "active", label: t(locale, "alerts.period.active"), hint: t(locale, "alerts.period.activeHint", { days: ACTIVE_DAYS }) },
+            {
+              value: "active",
+              label: t(locale, "alerts.period.active"),
+              hint: t(locale, "alerts.period.activeHint", { days: ACTIVE_DAYS }),
+            },
             { value: "all", label: t(locale, "alerts.period.all"), hint: t(locale, "alerts.period.allHint") },
           ]}
         />
@@ -386,7 +427,13 @@ export function AlertsScreen(p: {
             <Summary
               d={d}
               control={
-                <button type="button" className="alerts-toggle" aria-expanded={open} aria-controls={`${id}-body`} onClick={() => toggle(s.id)}>
+                <button
+                  type="button"
+                  className="alerts-toggle"
+                  aria-expanded={open}
+                  aria-controls={`${id}-body`}
+                  onClick={() => toggle(s.id)}
+                >
                   {d.title.node}
                 </button>
               }
@@ -454,14 +501,15 @@ export function AlertsScreen(p: {
       {header}
       {signals.length > 0 ? filterBar : null}
       {hiddenLine}
-      {empty ?? (desktop ? (
-        <div className="alerts-cols">
-          {list}
-          {detail}
-        </div>
-      ) : (
-        list
-      ))}
+      {empty ??
+        (desktop ? (
+          <div className="alerts-cols">
+            {list}
+            {detail}
+          </div>
+        ) : (
+          list
+        ))}
     </div>
   );
 }

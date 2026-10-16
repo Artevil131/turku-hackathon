@@ -76,7 +76,13 @@ function organismsOf(list: readonly Result[]): LikelyOrganism[] {
 }
 
 /** Counts for exactly this query over the `days` up to and including `asOf`. */
-export function windowCoverage(results: readonly Result[], asOf: IsoDate, query: PatientQuery, catalog: Catalog, days: number): WindowCounts {
+export function windowCoverage(
+  results: readonly Result[],
+  asOf: IsoDate,
+  query: PatientQuery,
+  catalog: Catalog,
+  days: number,
+): WindowCounts {
   const from = addDays(asOf, 1 - days);
   const isolates = pool(results, from, asOf, query);
   const drugs: DrugFigure[] = [];

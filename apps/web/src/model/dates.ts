@@ -76,7 +76,7 @@ export function monthsBetween(from: IsoDate, to: IsoDate): number {
 export function weekStart(iso: IsoDate): IsoDate {
   const day = toDayNumber(iso);
   // 1970-01-01 was a Thursday: (day + 3) mod 7 is 0 on Mondays.
-  return fromDayNumber(day - (((day + 3) % 7) + 7) % 7);
+  return fromDayNumber(day - ((((day + 3) % 7) + 7) % 7));
 }
 
 /** The earlier of two dates. */

@@ -184,11 +184,13 @@ export function startFeedSync(feed: Feed, emit: (state: SyncState) => void): Fee
     if (e.type === "clock") {
       clockAsOf = e.clock.asOf;
       set({ clock: e.clock });
-      if (loadedTo && e.clock.asOf < loadedTo) reload(e.clock.asOf); // went back without a reset event
+      if (loadedTo && e.clock.asOf < loadedTo)
+        reload(e.clock.asOf); // went back without a reset event
       else if (loadedTo && e.clock.asOf > loadedTo) scheduleCatchUp();
     } else if (e.type === "arrivals") {
       if (loadedTo && e.to <= loadedTo && e.results.every((r) => ids.has(r.isolateId))) return; // already have it
-      if (loadedTo && e.from > loadedTo) fetchGap(e.to, e.results); // days in between are missing
+      if (loadedTo && e.from > loadedTo)
+        fetchGap(e.to, e.results); // days in between are missing
       else append(e.results, e.to, true);
     } else {
       clockAsOf = e.clock.asOf;

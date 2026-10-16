@@ -1,7 +1,7 @@
+import { formatNumber, formatShare, type Locale, t } from "../../i18n/index.ts";
 import type { MonthPoint } from "../../model/types.ts";
-import { formatNumber, formatShare, t, type Locale } from "../../i18n/index.ts";
 import { Sparkline } from "../../ui/index.ts";
-import { MIN, type Cell } from "./model.ts";
+import { type Cell, MIN } from "./model.ts";
 
 /*
   Small pieces shared by the report's two views:
@@ -95,7 +95,17 @@ export function Change({ locale, change }: { locale: Locale; change: number | nu
 /** Minimum height of the sparkline's y range (share 0-1), so a two-point wobble does not look like a cliff. */
 const MIN_SPAN = 0.2;
 
-export function MonthSpark({ locale, drug, months, fluid = false }: { locale: Locale; drug: string; months: readonly MonthPoint[]; fluid?: boolean }) {
+export function MonthSpark({
+  locale,
+  drug,
+  months,
+  fluid = false,
+}: {
+  locale: Locale;
+  drug: string;
+  months: readonly MonthPoint[];
+  fluid?: boolean;
+}) {
   const values = months.map((p) => (p.share.n >= MIN && p.share.n > 0 ? p.share.works / p.share.n : null));
   const known = values.filter((v): v is number => v !== null);
   if (known.length < 2) return <span className="report-spark-few">{t(locale, "report.months.tooFew")}</span>;
@@ -140,8 +150,26 @@ export function MonthSpark({ locale, drug, months, fluid = false }: { locale: Lo
 
 export function CsvButton({ locale, onClick, disabled }: { locale: Locale; onClick: () => void; disabled?: boolean }) {
   return (
-    <button type="button" className="k-btn is-secondary is-sm report-csv" onClick={onClick} disabled={disabled} aria-label={t(locale, "report.csv.aria")}>
-      <svg className="k-icon" width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+    <button
+      type="button"
+      className="k-btn is-secondary is-sm report-csv"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={t(locale, "report.csv.aria")}
+    >
+      <svg
+        className="k-icon"
+        width={18}
+        height={18}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.75}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+        focusable="false"
+      >
         <path d="M12 4v11 M7 10.5l5 5 5-5 M5 19.5h14" />
       </svg>
       <span>{t(locale, "report.csv.button")}</span>
