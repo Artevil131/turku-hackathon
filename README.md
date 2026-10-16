@@ -2,8 +2,9 @@
 
 Our challenge is the Antibiotic Efficacy Indicator (AEI) by Tyks
 Laboratories: a continuously updated, ward-level view of antibiotic
-resistance. The problem, the data and the open questions are in
-CONTEXT.md. This repository lays the foundation so that whatever we build,
+resistance, for doctors choosing empirical treatment and for researchers
+watching for spread. The problem, the data and the open questions are in
+CONTEXT.md; who we build for and what they need is in AUDIENCE.md. This repository lays the foundation so that whatever we build,
 a website and an iPhone app among it, sits on one structure.
 
 The architecture tries to generalise and keep everything as untangled as
@@ -35,9 +36,12 @@ experiment, it belongs in `libs/utils`, from the start.
     scripts/        every script: setup, data download, maintenance, one-offs
     benchmarks/     repeatable measurements of utils and apps (speed, quality,
                     cost) that are rerun as the code changes
+    research/       background reading notes with sources (users, domain,
+                    open data); describes the field, decides nothing
     experiments/    one directory per experiment, NNNN-slug/README.md,
                     started from experiments/TEMPLATE.md
     CONTEXT.md      the challenge: problem, data, open questions
+    AUDIENCE.md     the audiences, what each needs from the data, and who on the team does what
     PROTOCOL.md     how an experiment is planned, run and recorded in git,
                     and the rules for claims
     DECISIONS.md    every technical, mathematical or statistical choice the

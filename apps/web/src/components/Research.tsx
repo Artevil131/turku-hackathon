@@ -293,7 +293,7 @@ export function Research(props: Props) {
             {!question.active ? <ExampleChange locale={locale} /> : null}
             <AlertList
               client={props.client}
-              alerts={props.alerts.filter((a) => state.ward === "all" || a.ward === state.ward)}
+              alerts={props.alerts.filter((a) => state.ward === "all" || a.ward === state.ward || a.ward === null)}
               locale={locale}
             />
             {question.active && question.loading ? <p role="status">{t(locale, "dataLoading")}</p> : null}

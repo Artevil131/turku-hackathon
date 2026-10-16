@@ -71,8 +71,8 @@ describe("assistant HTTP routes", () => {
     expect(en).toMatchObject({ id: "cpe:i2", source: "template" });
     expect(en.text).toContain("Intensive care unit");
     expect(fi.text).toContain("Teho-osasto");
-    const carrier = await (await fetch(`${base}/api/explain?id=carrier:c2:esbl&lang=en`)).json();
-    expect(carrier.text).toContain("61 days");
+    // Carrier arrivals are no longer alerts (D-022).
+    expect((await fetch(`${base}/api/explain?id=carrier:c2:esbl&lang=en`)).status).toBe(404);
     expect((await fetch(`${base}/api/explain?id=cpe:i3&lang=en`)).status).toBe(404);
     await fetch(`${base}/api/clock`, { method: "POST", body: JSON.stringify({ action: "seek", date: "2025-03-01" }) });
     // Cache must not reveal an alert after rewinding past its release.
@@ -125,11 +125,11 @@ describe("assistant HTTP routes", () => {
     expect(en).toMatchObject({ source: "model" });
     await fetch(`${base}/api/explain?id=cpe:i2&lang=en`);
     expect(requests).toHaveLength(2);
-    await fetch(`${base}/api/explain?id=cpe:i2&lang=fi`);
-    expect(requests).toHaveLength(3);
     fail = true;
     expect((await fetch(`${base}/api/ask`, { method: "POST", body: JSON.stringify({ text: "anything", lang: "fi" }) })).status).toBe(502);
-    const fallback = await (await fetch(`${base}/api/explain?id=carrier:c2:esbl&lang=fi`)).json();
+    // Cached by language: Finnish is a new request, and a failing model gives the template.
+    const fallback = await (await fetch(`${base}/api/explain?id=cpe:i2&lang=fi`)).json();
     expect(fallback.source).toBe("template");
+    expect(fallback.text).toContain("Teho-osasto");
   });
 });

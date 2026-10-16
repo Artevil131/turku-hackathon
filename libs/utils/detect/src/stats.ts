@@ -12,11 +12,13 @@ const poissonLogPmf = (k: number, mean: number) => (mean === 0 ? (k === 0 ? 0 : 
 export function poissonUpper(k: number, mean: number): number {
   if (k <= 0) return 1;
   if (mean <= 0) return 0;
+  // Terms fall from x = max(k, mean) on; stop once they no longer add to the
+  // sum, including when they underflow to 0 (a far tail of a tiny mean).
   let sum = 0;
   for (let x = k; ; x++) {
     const term = Math.exp(poissonLogPmf(x, mean));
     sum += term;
-    if (x > mean && term < sum * 1e-15) break;
+    if (x > mean && (term === 0 || term < sum * 1e-15)) break;
   }
   return Math.min(1, sum);
 }

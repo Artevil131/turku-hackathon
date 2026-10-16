@@ -87,12 +87,18 @@ importers:
 
   libs/utils/alerts:
     dependencies:
+      '@aei/detect':
+        specifier: workspace:*
+        version: link:../detect
       '@aei/domain':
         specifier: workspace:*
         version: link:../domain
       '@aei/relations':
         specifier: workspace:*
         version: link:../relations
+      '@aei/replay':
+        specifier: workspace:*
+        version: link:../replay
 
   libs/utils/ask:
     dependencies:
@@ -158,6 +164,8 @@ importers:
       '@aei/domain':
         specifier: workspace:*
         version: link:../domain
+
+  libs/utils/logistic: {}
 
   libs/utils/relations:
     dependencies:

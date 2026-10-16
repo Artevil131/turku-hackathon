@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AEI data explorer</title>
+<style>
+  :root {
+    --bg: #ffffff; --fg: #1a1a1a; --muted: #6b6b6b; --line: #e3e3e3; --panel: #f6f6f6;
+    --accent: #1f5fbf; --s: #2e8b57; --r: #c0392b; --grey: #bdbdbd;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #141414; --fg: #e8e8e8; --muted: #9a9a9a; --line: #2c2c2c; --panel: #1e1e1e; --accent: #6ea0ff; --grey: #555; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.4 system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--fg); }
+  header { padding: 10px 16px; border-bottom: 1px solid var(--line); display: flex; gap: 16px; align-items: baseline; flex-wrap: wrap; }
+  header h1 { font-size: 16px; margin: 0; }
+  header .status { color: var(--muted); }
+  #filters.hidden { display: none; }
+  #filters { display: flex; flex-wrap: wrap; gap: 10px 14px; padding: 10px 16px; background: var(--panel); border-bottom: 1px solid var(--line); align-items: end; }
+  #filters label { display: flex; flex-direction: column; font-size: 12px; color: var(--muted); gap: 2px; }
+  #filters select, #filters input { font: inherit; padding: 3px 6px; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); color: var(--fg); min-width: 110px; }
+  #filters .check { flex-direction: row; align-items: center; gap: 6px; color: var(--fg); padding-bottom: 4px; }
+  nav { display: flex; gap: 2px; padding: 8px 16px 0; border-bottom: 1px solid var(--line); }
+  nav button { font: inherit; padding: 6px 12px; border: 1px solid var(--line); border-bottom: none; background: var(--panel); color: var(--muted); border-radius: 6px 6px 0 0; cursor: pointer; }
+  nav button.active { background: var(--bg); color: var(--fg); font-weight: 600; }
+  main { padding: 16px; }
+  .view { display: none; }
+  .view.active { display: block; }
+  table { border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  th, td { border: 1px solid var(--line); padding: 3px 7px; text-align: right; white-space: nowrap; }
+  th { background: var(--panel); position: sticky; top: 0; }
+  td:first-child, th:first-child { text-align: left; }
+  .scroll { overflow: auto; max-height: 75vh; }
+  .cell { position: relative; }
+  .cell small { color: var(--muted); font-size: 10px; margin-left: 4px; }
+  .lown { color: var(--muted); font-style: italic; }
+  .summary { display: flex; gap: 24px; flex-wrap: wrap; margin-bottom: 14px; color: var(--muted); }
+  .summary b { color: var(--fg); font-size: 18px; display: block; }
+  .row { display: flex; gap: 16px; flex-wrap: wrap; align-items: end; margin-bottom: 10px; }
+  svg text { fill: var(--fg); font-size: 11px; }
+  svg .axis { stroke: var(--line); }
+  .legend { color: var(--muted); font-size: 12px; margin: 4px 0 12px; }
+  .pager { display: flex; gap: 8px; align-items: center; margin: 8px 0; }
+  button.small { font: inherit; padding: 3px 10px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); color: var(--fg); cursor: pointer; }
+  .heat td { text-align: center; }
+  .warn { color: var(--r); }
+  details { margin-bottom: 10px; color: var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <h1>AEI data explorer</h1>
+  <span class="status" id="status">Loading CSV files…</span>
+  <button class="small" id="toggle-filters" style="margin-left:auto">Hide filters</button>
+</header>
+
+<div id="filters">
+  <label>Unit <select id="f-ward"></select></label>
+  <label>Specimen <select id="f-specimen"></select></label>
+  <label>Organism <select id="f-organism"></select></label>
+  <label>Sex <select id="f-sex"><option value="">all</option><option>F</option><option>M</option></select></label>
+  <label>Age <select id="f-age"><option value="">all</option><option value="0-17">0–17</option><option value="18-64">18–64</option><option value="65-200">65+</option></select></label>
+  <label>Onset <select id="f-onset"><option value="">all</option><option value="HA">hospital, day ≥3</option><option value="CA">community / day ≤2</option></select></label>
+  <label>Window <select id="f-window"><option value="28">4 weeks</option><option value="365">12 months</option><option value="all">everything</option></select></label>
+  <label>As of <input type="date" id="f-asof"></label>
+  <label class="check"><input type="checkbox" id="f-first" checked> first isolate per patient, organism, specimen, window</label>
+</div>
+
+<nav>
+  <button data-view="antibiogram" class="active">Antibiogram</button>
+  <button data-view="units">Units</button>
+  <button data-view="timeline">Timeline</button>
+  <button data-view="network">Shared patients</button>
+  <button data-view="records">Records</button>
+</nav>
+
+<main>
+  <div class="summary" id="summary"></div>
+
+  <section class="view active" id="v-antibiogram">
+    <div class="legend">%S per organism and antibiotic from the filtered first isolates. Cell colour: green high %S, red low. Greyed italics: fewer than 30 isolates, below the reporting rule. Hover for S/R counts.</div>
+    <div class="scroll"><table id="t-antibiogram"></table></div>
+  </section>
+
+  <section class="view" id="v-units">
+    <div class="legend">Isolates and flagged phenotypes per unit in the window. Compare against the 30-isolate rule.</div>
+    <div class="scroll"><table id="t-units"></table></div>
+    <div class="legend" style="margin-top:14px">Isolates per organism in the window.</div>
+    <div class="scroll"><table id="t-organisms"></table></div>
+  </section>
+
+  <section class="view" id="v-timeline">
+    <div class="row">
+      <label>Antibiotic for the %R line <select id="t-antibiotic"></select></label>
+      <label>Bucket <select id="t-bucket"><option value="7">week</option><option value="28">4 weeks</option></select></label>
+    </div>
+    <div class="legend">Bars: isolates per bucket under the current unit, specimen, organism and patient filters, over the whole dataset (the window and as-of are ignored here; first-isolate rule applied per bucket). Line: %R to the chosen antibiotic. Vertical mark: the as-of date.</div>
+    <div id="chart-timeline"></div>
+  </section>
+
+  <section class="view" id="v-network">
+    <div class="legend">Patients with at least one culture, positive or negative, in both units, over the whole dataset. Diagonal: patients seen in the unit. The only movement signal in the data.</div>
+    <div class="scroll"><table id="t-network" class="heat"></table></div>
+  </section>
+
+  <section class="view" id="v-records">
+    <div class="legend">Filtered isolates with their susceptibility results. S/R per antibiotic code; blank means not tested.</div>
+    <div class="pager">
+      <span id="r-page"></span>
+      <button class="small" id="r-csv">Download filtered isolates as CSV</button>
+    </div>
+    <table id="t-records"></table>
+    <div id="r-sentinel" style="height:1px"></div>
+  </section>
+</main>
+
+<script>
+'use strict';
+const BASE = '../../data/synthetic_microbiology_dataset/';
+const DAY = 86400000;
+const $ = id => document.getElementById(id);
+
+// ---------- CSV ----------
+function parseCSV(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.length);
+  const head = lines[0].split(',');
+  const rows = new Array(lines.length - 1);
+  for (let i = 1; i < lines.length; i++) {
+    const parts = lines[i].split(',');
+    const o = {};
+    for (let j = 0; j < head.length; j++) o[head[j]] = parts[j] ?? '';
+    rows[i - 1] = o;
+  }
+  return rows;
+}
+async function load(name) {
+  const r = await fetch(BASE + name);
+  if (!r.ok) throw new Error(name + ': ' + r.status);
+  return parseCSV(await r.text());
+}
+const toDate = s => s ? Date.parse(s + 'T00:00:00Z') : NaN;
+const fmtDate = ms => new Date(ms).toISOString().slice(0, 10);
+
+// ---------- data ----------
+const D = {};
+let ISOLATES = []; // joined isolate rows
+
+async function init() {
+  const [wards, antibiotics, patients, cultures, isolates, susc] = await Promise.all(
+    ['wards.csv', 'antibiotics.csv', 'patients.csv', 'cultures.csv', 'isolates.csv', 'susceptibility.csv'].map(load));
+  D.wards = wards; D.antibiotics = antibiotics; D.cultures = cultures;
+  const pat = new Map(patients.map(p => [p.patient_id, p]));
+  const cul = new Map(cultures.map(c => [c.culture_id, c]));
+  const byIso = new Map();
+  for (const s of susc) {
+    let m = byIso.get(s.isolate_id);
+    if (!m) { m = {}; byIso.set(s.isolate_id, m); }
+    m[s.antibiotic_code] = s.result;
+  }
+  ISOLATES = isolates.map(i => {
+    const c = cul.get(i.culture_id), p = pat.get(c.patient_id);
+    const sample = toDate(c.sample_date), adm = toDate(c.admission_date);
+    const stayDay = isNaN(adm) ? NaN : Math.round((sample - adm) / DAY) + 1;
+    return {
+      isolate_id: i.isolate_id, culture_id: i.culture_id, patient_id: c.patient_id,
+      organism: i.organism, quantity: i.quantity,
+      esbl: i.esbl === '1', mrsa: i.mrsa === '1', vre: i.vre === '1', cpe: i.cpe === '1',
+      ward: c.ward_code, ward_en: c.ward_en, specimen: c.specimen, inout: c.ward_type,
+      sample, sample_date: c.sample_date, stayDay, onset: stayDay >= 3 ? 'HA' : 'CA',
+      age: +c.age_years, sex: p ? p.sex : '', home: p ? p.home_area : '',
+      ast: byIso.get(i.isolate_id) || {},
+    };
+  }).sort((a, b) => a.sample - b.sample);
+  D.minDate = ISOLATES[0].sample; D.maxDate = ISOLATES[ISOLATES.length - 1].sample;
+  D.organisms = [...new Set(ISOLATES.map(i => i.organism))].sort();
+  D.specimens = [...new Set(ISOLATES.map(i => i.specimen))].sort();
+  D.abx = antibiotics.map(a => a.antibiotic_code);
+  D.abxInfo = new Map(antibiotics.map(a => [a.antibiotic_code, a]));
+
+  fill($('f-ward'), [['', 'all units'], ...wards.map(w => [w.ward_code, `${w.ward_code} ${w.ward_en}`])]);
+  fill($('f-specimen'), [['', 'all'], ...D.specimens.map(s => [s, s])]);
+  fill($('f-organism'), [['', 'all'], ...D.organisms.map(o => [o, o])]);
+  fill($('t-antibiotic'), D.abx.map(a => [a, `${a} ${D.abxInfo.get(a).antibiotic}`]));
+  $('f-asof').value = fmtDate(D.maxDate); $('f-asof').min = fmtDate(D.minDate); $('f-asof').max = fmtDate(D.maxDate);
+  $('status').textContent = `${cultures.length.toLocaleString()} cultures, ${isolates.length.toLocaleString()} isolates, ${susc.length.toLocaleString()} results, ${fmtDate(D.minDate)} to ${fmtDate(D.maxDate)}`;
+
+  document.querySelectorAll('#filters select, #filters input, #t-antibiotic, #t-bucket').forEach(el => el.addEventListener('change', render));
+  document.querySelectorAll('nav button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('nav button').forEach(x => x.classList.toggle('active', x === b));
+    document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'v-' + b.dataset.view));
+    render();
+  }));
+  $('r-csv').onclick = downloadCSV;
+  $('toggle-filters').onclick = () => {
+    const hidden = $('filters').classList.toggle('hidden');
+    $('toggle-filters').textContent = hidden ? 'Show filters' : 'Hide filters';
+  };
+  new IntersectionObserver(es => { if (es[0].isIntersecting) appendRecords(); }).observe($('r-sentinel'));
+  render();
+}
+function fill(sel, opts) { sel.innerHTML = opts.map(([v, t]) => `<option value="${v}">${t}</option>`).join(''); }
+
+// ---------- filtering ----------
+function patientFilter() {
+  const sex = $('f-sex').value, onset = $('f-onset').value, age = $('f-age').value;
+  const [a0, a1] = age ? age.split('-').map(Number) : [-1, 1e9];
+  const ward = $('f-ward').value, spec = $('f-specimen').value, org = $('f-organism').value;
+  return i => (!ward || i.ward === ward) && (!spec || i.specimen === spec) && (!org || i.organism === org)
+    && (!sex || i.sex === sex) && (!onset || i.onset === onset) && i.age >= a0 && i.age <= a1;
+}
+function windowBounds() {
+  const asof = toDate($('f-asof').value) || D.maxDate;
+  const w = $('f-window').value;
+  const start = w === 'all' ? D.minDate : asof - (Number(w) - 1) * DAY;
+  return [start, asof];
+}
+// First isolate per patient × organism × specimen inside the given set (rows must be date-sorted).
+function firstIsolates(rows) {
+  const seen = new Set(); const out = [];
+  for (const r of rows) {
+    const k = r.patient_id + '|' + r.organism + '|' + r.specimen;
+    if (seen.has(k)) continue;
+    seen.add(k); out.push(r);
+  }
+  return out;
+}
+let CUR = [];
+function current() {
+  const [t0, t1] = windowBounds(); const pf = patientFilter();
+  let rows = ISOLATES.filter(i => i.sample >= t0 && i.sample <= t1 && pf(i));
+  if ($('f-first').checked) rows = firstIsolates(rows);
+  return rows;
+}
+
+// ---------- rendering ----------
+function render() {
+  CUR = current();
+  const [t0, t1] = windowBounds();
+  const patients = new Set(CUR.map(r => r.patient_id)).size;
+  const flagged = CUR.filter(r => r.esbl || r.mrsa || r.vre || r.cpe).length;
+  $('summary').innerHTML = [
+    ['Window', `${fmtDate(t0)} → ${fmtDate(t1)}`],
+    ['Isolates', CUR.length.toLocaleString()],
+    ['Patients', patients.toLocaleString()],
+    ['Flagged (ESBL/MRSA/VRE/CPE)', flagged.toLocaleString()],
+    ['Reporting rule', CUR.length >= 30 ? 'n ≥ 30 pooled' : `<span class="warn">n < 30</span>`],
+  ].map(([k, v]) => `<div>${k}<b>${v}</b></div>`).join('');
+  const view = document.querySelector('nav button.active').dataset.view;
+  ({ antibiogram: renderAntibiogram, units: renderUnits, timeline: renderTimeline, network: renderNetwork, records: renderRecords })[view]();
+}
+
+function pctCell(s, r) {
+  const n = s + r;
+  if (!n) return '<td></td>';
+  const p = s / n, hue = Math.round(p * 120);
+  const cls = n < 30 ? 'cell lown' : 'cell';
+  return `<td class="${cls}" style="background:hsla(${hue},60%,50%,${0.12 + 0.35 * p})" title="S ${s}, R ${r}, n ${n}">${Math.round(p * 100)}%<small>${n}</small></td>`;
+}
+function renderAntibiogram() {
+  const orgs = D.organisms.filter(o => CUR.some(r => r.organism === o));
+  const counts = {};
+  for (const r of CUR) {
+    const c = counts[r.organism] || (counts[r.organism] = { n: 0, ab: {} });
+    c.n++;
+    for (const [code, res] of Object.entries(r.ast)) {
+      const a = c.ab[code] || (c.ab[code] = { s: 0, r: 0 });
+      if (res === 'S') a.s++; else if (res === 'R') a.r++;
+    }
+  }
+  const abx = D.abx.filter(a => orgs.some(o => counts[o].ab[a]));
+  let h = '<tr><th>Organism</th><th>n</th>' + abx.map(a => `<th title="${D.abxInfo.get(a).antibiotic} (${D.abxInfo.get(a).reported_for})">${a}</th>`).join('') + '</tr>';
+  for (const o of orgs) {
+    const c = counts[o];
+    h += `<tr><td><i>${o}</i></td><td class="${c.n < 30 ? 'lown' : ''}">${c.n}</td>` + abx.map(a => c.ab[a] ? pctCell(c.ab[a].s, c.ab[a].r) : '<td></td>').join('') + '</tr>';
+  }
+  $('t-antibiogram').innerHTML = h;
+}
+
+function renderUnits() {
+  const by = {};
+  for (const r of CUR) {
+    const u = by[r.ward] || (by[r.ward] = { n: 0, pat: new Set(), esbl: 0, mrsa: 0, vre: 0, cpe: 0, ha: 0, urine: 0, blood: 0, wound: 0 });
+    u.n++; u.pat.add(r.patient_id); u[r.specimen]++;
+    if (r.esbl) u.esbl++; if (r.mrsa) u.mrsa++; if (r.vre) u.vre++; if (r.cpe) u.cpe++; if (r.onset === 'HA') u.ha++;
+  }
+  let h = '<tr><th>Unit</th><th>Isolates</th><th>Patients</th><th>Urine</th><th>Blood</th><th>Wound</th><th>Day ≥3</th><th>ESBL</th><th>MRSA</th><th>VRE</th><th>CPE</th></tr>';
+  for (const w of D.wards) {
+    const u = by[w.ward_code]; if (!u) continue;
+    h += `<tr><td>${w.ward_code} ${w.ward_en}</td><td class="${u.n < 30 ? 'lown' : ''}">${u.n}</td><td>${u.pat.size}</td><td>${u.urine}</td><td>${u.blood}</td><td>${u.wound}</td><td>${u.ha}</td><td>${u.esbl}</td><td>${u.mrsa}</td><td>${u.vre}</td><td>${u.cpe}</td></tr>`;
+  }
+  $('t-units').innerHTML = h;
+  const byO = {};
+  for (const r of CUR) { const o = byO[r.organism] || (byO[r.organism] = { n: 0, esbl: 0, mrsa: 0, vre: 0, cpe: 0 }); o.n++; if (r.esbl) o.esbl++; if (r.mrsa) o.mrsa++; if (r.vre) o.vre++; if (r.cpe) o.cpe++; }
+  let g = '<tr><th>Organism</th><th>Isolates</th><th>ESBL</th><th>MRSA</th><th>VRE</th><th>CPE</th></tr>';
+  for (const o of Object.keys(byO).sort((a, b) => byO[b].n - byO[a].n)) g += `<tr><td><i>${o}</i></td><td class="${byO[o].n < 30 ? 'lown' : ''}">${byO[o].n}</td><td>${byO[o].esbl}</td><td>${byO[o].mrsa}</td><td>${byO[o].vre}</td><td>${byO[o].cpe}</td></tr>`;
+  $('t-organisms').innerHTML = g;
+}
+
+function renderTimeline() {
+  const pf = patientFilter(); const bucket = Number($('t-bucket').value) * DAY; const ab = $('t-antibiotic').value;
+  const useFirst = $('f-first').checked;
+  const nb = Math.ceil((D.maxDate - D.minDate + DAY) / bucket);
+  const buckets = Array.from({ length: nb }, () => []);
+  for (const i of ISOLATES) if (pf(i)) buckets[Math.floor((i.sample - D.minDate) / bucket)].push(i);
+  const pts = buckets.map((rows, k) => {
+    if (useFirst) rows = firstIsolates(rows);
+    let s = 0, r = 0;
+    for (const x of rows) { if (x.ast[ab] === 'S') s++; else if (x.ast[ab] === 'R') r++; }
+    return { t: D.minDate + k * bucket, n: rows.length, s, r };
+  });
+  const W = Math.max(700, Math.min(1400, window.innerWidth - 48)), H = 320, L = 44, R = 44, T = 16, B = 40;
+  const x = k => L + k * (W - L - R) / nb, bw = (W - L - R) / nb;
+  const maxN = Math.max(1, ...pts.map(p => p.n));
+  const yN = n => T + (H - T - B) * (1 - n / maxN), yP = p => T + (H - T - B) * (1 - p);
+  let svg = `<svg width="${W}" height="${H}" role="img">`;
+  svg += `<line class="axis" x1="${L}" y1="${T}" x2="${L}" y2="${H - B}"/><line class="axis" x1="${L}" y1="${H - B}" x2="${W - R}" y2="${H - B}"/>`;
+  for (const f of [0, 0.5, 1]) {
+    svg += `<text x="${L - 6}" y="${yN(f * maxN) + 4}" text-anchor="end">${Math.round(f * maxN)}</text>`;
+    svg += `<text x="${W - R + 6}" y="${yP(f) + 4}">${Math.round(f * 100)}%</text>`;
+    svg += `<line class="axis" x1="${L}" y1="${yN(f * maxN)}" x2="${W - R}" y2="${yN(f * maxN)}" stroke-dasharray="2 4"/>`;
+  }
+  pts.forEach((p, k) => {
+    svg += `<rect x="${x(k)}" y="${yN(p.n)}" width="${Math.max(1, bw - 1)}" height="${H - B - yN(p.n)}" fill="var(--accent)" opacity="0.45"><title>${fmtDate(p.t)}: ${p.n} isolates, ${ab} R ${p.r} / ${p.r + p.s}</title></rect>`;
+  });
+  const line = pts.map((p, k) => (p.s + p.r) ? `${x(k) + bw / 2},${yP(p.r / (p.s + p.r))}` : null).filter(Boolean);
+  svg += `<polyline fill="none" stroke="var(--r)" stroke-width="2" points="${line.join(' ')}"/>`;
+  pts.forEach((p, k) => { if (p.s + p.r) svg += `<circle cx="${x(k) + bw / 2}" cy="${yP(p.r / (p.s + p.r))}" r="${p.s + p.r < 30 ? 2 : 3.5}" fill="${p.s + p.r < 30 ? 'var(--grey)' : 'var(--r)'}"><title>${fmtDate(p.t)}: %R ${Math.round(100 * p.r / (p.s + p.r))} (n ${p.s + p.r})</title></circle>`; });
+  const asof = toDate($('f-asof').value) || D.maxDate; const ka = (asof - D.minDate) / bucket;
+  svg += `<line x1="${x(ka)}" y1="${T}" x2="${x(ka)}" y2="${H - B}" stroke="var(--fg)" stroke-dasharray="4 3"/>`;
+  for (let k = 0; k < nb; k += Math.ceil(nb / 12)) svg += `<text x="${x(k)}" y="${H - B + 16}">${fmtDate(pts[k].t)}</text>`;
+  svg += `<text x="${L}" y="${H - 4}" fill="var(--muted)">isolates per bucket (left), %R to ${ab} (right, grey dot = n &lt; 30)</text></svg>`;
+  $('chart-timeline').innerHTML = svg;
+}
+
+function renderNetwork() {
+  const units = D.wards.map(w => w.ward_code);
+  const byPat = new Map();
+  for (const c of D.cultures) { let s = byPat.get(c.patient_id); if (!s) byPat.set(c.patient_id, s = new Set()); s.add(c.ward_code); }
+  const M = {}; units.forEach(a => { M[a] = {}; units.forEach(b => M[a][b] = 0); });
+  for (const s of byPat.values()) for (const a of s) for (const b of s) M[a][b]++;
+  const max = Math.max(...units.flatMap(a => units.filter(b => b !== a).map(b => M[a][b])));
+  let h = '<tr><th></th>' + units.map(u => `<th>${u}</th>`).join('') + '</tr>';
+  for (const a of units) h += `<tr><td>${a}</td>` + units.map(b => a === b ? `<td style="background:var(--panel)"><b>${M[a][b]}</b></td>` : `<td style="background:hsla(215,70%,50%,${(M[a][b] / max) * 0.8})">${M[a][b]}</td>`).join('') + '</tr>';
+  $('t-network').innerHTML = h;
+}
+
+const CHUNK = 200;
+let shown = 0;
+function recordRow(r) {
+  const flags = ['esbl', 'mrsa', 'vre', 'cpe'].filter(f => r[f]).map(f => f.toUpperCase()).join(' ');
+  return `<tr><td>${r.sample_date}</td><td>${r.isolate_id}</td><td>${r.patient_id}</td><td>${r.ward}</td><td>${r.specimen}</td><td>${r.sex}</td><td>${r.age}</td><td>${isNaN(r.stayDay) ? '' : r.stayDay}</td><td><i>${r.organism}</i></td><td class="warn">${flags}</td>`
+    + D.abx.map(a => `<td style="color:${r.ast[a] === 'R' ? 'var(--r)' : r.ast[a] === 'S' ? 'var(--s)' : 'inherit'}">${r.ast[a] || ''}</td>`).join('') + '</tr>';
+}
+function renderRecords() {
+  shown = 0;
+  $('t-records').innerHTML = '<tr><th>Date</th><th>Isolate</th><th>Patient</th><th>Unit</th><th>Specimen</th><th>Sex</th><th>Age</th><th>Stay day</th><th>Organism</th><th>Flags</th>' + D.abx.map(a => `<th>${a}</th>`).join('') + '</tr>';
+  appendRecords();
+}
+function appendRecords() {
+  if (!document.querySelector('#v-records.active') || shown >= CUR.length) return;
+  const next = CUR.slice(shown, shown + CHUNK);
+  $('t-records').insertAdjacentHTML('beforeend', next.map(recordRow).join(''));
+  shown += next.length;
+  $('r-page').textContent = `${CUR.length.toLocaleString()} isolates, showing ${shown.toLocaleString()}`;
+  // keep filling while the sentinel is still on screen
+  if (shown < CUR.length && $('r-sentinel').getBoundingClientRect().top < window.innerHeight) requestAnimationFrame(appendRecords);
+}
+function downloadCSV() {
+  const head = ['sample_date', 'isolate_id', 'patient_id', 'ward', 'specimen', 'sex', 'age', 'stay_day', 'onset', 'organism', 'esbl', 'mrsa', 'vre', 'cpe', ...D.abx];
+  const lines = [head.join(',')];
+  for (const r of CUR) lines.push([r.sample_date, r.isolate_id, r.patient_id, r.ward, r.specimen, r.sex, r.age, isNaN(r.stayDay) ? '' : r.stayDay, r.onset, r.organism, +r.esbl, +r.mrsa, +r.vre, +r.cpe, ...D.abx.map(a => r.ast[a] || '')].join(','));
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/csv' }));
+  a.download = 'filtered_isolates.csv'; a.click();
+}
+
+init().catch(e => { $('status').textContent = 'Failed to load: ' + e.message + '. Serve the repo root with `python3 -m http.server` and open /scripts/explore/'; $('status').classList.add('warn'); });
+</script>
+</body>
+</html>

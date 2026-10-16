@@ -63,3 +63,71 @@ describe("alertExplainInput", () => {
     });
   });
 });
+
+describe("alertExplainInput for every kind", () => {
+  const detector = (over: Record<string, unknown>) =>
+    ({
+      kind: "detector",
+      id: "d",
+      date: "2025-06-04",
+      ward: "URO",
+      detector: "profile-excess",
+      observed: 9,
+      expected: 2.34,
+      p: 0.00001,
+      organism: "Escherichia coli",
+      ...over,
+    }) as Alert;
+
+  it("fills a detector template whose every slot has a fact", () => {
+    const input = alertExplainInput(detector({}), "en", names);
+    expect(input.facts).toMatchObject({ observed: 9, expected: 2.3, p: "< 0.001", ward: "Ward URO" });
+    const text = fillSlots(input.fallback, input.facts, "en");
+    expect(text).toContain("9 patients in Ward URO");
+    expect(text).not.toMatch(/[{}]/);
+  });
+
+  it("shows a hospital-wide trend as a percentage and never leaves a raw slot", () => {
+    const input = alertExplainInput(
+      detector({ detector: "rising-trend", ward: null, observed: 0.2, expected: undefined, antibiotic: "TMP" }),
+      "fi",
+      names,
+    );
+    expect(input.facts.observed).toBe("20 %");
+    expect(input.facts.ward).toBe("koko sairaala");
+    expect(fillSlots(input.fallback, input.facts, "fi")).not.toMatch(/[{}]/);
+  });
+
+  it("falls back to a generic template when a detector lacks a fact its wording needs", () => {
+    const input = alertExplainInput(detector({ organism: undefined }), "en", names);
+    expect(fillSlots(input.fallback, input.facts, "en")).not.toMatch(/[{}]/);
+  });
+
+  it("explains new-in-unit alerts with and without a previous isolate", () => {
+    const base = {
+      kind: "new-in-unit",
+      id: "n",
+      date: "2026-03-03",
+      ward: "ICU",
+      phenotype: "mrsa",
+      organism: "Staphylococcus aureus",
+      patientId: "p",
+      isolateId: "i",
+    };
+    const withPrev = alertExplainInput({ ...base, previous: "2025-08-01" } as Alert, "en", names);
+    expect(withPrev.facts.daysSincePrevious).toBe(214);
+    const first = alertExplainInput({ ...base, previous: null } as Alert, "fi", names);
+    expect(first.facts.previous).toBeUndefined();
+    for (const input of [withPrev, first]) expect(fillSlots(input.fallback, input.facts, input.lang)).not.toMatch(/[{}]/);
+  });
+
+  it("gives an unknown future kind its scalar fields and a generic template", () => {
+    const input = alertExplainInput(
+      { kind: "future", id: "f", date: "2026-01-01", ward: "ICU", n: 3, nested: { x: 1 } } as unknown as Alert,
+      "en",
+      names,
+    );
+    expect(input.facts).toEqual({ date: "2026-01-01", ward: "ICU", n: 3 });
+    expect(fillSlots(input.fallback, input.facts, "en")).not.toMatch(/[{}]/);
+  });
+});

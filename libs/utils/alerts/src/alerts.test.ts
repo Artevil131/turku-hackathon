@@ -1,7 +1,7 @@
 import type { IsolateRecord } from "@aei/domain";
 import type { CarrierArrival } from "@aei/relations";
 import { describe, expect, it } from "vitest";
-import { carrierAlerts, cpeAlerts, sortAlerts } from "./index.ts";
+import { carrierAlerts, cpeAlerts, detectorAlerts, newInUnitAlerts, sortAlerts } from "./index.ts";
 
 const record = (isolateId: string, sampleDate: string, phenotypes: IsolateRecord["phenotypes"]): IsolateRecord => ({
   isolateId,
@@ -47,5 +47,45 @@ describe("alerts", () => {
       ["cpe", "2026-03-01"],
     ]);
     expect(alerts[0]).toMatchObject({ from: "ICU", foundOn: "2026-02-20", phenotype: "esbl" });
+  });
+});
+
+describe("detectorAlerts", () => {
+  it("raises one alert per signal episode, on its first day", () => {
+    const signal = (date: string) => ({
+      detector: "phenotype-excess" as const,
+      key: "URO|esbl",
+      date,
+      ward: "URO" as const,
+      phenotype: "esbl" as const,
+      observed: 6,
+      expected: 1.2,
+      p: 0.0004,
+    });
+    const alerts = detectorAlerts([signal("2025-06-10"), signal("2025-06-12"), signal("2025-09-01")]);
+    expect(alerts.map((a) => a.date)).toEqual(["2025-06-10", "2025-09-01"]);
+    expect(alerts[0]).toMatchObject({ kind: "detector", ward: "URO", detector: "phenotype-excess", phenotype: "esbl", observed: 6 });
+  });
+});
+
+describe("newInUnitAlerts", () => {
+  it("fires on the first MRSA in a unit after the look-back, not during the first look-back of the data", () => {
+    const mrsa = (id: string, date: string, ward: IsolateRecord["ward"] = "ICU") => ({
+      ...record(id, date, ["mrsa"]),
+      ward,
+      organism: "Staphylococcus aureus" as const,
+    });
+    const records = [
+      record("C0-1", "2025-01-01", []), // data start
+      mrsa("C1-1", "2025-02-01"), // inside the first 180 days: quiet
+      mrsa("C2-1", "2025-03-01"),
+      mrsa("C3-1", "2025-10-01"), // 214 days after the last: new
+      mrsa("C4-1", "2025-10-05"), // 4 days later: not new
+      mrsa("C5-1", "2025-10-06", "GER"), // first ever in GER, after the quiet start: new
+    ];
+    expect(newInUnitAlerts(records, ["mrsa"], 180).map((a) => [a.ward, a.date, a.previous])).toEqual([
+      ["ICU", "2025-10-01", "2025-03-01"],
+      ["GER", "2025-10-06", null],
+    ]);
   });
 });

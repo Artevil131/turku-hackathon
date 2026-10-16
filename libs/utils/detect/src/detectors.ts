@@ -153,7 +153,8 @@ export function profileExcess(records: readonly IsolateRecord[], o: ExcessOption
   const orgDates = new Map([...byOrganism].map(([k, v]) => [k, v.map((r) => r.sampleDate)]));
   const byProfile = groupBy(sorted, (r) => `${stratum(r)}|${profileOf(r)}`);
   const profileDates = new Map([...byProfile].map(([k, v]) => [k, v.map((r) => r.sampleDate)]));
-  const byUnitOrg = groupBy(sorted, (r) => `${r.ward}|${r.organism}`);
+  // The window is counted in the same stratum as the share (organism, or organism and specimen).
+  const byUnitOrg = groupBy(sorted, (r) => `${r.ward}|${stratum(r)}`);
   const unitOrgDates = new Map([...byUnitOrg].map(([k, v]) => [k, v.map((r) => r.sampleDate)]));
 
   const signals: Signal[] = [];
@@ -163,8 +164,8 @@ export function profileExcess(records: readonly IsolateRecord[], o: ExcessOption
     const from = addDays(r.sampleDate, 1 - o.windowDays);
     const baseTo = addDays(from, -1);
     const baseFrom = addDays(from, -o.baselineDays);
-    const unitList = byUnitOrg.get(`${r.ward}|${r.organism}`) ?? [];
-    const inWindow = slice(unitList, unitOrgDates.get(`${r.ward}|${r.organism}`) ?? [], from, r.sampleDate);
+    const unitList = byUnitOrg.get(`${r.ward}|${stratum(r)}`) ?? [];
+    const inWindow = slice(unitList, unitOrgDates.get(`${r.ward}|${stratum(r)}`) ?? [], from, r.sampleDate);
     const observed = distinctPatients(inWindow.filter((x) => profileOf(x) === profile));
     if (observed < o.minObserved) continue;
     const baseAll = slice(byOrganism.get(stratum(r)) ?? [], orgDates.get(stratum(r)) ?? [], baseFrom, baseTo).length;
@@ -328,6 +329,12 @@ export interface TrendOptions {
   binDays: number;
   minBins: number;
   alpha: number;
+  /**
+   * Leave an isolate out of the test made as of `asOf` (for example one that
+   * belongs to a cluster already detected by then), so one outbreak is not
+   * also reported as a hospital-wide trend.
+   */
+  exclude?: (r: IsolateRecord, asOf: IsoDate) => boolean;
 }
 
 /** Hospital-wide per pair: Cochran-Armitage test for a rise over bins from the start of the data to each bin end. */
@@ -339,16 +346,23 @@ export function risingTrend(records: readonly IsolateRecord[], pairs: readonly P
   const nBins = Math.floor((daysBetween(start, end) + 1) / o.binDays);
   const signals: Signal[] = [];
   for (const pair of pairs) {
-    const bins = Array.from({ length: nBins }, () => ({ events: 0, n: 0 }));
-    for (const r of sorted) {
-      const result = r.results[pair.antibiotic];
-      if (r.organism !== pair.organism || (pair.specimen && r.specimen !== pair.specimen) || !result) continue;
-      const bin = bins[Math.floor(daysBetween(start, r.sampleDate) / o.binDays)];
-      if (!bin) continue;
-      bin.n++;
-      if (result === "R") bin.events++;
-    }
+    const tested = sorted.filter(
+      (r) => r.organism === pair.organism && (!pair.specimen || r.specimen === pair.specimen) && r.results[pair.antibiotic],
+    );
+    const binsAsOf = (asOf: IsoDate) => {
+      const bins = Array.from({ length: nBins }, () => ({ events: 0, n: 0 }));
+      for (const r of tested) {
+        if (r.sampleDate > asOf || o.exclude?.(r, asOf)) continue;
+        const bin = bins[Math.floor(daysBetween(start, r.sampleDate) / o.binDays)];
+        if (!bin) continue;
+        bin.n++;
+        if (r.results[pair.antibiotic] === "R") bin.events++;
+      }
+      return bins;
+    };
+    const all = o.exclude ? null : binsAsOf(end);
     for (let k = o.minBins; k <= nBins; k++) {
+      const bins = all ?? binsAsOf(addDays(start, k * o.binDays - 1));
       const p = cochranArmitageRising(bins.slice(0, k));
       if (p < o.alpha) {
         const last = bins[k - 1] as { events: number; n: number };

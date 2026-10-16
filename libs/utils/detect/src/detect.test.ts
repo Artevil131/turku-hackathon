@@ -23,6 +23,11 @@ describe("stats", () => {
     expect(normalUpper(-1.959964)).toBeCloseTo(0.975, 5);
   });
 
+  it("survives a far tail of a tiny mean", () => {
+    expect(poissonUpper(100, 1e-3)).toBe(0);
+    expect(poissonUpper(3, 1e-3)).toBeGreaterThan(0);
+  });
+
   it("finds a rising proportion and not a flat one", () => {
     expect(
       cochranArmitageRising([

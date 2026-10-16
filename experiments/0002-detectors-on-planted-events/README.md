@@ -167,3 +167,38 @@ Not part of the planned experiment; counts measured by hand from the CSVs.
    weeks against about 3 a month, but in 8 different profiles across
    *E. coli* and *K. pneumoniae*: not one clone. Most likely chance among
    the many tests run.
+
+## Corrections after an independent review (2026-10-16, after close)
+
+A review of 0001 to 0004 (a separate agent, read-only) found the
+following; each was checked and acted on.
+
+- **Timing of plans.** Plans were committed minutes before results
+  (0002: under five minutes), with code drafted in the same sitting. This
+  record is exploratory and its thresholds were chosen while looking at
+  the events they are scored on; it is not a preregistered test.
+- **Unrecorded deviation.** The plan says "a patient counts once per
+  detector window"; profile and phenotype excess count patients, but
+  resistance shift, rising trend and all baselines count isolates.
+- **E1 starts earlier.** The first Urology isolate with the outbreak
+  profile is dated 2025-05-30, not 2025-06-04, so the E1 delays above are
+  at least 5 days longer. The E1 matcher credits any Urology *E. coli* or
+  ESBL episode in the window, which is loose. Delays also assume a result
+  arrives on its sample date (D-005); in practice culture and
+  susceptibility take 2 to 3 days more.
+- **Profile excess 2b mixed strata.** Its window counted the unit's
+  patients with the organism across all specimens while the share came
+  from one specimen. Fixed in `libs/utils/detect` (both now within
+  specimen) and the sweep rerun: 2b at alpha 0.0001 now finds E2 after
+  6 days (was 4) with 3 other episodes (unchanged); `out/` holds the rerun.
+- **`poissonUpper` crashed** on a far tail of a tiny mean (for example
+  k = 100, mean 0.001); fixed with a test. This dataset never reached it.
+- **Sampling drop** was tuned on data with no weekday or holiday pattern
+  (cultures per weekday 6,524 to 6,812); real data would need weekday and
+  holiday adjustment.
+- **The live set changed (D-022):** isolates of a cluster already
+  detected are left out of the trend test from that day. The Urology
+  outbreak had also raised hospital-wide *E. coli* cefuroxime and
+  ceftriaxone trends; those are gone. The trimethoprim trend now first
+  fires on 2026-05-10 instead of 2025-09-28: part of its earlier signal was
+  the outbreak strain, which is trimethoprim-resistant.

@@ -56,6 +56,32 @@ export function AlertExplanation({ client, id, locale }: { client: AeiClient; id
   );
 }
 
+const DETECTOR_LABELS = {
+  "profile-excess": "alertProfileExcess",
+  "phenotype-excess": "alertPhenotypeExcess",
+  "sampling-drop": "alertSamplingDrop",
+  "rising-trend": "alertRisingTrend",
+} as const;
+
+function alertLabel(alert: Alert, locale: Locale): string {
+  switch (alert.kind) {
+    case "cpe":
+      return t(locale, "alertCpe");
+    case "carrier":
+      return t(locale, "alertCarrier", { phenotype: phenotypeName(alert.phenotype) });
+    case "new-in-unit":
+      return t(locale, "alertNewInUnit", { phenotype: phenotypeName(alert.phenotype) });
+    case "detector": {
+      const key = DETECTOR_LABELS[alert.detector as keyof typeof DETECTOR_LABELS] ?? "alertDetector";
+      const what = alert.phenotype ? phenotypeName(alert.phenotype) : (alert.organism ?? "");
+      const label = t(locale, key, { phenotype: what });
+      return alert.organism && key !== "alertPhenotypeExcess" ? `${label} · ${alert.organism}` : label;
+    }
+    default:
+      return (alert as { kind: string }).kind;
+  }
+}
+
 export function AlertList({ client, alerts, locale }: { client: AeiClient; alerts: Alert[]; locale: Locale }) {
   if (!alerts.length) return null;
   return (
@@ -67,8 +93,8 @@ export function AlertList({ client, alerts, locale }: { client: AeiClient; alert
         {alerts.map((alert) => (
           <li key={alert.id}>
             <span>
-              {formatDate(locale, alert.date)} · {wardName(locale, alert.ward)} ·{" "}
-              {alert.kind === "cpe" ? "CPE" : phenotypeName(alert.phenotype)}
+              {formatDate(locale, alert.date)} · {alert.ward ? wardName(locale, alert.ward) : t(locale, "hospitalWide")} ·{" "}
+              {alertLabel(alert, locale)}
             </span>
             <AlertExplanation client={client} id={alert.id} locale={locale} />
           </li>
