@@ -27,3 +27,4 @@ Code, Opus 5.5, operated by Artem).
 | 01:44 | 0019 exposure ranking (m22) | implement start | Sonnet 5.5 | | plan by Fable (committed) |
 | 01:44 | harness: detection | finish | Sonnet 5.5 | 34 min; baselines 272 s CPU | reproduces 0007 and 0011; live set D5 rare 0.92, common ESBL 0.75 at 3.0 episodes/yr (held out 0.94, 0.695); re-tuned alphas profile 1e-3, phenotype 1e-2, sampling 1e-3, empty run 1e-3, D4 9.55/yr; one random failure of a coverage test reported, passed on rerun (to check) |
 | 01:45 | harness check | start | Fable 5.1 | | reproductions, strictness, the spec's choices as implemented, the flaky coverage test |
+| 01:54 | 0013 | plan committed | Sonnet 5.5 | 9 min | grid M_π × M ∈ {10,30,100,300}², chosen on TUNE |
