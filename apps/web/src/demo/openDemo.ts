@@ -33,7 +33,7 @@ async function runPage(client: AeiClient, cells: NbCell[]): Promise<NbCell[]> {
  * Bump when a demo's layout, notes or analyses change: a demo opened before is then rebuilt once (its layout, board and
  * notebook reset to the new version), so everyone sees the current demo, not the one first created in their browser.
  */
-const DEMO_VERSION = "6";
+const DEMO_VERSION = "7";
 const versionKey = (projectId: string) => `yl.demo.${projectId}`;
 const storedVersion = (projectId: string) => {
   try {

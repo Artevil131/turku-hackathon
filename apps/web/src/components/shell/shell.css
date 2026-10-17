@@ -937,3 +937,24 @@
 .sb-tour {
   color: var(--live);
 }
+
+/* A cross beside the project's name closes its tab, so closing is also where you are looking. */
+.viewbar-close {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin-left: 4px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--ink-3);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+.viewbar-close:hover,
+.viewbar-close:focus-visible {
+  background: var(--chassis);
+  color: var(--ink);
+}

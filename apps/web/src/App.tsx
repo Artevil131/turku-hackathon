@@ -428,6 +428,18 @@ export function App() {
                       <h1 className="viewbar-title" title={active?.project ? undefined : t(locale, "shellUnsaved")}>
                         {active ? tabName(locale, active) : t(locale, "shellUntitled")}
                       </h1>
+                      {active ? (
+                        <button
+                          type="button"
+                          className="viewbar-close"
+                          data-close-view
+                          aria-label={t(locale, "shellCloseTab", { name: tabName(locale, active) })}
+                          title={t(locale, "shellCloseTab", { name: tabName(locale, active) })}
+                          onClick={() => close(active.key)}
+                        >
+                          ×
+                        </button>
+                      ) : null}
                       {active?.frozen ? (
                         <span className="project-frozen" role="status">
                           {t(locale, "projectFrozenBanner", { date: active.asOf ?? "" })}

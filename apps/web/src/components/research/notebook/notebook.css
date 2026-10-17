@@ -683,3 +683,14 @@
   color: var(--ink-3);
   font-weight: 500;
 }
+
+/* Hierarchy: the notebook's name leads, notes are the body text, machine cells are small and grey. */
+.nb-h {
+  font-size: 20px;
+}
+.nb-cell[data-kind="note"] .nb-title {
+  font-size: var(--t-m);
+}
+.nb-cell:not([data-kind="note"]) .nb-title {
+  font-size: var(--t-s);
+}

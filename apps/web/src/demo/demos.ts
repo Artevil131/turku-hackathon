@@ -84,7 +84,7 @@ export const DEMOS: readonly DemoSpec[] = [
       return page([
         note(t(locale, "demoNoteControlHead")),
         sliceCell(s),
-        { id: newId(), kind: "timeline", window: { from: "2024-11-01", to: "2025-05-11" } },
+        { id: newId(), kind: "timeline", window: { from: "2024-11-01", to: "2025-05-11" }, collapsed: true },
         analysis("shares", s, { period: 7 }),
         analysis("detector", s, { detector: "phenotype" }),
         note(t(locale, "demoNoteControlNext")),
@@ -109,7 +109,7 @@ export const DEMOS: readonly DemoSpec[] = [
       return page([
         note(t(locale, "demoNoteResearcherQuestion")),
         sliceCell(s),
-        { id: newId(), kind: "timeline", window: { from: "2024-10-01", to: "2025-04-30" } },
+        { id: newId(), kind: "timeline", window: { from: "2024-10-01", to: "2025-04-30" }, collapsed: true },
         analysis("rate", s),
         analysis("compare", s, { bMode: "previous" }),
         analysis("beta", s),
@@ -119,6 +119,7 @@ export const DEMOS: readonly DemoSpec[] = [
           id: newId(),
           kind: "chart",
           spec: defaultSpec({ unit: "MED-A", window: { from: "2024-11-01", to: "2025-04-30" }, event: "phenotype:esbl", periodDays: 14 }),
+          collapsed: true,
         },
         note(t(locale, "demoNoteResearcherRead")),
       ]);
