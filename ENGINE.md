@@ -1,420 +1,384 @@
-# The engine (draft)
+# The engine
 
-What the tool computes, from the raw laboratory rows to the two screens.
-This is a proposal: every choice marked **decision** is open until the
-team records it in DECISIONS.md. Formulas are in plain notation. The
-background and sources are in research/; the events the engine must find
-are in benchmarks/planted-events/.
+What the tool computes, from the laboratory rows to the screens, and where
+each number appears. Part A is the method that runs today; every rule in it
+rests on a DECISIONS.md entry. Part B says where each result is shown,
+including every mark on the timeline. Part C is for porting the backend
+into its own container. Part D keeps the proposals that do not run, with
+what the experiments measured. Formulas are in plain notation. Numbers are
+tagged measured (in the data) or computed (by a run), with the record they
+come from; experiments 0012 to 0022 are on branch `overnight/experiments`.
 
-One sentence: the engine keeps one count table of first isolates as of a
-date, turns it into probabilities with pseudo-counts borrowed from the
-level above, and tests the same counts against their own past to raise
-signals. The doctor reads the probabilities, the researcher reads the
-signals, and both come from the same table so they never disagree.
+One sentence: the engine keeps one table of isolates as of a date, gives
+the doctor each antibiotic's share of covered first isolates over the last
+year, and tests raw counts against their own past to raise signals for the
+researcher. Both read the same rows, released one day at a time.
 
-## Status against the codebase (2026-10-17)
+## Status at a glance
 
-Main now carries a working tool built by Aapo's sessions. Where this
-draft and the code meet:
+| Part | Runs today | Gear (TypeScript) | Route | Decision | Evidence |
+|---|---|---|---|---|---|
+| A1 table, first isolates, masks | yes | `@aei/counting`, `@aei/eucast` | all | D-023, D-033 | 0001, 0004 |
+| A2 doctor's coverage list | yes | `@aei/coverage` | `/api/coverage` | D-023, D-026 to D-028, D-033 | 0004, 0010; overnight C1–C8 |
+| A3 signals | yes | `@aei/detect`, `@aei/alerts` | `/api/alerts`, `/api/live` | D-014, D-020 to D-022, D-031, D-034, D-042 | 0002, 0007, 0009, 0011; overnight D1–D7 |
+| A4 flows between units | yes | `@aei/relations` | `/api/relations` | D-009, D-011 to D-013 | 0019 |
+| A5 counties | yes (computed in Python, served as a file) | `aei.regional` | `/api/regional` | D-025, D-037 | 0008 |
+| B2 timeline weekly counts | yes, on branch `overnight/design` | `@aei/viz` `weeklySeries` | `/api/weekly` | D-042 | — |
+| D Beta-binomial, Gamma-Poisson, CUSUM, exposure, forecasts | no | — | — | D-041 accepted the Beta-binomial; the rest open | 0012 to 0022 |
 
-| Section here | In the code today | Decision |
-|---|---|---|
-| 1 table, first-isolate rule, masks | `@aei/counting`, `@aei/eucast`; Python mirrors in `libs/utils/py/aei` | D-023, D-033 |
-| 2.1–2.4 Beta-binomial, discount, Dirichlet mix | Not built. The shipped coverage list uses the raw share over 365 days at one level (unit, ward type, hospital) with a Wilson interval; experiments/0004 found blends no better than the hospital year | D-041 accepted the method; the overnight experiments test it (benchmarks/METRICS.md C1, C6) before it replaces D-023/D-033 |
-| 2.6 ranking | `@aei/coverage` `suggest`: thresholds 80/90, Access first, spectrum basis for mild, pairs for severe | D-026 to D-028, D-033 |
-| 3.1 data-quality | sampling-drop and empty-run detectors | D-020, D-031 |
-| 3.2 sentinel rules | CPE isolate; MRSA or VRE new in an inpatient unit after 180 days | D-014, D-021, D-034 |
-| 3.3 cluster test | profile excess and phenotype excess, Poisson, 365-day baseline, per-test alpha, no guard band, no multiplicity control | D-020 (provisional) |
-| 3.4 trend | Cochran-Armitage hospital-wide, alpha 0.001 | D-020 |
-| 3.6 naming | alerts carry a detector name and a template explanation; the five kinds are not yet a field | D-019, D-029 |
-| 4 network | patient flow and phenotype trail (`@aei/relations`); exposure not built | D-009, D-011 to D-013 |
-| 4 counties | THL series and a Farrington-style monthly test (`aei.regional`), served by `/api/regional` | D-025, D-037 |
-| 5 replay | the API's replay clock; experiments 0004, 0007, 0010 are the backtests | D-005 |
+Every gear the app runs has a Python twin in `libs/utils/py/aei` for
+analysis; parity tests require identical output (D-030, D-032).
 
 ## 0. Notation
 
 | Symbol | Meaning |
 |---|---|
-| t | the clock date; nothing after t is visible |
-| i | a unit (ward or health centre); later also a hospital or a county |
-| o | an organism, one of nine species |
-| d | an antibiotic, one of thirteen |
-| x | what the doctor knows: unit, specimen, sex, age band, onset (hospital-acquired or not), optional organism, optional prior findings |
-| n, s, r | isolates tested, susceptible, resistant in a cell |
-| S | susceptible, R resistant, flag ∈ {ESBL, MRSA, VRE, CPE} |
+| t | the replay date; nothing sampled after t is visible |
+| i | a unit (ward, ED or health centre) |
+| o, d | an organism (nine species), an antibiotic (thirteen) |
+| n, k | isolates with a result, isolates covered (susceptible) |
+| y | a count in a window; μ its expected value |
 
-### Beta, Beta-binomial, Gamma, negative binomial
+---
 
-| Belief about | Distribution of the unknown | Count it predicts |
-|---|---|---|
-| a proportion p in [0, 1] (share susceptible) | Beta(a, b) | Beta-binomial: successes in the next n draws |
-| a rate λ (cases per week) | Gamma(shape, rate) | negative binomial: cases in the next period |
+# Part A. The method that runs
 
-"Beta-binomial model" names the whole method: binomial counts with a
-Beta prior, updated by adding counts. The Beta is what we maintain and
-show; the Beta-binomial is what we check predictions against in replay.
-Accepted as the estimation method in DECISIONS.md D-003.
+## A1. The table
 
-## 1. The one table everything reads from
+- **As of t.** Every number for day t uses rows with sample date ≤ t. A
+  result arrives on its culture's sample date (D-005), so delays here
+  understate a real laboratory's by its 2 to 3 days of turnaround
+  (assumed).
+- **First isolate** (`@aei/counting`): within a period, the first isolate
+  of each patient × organism × specimen; later ones are dropped. The
+  coverage list applies it over its 365-day window. The detectors count
+  distinct patients in their own windows instead.
+- **Onset**: hospital-acquired when sampled on day 3 of the stay or later
+  (sample date − admission date ≥ 2).
+- **Masks** (`@aei/eucast`): resistance by nature counts as not covered;
+  an organism EUCAST gives no breakpoint for counts as not covered over all
+  organisms and is left out "within spectrum"; inferred results (for
+  example *S. aureus* β-lactams from cefoxitin) are used; untested
+  isolates are left out; urine-only drugs are offered for urine only.
 
-**Input rows.** Cultures (date, unit, specimen, patient, admission date),
-isolates (organism, flags), susceptibility results (S/R per drug,
-guideline version), patients (sex, birth year).
+## A2. The doctor's coverage list (D-023, D-033)
 
-**As-of filter.** Keep rows with sample date ≤ t. In a replay t advances
-one day at a time. The same function will later receive rows from the
-laboratory system instead.
-
-**First-isolate rule.** Within a lookback window ending at t, keep the
-first isolate per (patient, organism, specimen). Every level of the
-hierarchy uses the same rule and the same lookback, so counts add up
-across levels. **Decision:** the lookback (candidates: the display
-window itself, or a fixed 365 days).
-
-**Onset.** Hospital-acquired if the sample was taken on day 3 of the stay
-or later (sample date − admission date ≥ 2), else community. Matches the
-dataset README; GLASS uses "more than two calendar days", which is the
-same cutoff. Outpatient units are always community.
-
-**Masks.** Intrinsically resistant (organism, drug) pairs are removed
-before counting and never shown as data (EUCAST Expected Resistant
-Phenotypes). Drugs reported only for urine are counted only for urine.
-A (organism, drug) cell where fewer than 85% of that organism's isolates
-were tested is flagged as selectively tested.
-
-**Output: the count table.** For every (unit, specimen, onset, sex, age
-band, organism, drug) and every window: n, s, r. Plus per
-(unit, organism, flag, week): the isolate count, used by detection. Plus
-per (unit, week): cultures taken, positives, patients, guideline
-versions, used by the data-quality checks.
-
-## 2. From counts to probabilities (the doctor's side)
-
-### 2.1 One proportion with borrowed strength
-
-For a cell with n isolates, s susceptible, and a parent proportion p0
-from the level above:
+For a query (unit i, specimen, as of t, optional sex):
 
 ```
-p | data  ~  Beta( M·p0 + s ,  M·(1 − p0) + r )
-
-mean       E[p] = (M·p0 + s) / (M + n)  =  w · s/n  +  (1 − w) · p0
-weight     w    = n / (n + M)
-variance   Var  ≈ E[p]·(1 − E[p]) / (M + n + 1)
-interval   5th and 95th percentiles of the Beta
+pool       first isolates of that specimen sampled in [t − 364, t]
+level      the unit if its pool has ≥ 30 isolates, else its ward type, else the hospital
+           (a sex filter is dropped before the unit is)
+per drug d offered for the specimen, on the chosen level's pool:
+  known    isolates with a result (tested, by nature, inferred, or no breakpoint)
+  k        those covered (effective result S)
+  share    k / known, shown only when known ≥ 30
+  interval 95 % Wilson:  ( p + z²/2n ± z·√( p(1−p)/n + z²/4n² ) ) / (1 + z²/n),  z = 1.96
+  spectrum the same with no-breakpoint organisms left out (the basis for mild infections, D-027)
+  recent   the unit's own counts over the last 28 days, context only (D-023)
 ```
 
-M is the prior strength in pseudo-isolates. w is the share of the
-estimate that comes from the cell's own data, and it is shown to the
-user as the certainty badge.
+**Suggestion order** (D-026 to D-028, D-033). Threshold 80 % for mild,
+90 % for severe. A drug *clears* when its interval's lower end reaches the
+threshold, is *borderline* when its share does, *below* otherwise, and *not
+assessable* without 30 results or with over 20 % of the pool untested.
+Clearing drugs come first, Access before Watch (WHO AWaRe 2023), then by
+share. Mild leaves out injection-only drugs; vancomycin and clindamycin
+are not offered for urine. Pairs, for severe infections
+only and only when no single drug clears: covered if either drug covers the
+isolate, counted on isolates known for both; the partner must add 2 points;
+never two β-lactams or a urine-only drug.
 
-**The parent p0 is always from the same specimen and onset**, one level
-up, over a period that does not overlap the cell's own window:
+**How well it does** (computed, overnight harness, 2024-10-01 to
+2026-09-27): next-28-day Brier 0.1417 against the hospital year's 0.1414
+(+0.0003, +0.0001 to +0.0005); the first suggestion's realised next-month
+coverage 96.6 % mild within spectrum, 75.4 % mild over all organisms,
+95.4 % severe; 90 % predictive intervals contain the realised share in
+90.2 % of blocks; after the Urology outbreak (E1) the urinary ceftriaxone
+interval leaves its pre-outbreak value after 47 days.
 
-```
-ward, last 4 weeks     ← parent: hospital, same specimen and onset, preceding 12 months
-ward, last 12 months   ← parent: hospital, same specimen and onset, 12 months
-hospital               ← parent: Finres national figure for the same organism, drug, specimen (where it exists), strength M_ext; otherwise Jeffreys Beta(0.5, 0.5)
-```
+## A3. Signals for the researcher
 
-Using the preceding period for the parent avoids counting the recent
-isolates twice. **Decision:** M (candidate 30, so that w = 0.5 exactly at
-the 30-isolate rule) and M_ext (candidate 30).
-
-### 2.2 Recency: the discounted Beta-binomial
-
-The true susceptibility drifts, so old isolates should count for less.
-Keep the two Beta parameters per cell and, each week, discount them
-before adding the week's counts, with the hospital prior as a floor
-they relax toward:
-
-```
-a_t = δ·a_{t−1} + s_t + (1 − δ)·M·p0
-b_t = δ·b_{t−1} + r_t + (1 − δ)·M·(1 − p0)
-
-E[p] = a_t / (a_t + b_t)
-effective own count   n_eff = (a_t + b_t) − M
-own-data weight       w = n_eff / (n_eff + M)
-```
-
-An isolate k weeks old weighs δ^k. This is the exact conjugate filter
-for a log-odds that follows a random walk (West and Harrison), so it is
-the Beta-binomial for a drifting proportion, not an approximation. The
-four-week and twelve-month figures are then not two estimators but one
-estimator plus two displayed facts: the raw isolate counts in the last
-28 and 365 days are shown beside the probability so a decayed 28 is
-never mistaken for 28 recent isolates.
-
-Detection (section 3) never uses the filtered values; it works on raw
-weekly counts, because smoothing hides the jump it looks for.
-
-**Decision:** δ per week (proposal 0.95 for organism × drug cells,
-half-life about 13 weeks; 0.90 for flags such as ESBL, half-life about
-7 weeks). Alternative if the team prefers the brief's literal windows:
-hard 28-day and 365-day windows with the parent taken from the
-preceding period; simpler, but a cliff at day 365 and slower to react.
-
-### 2.3 Which organism
-
-For the doctor's context x (specimen, onset, unit, sex, age band), the
-share of each organism among first isolates in the window:
+All detectors read raw counts, never the estimates (D-042). Each runs every
+day over the history up to t.
 
 ```
-π | data  ~  Dirichlet( M_π · π0 + c )        c = counts per organism in the cell
-E[π_o]    = (M_π · π0_o + c_o) / (M_π + N)
+profile excess (D-020)       per unit × organism × specimen × 13-drug S/R profile with ≥ 1 acquired R
+  y   distinct patients in the unit with that profile in the last 28 days
+  μ   patients in the unit with that organism and specimen in the 28 days
+      × (profile's isolates hospital-wide + ½) / (all isolates of the organism and specimen + 1),
+      both counted over the 365 days before the window (at least 50 isolates)
+  signal   y ≥ 3  and  P(Y ≥ y | Poisson(μ)) < 10⁻⁴
+
+phenotype excess (D-020)     per unit × ESBL, MRSA, VRE, CPE
+  y   distinct patients with the phenotype in the unit in the last 28 days
+  μ   patients in the unit in the 28 days × (unit's isolates with it + ½) / (unit's isolates + 1),
+      over the 365 days before (at least 50 isolates)
+  signal   y ≥ 2  and  P(Y ≥ y | Poisson(μ)) < 10⁻³
+
+sampling drop (D-020)        per unit
+  y   cultures in the last 7 days;  μ = 7 × mean daily cultures over the 56 days before
+  signal   P(Y ≤ y | Poisson(μ)) < 10⁻⁴
+
+empty run (D-031)            per unit
+  L   consecutive days without a culture;  λ = mean daily cultures over the 56 days before the run
+  signal   e^(−λL) < 10⁻³;  a sampling drop within 14 days after it is not raised again
+
+rising trend (D-020, D-022)  hospital-wide, 22 organism–drug pairs
+  28-day bins from the start of the data; at each bin end with ≥ 13 bins,
+  one-sided Cochran-Armitage test for a rising R share, normal tail,
+  signal at p < 10⁻³; isolates of a cluster already detected are left out from that day
+
+CPE (D-014)                  every CPE isolate is an alert on its sample date
+new in unit (D-021, D-034)   an MRSA or VRE isolate in an inpatient unit with none there in the 180 days before
 ```
 
-π0 is the hospital's organism mix for the same specimen and onset over
-the preceding 12 months. **Decision:** M_π (candidate 30). If the doctor
-enters a suspected organism, π becomes 1 on that organism.
+**From signals to alerts.** Signals of the same detector and key no more
+than 28 days apart form one *episode*; each episode is one alert, dated by
+its first signal and carrying that signal's y, μ and p. Alerts are grouped
+into *incidents* (D-034): same unit, sharing an organism or phenotype (a
+phenotype implies its organisms; sampling alerts share one tag), within 28
+days of the incident's latest alert.
 
-### 2.4 Probability that a drug works
+**Kind** (the five of Part D9, by lookup): profile and phenotype excess
+are *cluster*, rising trend *trend*, sampling drop and empty run *data*,
+CPE and new in unit *sentinel*. Nothing raises *divergence* today.
 
-```
-coverage_d = Σ_o  E[π_o] · E[p_o,d]
+**How well it does** (computed, overnight harness, scoring period
+2024-10-01 to 2026-09-27; injection seed 2026, 200 trials per cell):
 
-Var(coverage_d) = Σ_o ( E[π_o]² + Var(π_o) ) · Var(p_o,d)
-                + Σ_o E[π_o] · ( E[p_o,d] − coverage_d )²  / (M_π + N + 1)
-```
+- Planted events (a demonstration, since the thresholds were chosen on
+  them): E1 Urology ESBL 5 days from its first isolate, E2 ICU MRSA on its
+  first isolate (new in unit), E3 the missing week on its first empty day,
+  E4 trimethoprim first signalled 2026-05-10; each named with the right
+  kind.
+- Noise: 4.5 signal episodes a year (2.1 to 8.6): 1.0 cluster, 1.5
+  sentinel, 2.0 data, 0 trend.
+- Injected clusters of 4 patients sharing one isolate's copy within 2
+  weeks: rare resistant strain 89 % (84 to 93), common ESBL *E. coli* 61 %,
+  split across two linked units 24 %, common resistant or fully
+  susceptible strains at most 0.5 %. These rates hold for events shaped
+  like the injections (identical copies), which favour the profile test.
+- The causality the server relies on holds: the full-data run and runs on
+  data cut at 2024-12-31, 2025-06-20, 2025-09-15, 2026-03-20 and
+  2026-06-30 give identical signals up to each cut (computed with the
+  Python mirror, 2026-10-17).
 
-The second term is uncertainty about which organism it is; it vanishes
-for a drug that works equally on all organisms. Report the mean and a
-90% interval from a Beta matched to these moments. Monte Carlo (2,000
-draws) is used only where the interval needs to be exact.
+## A4. Between units (D-009, D-011 to D-013)
 
-Combination regimens: the probability that at least one of two drugs
-works is counted directly per isolate (max of the two results) and put
-through 2.1, never computed as 1 − (1 − p1)(1 − p2), because resistances
-travel together.
+- **Flow** A → B: a patient's culture in B whose previous culture (by date)
+  was in A; counted once per patient in the window (D-011), dated by B's
+  culture; all cultures count, negative ones too. The window follows the
+  view (D-013).
+- **Next units** of A (`nextUnits`): the three strongest flows out of A,
+  each with patients and share = patients ÷ all of A's outgoing patients.
+- **Phenotype trail** (D-012): a patient with ESBL, MRSA, VRE or CPE found
+  in A and sampled in B within 90 days; `confirmed` when B's sample shows
+  it too. Kept per patient, not pushed as alerts (D-022).
 
-### 2.5 Patient-specific adjustments
+## A5. Counties (D-025, D-037)
 
-Rules, not fitted:
+Monthly THL cases per wellbeing county and report group. For each month
+from 2024-01: a Poisson GLM on the 36 months before (intercept, linear
+time, one annual harmonic), quasi-Poisson dispersion φ = max(1, χ²/df),
+signal when P(Y ≥ y) under a negative binomial with mean μ and variance φμ
+is below 10⁻³ and the month has at least 5 cases; `strong` when it also
+survives Bonferroni at 0.05 over all series-months tested. Computed in
+Python by `scripts/fetch_thl_ttr.py` into `data/external/thl/regional.json`,
+served cut at the replay date.
 
-- An earlier isolate of this patient with ESBL, MRSA, VRE or CPE: the
-  drugs that phenotype defeats are flagged "prior finding" and their
-  coverage shown with the flag; the ranking moves them below any drug
-  not affected. **Decision:** whether to also lower the number, and how.
-- An active cluster alert (section 3) in this unit or in a unit that
-  sends it many patients: the affected organism's share and the
-  affected drugs' coverage are shown with the alert, and the exposure
-  score (section 4) is displayed. **Decision:** whether the exposure
-  changes the number or only annotates it. Proposal for the first
-  version: annotate only.
+---
 
-Later, if the team wants covariates jointly: logistic regression per
-(organism, drug) with sex, age, onset, prior finding, and a random
-effect per unit, fitted only for cells with 40 or more resistant
-isolates. Not in the first version.
+# Part B. Where each number appears
 
-### 2.6 The ranked list
+## B1. The doctor's list (`/api/coverage`)
 
-1. Compute coverage, interval and w for every drug not masked for this
-   organism set and specimen.
-2. Mark drugs whose 10th percentile clears the syndrome threshold τ.
-   **Decision:** τ per syndrome (candidates: 0.80 urine community,
-   0.90 blood or hospital-acquired).
-3. Order: drugs clearing τ first, within them narrow before broad
-   (WHO AWaRe tier: Access, Watch, Reserve), within a tier by coverage.
-   Then the rest by coverage.
-4. Every row shows: coverage %, interval, n isolates behind it, which
-   level it came from (ward 4 weeks, ward 12 months, hospital), w as
-   "x% own data", date of the newest result, and any flag from 2.5.
-5. Never a single recommendation. The screen says it supports the
-   decision and names the rules it used.
+Each row is A2's share, interval, standing, level and counts for one drug;
+the four-week figure is A2's `recent` counts. Whether and how to flag "the
+four weeks differ from the year" is open (QUESTIONS B10, options with
+costs); so is the plain-language reliability label every number should
+carry (B11).
 
-## 3. From counts to signals (the researcher's side)
+## B2. The timeline (branch `overnight/design`)
 
-Signals are computed on the raw weekly counts from section 1, not on the
-shrunk estimates, because shrinkage hides change.
+The band above every screen: a weekly stream, one lane per unit, and the
+alerts as pills, on an axis that ends at the replay date.
 
-### 3.1 Data-quality checks, run first
+| Mark | What it is, exactly | Source | Statistical? |
+|---|---|---|---|
+| Stacked stream (ESBL, MRSA, VRE, CPE) | Per ISO week (Monday to Sunday) up to t: for each phenotype, the sum over units of the distinct patients sampled in that unit that week with an isolate carrying it | `/api/weekly`, `@aei/viz` `weeklySeries` | No: raw counts (D-042) |
+| Cultures line | Cultures sampled per week, all units, on its own scale | same | No |
+| Unit lane thickness | That unit's weekly patients, summed over the four phenotypes, one scale for all lanes | same | No |
+| Last week, marked partial | The week containing t, counted up to t | same | — |
+| Pill "ESBL 7/1.4" | A phenotype-excess alert (A3): 7 patients in the 28 days to the first signal, against μ = 1.4 expected from the unit's past year | `/api/alerts` | Yes: Poisson tail p < 10⁻³ |
+| Pill "Profile 5/0.2" | A profile-excess alert: 5 patients with one resistant profile in 28 days, against μ = 0.2 | same | Yes: p < 10⁻⁴ |
+| Pill "Samples 39/70" | A sampling-drop alert: 39 cultures in 7 days against 70 expected from the 56 days before | same | Yes: p < 10⁻⁴ |
+| Pill "No samples" | An empty-run alert | same | Yes: e^(−λL) < 10⁻³ |
+| Pill "Trend ↗" | A rising-trend alert for one organism–drug pair, hospital-wide | same | Yes: p < 10⁻³ |
+| Pill "MRSA new", "CPE" | Sentinel rules, no test | same | No: rules |
+| Pill "n signals" | Pills that would overlap on a lane, merged; the tooltip lists each | timeline layout | — |
+| Readout "surprise" | −log10 p of the alert's test, capped at 6 | `pillLine` | Yes, the same p |
+| Pill shape and colour | The alert's kind (A3) | `pillKind` | — |
 
-Per unit and week, compared with the unit's own trailing 26 weeks:
+Reading it right:
 
-| Check | Fires when | Effect |
-|---|---|---|
-| Sampling drop | cultures < 25% of the trailing median | data alert; suppress 3.2 to 3.4 for the unit that week; mark the unit's 4-week figures as incomplete |
-| Sampling surge | cultures > 2× trailing median | annotate any count alert with "sampling up" |
-| Testing fraction | a drug tested on < 85% of an organism's isolates | mark the cell as selectively tested |
-| Guideline change | share of results under a new guideline version jumps | annotate %R changes across all units in that period as possible breakpoint effects |
+- A pill's two numbers are the 28-day window at the alert's first signal;
+  the stream under it shows weekly counts, so a "7" on a pill is not a bar
+  height, and μ comes from the unit's past year (phenotype) or the
+  hospital's share of the profile (profile), not from the drawn weeks.
+- The stream adds per-unit counts: a patient sampled in two units in one
+  week counts twice, and a patient whose isolate is both ESBL and CPE
+  counts in both layers.
+- Pills are causal (A3, verified): each is exactly what the detectors
+  would have raised with the data up to its date, although the server
+  computes them once over the whole history.
+- The live set is provisional and was tuned on the planted events
+  (D-020, METRICS.md), and its sensitivity has the scope given in A3. A
+  pill carries its count and its window, not yet a reliability label (B11).
 
-**Decision:** the thresholds above.
+## B3. Signal feed and incidents (`/api/alerts`, `/api/live`)
 
-### 3.2 Sentinel rules
+One row per alert, grouped by incident (D-034); the explanation is a
+template filled from the alert's fields (D-019), optional model wording
+only when asked (D-029).
 
-Per isolate on arrival, no statistics:
+## B4. Unit graph and county map
 
-| Rule | Severity |
-|---|---|
-| any CPE | highest |
-| first MRSA or VRE in a unit in 90 days | high |
-| first isolate of any flag in the hospital in 365 days | high |
-| two or more isolates with the same rare 13-drug profile (background frequency < 1%) in one unit within 14 days | high |
+- **Unit graph** (research board): edges are A4 flows over the last 28
+  days, width linear in patients. A unit with a resistance alert in the
+  same 28 days is lit; arrows show its next units with chips
+  "share · n", for example "ED 31 % · n 41": 41 of the lit unit's
+  outgoing patients, 31 %, went to ED next. These are all moving patients,
+  not carriers (carriers are A4's trails), and raw volume: ranking units by
+  it did not beat volume-preserving random graphs (0019: pooled AUC 0.63,
+  p 0.22, computed).
+- **County map**: THL cases and incidence per county per month (A5), with
+  A5's signals; a county with too few cases is hatched.
 
-Sentinel alerts bypass every statistical filter. **Decision:** the list
-and its day counts.
+---
 
-### 3.3 Cluster test
+# Part C. The backend container
 
-Per series (unit, organism or flag), per week, count y against the
-unit's own baseline:
+What the container must do so that the web app, which reaches it only
+through `libs/utils/contract` over HTTP and server-sent events (D-006),
+shows the same numbers.
 
-```
-baseline window   the 26 weeks ending 4 weeks before this week (the 4-week gap is the guard band)
-baseline counts   C over S weeks, shrunk toward the hospital rate so it is never zero:
-                  rate prior Gamma(C + k·r_hosp·S, S + k·S)          k small, e.g. 0.1
-predictive        y ~ NegativeBinomial from the Gamma-Poisson
-surprise          p = P(Y ≥ y)   and   score = −log10 p
-```
+- **Inputs.** The dataset's rows, or a laboratory feed in HL7 v2, FHIR R4
+  or a flat export through `@aei/ingest` (D-035, D-036); THL's county file
+  (A5) as a mounted file.
+- **State.** Records released by the replay clock (D-005, D-015). Alerts:
+  `buildAlerts` over the whole history once at start, released by date;
+  this equals computing them as of each day because every rule is causal
+  (A3). With a live feed, rebuild on the rows up to today after each day's
+  ingest (`buildAlerts` over all 24,571 isolates takes about 1 s,
+  computed 2026-10-17).
+- **Per request.** Coverage (A2) on the released rows; weekly counts (B2)
+  on the released rows; flows (A4) for the requested window.
+- **Routes** it must serve: `/api/coverage`, `/api/alerts`, `/api/live`,
+  `/api/relations`, `/api/isolates`, `/api/regional`, `/api/meta`,
+  `/api/clock`, `/api/ingest`, `/api/explain`, `/api/ask`, and
+  `/api/weekly` once branch `overnight/design` is merged. `apps/api` only
+  wires gears to routes; logic lives in `libs/utils`.
+- **Port only what is decided** (Part A). Part D stays out, or goes in as
+  a marked placeholder naming its QUESTIONS.md item. Each result should
+  carry its isolate count, period, fallback level and reliability label
+  (Artem, 2026-10-17); the label's rule is QUESTIONS B11. The module and
+  route list, with the decision each rests on, is
+  `benchmarks/overnight-2026-10-17/engine-port-plan.md` on branch
+  `overnight/experiments`; changes to `/api/coverage`'s shape need Artem's
+  OK first.
+- **Open for the container itself**: runtime and base image (QUESTIONS F2),
+  storage (F3).
 
-Across all series in a week:
+---
 
-1. Drop series that cannot reach significance this week (y ≤ 1, Tarone's
-   filter), so the multiple-testing denominator is the active series
-   only.
-2. Benjamini-Hochberg at level q across the active series.
-3. Cap: the alert budget B per week for the whole hospital; if more
-   pass, keep the B highest scores and merge connected units (section 4)
-   into one cluster alert.
+# Part D. Proposals that do not run
 
-A Poisson CUSUM runs beside it for the slow drip the weekly test misses
-(three weeks of one case each in the ICU):
+Each was tried overnight on 2026-10-17 through one scoring harness
+(`benchmarks/overnight-2026-10-17/harness-spec.md`); the comparison table
+is `benchmarks/overnight-2026-10-17/README.md`. All are exploratory, and
+nothing replaces Part A until the team decides.
 
-```
-S_week = max(0, S_prev + y − k),   k = (θ − 1)/ln θ · baseline,   alarm when S > h
-```
-
-**Decision:** baseline length, guard band, q, B, θ, h. Proposal: set them
-on the first year of the replay and judge them on years two and three.
-
-### 3.4 Trend test
-
-Per (organism, drug, specimen) at hospital level, monthly: logistic
-regression of R on time over the last 24 months; signal if the slope's
-95% interval excludes zero and the change over 12 months exceeds 3
-percentage points. Report with the yearly proportions and counts.
-**Decision:** the 3 points and the 24 months.
-
-### 3.5 Divergence
-
-Per (unit, organism, drug) over 12 months: a funnel plot of the unit's
-%R against the hospital's, with limits that widen as n shrinks. Signal
-when a unit sits outside the 99.8% limit. Report, do not alert.
-
-### 3.6 Naming the signal
-
-Every signal is one of five kinds by construction, so naming is a
-lookup, not a model:
-
-| Kind | From | Name shown |
-|---|---|---|
-| sentinel | 3.2 | "First CPE in the hospital in 14 months" |
-| cluster | 3.3 | "ESBL *E. coli* in Urology: 21 isolates in 4 weeks, usual 1" |
-| trend | 3.4 | "Trimethoprim resistance in urinary *E. coli* rising: 15% → 20% over 3 years" |
-| divergence | 3.5 | "ICU ciprofloxacin resistance above hospital" |
-| data | 3.1 | "Health centre South: no samples week 50" |
-
-Every signal carries: the counts, the baseline, the test, the isolates
-behind it, and the suggested first step (isolation and screening,
-review guideline, check feed). A language model is not needed to name
-or classify; if one is used it writes the prose summary from these
-fields and answers questions about them, and it must never see data the
-fields do not contain. **Decision:** whether to use one, and where it
-runs; with synthetic data this is free, with real data it is a privacy
-question.
-
-## 4. The network
-
-**Graph.** Nodes are units. Edge weight from A to B is the number of
-patients with a culture in A and then one in B within 30 days, divided
-by the number of units that patient visited (so one heavily sampled
-patient does not dominate). Significance of an edge by comparing with
-rewired graphs that keep every unit's volume. **Decision:** the 30 days
-and the rewiring null.
-
-**Exposure.** For unit B at week t:
+## D1. Beta-binomial with borrowed strength and a weekly discount (D-041)
 
 ```
-exposure_B(t) = Σ_A  w_{A→B} · active_A(t)  /  Σ_A w_{A→B}
+belief about a cell's share     p ~ Beta(a, b)
+borrowed strength (parent p₀,
+same specimen and onset,
+preceding period)               a = M·p₀ + k,   b = M·(1 − p₀) + (n − k)
+each week t                     a_t = δ·a_{t−1} + (1 − δ)·M·p₀ + k_t
+                                b_t = δ·b_{t−1} + (1 − δ)·M·(1 − p₀) + (n_t − k_t)
+estimate and prediction         E[p] = a / (a + b);  next n isolates ~ BetaBinomial(n, a, b)
+own-data weight                 w = n_eff / (n_eff + M),   n_eff = a + b − M
+organism mix (Dirichlet)        coverage_d = Σ_o E[π_o]·E[p_o,d], with its closed-form variance
 ```
 
-where active_A is 1 if A has a cluster alert for the phenotype in the
-last 4 weeks, or the alert's score. Shown to the researcher as "units at
-risk next" and to the doctor as an annotation (2.5).
+The discounted update keeps the Beta exactly (Smith 1979; Harvey and
+Fernandes 1989): it holds the mean and widens the belief, which is close
+to, not exactly, a random walk on the log-odds. D-041 accepted the method;
+M, M_ext, M_π and δ are open (QUESTIONS B1 to B4). Overnight (computed):
+δ 0.95, M 10 chosen on the first year gives Brier +0.0002 (−0.0000 to
++0.0004) against the hospital year and reacts to E1 in 48 days (0012); the
+organism mix changes C1 by +0.0001, and ENGINE's variance formula is right
+to 0.64 % against Monte Carlo (0013); no finer pooling level beats the
+hospital year (0014). None meets METRICS.md's replacement rule, so A2 stays.
 
-**Clustering across units.** Connected sets of units are tested as one
-series in 3.3, so two cases in Surgery and two in the ICU can form one
-cluster of four.
+## D2. Patient-specific adjustments
 
-**Across Finland.** Nodes are the 21 wellbeing counties, edges the five
-university-hospital catchment trees. Monthly THL counts of the four
-flags become rates per 100,000 and are shrunk along the tree with the
-same Gamma-Poisson pseudo-counts as 2.1. Turku's hospital is a point
-with its own, sharper estimate. This layer shows pressure around us; it
-is a different quantity from %S and is labelled so.
+An earlier resistant finding of the patient, or an active cluster in a
+connected unit, would flag the affected drugs; whether they change the
+number or only annotate it is open (QUESTIONS B6, B7). A covariate model
+(logistic regression per organism and drug) is out of scope (B8; 0005
+found patient factors add nothing except men and urinary ciprofloxacin).
 
-## 5. Proving it
+## D3. Other detectors
 
-**Replay.** Clock t from the first day of year 2 to the last day. At each
-t: build the table, compute every doctor list for the cultures taken on
-day t, run detection. Year 1 is warm-up and tuning.
+| Method | Record | D5: share of 4-patient clusters found at ≤ 5 episodes a year (rare strain / common ESBL) | Against the live set's 0.92 / 0.75 |
+|---|---|---|---|
+| Gamma-Poisson surprise, guard band, Benjamini-Hochberg (ENGINE's former 3.3) | 0015 | 0.205 / 0.095 | far behind (on phenotype series alone it matches the live phenotype test) |
+| Poisson and Bernoulli CUSUM (QUESTIONS C5) | 0016 | 0.665 / 0.485 (held-out seeds 0.66 / 0.435) | behind |
+| Improved Farrington on unit series | 0017 | 0.31 / 0.24 | far behind |
+| Bayesian online change points | 0018 | 0.14 / 0.135 | far behind |
+| Live set combined with CUSUM (rank product) | 0022 | level with the live set at matched noise (held out 0.966 / 0.772 against 0.960 / 0.817) | no gain |
 
-**Doctor.** For each culture on day t, the drugs' coverage before the
-result, then the actual S/R. Metrics: Brier score, calibration slope,
-share of episodes where the top-ranked drug was susceptible. Baselines
-to beat: the hospital's 12-month antibiogram with no ward and no
-shrinkage; the raw ward 4-week proportion.
+The live set wins mostly on information: its profile test matches the
+exact 13-drug profile the injected copies share. QUESTIONS C3, C4 (baseline,
+guard band, FDR, budget) and C5 (CUSUM θ, h; the first year picks θ = 8)
+stay open.
 
-**Researcher.** The four events in benchmarks/planted-events: detected
-yes or no, first alert date, delay from onset, and alerts per week over
-the whole replay at the same thresholds. Plus injected clusters of 2, 3,
-5 and 8 isolates placed at random unit-weeks, for a curve of sensitivity
-and delay against alerts per week.
+## D4. Trend over 24 months and divergence
 
-## 6. Where the code goes
+ENGINE's former proposal for the trend: logistic regression of R on time
+over the last 24 months, signal when the slope's interval excludes zero and
+the change over 12 months exceeds 3 points (QUESTIONS C6, open). A
+divergence funnel (a unit's 12-month %R against the hospital's, 99.8 %
+limits) is not built.
 
-```
-libs/utils/
-  asof/          build the first-isolate table as of t          (section 1)
-  estimate/      Beta, Dirichlet, coverage, intervals           (section 2)
-  rank/          thresholds, tiers, the list                    (section 2.6)
-  detect/        quality checks, sentinel rules, cluster test, CUSUM, trend, funnel  (section 3)
-  network/       graph, exposure, rewiring null                 (section 4)
-  replay/        the clock and the evaluation loop              (section 5)
-apps/web, apps/ios   only call these and draw
-benchmarks/          planted events and the alert-volume runs
-experiments/         one directory per question below
-```
+## D5. Exposure and forecasts
 
-## 7. First experiments
+- **Exposure**: exposure_B = Σ_A w(A→B)·active_A / Σ_A w(A→B). Over 24
+  real ESBL and MRSA episodes it is not above label-permutation nulls
+  (pooled AUC 0.63, p 0.22); after E1 and E2 no other unit rises, so their
+  AUC is undefined (0019). Not built (QUESTIONS D1, D2).
+- **County forecast**: a 24-month rolling mean with a negative-binomial
+  width forecasts THL counts one month ahead better than last month's
+  count (log score +0.40, 0.31 to 0.48; MAE +0.14), not for VRE once
+  persistence's floor is fair (0020 and its review). Shipping it is
+  QUESTIONS D6.
 
-Each one follows PROTOCOL.md: plan committed before the run.
+## D6. Naming
 
-1. **The table.** Build section 1; check that the hospital 12-month
-   antibiogram reproduces the organiser's README figures. No hypothesis,
-   a correctness check.
-2. **M.** Replay years 2 and 3 with M ∈ {10, 30, 100} and windows versus
-   decay; compare Brier and calibration against the two baselines.
-   Hypothesis: M around 30 beats both baselines on ward-level 4-week
-   predictions.
-3. **Detection.** Run 3.1 to 3.3 on the full replay; report detection
-   dates for E1 to E3 and alerts per week. Hypothesis: all three found
-   within 2 weeks of onset at under 2 alerts per week.
-4. **Trend.** 3.4 on E4. Hypothesis: both series flagged by mid-2025.
-5. **Network.** Does exposure predict where ESBL *E. coli* appears after
-   the Urology cluster, against rewired graphs? Exploratory.
+The five kinds (sentinel, cluster, trend, divergence, data) come from the
+detector by lookup (A3); every alert of the live set and of 0015 is named
+the same way by rule (0021), and the kind is right for 97.4 % of the
+detected planted and injected events (computed). Whether the kind becomes a contract field
+is part of the engine port.
 
-## 8. Decisions this draft needs
+---
 
-In the order the code needs them:
+# Part E. Open decisions
 
-1. First-isolate lookback (1).
-2. M and M_ext (2.1); the discount δ (2.2); M_π (2.3).
-3. τ per syndrome (2.6).
-4. Whether prior findings and exposure change numbers or annotate (2.5).
-5. Quality thresholds (3.1); sentinel list (3.2); baseline, guard band,
-   q, B, θ, h (3.3); trend thresholds (3.4).
-6. Edge window and null (4).
-7. Language model: yes or no, and where it runs (3.6).
-8. Storage for the as-of table (the stack is D-003, D-004, D-024).
+In QUESTIONS.md: A1 lookback, A2 onset, A4 selective testing; B1 to B4
+prior strengths and discount; B6, B7 annotations; B10 the four-week flag;
+B11 the reliability label; C1 to C8 detection settings; D1, D2 edges and
+null; D6 the county forecast; F2, F3 runtime and storage.
