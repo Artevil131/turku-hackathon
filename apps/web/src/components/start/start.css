@@ -1,6 +1,6 @@
 .start-page {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
+  grid-template-columns: minmax(0, 1fr);
   max-width: 1320px;
   gap: 32px;
   padding: 28px 12px 64px;

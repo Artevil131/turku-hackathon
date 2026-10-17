@@ -1,15 +1,8 @@
-import type { AeiClient, Alert, Project } from "@aei/contract";
+import type { AeiClient, Project } from "@aei/contract";
 import { formatDate, type Locale, siteName, t, wardName } from "@aei/i18n";
-import { useEffect, useMemo, useState } from "react";
-import type { Connection, Finding } from "../../live.ts";
+import { useEffect, useState } from "react";
 import { useShell } from "../../shell/context.ts";
 import { launchTemplate } from "../../shell/launch.ts";
-import { sharedQuery } from "../../url.ts";
-import { changesOn, incidentOf } from "../home/changes.ts";
-import { latestSentence, latestSignal } from "../home/Latest.tsx";
-import { Since } from "../home/Since.tsx";
-import { IncidentRow } from "../research/feed/IncidentRow.tsx";
-import { groupIncidents, openIncidents } from "../research/feed/model.ts";
 import { DeleteProjectDialog } from "../research/projects/ProjectDialogs.tsx";
 import { parseLayout } from "../research/workspace/layout.ts";
 import { QUICK_STARTS, TEMPLATE_KEYS, type Template } from "../research/workspace/templates.ts";
@@ -64,17 +57,11 @@ export function StartPage({
   client,
   locale,
   clock,
-  alerts,
-  findings = [],
-  connection = "open",
   audience,
 }: {
   client: AeiClient;
   locale: Locale;
   clock: string | null;
-  alerts: readonly Alert[];
-  findings?: Finding[];
-  connection?: Connection;
   audience: Audience;
 }) {
   const [projects, setProjects] = useState<Project[] | null>(null);
@@ -86,7 +73,6 @@ export function StartPage({
   const [busy, setBusy] = useState(false);
   const [launching, setLaunching] = useState<Template | null>(null);
   const [actionError, setActionError] = useState(false);
-  const [period, setPeriod] = useState<1 | 7 | 28>(1);
   const shell = useShell();
   // A template opens at once, with the defaults; "Customise…" asks for the details first.
   const launch = async (template: Template) => {
@@ -120,13 +106,6 @@ export function StartPage({
       stale = true;
     };
   }, [client, revision]);
-  const latest = clock ? latestSignal(clock, [...alerts]) : null;
-  const changes = useMemo(
-    () => (clock ? changesOn(clock, findings, [...alerts], undefined, period) : null),
-    [clock, findings, alerts, period],
-  );
-  const open = useMemo(() => (clock ? openIncidents(groupIncidents(alerts.filter((a) => a.date <= clock)), clock) : []), [clock, alerts]);
-  const summary = connection === "offline" ? "offline" : clock === null ? "connecting" : "ready";
   const templates = ORDER[audience];
   return (
     <div className="start-page">
@@ -283,50 +262,6 @@ export function StartPage({
         </section>
         {actionError ? <p role="alert">{t(locale, "startError")}</p> : null}
       </div>
-      <aside className="start-context">
-        <p>{t(locale, "startIntro")}</p>
-        <Since
-          locale={locale}
-          asOf={clock}
-          changes={changes}
-          state={summary}
-          period={period}
-          onPeriod={setPeriod}
-          openCount={summary === "ready" ? open.length : null}
-          level={2}
-        />
-        {summary === "ready" && open.length ? (
-          <section className="hm-incidents" aria-label={t(locale, "feedOpen", { n: open.length })}>
-            <ul className="feed-list">
-              {open.map((incident) => (
-                <li key={incident.key}>
-                  <IncidentRow
-                    locale={locale}
-                    incident={incident}
-                    spans={null}
-                    selected={false}
-                    onSelect={(key) => shell.openView(null, { inc: key })}
-                  />
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
-        <section>
-          <h2>{t(locale, "startLatest")}</h2>
-          {latest ? (
-            <>
-              <time dateTime={latest.date}>{formatDate(locale, latest.date, "long")}</time>
-              <p>{latestSentence(locale, latest)}</p>
-              <a href={`#project?inc=${encodeURIComponent(incidentOf(latest))}${sharedQuery().replace("?", "&")}`}>
-                {t(locale, "startSignalLink")}
-              </a>
-            </>
-          ) : (
-            <p>{t(locale, "startNoSignal")}</p>
-          )}
-        </section>
-      </aside>
       {creating ? (
         <NewProjectDialog client={client} locale={locale} clock={clock} initial={creating} onClose={() => setCreating(null)} />
       ) : null}

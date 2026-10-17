@@ -422,15 +422,7 @@ export function App() {
                   <SiteLine locale={locale} />
                   <Fragment key={siteKey}>
                     {page === "home" ? (
-                      <StartPage
-                        client={client}
-                        locale={locale}
-                        clock={live.clock?.asOf ?? null}
-                        alerts={alerts}
-                        findings={findings}
-                        connection={live.connection}
-                        audience={audience}
-                      />
+                      <StartPage client={client} locale={locale} clock={live.clock?.asOf ?? null} audience={audience} />
                     ) : null}
                     <Suspense fallback={<div className="section" aria-busy="true" />}>
                       {page === "project" ? (
