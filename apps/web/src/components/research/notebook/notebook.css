@@ -630,3 +630,56 @@
   color: var(--ink-3);
   font-weight: 400;
 }
+
+/* The notebook is for writing: the note button leads, notes read like paper, the machine cells step back. */
+.nb-bar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.nb-write {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--live);
+  border-radius: 999px;
+  background: var(--live);
+  color: #fff;
+  font: inherit;
+  font-size: var(--t-s);
+  font-weight: 600;
+  cursor: pointer;
+}
+.nb-write:hover,
+.nb-write:focus-visible {
+  filter: brightness(1.1);
+}
+.nb-empty {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+  padding: 24px;
+  border: 1px dashed var(--line-strong, var(--line));
+  border-radius: var(--radius-panel);
+  font-size: var(--t-m);
+}
+.nb-empty p {
+  margin: 0;
+  max-width: 46ch;
+}
+.nb-cell[data-kind="note"] {
+  padding: 8px 14px 10px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--live);
+  border-radius: 8px;
+  background: var(--glass-1);
+}
+.nb-cell[data-kind="note"] .nb-title {
+  color: var(--live);
+}
+.nb-cell:not([data-kind="note"]) .nb-title {
+  color: var(--ink-3);
+  font-weight: 500;
+}

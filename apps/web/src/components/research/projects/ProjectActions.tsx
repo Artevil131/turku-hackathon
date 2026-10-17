@@ -6,6 +6,7 @@ import { downloadFile } from "../../../downloadFile.ts";
 import { useShell } from "../../../shell/context.ts";
 import { launchTemplate } from "../../../shell/launch.ts";
 import { Menu, MenuItem, MenuSeparator } from "../../shell/Menu.tsx";
+import { EditProjectDialog } from "../../start/EditProjectDialog.tsx";
 import { NewProjectDialog } from "../../start/NewProjectDialog.tsx";
 import { ShareDialog } from "../../start/ShareDialog.tsx";
 import type { BoardState } from "../board.ts";
@@ -15,7 +16,7 @@ import { DeleteProjectDialog, OpenProjectDialog, RenameProjectDialog, SaveProjec
 import type { useProject } from "./useProject.ts";
 import "./projects.css";
 
-type Dialog = "new" | "open" | "save" | "frozen" | "rename" | "delete" | "share" | null;
+type Dialog = "new" | "open" | "save" | "frozen" | "rename" | "settings" | "delete" | "share" | null;
 /** Other parts of the view (an empty Reproduce window) ask for a project action by this event. */
 export const PROJECT_ACTION = "aei:project-action";
 
@@ -173,6 +174,9 @@ export function ProjectActions({
             >
               {t(locale, "pmDuplicate")}
             </MenuItem>
+            <MenuItem data-pm="settings" onSelect={() => setDialog("settings")}>
+              {t(locale, "pmSettings")}
+            </MenuItem>
             <MenuItem data-pm="rename" onSelect={() => setDialog("rename")}>
               {t(locale, "pmRename")}
             </MenuItem>
@@ -256,6 +260,15 @@ export function ProjectActions({
           board={board}
           current={dialog === "frozen" ? project : undefined}
           onSaved={saved}
+          onClose={() => setDialog(null)}
+        />
+      ) : null}
+      {dialog === "settings" && project ? (
+        <EditProjectDialog
+          client={client}
+          locale={locale}
+          project={project}
+          onSaved={() => selection.refresh()}
           onClose={() => setDialog(null)}
         />
       ) : null}

@@ -386,9 +386,24 @@ export function Notebook({ client, locale, asOf, page, update, signal, railCells
       <div className="nb-bar">
         <div className="nb-bar-text">
           <h2 className="nb-h">{t(locale, "notebookWindow")}</h2>
-          <p className="nb-muted">
-            {t(locale, "nbCount", { n: cells.length, slices })} · {t(locale, "nbSaved")}
-          </p>
+          <p className="nb-muted">{t(locale, "nbTagline")}</p>
+        </div>
+        <div className="nb-bar-actions">
+          <button type="button" className="nb-write" data-write-note onClick={() => add("note", cells.length)}>
+            <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false">
+              <path
+                d="M2.5 13.5l.7-3L11 2.7l2.3 2.3-7.8 7.8zM9.7 4l2.3 2.3"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeLinejoin="round"
+              />
+            </svg>
+            {t(locale, "nbWriteNote")}
+          </button>
+          <button type="button" className="btn" data-add-more onClick={() => setMenuAt(cells.length)}>
+            + {t(locale, "nbAddMore")}
+          </button>
         </div>
         {py.phase !== "off" && (
           <button
@@ -414,7 +429,14 @@ export function Notebook({ client, locale, asOf, page, update, signal, railCells
           {exporting ? t(locale, "nbExporting") : t(locale, "nbExport")}
         </button>
       </div>
-      {cells.length === 0 && <p className="nb-empty">{t(locale, "nbEmpty")}</p>}
+      {cells.length === 0 && (
+        <div className="nb-empty">
+          <p>{t(locale, "nbEmpty")}</p>
+          <button type="button" className="nb-write" onClick={() => add("note", 0)}>
+            {t(locale, "nbWriteNote")}
+          </button>
+        </div>
+      )}
       {adder(0)}
       {cells.map((c, i) => {
         const { title, summary } = titleOf(c, i);
