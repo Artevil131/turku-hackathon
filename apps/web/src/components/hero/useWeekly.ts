@@ -20,9 +20,14 @@ export function useWeekly(client: AeiClient | undefined, start: string | undefin
   const have = useRef<WeeklyResponse | null>(null);
   const generation = useRef(0);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const asked = useRef<string | null>(null);
 
   useEffect(() => {
     if (!client || !start || !asOf) return;
+    // The same window (from and replay date) is already asked for or shown: a new client object does not ask again.
+    const windowKey = `${start}|${asOf}`;
+    if (windowKey === asked.current) return;
+    asked.current = windowKey;
     const cur = have.current;
     const load = (attempt: number, mine: number) => {
       client

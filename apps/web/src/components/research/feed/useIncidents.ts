@@ -12,10 +12,13 @@ const RETRY_MS = 2000;
 
 export type IncidentLoad = { status: "loading" } | { status: "error" } | { status: "ready"; asOf: string; alerts: Alert[] };
 
+// The window moves a day per clock tick and most ticks change no alert: keep the array the board already has,
+// so the grouping (and everything that reads the incidents) is not redone for a tick that changed nothing.
+const sameAlerts = (a: Alert[], b: Alert[]) => a.length === b.length && JSON.stringify(a) === JSON.stringify(b);
+
 export function useIncidents(client: AeiClient, asOf: string | null) {
   const [load, setLoad] = useState<IncidentLoad>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
-  // biome-ignore lint/correctness/useExhaustiveDependencies: `attempt` is the retry trigger.
   useEffect(() => {
     if (!asOf) return;
     let stale = false;
@@ -23,7 +26,15 @@ export function useIncidents(client: AeiClient, asOf: string | null) {
     setLoad((l) => (l.status === "ready" ? l : { status: "loading" }));
     client
       .alerts({ from: shift(asOf, -WINDOW_DAYS) })
-      .then((r) => !stale && setLoad({ status: "ready", asOf: r.asOf, alerts: r.alerts }))
+      .then(
+        (r) =>
+          !stale &&
+          setLoad((prev) => ({
+            status: "ready",
+            asOf: r.asOf,
+            alerts: prev.status === "ready" && sameAlerts(prev.alerts, r.alerts) ? prev.alerts : r.alerts,
+          })),
+      )
       .catch(() => {
         if (stale) return;
         setLoad({ status: "error" });
@@ -35,6 +46,7 @@ export function useIncidents(client: AeiClient, asOf: string | null) {
       if (timer) clearTimeout(timer);
     };
   }, [client, asOf, attempt]);
-  const incidents = useMemo<Incident[]>(() => (load.status === "ready" ? groupIncidents(load.alerts) : []), [load]);
+  const alerts = load.status === "ready" ? load.alerts : undefined;
+  const incidents = useMemo<Incident[]>(() => (alerts ? groupIncidents(alerts) : []), [alerts]);
   return { load, incidents, retry: () => setAttempt((n) => n + 1) };
 }

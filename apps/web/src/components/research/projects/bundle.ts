@@ -1,7 +1,6 @@
 import type { AeiClient, Alert } from "@aei/contract";
 import { ANTIBIOTICS } from "@aei/domain";
-import { alertTable, type ExportBundle, type ExportFigure, isolateTable } from "@aei/export";
-import { rasterizeSvg, serializeSvg } from "@aei/export/dom";
+import type { ExportBundle, ExportFigure } from "@aei/export";
 import { type Locale, t } from "@aei/i18n";
 import { matchesScope, type Project, type ProjectScope } from "@aei/projects";
 import { alertSiteOf, currentSite } from "../../../sites.ts";
@@ -38,6 +37,8 @@ export function alertInScope(alert: Alert, scope: ProjectScope, asOf: string): b
 }
 
 export async function workspaceFigures(root: HTMLElement, png: boolean, locale: Locale): Promise<ExportFigure[]> {
+  // The export gear (docx, jszip) loads when an export is asked for, not with the research page.
+  const { rasterizeSvg, serializeSvg } = await import("@aei/export/dom");
   const figures: ExportFigure[] = [];
   for (const win of root.querySelectorAll<HTMLElement>(".ws-win")) {
     if (win.hidden || win.closest("[hidden]") || !win.getClientRects().length) continue;
@@ -81,6 +82,7 @@ export async function workspaceBundle({
   png: boolean;
   locale: Locale;
 }): Promise<ExportBundle> {
+  const { alertTable, isolateTable } = await import("@aei/export");
   const asOf = project?.mode === "frozen" ? (project.asOf ?? clock) : clock;
   const scope = workspaceScope(board, clock);
   // Keep a frozen window fixed as the replay moves on; choosing another window length changes it.

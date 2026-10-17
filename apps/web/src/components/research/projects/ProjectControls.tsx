@@ -1,14 +1,17 @@
 import type { AeiClient } from "@aei/contract";
-import { figurePngFile, figureSvgFile, toCsvFiles, toDocx, toJson, toLatex, toMarkdown, toPython, toResearchPackage } from "@aei/export";
 import { type Locale, t } from "@aei/i18n";
-import { useRef, useState } from "react";
+import { lazy, Suspense, useRef, useState } from "react";
 import { downloadFile } from "../../../downloadFile.ts";
 import type { BoardState } from "../board.ts";
 import { workspaceBundle } from "./bundle.ts";
-import { type ExportFormat, ExportFormatButtons, ExportMenu } from "./ExportMenu.tsx";
-import { ProjectsPanel } from "./ProjectsPanel.tsx";
+import type { ExportFormat } from "./ExportMenu.tsx";
 import type { useProject } from "./useProject.ts";
 import "./projects.css";
+
+// The projects window and the export menu open on demand, so their code (the export gear: docx, jszip) stays off the research page.
+const ProjectsPanel = lazy(() => import("./ProjectsPanel.tsx").then((m) => ({ default: m.ProjectsPanel })));
+const ExportMenu = lazy(() => import("./ExportMenu.tsx").then((m) => ({ default: m.ExportMenu })));
+const ExportFormatButtons = lazy(() => import("./ExportMenu.tsx").then((m) => ({ default: m.ExportFormatButtons })));
 
 export function ProjectControls({
   client,
@@ -37,6 +40,9 @@ export function ProjectControls({
     setBusy(true);
     setStatus(null);
     try {
+      const { figurePngFile, figureSvgFile, toCsvFiles, toDocx, toJson, toLatex, toMarkdown, toPython, toResearchPackage } = await import(
+        "@aei/export"
+      );
       const bundle = await workspaceBundle({
         client,
         board,
@@ -123,18 +129,29 @@ export function ProjectControls({
           </span>
         ) : null}
         {panel === "projects" ? (
-          <ProjectsPanel client={client} locale={locale} clock={clock} board={board} selection={selection} onClose={() => setPanel(null)} />
+          <Suspense fallback={null}>
+            <ProjectsPanel
+              client={client}
+              locale={locale}
+              clock={clock}
+              board={board}
+              selection={selection}
+              onClose={() => setPanel(null)}
+            />
+          </Suspense>
         ) : null}
         {panel === "export" ? (
-          <ExportMenu title={t(locale, "exportTitle")} anchor={exportTrigger.current} onClose={() => setPanel(null)}>
-            <ExportFormatButtons locale={locale} busy={busy} onSelect={(format) => void run(format)} />
-            {busy ? <p role="status">{t(locale, "exportBuilding")}</p> : null}
-            {status ? (
-              <p className={status === "exportError" ? "project-error" : undefined} role={status === "exportError" ? "alert" : "status"}>
-                {t(locale, status)}
-              </p>
-            ) : null}
-          </ExportMenu>
+          <Suspense fallback={null}>
+            <ExportMenu title={t(locale, "exportTitle")} anchor={exportTrigger.current} onClose={() => setPanel(null)}>
+              <ExportFormatButtons locale={locale} busy={busy} onSelect={(format) => void run(format)} />
+              {busy ? <p role="status">{t(locale, "exportBuilding")}</p> : null}
+              {status ? (
+                <p className={status === "exportError" ? "project-error" : undefined} role={status === "exportError" ? "alert" : "status"}>
+                  {t(locale, status)}
+                </p>
+              ) : null}
+            </ExportMenu>
+          </Suspense>
         ) : null}
       </div>
     </>
