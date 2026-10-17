@@ -292,6 +292,15 @@ One row per alert, grouped by incident (D-034); the explanation is a
 template filled from the alert's fields (D-019), optional model wording
 only when asked (D-029).
 
+**The signal card** (research board, window "Signal") shows one incident's
+lead alert as y ("observed"), μ ("usual"), the surprise −log10 p with
+"1 in N by chance" (N = 1/p, capped at 1 in 1 000 000), and one sentence
+per detector saying what was counted, against which past, and the tail
+probability, with the test, its minimums, threshold and decision number
+behind the ⓘ (`libs/utils/i18n/src/surfaces/card.ts`, keys `cardHow*`
+and `cardDetail*`). The sentences state A3 as it runs; MATH-REVIEW.md
+holds the audit (D-067, pending Artem).
+
 ## B4. Unit graph and county map
 
 - **Unit graph** (research board): edges are A4 flows over the last 28

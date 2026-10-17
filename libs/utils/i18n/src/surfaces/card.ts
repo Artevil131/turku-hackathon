@@ -26,17 +26,30 @@ export const cardEn = {
   cardHow: "How we calculate it",
   cardHowInfo: "The arithmetic behind this signal",
   cardHowCluster:
-    "We count distinct patients with this profile in the last {days} days on this unit ({n}) and compare with what the unit's own last year predicts ({expected}). The chance of {n} or more by luck is {odds}.",
+    "We count distinct patients with this resistance profile on this unit in the last {days} days ({n}) and compare with how often the profile appeared across the whole hospital in the year before, scaled to this unit's patients ({expected}). The chance of {n} or more by luck is {odds}.",
   cardHowPhenotype:
     "We count distinct patients with this resistance type in the last {days} days on this unit ({n}) and compare with what the unit's own last year predicts ({expected}). The chance of {n} or more by luck is {odds}.",
-  cardHowSentinel: "A rule, no test: the first {what} here in {days} days.",
+  cardHowSentinel: "A rule, no test: the first {what} on this inpatient unit in {days} days.",
   cardHowCpe: "A rule, no test: every CPE is an alert.",
   cardHowData:
     "We count cultures this unit sent this week ({n}) against its usual week ({expected}). A drop this large is a feed or sampling problem, not a resistance change.",
   cardHowEmpty:
     "This unit sent no cultures for {n} days, and usually sends about {expected} a day. A gap this long is a feed or sampling problem, not a resistance change.",
   cardHowTrend:
-    "We take the resistant share of isolates in each {days}-day period, now {to}, and test whether the rise is steeper than chance allows.",
+    "We take the resistant share of isolates hospital-wide in each {days}-day period since the data began (now {to}) and test whether the share rises along the periods more steeply than chance allows.",
+  cardDetailCluster:
+    "Test: the upper tail of a Poisson count, P(Y ≥ {n}) with mean {expected}. Needs at least 3 patients in the window and 50 isolates of the organism and specimen hospital-wide in the baseline year. Alert below p = 0.0001 (D-020).",
+  cardDetailPhenotype:
+    "Test: the upper tail of a Poisson count, P(Y ≥ {n}) with mean {expected}, the mean from this unit's own share over the year before. Needs at least 2 patients and 50 isolates in the baseline. Alert below p = 0.001 (D-020).",
+  cardDetailData:
+    "Test: the lower tail of a Poisson count, P(Y ≤ {n}) with mean {expected}, the mean from the 56 days before the week. Alert below p = 0.0001 (D-020).",
+  cardDetailEmpty: "Test: the chance of {n} empty days at a daily rate of {expected}, e^(−rate × days). Alert below 0.001 (D-031).",
+  cardDetailTrend:
+    "Test: one-sided Cochran–Armitage trend test on {days}-day periods, at least 13 of them, 22 organism–drug pairs watched; isolates of an already detected cluster are left out. Alert below p = 0.001 (D-020, D-022). No correction for the 22 pairs is applied.",
+  cardDetailSentinel:
+    "The rule: an MRSA or VRE isolate in an inpatient unit with none there in the {days} days before; silent for the data's first {days} days (D-021).",
+  cardDetailCpe: "The rule: every CPE isolate is an alert on its sample date (D-014).",
+  cardUsualSmall: "less than 0.1 usual",
   cardReach: "Reaches",
   cardIsolates: "Isolates behind it ({n})",
   cardGoToDay: "Go to this day",
@@ -66,17 +79,30 @@ export const cardFi: Record<keyof typeof cardEn, string> = {
   cardHow: "Näin se lasketaan",
   cardHowInfo: "Signaalin takana oleva laskenta",
   cardHowCluster:
-    "Laskemme tämän profiilin eri potilaat yksikössä viimeisten {days} päivän ajalta ({n}) ja vertaamme siihen, mitä yksikön oma edellinen vuosi ennustaa ({expected}). Todennäköisyys saada {n} tai enemmän sattumalta on {odds}.",
+    "Laskemme tämän resistenssiprofiilin eri potilaat tällä yksiköllä viimeisten {days} päivän ajalta ({n}) ja vertaamme siihen, kuinka usein profiili esiintyi koko sairaalassa edellisenä vuonna, suhteutettuna tämän yksikön potilaisiin ({expected}). Todennäköisyys saada {n} tai enemmän sattumalta on {odds}.",
   cardHowPhenotype:
     "Laskemme tämän resistenssityypin eri potilaat yksikössä viimeisten {days} päivän ajalta ({n}) ja vertaamme siihen, mitä yksikön oma edellinen vuosi ennustaa ({expected}). Todennäköisyys saada {n} tai enemmän sattumalta on {odds}.",
-  cardHowSentinel: "Sääntö, ei testiä: ensimmäinen {what} täällä {days} päivään.",
+  cardHowSentinel: "Sääntö, ei testiä: ensimmäinen {what} tällä vuodeosastolla {days} päivään.",
   cardHowCpe: "Sääntö, ei testiä: jokainen CPE on hälytys.",
   cardHowData:
     "Laskemme yksikön tällä viikolla lähettämät viljelyt ({n}) ja vertaamme sen tavalliseen viikkoon ({expected}). Näin suuri pudotus on syöte- tai näytteenotto-ongelma, ei resistenssin muutos.",
   cardHowEmpty:
     "Yksikkö ei lähettänyt viljelyjä {n} päivään, ja se lähettää tavallisesti noin {expected} päivässä. Näin pitkä tauko on syöte- tai näytteenotto-ongelma, ei resistenssin muutos.",
   cardHowTrend:
-    "Otamme isolaattien resistentin osuuden jokaiselta {days} päivän jaksolta, nyt {to}, ja testaamme, onko nousu jyrkempi kuin sattuma sallii.",
+    "Otamme isolaattien resistentin osuuden koko sairaalassa jokaiselta {days} päivän jaksolta aineiston alusta (nyt {to}) ja testaamme, nouseeko osuus jaksojen myötä jyrkemmin kuin sattuma sallii.",
+  cardDetailCluster:
+    "Testi: Poisson-jakauman ylähäntä, P(Y ≥ {n}) odotusarvolla {expected}. Vaatii vähintään 3 potilasta ikkunassa ja 50 organismin ja näytetyypin isolaattia koko sairaalassa vertailuvuonna. Hälytys, kun p < 0,0001 (D-020).",
+  cardDetailPhenotype:
+    "Testi: Poisson-jakauman ylähäntä, P(Y ≥ {n}) odotusarvolla {expected}, odotusarvo yksikön omasta osuudesta edellisenä vuonna. Vaatii vähintään 2 potilasta ja 50 isolaattia vertailujaksolla. Hälytys, kun p < 0,001 (D-020).",
+  cardDetailData:
+    "Testi: Poisson-jakauman alahäntä, P(Y ≤ {n}) odotusarvolla {expected}, odotusarvo viikkoa edeltävien 56 päivän keskiarvosta. Hälytys, kun p < 0,0001 (D-020).",
+  cardDetailEmpty: "Testi: todennäköisyys {n} tyhjälle päivälle päivätahdilla {expected}, e^(−tahti × päivät). Hälytys alle 0,001 (D-031).",
+  cardDetailTrend:
+    "Testi: yksisuuntainen Cochran–Armitage-trenditesti {days} päivän jaksoille, vähintään 13 jaksoa, 22 seurattua organismi–lääke-paria; jo tunnistetun rypään isolaatit jätetään pois. Hälytys, kun p < 0,001 (D-020, D-022). 22 parin monivertailua ei korjata.",
+  cardDetailSentinel:
+    "Sääntö: MRSA- tai VRE-isolaatti vuodeosastolla, jolla ei ollut sellaista edeltävinä {days} päivänä; hiljainen aineiston ensimmäiset {days} päivää (D-021).",
+  cardDetailCpe: "Sääntö: jokainen CPE-isolaatti on hälytys näytepäivänään (D-014).",
+  cardUsualSmall: "alle 0,1 tavallisesti",
   cardReach: "Ulottuu",
   cardIsolates: "Isolaatit sen takana ({n})",
   cardGoToDay: "Siirry tähän päivään",

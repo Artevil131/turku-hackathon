@@ -64,12 +64,37 @@ export function surpriseLabel(locale: Locale, p: number): string {
   return `${t(locale, "cardSurprise")} · ${chance}`;
 }
 
+/** An expectation to one decimal; below 0.05 it would print as 0.0, so it says "less than 0.1". */
+export function usualText(locale: Locale, expected: number): string {
+  return expected > 0 && expected < 0.05 ? (locale === "fi" ? "alle 0,1" : "less than 0.1") : oneDecimal(locale, expected);
+}
+
+/** The test behind the sentence, named with its minimums, threshold and decision (MATH-REVIEW.md). */
+export function howDetail(locale: Locale, a: Alert): string {
+  if (a.kind === "cpe") return t(locale, "cardDetailCpe");
+  if (a.kind === "new-in-unit") return t(locale, "cardDetailSentinel", { days: NEW_IN_UNIT_DAYS });
+  if (a.kind !== "detector") return "";
+  const expected = usualText(locale, a.expected ?? 0);
+  switch (a.detector) {
+    case "profile-excess":
+      return t(locale, "cardDetailCluster", { n: a.observed, expected });
+    case "phenotype-excess":
+      return t(locale, "cardDetailPhenotype", { n: a.observed, expected });
+    case "sampling-drop":
+      return t(locale, "cardDetailData", { n: a.observed, expected });
+    case "empty-run":
+      return t(locale, "cardDetailEmpty", { n: a.observed, expected });
+    case "rising-trend":
+      return t(locale, "cardDetailTrend", { days: LIVE_SETTINGS.risingTrend.binDays });
+  }
+}
+
 /** One sentence per detector with the live numbers filled in (D-020, D-044). */
 export function howSentence(locale: Locale, a: Alert): string {
   if (a.kind === "cpe") return t(locale, "cardHowCpe");
   if (a.kind === "new-in-unit") return t(locale, "cardHowSentinel", { what: phenotypeName(a.phenotype), days: NEW_IN_UNIT_DAYS });
   if (a.kind !== "detector") return "";
-  const expected = oneDecimal(locale, a.expected ?? 0);
+  const expected = usualText(locale, a.expected ?? 0);
   const odds = a.p === undefined ? "" : oddsPhrase(locale, a.p);
   switch (a.detector) {
     case "profile-excess":
@@ -249,10 +274,15 @@ function whereLine(locale: Locale, inc: Incident, win: { from: string; to: strin
 
 /** The ⓘ of the how-section: the Poisson tail for the count detectors; sentinels and trends have none. */
 function HowFigure({ locale, alert: a }: { locale: Locale; alert: Alert }): ReactNode {
-  if (a.kind !== "detector" || !COUNT_DETECTORS.includes(a.detector) || a.p === undefined || a.expected === undefined) return null;
+  const detail = howDetail(locale, a);
+  if (!detail) return null;
+  const figure = a.kind === "detector" && COUNT_DETECTORS.includes(a.detector) && a.p !== undefined && a.expected !== undefined;
   return (
     <InfoButton locale={locale} align="end" label={t(locale, "cardHowInfo")}>
-      <PoissonTail observed={a.observed} expected={a.expected} p={a.p} detector={a.detector} locale={locale} />
+      <p className="sig-detail">{detail}</p>
+      {figure && a.kind === "detector" ? (
+        <PoissonTail observed={a.observed} expected={a.expected as number} p={a.p as number} detector={a.detector} locale={locale} />
+      ) : null}
     </InfoButton>
   );
 }
@@ -269,7 +299,12 @@ function Numbers({ locale, alert: a }: { locale: Locale; alert: Alert }) {
     : data
       ? t(locale, "cardCultures", { n: obs })
       : t(locale, obs === 1 ? "cardPatientOne" : "cardPatients", { n: obs });
-  const fmtUsual = exp === undefined ? "" : t(locale, "cardUsualValue", { n: oneDecimal(locale, exp) });
+  const fmtUsual =
+    exp === undefined
+      ? ""
+      : exp > 0 && exp < 0.05
+        ? t(locale, "cardUsualSmall")
+        : t(locale, "cardUsualValue", { n: oneDecimal(locale, exp) });
   // A share is already on a 0 to 1 scale; counts are scaled to the larger of the two.
   const max = trend ? 1 : Math.max(obs, exp ?? 0) || 1;
   const s = surpriseOf(a);

@@ -66,7 +66,7 @@ describe("the signal card", () => {
       organism: "Staphylococcus aureus",
       previous: null,
     } as Alert);
-    expect(sentence(html)).toBe("A rule, no test: the first MRSA here in 180 days.");
+    expect(sentence(html)).toBe("A rule, no test: the first MRSA on this inpatient unit in 180 days.");
     expect(html).not.toContain("sig-bars");
     expect(html).not.toContain("sig-surprise");
     const cpe = { kind: "cpe", id: "s2", date: "2025-06-09", ward: "ICU", organism: "Klebsiella pneumoniae", specimen: "urine" } as Alert;
