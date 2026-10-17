@@ -13,7 +13,7 @@ import math
 
 import pytest
 
-from aei import counting, coverage, detect, eucast, jscompat, relations
+from aei import compare, counting, coverage, detect, eucast, jscompat, relations
 from aei.dates import add_days
 from aei.detect import SURVEILLANCE_PAIRS, Signal
 from aei.domain import ANTIBIOTICS, PHENOTYPES, SPECIMENS
@@ -189,3 +189,25 @@ def test_dates():
     assert add_days("2024-02-28", 1) == "2024-02-29"
     assert add_days("2025-03-30", 1) == "2025-03-31"  # daylight saving does not shift a day
     assert add_days("2026-01-01", -1) == "2025-12-31"
+
+
+def test_compare(ts):
+    c = ts["compare"]
+    same(c["proportions"], [compare.proportion_difference(*a) for a in ((10, 100, 20, 100), (0, 20, 5, 30), (30, 30, 25, 40), (123, 456, 140, 400))], "proportions", close=True)
+    same(c["rates"], [compare.rate_ratio(*a) for a in ((5, 4, 15, 4), (1, 4, 5, 4), (12, 26, 7, 13), (40, 52, 25, 20.5))], "rates", close=True)
+    same(c["trends"], [compare.trend_across(g) for g in ([(1, 10), (2, 10), (5, 12)], [(0, 5), (0, 0), (3, 4), (9, 11)])], "trends", close=True)
+    same(c["betas"], [compare.beta_posterior(3, 10), compare.beta_posterior(0, 10, (2, 5), 11), compare.beta_posterior(10, 10), compare.beta_posterior(0, 0, (0.5, 0.5), 5)], "betas", close=True)
+    weeks = [(3, 5), (1, 6), (4, 9)]
+    same(
+        c["discounted"],
+        [
+            compare.discounted_beta([(3, 5), (0, 5)], delta=1, m=4, parent_share=0.25),
+            compare.discounted_beta(weeks, delta=0.8, m=10, parent_share=0.3, points=21),
+            compare.discounted_beta(weeks, delta=0.8, m=10, parent_share=0.3, as_of_index=1, points=21),
+        ],
+        "discounted",
+        close=True,
+    )
+    days = [("2025-01-01", True), ("2025-01-04", False), ("2025-01-04", True), ("2025-01-09", True), ("2025-01-10", True), ("2025-01-11", False)]
+    py = compare.shares_by_period(days, "2025-01-01", "2025-01-10", 4, event=lambda r: r[1], date=lambda r: r[0])
+    same(c["shares"], py, "shares", close=True)

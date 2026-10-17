@@ -4,6 +4,7 @@
 // has no TypeScript copy and is not compared here (D-032). Run by the tests:
 //   node libs/utils/py/tests/ts_dump.ts data/synthetic_microbiology_dataset
 
+import { betaPosterior, discountedBeta, proportionDifference, rateRatio, sharesByPeriod, trendAcross } from "../../compare/src/index.ts";
 import { firstIsolates } from "../../counting/src/index.ts";
 import { wilson } from "../../coverage/src/index.ts";
 import { joinIsolates, loadDataset } from "../../dataset/src/index.ts";
@@ -76,6 +77,75 @@ const out = {
       [40, 40],
       [123, 456],
     ].map(([k, n]) => wilson(k as number, n as number)),
+  },
+  compare: {
+    proportions: [
+      [10, 100, 20, 100],
+      [0, 20, 5, 30],
+      [30, 30, 25, 40],
+      [123, 456, 140, 400],
+    ].map(([a, b, c, d]) => proportionDifference(a as number, b as number, c as number, d as number)),
+    rates: [
+      [5, 4, 15, 4],
+      [1, 4, 5, 4],
+      [12, 26, 7, 13],
+      [40, 52, 25, 20.5],
+    ].map(([a, b, c, d]) => rateRatio(a as number, b as number, c as number, d as number)),
+    trends: [
+      [
+        { events: 1, n: 10 },
+        { events: 2, n: 10 },
+        { events: 5, n: 12 },
+      ],
+      [
+        { events: 0, n: 5 },
+        { events: 0, n: 0 },
+        { events: 3, n: 4 },
+        { events: 9, n: 11 },
+      ],
+    ].map(trendAcross),
+    betas: [
+      betaPosterior(3, 10),
+      betaPosterior(0, 10, { a: 2, b: 5 }, 11),
+      betaPosterior(10, 10),
+      betaPosterior(0, 0, { a: 0.5, b: 0.5 }, 5),
+    ],
+    discounted: [
+      discountedBeta(
+        [
+          { k: 3, n: 5 },
+          { k: 0, n: 5 },
+        ],
+        { delta: 1, m: 4, parentShare: 0.25 },
+      ),
+      discountedBeta(
+        [
+          { k: 3, n: 5 },
+          { k: 1, n: 6 },
+          { k: 4, n: 9 },
+        ],
+        { delta: 0.8, m: 10, parentShare: 0.3, points: 21 },
+      ),
+      discountedBeta(
+        [
+          { k: 3, n: 5 },
+          { k: 1, n: 6 },
+          { k: 4, n: 9 },
+        ],
+        { delta: 0.8, m: 10, parentShare: 0.3, asOfIndex: 1, points: 21 },
+      ),
+    ],
+    shares: sharesByPeriod(
+      [
+        { sampleDate: "2025-01-01", r: true },
+        { sampleDate: "2025-01-04", r: false },
+        { sampleDate: "2025-01-04", r: true },
+        { sampleDate: "2025-01-09", r: true },
+        { sampleDate: "2025-01-10", r: true },
+        { sampleDate: "2025-01-11", r: false },
+      ],
+      { from: "2025-01-01", to: "2025-01-10", periodDays: 4, event: (x) => x.r },
+    ),
   },
   eucast: {
     effective: records.map((r) =>

@@ -153,6 +153,7 @@ experiments in Python speak for the live tool:
   `suits_specimen`, `effective_result` (`@aei/eucast`).
 - `aei.counting`: `first_isolates` (`@aei/counting`).
 - `aei.coverage`: `wilson` (`@aei/coverage`).
+- `aei.compare`: `proportion_difference`, `rate_ratio`, `trend_across`, `beta_posterior`, `discounted_beta`, `shares_by_period` (`@aei/compare`, D-068).
 - `aei.detect`: `profile_of`, `has_acquired_resistance`, the live
   detectors (`profile_excess` with `same_specimen`, `phenotype_excess`,
   `sampling_drop`, `empty_run`, `rising_trend` with `exclude`),
