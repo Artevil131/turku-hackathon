@@ -71,66 +71,126 @@ export function clampLayout(layout: Layout): Layout {
   };
 }
 
-export function defaultLayout(): Layout {
-  return {
-    columns: [
-      { id: "signals", width: 0.27, windows: [{ id: "signals", size: 1 }] },
-      { id: "map", width: 0.36, windows: [{ id: "map", size: 1 }] },
-      {
-        id: "detail",
-        width: 0.37,
-        windows: [
-          { id: "graph", size: 0.4 },
-          { id: "math", size: 0.36 },
-          { id: "assistant", size: 0.24 },
-        ],
-      },
-    ],
-    closed: { grid: { column: "map", columnIndex: 1, index: 1, size: 0.5 } },
-    maximized: null,
-  };
+/**
+ * The smallest body, in px, at which each window still shows something useful
+ * (the map: its 440 px stage and its head). A docked window never shrinks below
+ * this; a column whose windows need more than the board scrolls instead.
+ */
+export const MIN_BODY: Readonly<Record<WinId, number>> = {
+  signals: 360,
+  map: 520,
+  graph: 300,
+  math: 320,
+  assistant: 220,
+  grid: 320,
+};
+/** A window's header (40 px) and its 1 px border, top and bottom. */
+export const WINDOW_CHROME = 42;
+export const SPLITTER = 8;
+export const minWindowHeight = (id: WinId) => MIN_BODY[id] + WINDOW_CHROME;
+/** The height a stack needs so no window in it goes below its minimum. */
+export function stackNeed(ids: readonly WinId[]): number {
+  return ids.reduce((s, id) => s + minWindowHeight(id), 0) + Math.max(0, ids.length - 1) * SPLITTER;
+}
+/** Lowest priority first: what leaves a crowded column for the tray. */
+const TRAY_ORDER: readonly WinId[] = ["assistant", "graph", "grid", "math", "map", "signals"];
+
+/**
+ * Fit a layout to a board `height` px tall: while a column needs more than the
+ * board and holds more than one window, its lowest-priority window moves to the
+ * tray (keeping its home, so reopening puts it back). A single window too tall
+ * for the board stays and its column scrolls. `keep` windows never move.
+ */
+export function fitLayout(layout: Layout, height: number, keep: readonly WinId[] = []): Layout {
+  if (!finite(height) || height <= 0 || layout.maximized) return layout;
+  let next = layout;
+  for (let i = 0; i < next.columns.length; i++) {
+    for (;;) {
+      const ids = (next.columns[i] as Column).windows.map((w) => w.id);
+      if (ids.length < 2 || stackNeed(ids) <= height) break;
+      const out = TRAY_ORDER.find((id) => ids.includes(id) && !keep.includes(id));
+      if (!out) break;
+      next = closeWindow(next, out);
+    }
+  }
+  return next;
 }
 
-export function presetLayout(preset: Preset): Layout {
-  if (preset === "default") return defaultLayout();
-  if (preset === "signals")
-    return clampLayout({
+/**
+ * Signals | Alert math over Assistant | Map over Patient flow, the unit grid in
+ * the tray; fitted to the board, so under about 900 px Patient flow and under
+ * about 630 px Assistant start in the tray, never squashed.
+ */
+export function defaultLayout(height = Number.POSITIVE_INFINITY): Layout {
+  return fitLayout(
+    {
       columns: [
+        { id: "signals", width: 0.27, windows: [{ id: "signals", size: 1 }] },
         {
-          id: "signals",
-          width: 0.5,
+          id: "detail",
+          width: 0.33,
           windows: [
-            { id: "signals", size: 0.6 },
-            { id: "math", size: 0.4 },
+            { id: "math", size: 0.6 },
+            { id: "assistant", size: 0.4 },
           ],
         },
         {
           id: "map",
-          width: 0.5,
+          width: 0.4,
           windows: [
-            { id: "map", size: 0.55 },
-            { id: "graph", size: 0.45 },
+            { id: "map", size: 0.64 },
+            { id: "graph", size: 0.36 },
           ],
         },
       ],
-      closed: {
-        grid: { column: "map", columnIndex: 1, index: 0, size: 0.5 },
-        assistant: { column: "signals", columnIndex: 0, index: 2, size: 0.25 },
-      },
+      closed: { grid: { column: "map", columnIndex: 2, index: 2, size: 0.4 } },
       maximized: null,
-    });
-  const layout = defaultLayout();
-  layout.columns = [
-    { id: "signals", width: 0.26, windows: [{ id: "signals", size: 1 }] },
-    { id: "map", width: 0.74, windows: [{ id: preset === "map" ? "map" : "grid", size: 1 }] },
-  ];
-  layout.closed = {
-    graph: { column: "map", columnIndex: 1, index: 1, size: 0.4 },
-    math: { column: "signals", columnIndex: 0, index: 1, size: 0.4 },
-    assistant: { column: "signals", columnIndex: 0, index: 2, size: 0.25 },
-    [preset === "map" ? "grid" : "map"]: { column: "map", columnIndex: 1, index: 1, size: 0.5 },
-  };
-  return clampLayout(layout);
+    },
+    height,
+  );
+}
+
+/** Presets are fitted like the default: what the board cannot hold starts in the tray. */
+export function presetLayout(preset: Preset, height = Number.POSITIVE_INFINITY): Layout {
+  if (preset === "default") return defaultLayout(height);
+  if (preset === "signals")
+    // Reading: the feed and the alert math side by side, wide.
+    return fitLayout(
+      clampLayout({
+        columns: [
+          { id: "signals", width: 0.42, windows: [{ id: "signals", size: 1 }] },
+          {
+            id: "detail",
+            width: 0.58,
+            windows: [
+              { id: "math", size: 0.6 },
+              { id: "assistant", size: 0.4 },
+            ],
+          },
+        ],
+        closed: {
+          map: { column: "detail", columnIndex: 1, index: 2, size: 0.5 },
+          graph: { column: "detail", columnIndex: 1, index: 3, size: 0.4 },
+          grid: { column: "detail", columnIndex: 1, index: 3, size: 0.4 },
+        },
+        maximized: null,
+      }),
+      height,
+    );
+  const big = preset === "map" ? "map" : "grid";
+  return clampLayout({
+    columns: [
+      { id: "signals", width: 0.26, windows: [{ id: "signals", size: 1 }] },
+      { id: "map", width: 0.74, windows: [{ id: big, size: 1 }] },
+    ],
+    closed: {
+      graph: { column: "map", columnIndex: 1, index: 1, size: 0.4 },
+      math: { column: "signals", columnIndex: 0, index: 1, size: 0.5 },
+      assistant: { column: "signals", columnIndex: 0, index: 2, size: 0.3 },
+      [big === "map" ? "grid" : "map"]: { column: "map", columnIndex: 1, index: 1, size: 0.5 },
+    },
+    maximized: null,
+  });
 }
 
 export function locate(layout: Layout, id: WinId): { column: number; index: number } | null {
@@ -212,17 +272,26 @@ export function moveWindow(layout: Layout, id: WinId, slot: Slot): Layout {
   return clampLayout({ ...layout, columns });
 }
 
-/** Change just the adjacent pair; delta is a fraction of the whole board/stack. */
-export function resizePair(values: number[], index: number, delta: number, minimum: number): number[] {
+/**
+ * Change just the adjacent pair; delta is a fraction of the whole board/stack.
+ * `minimum` is one floor for both, or [upper/left, lower/right] floors; floors
+ * that cannot both fit are scaled down together.
+ */
+export function resizePair(values: number[], index: number, delta: number, minimum: number | readonly [number, number]): number[] {
   if (index < 0 || index >= values.length - 1 || !finite(delta)) return values;
   const next = [...values];
   const total = (values[index] as number) + (values[index + 1] as number);
-  const min = Math.min(minimum, total / 2);
-  next[index] = clamp((values[index] as number) + delta, min, total - min);
+  let [lo, hi] = typeof minimum === "number" ? [minimum, minimum] : minimum;
+  if (lo + hi > total) {
+    const scale = total / (lo + hi);
+    lo *= scale;
+    hi *= scale;
+  }
+  next[index] = clamp((values[index] as number) + delta, lo, total - hi);
   next[index + 1] = total - (next[index] as number);
   return next;
 }
-export function resizeColumns(layout: Layout, index: number, delta: number, minimum = 0.18): Layout {
+export function resizeColumns(layout: Layout, index: number, delta: number, minimum: number | readonly [number, number] = 0.18): Layout {
   const widths = resizePair(
     layout.columns.map((c) => c.width),
     index,
@@ -231,7 +300,13 @@ export function resizeColumns(layout: Layout, index: number, delta: number, mini
   );
   return { ...layout, columns: layout.columns.map((c, i) => ({ ...c, width: widths[i] as number })) };
 }
-export function resizeStack(layout: Layout, column: number, index: number, delta: number, minimum = 0.16): Layout {
+export function resizeStack(
+  layout: Layout,
+  column: number,
+  index: number,
+  delta: number,
+  minimum: number | readonly [number, number] = 0.16,
+): Layout {
   return {
     ...layout,
     columns: layout.columns.map((c, i) => {
@@ -313,6 +388,13 @@ export function parseLayout(raw: string | null): Layout | null {
     return null;
   }
 }
-export function migrateLayout(raw: string | null): Layout {
-  return parseLayout(raw) ?? defaultLayout();
+/**
+ * The stored layout, or the default, fitted to the board: a stored stack that
+ * would squash a window below its minimum loses its lowest-priority windows to
+ * the tray. The fitted result is shown, not written back, so a taller screen
+ * later still gets the stored arrangement.
+ */
+export function migrateLayout(raw: string | null, height = Number.POSITIVE_INFINITY, keep: readonly WinId[] = []): Layout {
+  const stored = parseLayout(raw);
+  return stored ? fitLayout(stored, height, keep) : defaultLayout(height);
 }
