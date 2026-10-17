@@ -146,7 +146,7 @@ export const doctorEn = {
   drOnsetDroppedChip: "onset filter dropped to keep the unit's data; bar still {bar} %",
   drFootOnset: "Inpatient day 3 or later (hospital onset) is judged against {bar} % whatever the severity.",
   drSyndrome: "Syndrome",
-  drSyndromeHint: "Sets specimen, severity and onset as the hospital guide gives them; tap again to clear.",
+  drSyndromeHint: "Sets specimen, severity and onset as the hospital guide states them; tap again to clear.",
   drGuideMark: "guide",
   drGuideLegend: "guide = the hospital guide names it as a first choice for {syndrome}. The list keeps its own order.",
   drGuideLine: "{title}, {date}, p. {page}: first choice {drug} covers {share} % here (bar {bar} %)",
