@@ -74,9 +74,10 @@ export const DEMOS: readonly DemoSpec[] = [
     board: "unit=MED-A&ph=esbl",
     layout: gridLayout({
       answer: { x: 0, y: 0, w: 12, h: 9 },
-      signals: { x: 0, y: 9, w: 4, h: 40 },
-      notebook: { x: 4, y: 9, w: 5, h: 40 },
-      graph: { x: 9, y: 9, w: 3, h: 40 },
+      // The notebook is where you write, so it is the widest and sits first; the evidence stacks beside it.
+      notebook: { x: 0, y: 9, w: 7, h: 56 },
+      signals: { x: 7, y: 9, w: 5, h: 28 },
+      graph: { x: 7, y: 37, w: 5, h: 28 },
     }),
     page: (locale, site) => {
       const s = slice(site, { from: "2025-02-17", to: "2025-05-11", unit: "MED-A", phenotype: "esbl" });

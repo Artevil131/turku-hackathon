@@ -30,6 +30,27 @@ async function runPage(client: AeiClient, cells: NbCell[]): Promise<NbCell[]> {
 }
 
 /**
+ * Bump when a demo's layout, notes or analyses change: a demo opened before is then rebuilt once (its layout, board and
+ * notebook reset to the new version), so everyone sees the current demo, not the one first created in their browser.
+ */
+const DEMO_VERSION = "6";
+const versionKey = (projectId: string) => `yl.demo.${projectId}`;
+const storedVersion = (projectId: string) => {
+  try {
+    return localStorage.getItem(versionKey(projectId));
+  } catch {
+    return null;
+  }
+};
+const storeVersion = (projectId: string) => {
+  try {
+    localStorage.setItem(versionKey(projectId), DEMO_VERSION);
+  } catch {
+    // Private mode: the demo is simply rebuilt on the next open.
+  }
+};
+
+/**
  * Opens a demo file as an ordinary project: the first time it creates the project (layout, board, frozen cut) and
  * fills its notebook; afterwards it just returns the project it made, so the visitor's edits are kept.
  */
@@ -38,8 +59,23 @@ export async function openDemo(client: AeiClient, locale: Locale, demo: DemoSpec
   const description = t(locale, demo.blurbKey);
   const { projects } = await client.projects();
   const existing = projects.find((p) => p.name === name && p.description === description);
-  if (existing) return existing;
   const site = currentSite() ?? homeSite().id;
+  if (existing) {
+    if (storedVersion(existing.id) === DEMO_VERSION) return existing;
+    // An older demo: bring it to the current version once.
+    const fresh = (await client.project(existing.id)).project;
+    const updated = await client.updateProject(existing.id, {
+      ...fresh,
+      layout: JSON.parse(serializeLayout(demo.layout)) as Record<string, unknown>,
+      scope: { ...fresh.scope, board: demo.board },
+    });
+    if (demo.page) {
+      const built = demo.page(locale, site);
+      savePage(pageSlot(currentSite(), existing.id), { ...built, cells: await runPage(client, built.cells) });
+    }
+    storeVersion(existing.id);
+    return updated.project;
+  }
   const input = {
     name,
     description,
@@ -60,5 +96,6 @@ export async function openDemo(client: AeiClient, locale: Locale, demo: DemoSpec
       savePage(slot, { ...built, cells: await runPage(client, built.cells) });
     }
   }
+  storeVersion(project.id);
   return project;
 }
