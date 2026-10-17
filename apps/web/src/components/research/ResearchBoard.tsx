@@ -23,7 +23,7 @@ import "./ResearchBoard.css";
 type Props = Omit<FeedProps, "state" | "onChange">;
 
 export function ResearchBoard(props: Props) {
-  const { locale, client, asOf, findings, acknowledge } = props;
+  const { locale, client, asOf, findings, acknowledge, command } = props;
   const [state, setState] = useState<BoardState>(boardFromUrl);
   const onChange = useCallback((patch: Partial<BoardState>) => setState((s) => ({ ...s, ...patch })), []);
   useEffect(() => writeHashParams(boardToParams(state)), [state]);
@@ -32,6 +32,20 @@ export function ResearchBoard(props: Props) {
   useEffect(() => {
     const onHash = () => setState(boardFromUrl());
     return subscribeHash(onHash);
+  }, []);
+
+  // "Show on map" (the signal card): reveal the map window and select the site's county in it. The county is
+  // cleared when another incident is chosen, so the next click selects it again.
+  const [mapCounty, setMapCounty] = useState<string | null>(null);
+  const [reveal, setReveal] = useState<{ id: WinId; key: string | null }>({ id: "math", key: state.incident });
+  const mapClicks = useRef(0);
+  useEffect(() => {
+    setReveal({ id: "math", key: state.incident });
+    setMapCounty(null);
+  }, [state.incident]);
+  const showMap = useCallback((county: string) => {
+    setMapCounty(county);
+    setReveal({ id: "map", key: `map-${++mapClicks.current}` });
   }, []);
 
   const { load, incidents, retry } = useIncidents(client, asOf);
@@ -64,7 +78,7 @@ export function ResearchBoard(props: Props) {
     signals: (
       <SignalFeed {...panelProps} load={load} incidents={incidents} retry={retry} spansOf={spansOf} selected={selected?.key ?? null} />
     ),
-    map: <GeoMap {...panelProps} />,
+    map: <GeoMap {...panelProps} focusCounty={mapCounty} />,
     graph: <UnitGraph {...panelProps} />,
     grid: <UnitGrid {...panelProps} />,
     math: (
@@ -76,6 +90,9 @@ export function ResearchBoard(props: Props) {
         findings={findings}
         onChange={onChange}
         acknowledge={acknowledge}
+        asOf={asOf}
+        command={command}
+        onShowMap={showMap}
         empty={loading ? "loading" : "pick"}
       />
     ),
@@ -92,7 +109,7 @@ export function ResearchBoard(props: Props) {
         locale={locale}
         content={content}
         initiallyOpen={initiallyOpen.current}
-        reveal={{ id: "math", key: state.incident }}
+        reveal={reveal}
         onOpened={(id) => (id === "grid" ? onChange({ panel: "grid" }) : id === "map" ? onChange({ panel: "geo" }) : undefined)}
         onClosed={(id) => (id === "grid" ? onChange({ panel: "geo" }) : undefined)}
       />
