@@ -1,0 +1,814 @@
+{
+  "experiment": "0022-ensemble",
+  "method": "stacked logistic (A, B; year-1 injections)",
+  "family": "detection",
+  "tuned_on_test": false,
+  "tuned_on": "2023-10-02..2024-09-30",
+  "metrics": {
+    "D1": {
+      "E1": 3,
+      "E1_corrected": 8,
+      "E2": 5,
+      "E2_corrected": 5,
+      "E3": null,
+      "E4": null
+    },
+    "D2": {
+      "rare_k0": 0.0,
+      "rare_k2": 0.04,
+      "rare_k3": 0.205,
+      "rare_k4": 0.62,
+      "rare_k6": 0.92,
+      "common_resistant_k0": 0.0,
+      "common_resistant_k2": 0.0,
+      "common_resistant_k3": 0.0,
+      "common_resistant_k4": 0.0,
+      "common_resistant_k6": 0.0,
+      "wild_type_k0": 0.0,
+      "wild_type_k2": 0.0,
+      "wild_type_k3": 0.0,
+      "wild_type_k4": 0.0,
+      "wild_type_k6": 0.0,
+      "common_esbl_k0": 0.0,
+      "common_esbl_k2": 0.0,
+      "common_esbl_k3": 0.025,
+      "common_esbl_k4": 0.23,
+      "common_esbl_k6": 0.635,
+      "two_unit_k0": 0.0,
+      "two_unit_k2": 0.055,
+      "two_unit_k3": 0.06,
+      "two_unit_k4": 0.07,
+      "two_unit_k6": 0.335
+    },
+    "D2_delay": {
+      "rare_k0": null,
+      "rare_k2": 2,
+      "rare_k3": 7,
+      "rare_k4": 7,
+      "rare_k6": 6,
+      "common_resistant_k0": null,
+      "common_resistant_k2": null,
+      "common_resistant_k3": null,
+      "common_resistant_k4": null,
+      "common_resistant_k6": null,
+      "wild_type_k0": null,
+      "wild_type_k2": null,
+      "wild_type_k3": null,
+      "wild_type_k4": null,
+      "wild_type_k6": null,
+      "common_esbl_k0": null,
+      "common_esbl_k2": null,
+      "common_esbl_k3": 11,
+      "common_esbl_k4": 8,
+      "common_esbl_k6": 9,
+      "two_unit_k0": null,
+      "two_unit_k2": 4,
+      "two_unit_k3": 6,
+      "two_unit_k4": 6,
+      "two_unit_k6": 9
+    },
+    "D3": {
+      "gap2": 0.0,
+      "gap3": 0.0,
+      "gap5": 0.0,
+      "gap7": 0.0,
+      "half7": 0.0
+    },
+    "D3_delay": {
+      "gap2": null,
+      "gap3": null,
+      "gap5": null,
+      "gap7": null,
+      "half7": null
+    },
+    "D6": 0.016,
+    "D4": {
+      "episodes_per_year": 1.00481,
+      "sentinel": 0.0,
+      "cluster": 1.00481,
+      "trend": 0.0,
+      "divergence": 0.0,
+      "data": 0.0,
+      "alerts_per_week": 0.0192572
+    },
+    "D5": {
+      "level": 0.003,
+      "noise": 3.01444,
+      "rare": 0.99,
+      "rare_delay": 5,
+      "common_esbl": 0.85,
+      "common_esbl_delay": 6
+    },
+    "D7": 0.99844,
+    "I1": {
+      "alerts": 6,
+      "incidents": 4,
+      "alerts_per_incident": 1.5
+    }
+  },
+  "intervals": {
+    "D2": {
+      "rare_k0": [
+        0.0,
+        0.0188453
+      ],
+      "rare_k2": [
+        0.0204056,
+        0.0769321
+      ],
+      "rare_k3": [
+        0.154862,
+        0.266257
+      ],
+      "rare_k4": [
+        0.551067,
+        0.68441
+      ],
+      "rare_k6": [
+        0.874011,
+        0.950159
+      ],
+      "common_resistant_k0": [
+        0.0,
+        0.0188453
+      ],
+      "common_resistant_k2": [
+        0.0,
+        0.0188453
+      ],
+      "common_resistant_k3": [
+        0.0,
+        0.0188453
+      ],
+      "common_resistant_k4": [
+        0.0,
+        0.0188453
+      ],
+      "common_resistant_k6": [
+        0.0,
+        0.0188453
+      ],
+      "wild_type_k0": [
+        0.0,
+        0.0188453
+      ],
+      "wild_type_k2": [
+        0.0,
+        0.0188453
+      ],
+      "wild_type_k3": [
+        0.0,
+        0.0188453
+      ],
+      "wild_type_k4": [
+        0.0,
+        0.0188453
+      ],
+      "wild_type_k6": [
+        0.0,
+        0.0188453
+      ],
+      "common_esbl_k0": [
+        0.0,
+        0.0188453
+      ],
+      "common_esbl_k2": [
+        0.0,
+        0.0188453
+      ],
+      "common_esbl_k3": [
+        0.0107247,
+        0.0571783
+      ],
+      "common_esbl_k4": [
+        0.177093,
+        0.293083
+      ],
+      "common_esbl_k6": [
+        0.566317,
+        0.698595
+      ],
+      "two_unit_k0": [
+        0.0,
+        0.0188453
+      ],
+      "two_unit_k2": [
+        0.0309853,
+        0.095787
+      ],
+      "two_unit_k3": [
+        0.0346522,
+        0.101932
+      ],
+      "two_unit_k4": [
+        0.0421522,
+        0.114055
+      ],
+      "two_unit_k6": [
+        0.273241,
+        0.402978
+      ]
+    },
+    "D3": {
+      "gap2": [
+        0.0,
+        0.0188453
+      ],
+      "gap3": [
+        0.0,
+        0.0188453
+      ],
+      "gap5": [
+        0.0,
+        0.0188453
+      ],
+      "gap7": [
+        0.0,
+        0.0188453
+      ],
+      "half7": [
+        0.0,
+        0.0188453
+      ]
+    },
+    "D6": [
+      0.00987224,
+      0.0258321
+    ],
+    "D4": {
+      "episodes_per_year": [
+        0.121688,
+        3.62973
+      ],
+      "sentinel": [
+        0.0,
+        1.85332
+      ],
+      "cluster": [
+        0.121688,
+        3.62973
+      ],
+      "trend": [
+        0.0,
+        1.85332
+      ],
+      "divergence": [
+        0.0,
+        1.85332
+      ],
+      "data": [
+        0.0,
+        1.85332
+      ]
+    },
+    "D5": {
+      "rare": [
+        0.964278,
+        0.997253
+      ],
+      "common_esbl": [
+        0.793944,
+        0.892864
+      ]
+    },
+    "D7": [
+      0.991217,
+      0.999725
+    ]
+  },
+  "n": {
+    "D2": {
+      "rare_k0": 200,
+      "rare_k2": 200,
+      "rare_k3": 200,
+      "rare_k4": 200,
+      "rare_k6": 200,
+      "common_resistant_k0": 200,
+      "common_resistant_k2": 200,
+      "common_resistant_k3": 200,
+      "common_resistant_k4": 200,
+      "common_resistant_k6": 200,
+      "wild_type_k0": 200,
+      "wild_type_k2": 200,
+      "wild_type_k3": 200,
+      "wild_type_k4": 200,
+      "wild_type_k6": 200,
+      "common_esbl_k0": 200,
+      "common_esbl_k2": 200,
+      "common_esbl_k3": 200,
+      "common_esbl_k4": 200,
+      "common_esbl_k6": 200,
+      "two_unit_k0": 200,
+      "two_unit_k2": 200,
+      "two_unit_k3": 200,
+      "two_unit_k4": 200,
+      "two_unit_k6": 200
+    },
+    "D3": {
+      "gap2": 200,
+      "gap3": 200,
+      "gap5": 200,
+      "gap7": 200,
+      "half7": 200
+    },
+    "D6": 1000,
+    "D4": {
+      "episodes_per_year": 2,
+      "sentinel": 0,
+      "cluster": 2,
+      "trend": 0,
+      "divergence": 0,
+      "data": 0,
+      "alerts_per_week": 2
+    },
+    "D5": {
+      "noise": 6,
+      "rare": 200,
+      "common_esbl": 200
+    },
+    "D7": 641,
+    "I1": {
+      "alerts": 6,
+      "incidents": 4
+    }
+  },
+  "runtime_s": 153.1,
+  "cpu_s": 151.4,
+  "seeds": [
+    2026
+  ],
+  "data": "synthetic_microbiology_dataset, seed 2026, as received 2026-10-09",
+  "notes": "Logistic regression (L2 lambda 1) on -log10 s_A, -log10 s_B and a both-fired indicator, trained on year-1 injections (200 rare + 200 common ESBL clusters of 4, 2024-04-01 to 2024-08-15, seed 2026) and year-1 real cell-days; harness p = upper-tail share of the 2024-01-01 to 2024-09-30 background with the same or a larger linear predictor. Operating level (loosest with year-1 noise at most 5 a year) p = 0.0003. Join: cell = unit x organism-or-phenotype, 7-day carry-forward, silent = 1, new-in-unit = 1e-6 (all proposed (overnight), pending Artem). Seed 2026, 200 trials per cell. Plan: experiments/0022-ensemble/README.md.",
+  "D5_curve": [
+    {
+      "level": 0.3,
+      "noise": 176.847,
+      "noise_count": 352,
+      "whole_tool": 176.847,
+      "rare": 1.0,
+      "rare_hit": 200,
+      "rare_n": 200,
+      "rare_delay": 0,
+      "common_resistant": 0.95,
+      "common_resistant_hit": 190,
+      "common_resistant_n": 200,
+      "common_resistant_delay": 0,
+      "wild_type": 0.715,
+      "wild_type_hit": 143,
+      "wild_type_n": 200,
+      "wild_type_delay": 0,
+      "common_esbl": 1.0,
+      "common_esbl_hit": 200,
+      "common_esbl_n": 200,
+      "common_esbl_delay": 0,
+      "two_unit": 1.0,
+      "two_unit_hit": 200,
+      "two_unit_n": 200,
+      "two_unit_delay": 0
+    },
+    {
+      "level": 0.1,
+      "noise": 149.215,
+      "noise_count": 297,
+      "whole_tool": 149.215,
+      "rare": 1.0,
+      "rare_hit": 200,
+      "rare_n": 200,
+      "rare_delay": 0,
+      "common_resistant": 0.905,
+      "common_resistant_hit": 181,
+      "common_resistant_n": 200,
+      "common_resistant_delay": 0,
+      "wild_type": 0.655,
+      "wild_type_hit": 131,
+      "wild_type_n": 200,
+      "wild_type_delay": 0,
+      "common_esbl": 1.0,
+      "common_esbl_hit": 200,
+      "common_esbl_n": 200,
+      "common_esbl_delay": 0,
+      "two_unit": 0.985,
+      "two_unit_hit": 197,
+      "two_unit_n": 200,
+      "two_unit_delay": 0
+    },
+    {
+      "level": 0.03,
+      "noise": 69.3322,
+      "noise_count": 138,
+      "whole_tool": 69.3322,
+      "rare": 1.0,
+      "rare_hit": 200,
+      "rare_n": 200,
+      "rare_delay": 2,
+      "common_resistant": 0.69,
+      "common_resistant_hit": 138,
+      "common_resistant_n": 200,
+      "common_resistant_delay": 5,
+      "wild_type": 0.43,
+      "wild_type_hit": 86,
+      "wild_type_n": 200,
+      "wild_type_delay": 0,
+      "common_esbl": 1.0,
+      "common_esbl_hit": 200,
+      "common_esbl_n": 200,
+      "common_esbl_delay": 2,
+      "two_unit": 0.945,
+      "two_unit_hit": 189,
+      "two_unit_n": 200,
+      "two_unit_delay": 1
+    },
+    {
+      "level": 0.01,
+      "noise": 20.0963,
+      "noise_count": 40,
+      "whole_tool": 20.0963,
+      "rare": 0.995,
+      "rare_hit": 199,
+      "rare_n": 200,
+      "rare_delay": 4,
+      "common_resistant": 0.225,
+      "common_resistant_hit": 45,
+      "common_resistant_n": 200,
+      "common_resistant_delay": 7,
+      "wild_type": 0.11,
+      "wild_type_hit": 22,
+      "wild_type_n": 200,
+      "wild_type_delay": 0,
+      "common_esbl": 0.975,
+      "common_esbl_hit": 195,
+      "common_esbl_n": 200,
+      "common_esbl_delay": 5,
+      "two_unit": 0.665,
+      "two_unit_hit": 133,
+      "two_unit_n": 200,
+      "two_unit_delay": 4
+    },
+    {
+      "level": 0.003,
+      "noise": 3.01444,
+      "noise_count": 6,
+      "whole_tool": 3.01444,
+      "rare": 0.99,
+      "rare_hit": 198,
+      "rare_n": 200,
+      "rare_delay": 5,
+      "common_resistant": 0.015,
+      "common_resistant_hit": 3,
+      "common_resistant_n": 200,
+      "common_resistant_delay": 3,
+      "wild_type": 0.005,
+      "wild_type_hit": 1,
+      "wild_type_n": 200,
+      "wild_type_delay": 0,
+      "common_esbl": 0.85,
+      "common_esbl_hit": 170,
+      "common_esbl_n": 200,
+      "common_esbl_delay": 6,
+      "two_unit": 0.325,
+      "two_unit_hit": 65,
+      "two_unit_n": 200,
+      "two_unit_delay": 5
+    },
+    {
+      "level": 0.001,
+      "noise": 1.50722,
+      "noise_count": 3,
+      "whole_tool": 1.50722,
+      "rare": 0.67,
+      "rare_hit": 134,
+      "rare_n": 200,
+      "rare_delay": 7,
+      "common_resistant": 0.0,
+      "common_resistant_hit": 0,
+      "common_resistant_n": 200,
+      "common_resistant_delay": null,
+      "wild_type": 0.0,
+      "wild_type_hit": 0,
+      "wild_type_n": 200,
+      "wild_type_delay": null,
+      "common_esbl": 0.29,
+      "common_esbl_hit": 58,
+      "common_esbl_n": 200,
+      "common_esbl_delay": 8,
+      "two_unit": 0.105,
+      "two_unit_hit": 21,
+      "two_unit_n": 200,
+      "two_unit_delay": 4
+    },
+    {
+      "level": 0.0003,
+      "noise": 1.00481,
+      "noise_count": 2,
+      "whole_tool": 1.00481,
+      "rare": 0.62,
+      "rare_hit": 124,
+      "rare_n": 200,
+      "rare_delay": 7,
+      "common_resistant": 0.0,
+      "common_resistant_hit": 0,
+      "common_resistant_n": 200,
+      "common_resistant_delay": null,
+      "wild_type": 0.0,
+      "wild_type_hit": 0,
+      "wild_type_n": 200,
+      "wild_type_delay": null,
+      "common_esbl": 0.23,
+      "common_esbl_hit": 46,
+      "common_esbl_n": 200,
+      "common_esbl_delay": 8,
+      "two_unit": 0.07,
+      "two_unit_hit": 14,
+      "two_unit_n": 200,
+      "two_unit_delay": 6
+    },
+    {
+      "level": 0.0001,
+      "noise": 0.0,
+      "noise_count": 0,
+      "whole_tool": 0.0,
+      "rare": 0.495,
+      "rare_hit": 99,
+      "rare_n": 200,
+      "rare_delay": 8,
+      "common_resistant": 0.0,
+      "common_resistant_hit": 0,
+      "common_resistant_n": 200,
+      "common_resistant_delay": null,
+      "wild_type": 0.0,
+      "wild_type_hit": 0,
+      "wild_type_n": 200,
+      "wild_type_delay": null,
+      "common_esbl": 0.175,
+      "common_esbl_hit": 35,
+      "common_esbl_n": 200,
+      "common_esbl_delay": 9,
+      "two_unit": 0.01,
+      "two_unit_hit": 2,
+      "two_unit_n": 200,
+      "two_unit_delay": 6
+    },
+    {
+      "level": 3e-05,
+      "noise": 0.0,
+      "noise_count": 0,
+      "whole_tool": 0.0,
+      "rare": 0.0,
+      "rare_hit": 0,
+      "rare_n": 200,
+      "rare_delay": null,
+      "common_resistant": 0.0,
+      "common_resistant_hit": 0,
+      "common_resistant_n": 200,
+      "common_resistant_delay": null,
+      "wild_type": 0.0,
+      "wild_type_hit": 0,
+      "wild_type_n": 200,
+      "wild_type_delay": null,
+      "common_esbl": 0.0,
+      "common_esbl_hit": 0,
+      "common_esbl_n": 200,
+      "common_esbl_delay": null,
+      "two_unit": 0.0,
+      "two_unit_hit": 0,
+      "two_unit_n": 200,
+      "two_unit_delay": null
+    },
+    {
+      "level": 1e-05,
+      "noise": 0.0,
+      "noise_count": 0,
+      "whole_tool": 0.0,
+      "rare": 0.0,
+      "rare_hit": 0,
+      "rare_n": 200,
+      "rare_delay": null,
+      "common_resistant": 0.0,
+      "common_resistant_hit": 0,
+      "common_resistant_n": 200,
+      "common_resistant_delay": null,
+      "wild_type": 0.0,
+      "wild_type_hit": 0,
+      "wild_type_n": 200,
+      "wild_type_delay": null,
+      "common_esbl": 0.0,
+      "common_esbl_hit": 0,
+      "common_esbl_n": 200,
+      "common_esbl_delay": null,
+      "two_unit": 0.0,
+      "two_unit_hit": 0,
+      "two_unit_n": 200,
+      "two_unit_delay": null
+    },
+    {
+      "level": 3e-06,
+      "noise": 0.0,
+      "noise_count": 0,
+      "whole_tool": 0.0,
+      "rare": 0.0,
+      "rare_hit": 0,
+      "rare_n": 200,
+      "rare_delay": null,
+      "common_resistant": 0.0,
+      "common_resistant_hit": 0,
+      "common_resistant_n": 200,
+      "common_resistant_delay": null,
+      "wild_type": 0.0,
+      "wild_type_hit": 0,
+      "wild_type_n": 200,
+      "wild_type_delay": null,
+      "common_esbl": 0.0,
+      "common_esbl_hit": 0,
+      "common_esbl_n": 200,
+      "common_esbl_delay": null,
+      "two_unit": 0.0,
+      "two_unit_hit": 0,
+      "two_unit_n": 200,
+      "two_unit_delay": null
+    },
+    {
+      "level": 1e-06,
+      "noise": 0.0,
+      "noise_count": 0,
+      "whole_tool": 0.0,
+      "rare": 0.0,
+      "rare_hit": 0,
+      "rare_n": 200,
+      "rare_delay": null,
+      "common_resistant": 0.0,
+      "common_resistant_hit": 0,
+      "common_resistant_n": 200,
+      "common_resistant_delay": null,
+      "wild_type": 0.0,
+      "wild_type_hit": 0,
+      "wild_type_n": 200,
+      "wild_type_delay": null,
+      "common_esbl": 0.0,
+      "common_esbl_hit": 0,
+      "common_esbl_n": 200,
+      "common_esbl_delay": null,
+      "two_unit": 0.0,
+      "two_unit_hit": 0,
+      "two_unit_n": 200,
+      "two_unit_delay": null
+    }
+  ],
+  "D2_per_seed": {
+    "rare_k0": [
+      0
+    ],
+    "rare_k2": [
+      8
+    ],
+    "rare_k3": [
+      41
+    ],
+    "rare_k4": [
+      124
+    ],
+    "rare_k6": [
+      184
+    ],
+    "common_resistant_k0": [
+      0
+    ],
+    "common_resistant_k2": [
+      0
+    ],
+    "common_resistant_k3": [
+      0
+    ],
+    "common_resistant_k4": [
+      0
+    ],
+    "common_resistant_k6": [
+      0
+    ],
+    "wild_type_k0": [
+      0
+    ],
+    "wild_type_k2": [
+      0
+    ],
+    "wild_type_k3": [
+      0
+    ],
+    "wild_type_k4": [
+      0
+    ],
+    "wild_type_k6": [
+      0
+    ],
+    "common_esbl_k0": [
+      0
+    ],
+    "common_esbl_k2": [
+      0
+    ],
+    "common_esbl_k3": [
+      5
+    ],
+    "common_esbl_k4": [
+      46
+    ],
+    "common_esbl_k6": [
+      127
+    ],
+    "two_unit_k0": [
+      0
+    ],
+    "two_unit_k2": [
+      11
+    ],
+    "two_unit_k3": [
+      12
+    ],
+    "two_unit_k4": [
+      14
+    ],
+    "two_unit_k6": [
+      67
+    ]
+  },
+  "D2_cluster_signals_only": {
+    "rare_k0": 0.0,
+    "rare_k2": 0.04,
+    "rare_k3": 0.205,
+    "rare_k4": 0.62,
+    "rare_k6": 0.92,
+    "common_resistant_k0": 0.0,
+    "common_resistant_k2": 0.0,
+    "common_resistant_k3": 0.0,
+    "common_resistant_k4": 0.0,
+    "common_resistant_k6": 0.0,
+    "wild_type_k0": 0.0,
+    "wild_type_k2": 0.0,
+    "wild_type_k3": 0.0,
+    "wild_type_k4": 0.0,
+    "wild_type_k6": 0.0,
+    "common_esbl_k0": 0.0,
+    "common_esbl_k2": 0.0,
+    "common_esbl_k3": 0.025,
+    "common_esbl_k4": 0.23,
+    "common_esbl_k6": 0.635,
+    "two_unit_k0": 0.0,
+    "two_unit_k2": 0.055,
+    "two_unit_k3": 0.06,
+    "two_unit_k4": 0.07,
+    "two_unit_k6": 0.335
+  },
+  "D3_control": {
+    "rate": 0.0,
+    "delay": null,
+    "interval": [
+      0.0,
+      0.0188453
+    ],
+    "n": 200
+  },
+  "D4_score_years": 1.99042,
+  "D7_detail": {
+    "E1": {
+      "found": true,
+      "right": true
+    },
+    "E2": {
+      "found": true,
+      "right": false
+    },
+    "E3": {
+      "found": false,
+      "right": false
+    },
+    "E4": {
+      "found": false,
+      "right": false
+    },
+    "injected_clusters": {
+      "detected": 639,
+      "right": 639
+    },
+    "injected_gaps": {
+      "detected": 0,
+      "right": 0
+    }
+  },
+  "I1_full_tool": {
+    "alerts": 15,
+    "incidents": 13,
+    "includes": "CPE finds (D-014)"
+  },
+  "operating_level": 0.0003,
+  "trial_seeds": [
+    2026
+  ],
+  "trials_per_seed": 200,
+  "partly_tuned_on_test": [
+    "rising-trend",
+    "new-in-unit"
+  ],
+  "D5_at_5_per_year": {
+    "rare": 0.990581,
+    "common_esbl": 0.86453
+  }
+}

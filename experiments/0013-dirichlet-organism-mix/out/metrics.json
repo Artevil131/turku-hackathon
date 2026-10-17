@@ -1,0 +1,1525 @@
+{
+  "experiment": "0013-dirichlet-organism-mix",
+  "method": "Two-layer coverage: Dirichlet organism mix (M_pi 100) times per-organism Beta (M 30), one Dirichlet per drug over the organisms with an outcome, unit year shrunk to the hospital year with the unit left out, closed-form variance (ENGINE.md 2.4) and a matched Beta; setting chosen on TUNE windows only",
+  "family": "coverage",
+  "tuned_on_test": false,
+  "tuned_on": "2023-12-25..2024-09-29",
+  "metrics": {
+    "C1": {
+      "all": 0.141508,
+      "small": 0.160688,
+      "all_counted": 0.145377,
+      "small_counted": 0.141849
+    },
+    "C1_diff": {
+      "all": 9.96906e-05,
+      "small": 0.000151887,
+      "all_counted": 0.000120345,
+      "small_counted": 0.000142123
+    },
+    "C2": {
+      "all": 0.443683,
+      "small": 0.489826,
+      "all_counted": 0.45298,
+      "small_counted": 0.439525
+    },
+    "C2_diff": {
+      "all": 0.000364903,
+      "small": 0.000440752,
+      "all_counted": 0.000420328,
+      "small_counted": 0.000459977
+    },
+    "C3a": {
+      "slope": 1.0365,
+      "intercept": 0.0263726
+    },
+    "C5": {
+      "Citrobacter freundii|AMP": 0.250442,
+      "Citrobacter freundii|MEC": 0.11847,
+      "Citrobacter freundii|TZP": 0.172553,
+      "Citrobacter freundii|CXM": 0.269202,
+      "Citrobacter freundii|CRO": 0.12714,
+      "Citrobacter freundii|MEM": 0.0185842,
+      "Citrobacter freundii|CIP": 0.0581728,
+      "Citrobacter freundii|TMP": 0.139992,
+      "Citrobacter freundii|NIT": 0.0578341,
+      "Citrobacter freundii|VAN": 0.0947388,
+      "Citrobacter freundii|CLI": 0.0470615,
+      "Enterococcus faecalis|AMP": 0.251054,
+      "Enterococcus faecalis|MEC": 0.558813,
+      "Enterococcus faecalis|TZP": 0.00695706,
+      "Enterococcus faecalis|CXM": 0.544199,
+      "Enterococcus faecalis|CRO": 0.605998,
+      "Enterococcus faecalis|CAZ": 0.04604,
+      "Enterococcus faecalis|MEM": 0.775716,
+      "Enterococcus faecalis|TMP": 0.494393,
+      "Enterococcus faecalis|NIT": 0.0401144,
+      "Enterococcus faecalis|VAN": 0.600533,
+      "Enterococcus faecalis|CLI": 0.0394788,
+      "Escherichia coli|AMP": 0.243837,
+      "Escherichia coli|MEC": 0.076328,
+      "Escherichia coli|TZP": 0.0376858,
+      "Escherichia coli|CXM": 0.107257,
+      "Escherichia coli|CRO": 0.0681183,
+      "Escherichia coli|MEM": 0.0142881,
+      "Escherichia coli|CIP": 0.075014,
+      "Escherichia coli|TMP": 0.166076,
+      "Escherichia coli|NIT": 0.0358765,
+      "Escherichia coli|VAN": 0.0402331,
+      "Escherichia coli|CLI": 0.0122762,
+      "Klebsiella oxytoca|AMP": 0.27497,
+      "Klebsiella oxytoca|MEC": 0.0945058,
+      "Klebsiella oxytoca|TZP": 0.0473621,
+      "Klebsiella oxytoca|CXM": 0.111687,
+      "Klebsiella oxytoca|CRO": 0.0541683,
+      "Klebsiella oxytoca|MEM": 0.0160887,
+      "Klebsiella oxytoca|CIP": 0.0567712,
+      "Klebsiella oxytoca|TMP": 0.120284,
+      "Klebsiella oxytoca|NIT": 0.0823863,
+      "Klebsiella oxytoca|VAN": 0.0317187,
+      "Klebsiella oxytoca|CLI": 0.00629874,
+      "Klebsiella pneumoniae|AMP": 0.266161,
+      "Klebsiella pneumoniae|MEC": 0.0880046,
+      "Klebsiella pneumoniae|TZP": 0.070133,
+      "Klebsiella pneumoniae|CXM": 0.12694,
+      "Klebsiella pneumoniae|CRO": 0.0884021,
+      "Klebsiella pneumoniae|MEM": 0.0153013,
+      "Klebsiella pneumoniae|CIP": 0.0940569,
+      "Klebsiella pneumoniae|TMP": 0.150188,
+      "Klebsiella pneumoniae|NIT": 0.252806,
+      "Klebsiella pneumoniae|VAN": 0.0530737,
+      "Klebsiella pneumoniae|CLI": 0.0205045,
+      "Proteus mirabilis|AMP": 0.25141,
+      "Proteus mirabilis|MEC": 0.0765811,
+      "Proteus mirabilis|TZP": 0.0135744,
+      "Proteus mirabilis|CXM": 0.087836,
+      "Proteus mirabilis|CRO": 0.0593365,
+      "Proteus mirabilis|MEM": 0.015261,
+      "Proteus mirabilis|CIP": 0.0581898,
+      "Proteus mirabilis|TMP": 0.167039,
+      "Proteus mirabilis|NIT": 0.669882,
+      "Proteus mirabilis|VAN": 0.0879531,
+      "Proteus mirabilis|CLI": 0.0432604,
+      "Pseudomonas aeruginosa|AMP": 0.232666,
+      "Pseudomonas aeruginosa|MEC": 0.558929,
+      "Pseudomonas aeruginosa|TZP": 0.0886046,
+      "Pseudomonas aeruginosa|CXM": 0.521649,
+      "Pseudomonas aeruginosa|CRO": 0.575291,
+      "Pseudomonas aeruginosa|CAZ": 0.581489,
+      "Pseudomonas aeruginosa|MEM": 0.063594,
+      "Pseudomonas aeruginosa|CIP": 0.0999752,
+      "Pseudomonas aeruginosa|TMP": 0.495301,
+      "Pseudomonas aeruginosa|NIT": 0.6701,
+      "Pseudomonas aeruginosa|VAN": 0.13867,
+      "Pseudomonas aeruginosa|CLI": 0.0757503,
+      "Staphylococcus aureus|AMP": 0.197976,
+      "Staphylococcus aureus|MEC": 0.557581,
+      "Staphylococcus aureus|TZP": 0.0360808,
+      "Staphylococcus aureus|CXM": 0.104638,
+      "Staphylococcus aureus|CRO": 0.0904777,
+      "Staphylococcus aureus|CAZ": 0.0396875,
+      "Staphylococcus aureus|MEM": 0.0438329,
+      "Staphylococcus aureus|TMP": 0.105496,
+      "Staphylococcus aureus|NIT": 0.0377478,
+      "Staphylococcus aureus|VAN": 0.339275,
+      "Staphylococcus aureus|CLI": 0.467336,
+      "Staphylococcus saprophyticus|MEC": 0.559211,
+      "Staphylococcus saprophyticus|CAZ": 0.0484975,
+      "Staphylococcus saprophyticus|TMP": 0.104532,
+      "Staphylococcus saprophyticus|NIT": 0.0435802
+    },
+    "C8": {
+      "C1": 0.165317,
+      "C1_diff": -0.0015787,
+      "C4_mild_spectrum": 0.964286,
+      "C4_severe": 0.920168
+    },
+    "C4": {
+      "mild_spectrum": 0.966095,
+      "mild_spectrum_counted": 0.966095,
+      "mild_all": 0.754198,
+      "mild_all_counted": 0.754198,
+      "severe": 0.953603,
+      "severe_counted": 0.938144
+    },
+    "C3b": {
+      "mild_obs": 0,
+      "mild_exp": 0.216981,
+      "mild_ratio": 0.0,
+      "mild_tail_p": 1.0,
+      "severe_obs": 29,
+      "severe_exp": 27.827,
+      "severe_ratio": 1.04215,
+      "severe_tail_p": 0.436967,
+      "pass": true
+    },
+    "C3b_bb": {
+      "mild_obs": 0,
+      "mild_exp": 0.287201,
+      "mild_ratio": 0.0,
+      "mild_tail_p": 1.0,
+      "severe_obs": 29,
+      "severe_exp": 29.0562,
+      "severe_ratio": 0.998067,
+      "severe_tail_p": 0.528843,
+      "pass": true
+    },
+    "C7_lower_bound": {
+      "cells": 4285,
+      "obs": 1106,
+      "exp": 1242.62,
+      "ratio": 0.890057,
+      "exp_bb": 1264.26,
+      "ratio_bb": 0.874822
+    },
+    "C7": {
+      "a": 0.905168,
+      "b": 0.740741,
+      "a_literal": 0.314099,
+      "b_literal": 0.296296,
+      "pass_a": true,
+      "a_expected": 0.906841,
+      "b_expected": 0.905662,
+      "a_minus_expected": -0.00167262
+    },
+    "C6": {
+      "E1_CRO": 48,
+      "E1_CXM": 117,
+      "E2_CXM": null
+    }
+  },
+  "intervals": {
+    "C1": {
+      "all": [
+        0.139862,
+        0.143224
+      ],
+      "small": [
+        0.157694,
+        0.163745
+      ],
+      "all_counted": [
+        0.14385,
+        0.147004
+      ],
+      "small_counted": [
+        0.139363,
+        0.144472
+      ]
+    },
+    "C1_diff": {
+      "all": [
+        -8.00107e-06,
+        0.000210011
+      ],
+      "small": [
+        -9.99725e-05,
+        0.000382707
+      ],
+      "all_counted": [
+        1.00652e-05,
+        0.000235443
+      ],
+      "small_counted": [
+        -6.23335e-05,
+        0.000335397
+      ]
+    },
+    "C2": {
+      "all": [
+        0.439648,
+        0.44791
+      ],
+      "small": [
+        0.482221,
+        0.497805
+      ],
+      "all_counted": [
+        0.449157,
+        0.456894
+      ],
+      "small_counted": [
+        0.432965,
+        0.446511
+      ]
+    },
+    "C2_diff": {
+      "all": [
+        2.93903e-05,
+        0.000690914
+      ],
+      "small": [
+        -0.000247714,
+        0.00108591
+      ],
+      "all_counted": [
+        0.000120453,
+        0.000741068
+      ],
+      "small_counted": [
+        -0.000112849,
+        0.00103995
+      ]
+    },
+    "C3a": {
+      "slope": [
+        1.02247,
+        1.0516
+      ],
+      "intercept": [
+        0.00822702,
+        0.0416353
+      ]
+    },
+    "C8": {
+      "C1": [
+        0.152804,
+        0.192287
+      ],
+      "C1_diff": [
+        -0.00348587,
+        0.000492007
+      ],
+      "C4_mild_spectrum": [
+        0.909091,
+        0.983333
+      ],
+      "C4_severe": [
+        0.783784,
+        0.979798
+      ]
+    },
+    "C4": {
+      "mild_spectrum": [
+        0.962641,
+        0.969742
+      ],
+      "mild_spectrum_counted": [
+        0.962641,
+        0.969742
+      ],
+      "mild_all": [
+        0.747083,
+        0.760512
+      ],
+      "mild_all_counted": [
+        0.747083,
+        0.760512
+      ],
+      "severe": [
+        0.950422,
+        0.956297
+      ],
+      "severe_counted": [
+        0.935294,
+        0.940832
+      ]
+    },
+    "C7": {
+      "a": [
+        0.883524,
+        0.9263
+      ],
+      "a_literal": [
+        0.290965,
+        0.339178
+      ],
+      "a_minus_expected": [
+        -0.0235357,
+        0.0195436
+      ]
+    }
+  },
+  "n": {
+    "C1": {
+      "all": 163666,
+      "small": 36588,
+      "fallback": 0,
+      "all_counted": 182367,
+      "small_counted": 50894,
+      "fallback_counted": 0
+    },
+    "C2": {
+      "all": 163666,
+      "small": 36588,
+      "fallback": 0,
+      "all_counted": 182367,
+      "small_counted": 50894,
+      "fallback_counted": 0
+    },
+    "C5": {
+      "Citrobacter freundii|AMP": 589,
+      "Citrobacter freundii|MEC": 413,
+      "Citrobacter freundii|TZP": 589,
+      "Citrobacter freundii|CXM": 589,
+      "Citrobacter freundii|CRO": 589,
+      "Citrobacter freundii|MEM": 589,
+      "Citrobacter freundii|CIP": 589,
+      "Citrobacter freundii|TMP": 413,
+      "Citrobacter freundii|NIT": 413,
+      "Citrobacter freundii|VAN": 589,
+      "Citrobacter freundii|CLI": 589,
+      "Enterococcus faecalis|AMP": 1623,
+      "Enterococcus faecalis|MEC": 1210,
+      "Enterococcus faecalis|TZP": 1623,
+      "Enterococcus faecalis|CXM": 1623,
+      "Enterococcus faecalis|CRO": 1623,
+      "Enterococcus faecalis|CAZ": 1623,
+      "Enterococcus faecalis|MEM": 1623,
+      "Enterococcus faecalis|TMP": 1210,
+      "Enterococcus faecalis|NIT": 1210,
+      "Enterococcus faecalis|VAN": 1623,
+      "Enterococcus faecalis|CLI": 1623,
+      "Escherichia coli|AMP": 7494,
+      "Escherichia coli|MEC": 6888,
+      "Escherichia coli|TZP": 7494,
+      "Escherichia coli|CXM": 7494,
+      "Escherichia coli|CRO": 7494,
+      "Escherichia coli|MEM": 7494,
+      "Escherichia coli|CIP": 7494,
+      "Escherichia coli|TMP": 6888,
+      "Escherichia coli|NIT": 6888,
+      "Escherichia coli|VAN": 7494,
+      "Escherichia coli|CLI": 7494,
+      "Klebsiella oxytoca|AMP": 404,
+      "Klebsiella oxytoca|MEC": 377,
+      "Klebsiella oxytoca|TZP": 404,
+      "Klebsiella oxytoca|CXM": 404,
+      "Klebsiella oxytoca|CRO": 404,
+      "Klebsiella oxytoca|MEM": 404,
+      "Klebsiella oxytoca|CIP": 404,
+      "Klebsiella oxytoca|TMP": 377,
+      "Klebsiella oxytoca|NIT": 377,
+      "Klebsiella oxytoca|VAN": 404,
+      "Klebsiella oxytoca|CLI": 404,
+      "Klebsiella pneumoniae|AMP": 1547,
+      "Klebsiella pneumoniae|MEC": 1338,
+      "Klebsiella pneumoniae|TZP": 1547,
+      "Klebsiella pneumoniae|CXM": 1547,
+      "Klebsiella pneumoniae|CRO": 1547,
+      "Klebsiella pneumoniae|MEM": 1547,
+      "Klebsiella pneumoniae|CIP": 1547,
+      "Klebsiella pneumoniae|TMP": 1338,
+      "Klebsiella pneumoniae|NIT": 1338,
+      "Klebsiella pneumoniae|VAN": 1547,
+      "Klebsiella pneumoniae|CLI": 1547,
+      "Proteus mirabilis|AMP": 1136,
+      "Proteus mirabilis|MEC": 838,
+      "Proteus mirabilis|TZP": 1136,
+      "Proteus mirabilis|CXM": 1136,
+      "Proteus mirabilis|CRO": 1136,
+      "Proteus mirabilis|MEM": 1136,
+      "Proteus mirabilis|CIP": 1136,
+      "Proteus mirabilis|TMP": 838,
+      "Proteus mirabilis|NIT": 838,
+      "Proteus mirabilis|VAN": 1136,
+      "Proteus mirabilis|CLI": 1136,
+      "Pseudomonas aeruginosa|AMP": 1128,
+      "Pseudomonas aeruginosa|MEC": 593,
+      "Pseudomonas aeruginosa|TZP": 1128,
+      "Pseudomonas aeruginosa|CXM": 1128,
+      "Pseudomonas aeruginosa|CRO": 1128,
+      "Pseudomonas aeruginosa|CAZ": 1128,
+      "Pseudomonas aeruginosa|MEM": 1128,
+      "Pseudomonas aeruginosa|CIP": 1128,
+      "Pseudomonas aeruginosa|TMP": 593,
+      "Pseudomonas aeruginosa|NIT": 593,
+      "Pseudomonas aeruginosa|VAN": 1128,
+      "Pseudomonas aeruginosa|CLI": 1128,
+      "Staphylococcus aureus|AMP": 74,
+      "Staphylococcus aureus|MEC": 404,
+      "Staphylococcus aureus|TZP": 1987,
+      "Staphylococcus aureus|CXM": 1987,
+      "Staphylococcus aureus|CRO": 1987,
+      "Staphylococcus aureus|CAZ": 1987,
+      "Staphylococcus aureus|MEM": 1987,
+      "Staphylococcus aureus|TMP": 404,
+      "Staphylococcus aureus|NIT": 404,
+      "Staphylococcus aureus|VAN": 1987,
+      "Staphylococcus aureus|CLI": 1987,
+      "Staphylococcus saprophyticus|MEC": 251,
+      "Staphylococcus saprophyticus|CAZ": 251,
+      "Staphylococcus saprophyticus|TMP": 251,
+      "Staphylococcus saprophyticus|NIT": 251
+    },
+    "C8": {
+      "C1": 2692,
+      "C4_mild_spectrum": 168,
+      "C4_severe": 238
+    },
+    "C4": {
+      "mild_spectrum": 9851,
+      "mild_spectrum_counted": 9851,
+      "mild_all": 16139,
+      "mild_all_counted": 16139,
+      "severe": 15475,
+      "severe_counted": 15730
+    },
+    "C3b": {
+      "mild": 175,
+      "severe": 312
+    },
+    "C7": {
+      "a": 1993,
+      "b": 27,
+      "a_literal": 1993,
+      "b_literal": 27,
+      "a_expected": 1993,
+      "b_expected": 27,
+      "a_minus_expected": 1993
+    }
+  },
+  "runtime_s": 45.5,
+  "cpu_s": 45.2,
+  "seeds": [
+    2026
+  ],
+  "data": "synthetic_microbiology_dataset, seed 2026, as received 2026-10-09",
+  "notes": "C4 and C3(b) rank this estimator's shares by the shipped list's rules; no cell is gated on its own count (n not returned). WISCA numbers are experiment-local (episode target), in `wisca`.",
+  "setting": {
+    "M_pi": 100,
+    "M": 30,
+    "control_M": 100
+  },
+  "tune_brier": {
+    "M_pi=10,M=10": 0.13719,
+    "M_pi=10,M=30": 0.137184,
+    "M_pi=10,M=100": 0.137193,
+    "M_pi=10,M=300": 0.137211,
+    "M_pi=30,M=10": 0.137087,
+    "M_pi=30,M=30": 0.137084,
+    "M_pi=30,M=100": 0.137093,
+    "M_pi=30,M=300": 0.137111,
+    "M_pi=100,M=10": 0.136985,
+    "M_pi=100,M=30": 0.136983,
+    "M_pi=100,M=100": 0.136994,
+    "M_pi=100,M=300": 0.137013,
+    "M_pi=300,M=10": 0.136925,
+    "M_pi=300,M=30": 0.136925,
+    "M_pi=300,M=100": 0.136937,
+    "M_pi=300,M=300": 0.136955
+  },
+  "control": {
+    "metrics": {
+      "C1": {
+        "all": 0.141506,
+        "small": 0.16069,
+        "all_counted": 0.145378,
+        "small_counted": 0.141856
+      },
+      "C1_diff": {
+        "all": 9.71766e-05,
+        "small": 0.000154546,
+        "all_counted": 0.000120999,
+        "small_counted": 0.000149818
+      },
+      "C2": {
+        "all": 0.443689,
+        "small": 0.489868,
+        "all_counted": 0.452995,
+        "small_counted": 0.439586
+      },
+      "C2_diff": {
+        "all": 0.000370678,
+        "small": 0.000482375,
+        "all_counted": 0.000435798,
+        "small_counted": 0.000521027
+      },
+      "C3a": {
+        "slope": 1.03484,
+        "intercept": 0.0242119
+      },
+      "C3b": {
+        "mild_obs": 0,
+        "mild_exp": 0.211528,
+        "mild_ratio": 0.0,
+        "mild_tail_p": 1.0,
+        "severe_obs": 29,
+        "severe_exp": 26.2502,
+        "severe_ratio": 1.10475,
+        "severe_tail_p": 0.320871,
+        "pass": true
+      },
+      "C4": {
+        "mild_spectrum": 0.966095,
+        "mild_spectrum_counted": 0.966095,
+        "mild_all": 0.754198,
+        "mild_all_counted": 0.754198,
+        "severe": 0.953317,
+        "severe_counted": 0.938313
+      },
+      "C6": {
+        "E1_CRO": 49,
+        "E1_CXM": null,
+        "E2_CXM": null
+      },
+      "C7": {
+        "a": 0.906673,
+        "b": 0.740741,
+        "a_literal": 0.321124,
+        "b_literal": 0.296296,
+        "pass_a": true,
+        "a_expected": 0.907041,
+        "b_expected": 0.901083,
+        "a_minus_expected": -0.000367954
+      },
+      "C8": {
+        "C1": 0.165471,
+        "C1_diff": -0.001425,
+        "C4_mild_spectrum": 0.964286,
+        "C4_severe": 0.903226
+      }
+    },
+    "intervals": {
+      "C1": {
+        "all": [
+          0.139858,
+          0.143215
+        ],
+        "small": [
+          0.157677,
+          0.163775
+        ],
+        "all_counted": [
+          0.143853,
+          0.147012
+        ],
+        "small_counted": [
+          0.139346,
+          0.144477
+        ]
+      },
+      "C1_diff": {
+        "all": [
+          -5.45572e-06,
+          0.000203182
+        ],
+        "small": [
+          -7.7496e-05,
+          0.000366847
+        ],
+        "all_counted": [
+          9.49007e-06,
+          0.000236671
+        ],
+        "small_counted": [
+          -4.10043e-05,
+          0.000327362
+        ]
+      },
+      "C4": {
+        "mild_spectrum": [
+          0.962641,
+          0.969742
+        ],
+        "mild_spectrum_counted": [
+          0.962641,
+          0.969742
+        ],
+        "mild_all": [
+          0.747083,
+          0.760512
+        ],
+        "mild_all_counted": [
+          0.747083,
+          0.760512
+        ],
+        "severe": [
+          0.949931,
+          0.956145
+        ],
+        "severe_counted": [
+          0.935122,
+          0.941165
+        ]
+      },
+      "C7": {
+        "a": [
+          0.884022,
+          0.928251
+        ],
+        "a_literal": [
+          0.29814,
+          0.34552
+        ],
+        "a_minus_expected": [
+          -0.0228514,
+          0.0207825
+        ]
+      },
+      "C8": {
+        "C1": [
+          0.152737,
+          0.193055
+        ],
+        "C1_diff": [
+          -0.00320281,
+          0.000519176
+        ],
+        "C4_mild_spectrum": [
+          0.909091,
+          0.983333
+        ],
+        "C4_severe": [
+          0.72327,
+          0.98
+        ]
+      }
+    }
+  },
+  "vs_control": {
+    "all": {
+      "diff": 2.51397e-06,
+      "ci": [
+        -1.34932e-05,
+        1.85069e-05
+      ]
+    },
+    "small": {
+      "diff": -2.65897e-06,
+      "ci": [
+        -5.34945e-05,
+        4.63257e-05
+      ]
+    },
+    "all_counted": {
+      "diff": -6.53876e-07,
+      "ci": [
+        -1.58958e-05,
+        1.49699e-05
+      ]
+    },
+    "small_counted": {
+      "diff": -7.69424e-06,
+      "ci": [
+        -4.76468e-05,
+        3.45052e-05
+      ]
+    }
+  },
+  "checks": {
+    "check1_variance_two_layer": {
+      "cells": 20,
+      "max_rel_var_error": 0.00640929,
+      "median_rel_var_error": 0.00312167,
+      "max_mean_error": 0.00029759,
+      "max_interval_gap": 0.000552206,
+      "pass": true
+    },
+    "check2_variance_wisca": {
+      "cells": 20,
+      "max_rel_var_error": 0.00935418,
+      "median_rel_var_error": 0.00214938,
+      "max_mean_error": 0.000194282,
+      "reduction_max_abs_diff": 4.48318e-16,
+      "pass": true
+    },
+    "check3_max_abs_diff": 2.22045e-16,
+    "check3_cells": 2106,
+    "check3_pass": true,
+    "check4_max_abs_diff": 2.14188e-11,
+    "check4_cells": 2430,
+    "check4_pass": true,
+    "check6_c4_style_reproduces_baseline": {
+      "computed_vs_baseline": {
+        "severe": [
+          0.953183,
+          0.953183
+        ],
+        "severe_counted": [
+          0.938322,
+          0.938322
+        ]
+      },
+      "pass": true
+    },
+    "check5_causality": {
+      "views_built": 289,
+      "pass": true
+    }
+  },
+  "wisca": {
+    "brier": {
+      "left_out": {
+        "E0": {
+          "fallback": 0,
+          "all": {
+            "n": 143179,
+            "brier": 0.144218,
+            "brier_ci": [
+              0.142473,
+              0.146071
+            ],
+            "diff_E3": 0.000263745,
+            "diff_E3_ci": [
+              0.00016378,
+              0.000360772
+            ],
+            "diff_E1": -0.000107291,
+            "diff_E1_ci": [
+              -0.000238896,
+              1.26246e-05
+            ]
+          },
+          "two": {
+            "n": 13964,
+            "brier": 0.21062,
+            "brier_ci": [
+              0.204977,
+              0.216136
+            ],
+            "diff_E3": 0.00281335,
+            "diff_E3_ci": [
+              0.00231481,
+              0.00338346
+            ],
+            "diff_E1": -3.81338e-05,
+            "diff_E1_ci": [
+              -0.000310677,
+              0.000219248
+            ]
+          },
+          "one": {
+            "n": 129215,
+            "brier": 0.137042,
+            "brier_ci": [
+              0.135073,
+              0.139179
+            ],
+            "diff_E3": -1.17851e-05,
+            "diff_E3_ci": [
+              -0.000113135,
+              7.6826e-05
+            ],
+            "diff_E1": -0.000114765,
+            "diff_E1_ci": [
+              -0.000250819,
+              2.18408e-05
+            ]
+          }
+        },
+        "E1": {
+          "fallback": 0,
+          "all": {
+            "n": 143179,
+            "brier": 0.144326,
+            "brier_ci": [
+              0.142557,
+              0.146201
+            ],
+            "diff_E3": 0.000371036,
+            "diff_E3_ci": [
+              0.000226155,
+              0.000518933
+            ],
+            "diff_E1": 0.0,
+            "diff_E1_ci": [
+              0.0,
+              0.0
+            ]
+          },
+          "two": {
+            "n": 13964,
+            "brier": 0.210658,
+            "brier_ci": [
+              0.205051,
+              0.216164
+            ],
+            "diff_E3": 0.00285148,
+            "diff_E3_ci": [
+              0.00241643,
+              0.00331222
+            ],
+            "diff_E1": 0.0,
+            "diff_E1_ci": [
+              0.0,
+              0.0
+            ]
+          },
+          "one": {
+            "n": 129215,
+            "brier": 0.137157,
+            "brier_ci": [
+              0.135216,
+              0.139267
+            ],
+            "diff_E3": 0.00010298,
+            "diff_E3_ci": [
+              -4.42315e-05,
+              0.000250717
+            ],
+            "diff_E1": 0.0,
+            "diff_E1_ci": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        "E2": {
+          "fallback": 0,
+          "all": {
+            "n": 143179,
+            "brier": 0.14404,
+            "brier_ci": [
+              0.142236,
+              0.145957
+            ],
+            "diff_E3": 8.53714e-05,
+            "diff_E3_ci": [
+              -4.7946e-05,
+              0.000213787
+            ],
+            "diff_E1": -0.000285665,
+            "diff_E1_ci": [
+              -0.000398037,
+              -0.000175114
+            ]
+          },
+          "two": {
+            "n": 13964,
+            "brier": 0.208034,
+            "brier_ci": [
+              0.202336,
+              0.213728
+            ],
+            "diff_E3": 0.000227711,
+            "diff_E3_ci": [
+              -9.88216e-05,
+              0.000530981
+            ],
+            "diff_E1": -0.00262377,
+            "diff_E1_ci": [
+              -0.00319942,
+              -0.00212648
+            ]
+          },
+          "one": {
+            "n": 129215,
+            "brier": 0.137124,
+            "brier_ci": [
+              0.135159,
+              0.139244
+            ],
+            "diff_E3": 6.9989e-05,
+            "diff_E3_ci": [
+              -7.54266e-05,
+              0.000212015
+            ],
+            "diff_E1": -3.29907e-05,
+            "diff_E1_ci": [
+              -0.000142972,
+              8.24014e-05
+            ]
+          }
+        },
+        "E3": {
+          "fallback": 0,
+          "all": {
+            "n": 143179,
+            "brier": 0.143955,
+            "brier_ci": [
+              0.142167,
+              0.145827
+            ],
+            "diff_E3": 0.0,
+            "diff_E3_ci": [
+              0.0,
+              0.0
+            ],
+            "diff_E1": -0.000371036,
+            "diff_E1_ci": [
+              -0.000519221,
+              -0.000226963
+            ]
+          },
+          "two": {
+            "n": 13964,
+            "brier": 0.207806,
+            "brier_ci": [
+              0.202076,
+              0.213383
+            ],
+            "diff_E3": 0.0,
+            "diff_E3_ci": [
+              0.0,
+              0.0
+            ],
+            "diff_E1": -0.00285148,
+            "diff_E1_ci": [
+              -0.00331547,
+              -0.00242352
+            ]
+          },
+          "one": {
+            "n": 129215,
+            "brier": 0.137054,
+            "brier_ci": [
+              0.135072,
+              0.139229
+            ],
+            "diff_E3": 0.0,
+            "diff_E3_ci": [
+              0.0,
+              0.0
+            ],
+            "diff_E1": -0.00010298,
+            "diff_E1_ci": [
+              -0.000251098,
+              4.30755e-05
+            ]
+          }
+        }
+      },
+      "counted": {
+        "E0": {
+          "fallback": 0,
+          "all": {
+            "n": 160794,
+            "brier": 0.147138,
+            "brier_ci": [
+              0.145513,
+              0.148821
+            ],
+            "diff_E3": 0.000354903,
+            "diff_E3_ci": [
+              0.000265925,
+              0.000450549
+            ],
+            "diff_E1": -0.000133994,
+            "diff_E1_ci": [
+              -0.000269023,
+              -1.40827e-05
+            ]
+          },
+          "two": {
+            "n": 16911,
+            "brier": 0.20341,
+            "brier_ci": [
+              0.198056,
+              0.208878
+            ],
+            "diff_E3": 0.00320733,
+            "diff_E3_ci": [
+              0.0027554,
+              0.00372294
+            ],
+            "diff_E1": -0.000163679,
+            "diff_E1_ci": [
+              -0.000391332,
+              6.02031e-05
+            ]
+          },
+          "one": {
+            "n": 143883,
+            "brier": 0.140524,
+            "brier_ci": [
+              0.138699,
+              0.142509
+            ],
+            "diff_E3": 1.96488e-05,
+            "diff_E3_ci": [
+              -6.31212e-05,
+              0.000103014
+            ],
+            "diff_E1": -0.000130505,
+            "diff_E1_ci": [
+              -0.0002748,
+              8.51197e-06
+            ]
+          }
+        },
+        "E1": {
+          "fallback": 0,
+          "all": {
+            "n": 160794,
+            "brier": 0.147272,
+            "brier_ci": [
+              0.145626,
+              0.148954
+            ],
+            "diff_E3": 0.000488897,
+            "diff_E3_ci": [
+              0.000346595,
+              0.000647509
+            ],
+            "diff_E1": 0.0,
+            "diff_E1_ci": [
+              0.0,
+              0.0
+            ]
+          },
+          "two": {
+            "n": 16911,
+            "brier": 0.203574,
+            "brier_ci": [
+              0.198277,
+              0.208907
+            ],
+            "diff_E3": 0.00337101,
+            "diff_E3_ci": [
+              0.00293497,
+              0.00384266
+            ],
+            "diff_E1": 0.0,
+            "diff_E1_ci": [
+              0.0,
+              0.0
+            ]
+          },
+          "one": {
+            "n": 143883,
+            "brier": 0.140654,
+            "brier_ci": [
+              0.13885,
+              0.142595
+            ],
+            "diff_E3": 0.000150154,
+            "diff_E3_ci": [
+              1.52668e-05,
+              0.00029768
+            ],
+            "diff_E1": 0.0,
+            "diff_E1_ci": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        "E2": {
+          "fallback": 0,
+          "all": {
+            "n": 160794,
+            "brier": 0.146898,
+            "brier_ci": [
+              0.1452,
+              0.148647
+            ],
+            "diff_E3": 0.000115358,
+            "diff_E3_ci": [
+              -2.95361e-05,
+              0.000256168
+            ],
+            "diff_E1": -0.000373539,
+            "diff_E1_ci": [
+              -0.000489048,
+              -0.000272396
+            ]
+          },
+          "two": {
+            "n": 16911,
+            "brier": 0.200573,
+            "brier_ci": [
+              0.195164,
+              0.206117
+            ],
+            "diff_E3": 0.000370313,
+            "diff_E3_ci": [
+              0.000101331,
+              0.000607454
+            ],
+            "diff_E1": -0.0030007,
+            "diff_E1_ci": [
+              -0.00356415,
+              -0.00251459
+            ]
+          },
+          "one": {
+            "n": 143883,
+            "brier": 0.140589,
+            "brier_ci": [
+              0.138742,
+              0.142559
+            ],
+            "diff_E3": 8.53921e-05,
+            "diff_E3_ci": [
+              -7.0193e-05,
+              0.000240535
+            ],
+            "diff_E1": -6.47616e-05,
+            "diff_E1_ci": [
+              -0.000167437,
+              3.38084e-05
+            ]
+          }
+        },
+        "E3": {
+          "fallback": 0,
+          "all": {
+            "n": 160794,
+            "brier": 0.146783,
+            "brier_ci": [
+              0.145096,
+              0.148493
+            ],
+            "diff_E3": 0.0,
+            "diff_E3_ci": [
+              0.0,
+              0.0
+            ],
+            "diff_E1": -0.000488897,
+            "diff_E1_ci": [
+              -0.000649724,
+              -0.000347401
+            ]
+          },
+          "two": {
+            "n": 16911,
+            "brier": 0.200203,
+            "brier_ci": [
+              0.194831,
+              0.205743
+            ],
+            "diff_E3": 0.0,
+            "diff_E3_ci": [
+              0.0,
+              0.0
+            ],
+            "diff_E1": -0.00337101,
+            "diff_E1_ci": [
+              -0.0038456,
+              -0.00293729
+            ]
+          },
+          "one": {
+            "n": 143883,
+            "brier": 0.140504,
+            "brier_ci": [
+              0.138643,
+              0.142519
+            ],
+            "diff_E3": 0.0,
+            "diff_E3_ci": [
+              0.0,
+              0.0
+            ],
+            "diff_E1": -0.000150154,
+            "diff_E1_ci": [
+              -0.000300189,
+              -1.76478e-05
+            ]
+          }
+        }
+      },
+      "targets": {
+        "episodes": 14246,
+        "two_organism": 1519
+      }
+    },
+    "c4_style": {
+      "E0": {
+        "query_months": 500,
+        "top_picks": {
+          "TZP": 500
+        },
+        "isolate_left_out": {
+          "value": 0.953183,
+          "ci": [
+            0.94987,
+            0.955906
+          ],
+          "n": 15785
+        },
+        "isolate_counted": {
+          "value": 0.938322,
+          "ci": [
+            0.935316,
+            0.941176
+          ],
+          "n": 16035
+        },
+        "episode_left_out": {
+          "value": 0.948346,
+          "ci": [
+            0.944504,
+            0.951605
+          ],
+          "n": 13842
+        },
+        "episode_counted": {
+          "value": 0.931984,
+          "ci": [
+            0.928216,
+            0.935254
+          ],
+          "n": 14085
+        },
+        "gap_left_out": 0.00483779
+      },
+      "E1": {
+        "query_months": 431,
+        "top_picks": {
+          "TZP": 427,
+          "CIP": 4
+        },
+        "isolate_left_out": {
+          "value": 0.953603,
+          "ci": [
+            0.950422,
+            0.956297
+          ],
+          "n": 15475
+        },
+        "isolate_counted": {
+          "value": 0.938144,
+          "ci": [
+            0.935294,
+            0.940832
+          ],
+          "n": 15730
+        },
+        "episode_left_out": {
+          "value": 0.948801,
+          "ci": [
+            0.945134,
+            0.952065
+          ],
+          "n": 13555
+        },
+        "episode_counted": {
+          "value": 0.931754,
+          "ci": [
+            0.928133,
+            0.934804
+          ],
+          "n": 13803
+        },
+        "gap_left_out": 0.0048014
+      },
+      "E2": {
+        "query_months": 384,
+        "top_picks": {
+          "TZP": 380,
+          "CIP": 4
+        },
+        "isolate_left_out": {
+          "value": 0.953657,
+          "ci": [
+            0.950365,
+            0.956424
+          ],
+          "n": 15040
+        },
+        "isolate_counted": {
+          "value": 0.938125,
+          "ci": [
+            0.934906,
+            0.940935
+          ],
+          "n": 15289
+        },
+        "episode_left_out": {
+          "value": 0.948743,
+          "ci": [
+            0.944802,
+            0.951916
+          ],
+          "n": 13169
+        },
+        "episode_counted": {
+          "value": 0.931623,
+          "ci": [
+            0.927722,
+            0.93492
+          ],
+          "n": 13411
+        },
+        "gap_left_out": 0.00491365
+      },
+      "E3": {
+        "query_months": 488,
+        "top_picks": {
+          "TZP": 488
+        },
+        "isolate_left_out": {
+          "value": 0.953228,
+          "ci": [
+            0.950019,
+            0.955927
+          ],
+          "n": 15736
+        },
+        "isolate_counted": {
+          "value": 0.938321,
+          "ci": [
+            0.935352,
+            0.94114
+          ],
+          "n": 15986
+        },
+        "episode_left_out": {
+          "value": 0.948387,
+          "ci": [
+            0.944609,
+            0.951677
+          ],
+          "n": 13795
+        },
+        "episode_counted": {
+          "value": 0.93197,
+          "ci": [
+            0.928213,
+            0.935201
+          ],
+          "n": 14038
+        },
+        "gap_left_out": 0.00484117
+      }
+    },
+    "per_drug_gap": [
+      {
+        "antibiotic": "AMP",
+        "isolate_share": 0.525259,
+        "isolate_n": 13995,
+        "episode_share": 0.50619,
+        "episode_n": 12116
+      },
+      {
+        "antibiotic": "MEC",
+        "isolate_share": 0.774123,
+        "isolate_n": 12312,
+        "episode_share": 0.759484,
+        "episode_n": 10860
+      },
+      {
+        "antibiotic": "TZP",
+        "isolate_share": 0.953231,
+        "isolate_n": 15908,
+        "episode_share": 0.948647,
+        "episode_n": 14001
+      },
+      {
+        "antibiotic": "CXM",
+        "isolate_share": 0.748617,
+        "isolate_n": 15908,
+        "episode_share": 0.728948,
+        "episode_n": 14001
+      },
+      {
+        "antibiotic": "CRO",
+        "isolate_share": 0.789351,
+        "isolate_n": 15908,
+        "episode_share": 0.772302,
+        "episode_n": 14001
+      },
+      {
+        "antibiotic": "CAZ",
+        "isolate_share": 0.208659,
+        "isolate_n": 4989,
+        "episode_share": 0.189519,
+        "episode_n": 3931
+      },
+      {
+        "antibiotic": "MEM",
+        "isolate_share": 0.888232,
+        "isolate_n": 15908,
+        "episode_share": 0.877866,
+        "episode_n": 14001
+      },
+      {
+        "antibiotic": "CIP",
+        "isolate_share": 0.916328,
+        "isolate_n": 12298,
+        "episode_share": 0.911246,
+        "episode_n": 10546
+      },
+      {
+        "antibiotic": "TMP",
+        "isolate_share": 0.707196,
+        "isolate_n": 12312,
+        "episode_share": 0.687293,
+        "episode_n": 10860
+      },
+      {
+        "antibiotic": "NIT",
+        "isolate_share": 0.838613,
+        "isolate_n": 12312,
+        "episode_share": 0.827164,
+        "episode_n": 10860
+      },
+      {
+        "antibiotic": "VAN",
+        "isolate_share": 0.226741,
+        "isolate_n": 15908,
+        "episode_share": 0.201057,
+        "episode_n": 14001
+      },
+      {
+        "antibiotic": "CLI",
+        "isolate_share": 0.119374,
+        "isolate_n": 15908,
+        "episode_share": 0.10535,
+        "episode_n": 14001
+      }
+    ],
+    "independence": {
+      "per_drug": {
+        "AMP": [
+          0.225714,
+          0.218268,
+          1050
+        ],
+        "MEC": [
+          0.475,
+          0.472111,
+          1080
+        ],
+        "TZP": [
+          0.911401,
+          0.901436,
+          1456
+        ],
+        "CXM": [
+          0.475962,
+          0.469527,
+          1456
+        ],
+        "CRO": [
+          0.531593,
+          0.527524,
+          1456
+        ],
+        "CAZ": [
+          0.0,
+          0.0,
+          178
+        ],
+        "MEM": [
+          0.74794,
+          0.741412,
+          1456
+        ],
+        "CIP": [
+          0.818182,
+          0.844974,
+          759
+        ],
+        "TMP": [
+          0.433333,
+          0.457183,
+          1080
+        ],
+        "NIT": [
+          0.588889,
+          0.605171,
+          1080
+        ],
+        "VAN": [
+          0.0412088,
+          0.0410607,
+          1456
+        ],
+        "CLI": [
+          0.0,
+          0.0,
+          1456
+        ]
+      },
+      "pooled": {
+        "observed": 0.459643,
+        "independence": 0.46059,
+        "n": 13963
+      }
+    },
+    "note": "experiment-local episode-level target; not a harness metric, not comparable with the leaderboard's C1 or C4"
+  }
+}

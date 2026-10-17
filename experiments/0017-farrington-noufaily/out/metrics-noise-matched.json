@@ -1,0 +1,268 @@
+{
+  "experiment": "0017-farrington-noufaily",
+  "method": "Farrington unit, trailing 26 wk, guard 4 wk, plain, read at D5's level (extra row, 200 per cell, exploratory)",
+  "family": "detection",
+  "tuned_on_test": false,
+  "tuned_on": "2023-10-02..2024-09-30",
+  "metrics": {
+    "D2": {
+      "rare_k0": 0.0,
+      "rare_k2": 0.08,
+      "rare_k3": 0.19,
+      "rare_k4": 0.31,
+      "rare_k6": 0.49,
+      "common_resistant_k0": 0.0,
+      "common_resistant_k2": 0.025,
+      "common_resistant_k3": 0.015,
+      "common_resistant_k4": 0.035,
+      "common_resistant_k6": 0.025,
+      "wild_type_k0": 0.01,
+      "wild_type_k2": 0.01,
+      "wild_type_k3": 0.015,
+      "wild_type_k4": 0.035,
+      "wild_type_k6": 0.045,
+      "common_esbl_k0": 0.005,
+      "common_esbl_k2": 0.02,
+      "common_esbl_k3": 0.125,
+      "common_esbl_k4": 0.24,
+      "common_esbl_k6": 0.29,
+      "two_unit_k0": 0.02,
+      "two_unit_k2": 0.035,
+      "two_unit_k3": 0.13,
+      "two_unit_k4": 0.16,
+      "two_unit_k6": 0.295
+    },
+    "D2_delay": {
+      "rare_k0": null,
+      "rare_k2": 4,
+      "rare_k3": 5,
+      "rare_k4": 6,
+      "rare_k6": 6,
+      "common_resistant_k0": null,
+      "common_resistant_k2": 5,
+      "common_resistant_k3": 4,
+      "common_resistant_k4": 10,
+      "common_resistant_k6": 8,
+      "wild_type_k0": 8,
+      "wild_type_k2": 1,
+      "wild_type_k3": 1,
+      "wild_type_k4": 8,
+      "wild_type_k6": 11,
+      "common_esbl_k0": 18,
+      "common_esbl_k2": 5,
+      "common_esbl_k3": 6,
+      "common_esbl_k4": 6,
+      "common_esbl_k6": 6,
+      "two_unit_k0": 3,
+      "two_unit_k2": 4,
+      "two_unit_k3": 5,
+      "two_unit_k4": 7,
+      "two_unit_k6": 7
+    },
+    "D6": 0.014,
+    "D4": {
+      "episodes_per_year": 4.52166,
+      "sentinel": 0.0,
+      "cluster": 4.52166,
+      "trend": 0.0,
+      "divergence": 0.0,
+      "data": 0.0,
+      "alerts_per_week": 0.0866575
+    },
+    "D7": 0.998062,
+    "I1": {
+      "alerts": 12,
+      "incidents": 11,
+      "alerts_per_incident": 1.09091
+    }
+  },
+  "intervals": {
+    "D2": {
+      "rare_k0": [
+        0.0,
+        0.0188453
+      ],
+      "rare_k2": [
+        0.0498406,
+        0.125989
+      ],
+      "rare_k3": [
+        0.141672,
+        0.250012
+      ],
+      "rare_k4": [
+        0.249989,
+        0.377172
+      ],
+      "rare_k6": [
+        0.421563,
+        0.558814
+      ],
+      "common_resistant_k0": [
+        0.0,
+        0.0188453
+      ],
+      "common_resistant_k2": [
+        0.0107247,
+        0.0571783
+      ],
+      "common_resistant_k3": [
+        0.00511424,
+        0.0431657
+      ],
+      "common_resistant_k4": [
+        0.0170555,
+        0.0704706
+      ],
+      "common_resistant_k6": [
+        0.0107247,
+        0.0571783
+      ],
+      "wild_type_k0": [
+        0.00274666,
+        0.0357218
+      ],
+      "wild_type_k2": [
+        0.00274666,
+        0.0357218
+      ],
+      "wild_type_k3": [
+        0.00511424,
+        0.0431657
+      ],
+      "wild_type_k4": [
+        0.0170555,
+        0.0704706
+      ],
+      "wild_type_k6": [
+        0.0238525,
+        0.0832967
+      ],
+      "common_esbl_k0": [
+        0.000883169,
+        0.0277737
+      ],
+      "common_esbl_k2": [
+        0.00780443,
+        0.0502871
+      ],
+      "common_esbl_k3": [
+        0.0861197,
+        0.178014
+      ],
+      "common_esbl_k4": [
+        0.186066,
+        0.303733
+      ],
+      "common_esbl_k6": [
+        0.23154,
+        0.356375
+      ],
+      "two_unit_k0": [
+        0.00780443,
+        0.0502871
+      ],
+      "two_unit_k2": [
+        0.0170555,
+        0.0704706
+      ],
+      "two_unit_k3": [
+        0.090282,
+        0.183664
+      ],
+      "two_unit_k4": [
+        0.115674,
+        0.217141
+      ],
+      "two_unit_k6": [
+        0.236139,
+        0.361587
+      ]
+    },
+    "D6": [
+      0.00835758,
+      0.023362
+    ],
+    "D4": {
+      "episodes_per_year": [
+        2.06759,
+        8.58353
+      ],
+      "sentinel": [
+        0.0,
+        1.85332
+      ],
+      "cluster": [
+        2.06759,
+        8.58353
+      ],
+      "trend": [
+        0.0,
+        1.85332
+      ],
+      "divergence": [
+        0.0,
+        1.85332
+      ],
+      "data": [
+        0.0,
+        1.85332
+      ]
+    },
+    "D7": [
+      0.989105,
+      0.999658
+    ]
+  },
+  "n": {
+    "D2": {
+      "rare_k0": 200,
+      "rare_k2": 200,
+      "rare_k3": 200,
+      "rare_k4": 200,
+      "rare_k6": 200,
+      "common_resistant_k0": 200,
+      "common_resistant_k2": 200,
+      "common_resistant_k3": 200,
+      "common_resistant_k4": 200,
+      "common_resistant_k6": 200,
+      "wild_type_k0": 200,
+      "wild_type_k2": 200,
+      "wild_type_k3": 200,
+      "wild_type_k4": 200,
+      "wild_type_k6": 200,
+      "common_esbl_k0": 200,
+      "common_esbl_k2": 200,
+      "common_esbl_k3": 200,
+      "common_esbl_k4": 200,
+      "common_esbl_k6": 200,
+      "two_unit_k0": 200,
+      "two_unit_k2": 200,
+      "two_unit_k3": 200,
+      "two_unit_k4": 200,
+      "two_unit_k6": 200
+    },
+    "D6": 1000,
+    "D4": {
+      "episodes_per_year": 9,
+      "sentinel": 0,
+      "cluster": 9,
+      "trend": 0,
+      "divergence": 0,
+      "data": 0,
+      "alerts_per_week": 9
+    },
+    "D7": 516,
+    "I1": {
+      "alerts": 12,
+      "incidents": 11
+    }
+  },
+  "runtime_s": 50.9,
+  "cpu_s": 50.4,
+  "seeds": [
+    2026
+  ],
+  "data": "synthetic_microbiology_dataset, seed 2026, as received 2026-10-09",
+  "notes": "Component of 0017, exploratory, not in the plan: the headline setting read at D5's noise-matched level instead of the year-1 level."
+}

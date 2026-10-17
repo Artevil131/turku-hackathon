@@ -27,6 +27,51 @@ answers can refer to it.
 | B7 | Active cluster in a connected unit: change the doctor's number or annotate? | Annotate in v1 with the exposure score shown. |
 | B8 | Covariate model (logistic regression per organism-drug) in scope? | Not in v1; only after the count model is validated in replay. |
 | B9 | How the ranking is shown: tiers by τ then AWaRe tier then coverage, or plain coverage sort? | Tiers, with a toggle to plain sort. |
+| B10 | The doctor's screen shows the unit's four-week figure beside the annual one: when is the difference flagged, on counts this small? | No proposal (Artem asked for options with costs, not a pick): see "B10 and B11: options" below. |
+| B11 | What plain-language reliability label goes with every number sent to the app (with its isolate count and period)? | No proposal: options below. Only the 30-isolate floor (D-023) is decided. |
+
+
+### B10 and B11: options (overnight run, 2026-10-17)
+
+Added by Claude Code, operated by Artem, at his request; nothing here is
+chosen. Numbers are computed on the synthetic data's scoring period
+(2024-10-01 to 2026-09-27) unless marked derived.
+
+**How small the four-week figure is.** Tested results per unit × specimen
+× antibiotic in a 28-day window (first isolates): median 27 in urine, 6 in
+wound, 2 in blood; 59 % of cells have under 10 and 77 % under 30
+(computed). Most four-week figures rest on fewer results than the 30 the
+organiser asks for (D-023).
+
+**B10, when to flag "the four weeks differ from the year".** Costs below
+use a year share of 85 % on 300 results and a true four-week share of
+70 % (derived, exact binomial). A screen shows up to 10 drugs, so a
+per-drug false-flag rate α gives a chance 1 − (1 − α)^10 of at least one
+false flag per screen: 0.40 at α = 0.05, 0.10 at α = 0.01 (derived).
+
+| Option | Rule | False flags per drug, n = 10 / 20 / 40 | Power at 70 %, n = 10 / 20 / 40 | Other costs |
+|---|---|---|---|---|
+| O1 | One-sided exact binomial (or Beta-binomial predictive, D-038) test of the four-week count against the year's share, α = 0.05 | 0.050 / 0.022 / 0.030 | 0.35 / 0.39 / 0.69 | Many flags per screen at α = 0.05; needs α decided; the Beta-binomial version needs M and δ (B1, B3) |
+| O1′ | O1 at α = 0.01 | 0.010 / 0.006 / 0.004 | 0.15 / 0.23 / 0.42 | Rarely fires on blood or wound cells at all |
+| O2 | O1 with Benjamini-Hochberg across the drugs on one screen | below O1's | below O1's | Flags depend on which drugs are shown; harder to explain |
+| O3 | Flag when the two 95 % intervals (Wilson) do not overlap | 0.010 / 0.006 / 0.006 | 0.15 / 0.23 / 0.42 | The easiest to explain ("the ranges do not overlap"), about as strict as O1′ |
+| O4 | Flag when the difference is at least 10 points and the four weeks have at least 10 results | 0.377 / 0.106 / 0.042 | 0.65 / 0.58 / 0.69 | Ignores sampling noise: at 10 results it flags 38 % of unchanged cells |
+| O5 | Flag when the posterior probability (D-038 Beta-binomial) that the four-week share is lower than the year's by Δ is at least 0.9 | depends on M, δ, Δ | depends | Reads as "probably lower"; needs M, δ (B1, B3) and Δ |
+| O6 | No flag on the doctor's screen: both figures shown with their counts; real changes reach infection control through the detectors (D-039) | 0 | 0 | The doctor must judge two numbers; nothing to tune |
+
+Whichever is chosen, the flag would be a detection-like signal on raw
+counts (D-039), and the experiments 0004 and 0012 found that the
+four-week figure itself predicts the next four weeks worse than the
+year (0004: +0.0058 Brier for the unit's raw 28 days).
+
+**B11, the reliability label.**
+
+| Option | Label from | Example | Costs |
+|---|---|---|---|
+| L1 | The decided 30-result floor (D-023) only | "30 or more results" / "under 30 results: indicative" | Rests on a decided number; ignores interval width (31 results at 50 % have a 95 % interval about ±17 points, derived) |
+| L2 | Width of the 95 % interval | "precise" (half-width ≤ 5 points), "approximate" (≤ 10), "uncertain" (> 10) | New thresholds; width is narrow near 0 % and 100 % even at small counts |
+| L3 | Own-data weight w = n / (n + M) (ENGINE.md 2.1) | "mostly this unit's data" / "half" / "mostly hospital data" | Needs M (B1); meaningful only once D-038 replaces D-023 |
+| L4 | The fallback level (D-033, decided) plus the count | "Hospital figure: the unit has 12 results" | Longer text; rests only on decided rules; combines with L1 or L2 |
 
 ## C. Detection (researcher)
 

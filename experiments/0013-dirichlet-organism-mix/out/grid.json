@@ -1,0 +1,3391 @@
+{
+  "note": "exploratory: every setting scored on the scoring period; a row picked from this table was picked on the scoring period (tuned-on-test)",
+  "chosen_on_tune": {
+    "M_pi": 100,
+    "M": 30
+  },
+  "two_layer": {
+    "M_pi=10,M=10": {
+      "tune_brier": 0.13719,
+      "metrics": {
+        "C1": {
+          "all": 0.141646,
+          "small": 0.161156,
+          "all_counted": 0.145509,
+          "small_counted": 0.1422
+        },
+        "C1_diff": {
+          "all": 0.000237624,
+          "small": 0.000620325,
+          "all_counted": 0.000252675,
+          "small_counted": 0.000493714
+        },
+        "C2": {
+          "all": 0.444146,
+          "small": 0.491392,
+          "all_counted": 0.453426,
+          "small_counted": 0.440744
+        },
+        "C2_diff": {
+          "all": 0.000827195,
+          "small": 0.00200591,
+          "all_counted": 0.000866211,
+          "small_counted": 0.00167834
+        },
+        "C3a": {
+          "slope": 1.03047,
+          "intercept": 0.0287697
+        },
+        "C3b": {
+          "mild_obs": 0,
+          "mild_exp": 0.261661,
+          "mild_ratio": 0.0,
+          "mild_tail_p": 1.0,
+          "severe_obs": 30,
+          "severe_exp": 25.0355,
+          "severe_ratio": 1.1983,
+          "severe_tail_p": 0.184044,
+          "pass": true
+        },
+        "C4": {
+          "mild_spectrum": 0.966095,
+          "mild_spectrum_counted": 0.966095,
+          "mild_all": 0.754198,
+          "mild_all_counted": 0.754198,
+          "severe": 0.953643,
+          "severe_counted": 0.937822
+        },
+        "C6": {
+          "E1_CRO": 48,
+          "E1_CXM": null,
+          "E2_CXM": null
+        },
+        "C7": {
+          "a": 0.904666,
+          "b": 0.740741,
+          "a_literal": 0.342699,
+          "b_literal": 0.333333,
+          "pass_a": true,
+          "a_expected": 0.907272,
+          "b_expected": 0.905517,
+          "a_minus_expected": -0.00260611
+        },
+        "C8": {
+          "C1": 0.165399,
+          "C1_diff": -0.00149654,
+          "C4_mild_spectrum": 0.964286,
+          "C4_severe": 0.917031
+        }
+      },
+      "intervals": {
+        "C1": {
+          "all": [
+            0.139999,
+            0.143377
+          ],
+          "small": [
+            0.15802,
+            0.164345
+          ],
+          "all_counted": [
+            0.143952,
+            0.147148
+          ],
+          "small_counted": [
+            0.13965,
+            0.144898
+          ]
+        },
+        "C1_diff": {
+          "all": [
+            9.35631e-05,
+            0.000387099
+          ],
+          "small": [
+            0.000200042,
+            0.00101609
+          ],
+          "all_counted": [
+            9.65351e-05,
+            0.000422451
+          ],
+          "small_counted": [
+            0.000136278,
+            0.000834019
+          ]
+        },
+        "C4": {
+          "mild_spectrum": [
+            0.962641,
+            0.969742
+          ],
+          "mild_spectrum_counted": [
+            0.962641,
+            0.969742
+          ],
+          "mild_all": [
+            0.747083,
+            0.760512
+          ],
+          "mild_all_counted": [
+            0.747083,
+            0.760512
+          ],
+          "severe": [
+            0.950141,
+            0.956602
+          ],
+          "severe_counted": [
+            0.934398,
+            0.940809
+          ]
+        },
+        "C7": {
+          "a": [
+            0.881347,
+            0.926756
+          ],
+          "a_literal": [
+            0.316783,
+            0.370522
+          ],
+          "a_minus_expected": [
+            -0.0260183,
+            0.0192969
+          ]
+        },
+        "C8": {
+          "C1": [
+            0.152858,
+            0.1917
+          ],
+          "C1_diff": [
+            -0.00403022,
+            0.00175477
+          ],
+          "C4_mild_spectrum": [
+            0.909091,
+            0.983333
+          ],
+          "C4_severe": [
+            0.764706,
+            0.977778
+          ]
+        }
+      }
+    },
+    "M_pi=10,M=30": {
+      "tune_brier": 0.137184,
+      "metrics": {
+        "C1": {
+          "all": 0.141635,
+          "small": 0.161133,
+          "all_counted": 0.145497,
+          "small_counted": 0.142174
+        },
+        "C1_diff": {
+          "all": 0.000226517,
+          "small": 0.000597109,
+          "all_counted": 0.000240651,
+          "small_counted": 0.000467754
+        },
+        "C2": {
+          "all": 0.444094,
+          "small": 0.491271,
+          "all_counted": 0.453379,
+          "small_counted": 0.440629
+        },
+        "C2_diff": {
+          "all": 0.000774947,
+          "small": 0.00188495,
+          "all_counted": 0.000819795,
+          "small_counted": 0.00156321
+        },
+        "C3a": {
+          "slope": 1.03195,
+          "intercept": 0.028072
+        },
+        "C3b": {
+          "mild_obs": 0,
+          "mild_exp": 0.213297,
+          "mild_ratio": 0.0,
+          "mild_tail_p": 1.0,
+          "severe_obs": 29,
+          "severe_exp": 27.6253,
+          "severe_ratio": 1.04976,
+          "severe_tail_p": 0.421825,
+          "pass": true
+        },
+        "C4": {
+          "mild_spectrum": 0.966095,
+          "mild_spectrum_counted": 0.966095,
+          "mild_all": 0.754198,
+          "mild_all_counted": 0.754198,
+          "severe": 0.953718,
+          "severe_counted": 0.938107
+        },
+        "C6": {
+          "E1_CRO": 51,
+          "E1_CXM": null,
+          "E2_CXM": null
+        },
+        "C7": {
+          "a": 0.904165,
+          "b": 0.740741,
+          "a_literal": 0.324636,
+          "b_literal": 0.296296,
+          "pass_a": true,
+          "a_expected": 0.907191,
+          "b_expected": 0.903969,
+          "a_minus_expected": -0.00302626
+        },
+        "C8": {
+          "C1": 0.165487,
+          "C1_diff": -0.00140896,
+          "C4_mild_spectrum": 0.964286,
+          "C4_severe": 0.920168
+        }
+      },
+      "intervals": {
+        "C1": {
+          "all": [
+            0.140012,
+            0.143363
+          ],
+          "small": [
+            0.157994,
+            0.164323
+          ],
+          "all_counted": [
+            0.143935,
+            0.147141
+          ],
+          "small_counted": [
+            0.139635,
+            0.14487
+          ]
+        },
+        "C1_diff": {
+          "all": [
+            8.91385e-05,
+            0.00036797
+          ],
+          "small": [
+            0.000174504,
+            0.00100311
+          ],
+          "all_counted": [
+            9.31437e-05,
+            0.000399895
+          ],
+          "small_counted": [
+            0.000118574,
+            0.000818801
+          ]
+        },
+        "C4": {
+          "mild_spectrum": [
+            0.962641,
+            0.969742
+          ],
+          "mild_spectrum_counted": [
+            0.962641,
+            0.969742
+          ],
+          "mild_all": [
+            0.747083,
+            0.760512
+          ],
+          "mild_all_counted": [
+            0.747083,
+            0.760512
+          ],
+          "severe": [
+            0.950526,
+            0.956375
+          ],
+          "severe_counted": [
+            0.935145,
+            0.940876
+          ]
+        },
+        "C7": {
+          "a": [
+            0.882031,
+            0.92576
+          ],
+          "a_literal": [
+            0.299289,
+            0.352049
+          ],
+          "a_minus_expected": [
+            -0.0252478,
+            0.0186767
+          ]
+        },
+        "C8": {
+          "C1": [
+            0.15282,
+            0.191947
+          ],
+          "C1_diff": [
+            -0.00379798,
+            0.00170554
+          ],
+          "C4_mild_spectrum": [
+            0.909091,
+            0.983333
+          ],
+          "C4_severe": [
+            0.783784,
+            0.979798
+          ]
+        }
+      }
+    },
+    "M_pi=10,M=100": {
+      "tune_brier": 0.137193,
+      "metrics": {
+        "C1": {
+          "all": 0.141645,
+          "small": 0.161177,
+          "all_counted": 0.145503,
+          "small_counted": 0.142187
+        },
+        "C1_diff": {
+          "all": 0.000236427,
+          "small": 0.000641476,
+          "all_counted": 0.000246138,
+          "small_counted": 0.000480324
+        },
+        "C2": {
+          "all": 0.444109,
+          "small": 0.49139,
+          "all_counted": 0.453388,
+          "small_counted": 0.440641
+        },
+        "C2_diff": {
+          "all": 0.000790619,
+          "small": 0.00200476,
+          "all_counted": 0.000827971,
+          "small_counted": 0.001576
+        },
+        "C3a": {
+          "slope": 1.03351,
+          "intercept": 0.0278775
+        },
+        "C3b": {
+          "mild_obs": 0,
+          "mild_exp": 0.165924,
+          "mild_ratio": 0.0,
+          "mild_tail_p": 1.0,
+          "severe_obs": 29,
+          "severe_exp": 28.9141,
+          "severe_ratio": 1.00297,
+          "severe_tail_p": 0.518342,
+          "pass": true
+        },
+        "C4": {
+          "mild_spectrum": 0.966095,
+          "mild_spectrum_counted": 0.966095,
+          "mild_all": 0.754198,
+          "mild_all_counted": 0.754198,
+          "severe": 0.953509,
+          "severe_counted": 0.938525
+        },
+        "C6": {
+          "E1_CRO": null,
+          "E1_CXM": null,
+          "E2_CXM": null
+        },
+        "C7": {
+          "a": 0.904666,
+          "b": 0.703704,
+          "a_literal": 0.306573,
+          "b_literal": 0.259259,
+          "pass_a": true,
+          "a_expected": 0.907029,
+          "b_expected": 0.90088,
+          "a_minus_expected": -0.00236221
+        },
+        "C8": {
+          "C1": 0.165799,
+          "C1_diff": -0.00109679,
+          "C4_mild_spectrum": 0.964286,
+          "C4_severe": 0.922764
+        }
+      },
+      "intervals": {
+        "C1": {
+          "all": [
+            0.140018,
+            0.14337
+          ],
+          "small": [
+            0.158027,
+            0.164371
+          ],
+          "all_counted": [
+            0.143934,
+            0.147152
+          ],
+          "small_counted": [
+            0.139649,
+            0.144887
+          ]
+        },
+        "C1_diff": {
+          "all": [
+            0.000105759,
+            0.000370341
+          ],
+          "small": [
+            0.000232191,
+            0.00105613
+          ],
+          "all_counted": [
+            0.000105978,
+            0.000392194
+          ],
+          "small_counted": [
+            0.000143691,
+            0.000827562
+          ]
+        },
+        "C4": {
+          "mild_spectrum": [
+            0.962641,
+            0.969742
+          ],
+          "mild_spectrum_counted": [
+            0.962641,
+            0.969742
+          ],
+          "mild_all": [
+            0.747083,
+            0.760512
+          ],
+          "mild_all_counted": [
+            0.747083,
+            0.760512
+          ],
+          "severe": [
+            0.950412,
+            0.956071
+          ],
+          "severe_counted": [
+            0.93555,
+            0.941165
+          ]
+        },
+        "C7": {
+          "a": [
+            0.88335,
+            0.92574
+          ],
+          "a_literal": [
+            0.282522,
+            0.333501
+          ],
+          "a_minus_expected": [
+            -0.0234175,
+            0.0184654
+          ]
+        },
+        "C8": {
+          "C1": [
+            0.152872,
+            0.192571
+          ],
+          "C1_diff": [
+            -0.00313987,
+            0.00168265
+          ],
+          "C4_mild_spectrum": [
+            0.909091,
+            0.983333
+          ],
+          "C4_severe": [
+            0.798611,
+            0.981308
+          ]
+        }
+      }
+    },
+    "M_pi=10,M=300": {
+      "tune_brier": 0.137211,
+      "metrics": {
+        "C1": {
+          "all": 0.141678,
+          "small": 0.161235,
+          "all_counted": 0.145531,
+          "small_counted": 0.142213
+        },
+        "C1_diff": {
+          "all": 0.000269453,
+          "small": 0.000699608,
+          "all_counted": 0.000274556,
+          "small_counted": 0.000506125
+        },
+        "C2": {
+          "all": 0.444191,
+          "small": 0.491566,
+          "all_counted": 0.453458,
+          "small_counted": 0.440706
+        },
+        "C2_diff": {
+          "all": 0.000872695,
+          "small": 0.00218028,
+          "all_counted": 0.000898612,
+          "small_counted": 0.00164025
+        },
+        "C3a": {
+          "slope": 1.03469,
+          "intercept": 0.0289477
+        },
+        "C3b": {
+          "mild_obs": 0,
+          "mild_exp": 0.140032,
+          "mild_ratio": 0.0,
+          "mild_tail_p": 1.0,
+          "severe_obs": 29,
+          "severe_exp": 28.8609,
+          "severe_ratio": 1.00482,
+          "severe_tail_p": 0.5144,
+          "pass": true
+        },
+        "C4": {
+          "mild_spectrum": 0.966095,
+          "mild_spectrum_counted": 0.966095,
+          "mild_all": 0.754198,
+          "mild_all_counted": 0.754198,
+          "severe": 0.953246,
+          "severe_counted": 0.938344
+        },
+        "C6": {
+          "E1_CRO": null,
+          "E1_CXM": null,
+          "E2_CXM": null
+        },
+        "C7": {
+          "a": 0.900151,
+          "b": 0.62963,
+          "a_literal": 0.290517,
+          "b_literal": 0.259259,
+          "pass_a": true,
+          "a_expected": 0.906865,
+          "b_expected": 0.90352,
+          "a_minus_expected": -0.00671417
+        },
+        "C8": {
+          "C1": 0.166321,
+          "C1_diff": -0.000574401,
+          "C4_mild_spectrum": 0.964286,
+          "C4_severe": 0.907336
+        }
+      },
+      "intervals": {
+        "C1": {
+          "all": [
+            0.140042,
+            0.143376
+          ],
+          "small": [
+            0.158084,
+            0.164437
+          ],
+          "all_counted": [
+            0.143959,
+            0.147185
+          ],
+          "small_counted": [
+            0.139675,
+            0.144907
+          ]
+        },
+        "C1_diff": {
+          "all": [
+            0.000150449,
+            0.000389399
+          ],
+          "small": [
+            0.000285505,
+            0.0011175
+          ],
+          "all_counted": [
+            0.000142013,
+            0.000411383
+          ],
+          "small_counted": [
+            0.000173758,
+            0.0008544
+          ]
+        },
+        "C4": {
+          "mild_spectrum": [
+            0.962641,
+            0.969742
+          ],
+          "mild_spectrum_counted": [
+            0.962641,
+            0.969742
+          ],
+          "mild_all": [
+            0.747083,
+            0.760512
+          ],
+          "mild_all_counted": [
+            0.747083,
+            0.760512
+          ],
+          "severe": [
+            0.949977,
+            0.955982
+          ],
+          "severe_counted": [
+            0.935328,
+            0.941146
+          ]
+        },
+        "C7": {
+          "a": [
+            0.87753,
+            0.922306
+          ],
+          "a_literal": [
+            0.26862,
+            0.313357
+          ],
+          "a_minus_expected": [
+            -0.0292528,
+            0.0151996
+          ]
+        },
+        "C8": {
+          "C1": [
+            0.153534,
+            0.193299
+          ],
+          "C1_diff": [
+            -0.00232215,
+            0.00186123
+          ],
+          "C4_mild_spectrum": [
+            0.909091,
+            0.983333
+          ],
+          "C4_severe": [
+            0.748571,
+            0.981982
+          ]
+        }
+      }
+    },
+    "M_pi=30,M=10": {
+      "tune_brier": 0.137087,
+      "metrics": {
+        "C1": {
+          "all": 0.141591,
+          "small": 0.16094,
+          "all_counted": 0.145458,
+          "small_counted": 0.142045
+        },
+        "C1_diff": {
+          "all": 0.000182243,
+          "small": 0.000403917,
+          "all_counted": 0.000201695,
+          "small_counted": 0.000337889
+        },
+        "C2": {
+          "all": 0.443961,
+          "small": 0.490667,
+          "all_counted": 0.45325,
+          "small_counted": 0.440198
+        },
+        "C2_diff": {
+          "all": 0.000642717,
+          "small": 0.00128133,
+          "all_counted": 0.000690468,
+          "small_counted": 0.00113267
+        },
+        "C3a": {
+          "slope": 1.03239,
+          "intercept": 0.0280874
+        },
+        "C3b": {
+          "mild_obs": 0,
+          "mild_exp": 0.262753,
+          "mild_ratio": 0.0,
+          "mild_tail_p": 1.0,
+          "severe_obs": 29,
+          "severe_exp": 25.1711,
+          "severe_ratio": 1.15211,
+          "severe_tail_p": 0.247526,
+          "pass": true
+        },
+        "C4": {
+          "mild_spectrum": 0.966095,
+          "mild_spectrum_counted": 0.966095,
+          "mild_all": 0.754198,
+          "mild_all_counted": 0.754198,
+          "severe": 0.95381,
+          "severe_counted": 0.938083
+        },
+        "C6": {
+          "E1_CRO": 48,
+          "E1_CXM": null,
+          "E2_CXM": null
+        },
+        "C7": {
+          "a": 0.90567,
+          "b": 0.740741,
+          "a_literal": 0.340692,
+          "b_literal": 0.333333,
+          "pass_a": true,
+          "a_expected": 0.907309,
+          "b_expected": 0.904856,
+          "a_minus_expected": -0.00163922
+        },
+        "C8": {
+          "C1": 0.16532,
+          "C1_diff": -0.00157507,
+          "C4_mild_spectrum": 0.964286,
+          "C4_severe": 0.917031
+        }
+      },
+      "intervals": {
+        "C1": {
+          "all": [
+            0.139943,
+            0.143315
+          ],
+          "small": [
+            0.157847,
+            0.164083
+          ],
+          "all_counted": [
+            0.143913,
+            0.147092
+          ],
+          "small_counted": [
+            0.139525,
+            0.144716
+          ]
+        },
+        "C1_diff": {
+          "all": [
+            4.9886e-05,
+            0.000320548
+          ],
+          "small": [
+            3.71797e-05,
+            0.000743669
+          ],
+          "all_counted": [
+            5.83425e-05,
+            0.000348989
+          ],
+          "small_counted": [
+            4.28009e-05,
+            0.000613538
+          ]
+        },
+        "C4": {
+          "mild_spectrum": [
+            0.962641,
+            0.969742
+          ],
+          "mild_spectrum_counted": [
+            0.962641,
+            0.969742
+          ],
+          "mild_all": [
+            0.747083,
+            0.760512
+          ],
+          "mild_all_counted": [
+            0.747083,
+            0.760512
+          ],
+          "severe": [
+            0.950385,
+            0.956683
+          ],
+          "severe_counted": [
+            0.934871,
+            0.940955
+          ]
+        },
+        "C7": {
+          "a": [
+            0.882645,
+            0.927747
+          ],
+          "a_literal": [
+            0.315365,
+            0.368159
+          ],
+          "a_minus_expected": [
+            -0.0243093,
+            0.0201045
+          ]
+        },
+        "C8": {
+          "C1": [
+            0.152859,
+            0.191845
+          ],
+          "C1_diff": [
+            -0.00390979,
+            0.00126577
+          ],
+          "C4_mild_spectrum": [
+            0.909091,
+            0.983333
+          ],
+          "C4_severe": [
+            0.764706,
+            0.977778
+          ]
+        }
+      }
+    },
+    "M_pi=30,M=30": {
+      "tune_brier": 0.137084,
+      "metrics": {
+        "C1": {
+          "all": 0.14158,
+          "small": 0.160916,
+          "all_counted": 0.145447,
+          "small_counted": 0.14202
+        },
+        "C1_diff": {
+          "all": 0.000170843,
+          "small": 0.000379753,
+          "all_counted": 0.000189921,
+          "small_counted": 0.000313095
+        },
+        "C2": {
+          "all": 0.44391,
+          "small": 0.49055,
+          "all_counted": 0.453206,
+          "small_counted": 0.440091
+        },
+        "C2_diff": {
+          "all": 0.00059114,
+          "small": 0.00116418,
+          "all_counted": 0.000646237,
+          "small_counted": 0.00102603
+        },
+        "C3a": {
+          "slope": 1.03387,
+          "intercept": 0.0273913
+        },
+        "C3b": {
+          "mild_obs": 0,
+          "mild_exp": 0.214551,
+          "mild_ratio": 0.0,
+          "mild_tail_p": 1.0,
+          "severe_obs": 29,
+          "severe_exp": 27.721,
+          "severe_ratio": 1.04614,
+          "severe_tail_p": 0.429004,
+          "pass": true
+        },
+        "C4": {
+          "mild_spectrum": 0.966095,
+          "mild_spectrum_counted": 0.966095,
+          "mild_all": 0.754198,
+          "mild_all_counted": 0.754198,
+          "severe": 0.953829,
+          "severe_counted": 0.938253
+        },
+        "C6": {
+          "E1_CRO": 49,
+          "E1_CXM": null,
+          "E2_CXM": null
+        },
+        "C7": {
+          "a": 0.904666,
+          "b": 0.740741,
+          "a_literal": 0.322127,
+          "b_literal": 0.296296,
+          "pass_a": true,
+          "a_expected": 0.906945,
+          "b_expected": 0.905138,
+          "a_minus_expected": -0.00227848
+        },
+        "C8": {
+          "C1": 0.165405,
+          "C1_diff": -0.00149055,
+          "C4_mild_spectrum": 0.964286,
+          "C4_severe": 0.920168
+        }
+      },
+      "intervals": {
+        "C1": {
+          "all": [
+            0.139949,
+            0.143299
+          ],
+          "small": [
+            0.157851,
+            0.164045
+          ],
+          "all_counted": [
+            0.143896,
+            0.147085
+          ],
+          "small_counted": [
+            0.139499,
+            0.144682
+          ]
+        },
+        "C1_diff": {
+          "all": [
+            4.64822e-05,
+            0.000302474
+          ],
+          "small": [
+            2.56937e-05,
+            0.000715372
+          ],
+          "all_counted": [
+            5.83075e-05,
+            0.000328898
+          ],
+          "small_counted": [
+            1.64366e-05,
+            0.000589691
+          ]
+        },
+        "C4": {
+          "mild_spectrum": [
+            0.962641,
+            0.969742
+          ],
+          "mild_spectrum_counted": [
+            0.962641,
+            0.969742
+          ],
+          "mild_all": [
+            0.747083,
+            0.760512
+          ],
+          "mild_all_counted": [
+            0.747083,
+            0.760512
+          ],
+          "severe": [
+            0.950656,
+            0.956459
+          ],
+          "severe_counted": [
+            0.935385,
+            0.940992
+          ]
+        },
+        "C7": {
+          "a": [
+            0.882887,
+            0.925793
+          ],
+          "a_literal": [
+            0.297325,
+            0.348884
+          ],
+          "a_minus_expected": [
+            -0.0241992,
+            0.019221
+          ]
+        },
+        "C8": {
+          "C1": [
+            0.152788,
+            0.192092
+          ],
+          "C1_diff": [
+            -0.00368962,
+            0.00120167
+          ],
+          "C4_mild_spectrum": [
+            0.909091,
+            0.983333
+          ],
+          "C4_severe": [
+            0.783784,
+            0.979798
+          ]
+        }
+      }
+    },
+    "M_pi=30,M=100": {
+      "tune_brier": 0.137093,
+      "metrics": {
+        "C1": {
+          "all": 0.141589,
+          "small": 0.160957,
+          "all_counted": 0.145452,
+          "small_counted": 0.142032
+        },
+        "C1_diff": {
+          "all": 0.00017996,
+          "small": 0.000421232,
+          "all_counted": 0.000195119,
+          "small_counted": 0.000325113
+        },
+        "C2": {
+          "all": 0.443924,
+          "small": 0.490665,
+          "all_counted": 0.453214,
+          "small_counted": 0.440105
+        },
+        "C2_diff": {
+          "all": 0.000605521,
+          "small": 0.00127953,
+          "all_counted": 0.000654248,
+          "small_counted": 0.0010394
+        },
+        "C3a": {
+          "slope": 1.03545,
+          "intercept": 0.0271894
+        },
+        "C3b": {
+          "mild_obs": 0,
+          "mild_exp": 0.167181,
+          "mild_ratio": 0.0,
+          "mild_tail_p": 1.0,
+          "severe_obs": 29,
+          "severe_exp": 29.0685,
+          "severe_ratio": 0.997645,
+          "severe_tail_p": 0.529749,
+          "pass": true
+        },
+        "C4": {
+          "mild_spectrum": 0.966095,
+          "mild_spectrum_counted": 0.966095,
+          "mild_all": 0.754198,
+          "mild_all_counted": 0.754198,
+          "severe": 0.953509,
+          "severe_counted": 0.938566
+        },
+        "C6": {
+          "E1_CRO": null,
+          "E1_CXM": null,
+          "E2_CXM": null
+        },
+        "C7": {
+          "a": 0.90567,
+          "b": 0.703704,
+          "a_literal": 0.302559,
+          "b_literal": 0.259259,
+          "pass_a": true,
+          "a_expected": 0.90689,
+          "b_expected": 0.899117,
+          "a_minus_expected": -0.00122047
+        },
+        "C8": {
+          "C1": 0.165711,
+          "C1_diff": -0.00118426,
+          "C4_mild_spectrum": 0.964286,
+          "C4_severe": 0.922764
+        }
+      },
+      "intervals": {
+        "C1": {
+          "all": [
+            0.139952,
+            0.143289
+          ],
+          "small": [
+            0.15789,
+            0.164077
+          ],
+          "all_counted": [
+            0.143895,
+            0.147095
+          ],
+          "small_counted": [
+            0.139512,
+            0.144695
+          ]
+        },
+        "C1_diff": {
+          "all": [
+            6.17866e-05,
+            0.000298604
+          ],
+          "small": [
+            7.10277e-05,
+            0.000757731
+          ],
+          "all_counted": [
+            6.85277e-05,
+            0.000324507
+          ],
+          "small_counted": [
+            4.14091e-05,
+            0.000610644
+          ]
+        },
+        "C4": {
+          "mild_spectrum": [
+            0.962641,
+            0.969742
+          ],
+          "mild_spectrum_counted": [
+            0.962641,
+            0.969742
+          ],
+          "mild_all": [
+            0.747083,
+            0.760512
+          ],
+          "mild_all_counted": [
+            0.747083,
+            0.760512
+          ],
+          "severe": [
+            0.950359,
+            0.956092
+          ],
+          "severe_counted": [
+            0.935577,
+            0.941247
+          ]
+        },
+        "C7": {
+          "a": [
+            0.884051,
+            0.926744
+          ],
+          "a_literal": [
+            0.278449,
+            0.32898
+          ],
+          "a_minus_expected": [
+            -0.0224546,
+            0.0195969
+          ]
+        },
+        "C8": {
+          "C1": [
+            0.152829,
+            0.192709
+          ],
+          "C1_diff": [
+            -0.00298368,
+            0.00117013
+          ],
+          "C4_mild_spectrum": [
+            0.909091,
+            0.983333
+          ],
+          "C4_severe": [
+            0.798611,
+            0.981308
+          ]
+        }
+      }
+    },
+    "M_pi=30,M=300": {
+      "tune_brier": 0.137111,
+      "metrics": {
+        "C1": {
+          "all": 0.141621,
+          "small": 0.161013,
+          "all_counted": 0.14548,
+          "small_counted": 0.142057
+        },
+        "C1_diff": {
+          "all": 0.000212258,
+          "small": 0.000477058,
+          "all_counted": 0.000223075,
+          "small_counted": 0.000349907
+        },
+        "C2": {
+          "all": 0.444004,
+          "small": 0.490835,
+          "all_counted": 0.453283,
+          "small_counted": 0.440166
+        },
+        "C2_diff": {
+          "all": 0.000685915,
+          "small": 0.00144936,
+          "all_counted": 0.000723727,
+          "small_counted": 0.00110101
+        },
+        "C3a": {
+          "slope": 1.03665,
+          "intercept": 0.028255
+        },
+        "C3b": {
+          "mild_obs": 0,
+          "mild_exp": 0.141254,
+          "mild_ratio": 0.0,
+          "mild_tail_p": 1.0,
+          "severe_obs": 29,
+          "severe_exp": 29.1065,
+          "severe_ratio": 0.996342,
+          "severe_tail_p": 0.532548,
+          "pass": true
+        },
+        "C4": {
+          "mild_spectrum": 0.966095,
+          "mild_spectrum_counted": 0.966095,
+          "mild_all": 0.754198,
+          "mild_all_counted": 0.754198,
+          "severe": 0.953172,
+          "severe_counted": 0.938307
+        },
+        "C6": {
+          "E1_CRO": null,
+          "E1_CXM": null,
+          "E2_CXM": null
+        },
+        "C7": {
+          "a": 0.900151,
+          "b": 0.62963,
+          "a_literal": 0.289012,
+          "b_literal": 0.259259,
+          "pass_a": true,
+          "a_expected": 0.907141,
+          "b_expected": 0.903801,
+          "a_minus_expected": -0.00699084
+        },
+        "C8": {
+          "C1": 0.166228,
+          "C1_diff": -0.00066756,
+          "C4_mild_spectrum": 0.964286,
+          "C4_severe": 0.907336
+        }
+      },
+      "intervals": {
+        "C1": {
+          "all": [
+            0.139977,
+            0.14332
+          ],
+          "small": [
+            0.157937,
+            0.164114
+          ],
+          "all_counted": [
+            0.14392,
+            0.147127
+          ],
+          "small_counted": [
+            0.139538,
+            0.144684
+          ]
+        },
+        "C1_diff": {
+          "all": [
+            0.000108116,
+            0.000315662
+          ],
+          "small": [
+            0.000133737,
+            0.00082217
+          ],
+          "all_counted": [
+            0.000106958,
+            0.000339272
+          ],
+          "small_counted": [
+            6.71081e-05,
+            0.000626881
+          ]
+        },
+        "C4": {
+          "mild_spectrum": [
+            0.962641,
+            0.969742
+          ],
+          "mild_spectrum_counted": [
+            0.962641,
+            0.969742
+          ],
+          "mild_all": [
+            0.747083,
+            0.760512
+          ],
+          "mild_all_counted": [
+            0.747083,
+            0.760512
+          ],
+          "severe": [
+            0.949855,
+            0.955892
+          ],
+          "severe_counted": [
+            0.93532,
+            0.941199
+          ]
+        },
+        "C7": {
+          "a": [
+            0.87753,
+            0.922306
+          ],
+          "a_literal": [
+            0.267031,
+            0.311806
+          ],
+          "a_minus_expected": [
+            -0.0295853,
+            0.0149321
+          ]
+        },
+        "C8": {
+          "C1": [
+            0.153488,
+            0.192979
+          ],
+          "C1_diff": [
+            -0.00217668,
+            0.00130765
+          ],
+          "C4_mild_spectrum": [
+            0.909091,
+            0.983333
+          ],
+          "C4_severe": [
+            0.748571,
+            0.981982
+          ]
+        }
+      }
+    },
+    "M_pi=100,M=10": {
+      "tune_brier": 0.136985,
+      "metrics": {
+        "C1": {
+          "all": 0.141521,
+          "small": 0.160715,
+          "all_counted": 0.145389,
+          "small_counted": 0.141872
+        },
+        "C1_diff": {
+          "all": 0.000111967,
+          "small": 0.000178875,
+          "all_counted": 0.000131903,
+          "small_counted": 0.000165319
+        },
+        "C2": {
+          "all": 0.443735,
+          "small": 0.489942,
+          "all_counted": 0.453022,
+          "small_counted": 0.439623
+        },
+        "C2_diff": {
+          "all": 0.000416627,
+          "small": 0.000556126,
+          "all_counted": 0.000462442,
+          "small_counted": 0.000557108
+        },
+        "C3a": {
+          "slope": 1.03503,
+          "intercept": 0.0270784
+        },
+        "C3b": {
+          "mild_obs": 0,
+          "mild_exp": 0.265042,
+          "mild_ratio": 0.0,
+          "mild_tail_p": 1.0,
+          "severe_obs": 29,
+          "severe_exp": 24.8938,
+          "severe_ratio": 1.16495,
+          "severe_tail_p": 0.229927,
+          "pass": true
+        },
+        "C4": {
+          "mild_spectrum": 0.966095,
+          "mild_spectrum_counted": 0.966095,
+          "mild_all": 0.754198,
+          "mild_all_counted": 0.754198,
+          "severe": 0.95378,
+          "severe_counted": 0.938042
+        },
+        "C6": {
+          "E1_CRO": 44,
+          "E1_CXM": 117,
+          "E2_CXM": null
+        },
+        "C7": {
+          "a": 0.904165,
+          "b": 0.740741,
+          "a_literal": 0.329654,
+          "b_literal": 0.333333,
+          "pass_a": true,
+          "a_expected": 0.906933,
+          "b_expected": 0.903902,
+          "a_minus_expected": -0.00276833
+        },
+        "C8": {
+          "C1": 0.165238,
+          "C1_diff": -0.00165804,
+          "C4_mild_spectrum": 0.964286,
+          "C4_severe": 0.917031
+        }
+      },
+      "intervals": {
+        "C1": {
+          "all": [
+            0.139878,
+            0.143237
+          ],
+          "small": [
+            0.157688,
+            0.163794
+          ],
+          "all_counted": [
+            0.143854,
+            0.147011
+          ],
+          "small_counted": [
+            0.139367,
+            0.144514
+          ]
+        },
+        "C1_diff": {
+          "all": [
+            -5.31852e-07,
+            0.00023041
+          ],
+          "small": [
+            -8.75939e-05,
+            0.000422637
+          ],
+          "all_counted": [
+            1.21476e-05,
+            0.000256696
+          ],
+          "small_counted": [
+            -4.55796e-05,
+            0.000368697
+          ]
+        },
+        "C4": {
+          "mild_spectrum": [
+            0.962641,
+            0.969742
+          ],
+          "mild_spectrum_counted": [
+            0.962641,
+            0.969742
+          ],
+          "mild_all": [
+            0.747083,
+            0.760512
+          ],
+          "mild_all_counted": [
+            0.747083,
+            0.760512
+          ],
+          "severe": [
+            0.950381,
+            0.956641
+          ],
+          "severe_counted": [
+            0.93477,
+            0.940912
+          ]
+        },
+        "C7": {
+          "a": [
+            0.881143,
+            0.926019
+          ],
+          "a_literal": [
+            0.306203,
+            0.356241
+          ],
+          "a_minus_expected": [
+            -0.0254878,
+            0.0191673
+          ]
+        },
+        "C8": {
+          "C1": [
+            0.152922,
+            0.192087
+          ],
+          "C1_diff": [
+            -0.00374136,
+            0.00065818
+          ],
+          "C4_mild_spectrum": [
+            0.909091,
+            0.983333
+          ],
+          "C4_severe": [
+            0.764706,
+            0.977778
+          ]
+        }
+      }
+    },
+    "M_pi=100,M=30": {
+      "tune_brier": 0.136983,
+      "metrics": {
+        "C1": {
+          "all": 0.141508,
+          "small": 0.160688,
+          "all_counted": 0.145377,
+          "small_counted": 0.141849
+        },
+        "C1_diff": {
+          "all": 9.96906e-05,
+          "small": 0.000151887,
+          "all_counted": 0.000120345,
+          "small_counted": 0.000142123
+        },
+        "C2": {
+          "all": 0.443683,
+          "small": 0.489826,
+          "all_counted": 0.45298,
+          "small_counted": 0.439525
+        },
+        "C2_diff": {
+          "all": 0.000364903,
+          "small": 0.000440752,
+          "all_counted": 0.000420328,
+          "small_counted": 0.000459977
+        },
+        "C3a": {
+          "slope": 1.0365,
+          "intercept": 0.0263726
+        },
+        "C3b": {
+          "mild_obs": 0,
+          "mild_exp": 0.216981,
+          "mild_ratio": 0.0,
+          "mild_tail_p": 1.0,
+          "severe_obs": 29,
+          "severe_exp": 27.827,
+          "severe_ratio": 1.04215,
+          "severe_tail_p": 0.436967,
+          "pass": true
+        },
+        "C4": {
+          "mild_spectrum": 0.966095,
+          "mild_spectrum_counted": 0.966095,
+          "mild_all": 0.754198,
+          "mild_all_counted": 0.754198,
+          "severe": 0.953603,
+          "severe_counted": 0.938144
+        },
+        "C6": {
+          "E1_CRO": 48,
+          "E1_CXM": 117,
+          "E2_CXM": null
+        },
+        "C7": {
+          "a": 0.905168,
+          "b": 0.740741,
+          "a_literal": 0.314099,
+          "b_literal": 0.296296,
+          "pass_a": true,
+          "a_expected": 0.906841,
+          "b_expected": 0.905662,
+          "a_minus_expected": -0.00167262
+        },
+        "C8": {
+          "C1": 0.165317,
+          "C1_diff": -0.0015787,
+          "C4_mild_spectrum": 0.964286,
+          "C4_severe": 0.920168
+        }
+      },
+      "intervals": {
+        "C1": {
+          "all": [
+            0.139862,
+            0.143224
+          ],
+          "small": [
+            0.157694,
+            0.163745
+          ],
+          "all_counted": [
+            0.14385,
+            0.147004
+          ],
+          "small_counted": [
+            0.139363,
+            0.144472
+          ]
+        },
+        "C1_diff": {
+          "all": [
+            -8.00107e-06,
+            0.000210011
+          ],
+          "small": [
+            -9.99725e-05,
+            0.000382707
+          ],
+          "all_counted": [
+            1.00652e-05,
+            0.000235443
+          ],
+          "small_counted": [
+            -6.23335e-05,
+            0.000335397
+          ]
+        },
+        "C4": {
+          "mild_spectrum": [
+            0.962641,
+            0.969742
+          ],
+          "mild_spectrum_counted": [
+            0.962641,
+            0.969742
+          ],
+          "mild_all": [
+            0.747083,
+            0.760512
+          ],
+          "mild_all_counted": [
+            0.747083,
+            0.760512
+          ],
+          "severe": [
+            0.950422,
+            0.956297
+          ],
+          "severe_counted": [
+            0.935294,
+            0.940832
+          ]
+        },
+        "C7": {
+          "a": [
+            0.883524,
+            0.9263
+          ],
+          "a_literal": [
+            0.290965,
+            0.339178
+          ],
+          "a_minus_expected": [
+            -0.0235357,
+            0.0195436
+          ]
+        },
+        "C8": {
+          "C1": [
+            0.152804,
+            0.192287
+          ],
+          "C1_diff": [
+            -0.00348587,
+            0.000492007
+          ],
+          "C4_mild_spectrum": [
+            0.909091,
+            0.983333
+          ],
+          "C4_severe": [
+            0.783784,
+            0.979798
+          ]
+        }
+      }
+    },
+    "M_pi=100,M=100": {
+      "tune_brier": 0.136994,
+      "metrics": {
+        "C1": {
+          "all": 0.141516,
+          "small": 0.160724,
+          "all_counted": 0.145382,
+          "small_counted": 0.14186
+        },
+        "C1_diff": {
+          "all": 0.000107115,
+          "small": 0.000187839,
+          "all_counted": 0.000124826,
+          "small_counted": 0.000153035
+        },
+        "C2": {
+          "all": 0.443695,
+          "small": 0.489934,
+          "all_counted": 0.452987,
+          "small_counted": 0.439539
+        },
+        "C2_diff": {
+          "all": 0.000376655,
+          "small": 0.000548305,
+          "all_counted": 0.0004274,
+          "small_counted": 0.000473387
+        },
+        "C3a": {
+          "slope": 1.03812,
+          "intercept": 0.0261549
+        },
+        "C3b": {
+          "mild_obs": 0,
+          "mild_exp": 0.169585,
+          "mild_ratio": 0.0,
+          "mild_tail_p": 1.0,
+          "severe_obs": 29,
+          "severe_exp": 29.18,
+          "severe_ratio": 0.993832,
+          "severe_tail_p": 0.537949,
+          "pass": true
+        },
+        "C4": {
+          "mild_spectrum": 0.966095,
+          "mild_spectrum_counted": 0.966095,
+          "mild_all": 0.754198,
+          "mild_all_counted": 0.754198,
+          "severe": 0.95321,
+          "severe_counted": 0.938298
+        },
+        "C6": {
+          "E1_CRO": null,
+          "E1_CXM": null,
+          "E2_CXM": null
+        },
+        "C7": {
+          "a": 0.904165,
+          "b": 0.703704,
+          "a_literal": 0.293527,
+          "b_literal": 0.259259,
+          "pass_a": true,
+          "a_expected": 0.906683,
+          "b_expected": 0.899414,
+          "a_minus_expected": -0.00251883
+        },
+        "C8": {
+          "C1": 0.165612,
+          "C1_diff": -0.00128389,
+          "C4_mild_spectrum": 0.964286,
+          "C4_severe": 0.905882
+        }
+      },
+      "intervals": {
+        "C1": {
+          "all": [
+            0.139872,
+            0.143209
+          ],
+          "small": [
+            0.157712,
+            0.163774
+          ],
+          "all_counted": [
+            0.143836,
+            0.147013
+          ],
+          "small_counted": [
+            0.139372,
+            0.144463
+          ]
+        },
+        "C1_diff": {
+          "all": [
+            1.32984e-05,
+            0.000203021
+          ],
+          "small": [
+            -5.02506e-05,
+            0.00042466
+          ],
+          "all_counted": [
+            2.34239e-05,
+            0.000231389
+          ],
+          "small_counted": [
+            -4.27328e-05,
+            0.000346124
+          ]
+        },
+        "C4": {
+          "mild_spectrum": [
+            0.962641,
+            0.969742
+          ],
+          "mild_spectrum_counted": [
+            0.962641,
+            0.969742
+          ],
+          "mild_all": [
+            0.747083,
+            0.760512
+          ],
+          "mild_all_counted": [
+            0.747083,
+            0.760512
+          ],
+          "severe": [
+            0.949968,
+            0.955916
+          ],
+          "severe_counted": [
+            0.935313,
+            0.941144
+          ]
+        },
+        "C7": {
+          "a": [
+            0.882085,
+            0.926171
+          ],
+          "a_literal": [
+            0.270471,
+            0.319403
+          ],
+          "a_minus_expected": [
+            -0.024273,
+            0.0191113
+          ]
+        },
+        "C8": {
+          "C1": [
+            0.152844,
+            0.192266
+          ],
+          "C1_diff": [
+            -0.00281568,
+            0.000455729
+          ],
+          "C4_mild_spectrum": [
+            0.909091,
+            0.983333
+          ],
+          "C4_severe": [
+            0.74269,
+            0.981308
+          ]
+        }
+      }
+    },
+    "M_pi=100,M=300": {
+      "tune_brier": 0.137013,
+      "metrics": {
+        "C1": {
+          "all": 0.141547,
+          "small": 0.160775,
+          "all_counted": 0.145408,
+          "small_counted": 0.141883
+        },
+        "C1_diff": {
+          "all": 0.000137787,
+          "small": 0.000239342,
+          "all_counted": 0.00015169,
+          "small_counted": 0.000175904
+        },
+        "C2": {
+          "all": 0.443772,
+          "small": 0.490095,
+          "all_counted": 0.453054,
+          "small_counted": 0.439596
+        },
+        "C2_diff": {
+          "all": 0.000453723,
+          "small": 0.000708921,
+          "all_counted": 0.000494327,
+          "small_counted": 0.00053048
+        },
+        "C3a": {
+          "slope": 1.03936,
+          "intercept": 0.0272163
+        },
+        "C3b": {
+          "mild_obs": 0,
+          "mild_exp": 0.143609,
+          "mild_ratio": 0.0,
+          "mild_tail_p": 1.0,
+          "severe_obs": 29,
+          "severe_exp": 29.0467,
+          "severe_ratio": 0.998393,
+          "severe_tail_p": 0.528143,
+          "pass": true
+        },
+        "C4": {
+          "mild_spectrum": 0.966095,
+          "mild_spectrum_counted": 0.966095,
+          "mild_all": 0.754198,
+          "mild_all_counted": 0.754198,
+          "severe": 0.953198,
+          "severe_counted": 0.938342
+        },
+        "C6": {
+          "E1_CRO": null,
+          "E1_CXM": null,
+          "E2_CXM": null
+        },
+        "C7": {
+          "a": 0.901656,
+          "b": 0.62963,
+          "a_literal": 0.274461,
+          "b_literal": 0.259259,
+          "pass_a": true,
+          "a_expected": 0.906893,
+          "b_expected": 0.906685,
+          "a_minus_expected": -0.0052372
+        },
+        "C8": {
+          "C1": 0.166115,
+          "C1_diff": -0.000780496,
+          "C4_mild_spectrum": 0.964286,
+          "C4_severe": 0.907336
+        }
+      },
+      "intervals": {
+        "C1": {
+          "all": [
+            0.139899,
+            0.143262
+          ],
+          "small": [
+            0.157748,
+            0.163831
+          ],
+          "all_counted": [
+            0.143843,
+            0.147044
+          ],
+          "small_counted": [
+            0.139398,
+            0.144493
+          ]
+        },
+        "C1_diff": {
+          "all": [
+            5.64857e-05,
+            0.000218974
+          ],
+          "small": [
+            -2.34438e-06,
+            0.000475424
+          ],
+          "all_counted": [
+            6.07128e-05,
+            0.000241339
+          ],
+          "small_counted": [
+            -1.5827e-05,
+            0.000370027
+          ]
+        },
+        "C4": {
+          "mild_spectrum": [
+            0.962641,
+            0.969742
+          ],
+          "mild_spectrum_counted": [
+            0.962641,
+            0.969742
+          ],
+          "mild_all": [
+            0.747083,
+            0.760512
+          ],
+          "mild_all_counted": [
+            0.747083,
+            0.760512
+          ],
+          "severe": [
+            0.949909,
+            0.955917
+          ],
+          "severe_counted": [
+            0.935351,
+            0.941227
+          ]
+        },
+        "C7": {
+          "a": [
+            0.879077,
+            0.923352
+          ],
+          "a_literal": [
+            0.253035,
+            0.298833
+          ],
+          "a_minus_expected": [
+            -0.0271194,
+            0.016474
+          ]
+        },
+        "C8": {
+          "C1": [
+            0.153486,
+            0.192362
+          ],
+          "C1_diff": [
+            -0.00185354,
+            0.000546799
+          ],
+          "C4_mild_spectrum": [
+            0.909091,
+            0.983333
+          ],
+          "C4_severe": [
+            0.748571,
+            0.981982
+          ]
+        }
+      }
+    },
+    "M_pi=300,M=10": {
+      "tune_brier": 0.136925,
+      "metrics": {
+        "C1": {
+          "all": 0.141461,
+          "small": 0.160606,
+          "all_counted": 0.145325,
+          "small_counted": 0.141786
+        },
+        "C1_diff": {
+          "all": 5.21929e-05,
+          "small": 6.97962e-05,
+          "all_counted": 6.84571e-05,
+          "small_counted": 7.89642e-05
+        },
+        "C2": {
+          "all": 0.443545,
+          "small": 0.489597,
+          "all_counted": 0.452821,
+          "small_counted": 0.439337
+        },
+        "C2_diff": {
+          "all": 0.000226709,
+          "small": 0.000211583,
+          "all_counted": 0.000261098,
+          "small_counted": 0.000271358
+        },
+        "C3a": {
+          "slope": 1.03703,
+          "intercept": 0.0259543
+        },
+        "C3b": {
+          "mild_obs": 0,
+          "mild_exp": 0.268015,
+          "mild_ratio": 0.0,
+          "mild_tail_p": 1.0,
+          "severe_obs": 29,
+          "severe_exp": 24.3637,
+          "severe_ratio": 1.19029,
+          "severe_tail_p": 0.197991,
+          "pass": true
+        },
+        "C4": {
+          "mild_spectrum": 0.966095,
+          "mild_spectrum_counted": 0.966095,
+          "mild_all": 0.754198,
+          "mild_all_counted": 0.754198,
+          "severe": 0.9536,
+          "severe_counted": 0.937827
+        },
+        "C6": {
+          "E1_CRO": 36,
+          "E1_CXM": 49,
+          "E2_CXM": null
+        },
+        "C7": {
+          "a": 0.905168,
+          "b": 0.740741,
+          "a_literal": 0.306071,
+          "b_literal": 0.259259,
+          "pass_a": true,
+          "a_expected": 0.906855,
+          "b_expected": 0.903213,
+          "a_minus_expected": -0.001687
+        },
+        "C8": {
+          "C1": 0.165217,
+          "C1_diff": -0.00167878,
+          "C4_mild_spectrum": 0.964286,
+          "C4_severe": 0.917031
+        }
+      },
+      "intervals": {
+        "C1": {
+          "all": [
+            0.139821,
+            0.143168
+          ],
+          "small": [
+            0.157583,
+            0.163645
+          ],
+          "all_counted": [
+            0.143792,
+            0.146929
+          ],
+          "small_counted": [
+            0.139303,
+            0.144379
+          ]
+        },
+        "C1_diff": {
+          "all": [
+            -4.48452e-05,
+            0.00014734
+          ],
+          "small": [
+            -0.000113984,
+            0.000240749
+          ],
+          "all_counted": [
+            -2.81894e-05,
+            0.000167104
+          ],
+          "small_counted": [
+            -5.80705e-05,
+            0.000213451
+          ]
+        },
+        "C4": {
+          "mild_spectrum": [
+            0.962641,
+            0.969742
+          ],
+          "mild_spectrum_counted": [
+            0.962641,
+            0.969742
+          ],
+          "mild_all": [
+            0.747083,
+            0.760512
+          ],
+          "mild_all_counted": [
+            0.747083,
+            0.760512
+          ],
+          "severe": [
+            0.950233,
+            0.956502
+          ],
+          "severe_counted": [
+            0.934643,
+            0.940587
+          ]
+        },
+        "C7": {
+          "a": [
+            0.881154,
+            0.928393
+          ],
+          "a_literal": [
+            0.283515,
+            0.331156
+          ],
+          "a_minus_expected": [
+            -0.0259661,
+            0.0215668
+          ]
+        },
+        "C8": {
+          "C1": [
+            0.153012,
+            0.192281
+          ],
+          "C1_diff": [
+            -0.00364676,
+            0.000324646
+          ],
+          "C4_mild_spectrum": [
+            0.909091,
+            0.983333
+          ],
+          "C4_severe": [
+            0.764706,
+            0.977778
+          ]
+        }
+      }
+    },
+    "M_pi=300,M=30": {
+      "tune_brier": 0.136925,
+      "metrics": {
+        "C1": {
+          "all": 0.141447,
+          "small": 0.160574,
+          "all_counted": 0.145313,
+          "small_counted": 0.141763
+        },
+        "C1_diff": {
+          "all": 3.84816e-05,
+          "small": 3.8654e-05,
+          "all_counted": 5.65107e-05,
+          "small_counted": 5.60089e-05
+        },
+        "C2": {
+          "all": 0.443492,
+          "small": 0.489478,
+          "all_counted": 0.452779,
+          "small_counted": 0.439243
+        },
+        "C2_diff": {
+          "all": 0.00017296,
+          "small": 9.18834e-05,
+          "all_counted": 0.00021899,
+          "small_counted": 0.000177779
+        },
+        "C3a": {
+          "slope": 1.03852,
+          "intercept": 0.0252232
+        },
+        "C3b": {
+          "mild_obs": 0,
+          "mild_exp": 0.219615,
+          "mild_ratio": 0.0,
+          "mild_tail_p": 1.0,
+          "severe_obs": 29,
+          "severe_exp": 27.7487,
+          "severe_ratio": 1.04509,
+          "severe_tail_p": 0.431086,
+          "pass": true
+        },
+        "C4": {
+          "mild_spectrum": 0.966095,
+          "mild_spectrum_counted": 0.966095,
+          "mild_all": 0.754198,
+          "mild_all_counted": 0.754198,
+          "severe": 0.953577,
+          "severe_counted": 0.938131
+        },
+        "C6": {
+          "E1_CRO": 44,
+          "E1_CXM": 49,
+          "E2_CXM": null
+        },
+        "C7": {
+          "a": 0.904666,
+          "b": 0.740741,
+          "a_literal": 0.292524,
+          "b_literal": 0.259259,
+          "pass_a": true,
+          "a_expected": 0.906693,
+          "b_expected": 0.902965,
+          "a_minus_expected": -0.00202649
+        },
+        "C8": {
+          "C1": 0.16529,
+          "C1_diff": -0.0016056,
+          "C4_mild_spectrum": 0.964286,
+          "C4_severe": 0.920168
+        }
+      },
+      "intervals": {
+        "C1": {
+          "all": [
+            0.139807,
+            0.143151
+          ],
+          "small": [
+            0.157585,
+            0.163607
+          ],
+          "all_counted": [
+            0.143775,
+            0.146921
+          ],
+          "small_counted": [
+            0.139295,
+            0.144359
+          ]
+        },
+        "C1_diff": {
+          "all": [
+            -5.32089e-05,
+            0.000123438
+          ],
+          "small": [
+            -0.000116994,
+            0.000185454
+          ],
+          "all_counted": [
+            -3.21641e-05,
+            0.000147594
+          ],
+          "small_counted": [
+            -6.32935e-05,
+            0.000177046
+          ]
+        },
+        "C4": {
+          "mild_spectrum": [
+            0.962641,
+            0.969742
+          ],
+          "mild_spectrum_counted": [
+            0.962641,
+            0.969742
+          ],
+          "mild_all": [
+            0.747083,
+            0.760512
+          ],
+          "mild_all_counted": [
+            0.747083,
+            0.760512
+          ],
+          "severe": [
+            0.95038,
+            0.956219
+          ],
+          "severe_counted": [
+            0.935334,
+            0.940759
+          ]
+        },
+        "C7": {
+          "a": [
+            0.881467,
+            0.927309
+          ],
+          "a_literal": [
+            0.269443,
+            0.319741
+          ],
+          "a_minus_expected": [
+            -0.0251245,
+            0.020818
+          ]
+        },
+        "C8": {
+          "C1": [
+            0.152916,
+            0.192528
+          ],
+          "C1_diff": [
+            -0.0033269,
+            0.000140276
+          ],
+          "C4_mild_spectrum": [
+            0.909091,
+            0.983333
+          ],
+          "C4_severe": [
+            0.783784,
+            0.979798
+          ]
+        }
+      }
+    },
+    "M_pi=300,M=100": {
+      "tune_brier": 0.136937,
+      "metrics": {
+        "C1": {
+          "all": 0.141452,
+          "small": 0.160604,
+          "all_counted": 0.145316,
+          "small_counted": 0.141772
+        },
+        "C1_diff": {
+          "all": 4.35902e-05,
+          "small": 6.85025e-05,
+          "all_counted": 5.96534e-05,
+          "small_counted": 6.51051e-05
+        },
+        "C2": {
+          "all": 0.443499,
+          "small": 0.489576,
+          "all_counted": 0.452783,
+          "small_counted": 0.439255
+        },
+        "C2_diff": {
+          "all": 0.000180809,
+          "small": 0.000190045,
+          "all_counted": 0.0002237,
+          "small_counted": 0.000189303
+        },
+        "C3a": {
+          "slope": 1.04018,
+          "intercept": 0.0249838
+        },
+        "C3b": {
+          "mild_obs": 0,
+          "mild_exp": 0.172045,
+          "mild_ratio": 0.0,
+          "mild_tail_p": 1.0,
+          "severe_obs": 29,
+          "severe_exp": 29.1071,
+          "severe_ratio": 0.99632,
+          "severe_tail_p": 0.532596,
+          "pass": true
+        },
+        "C4": {
+          "mild_spectrum": 0.966095,
+          "mild_spectrum_counted": 0.966095,
+          "mild_all": 0.754198,
+          "mild_all_counted": 0.754198,
+          "severe": 0.953213,
+          "severe_counted": 0.938302
+        },
+        "C6": {
+          "E1_CRO": 49,
+          "E1_CXM": 117,
+          "E2_CXM": null
+        },
+        "C7": {
+          "a": 0.903663,
+          "b": 0.703704,
+          "a_literal": 0.270948,
+          "b_literal": 0.222222,
+          "pass_a": true,
+          "a_expected": 0.906774,
+          "b_expected": 0.900682,
+          "a_minus_expected": -0.0031111
+        },
+        "C8": {
+          "C1": 0.16557,
+          "C1_diff": -0.00132594,
+          "C4_mild_spectrum": 0.964286,
+          "C4_severe": 0.905882
+        }
+      },
+      "intervals": {
+        "C1": {
+          "all": [
+            0.13982,
+            0.143161
+          ],
+          "small": [
+            0.157607,
+            0.163646
+          ],
+          "all_counted": [
+            0.14376,
+            0.146929
+          ],
+          "small_counted": [
+            0.139323,
+            0.144365
+          ]
+        },
+        "C1_diff": {
+          "all": [
+            -3.26298e-05,
+            0.000116428
+          ],
+          "small": [
+            -6.62613e-05,
+            0.000209837
+          ],
+          "all_counted": [
+            -1.52494e-05,
+            0.000137074
+          ],
+          "small_counted": [
+            -4.9182e-05,
+            0.00018198
+          ]
+        },
+        "C4": {
+          "mild_spectrum": [
+            0.962641,
+            0.969742
+          ],
+          "mild_spectrum_counted": [
+            0.962641,
+            0.969742
+          ],
+          "mild_all": [
+            0.747083,
+            0.760512
+          ],
+          "mild_all_counted": [
+            0.747083,
+            0.760512
+          ],
+          "severe": [
+            0.949968,
+            0.955919
+          ],
+          "severe_counted": [
+            0.935313,
+            0.941155
+          ]
+        },
+        "C7": {
+          "a": [
+            0.879506,
+            0.927199
+          ],
+          "a_literal": [
+            0.247141,
+            0.297613
+          ],
+          "a_minus_expected": [
+            -0.0271104,
+            0.0201529
+          ]
+        },
+        "C8": {
+          "C1": [
+            0.152937,
+            0.19258
+          ],
+          "C1_diff": [
+            -0.0026676,
+            5.37354e-06
+          ],
+          "C4_mild_spectrum": [
+            0.909091,
+            0.983333
+          ],
+          "C4_severe": [
+            0.74269,
+            0.981308
+          ]
+        }
+      }
+    },
+    "M_pi=300,M=300": {
+      "tune_brier": 0.136955,
+      "metrics": {
+        "C1": {
+          "all": 0.141481,
+          "small": 0.160651,
+          "all_counted": 0.145341,
+          "small_counted": 0.141792
+        },
+        "C1_diff": {
+          "all": 7.18419e-05,
+          "small": 0.000115365,
+          "all_counted": 8.47101e-05,
+          "small_counted": 8.56601e-05
+        },
+        "C2": {
+          "all": 0.443572,
+          "small": 0.489727,
+          "all_counted": 0.452846,
+          "small_counted": 0.439307
+        },
+        "C2_diff": {
+          "all": 0.000253186,
+          "small": 0.00034157,
+          "all_counted": 0.000286665,
+          "small_counted": 0.000241594
+        },
+        "C3a": {
+          "slope": 1.04148,
+          "intercept": 0.0260487
+        },
+        "C3b": {
+          "mild_obs": 0,
+          "mild_exp": 0.14602,
+          "mild_ratio": 0.0,
+          "mild_tail_p": 1.0,
+          "severe_obs": 29,
+          "severe_exp": 28.975,
+          "severe_ratio": 1.00086,
+          "severe_tail_p": 0.522853,
+          "pass": true
+        },
+        "C4": {
+          "mild_spectrum": 0.966095,
+          "mild_spectrum_counted": 0.966095,
+          "mild_all": 0.754198,
+          "mild_all_counted": 0.754198,
+          "severe": 0.953198,
+          "severe_counted": 0.938342
+        },
+        "C6": {
+          "E1_CRO": null,
+          "E1_CXM": null,
+          "E2_CXM": null
+        },
+        "C7": {
+          "a": 0.904666,
+          "b": 0.62963,
+          "a_literal": 0.257903,
+          "b_literal": 0.222222,
+          "pass_a": true,
+          "a_expected": 0.907397,
+          "b_expected": 0.906613,
+          "a_minus_expected": -0.00273086
+        },
+        "C8": {
+          "C1": 0.166052,
+          "C1_diff": -0.000843597,
+          "C4_mild_spectrum": 0.964286,
+          "C4_severe": 0.907336
+        }
+      },
+      "intervals": {
+        "C1": {
+          "all": [
+            0.139845,
+            0.143198
+          ],
+          "small": [
+            0.157647,
+            0.163672
+          ],
+          "all_counted": [
+            0.143793,
+            0.146945
+          ],
+          "small_counted": [
+            0.139352,
+            0.144374
+          ]
+        },
+        "C1_diff": {
+          "all": [
+            1.62591e-05,
+            0.000132365
+          ],
+          "small": [
+            -1.63917e-05,
+            0.000257045
+          ],
+          "all_counted": [
+            2.20643e-05,
+            0.000148202
+          ],
+          "small_counted": [
+            -2.90289e-05,
+            0.000201929
+          ]
+        },
+        "C4": {
+          "mild_spectrum": [
+            0.962641,
+            0.969742
+          ],
+          "mild_spectrum_counted": [
+            0.962641,
+            0.969742
+          ],
+          "mild_all": [
+            0.747083,
+            0.760512
+          ],
+          "mild_all_counted": [
+            0.747083,
+            0.760512
+          ],
+          "severe": [
+            0.949909,
+            0.955917
+          ],
+          "severe_counted": [
+            0.935351,
+            0.941227
+          ]
+        },
+        "C7": {
+          "a": [
+            0.882025,
+            0.92672
+          ],
+          "a_literal": [
+            0.23497,
+            0.283605
+          ],
+          "a_minus_expected": [
+            -0.0255783,
+            0.0191565
+          ]
+        },
+        "C8": {
+          "C1": [
+            0.153385,
+            0.192462
+          ],
+          "C1_diff": [
+            -0.00169269,
+            2.26081e-05
+          ],
+          "C4_mild_spectrum": [
+            0.909091,
+            0.983333
+          ],
+          "C4_severe": [
+            0.748571,
+            0.981982
+          ]
+        }
+      }
+    }
+  },
+  "one_layer": {
+    "M=10": {
+      "tune_brier": 0.137189,
+      "metrics": {
+        "C1": {
+          "all": 0.141672,
+          "small": 0.161244,
+          "all_counted": 0.145537,
+          "small_counted": 0.142279
+        },
+        "C1_diff": {
+          "all": 0.000263717,
+          "small": 0.000707749,
+          "all_counted": 0.0002807,
+          "small_counted": 0.000572179
+        },
+        "C2": {
+          "all": 0.444275,
+          "small": 0.491853,
+          "all_counted": 0.45355,
+          "small_counted": 0.441123
+        },
+        "C2_diff": {
+          "all": 0.0009565,
+          "small": 0.00246777,
+          "all_counted": 0.000990707,
+          "small_counted": 0.00205749
+        },
+        "C3a": {
+          "slope": 1.02801,
+          "intercept": 0.0291982
+        },
+        "C3b": {
+          "mild_obs": 0,
+          "mild_exp": 0.289492,
+          "mild_ratio": 0.0,
+          "mild_tail_p": 1.0,
+          "severe_obs": 27,
+          "severe_exp": 21.7043,
+          "severe_ratio": 1.244,
+          "severe_tail_p": 0.151663,
+          "pass": true
+        },
+        "C4": {
+          "mild_spectrum": 0.965636,
+          "mild_spectrum_counted": 0.965636,
+          "mild_all": 0.754198,
+          "mild_all_counted": 0.754198,
+          "severe": 0.953751,
+          "severe_counted": 0.937678
+        },
+        "C6": {
+          "E1_CRO": 48,
+          "E1_CXM": null,
+          "E2_CXM": null
+        },
+        "C7": {
+          "a": 0.901656,
+          "b": 0.740741,
+          "a_literal": 0.342198,
+          "b_literal": 0.333333,
+          "pass_a": true,
+          "a_expected": 0.906487,
+          "b_expected": 0.905409,
+          "a_minus_expected": -0.00483092
+        },
+        "C8": {
+          "C1": 0.165522,
+          "C1_diff": -0.00137357,
+          "C4_mild_spectrum": 0.964286,
+          "C4_severe": 0.91453
+        }
+      },
+      "intervals": {
+        "C1": {
+          "all": [
+            0.140026,
+            0.143411
+          ],
+          "small": [
+            0.15812,
+            0.164448
+          ],
+          "all_counted": [
+            0.143969,
+            0.147169
+          ],
+          "small_counted": [
+            0.139699,
+            0.144959
+          ]
+        },
+        "C1_diff": {
+          "all": [
+            0.000113654,
+            0.000416294
+          ],
+          "small": [
+            0.000278361,
+            0.00111461
+          ],
+          "all_counted": [
+            0.00012156,
+            0.000443769
+          ],
+          "small_counted": [
+            0.00021472,
+            0.00090732
+          ]
+        },
+        "C4": {
+          "mild_spectrum": [
+            0.962124,
+            0.969335
+          ],
+          "mild_spectrum_counted": [
+            0.962124,
+            0.969335
+          ],
+          "mild_all": [
+            0.747083,
+            0.760512
+          ],
+          "mild_all_counted": [
+            0.747083,
+            0.760512
+          ],
+          "severe": [
+            0.950541,
+            0.956487
+          ],
+          "severe_counted": [
+            0.934411,
+            0.94059
+          ]
+        },
+        "C7": {
+          "a": [
+            0.876823,
+            0.925238
+          ],
+          "a_literal": [
+            0.318159,
+            0.369718
+          ],
+          "a_minus_expected": [
+            -0.0292519,
+            0.0183343
+          ]
+        },
+        "C8": {
+          "C1": [
+            0.153019,
+            0.192246
+          ],
+          "C1_diff": [
+            -0.0038213,
+            0.00210722
+          ],
+          "C4_mild_spectrum": [
+            0.909091,
+            0.983333
+          ],
+          "C4_severe": [
+            0.755906,
+            0.967033
+          ]
+        }
+      }
+    },
+    "M=30": {
+      "tune_brier": 0.137048,
+      "metrics": {
+        "C1": {
+          "all": 0.141596,
+          "small": 0.160956,
+          "all_counted": 0.145468,
+          "small_counted": 0.142071
+        },
+        "C1_diff": {
+          "all": 0.000187611,
+          "small": 0.000419856,
+          "all_counted": 0.00021143,
+          "small_counted": 0.000364372
+        },
+        "C2": {
+          "all": 0.443999,
+          "small": 0.49079,
+          "all_counted": 0.453301,
+          "small_counted": 0.440349
+        },
+        "C2_diff": {
+          "all": 0.000680142,
+          "small": 0.00140398,
+          "all_counted": 0.000741074,
+          "small_counted": 0.00128403
+        },
+        "C3a": {
+          "slope": 1.03098,
+          "intercept": 0.0271606
+        },
+        "C3b": {
+          "mild_obs": 0,
+          "mild_exp": 0.261591,
+          "mild_ratio": 0.0,
+          "mild_tail_p": 1.0,
+          "severe_obs": 28,
+          "severe_exp": 22.2994,
+          "severe_ratio": 1.25564,
+          "severe_tail_p": 0.136459,
+          "pass": true
+        },
+        "C4": {
+          "mild_spectrum": 0.966095,
+          "mild_spectrum_counted": 0.966095,
+          "mild_all": 0.754198,
+          "mild_all_counted": 0.754198,
+          "severe": 0.953677,
+          "severe_counted": 0.938081
+        },
+        "C6": {
+          "E1_CRO": 48,
+          "E1_CXM": null,
+          "E2_CXM": null
+        },
+        "C7": {
+          "a": 0.902659,
+          "b": 0.740741,
+          "a_literal": 0.338184,
+          "b_literal": 0.333333,
+          "pass_a": true,
+          "a_expected": 0.906761,
+          "b_expected": 0.905196,
+          "a_minus_expected": -0.00410128
+        },
+        "C8": {
+          "C1": 0.165439,
+          "C1_diff": -0.00145683,
+          "C4_mild_spectrum": 0.964286,
+          "C4_severe": 0.915179
+        }
+      },
+      "intervals": {
+        "C1": {
+          "all": [
+            0.13995,
+            0.143323
+          ],
+          "small": [
+            0.157873,
+            0.164128
+          ],
+          "all_counted": [
+            0.143921,
+            0.147103
+          ],
+          "small_counted": [
+            0.139557,
+            0.144747
+          ]
+        },
+        "C1_diff": {
+          "all": [
+            5.65194e-05,
+            0.000327806
+          ],
+          "small": [
+            6.45297e-05,
+            0.000747604
+          ],
+          "all_counted": [
+            6.80073e-05,
+            0.000360154
+          ],
+          "small_counted": [
+            8.13412e-05,
+            0.0006317
+          ]
+        },
+        "C4": {
+          "mild_spectrum": [
+            0.962641,
+            0.969742
+          ],
+          "mild_spectrum_counted": [
+            0.962641,
+            0.969742
+          ],
+          "mild_all": [
+            0.747083,
+            0.760512
+          ],
+          "mild_all_counted": [
+            0.747083,
+            0.760512
+          ],
+          "severe": [
+            0.950435,
+            0.956513
+          ],
+          "severe_counted": [
+            0.934694,
+            0.940982
+          ]
+        },
+        "C7": {
+          "a": [
+            0.878955,
+            0.92576
+          ],
+          "a_literal": [
+            0.314115,
+            0.3645
+          ],
+          "a_minus_expected": [
+            -0.0276713,
+            0.0192067
+          ]
+        },
+        "C8": {
+          "C1": [
+            0.152876,
+            0.192532
+          ],
+          "C1_diff": [
+            -0.00373897,
+            0.00135499
+          ],
+          "C4_mild_spectrum": [
+            0.909091,
+            0.983333
+          ],
+          "C4_severe": [
+            0.761364,
+            0.972603
+          ]
+        }
+      }
+    },
+    "M=100": {
+      "tune_brier": 0.136924,
+      "metrics": {
+        "C1": {
+          "all": 0.141506,
+          "small": 0.16069,
+          "all_counted": 0.145378,
+          "small_counted": 0.141856
+        },
+        "C1_diff": {
+          "all": 9.71766e-05,
+          "small": 0.000154546,
+          "all_counted": 0.000120999,
+          "small_counted": 0.000149818
+        },
+        "C2": {
+          "all": 0.443689,
+          "small": 0.489868,
+          "all_counted": 0.452995,
+          "small_counted": 0.439586
+        },
+        "C2_diff": {
+          "all": 0.000370678,
+          "small": 0.000482375,
+          "all_counted": 0.000435798,
+          "small_counted": 0.000521027
+        },
+        "C3a": {
+          "slope": 1.03484,
+          "intercept": 0.0242119
+        },
+        "C3b": {
+          "mild_obs": 0,
+          "mild_exp": 0.211528,
+          "mild_ratio": 0.0,
+          "mild_tail_p": 1.0,
+          "severe_obs": 29,
+          "severe_exp": 26.2502,
+          "severe_ratio": 1.10475,
+          "severe_tail_p": 0.320871,
+          "pass": true
+        },
+        "C4": {
+          "mild_spectrum": 0.966095,
+          "mild_spectrum_counted": 0.966095,
+          "mild_all": 0.754198,
+          "mild_all_counted": 0.754198,
+          "severe": 0.953317,
+          "severe_counted": 0.938313
+        },
+        "C6": {
+          "E1_CRO": 49,
+          "E1_CXM": null,
+          "E2_CXM": null
+        },
+        "C7": {
+          "a": 0.906673,
+          "b": 0.740741,
+          "a_literal": 0.321124,
+          "b_literal": 0.296296,
+          "pass_a": true,
+          "a_expected": 0.907041,
+          "b_expected": 0.901083,
+          "a_minus_expected": -0.000367954
+        },
+        "C8": {
+          "C1": 0.165471,
+          "C1_diff": -0.001425,
+          "C4_mild_spectrum": 0.964286,
+          "C4_severe": 0.903226
+        }
+      },
+      "intervals": {
+        "C1": {
+          "all": [
+            0.139858,
+            0.143215
+          ],
+          "small": [
+            0.157677,
+            0.163775
+          ],
+          "all_counted": [
+            0.143853,
+            0.147012
+          ],
+          "small_counted": [
+            0.139346,
+            0.144477
+          ]
+        },
+        "C1_diff": {
+          "all": [
+            -5.45572e-06,
+            0.000203182
+          ],
+          "small": [
+            -7.7496e-05,
+            0.000366847
+          ],
+          "all_counted": [
+            9.49007e-06,
+            0.000236671
+          ],
+          "small_counted": [
+            -4.10043e-05,
+            0.000327362
+          ]
+        },
+        "C4": {
+          "mild_spectrum": [
+            0.962641,
+            0.969742
+          ],
+          "mild_spectrum_counted": [
+            0.962641,
+            0.969742
+          ],
+          "mild_all": [
+            0.747083,
+            0.760512
+          ],
+          "mild_all_counted": [
+            0.747083,
+            0.760512
+          ],
+          "severe": [
+            0.949931,
+            0.956145
+          ],
+          "severe_counted": [
+            0.935122,
+            0.941165
+          ]
+        },
+        "C7": {
+          "a": [
+            0.884022,
+            0.928251
+          ],
+          "a_literal": [
+            0.29814,
+            0.34552
+          ],
+          "a_minus_expected": [
+            -0.0228514,
+            0.0207825
+          ]
+        },
+        "C8": {
+          "C1": [
+            0.152737,
+            0.193055
+          ],
+          "C1_diff": [
+            -0.00320281,
+            0.000519176
+          ],
+          "C4_mild_spectrum": [
+            0.909091,
+            0.983333
+          ],
+          "C4_severe": [
+            0.72327,
+            0.98
+          ]
+        }
+      }
+    },
+    "M=300": {
+      "tune_brier": 0.136862,
+      "metrics": {
+        "C1": {
+          "all": 0.141441,
+          "small": 0.160597,
+          "all_counted": 0.145307,
+          "small_counted": 0.141767
+        },
+        "C1_diff": {
+          "all": 3.18103e-05,
+          "small": 6.1341e-05,
+          "all_counted": 4.98202e-05,
+          "small_counted": 6.03879e-05
+        },
+        "C2": {
+          "all": 0.44347,
+          "small": 0.489573,
+          "all_counted": 0.452761,
+          "small_counted": 0.439261
+        },
+        "C2_diff": {
+          "all": 0.00015098,
+          "small": 0.000187018,
+          "all_counted": 0.000201147,
+          "small_counted": 0.000195444
+        },
+        "C3a": {
+          "slope": 1.03791,
+          "intercept": 0.0214832
+        },
+        "C3b": {
+          "mild_obs": 0,
+          "mild_exp": 0.166792,
+          "mild_ratio": 0.0,
+          "mild_tail_p": 1.0,
+          "severe_obs": 29,
+          "severe_exp": 27.5146,
+          "severe_ratio": 1.05399,
+          "severe_tail_p": 0.413531,
+          "pass": true
+        },
+        "C4": {
+          "mild_spectrum": 0.966095,
+          "mild_spectrum_counted": 0.966095,
+          "mild_all": 0.754198,
+          "mild_all_counted": 0.754198,
+          "severe": 0.953226,
+          "severe_counted": 0.938358
+        },
+        "C6": {
+          "E1_CRO": null,
+          "E1_CXM": null,
+          "E2_CXM": null
+        },
+        "C7": {
+          "a": 0.906172,
+          "b": 0.703704,
+          "a_literal": 0.291019,
+          "b_literal": 0.296296,
+          "pass_a": true,
+          "a_expected": 0.907091,
+          "b_expected": 0.905265,
+          "a_minus_expected": -0.0009197
+        },
+        "C8": {
+          "C1": 0.165774,
+          "C1_diff": -0.00112196,
+          "C4_mild_spectrum": 0.964286,
+          "C4_severe": 0.905882
+        }
+      },
+      "intervals": {
+        "C1": {
+          "all": [
+            0.139796,
+            0.14316
+          ],
+          "small": [
+            0.157597,
+            0.163633
+          ],
+          "all_counted": [
+            0.143751,
+            0.146924
+          ],
+          "small_counted": [
+            0.139292,
+            0.144378
+          ]
+        },
+        "C1_diff": {
+          "all": [
+            -3.92889e-05,
+            0.000101473
+          ],
+          "small": [
+            -5.71305e-05,
+            0.000176283
+          ],
+          "all_counted": [
+            -2.37414e-05,
+            0.000124081
+          ],
+          "small_counted": [
+            -4.277e-05,
+            0.000159548
+          ]
+        },
+        "C4": {
+          "mild_spectrum": [
+            0.962641,
+            0.969742
+          ],
+          "mild_spectrum_counted": [
+            0.962641,
+            0.969742
+          ],
+          "mild_all": [
+            0.747083,
+            0.760512
+          ],
+          "mild_all_counted": [
+            0.747083,
+            0.760512
+          ],
+          "severe": [
+            0.949994,
+            0.955919
+          ],
+          "severe_counted": [
+            0.93535,
+            0.941198
+          ]
+        },
+        "C7": {
+          "a": [
+            0.881886,
+            0.929252
+          ],
+          "a_literal": [
+            0.267483,
+            0.318
+          ],
+          "a_minus_expected": [
+            -0.0251458,
+            0.0221297
+          ]
+        },
+        "C8": {
+          "C1": [
+            0.152974,
+            0.193052
+          ],
+          "C1_diff": [
+            -0.00231691,
+            0.000145718
+          ],
+          "C4_mild_spectrum": [
+            0.909091,
+            0.983333
+          ],
+          "C4_severe": [
+            0.74269,
+            0.981308
+          ]
+        }
+      }
+    }
+  }
+}

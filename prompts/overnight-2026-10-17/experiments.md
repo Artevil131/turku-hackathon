@@ -128,7 +128,7 @@ When the list is exhausted, go deeper: sweep the best method's
 parameters, combine the two best detectors, test the winners on the
 two-unit injections, and try anything else you can justify.
 
-**Coverage, the doctor's number (C1 to C7).**
+**Coverage, the doctor's number (C1 to C8).**
 1. Discounted Beta-binomial (ENGINE.md 2.2): δ per week in {0.90, 0.95,
    0.98, 1.0}, M in {10, 30, 100}, parent hospital × specimen × onset
    over the preceding period. 0004 found blends no better than the
@@ -255,13 +255,15 @@ script and finished by you, with:
 
 1. The comparison table: every method, every metric of its family, best
    marked, baselines first, `tuned-on-test` flagged, runtime.
-2. Detection: which methods found the four events earliest at 5 or fewer
-   episodes a year; the sensitivity-against-noise curves as one figure;
+2. Detection: the sensitivity-against-noise curves (D5) per injection
+   family as one figure, with delay; the four events as a demonstration
+   only (D1 cannot rank methods);
    what catches 3-patient and common-profile clusters that the live set
    misses, and at what noise.
-3. Coverage: whether anything meets the replacement rule (not worse on
-   C1, better on C6, C3 and C7 passing), and how many days each estimate
-   took to react to E1 and E2.
+3. Coverage: whether anything meets the replacement rule in METRICS.md
+   (C1 within the minimum meaningful difference, C4 not worse, C8
+   better, C3(b) and C7(a) passing), and how many days each estimate
+   took to react to E1 and E2 (C6).
 4. Prediction: county forecast skill against persistence per phenotype,
    whether exposure ranked the right units, and whether any lead-lag
    survived.

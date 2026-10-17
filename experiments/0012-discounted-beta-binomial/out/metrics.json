@@ -1,0 +1,477 @@
+{
+  "experiment": "0012-discounted-beta-binomial",
+  "method": "Discounted Beta-binomial (ENGINE.md 2.2), delta 0.95 per week, M 10, per unit x specimen x onset x antibiotic, parent: hospital, same specimen and onset, 52 weeks before, own unit left out, Jeffreys; isolate-level p by the isolate's onset, cell-level Beta by mixing the onset strata by effective own count; untested results do not enter the filter. Chosen on the TUNE windows 2023-12-25 to 2024-09-29 only",
+  "family": "coverage",
+  "tuned_on_test": false,
+  "tuned_on": "2023-12-25..2024-09-29",
+  "metrics": {
+    "C1": {
+      "all": 0.141591,
+      "small": 0.161427,
+      "all_counted": 0.154311,
+      "small_counted": 0.168898
+    },
+    "C1_diff": {
+      "all": 0.000182258,
+      "small": 0.000890922,
+      "all_counted": 0.0090544,
+      "small_counted": 0.0271911
+    },
+    "C2": {
+      "all": 0.444081,
+      "small": 0.492286,
+      "all_counted": 0.48526,
+      "small_counted": 0.531127
+    },
+    "C2_diff": {
+      "all": 0.00076234,
+      "small": 0.00290013,
+      "all_counted": 0.0327008,
+      "small_counted": 0.0920611
+    },
+    "C3a": {
+      "slope": 0.976738,
+      "intercept": 0.000525715
+    },
+    "C5": {
+      "Citrobacter freundii|AMP": 0.266091,
+      "Citrobacter freundii|MEC": 0.110192,
+      "Citrobacter freundii|TZP": 0.17296,
+      "Citrobacter freundii|CXM": 0.275678,
+      "Citrobacter freundii|CRO": 0.126417,
+      "Citrobacter freundii|MEM": 0.016684,
+      "Citrobacter freundii|CIP": 0.0592649,
+      "Citrobacter freundii|TMP": 0.136574,
+      "Citrobacter freundii|NIT": 0.0518646,
+      "Citrobacter freundii|VAN": 0.0930635,
+      "Citrobacter freundii|CLI": 0.0485208,
+      "Enterococcus faecalis|AMP": 0.237765,
+      "Enterococcus faecalis|MEC": 0.607548,
+      "Enterococcus faecalis|TZP": 0.00699467,
+      "Enterococcus faecalis|CXM": 0.56936,
+      "Enterococcus faecalis|CRO": 0.632328,
+      "Enterococcus faecalis|CAZ": 0.0463769,
+      "Enterococcus faecalis|MEM": 0.795415,
+      "Enterococcus faecalis|TMP": 0.513387,
+      "Enterococcus faecalis|NIT": 0.0322331,
+      "Enterococcus faecalis|VAN": 0.623918,
+      "Enterococcus faecalis|CLI": 0.0410484,
+      "Escherichia coli|AMP": 0.239918,
+      "Escherichia coli|MEC": 0.062968,
+      "Escherichia coli|TZP": 0.0378629,
+      "Escherichia coli|CXM": 0.101172,
+      "Escherichia coli|CRO": 0.0621524,
+      "Escherichia coli|MEM": 0.0114667,
+      "Escherichia coli|CIP": 0.0750725,
+      "Escherichia coli|TMP": 0.163597,
+      "Escherichia coli|NIT": 0.0279331,
+      "Escherichia coli|VAN": 0.035778,
+      "Escherichia coli|CLI": 0.012381,
+      "Klebsiella oxytoca|AMP": 0.295082,
+      "Klebsiella oxytoca|MEC": 0.0832944,
+      "Klebsiella oxytoca|TZP": 0.0472089,
+      "Klebsiella oxytoca|CXM": 0.10692,
+      "Klebsiella oxytoca|CRO": 0.0480976,
+      "Klebsiella oxytoca|MEM": 0.0133026,
+      "Klebsiella oxytoca|CIP": 0.0566452,
+      "Klebsiella oxytoca|TMP": 0.114709,
+      "Klebsiella oxytoca|NIT": 0.0784369,
+      "Klebsiella oxytoca|VAN": 0.0268647,
+      "Klebsiella oxytoca|CLI": 0.00606336,
+      "Klebsiella pneumoniae|AMP": 0.284561,
+      "Klebsiella pneumoniae|MEC": 0.0765686,
+      "Klebsiella pneumoniae|TZP": 0.0703092,
+      "Klebsiella pneumoniae|CXM": 0.123008,
+      "Klebsiella pneumoniae|CRO": 0.0839258,
+      "Klebsiella pneumoniae|MEM": 0.0125467,
+      "Klebsiella pneumoniae|CIP": 0.0941219,
+      "Klebsiella pneumoniae|TMP": 0.146947,
+      "Klebsiella pneumoniae|NIT": 0.261545,
+      "Klebsiella pneumoniae|VAN": 0.0492526,
+      "Klebsiella pneumoniae|CLI": 0.0212247,
+      "Proteus mirabilis|AMP": 0.243387,
+      "Proteus mirabilis|MEC": 0.06278,
+      "Proteus mirabilis|TZP": 0.0137249,
+      "Proteus mirabilis|CXM": 0.0807748,
+      "Proteus mirabilis|CRO": 0.0538907,
+      "Proteus mirabilis|MEM": 0.0131114,
+      "Proteus mirabilis|CIP": 0.0579324,
+      "Proteus mirabilis|TMP": 0.164749,
+      "Proteus mirabilis|NIT": 0.710636,
+      "Proteus mirabilis|VAN": 0.0866982,
+      "Proteus mirabilis|CLI": 0.0451158,
+      "Pseudomonas aeruginosa|AMP": 0.245441,
+      "Pseudomonas aeruginosa|MEC": 0.607331,
+      "Pseudomonas aeruginosa|TZP": 0.0887409,
+      "Pseudomonas aeruginosa|CXM": 0.542521,
+      "Pseudomonas aeruginosa|CRO": 0.596645,
+      "Pseudomonas aeruginosa|CAZ": 0.583693,
+      "Pseudomonas aeruginosa|MEM": 0.0632444,
+      "Pseudomonas aeruginosa|CIP": 0.100384,
+      "Pseudomonas aeruginosa|TMP": 0.515568,
+      "Pseudomonas aeruginosa|NIT": 0.711174,
+      "Pseudomonas aeruginosa|VAN": 0.1405,
+      "Pseudomonas aeruginosa|CLI": 0.079563,
+      "Staphylococcus aureus|AMP": 0.20001,
+      "Staphylococcus aureus|MEC": 0.608141,
+      "Staphylococcus aureus|TZP": 0.0361812,
+      "Staphylococcus aureus|CXM": 0.102028,
+      "Staphylococcus aureus|CRO": 0.0885425,
+      "Staphylococcus aureus|CAZ": 0.0406821,
+      "Staphylococcus aureus|MEM": 0.0432397,
+      "Staphylococcus aureus|TMP": 0.0999597,
+      "Staphylococcus aureus|NIT": 0.0296175,
+      "Staphylococcus aureus|VAN": 0.341799,
+      "Staphylococcus aureus|CLI": 0.463214,
+      "Staphylococcus saprophyticus|MEC": 0.609416,
+      "Staphylococcus saprophyticus|CAZ": 0.0493216,
+      "Staphylococcus saprophyticus|TMP": 0.0987266,
+      "Staphylococcus saprophyticus|NIT": 0.0365116
+    },
+    "C8": {
+      "C1": 0.166645,
+      "C1_diff": -0.00025055,
+      "C4_mild_spectrum": 0.958333
+    },
+    "C4": {
+      "mild_spectrum": 0.966036,
+      "mild_spectrum_counted": 0.965938,
+      "mild_all": 0.754183,
+      "mild_all_counted": 0.754136,
+      "severe": 0.954844,
+      "severe_counted": 0.938144
+    },
+    "C3b": {
+      "mild_obs": 0,
+      "mild_exp": 0.23128,
+      "mild_ratio": 0.0,
+      "mild_tail_p": 1.0,
+      "severe_obs": 14,
+      "severe_exp": 7.27818,
+      "severe_ratio": 1.92356,
+      "severe_tail_p": 0.0172529,
+      "pass": false
+    },
+    "C3b_bb": {
+      "mild_obs": 0,
+      "mild_exp": 0.777856,
+      "mild_ratio": 0.0,
+      "mild_tail_p": 1.0,
+      "severe_obs": 14,
+      "severe_exp": 9.57179,
+      "severe_ratio": 1.46263,
+      "severe_tail_p": 0.106353,
+      "pass": true
+    },
+    "C7_lower_bound": {
+      "cells": 4285,
+      "obs": 689,
+      "exp": 583.307,
+      "ratio": 1.1812,
+      "exp_bb": 707.029,
+      "ratio_bb": 0.9745
+    },
+    "C7": {
+      "a": 0.929252,
+      "b": 0.814815,
+      "a_literal": 0.611641,
+      "b_literal": 0.62963,
+      "pass_a": true,
+      "a_expected": 0.907689,
+      "b_expected": 0.901381,
+      "a_minus_expected": 0.0215631
+    },
+    "C6": {
+      "E1_CRO": 48,
+      "E1_CXM": null,
+      "E2_CXM": null
+    }
+  },
+  "intervals": {
+    "C1": {
+      "all": [
+        0.139866,
+        0.143399
+      ],
+      "small": [
+        0.158366,
+        0.164745
+      ],
+      "all_counted": [
+        0.152465,
+        0.156231
+      ],
+      "small_counted": [
+        0.165978,
+        0.171833
+      ]
+    },
+    "C1_diff": {
+      "all": [
+        -6.62498e-06,
+        0.000357283
+      ],
+      "small": [
+        0.000395514,
+        0.00134178
+      ],
+      "all_counted": [
+        0.00860362,
+        0.0095629
+      ],
+      "small_counted": [
+        0.025443,
+        0.0288788
+      ]
+    },
+    "C2": {
+      "all": [
+        0.439688,
+        0.448549
+      ],
+      "small": [
+        0.484405,
+        0.500774
+      ],
+      "all_counted": [
+        0.480618,
+        0.49027
+      ],
+      "small_counted": [
+        0.523228,
+        0.539304
+      ]
+    },
+    "C2_diff": {
+      "all": [
+        0.000153624,
+        0.00134375
+      ],
+      "small": [
+        0.00148314,
+        0.00427668
+      ],
+      "all_counted": [
+        0.0312109,
+        0.034323
+      ],
+      "small_counted": [
+        0.0863249,
+        0.0974558
+      ]
+    },
+    "C3a": {
+      "slope": [
+        0.964043,
+        0.990174
+      ],
+      "intercept": [
+        -0.0177309,
+        0.016218
+      ]
+    },
+    "C8": {
+      "C1": [
+        0.154003,
+        0.193722
+      ],
+      "C1_diff": [
+        -0.0026004,
+        0.00317193
+      ],
+      "C4_mild_spectrum": [
+        0.8,
+        0.97861
+      ]
+    },
+    "C4": {
+      "mild_spectrum": [
+        0.962678,
+        0.969518
+      ],
+      "mild_spectrum_counted": [
+        0.962646,
+        0.969358
+      ],
+      "mild_all": [
+        0.747051,
+        0.760468
+      ],
+      "mild_all_counted": [
+        0.746959,
+        0.76034
+      ],
+      "severe": [
+        0.951136,
+        0.95788
+      ],
+      "severe_counted": [
+        0.934613,
+        0.941461
+      ]
+    },
+    "C7": {
+      "a": [
+        0.907576,
+        0.948284
+      ],
+      "a_literal": [
+        0.574056,
+        0.646643
+      ],
+      "a_minus_expected": [
+        -0.000568413,
+        0.0408678
+      ]
+    }
+  },
+  "n": {
+    "C1": {
+      "all": 163666,
+      "small": 36588,
+      "fallback": 0,
+      "all_counted": 182367,
+      "small_counted": 50894,
+      "fallback_counted": 0
+    },
+    "C2": {
+      "all": 163666,
+      "small": 36588,
+      "fallback": 0,
+      "all_counted": 182367,
+      "small_counted": 50894,
+      "fallback_counted": 0
+    },
+    "C5": {
+      "Citrobacter freundii|AMP": 589,
+      "Citrobacter freundii|MEC": 413,
+      "Citrobacter freundii|TZP": 589,
+      "Citrobacter freundii|CXM": 589,
+      "Citrobacter freundii|CRO": 589,
+      "Citrobacter freundii|MEM": 589,
+      "Citrobacter freundii|CIP": 589,
+      "Citrobacter freundii|TMP": 413,
+      "Citrobacter freundii|NIT": 413,
+      "Citrobacter freundii|VAN": 589,
+      "Citrobacter freundii|CLI": 589,
+      "Enterococcus faecalis|AMP": 1623,
+      "Enterococcus faecalis|MEC": 1210,
+      "Enterococcus faecalis|TZP": 1623,
+      "Enterococcus faecalis|CXM": 1623,
+      "Enterococcus faecalis|CRO": 1623,
+      "Enterococcus faecalis|CAZ": 1623,
+      "Enterococcus faecalis|MEM": 1623,
+      "Enterococcus faecalis|TMP": 1210,
+      "Enterococcus faecalis|NIT": 1210,
+      "Enterococcus faecalis|VAN": 1623,
+      "Enterococcus faecalis|CLI": 1623,
+      "Escherichia coli|AMP": 7494,
+      "Escherichia coli|MEC": 6888,
+      "Escherichia coli|TZP": 7494,
+      "Escherichia coli|CXM": 7494,
+      "Escherichia coli|CRO": 7494,
+      "Escherichia coli|MEM": 7494,
+      "Escherichia coli|CIP": 7494,
+      "Escherichia coli|TMP": 6888,
+      "Escherichia coli|NIT": 6888,
+      "Escherichia coli|VAN": 7494,
+      "Escherichia coli|CLI": 7494,
+      "Klebsiella oxytoca|AMP": 404,
+      "Klebsiella oxytoca|MEC": 377,
+      "Klebsiella oxytoca|TZP": 404,
+      "Klebsiella oxytoca|CXM": 404,
+      "Klebsiella oxytoca|CRO": 404,
+      "Klebsiella oxytoca|MEM": 404,
+      "Klebsiella oxytoca|CIP": 404,
+      "Klebsiella oxytoca|TMP": 377,
+      "Klebsiella oxytoca|NIT": 377,
+      "Klebsiella oxytoca|VAN": 404,
+      "Klebsiella oxytoca|CLI": 404,
+      "Klebsiella pneumoniae|AMP": 1547,
+      "Klebsiella pneumoniae|MEC": 1338,
+      "Klebsiella pneumoniae|TZP": 1547,
+      "Klebsiella pneumoniae|CXM": 1547,
+      "Klebsiella pneumoniae|CRO": 1547,
+      "Klebsiella pneumoniae|MEM": 1547,
+      "Klebsiella pneumoniae|CIP": 1547,
+      "Klebsiella pneumoniae|TMP": 1338,
+      "Klebsiella pneumoniae|NIT": 1338,
+      "Klebsiella pneumoniae|VAN": 1547,
+      "Klebsiella pneumoniae|CLI": 1547,
+      "Proteus mirabilis|AMP": 1136,
+      "Proteus mirabilis|MEC": 838,
+      "Proteus mirabilis|TZP": 1136,
+      "Proteus mirabilis|CXM": 1136,
+      "Proteus mirabilis|CRO": 1136,
+      "Proteus mirabilis|MEM": 1136,
+      "Proteus mirabilis|CIP": 1136,
+      "Proteus mirabilis|TMP": 838,
+      "Proteus mirabilis|NIT": 838,
+      "Proteus mirabilis|VAN": 1136,
+      "Proteus mirabilis|CLI": 1136,
+      "Pseudomonas aeruginosa|AMP": 1128,
+      "Pseudomonas aeruginosa|MEC": 593,
+      "Pseudomonas aeruginosa|TZP": 1128,
+      "Pseudomonas aeruginosa|CXM": 1128,
+      "Pseudomonas aeruginosa|CRO": 1128,
+      "Pseudomonas aeruginosa|CAZ": 1128,
+      "Pseudomonas aeruginosa|MEM": 1128,
+      "Pseudomonas aeruginosa|CIP": 1128,
+      "Pseudomonas aeruginosa|TMP": 593,
+      "Pseudomonas aeruginosa|NIT": 593,
+      "Pseudomonas aeruginosa|VAN": 1128,
+      "Pseudomonas aeruginosa|CLI": 1128,
+      "Staphylococcus aureus|AMP": 74,
+      "Staphylococcus aureus|MEC": 404,
+      "Staphylococcus aureus|TZP": 1987,
+      "Staphylococcus aureus|CXM": 1987,
+      "Staphylococcus aureus|CRO": 1987,
+      "Staphylococcus aureus|CAZ": 1987,
+      "Staphylococcus aureus|MEM": 1987,
+      "Staphylococcus aureus|TMP": 404,
+      "Staphylococcus aureus|NIT": 404,
+      "Staphylococcus aureus|VAN": 1987,
+      "Staphylococcus aureus|CLI": 1987,
+      "Staphylococcus saprophyticus|MEC": 251,
+      "Staphylococcus saprophyticus|CAZ": 251,
+      "Staphylococcus saprophyticus|TMP": 251,
+      "Staphylococcus saprophyticus|NIT": 251
+    },
+    "C8": {
+      "C1": 2692,
+      "C4_mild_spectrum": 168
+    },
+    "C4": {
+      "mild_spectrum": 9834,
+      "mild_spectrum_counted": 9835,
+      "mild_all": 16138,
+      "mild_all_counted": 16139,
+      "severe": 10674,
+      "severe_counted": 10864
+    },
+    "C3b": {
+      "mild": 175,
+      "severe": 167
+    },
+    "C7": {
+      "a": 1993,
+      "b": 27,
+      "a_literal": 1993,
+      "b_literal": 27,
+      "a_expected": 1993,
+      "b_expected": 27,
+      "a_minus_expected": 1993
+    }
+  },
+  "runtime_s": 34.4,
+  "cpu_s": 34.0,
+  "seeds": [
+    2026
+  ],
+  "data": "synthetic_microbiology_dataset, seed 2026, as received 2026-10-09",
+  "notes": "Chosen setting of a 12-setting grid (full grid in grid.json, exploratory); no number from the scoring period was used to choose it.",
+  "setting": {
+    "delta": 0.95,
+    "M": 10
+  }
+}

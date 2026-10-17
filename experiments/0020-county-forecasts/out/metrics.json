@@ -1,0 +1,359 @@
+{
+  "experiment": "0020-county-forecasts",
+  "method": "County one-month-ahead forecast: Poisson GLM per series from a grid with and without annual harmonics; the cell chosen on targets 2024-01 to 2024-09 has none, a rolling mean (W24 K0 trend=off rho=0 quasi_pooled floor=0.1), negative binomial predictive; 4 phenotypes x 23 counties + national, targets 2024-10 to 2026-09",
+  "family": "prediction",
+  "tuned_on_test": false,
+  "tuned_on": "targets 2024-01 to 2024-09 (windows from 2021-01); no scoring-period number used",
+  "metrics": {
+    "P2": {
+      "mae": 2.16712,
+      "log_score": -1.72788,
+      "mae_skill": 0.144466,
+      "log_skill": 0.402128,
+      "mae_skill_seasonal": 0.218648,
+      "log_skill_seasonal": 0.792725,
+      "MRSA_mae_skill": 0.216881,
+      "MRSA_log_skill": 0.620348,
+      "ESBL_mae_skill": 0.0918791,
+      "ESBL_log_skill": 0.519473,
+      "VRE_mae_skill": 0.2,
+      "VRE_log_skill": 0.250076,
+      "CPE_mae_skill": 0.285714,
+      "CPE_log_skill": 0.218614,
+      "national_mae_skill": -0.126038,
+      "national_log_skill": 1.54792,
+      "mae_skill_no_last2": 0.149589,
+      "log_skill_no_last2": 0.408132
+    }
+  },
+  "intervals": {
+    "P2": {
+      "mae": [
+        1.99637,
+        2.37592
+      ],
+      "log_score": [
+        -1.79851,
+        -1.66767
+      ],
+      "mae_skill": [
+        0.0628025,
+        0.213219
+      ],
+      "log_skill": [
+        0.30893,
+        0.481687
+      ],
+      "mae_skill_seasonal": [
+        0.158742,
+        0.271734
+      ],
+      "log_skill_seasonal": [
+        0.660169,
+        0.932551
+      ],
+      "MRSA_mae_skill": [
+        0.144634,
+        0.275571
+      ],
+      "MRSA_log_skill": [
+        0.453146,
+        0.803747
+      ],
+      "ESBL_mae_skill": [
+        -0.0335151,
+        0.189152
+      ],
+      "ESBL_log_skill": [
+        0.279849,
+        0.741907
+      ],
+      "VRE_mae_skill": [
+        -0.00720819,
+        0.428664
+      ],
+      "VRE_log_skill": [
+        0.165428,
+        0.331864
+      ],
+      "CPE_mae_skill": [
+        0.19162,
+        0.376289
+      ],
+      "CPE_log_skill": [
+        0.160465,
+        0.27618
+      ],
+      "national_mae_skill": [
+        -0.4888,
+        0.133993
+      ],
+      "national_log_skill": [
+        0.809414,
+        2.33485
+      ],
+      "mae_skill_no_last2": [
+        0.064329,
+        0.225722
+      ],
+      "log_skill_no_last2": [
+        0.312942,
+        0.5015
+      ]
+    }
+  },
+  "n": {
+    "P2": {
+      "mae": 2208,
+      "log_score": 2208,
+      "mae_skill": 2208,
+      "log_skill": 2208,
+      "mae_skill_seasonal": 2208,
+      "log_skill_seasonal": 2208,
+      "MRSA_mae_skill": 552,
+      "MRSA_log_skill": 552,
+      "ESBL_mae_skill": 552,
+      "ESBL_log_skill": 552,
+      "VRE_mae_skill": 552,
+      "VRE_log_skill": 552,
+      "CPE_mae_skill": 552,
+      "CPE_log_skill": 552,
+      "national_mae_skill": 96,
+      "national_log_skill": 96,
+      "mae_skill_no_last2": 2024,
+      "log_skill_no_last2": 2024
+    }
+  },
+  "runtime_s": 2.1,
+  "cpu_s": 2.1,
+  "seeds": [
+    2026
+  ],
+  "data": "thl-ttr-cases fetched 2026-10-17 by scripts/fetch_thl_ttr.py, months 2021-01 to 2026-09",
+  "notes": "THL series as fetched 2026-10-17, final values for every target month, so not strictly as-of; the last two months (2026-08, 2026-09) are incomplete at fetch time (see the _no_last2 keys). Skill is against persistence unless named. Bootstrap: 1,000 resamples of target months, seed 2026. The model is deterministic.",
+  "detail": [
+    {
+      "group": "pooled",
+      "n": 2208,
+      "mae_model": 2.16712,
+      "log_model": -1.72788,
+      "mae_persistence": 2.53306,
+      "log_persistence": -2.13001,
+      "mae_seasonal_naive": 2.77355,
+      "log_seasonal_naive": -2.5206
+    },
+    {
+      "group": "MRSA",
+      "n": 552,
+      "mae_model": 2.53804,
+      "log_model": -2.33493,
+      "mae_persistence": 3.24094,
+      "log_persistence": -2.95527,
+      "mae_seasonal_naive": 3.33877,
+      "log_seasonal_naive": -3.19181
+    },
+    {
+      "group": "ESBL",
+      "n": 552,
+      "mae_model": 5.55072,
+      "log_model": -3.3746,
+      "mae_persistence": 6.11232,
+      "log_persistence": -3.89407,
+      "mae_seasonal_naive": 6.93841,
+      "log_seasonal_naive": -5.10523
+    },
+    {
+      "group": "VRE",
+      "n": 552,
+      "mae_model": 0.217391,
+      "log_model": -0.47745,
+      "mae_persistence": 0.271739,
+      "log_persistence": -0.727527,
+      "mae_seasonal_naive": 0.271739,
+      "log_seasonal_naive": -0.804847
+    },
+    {
+      "group": "CPE",
+      "n": 552,
+      "mae_model": 0.362319,
+      "log_model": -0.724532,
+      "mae_persistence": 0.507246,
+      "log_persistence": -0.943146,
+      "mae_seasonal_naive": 0.54529,
+      "log_seasonal_naive": -0.980517
+    },
+    {
+      "group": "national",
+      "n": 96,
+      "mae_model": 24.0104,
+      "log_model": -4.16,
+      "mae_persistence": 21.3229,
+      "log_persistence": -5.70793,
+      "mae_seasonal_naive": 29.7917,
+      "log_seasonal_naive": -7.67947
+    }
+  ],
+  "selected": {
+    "tuned_on": "targets 2024-01 to 2024-09 (windows from 2021-01); no scoring-period number used",
+    "tune_targets": [
+      "2024-01",
+      "2024-02",
+      "2024-03",
+      "2024-04",
+      "2024-05",
+      "2024-06",
+      "2024-07",
+      "2024-08",
+      "2024-09"
+    ],
+    "R1": {
+      "window": 24,
+      "k": 0,
+      "trend": false,
+      "rho": 0.0,
+      "dispersion": "quasi_pooled",
+      "floor": 0.1
+    },
+    "R2": {
+      "MRSA": {
+        "window": 24,
+        "k": 0,
+        "trend": false,
+        "rho": 0.0,
+        "dispersion": "quasi_pooled",
+        "floor": 0.5
+      },
+      "ESBL": {
+        "window": 24,
+        "k": 0,
+        "trend": false,
+        "rho": 0.0,
+        "dispersion": "poisson",
+        "floor": 0.5
+      },
+      "VRE": {
+        "window": 36,
+        "k": 0,
+        "trend": false,
+        "rho": 0.0,
+        "dispersion": "quasi",
+        "floor": 0.02
+      },
+      "CPE": {
+        "window": 36,
+        "k": 0,
+        "trend": false,
+        "rho": 0.0,
+        "dispersion": "poisson",
+        "floor": 0.1
+      }
+    },
+    "R3": {
+      "window": 24,
+      "k": 1,
+      "trend": false,
+      "rho": 0.0,
+      "dispersion": "quasi_pooled",
+      "floor": 0.1
+    },
+    "R4": {
+      "window": 24,
+      "k": 0,
+      "trend": false,
+      "rho": 0.0,
+      "dispersion": "poisson",
+      "floor": 0.1
+    },
+    "eligible_cells_pooled": 8,
+    "eligible_cells_by_phenotype": {
+      "MRSA": 9,
+      "ESBL": 30,
+      "VRE": 24,
+      "CPE": 24
+    }
+  },
+  "diagnostics": {
+    "coverage90": {
+      "pooled": {
+        "all": 0.939312,
+        "n_all": 2208,
+        "window_mean_ge5": 0.884226,
+        "n_window_mean_ge5": 691
+      },
+      "MRSA": {
+        "all": 0.918478,
+        "n_all": 552,
+        "window_mean_ge5": 0.867052,
+        "n_window_mean_ge5": 173
+      },
+      "ESBL": {
+        "all": 0.893116,
+        "n_all": 552,
+        "window_mean_ge5": 0.889961,
+        "n_window_mean_ge5": 518
+      },
+      "VRE": {
+        "all": 0.96558,
+        "n_all": 552,
+        "window_mean_ge5": null,
+        "n_window_mean_ge5": 0
+      },
+      "CPE": {
+        "all": 0.980072,
+        "n_all": 552,
+        "window_mean_ge5": null,
+        "n_window_mean_ge5": 0
+      },
+      "national": {
+        "all": 0.885417,
+        "n_all": 96,
+        "window_mean_ge5": 0.890411,
+        "n_window_mean_ge5": 73
+      }
+    },
+    "status": {
+      "pooled": {
+        "fit": 2074,
+        "sparse": 0,
+        "no_converge": 0,
+        "explosion": 0,
+        "empty": 134
+      },
+      "MRSA": {
+        "fit": 552,
+        "sparse": 0,
+        "no_converge": 0,
+        "explosion": 0,
+        "empty": 0
+      },
+      "ESBL": {
+        "fit": 552,
+        "sparse": 0,
+        "no_converge": 0,
+        "explosion": 0,
+        "empty": 0
+      },
+      "VRE": {
+        "fit": 438,
+        "sparse": 0,
+        "no_converge": 0,
+        "explosion": 0,
+        "empty": 114
+      },
+      "CPE": {
+        "fit": 532,
+        "sparse": 0,
+        "no_converge": 0,
+        "explosion": 0,
+        "empty": 20
+      },
+      "national": {
+        "fit": 96,
+        "sparse": 0,
+        "no_converge": 0,
+        "explosion": 0,
+        "empty": 0
+      }
+    }
+  }
+}
