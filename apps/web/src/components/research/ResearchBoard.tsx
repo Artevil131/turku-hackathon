@@ -119,6 +119,9 @@ export function ResearchBoard(props: Props) {
   return (
     <div className="section board">
       <Workspace
+        projectId={project.id}
+        project={project.response?.project}
+        client={client}
         locale={locale}
         content={content}
         toolbar={

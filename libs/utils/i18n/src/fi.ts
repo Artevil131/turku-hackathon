@@ -15,9 +15,11 @@ import { networkFi } from "./surfaces/network.ts";
 import { projectsFi } from "./surfaces/projects.ts";
 import { qualityFi } from "./surfaces/quality.ts";
 import { sitesFi } from "./surfaces/sites.ts";
+import { startFi } from "./surfaces/start.ts";
 import { timelineFi } from "./surfaces/timeline.ts";
 
 export const fi: Record<keyof typeof en, string> = {
+  ...startFi,
   askSubmit: "Kysy",
   askLoading: "Tulkitaan…",
   askUnavailable: "Avustaja ei ole käytettävissä. Käytä rajauksia.",

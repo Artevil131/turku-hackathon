@@ -84,6 +84,22 @@
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+:root[data-density="comfortable"] {
+  --control-h: 40px;
+  --row-h: 44px;
+  --pad: 16px;
+  --gap: 12px;
+  --t-s: 15px;
+  --t-xs: 13px;
+}
+
+:root[data-density="compact"] {
+  --control-h: 26px;
+  --row-h: 28px;
+  --pad: 8px;
+  --gap: 6px;
+}
+
 :root[data-theme="dark"] {
   color-scheme: dark;
   --brand-accent-soft: #23214f;

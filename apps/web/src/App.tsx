@@ -1,10 +1,10 @@
 import type { Flow } from "@aei/contract";
-import type { WardCode } from "@aei/domain";
 import { formatDate, type Locale, t } from "@aei/i18n";
 import { Fragment, lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
-import { DoctorPage } from "./components/doctor/DoctorPage.tsx";
-import { Home, type Role } from "./components/Home.tsx";
+import * as doctorFilters from "./components/doctor/filters.ts";
 import { SiteLine } from "./components/SitePicker.tsx";
+import { type Audience, storedAudience } from "./components/start/audience.ts";
+import { StartPage } from "./components/start/StartPage.tsx";
 import { Timeline } from "./components/Timeline.tsx";
 import { type Page, TopBar } from "./components/TopBar.tsx";
 import { useLive } from "./live.ts";
@@ -62,8 +62,22 @@ function store(key: string, value: string | null) {
 
 // The page is in the URL hash (#doctor, #research) so it can be bookmarked.
 function pageFromHash(): Page {
-  const value = hashPage() as Page;
-  return PAGES.includes(value) ? value : "home";
+  const value = hashPage();
+  if (value === "doctor") {
+    const previous = hashParams();
+    // TODO(coverage integration): use the direct import once the parallel coverage change lands.
+    const convert = (doctorFilters as unknown as { doctorParamsToWindow?: (params: URLSearchParams) => Record<string, string> })
+      .doctorParamsToWindow;
+    const params = convert ? new URLSearchParams(convert(previous)) : previous;
+    if (previous.has(HOSPITAL_PARAM)) params.set(HOSPITAL_PARAM, previous.get(HOSPITAL_PARAM) as string);
+    params.delete("project");
+    params.set("quick", "patient");
+    history.replaceState(null, "", `#workspace?${params}`);
+    return "research";
+  }
+  if (value === "workspace") return "research";
+  if (value === "start") return "home";
+  return PAGES.includes(value as Page) ? (value as Page) : "home";
 }
 
 function usePrefersReducedMotion(): boolean {
@@ -81,10 +95,10 @@ function usePrefersReducedMotion(): boolean {
 export function App() {
   const [locale, setLocale] = useState<Locale>(() => stored("aei.locale", "fi", (v) => v === "fi" || v === "en"));
   const [page, setPage] = useState<Page>(pageFromHash);
-  const [lastRole, setLastRole] = useState<Role | null>(() => {
-    const r = stored<Role | "">("aei.role", "", (v) => v === "doctor" || v === "research");
-    return r === "" ? null : r;
-  });
+  const [route, setRoute] = useState({ hash: location.hash });
+  const [audience, setAudience] = useState<Audience>(storedAudience);
+  const [workspaceUrl, setWorkspaceUrl] = useState("#workspace");
+  const [projectName, setProjectName] = useState<string | null>(null);
   const live = useLive();
   const reducedMotion = usePrefersReducedMotion();
 
@@ -111,7 +125,6 @@ export function App() {
   // biome-ignore lint/correctness/useExhaustiveDependencies: sitesReady marks the registry as loaded
   const client = useMemo(() => scopeClient(live.client, scope), [live.client, scope, sitesReady]);
   const alerts = useMemo(() => (isMulti() ? alertsOf(live.alerts, scope) : live.alerts), [live.alerts, scope]);
-  const records = useMemo(() => (isMulti() ? recordsOf(live.records, scope) : live.records), [live.records, scope]);
   const findings = useMemo(
     () => (isMulti() ? live.findings.filter((f) => recordsOf([f.record], scope).length) : live.findings),
     [live.findings, scope],
@@ -131,18 +144,44 @@ export function App() {
     document.documentElement.lang = locale;
     store("aei.locale", locale);
   }, [locale]);
-  useEffect(() => store("aei.role", lastRole), [lastRole]);
   useEffect(() => {
-    // Only a page change touches history; the page's own params (url.ts) stay.
-    // The selected hospital travels with the page.
-    const keep = sharedQuery();
-    if (hashPage() !== (page === "home" ? "" : page))
-      history.pushState(null, "", page === "home" && !keep ? location.pathname : `#${page === "home" ? "" : page}${keep}`);
-    if (page === "doctor" || page === "research") setLastRole(page);
-  }, [page]);
+    store("aei.audience", audience);
+    document.documentElement.dataset.density = audience === "clinician" ? "comfortable" : audience === "researcher" ? "compact" : "default";
+  }, [audience]);
+  const navigate = useCallback(
+    (next: Page) => {
+      if (page === "research") setWorkspaceUrl(location.hash);
+      history.pushState(null, "", next === "home" ? `#${sharedQuery()}` : next === "research" ? workspaceUrl : `#${next}${sharedQuery()}`);
+      setPage(next);
+      dispatchEvent(new HashChangeEvent("hashchange"));
+    },
+    [page, workspaceUrl],
+  );
+  useEffect(() => {
+    const id = new URLSearchParams(route.hash.split("?")[1] ?? "").get("project");
+    if (page !== "research") return;
+    setWorkspaceUrl(location.hash);
+    if (!id) {
+      setProjectName(null);
+      return;
+    }
+    let stale = false;
+    client
+      .project(id)
+      .then(({ project }) => {
+        if (!stale) setProjectName(project.name);
+      })
+      .catch(() => {
+        if (!stale) setProjectName(null);
+      });
+    return () => {
+      stale = true;
+    };
+  }, [client, page, route]);
   useEffect(() => {
     const onHash = () => {
       setPage(pageFromHash());
+      setRoute({ hash: location.hash });
       // Back and forward, or a pasted link, may name another hospital.
       if (isMulti()) {
         const s = validSite(hashParams().get(HOSPITAL_PARAM));
@@ -158,12 +197,6 @@ export function App() {
     };
   }, []);
 
-  // Opens the researcher's board filtered to a unit; the board reads its state from the URL on mount.
-  const openSignals = useCallback((ward: WardCode) => {
-    history.pushState(null, "", `#research?unit=${encodeURIComponent(ward)}${sharedQuery().replace("?", "&")}`);
-    setPage("research");
-  }, []);
-
   // The pitch intro is full screen, without the working tool's chrome.
   if (page === "intro")
     return (
@@ -172,7 +205,7 @@ export function App() {
           client={client}
           locale={locale}
           asOf={live.clock?.asOf ?? null}
-          onEnter={() => setPage("home")}
+          onEnter={() => navigate("home")}
           reducedMotion={reducedMotion}
         />
       </Suspense>
@@ -190,46 +223,42 @@ export function App() {
           <TopBar
             locale={locale}
             page={page}
-            onPage={setPage}
+            onPage={navigate}
+            projectName={projectName}
             asOf={live.clock?.asOf ?? null}
             alerts={live.alertsLoaded ? alerts : undefined}
           />
-          <Timeline
-            key={siteKey}
-            client={client}
-            liveAlerts={liveAlerts}
-            locale={locale}
-            clock={live.clock}
-            connection={live.connection}
-            lastArrivals={live.lastArrivals}
-            command={live.command}
-            reducedMotion={reducedMotion}
-            collapsible
-          />
+          {page === "research" ? (
+            <Timeline
+              key={siteKey}
+              client={client}
+              liveAlerts={liveAlerts}
+              locale={locale}
+              clock={live.clock}
+              connection={live.connection}
+              lastArrivals={live.lastArrivals}
+              command={live.command}
+              reducedMotion={reducedMotion}
+              collapsible
+            />
+          ) : page === "home" && live.clock ? (
+            <p className="start-clock">{t(locale, "startClock", { date: formatDate(locale, live.clock.asOf, "long") })}</p>
+          ) : null}
 
           <main id="main-content" className="page" tabIndex={-1}>
             <SiteLine locale={locale} />
             <Fragment key={siteKey}>
               {page === "home" ? (
-                <Home
-                  locale={locale}
-                  clock={live.clock}
-                  findings={findings}
-                  lastRole={lastRole}
-                  onRole={setPage}
-                  connection={live.connection}
-                  alerts={live.alertsLoaded ? alerts : undefined}
-                  records={records}
-                />
-              ) : null}
-              {page === "doctor" ? (
-                <DoctorPage
+                <StartPage
                   client={client}
                   locale={locale}
-                  asOf={live.clock?.asOf ?? null}
+                  clock={live.clock?.asOf ?? null}
                   alerts={alerts}
-                  alertsStatus={live.alertsLoaded ? "ready" : "loading"}
-                  onOpenSignals={openSignals}
+                  audience={audience}
+                  onAudience={(next) => {
+                    store("aei.research.layout.v2", null);
+                    setAudience(next);
+                  }}
                 />
               ) : null}
               <Suspense fallback={<div className="section" aria-busy="true" />}>
@@ -246,7 +275,7 @@ export function App() {
                 {page === "method" ? <MethodPage client={client} locale={locale} asOf={live.clock?.asOf ?? null} /> : null}
                 {page === "connect" ? <ConnectPage client={live.client} locale={locale} /> : null}
                 {page === "settings" ? (
-                  <Settings client={client} locale={locale} onLocale={setLocale} onResetRole={() => setLastRole(null)} />
+                  <Settings client={client} locale={locale} onLocale={setLocale} onResetRole={() => setAudience("control")} />
                 ) : null}
               </Suspense>
             </Fragment>

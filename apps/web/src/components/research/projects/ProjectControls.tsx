@@ -3,6 +3,7 @@ import { figurePngFile, figureSvgFile, toCsvFiles, toDocx, toJson, toLatex, toMa
 import { type Locale, t } from "@aei/i18n";
 import { useRef, useState } from "react";
 import { downloadFile } from "../../../downloadFile.ts";
+import { ShareDialog } from "../../start/ShareDialog.tsx";
 import type { BoardState } from "../board.ts";
 import { workspaceBundle } from "./bundle.ts";
 import { type ExportFormat, ExportFormatButtons, ExportMenu } from "./ExportMenu.tsx";
@@ -26,6 +27,7 @@ export function ProjectControls({
   onReproduce?: () => void;
 }) {
   const [panel, setPanel] = useState<"projects" | "export" | null>(null);
+  const [sharing, setSharing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<"exportError" | "exportNoFigures" | "exportDone" | null>(null);
   const root = useRef<HTMLDivElement>(null);
@@ -112,6 +114,12 @@ export function ProjectControls({
         >
           {t(locale, busy ? "exportBuilding" : "exportButton")}
         </button>
+        {project ? (
+          <button type="button" className="ws-tray-button" onClick={() => setSharing(true)}>
+            {t(locale, "startShare")}
+          </button>
+        ) : null}
+        {sharing && project ? <ShareDialog project={project} locale={locale} onClose={() => setSharing(false)} /> : null}
         {project && onReproduce ? (
           <button type="button" className="ws-tray-button" data-open-reproduce onClick={onReproduce}>
             {t(locale, "boardReproduce")}

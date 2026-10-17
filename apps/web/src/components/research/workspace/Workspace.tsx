@@ -1,3 +1,4 @@
+import type { AeiClient, Project } from "@aei/contract";
 import { type Locale, t } from "@aei/i18n";
 import {
   type CSSProperties,
@@ -11,6 +12,8 @@ import {
   useRef,
   useState,
 } from "react";
+import { hashParams } from "../../../url.ts";
+import { storedAudience } from "../../start/audience.ts";
 import {
   closeWindow,
   defaultLayout,
@@ -24,6 +27,7 @@ import {
   minWindowHeight,
   moveWindow,
   type Preset,
+  parseLayout,
   presetLayout,
   reopenWindow,
   resizeColumns,
@@ -34,6 +38,7 @@ import {
   WIN_IDS,
   type WinId,
 } from "./layout.ts";
+import { templateLayout } from "./templates.ts";
 import "./workspace.css";
 
 const TITLE_KEY = {
@@ -51,7 +56,10 @@ const PRESETS = ["default", "map", "signals", "units"] as const;
 const PRESET_KEY = { default: "wsDefault", map: "wsMap", signals: "wsSignals", units: "wsUnits" } as const;
 function loadLayout(): Layout {
   try {
-    return migrateLayout(localStorage.getItem(STORAGE_KEY));
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) return migrateLayout(saved);
+    const audience = storedAudience();
+    return audience === "clinician" ? templateLayout("patient") : audience === "researcher" ? templateLayout("blank") : defaultLayout();
   } catch {
     return defaultLayout();
   }
@@ -97,6 +105,9 @@ type Gesture = Move | Resize;
 type Drop = { slot: Slot; top: number };
 
 export function Workspace({
+  projectId,
+  project,
+  client,
   locale,
   content,
   onOpened,
@@ -106,6 +117,9 @@ export function Workspace({
   toolbar,
   overlay,
 }: {
+  projectId?: string | null;
+  project?: Project;
+  client?: AeiClient;
   locale: Locale;
   toolbar?: ReactNode;
   /** Stable content outside the reparented dock windows. */
@@ -118,7 +132,50 @@ export function Workspace({
   reveal?: { id: WinId; key: string | null };
 }) {
   const wide = useWide();
-  const [layout, setLayout] = useState<Layout>(() => (initiallyOpen ?? []).reduce(reopenWindow, loadLayout()));
+  const initialLayout = () => {
+    const initial = project?.layout ? parseLayout(JSON.stringify(project.layout)) : null;
+    const fallback = !project && hashParams().get("quick") === "patient" ? templateLayout("patient") : loadLayout();
+    return (initiallyOpen ?? []).reduce(reopenWindow, initial ?? fallback);
+  };
+  const [layout, setLayout] = useState<Layout>(initialLayout);
+  const pending = useRef<{ id: string; layout: Layout } | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveQueue = useRef(Promise.resolve());
+  const [saveFailed, setSaveFailed] = useState(false);
+  const persist = useCallback(() => {
+    const next = pending.current;
+    pending.current = null;
+    if (!next || !client) return;
+    saveQueue.current = saveQueue.current.then(async () => {
+      try {
+        // Read just before replacing, so a project-dialog edit or earlier save is not overwritten by stale props.
+        const fresh = await client.project(next.id);
+        await client.updateProject(next.id, { ...fresh.project, layout: JSON.parse(serializeLayout(next.layout)) });
+        setSaveFailed(false);
+      } catch {
+        setSaveFailed(true);
+      }
+    });
+    return saveQueue.current;
+  }, [client]);
+  useEffect(
+    () => () => {
+      if (timer.current) clearTimeout(timer.current);
+      void persist();
+    },
+    [persist],
+  );
+  const loadedIdentity = `${projectId ?? ""}:${project?.id ?? ""}:${projectId ? "" : (hashParams().get("quick") ?? "")}`;
+  const initialized = useRef(loadedIdentity);
+  useEffect(() => {
+    if (initialized.current === loadedIdentity) return;
+    initialized.current = loadedIdentity;
+    if (timer.current) clearTimeout(timer.current);
+    void persist();
+    setLayout(initialLayout());
+    setFitted(false);
+    setSaveFailed(false);
+  });
   // Windows render only once the stored layout is fitted to the measured board, so none mounts squashed.
   const [fitted, setFitted] = useState(false);
   const [draft, setDraft] = useState<Layout | null>(null);
@@ -132,7 +189,11 @@ export function Workspace({
   const title = (id: WinId) => t(locale, TITLE_KEY[id]);
   const commit = (next: Layout) => {
     setLayout(next);
-    saveLayout(next);
+    if (project && client) {
+      pending.current = { id: project.id, layout: next };
+      if (timer.current) clearTimeout(timer.current);
+      timer.current = setTimeout(() => void persist(), 1000);
+    } else if (!projectId) saveLayout(next);
   };
   const keep = useRef(initiallyOpen ?? []);
   useLayoutEffect(() => {
@@ -464,6 +525,7 @@ export function Workspace({
           </div>
         ) : null}
       </div>
+      {saveFailed ? <p role="alert">{t(locale, "layoutSaveError")}</p> : null}
       {overlay}
       {moving ? (
         <div className="ws-drag-label" aria-hidden="true" style={{ left: moving.x + 12, top: moving.y + 12 }}>
