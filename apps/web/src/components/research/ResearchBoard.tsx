@@ -85,26 +85,36 @@ export function ResearchBoard(props: Props) {
     if (project.missing) gone();
   }, [project.missing, gone]);
   const [notebookLanguage, setNotebookLanguage] = useState<NotebookLanguage>("python");
-  // The timeline's dragged range (`from=`, `to=`) stays too: the tool rail reads it as its frame.
+  // The timeline's dragged range (`from=`, `to=`) stays too: the tool rail reads it as its frame. So do the
+  // coverage window's own keys (`cov.*`): a link such as #doctor?unit=URO&ab=MEM arrives as cov.unit, cov.ab
+  // and must survive the board's first write, or the drug a search asked for is lost.
   useEffect(() => {
     const keep = hashParams();
-    writeHashParams({ ...boardToParams(state), project: keep.get("project"), from: keep.get("from"), to: keep.get("to") });
+    const cov = Object.fromEntries([...keep].filter(([key]) => key.startsWith("cov.")));
+    writeHashParams({ ...cov, ...boardToParams(state), project: keep.get("project"), from: keep.get("from"), to: keep.get("to") });
   }, [state]);
   // A link followed inside the app (or the back button) changes the hash without remounting.
   // Also when another component (the timeline's pills and lanes) writes `inc=` or `unit=` through url.ts.
+  const [reveal, setReveal] = useState<{ id: WinId; key: string | null }>({ id: "signals", key: state.incident });
+  // A doctor link (#doctor?…, arriving as `cov.*`) into a board that had none opens the coverage window: the
+  // board is not remounted for it, so the window would otherwise stay wherever the saved layout left it.
+  const hadCov = useRef([...hashParams().keys()].some((key) => key.startsWith("cov.")));
   useEffect(() => {
-    const onHash = () =>
+    const onHash = () => {
       setState((s) => {
         const next = boardFromUrl();
         return JSON.stringify(boardToParams(s)) === JSON.stringify(boardToParams(next)) ? s : next;
       });
+      const hasCov = [...hashParams().keys()].some((key) => key.startsWith("cov."));
+      if (hasCov && !hadCov.current) setReveal({ id: "coverage", key: `coverage-link-${Date.now()}` });
+      hadCov.current = hasCov;
+    };
     return subscribeHash(onHash);
   }, []);
 
   // "Show on map" (the signal card): reveal the map window and select the site's county in it. The county is
   // cleared when another incident is chosen, so the next click selects it again.
   const [mapCounty, setMapCounty] = useState<string | null>(null);
-  const [reveal, setReveal] = useState<{ id: WinId; key: string | null }>({ id: "signals", key: state.incident });
   const mapClicks = useRef(0);
   // "Open in Tools" (the card): the Tools window takes the signal's slice; cleared with the next selection.
   const [toolsPreset, setToolsPreset] = useState<Slice | null>(null);
