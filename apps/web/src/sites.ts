@@ -134,7 +134,7 @@ function mergeWeekly(parts: readonly WeeklyResponse[]): WeeklyResponse {
 /**
  * The client with the hospital added to every per-site query, and the live stream filtered to it.
  * All hospitals: the queries as they are, and the weekly series of each hospital side by side.
- * With one hospital: the client itself.
+ * With one hospital: the client itself. A query that names its own site keeps it (the notebook's slice of another hospital).
  */
 export function scopeClient(client: AeiClient, site: SiteId | null): AeiClient {
   if (!isMulti()) return client;
@@ -153,12 +153,12 @@ export function scopeClient(client: AeiClient, site: SiteId | null): AeiClient {
   };
   return {
     ...client,
-    coverage: (q) => client.coverage({ ...q, site }),
-    isolates: (q) => client.isolates({ ...q, site }),
-    relations: (q) => client.relations({ ...q, site }),
-    alerts: (q) => client.alerts({ ...q, site }),
-    weekly: (q) => client.weekly({ ...q, site }),
-    quality: (q) => client.quality({ ...q, site }),
+    coverage: (q) => client.coverage({ site, ...q }),
+    isolates: (q) => client.isolates({ site, ...q }),
+    relations: (q) => client.relations({ site, ...q }),
+    alerts: (q) => client.alerts({ site, ...q }),
+    weekly: (q) => client.weekly({ site, ...q }),
+    quality: (q) => client.quality({ site, ...q }),
     live: (onEvent, onError) =>
       client.live((e) => {
         const kept = keep(e);

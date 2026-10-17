@@ -1,6 +1,15 @@
 import { ANTIBIOTICS, ORGANISMS } from "@aei/domain";
 import { describe, expect, it } from "vitest";
-import { defeatedBy, effectiveResult, INTRINSIC, inferredResistantFrom, inferredResult, isIntrinsic, NO_BREAKPOINT, suitsSpecimen } from "./index.ts";
+import {
+  defeatedBy,
+  effectiveResult,
+  INTRINSIC,
+  inferredResistantFrom,
+  inferredResult,
+  isIntrinsic,
+  NO_BREAKPOINT,
+  suitsSpecimen,
+} from "./index.ts";
 
 describe("rule tables", () => {
   it("name only the dataset's organisms and antibiotics, each pair once", () => {

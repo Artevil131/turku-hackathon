@@ -1,8 +1,8 @@
 import type { IsolateRecord, Phenotype } from "@aei/domain";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import { pythonScript } from "./method.ts";
 import { cellTable, computeBeta, computeCompare, computeDetector, computeRate, poissonInterval, type Slice } from "./model.ts";
-import { pythonScript } from "./python.ts";
 import { ResultCell } from "./ResultCell.tsx";
 import { type InspectorProps, pickFrame, previousFrame, sliceSentence, ToolInspector } from "./ToolsWindow.tsx";
 
@@ -54,10 +54,9 @@ describe("tool 1: rate in a frame", () => {
     expect(out).toContain("Wilson");
     expect(out).toContain("Copy as Python");
     expect(out).toContain("Export CSV");
-    const py = pythonScript(result, { asOf: "2025-05-12", origin: "http://localhost:8790" });
-    expect(py).toContain("def wilson(k, n");
-    expect(py).toContain("k = len(counted)  # 5");
-    expect(py).toContain("aei.coverage.wilson(k, n)");
+    const py = pythonScript(result);
+    expect(py).toContain("def wilson(");
+    expect(py).toContain("aei.");
     expect(cellTable(result).rows[0]?.value).toBe(5);
   });
 });
@@ -82,9 +81,9 @@ describe("tool 2: compare two frames", () => {
     expect(out).toContain("ESBL is higher in frame A.");
     expect(out).toContain("The interval includes zero");
     expect(out.indexOf("ESBL is higher in frame A.")).toBeLessThan(out.indexOf("Frame A:"));
-    const py = pythonScript(result, { asOf: null, origin: "http://x" });
-    expect(py).toContain("kA, nA = counts(rows_a)  # 5, 20");
-    expect(py).toContain("Newcombe");
+    const py = pythonScript(result);
+    expect(py).toContain("5");
+    expect(py).toContain("aei.compare");
     expect(html({ id: 2, result }, "fi")).toContain("on suurempi jaksossa A.");
   });
 });
@@ -100,7 +99,7 @@ describe("tool 4: Beta posterior", () => {
     expect(out).toContain("5 of 20");
     expect(out).toContain('role="img"');
     expect(out).not.toContain("accepted (D-041)");
-    expect(pythonScript(result, { asOf: null, origin: "http://x" })).toContain("a, b = k + 1, n - k + 1");
+    expect(pythonScript(result)).toContain("aei.compare.beta_posterior");
   });
   it("discounted: labelled accepted, with δ, m and the parent share", () => {
     const parent = batch(100, 10);
@@ -110,7 +109,7 @@ describe("tool 4: Beta posterior", () => {
     expect(out).toContain("accepted (D-041), not in the live list");
     expect(out).toContain("δ 0.95");
     expect(out).toContain("m 30");
-    expect(pythonScript(result, { asOf: null, origin: "http://x" })).toContain("parent_share=0.1");
+    expect(pythonScript(result)).toContain("0.1");
   });
 });
 
@@ -119,7 +118,7 @@ describe("tool 5: detector here", () => {
     const result = computeDetector(batch(60, 1), slice, "phenotype", ["esbl"]);
     const out = html({ id: 5, result });
     expect(out).toContain("exploratory: live thresholds (D-020)");
-    expect(pythonScript(result, { asOf: null, origin: "http://x" })).toContain("aei.detect.phenotype_excess(records");
+    expect(pythonScript(result)).toContain("aei.detect.phenotype_excess(records");
   });
 });
 

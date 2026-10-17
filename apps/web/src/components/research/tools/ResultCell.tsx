@@ -4,6 +4,7 @@ import { formatNum, formatP } from "@aei/viz";
 import { type ReactNode, useState } from "react";
 import { downloadFile } from "../../../downloadFile.ts";
 import { BetaCurve, ShareLine } from "./Charts.tsx";
+import { pythonScript } from "./method.ts";
 import {
   type BetaResult,
   type Cell,
@@ -15,7 +16,6 @@ import {
   type RateResult,
   type SharesResult,
 } from "./model.ts";
-import { pythonScript } from "./python.ts";
 import { ChartIcon, CopyIcon, DownloadIcon } from "./ToolIcons.tsx";
 
 // One result cell: a title in words, the numbers, one method line, Copy as Python, Export CSV, remove.
@@ -257,23 +257,27 @@ function Detector({ r, locale }: { r: DetectorResult; locale: Locale }) {
 export function ResultCell({
   cell,
   locale,
-  asOf,
   onRemove,
   onChart,
   fresh = false,
+  onToNotebook,
+  removable = true,
 }: {
   cell: Cell;
   locale: Locale;
-  /** The clock's date, named in the copied script so the numbers can be reproduced. */
-  asOf?: string | null;
   onRemove?: (id: number) => void;
   /** Adds this result as a chart window; not offered for a detector run (it is a table). */
   onChart?: (result: Cell["result"]) => void;
   /** The newest result: it gets the short entrance. */
   fresh?: boolean;
+  /** Appends this result to the notebook page as an analysis cell under a slice cell of its slice. */
+  onToNotebook?: (result: Cell["result"]) => void;
+  /** Hides the × (the notebook cell has its own remove). */
+  removable?: boolean;
 }) {
   const r = cell.result;
   const [copied, setCopied] = useState(false);
+  const [sent, setSent] = useState(false);
   const event =
     r.kind === "compare" || r.kind === "shares" || r.kind === "beta"
       ? eventName(locale, r.event)
@@ -283,9 +287,7 @@ export function ResultCell({
   const title = t(locale, (r.kind === "rate" && !event ? "toolsTitle_rateAll" : `toolsTitle_${r.kind}`) as "toolsTitle_rate", { event });
   const copy = async () => {
     try {
-      await navigator.clipboard.writeText(
-        pythonScript(r, { asOf: asOf ?? null, origin: typeof location === "undefined" ? "http://localhost:8790" : location.origin }),
-      );
+      await navigator.clipboard.writeText(pythonScript(r));
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
     } catch {
@@ -299,15 +301,17 @@ export function ResultCell({
           <h3>{title}</h3>
           <p className="tl-slice-line">{sliceWords(locale, r)}</p>
         </div>
-        <button
-          type="button"
-          className="tl-x"
-          aria-label={t(locale, "toolsRemove")}
-          title={t(locale, "toolsRemove")}
-          onClick={() => onRemove?.(cell.id)}
-        >
-          ×
-        </button>
+        {removable && (
+          <button
+            type="button"
+            className="tl-x"
+            aria-label={t(locale, "toolsRemove")}
+            title={t(locale, "toolsRemove")}
+            onClick={() => onRemove?.(cell.id)}
+          >
+            ×
+          </button>
+        )}
       </header>
       {r.kind === "rate" && <Rate r={r} locale={locale} />}
       {r.kind === "compare" && <Compare r={r} locale={locale} />}
@@ -327,6 +331,20 @@ export function ResultCell({
           <button type="button" className="btn tl-act" data-add-chart onClick={() => onChart(r)}>
             <ChartIcon />
             {t(locale, "chartAddAs")}
+          </button>
+        )}
+        {onToNotebook && (
+          <button
+            type="button"
+            className="btn tl-act"
+            data-to-notebook
+            onClick={() => {
+              onToNotebook(r);
+              setSent(true);
+              setTimeout(() => setSent(false), 1800);
+            }}
+          >
+            {t(locale, sent ? "nbAdded" : "nbToNotebook")}
           </button>
         )}
       </footer>

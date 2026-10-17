@@ -1,6 +1,5 @@
-import { t } from "@aei/i18n";
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { currentHospitalName } from "../../sites.ts";
+import { currentSite, homeSite } from "../../sites.ts";
 import { hashParams, subscribeHash, writeHashParams } from "../../url.ts";
 import { Assistant } from "./assistant/Assistant.tsx";
 import { type BoardState, boardFromUrl, boardToParams, type FeedProps } from "./board.ts";
@@ -8,17 +7,20 @@ import { ChartForm } from "./charts/ChartForm.tsx";
 import { ChartWindow } from "./charts/ChartWindow.tsx";
 import type { ChartSpec } from "./charts/spec.ts";
 import { applyFilters } from "./feed/model.ts";
-import { unitLabel } from "./feed/names.ts";
 import { computeSpans, useRelations } from "./feed/spans.ts";
 import { useIncidents } from "./feed/useIncidents.ts";
 import { GeoMap } from "./geo/GeoMap.tsx";
 import { UnitGraph } from "./geo/UnitGraph.tsx";
 import { AlertMath } from "./math/AlertMath.tsx";
+import type { SliceSources } from "./notebook/cells/SliceCell.tsx";
+import { appendResult, pageSlot, withSite } from "./notebook/model.ts";
+import { Notebook } from "./notebook/Notebook.tsx";
+import { useNotebookPage } from "./notebook/usePage.ts";
 import { ProjectControls } from "./projects/ProjectControls.tsx";
 import { type NotebookLanguage, Reproduce, ReproduceHost } from "./projects/Reproduce.tsx";
 import { useProject } from "./projects/useProject.ts";
 import { SignalFeed } from "./SignalFeed.tsx";
-import type { Cell, Slice } from "./tools/model.ts";
+import type { Cell, CellResult, Slice } from "./tools/model.ts";
 import { ToolRail } from "./tools/ToolRail.tsx";
 import { UnitGrid } from "./UnitGrid.tsx";
 import type { WinId } from "./workspace/layout.ts";
@@ -150,6 +152,24 @@ export function ResearchBoard(props: Props) {
     : (picked ?? signalWindow);
   const back = useCallback(() => onChange({ incident: null }), [onChange]);
 
+  // The notebook page: one per hospital, and per project when one is open (kept in this browser; the project
+  // shell, @aei/projects, stores no page). The board holds it, so "To notebook" reaches a closed window too.
+  const notebook = useNotebookPage(pageSlot(currentSite(), project.id));
+  const updateNotebook = notebook.update;
+  const toNotebook = useCallback(
+    (r: CellResult) => {
+      updateNotebook((p) => appendResult(p, withSite(r, currentSite() ?? homeSite().id)));
+      setReveal({ id: "notebook", key: `notebook-${Date.now()}` });
+    },
+    [updateNotebook],
+  );
+  const reproduceIn = useCallback((lang: NotebookLanguage) => {
+    setNotebookLanguage(lang);
+    setReveal({ id: "reproduce", key: `reproduce-${Date.now()}` });
+  }, []);
+  const notebookSignal: SliceSources["signal"] =
+    signalWindow && selected ? { ...signalWindow, unit: selected.ward ?? "", phenotype: state.phenotype ?? "" } : null;
+
   const card = (layer: boolean) => (
     <AlertMath
       client={client}
@@ -190,6 +210,19 @@ export function ResearchBoard(props: Props) {
     graph: <UnitGraph {...panelProps} />,
     grid: <UnitGrid {...panelProps} />,
     math: card(false),
+    notebook: (
+      <Notebook
+        client={client}
+        locale={locale}
+        asOf={asOf}
+        page={notebook.page}
+        update={notebook.update}
+        projectId={project.id}
+        signal={notebookSignal}
+        railCells={cells}
+        onReproduce={reproduceIn}
+      />
+    ),
     assistant: (
       <Assistant client={client} locale={locale} incident={selected} spans={selected ? spansOf(selected) : null} waiting={loading} />
     ),
@@ -248,6 +281,7 @@ export function ResearchBoard(props: Props) {
             window={toolsWindow}
             onAddChart={addChart}
             onCells={setCells}
+            onToNotebook={toNotebook}
             chartMenu={chartMenu}
             request={railRequest}
           />

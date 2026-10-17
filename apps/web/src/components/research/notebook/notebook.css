@@ -1,0 +1,542 @@
+/* The notebook window: a page of cells, light as a lab notebook. Tokens only; the workspace supplies the frame. */
+.nb {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  padding: var(--pad);
+  color: var(--ink);
+  font-size: var(--t-s);
+  min-width: 0;
+}
+.nb *,
+.nb *::before,
+.nb *::after {
+  min-width: 0;
+}
+.nb-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap);
+  /* The window's own focus and close buttons float at the top right. */
+  padding: 0 52px var(--gap) 0;
+  border-bottom: 1px solid var(--line);
+}
+.nb-bar-text {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px var(--gap);
+}
+.nb-h {
+  margin: 0;
+  font: 600 var(--t-m) var(--font-display);
+}
+.nb-bar .nb-muted {
+  margin: 0;
+}
+.nb-muted {
+  margin: 4px 0 0;
+  color: var(--ink-3);
+  font-size: var(--t-xs);
+  line-height: 1.4;
+}
+.nb-empty {
+  margin: var(--pad) 0 0;
+  color: var(--ink-2);
+  line-height: 1.45;
+}
+
+/* ---------- the "+" between cells ---------- */
+.nb-adder {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 20px;
+}
+.nb-adder::before {
+  content: "";
+  position: absolute;
+  inset: 50% 0 auto;
+  height: 1px;
+  background: var(--live);
+  opacity: 0;
+  transition: opacity var(--mo-1) var(--mo-ease);
+}
+.nb-adder:hover::before,
+.nb-adder:focus-within::before,
+.nb-adder[data-open]::before {
+  opacity: 0.35;
+}
+.nb-adder[data-drop]::before {
+  height: 2px;
+  opacity: 1;
+}
+.nb-plus {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  background: var(--glass-1);
+  color: var(--ink-3);
+  cursor: pointer;
+  opacity: 0.45;
+  transition:
+    opacity var(--mo-1) var(--mo-ease),
+    color var(--mo-1) var(--mo-ease),
+    border-color var(--mo-1) var(--mo-ease);
+}
+.nb-adder:hover .nb-plus,
+.nb-plus:focus-visible,
+.nb-plus[aria-expanded="true"] {
+  opacity: 1;
+}
+.nb-plus:hover,
+.nb-plus[aria-expanded="true"] {
+  color: var(--live);
+  border-color: var(--live);
+}
+@media (hover: none) {
+  .nb-plus {
+    opacity: 1;
+  }
+}
+.nb-menu {
+  position: absolute;
+  top: 22px;
+  left: 50%;
+  z-index: 5;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: min(240px, 100cqi);
+  padding: 4px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control);
+  background: var(--glass-1);
+  box-shadow: var(--pop-shadow);
+}
+.nb-menu-group + .nb-menu-group {
+  margin-top: 2px;
+  padding-top: 4px;
+  border-top: 1px solid var(--line);
+}
+.nb-menu-group {
+  display: flex;
+  flex-direction: column;
+}
+.nb-menu-label {
+  padding: 2px 8px;
+  color: var(--ink-3);
+  font-size: var(--t-xs);
+}
+.nb-menu-item {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--gap);
+  min-height: var(--control-h);
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.nb-menu-item:hover,
+.nb-menu-item:focus-visible {
+  background: var(--live-soft);
+  outline: none;
+}
+.nb-menu-hint {
+  color: var(--ink-3);
+  font-size: var(--t-xs);
+  white-space: nowrap;
+}
+
+/* ---------- a cell ---------- */
+.nb-cell {
+  position: relative;
+  padding: 2px 0 4px 10px;
+  border-left: 2px solid var(--line);
+  transition: border-color var(--mo-1) var(--mo-ease);
+}
+.nb-cell:focus {
+  outline: none;
+}
+.nb-cell:focus-visible,
+.nb-cell:focus-within {
+  border-left-color: var(--live);
+}
+.nb-cell[data-kind="slice"] {
+  border-left-color: var(--ink-2);
+}
+.nb-cell[data-dragging] {
+  opacity: 0.45;
+}
+.nb-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+}
+.nb-title {
+  margin: 0;
+  flex: 0 1 auto;
+  color: var(--ink-3);
+  font: 600 var(--t-xs) var(--font-ui);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.nb-cell[data-kind="slice"] .nb-title {
+  color: var(--ink-2);
+}
+.nb-summary {
+  margin: 0;
+  flex: 1 1 0;
+  color: var(--ink-2);
+  font-size: var(--t-xs);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.nb-collapse {
+  margin-left: auto;
+}
+.nb-grip,
+.nb-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--ink-3);
+  fill: currentColor;
+  cursor: pointer;
+}
+.nb-grip {
+  margin-left: -6px;
+  cursor: grab;
+  opacity: 0.5;
+}
+.nb-cell:hover .nb-grip,
+.nb-grip:focus-visible {
+  opacity: 1;
+}
+.nb-grip:active {
+  cursor: grabbing;
+}
+.nb-grip:hover,
+.nb-icon:hover {
+  background: var(--glass-3);
+  color: var(--ink);
+}
+.nb-icon svg {
+  fill: none;
+}
+.nb-body {
+  padding-top: 2px;
+}
+.nb-body[hidden] {
+  display: none;
+}
+
+/* ---------- slice ---------- */
+.nb-sentence {
+  margin: 0 0 6px;
+  font: 600 var(--t-m) var(--font-ui);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.nb-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.nb-fields {
+  margin-top: var(--gap);
+}
+
+/* ---------- note ---------- */
+.nb-note-wrap {
+  position: relative;
+}
+.nb-note {
+  cursor: text;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.nb-note > :first-child {
+  margin-top: 0;
+}
+.nb-note > :last-child {
+  margin-bottom: 0;
+}
+.nb-note :is(h4, h5, h6) {
+  margin: 10px 0 4px;
+  font-family: var(--font-display);
+  color: var(--ink);
+}
+.nb-note h4 {
+  font-size: var(--t-l);
+}
+.nb-note h5 {
+  font-size: var(--t-m);
+}
+.nb-note h6 {
+  font-size: var(--t-s);
+}
+.nb-note p,
+.nb-note ul,
+.nb-note ol {
+  margin: 0 0 6px;
+}
+.nb-note ul,
+.nb-note ol {
+  padding-left: 20px;
+}
+.nb-note code,
+.nb-pre,
+.nb-code-edit,
+.nb-path code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.nb-note code {
+  padding: 0 3px;
+  border-radius: 3px;
+  background: var(--glass-3);
+  border: 1px solid var(--line);
+  font-size: 0.92em;
+}
+.nb-note[data-empty] .nb-muted {
+  margin: 0;
+}
+.nb-note-btn {
+  margin-top: 2px;
+  font-size: var(--t-xs);
+}
+.nb-note-edit,
+.nb-code-edit {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control);
+  background: var(--glass-3);
+  color: var(--ink);
+  font: inherit;
+  line-height: 1.5;
+  resize: vertical;
+}
+.nb-note-edit:focus,
+.nb-code-edit:focus {
+  outline: 2px solid var(--live);
+  outline-offset: -1px;
+}
+
+/* ---------- code ---------- */
+.nb-code-edit {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: var(--t-xs);
+  line-height: 1.5;
+  tab-size: 4;
+  white-space: pre;
+  overflow-x: auto;
+}
+.nb-code-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin: 6px 0;
+}
+.nb-seg {
+  display: inline-flex;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control);
+  overflow: hidden;
+}
+.nb-seg button {
+  min-height: 24px;
+  padding: 0 10px;
+  border: 0;
+  background: none;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: var(--t-xs);
+  cursor: pointer;
+}
+.nb-seg button + button {
+  border-left: 1px solid var(--line-strong);
+}
+.nb-seg button[aria-pressed="true"] {
+  background: var(--live-soft);
+  color: var(--ink);
+  font-weight: 600;
+}
+.btn.nb-small {
+  min-height: 24px;
+  padding-block: 0;
+  font-size: var(--t-xs);
+}
+.nb-pre {
+  margin: 0;
+  padding: 8px;
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--glass-3);
+  font-size: var(--t-xs);
+  line-height: 1.5;
+  white-space: pre;
+  user-select: text;
+}
+.nb-path {
+  margin: 4px 0 0;
+  color: var(--ink-3);
+  font-size: var(--t-xs);
+  overflow-wrap: anywhere;
+}
+
+/* ---------- analysis ---------- */
+.nb-params {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--gap);
+}
+.nb-params .tl-field {
+  flex: 1 1 140px;
+}
+.nb-params .nb-narrow {
+  flex: 0 1 90px;
+  min-width: 80px;
+}
+.nb-params .tl-check {
+  align-self: center;
+}
+.nb-run {
+  flex: 0 0 auto;
+}
+.nb-analysis .tl-cell {
+  margin-top: var(--gap);
+}
+/* A detector's table scrolls inside the cell, never the window. */
+.nb .tl-table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+.nb .tl-cell-foot {
+  flex-wrap: wrap;
+}
+
+/* ---------- method ---------- */
+.nb-method {
+  margin-top: var(--gap);
+  padding-top: var(--gap);
+  border-top: 1px dashed var(--line);
+}
+.nb-method-name {
+  margin: 0 0 4px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.nb-decision {
+  color: var(--ink-3);
+  font-weight: 400;
+  font-size: var(--t-xs);
+}
+.nb-formula-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.nb-formula {
+  flex: 1 1 200px;
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 4px 0;
+  font-size: var(--t-m);
+}
+.nb-formula math {
+  text-align: left;
+}
+@container (max-width: 520px) {
+  .nb-formula {
+    flex-basis: 100%;
+  }
+}
+.nb-letters,
+.nb-constants {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+  margin: 6px 0;
+}
+.nb-letters > div,
+.nb-constants > div {
+  display: flex;
+  gap: 4px;
+  align-items: baseline;
+}
+.nb-letters dt {
+  font-style: italic;
+  font-family: var(--font-display);
+  color: var(--ink-2);
+}
+.nb-letters dt::after,
+.nb-constants dt::after {
+  content: " =";
+  font-style: normal;
+  color: var(--ink-3);
+}
+.nb-letters dd,
+.nb-constants dd {
+  margin: 0;
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+}
+.nb-constants dt {
+  color: var(--ink-3);
+  font-size: var(--t-xs);
+}
+.nb-more > summary {
+  color: var(--live);
+  font-size: var(--t-xs);
+  cursor: pointer;
+}
+.nb-more[open] > summary {
+  margin-bottom: 4px;
+}
+
+/* ---------- chart ---------- */
+.nb-chart .ch {
+  min-height: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nb-adder::before,
+  .nb-plus,
+  .nb-cell {
+    transition: none;
+  }
+}

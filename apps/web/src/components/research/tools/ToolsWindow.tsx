@@ -1,4 +1,4 @@
-import type { IsolateRecord, Phenotype } from "@aei/domain";
+import type { Phenotype } from "@aei/domain";
 import { ANTIBIOTICS, ORGANISMS, PHENOTYPES, SPECIMENS } from "@aei/domain";
 import { antibioticName, formatDate, type Locale, phenotypeName, specimenName, t, wardName } from "@aei/i18n";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -9,13 +9,7 @@ import { specFromResult, specFromSlice } from "../charts/model.ts";
 import type { ChartSpec } from "../charts/spec.ts";
 import { shift } from "../feed/model.ts";
 import {
-  baselineStart,
   type Cell,
-  computeBeta,
-  computeCompare,
-  computeDetector,
-  computeRate,
-  computeShares,
   type DetectorChoice,
   eventKey,
   type Frame,
@@ -27,6 +21,7 @@ import {
   type ToolId,
 } from "./model.ts";
 import { ResultCell } from "./ResultCell.tsx";
+import { runTool } from "./run.ts";
 import "./tools.css";
 
 // The body of the tool rail's inspector (D-065 engine A, D-076): the slice as one sentence, then either the slice
@@ -45,6 +40,8 @@ export interface ToolsProps extends PanelProps {
   onAddChart?: (spec: ChartSpec) => void;
   /** The result cells as they change, for the "+ Chart" form's sources. */
   onCells?: (cells: Cell[]) => void;
+  /** Appends a result to the notebook page (its "To notebook" button). */
+  onToNotebook?: (result: Cell["result"]) => void;
 }
 
 export interface InspectorProps extends ToolsProps {
@@ -148,7 +145,21 @@ function EventSelect({ locale, id, value, onChange }: { locale: Locale; id: stri
 const ORIGIN_KEY = { timeline: "toolsFrameTimeline", signal: "toolsFrameSignal", default: "toolsFrameDefault" } as const;
 
 export function ToolInspector(props: InspectorProps) {
-  const { client, locale, asOf, state, window: win, preset, onAddChart, onCells, tool, onEditSlice, onPickTool, resetKey = 0 } = props;
+  const {
+    client,
+    locale,
+    asOf,
+    state,
+    window: win,
+    preset,
+    onAddChart,
+    onCells,
+    onToNotebook,
+    tool,
+    onEditSlice,
+    onPickTool,
+    resetKey = 0,
+  } = props;
   const [hashFrom] = useHashParam("from");
   const [hashTo] = useHashParam("to");
   const { frame, origin } = pickFrame(hashFrom, hashTo, win);
@@ -223,42 +234,18 @@ export function ToolInspector(props: InspectorProps) {
     custom: t(locale, "toolsBCustom"),
   };
 
-  const fetchFrame = async (f: Frame, wide = false): Promise<IsolateRecord[]> =>
-    (
-      await client.isolates({
-        from: f.from,
-        to: f.to,
-        ...(f.unit && !wide ? { ward: f.unit } : {}),
-        ...(slice.organism && !wide ? { organism: slice.organism as never } : {}),
-        ...(slice.specimen && !wide ? { specimen: slice.specimen as never } : {}),
-      })
-    ).records;
-
   const run = async (which: ToolId) => {
     if (!valid || busy !== null) return;
     setBusy(which);
     setError(null);
     try {
-      const s = slice;
-      let cell: Cell["result"];
-      if (which === "rate") {
-        cell = computeRate(prepare(await fetchFrame(s), s, s.firstOnly), s);
-      } else if (which === "compare") {
-        const b = frameBOf(s);
-        const [ra, rb] = await Promise.all([fetchFrame(s), fetchFrame(b)]);
-        cell = computeCompare(prepare(ra, s, s.firstOnly), prepare(rb, b, s.firstOnly), s, b, parseEvent(event));
-      } else if (which === "shares") {
-        cell = computeShares(prepare(await fetchFrame(s), s, s.firstOnly), s, parseEvent(event), period);
-      } else if (which === "beta") {
-        const own = prepare(await fetchFrame(s), s, s.firstOnly);
-        const parent = discounted ? prepare(await fetchFrame({ ...s, unit: "" }, true), s, s.firstOnly) : null;
-        cell = computeBeta(own, parent, s, parseEvent(event), discounted ? { delta, m } : null);
-      } else {
-        // The baseline is the live detector's: every unit and organism, 365 days before the frame.
-        const all = await fetchFrame({ from: baselineStart(s.from), to: s.to, unit: "" }, true);
-        const phs: Phenotype[] = s.phenotype ? [s.phenotype] : [...PHENOTYPES];
-        cell = computeDetector(all, s, detector, phs);
-      }
+      const cell = await runTool(client, which, slice, {
+        event: parseEvent(event),
+        frameB: frameBOf(slice),
+        periodDays: period,
+        discount: discounted ? { delta, m } : null,
+        detector,
+      });
       setCells((c) => [{ id: next.current++, result: cell }, ...c]);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -285,6 +272,7 @@ export function ToolInspector(props: InspectorProps) {
   // What the slice holds, counted as the slice changes (after a short pause), so choosing data has a visible effect.
   const [count, setCount] = useState<{ key: string; isolates: number; patients: number } | null>(null);
   const sliceKey = JSON.stringify(slice);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: sliceKey stands for the slice's fields.
   useEffect(() => {
     if (tool !== "data" || !valid) return;
     let stale = false;
@@ -310,7 +298,6 @@ export function ToolInspector(props: InspectorProps) {
       stale = true;
       clearTimeout(timer);
     };
-    // biome-ignore lint/correctness/useExhaustiveDependencies: sliceKey stands for the slice's fields.
   }, [tool, valid, sliceKey, client]);
 
   const dateField = (id: string, label: string, value: string, onChange: (v: string) => void) => (
@@ -598,9 +585,9 @@ export function ToolInspector(props: InspectorProps) {
             key={c.id}
             cell={c}
             locale={locale}
-            asOf={asOf}
             fresh={i === 0}
             onChart={addChart}
+            onToNotebook={onToNotebook}
             onRemove={(id) => setCells((all) => all.filter((x) => x.id !== id))}
           />
         ))}

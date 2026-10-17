@@ -3,6 +3,7 @@ import { NEW_IN_UNIT_DAYS } from "@aei/alerts";
 import { LIVE_SETTINGS, SURVEILLANCE_PAIRS } from "@aei/detect";
 import { describe, expect, it } from "vitest";
 import { fillSnippet, METHODS, type MethodId, methodOf } from "./registry.ts";
+import { fillTemplate, TOOL_METHODS, type ToolMethodId } from "./tools.ts";
 
 const IDS = Object.keys(METHODS) as MethodId[];
 const value = (id: MethodId, name: string) => METHODS[id].constants.find((c) => c.name === name)?.value;
@@ -106,5 +107,75 @@ describe("method registry", () => {
     );
     expect(cut).toContain('as.Date("2025-05-13") & x$sampleDate <= as.Date("2025-06-09")');
     expect(filled).not.toMatch(/\{[a-z]+\}/);
+  });
+});
+
+const TOOL_IDS = Object.keys(TOOL_METHODS) as ToolMethodId[];
+
+/** Every opened MathML tag is closed in order (the browser renders it with no library, so a slip shows as text). */
+function balanced(xml: string): boolean {
+  const stack: string[] = [];
+  for (const [, close, name, self] of xml.matchAll(/<(\/?)([a-z]+)[^>]*?(\/?)>/g)) {
+    if (self) continue;
+    if (close) {
+      if (stack.pop() !== name) return false;
+    } else stack.push(name as string);
+  }
+  return stack.length === 0;
+}
+
+describe("tool methods", () => {
+  it("covers the five tools, the Beta twice and the detector per choice, each keyed by its id", () => {
+    expect(TOOL_IDS.sort()).toEqual([
+      "tool-beta",
+      "tool-beta-discounted",
+      "tool-compare",
+      "tool-detector-phenotype",
+      "tool-detector-profile",
+      "tool-rate",
+      "tool-shares",
+    ]);
+    for (const id of TOOL_IDS) expect(TOOL_METHODS[id].id).toBe(id);
+  });
+
+  it.each(TOOL_IDS)("%s has a formula in LaTeX and well-formed MathML, constants with decisions, Python and R", (id) => {
+    const m = TOOL_METHODS[id];
+    expect(m.latex.trim().length).toBeGreaterThan(0);
+    expect(m.mathml.startsWith('<math xmlns="http://www.w3.org/1998/Math/MathML"')).toBe(true);
+    expect(balanced(m.mathml)).toBe(true);
+    expect(m.constants.length).toBeGreaterThanOrEqual(1);
+    for (const c of m.constants) expect(c.decision).toMatch(/^D-\d{3}$/);
+    expect(m.snippet.trim().length).toBeGreaterThan(0);
+    expect(m.r.trim().length).toBeGreaterThan(0);
+  });
+
+  it("reuses the live detectors' entries for the detector tool", () => {
+    expect(TOOL_METHODS["tool-detector-phenotype"].latex).toBe(METHODS["phenotype-excess"].latex);
+    expect(TOOL_METHODS["tool-detector-profile"].constants).toEqual(METHODS["profile-excess"].constants);
+  });
+
+  it("names Python functions that exist in aei", () => {
+    const sources: Record<string, string> = {
+      compare: readFileSync(new URL("../../py/aei/compare.py", import.meta.url), "utf8"),
+      coverage: readFileSync(new URL("../../py/aei/coverage.py", import.meta.url), "utf8"),
+      detect: readFileSync(new URL("../../py/aei/detect.py", import.meta.url), "utf8"),
+    };
+    for (const id of TOOL_IDS) {
+      const [, mod, fn] = TOOL_METHODS[id].code.py.split(".");
+      expect(sources[mod as string]).toMatch(new RegExp(`^def ${fn}\\(`, "m"));
+    }
+  });
+
+  it("takes z and the Beta defaults from the gears' own values", () => {
+    const z = (id: ToolMethodId, name: string) => TOOL_METHODS[id].constants.find((c) => c.name === name)?.value;
+    expect(z("tool-rate", "z (Wilson)")).toBe(1.959964);
+    expect(z("tool-compare", "z (Wilson limits)")).toBe(1.96);
+    expect(z("tool-beta-discounted", "m default")).toBe(30);
+  });
+
+  it("fills the letters and leaves unknown placeholders", () => {
+    const r = fillTemplate(TOOL_METHODS["tool-rate"].r, { k: 12, n: 140, T: 4 });
+    expect(r).toContain("k <- 12; T <- 4; n <- 140");
+    expect(fillTemplate("{k} {zz}", { k: 1 })).toBe("1 {zz}");
   });
 });

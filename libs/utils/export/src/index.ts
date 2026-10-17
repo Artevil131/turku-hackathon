@@ -1,9 +1,10 @@
 export type { ExportBundle, ExportColumn, ExportFigure, ExportFile, ExportNumber, ExportTable } from "./bundle.ts";
 export { type NotebookTarget, pythonAnalysis, pythonNotebook, rAnalysis, rNotebook } from "./notebooks.ts";
 export { packageFiles, toResearchPackage } from "./package.ts";
+export { type Page as ExportPage, type PageBlock, pageMarkdown, pageTablePath, toPageZip } from "./page.ts";
 export { alertInScope, type ProjectBundleLabels, projectBundle } from "./project.ts";
 export { alertTable, isolateTable } from "./tables.ts";
-export { csv, toCsv, toCsvFiles, toJson, toLatex, toMarkdown, toPython } from "./text.ts";
+export { csv, markdownTable, toCsv, toCsvFiles, toJson, toLatex, toMarkdown, toPython } from "./text.ts";
 export { figurePngFile, figureSvgFile, toDocx } from "./word.ts";
 
 export const exportFormats: { id: "zip" | "csv" | "json" | "md" | "tex" | "docx" | "py"; label: string }[] = [

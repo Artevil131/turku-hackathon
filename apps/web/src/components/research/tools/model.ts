@@ -6,7 +6,7 @@ type PeriodShare = ReturnType<typeof sharesByPeriod>[number];
 import { firstIsolates } from "@aei/counting";
 import { wilson } from "@aei/coverage";
 import { episodes, LIVE_SETTINGS, phenotypeExcess, poissonLower, poissonUpper, profileExcess, type Signal } from "@aei/detect";
-import type { AntibioticCode, IsolateRecord, Phenotype } from "@aei/domain";
+import type { AntibioticCode, IsolateRecord, Phenotype, SiteId } from "@aei/domain";
 import type { ExportTable } from "@aei/export";
 import { daysBetween, shift } from "../feed/model.ts";
 
@@ -20,6 +20,8 @@ export interface Frame {
   unit: string;
 }
 export interface Slice extends Frame {
+  /** The hospital whose rows are read (D-051); absent is the hospital the board shows. */
+  site?: SiteId;
   organism: string;
   specimen: string;
   /** "" is no phenotype. */
@@ -48,7 +50,7 @@ export function prepare(records: readonly IsolateRecord[], frame: Frame, firstOn
   return firstOnly ? firstIsolates(inFrame, { from: frame.from, to: frame.to }) : inFrame;
 }
 
-const Z_TAIL = 0.025;
+export const Z_TAIL = 0.025;
 
 /** Exact (Garwood) 95 % interval of a Poisson mean given k, by bisection on the detector gear's tails. */
 export function poissonInterval(k: number): Interval {
@@ -126,8 +128,8 @@ export interface CompareResult {
   excludesZero: boolean;
 }
 
-const TREND_PERIOD_DAYS = 7;
-const MIN_TREND_PERIODS = 3;
+export const TREND_PERIOD_DAYS = 7;
+export const MIN_TREND_PERIODS = 3;
 
 function countsOf(rows: readonly IsolateRecord[], frame: Frame, event: EventSpec): FrameCounts {
   const tested = rows.filter(isTested(event));
@@ -316,6 +318,37 @@ export const TOOL_IDS: readonly ToolId[] = ["rate", "compare", "shares", "beta",
 
 const q = (v: string) => JSON.stringify(v);
 const num = (v: number) => (Number.isInteger(v) ? String(v) : String(Number(v.toPrecision(10))));
+
+/** The call a researcher pastes into a notebook (aei, D-061): same arguments as the gear call. */
+export function pythonCall(r: CellResult): string {
+  switch (r.kind) {
+    case "rate":
+      return `aei.coverage.wilson(k=${r.share?.k ?? r.count}, n=${r.share?.n ?? r.count})  # share; the count's Poisson interval: k=${r.count}`;
+    case "compare": {
+      const lines = [
+        `aei.compare.proportion_difference(k1=${r.a.k}, n1=${r.a.n}, k2=${r.b.k}, n2=${r.b.n})  # diff = B - A; the cell shows A - B`,
+      ];
+      lines.push(`aei.compare.rate_ratio(k1=${r.a.k}, t1=${num(r.a.weeks)}, k2=${r.b.k}, t2=${num(r.b.weeks)})`);
+      if (r.trend) lines.push(`aei.compare.trend_across(bins=[...])  # ${r.trend.periods} weekly {events, n} bins, A then B`);
+      return lines.join("\n");
+    }
+    case "shares":
+      return `aei.compare.shares_by_period(records, from_=${q(r.slice.from)}, to=${q(r.slice.to)}, period_days=${r.periodDays}, event=${q(eventKey(r.event))})`;
+    case "beta": {
+      const plain = `aei.compare.beta_posterior(k=${r.k}, n=${r.n})`;
+      if (!r.discounted) return plain;
+      const d = r.discounted;
+      return `${plain}\naei.compare.discounted_beta(weeks, delta=${num(d.delta)}, m=${num(d.m)}, parent_share=${num(d.parentShare)})  # weeks: ${d.weeks} weekly {k, n}`;
+    }
+    case "detector": {
+      const live = r.detector === "profile" ? LIVE_SETTINGS.profileExcess : LIVE_SETTINGS.phenotypeExcess;
+      const opts = `window_days=${live.windowDays}, baseline_days=${live.baselineDays}, alpha=${live.alpha}, min_observed=${live.minObserved}`;
+      return r.detector === "profile"
+        ? `aei.detect.profile_excess(records, ${opts}, same_specimen=True)`
+        : `aei.detect.phenotype_excess(records, phenotypes=[${r.phenotypes.map(q).join(", ")}], ${opts})`;
+    }
+  }
+}
 
 type Row = ExportTable["rows"][number];
 const table = (name: string, title: string, keys: string[], rows: Row[], slice?: Slice): ExportTable => ({

@@ -36,12 +36,27 @@ describe("compactLayout", () => {
     const l = patchWin(patchWin(defaultLayout(), "graph", { open: false }), "math", { open: true });
     expect(compactLayout(l).wins.math.y).toBe(0);
   });
-  it("opens with the Signals window large and the card and the assistant in the tray", () => {
+  it("opens with the Signals window large, the notebook wide beside it, and the card and the assistant in the tray", () => {
     const d = defaultLayout();
     expect(d.wins.signals.w).toBeGreaterThanOrEqual(5);
     expect(d.wins.math.open).toBe(false);
     expect(d.wins.assistant.open).toBe(false);
-    expect(WIN_IDS.filter((id) => d.wins[id].open)).toEqual(["signals", "map", "graph"]);
+    expect(WIN_IDS.filter((id) => d.wins[id].open)).toEqual(["signals", "map", "graph", "notebook"]);
+    expect(d.wins.notebook.x).toBe(d.wins.signals.x + d.wins.signals.w);
+    expect(d.wins.notebook.w).toBeGreaterThanOrEqual(6);
+    noOverlap(d);
+  });
+  it("opens the notebook in the analysis layout, beside Signals", () => {
+    const a = presetLayout("analysis");
+    expect(a.wins.notebook.open).toBe(true);
+    expect(a.wins.notebook.x).toBe(a.wins.signals.w);
+    noOverlap(a);
+  });
+  it("gives a layout saved before the notebook existed the notebook's default place", () => {
+    const { notebook: _n, ...wins } = defaultLayout().wins;
+    const l = parseLayout(JSON.stringify({ v: 2, wins, charts: {}, order: ["signals", "map", "graph"] }));
+    expect(l?.wins.notebook.open).toBe(true);
+    expect(l?.wins.signals.open).toBe(true);
   });
   it("pushes the windows a moved one lands on down, with no overlaps", () => {
     const l = patchWin(defaultLayout(), "assistant", { y: 0, open: true });
@@ -67,7 +82,7 @@ describe("focusLayout", () => {
   it("keeps a window taller than the viewport at its own height and leaves the source layout alone", () => {
     const d = defaultLayout();
     const f = focusLayout(d, "signals", 20);
-    expect(f.wins.signals.h).toBe(40);
+    expect(f.wins.signals.h).toBe(d.wins.signals.h);
     expect(d.wins.map.open).toBe(true);
     expect(d.wins.signals.w).toBe(5);
   });

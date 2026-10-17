@@ -76,7 +76,7 @@ export function toJson(bundle: ExportBundle): ExportFile {
   };
 }
 
-function markdown(value: unknown): string {
+export function markdown(value: unknown): string {
   return text(value)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -86,7 +86,7 @@ function markdown(value: unknown): string {
     .replace(/\r\n|\r|\n/g, "<br>");
 }
 
-function markdownTable(table: ExportTable): string {
+export function markdownTable(table: ExportTable): string {
   if (!table.columns.length) return "_No columns._";
   const row = (values: unknown[]) => `| ${values.map(markdown).join(" | ")} |`;
   return [
