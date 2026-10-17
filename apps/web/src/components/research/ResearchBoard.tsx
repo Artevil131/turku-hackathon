@@ -25,17 +25,25 @@ function useFitHeight(ref: React.RefObject<HTMLElement | null>) {
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
+    let last = "";
     const fit = () => {
-      if (!window.matchMedia("(min-width: 1100px)").matches) return el.style.removeProperty("--board-h");
-      el.style.setProperty(
-        "--board-h",
-        `${Math.max(420, Math.floor(window.innerHeight - el.getBoundingClientRect().top - 12 + window.scrollY))}px`,
-      );
+      if (!window.matchMedia("(min-width: 1100px)").matches) {
+        last = "";
+        return el.style.removeProperty("--board-h");
+      }
+      const next = `${Math.max(420, Math.floor(window.innerHeight - el.getBoundingClientRect().top - 12 + window.scrollY))}px`;
+      // Only a real change is written: rewriting the same height re-triggers layout observers.
+      if (next !== last) {
+        last = next;
+        el.style.setProperty("--board-h", next);
+      }
     };
     fit();
-    const ro = new ResizeObserver(fit);
-    ro.observe(document.documentElement);
-    ro.observe(document.body);
+    // Watch only what decides the board's top: the window and the timeline above it (never the
+    // page itself, whose height the board sets; that loop hung the browser).
+    const ro = new ResizeObserver(() => requestAnimationFrame(fit));
+    const timeline = document.querySelector(".timeline");
+    if (timeline) ro.observe(timeline);
     window.addEventListener("resize", fit);
     return () => {
       ro.disconnect();

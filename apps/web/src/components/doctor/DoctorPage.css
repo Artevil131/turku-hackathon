@@ -108,7 +108,9 @@
 /* Wide: no page scroll; the two columns fill the height and scroll inside. */
 @media (min-width: 960px) {
   .doctor {
-    height: calc(100dvh - 120px);
+    /* The console grid gives the page row exactly the height left under the top bar and timeline. */
+    height: 100%;
+    min-height: 0;
     overflow: hidden;
   }
   .doctor-main {
