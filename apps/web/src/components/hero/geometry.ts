@@ -216,7 +216,7 @@ export function pillLine(locale: Locale, a: Alert): string {
   return parts.join(" · ");
 }
 
-export const PILL_CHAR = 6.4;
+export const PILL_CHAR = 7.04;
 export const pillWidth = (label: string, glyph: boolean) => Math.ceil(label.length * PILL_CHAR + 8 + (glyph ? 7 : 0));
 
 /** Splits points at gaps (null): every stretch of consecutive points is drawn on its own. */

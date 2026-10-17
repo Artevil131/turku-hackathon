@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Timeline: five directions</title>
+<style>
+  body { margin: 0; font: 15px/1.5 system-ui, sans-serif; background: #f6f6fa; color: #14163a; }
+  header { padding: 20px 24px 8px; }
+  h1 { margin: 0 0 4px; font-size: 22px; }
+  p { margin: 0; color: #5a5d80; }
+  nav { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 24px; position: sticky; top: 0; background: #f6f6fa; z-index: 2; }
+  nav button { padding: 8px 14px; border: 1px solid #c9cbe3; border-radius: 999px; background: #fff; font: inherit; cursor: pointer; }
+  nav button[aria-pressed="true"] { background: #635bf1; border-color: #635bf1; color: #fff; }
+  .note { margin: 0 24px 12px; padding: 12px 14px; border: 1px solid #dfe0f0; border-radius: 10px; background: #fff; display: grid; gap: 4px; }
+  .note b { color: #14163a; }
+  iframe { display: block; width: calc(100% - 48px); height: 640px; margin: 0 24px 24px; border: 1px solid #dfe0f0; border-radius: 10px; background: #fff; }
+</style>
+</head>
+<body>
+<header>
+  <h1>The timeline: five directions</h1>
+  <p>Same data in each (ESBL cluster on MED-A, MRSA in ICU, CPE in ED, the MED-A sampling gap). Pick one in the row; each file also opens on its own.</p>
+</header>
+<nav id="tabs"></nav>
+<div class="note" id="note"></div>
+<iframe id="frame" title="mockup"></iframe>
+<script>
+const V = [
+  ["v1", "Calm summary ribbon", "Strongest: only three things compete for attention; lanes appear when asked. Weakest: a single-unit outbreak can hide in the summed ribbon; two markers overlap on a phone."],
+  ["v2", "Events first", "Strongest: each signal is one plain sentence with a unit tag and date. Weakest: no side-by-side unit comparison; dense weeks need a grouping rule."],
+  ["v3", "Heatmap grid", "Strongest: one glance shows where this week is above usual. Weakest: signals older than 12 weeks shrink to tiny marks; the two palest shades are hard to tell apart."],
+  ["v4", "Focus + context", "Strongest: one big readable chart with signals labelled on it. Weakest: one unit at a time; cross-unit patterns take clicks. (It also invents a third MED-A signal, 'VRE up 24 Feb', not in our data.)"],
+  ["v5", "Replay first", "Strongest: replaying to a date and seeing what changed fits in one row. Weakest: a single total hides which unit drove a rise; the 'since' anchor is an invented rule."],
+];
+const tabs = document.getElementById("tabs"), frame = document.getElementById("frame"), note = document.getElementById("note");
+function show(i) {
+  [...tabs.children].forEach((b, j) => b.setAttribute("aria-pressed", String(i === j)));
+  frame.src = V[i][0] + ".html";
+  note.innerHTML = "<b>" + V[i][0] + " · " + V[i][1] + "</b><span>" + V[i][2] + "</span>";
+}
+V.forEach((v, i) => { const b = document.createElement("button"); b.textContent = v[0] + " · " + v[1]; b.onclick = () => show(i); tabs.appendChild(b); });
+show(0);
+</script>
+</body>
+</html>

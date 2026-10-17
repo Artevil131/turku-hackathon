@@ -1,6 +1,8 @@
 // Copy for the replay timeline's weekly stream and unit lanes. Keys are global: prefix them `tl`.
 
 export const timelineEn = {
+  tlMore: "Playback options",
+  tlSignalsLink: "{n} signals · open the list",
   tlToday: "Clock",
   tlFound: "Found so far · {n}",
   tlNewSince: "Signals since {date} · {n}",
@@ -85,6 +87,8 @@ export const timelineEn = {
 } as const;
 
 export const timelineFi: Record<keyof typeof timelineEn, string> = {
+  tlMore: "Toistoasetukset",
+  tlSignalsLink: "{n} signaalia · avaa lista",
   tlToday: "Kello",
   tlFound: "Löydetty tähän mennessä · {n}",
   tlNewSince: "Signaalit {date} alkaen · {n}",

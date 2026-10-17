@@ -783,3 +783,37 @@
 .ws .assist-title {
   padding-right: 76px;
 }
+
+/* The timeline window shows play and the date; step, speed and jump wait behind one line. */
+.timeline[data-variant="window"] .tl-more {
+  color: var(--ink-3);
+  font-size: var(--t-s);
+}
+.timeline[data-variant="window"] .tl-more summary {
+  cursor: pointer;
+  list-style: none;
+}
+.timeline[data-variant="window"] .tl-more summary::before {
+  content: "▸ ";
+}
+.timeline[data-variant="window"] .tl-more[open] summary::before {
+  content: "▾ ";
+}
+.timeline[data-variant="window"] .tl-more-body {
+  display: grid;
+  gap: 8px;
+  padding-top: 8px;
+}
+.tl-signals-link {
+  align-self: flex-start;
+  margin: 4px 0 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--live);
+  font: inherit;
+  font-size: var(--t-s);
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}

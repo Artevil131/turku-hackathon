@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>YL Timeline v3 · Heatmap grid</title>
+<style>
+:root{--ink:#07081c;--ink-2:#1d204e;--ink-3:#5c6080;--line:#e4e6ee;--line-strong:#aebecb;--chassis:#f8f8f8;
+--accent:#635bf1;--r:10px;--t-xs:13px;--t-s:14px;--t-m:16px;
+--font:"Inter","Segoe UI",system-ui,sans-serif;
+--h0:#edeff7;--h1:#c5cae3;--h2:#7f89bf;--h3:#1d204e;
+--lab:150px;--cm:18px;--dv:14px;--gap:3px;--rowh:40px}
+*{box-sizing:border-box}
+body{margin:0;padding:16px;background:var(--chassis);color:var(--ink);font:var(--t-s)/1.4 var(--font)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.cap,.comp{max-width:1200px;margin:0 auto}
+.cap{margin-bottom:12px;padding:12px 16px;border:1px dashed var(--line-strong);border-radius:var(--r);background:#fff}
+.cap h2{margin:0 0 6px;font-size:var(--t-m)}
+.cap p{margin:2px 0;font-size:var(--t-s)}
+.cap b{color:var(--ink-2)}
+.comp{position:relative;padding:20px 24px 18px;background:#fff;border:1px solid var(--line);border-radius:var(--r)}
+.bar{display:flex;align-items:center;flex-wrap:wrap;gap:8px 16px;margin-bottom:18px}
+#play{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 18px;border:0;border-radius:var(--r);
+ background:var(--accent);color:#fff;font:600 15px var(--font);cursor:pointer}
+#play:hover{background:#4f47dd}
+#date{font:700 22px/1 var(--font);color:var(--ink);letter-spacing:-.01em}
+.hint{margin-left:auto;font-size:var(--t-xs);color:var(--ink-3)}
+.gw{position:relative;padding-right:9px}
+.mk{position:absolute;right:0;top:0;bottom:0;width:3px;border-radius:2px;background:var(--accent)}
+.row{display:grid;grid-template-columns:var(--lab) repeat(var(--nm,0),var(--cm)) var(--dv) repeat(12,minmax(0,1fr));
+ column-gap:var(--gap);row-gap:var(--gap)}
+.bd{display:grid;row-gap:var(--gap)}
+.row.hd{margin-bottom:6px;align-items:end}
+.mh{padding-bottom:3px;border-bottom:2px solid var(--line-strong);font-size:var(--t-xs);font-weight:600;color:var(--ink-3);white-space:nowrap;overflow:hidden}
+.wl{font-size:var(--t-xs);line-height:15px;color:var(--ink-3);white-space:nowrap}
+.wl i{display:block;height:15px;font-style:normal;font-weight:600;color:var(--ink-2);visibility:hidden}
+.wl.ch i,.wl.f i{visibility:visible}
+.wl b{display:block;font-weight:500}
+.lab{display:flex;flex-direction:column;justify-content:center;height:var(--rowh);font-size:15px;font-weight:600;line-height:1.15}
+.lab span{font-size:var(--t-xs);font-weight:400;color:var(--ink-3)}
+.dv{background:linear-gradient(var(--line),var(--line)) center/1px 100% no-repeat}
+.c{display:grid;place-items:center;height:var(--rowh);border-radius:6px;font:700 var(--t-xs)/1 var(--font);color:var(--ink);cursor:default;position:relative}
+.c.m{border-radius:4px}
+.s0{background:var(--h0)}.s1{background:var(--h1)}.s2{background:var(--h2)}.s3{background:var(--h3);color:#fff}
+.sig{box-shadow:inset 0 0 0 2px var(--ink),inset 0 0 0 4px #fff;z-index:1}
+.m.sig{box-shadow:inset 0 0 0 2px var(--ink),inset 0 0 0 3px #fff}
+.gap{background:repeating-linear-gradient(45deg,#fff 0 4px,var(--line) 4px 8px)}
+.c:hover{outline:2px solid var(--ink-3);outline-offset:1px;z-index:2}
+.c:focus-visible{z-index:3}
+.leg{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line);font-size:var(--t-xs);color:var(--ink-2)}
+.leg span{display:inline-flex;align-items:center;gap:7px}
+.leg .c{width:22px;height:22px;border-radius:5px;font-size:var(--t-xs)}
+.leg .sig{box-shadow:inset 0 0 0 2px var(--ink),inset 0 0 0 3px #fff}
+.leg u{display:block;width:3px;height:22px;border-radius:2px;background:var(--accent)}
+.leg strong{font-weight:600;color:var(--ink-3)}
+#tip{position:absolute;display:none;z-index:9;max-width:300px;padding:8px 12px;border-radius:8px;background:var(--ink);color:#fff;
+ font-size:var(--t-xs);line-height:1.35;box-shadow:0 4px 16px rgb(7 8 28/.25);pointer-events:none}
+#tip b{display:block;font-weight:600}
+#tip span{color:#c3c7ea}
+@media(max-width:700px){
+ :root{--lab:96px;--rowh:38px;--gap:2px}
+ body{padding:12px}
+ .comp{padding:14px 12px}
+ .row{grid-template-columns:var(--lab) repeat(7,minmax(0,1fr))}
+ .m,.dv,.mh,.o{display:none}
+ .lab{font-size:var(--t-s)}.lab span{display:none}
+ #date{font-size:20px}.hint{margin-left:0}
+}
+</style>
+</head>
+<body>
+<section class="cap" aria-label="Design note">
+ <h2>v3 · Heatmap grid</h2>
+ <p><b>Idea:</b> nine units by week; shade = resistant finds against that unit's own usual, signals are outlined numbered cells, the last 12 weeks are large and older months are squeezed left.</p>
+ <p><b>Removes:</b> the control column (step, speed, jump), the status panel, the pills and the incident tiles; only play and the date stay.</p>
+ <p><b>Costs:</b> signals older than 12 weeks shrink to month cells whose detail lives in the tooltip; phones show 7 weeks, not 12.</p>
+</section>
+
+<main class="comp" id="comp">
+ <div class="bar">
+  <button id="play" type="button"><span id="pi" aria-hidden="true">▶</span><span id="pt">Replay</span></button>
+  <time id="date"></time>
+  <span class="hint">Resistant finds per week, against each unit's usual</span>
+ </div>
+ <div class="gw">
+  <div class="mk" aria-hidden="true" title="Replay clock"></div>
+  <div id="grid" role="grid" aria-label="Resistant finds by unit and week. Arrow keys move between cells.">
+   <div class="row hd" id="hd" aria-hidden="true"></div>
+   <div class="bd" id="bd"></div>
+  </div>
+ </div>
+ <div class="leg" aria-label="Legend">
+  <strong>Finds vs usual:</strong>
+  <span><i class="c s0"></i>Below usual</span>
+  <span><i class="c s1"></i>About usual</span>
+  <span><i class="c s2"></i>Above usual</span>
+  <span><i class="c s3"></i>Far above usual</span>
+  <span><i class="c s1 sig">7</i>Signal (number of finds)</span>
+  <span><i class="c gap"></i>No samples</span>
+  <span><u></u>Replay clock</span>
+ </div>
+ <div id="tip" role="tooltip"></div>
+</main>
+
+<script>
+const $=s=>document.querySelector(s);
+const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const WORD=["Below usual","About usual","Above usual","Far above usual"];
+const UNITS=[["ED","Emergency dept",4],["MED-A","Medical ward A",3.2],["MED-B","Medical ward B",2.8],["SURG","Surgical ward",3],
+ ["URO","Urology",2.4],["ICU","Intensive care",2],["GER","Geriatrics",1.8],["PHC-N","Primary care North",1.4],["PHC-S","Primary care South",1.2]];
+const T0=Date.UTC(2023,9,2),DAY=864e5,N=84,START=48;   // 84 weeks, Mon 2 Oct 2023 .. Mon 5 May 2025
+const wkDate=i=>new Date(T0+i*7*DAY);
+const wkOf=(y,m,d)=>Math.floor((Date.UTC(y,m-1,d)-T0)/(7*DAY));
+const fmt=d=>d.getUTCDate()+" "+MON[d.getUTCMonth()];
+function rng(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+// seeded fake data: D[unit][week] = {n finds, e usual}
+const R=rng(20231002);
+const D=UNITS.map(([,,us])=>Array.from({length:N},(_,i)=>{
+  const e=+(us*(1+.18*Math.sin((i-10)/52*2*Math.PI))).toFixed(1);
+  let f=.55+R()*.9; if(R()<.05)f*=1.9;
+  return{n:Math.round(e*f),e};
+}));
+const put=(u,y,m,d,o)=>D[u][wkOf(y,m,d)]=o;
+put(1,2025,4,30,{n:7,e:1.4,sig:{name:"ESBL",note:"Cluster signal · 5× usual"}});
+put(5,2025,1,19,{n:1,e:.1,sig:{name:"MRSA carrier",note:"New carrier signal"}});
+put(0,2025,1,2,{n:1,e:.1,sig:{name:"CPE",note:"New CPE find signal"}});
+put(1,2024,11,10,{n:0,e:3.4,gap:1});
+
+const step=(n,e)=>{const r=n/e;return r<.75?0:r<1.25?1:r<2?2:3};
+const cell=(cls,t,note,txt,o)=>`<div class="c ${cls}" role="gridcell" tabindex="-1" aria-label="${t}. ${note}" data-t="${t}" data-n="${note}">${txt}</div>`;
+let ci=N-1, tab={r:0,k:0}, timer=null;
+
+function weekCell(u,i,o){
+  const [code]=UNITS[u], s=o.sig, st=step(o.n,o.e);
+  const t=`${code} · week of ${fmt(wkDate(i))} · ${o.gap?"no samples logged":o.n+" "+(s?s.name:"resistant")}, ${o.e.toFixed(1)} usual`;
+  const note=o.gap?"Sampling gap, not a quiet week":s?s.note:WORD[st];
+  return cell(`w s${st}${s||o.gap?" sig":""}${o.gap?" gap":""}${i<ci-6?" o":""}`,t,note,s?o.n:o.gap?"–":"");
+}
+function monthCell(u,m){
+  let n=0,e=0,sig=null,gap=false;
+  m.w.forEach(i=>{const o=D[u][i]; if(o.gap)gap=true; else{n+=o.n;e+=o.e} if(o.sig)sig=o});
+  const st=step(n,e), d=m.d, mark=sig||gap;
+  const t=`${UNITS[u][0]} · ${MON[d.getUTCMonth()]} ${d.getUTCFullYear()} · ${n} resistant, ${e.toFixed(1)} usual`;
+  const note=sig?`Includes ${sig.sig.name} signal`:gap?"Includes a sampling gap":WORD[st];
+  return cell(`m s${st}${mark?" sig":""}${gap&&!sig?" gap":""}`,t,note,sig?sig.n:gap?"–":"");
+}
+
+function render(){
+  hide();
+  const ws=ci-11, ms=[];
+  for(let i=0;i<ws;i++){
+    const d=new Date(T0+(i*7+3)*DAY), k=d.getUTCFullYear()*12+d.getUTCMonth();   // month by the week's Thursday
+    if(!ms.length||ms[ms.length-1].k!==k)ms.push({k,d,w:[]});
+    ms[ms.length-1].w.push(i);
+  }
+  const g=$("#grid"); g.style.setProperty("--nm",ms.length);
+  const y0=ms.length&&ms[0].d.getUTCFullYear()%100, y1=ms.length&&ms[ms.length-1].d.getUTCFullYear()%100;
+  let hd=`<div></div>`;
+  if(ms.length)hd+=`<div class="mh" style="grid-column:2/span ${ms.length}">20${y0}–${y1} · one column a month</div>`;
+  hd+=`<div class="dv"></div>`;
+  for(let i=ws;i<=ci;i++){
+    const d=wkDate(i), ch=i===ws||d.getUTCMonth()!==wkDate(i-1).getUTCMonth();
+    hd+=`<div class="wl${ch?" ch":""}${i<ci-6?" o":""}${i===ci-6?" f":""}"><i>${MON[d.getUTCMonth()]}</i><b>${d.getUTCDate()}</b></div>`;
+  }
+  $("#hd").innerHTML=hd;
+  $("#bd").innerHTML=UNITS.map(([code,name],u)=>
+    `<div class="row" role="row"><div class="lab" role="rowheader">${name}<span>${code}</span></div>`+
+    ms.map(m=>monthCell(u,m)).join("")+`<div class="dv"></div>`+
+    Array.from({length:12},(_,k)=>weekCell(u,ws+k,D[u][ws+k])).join("")+`</div>`).join("");
+  const rows=cellRows(), row=rows[Math.min(tab.r,rows.length-1)];
+  row[Math.max(0,row.length-1-tab.k)].tabIndex=0;
+  const end=new Date(wkDate(ci).getTime()+7*DAY);
+  $("#date").textContent=`${end.getUTCDate()} ${MON[end.getUTCMonth()]} ${end.getUTCFullYear()}`;
+  $("#date").dateTime=end.toISOString().slice(0,10);
+  $("#pi").textContent=timer?"❚❚":"▶";
+  $("#pt").textContent=timer?"Pause":ci>=N-1?"Replay":"Play";
+}
+const cellRows=()=>[...document.querySelectorAll("#bd .row")].map(r=>[...r.querySelectorAll(".c")].filter(c=>c.offsetParent));
+
+function play(){
+  if(timer){clearInterval(timer);timer=null;return render()}
+  if(ci>=N-1)ci=START;
+  timer=setInterval(()=>{ci++;if(ci>=N-1){clearInterval(timer);timer=null}render()},550);
+  render();
+}
+$("#play").onclick=play;
+
+// tooltip: hover, focus and tap
+const tip=$("#tip"), comp=$("#comp");
+function show(c){
+  tip.innerHTML=`<b>${c.dataset.t}</b><span>${c.dataset.n}</span>`; tip.style.display="block";
+  const cr=comp.getBoundingClientRect(), r=c.getBoundingClientRect(), w=tip.offsetWidth, h=tip.offsetHeight;
+  tip.style.left=Math.max(8,Math.min(r.left-cr.left+r.width/2-w/2,cr.width-w-8))+"px";
+  let y=r.top-cr.top-h-8; if(y<8)y=r.bottom-cr.top+8;
+  tip.style.top=y+"px";
+}
+function hide(){tip.style.display="none"}
+const grid=$("#grid");
+grid.addEventListener("mouseover",e=>{const c=e.target.closest(".c");c?show(c):hide()});
+grid.addEventListener("mouseleave",hide);
+grid.addEventListener("click",e=>{const c=e.target.closest(".c");c&&show(c)});
+document.addEventListener("click",e=>{if(!e.target.closest("#grid"))hide()});
+grid.addEventListener("focusin",e=>{
+  const c=e.target.closest(".c"); if(!c)return;
+  grid.querySelectorAll('.c[tabindex="0"]').forEach(x=>x.tabIndex=-1); c.tabIndex=0;
+  const rows=cellRows(), r=rows.findIndex(x=>x.includes(c));
+  tab={r,k:rows[r].length-1-rows[r].indexOf(c)}; show(c);
+});
+grid.addEventListener("focusout",hide);
+grid.addEventListener("keydown",e=>{
+  const c=e.target.closest(".c"); if(!c)return;
+  if(e.key==="Escape")return hide();
+  const rows=cellRows(), r=rows.findIndex(x=>x.includes(c)), k=rows[r].indexOf(c);
+  const to={ArrowLeft:[r,k-1],ArrowRight:[r,k+1],ArrowUp:[r-1,k],ArrowDown:[r+1,k],Home:[r,0],End:[r,1e3]}[e.key];
+  if(!to)return; e.preventDefault();
+  const nr=Math.max(0,Math.min(rows.length-1,to[0])), nc=Math.max(0,Math.min(rows[nr].length-1,to[1]));
+  rows[nr][nc].focus();
+});
+addEventListener("resize",hide);
+render();
+</script>
+</body>
+</html>

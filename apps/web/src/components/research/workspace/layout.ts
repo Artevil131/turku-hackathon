@@ -101,7 +101,7 @@ export function defaultLayout(): Layout {
 }
 
 /** Rows of the timeline window every project starts with, across the top of the board. */
-export const TIMELINE_ROWS = 11;
+export const TIMELINE_ROWS = 10;
 
 /**
  * Opens the timeline across the top of the board and moves every other open window down below it. `bottom` puts it
@@ -109,6 +109,8 @@ export const TIMELINE_ROWS = 11;
  */
 export function withTimeline(layout: Layout, place: "top" | "bottom" | "none" = "top"): Layout {
   const wins = { ...layout.wins };
+  const withShift = (copies: Layout["copies"]) =>
+    Object.fromEntries(Object.entries(copies).map(([id, c]) => [id, c.open ? { ...c, y: c.y + TIMELINE_ROWS } : c]));
   if (place !== "top") {
     const bottom = Math.max(
       0,
@@ -117,8 +119,15 @@ export function withTimeline(layout: Layout, place: "top" | "bottom" | "none" = 
     wins.timeline = { x: 0, y: bottom, w: COLS, h: TIMELINE_ROWS, open: place === "bottom" };
     return { ...layout, wins };
   }
-  for (const id of WIN_IDS) if (id !== "timeline" && wins[id].open) wins[id] = { ...wins[id], y: wins[id].y + TIMELINE_ROWS };
-  const copies = Object.fromEntries(Object.entries(layout.copies).map(([id, c]) => [id, c.open ? { ...c, y: c.y + TIMELINE_ROWS } : c]));
+  // A summary window stays first: the answer is read before the timeline that shows where it came from.
+  const summary = wins.answer.open ? wins.answer : null;
+  for (const id of WIN_IDS)
+    if (id !== "timeline" && id !== "answer" && wins[id].open) wins[id] = { ...wins[id], y: wins[id].y + TIMELINE_ROWS };
+  if (summary) {
+    wins.timeline = { x: 0, y: summary.y + summary.h, w: COLS, h: TIMELINE_ROWS, open: true };
+    return { ...layout, wins, copies: withShift(layout.copies) };
+  }
+  const copies = withShift(layout.copies);
   wins.timeline = { x: 0, y: 0, w: COLS, h: TIMELINE_ROWS, open: true };
   return { ...layout, wins, copies };
 }

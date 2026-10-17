@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Timeline v1 · Calm summary ribbon</title>
+<style>
+:root{--accent:#635bf1;--soft:#ecebfc;--aline:#c6c4ed;--ink:#07081c;--ink2:#1d204e;--ink3:#5c6080;--line:#e4e6ee;--strong:#aebecb;
+--alert:#d0004b;--alertbg:#fde3e9;--watch:#94590a;--watchbg:#fdf3e2;--bg:#f8f8f8;--xs:13px;--s:14px;--m:16px;--l:22px;--lw:64px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 var(--s)/1.45 "Inter","Segoe UI",system-ui,sans-serif}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1232px;margin:0 auto;padding:16px}
+.cap{background:var(--soft);border:1px dashed var(--aline);border-radius:10px;padding:12px 16px;margin-bottom:16px}
+.cap h1{margin:0 0 4px;font-size:var(--m);font-weight:600}
+.cap p{margin:2px 0;font-size:var(--s)}
+.mut{color:var(--ink3);font-size:var(--xs)}
+.tl{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px}
+.bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:relative;margin-bottom:12px}
+.play{width:44px;height:44px;border-radius:50%;border:0;background:var(--accent);color:#fff;display:grid;place-items:center}
+.clock{display:flex;flex-direction:column;line-height:1.2}
+.clock strong{font-size:var(--l);font-weight:600;font-variant-numeric:tabular-nums}
+.ghost{min-height:36px;padding:0 12px;border:1px solid var(--strong);background:#fff;border-radius:6px;font-size:var(--s)}
+.ghost[aria-pressed=true]{background:var(--soft);border-color:var(--accent);color:var(--ink2);font-weight:600}
+#more{width:36px;padding:0;font-size:20px;line-height:1}
+.sp{margin-left:auto}
+.menu{position:absolute;top:100%;left:0;z-index:5;width:min(300px,100%);background:#fff;border:1px solid var(--line);border-radius:10px;
+box-shadow:0 4px 16px rgb(7 8 28/.12);padding:12px;margin-top:4px}
+.menu[hidden]{display:none}
+.menu .g{margin-bottom:12px}.menu .g:last-child{margin:0}
+.menu .seg{display:flex;gap:4px;margin-top:4px}.menu .seg .ghost{flex:1;padding:0 4px}
+.menu input{min-height:36px;width:100%;border:1px solid var(--strong);border-radius:6px;padding:0 8px;margin-top:4px}
+.stack{position:relative}
+.row{display:grid;grid-template-columns:var(--lw) 1fr;align-items:center}
+.lab{font-size:var(--xs);color:var(--ink3);padding-right:8px;white-space:nowrap}
+.lane{border-top:1px solid var(--line)}
+.lane.on{background:var(--soft)}
+.lane.on .lab{color:var(--ink);font-weight:600}
+.strip{position:relative}
+.strip svg{display:block;width:100%;height:100%}
+.fill{fill:var(--soft)}.ln{fill:none;stroke:var(--accent);stroke-width:1.5}
+.lane .fill{fill:#eef0f6}.lane .ln{stroke:var(--strong)}
+.lane.on .fill{fill:#d3d0f8}.lane.on .ln{stroke:var(--accent)}
+.scrub{position:absolute;inset:0;cursor:col-resize;touch-action:none}
+.mk{position:absolute;width:28px;height:28px;transform:translate(-50%,-50%);border:0;background:none;padding:0;display:grid;place-items:center}
+.mk i{width:12px;height:12px;border-radius:50%;background:var(--alert);border:2px solid #fff;box-shadow:0 0 0 1px var(--alert)}
+.mk.watch i{border-radius:2px;transform:rotate(45deg);background:var(--watch);box-shadow:0 0 0 1px var(--watch)}
+.mk.gap i{background:#fff;border-color:#fff;box-shadow:0 0 0 2px var(--watch)}
+.mk.sel i{outline:2px solid var(--ink2);outline-offset:3px}
+.pill{position:absolute;top:50%;transform:translate(-50%,-50%);height:24px;padding:0 8px;border-radius:12px;font-size:var(--xs);font-weight:600;
+border:1px solid var(--alert);background:var(--alert);color:#fff}
+.pill.watch{background:var(--watchbg);border-color:var(--watch);color:var(--watch)}
+.pill.sel{outline:2px solid var(--ink2);outline-offset:2px}
+.axis{position:relative;height:28px}
+.axis span{position:absolute;top:6px;transform:translateX(-50%);font-size:var(--xs);color:var(--ink3);white-space:nowrap}
+.ov{position:absolute;left:var(--lw);right:0;top:0;bottom:28px;pointer-events:none}
+.fut{position:absolute;top:0;bottom:0;left:var(--p);right:0;background:rgb(255 255 255/.66)}
+.ph{position:absolute;top:0;bottom:0;left:var(--p);width:2px;margin-left:-1px;background:var(--ink2)}
+.card{margin-top:12px;border:1px solid var(--line);border-left:4px solid var(--alert);border-radius:6px;padding:12px 16px;
+display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center}
+.card.watch{border-left-color:var(--watch)}
+.card .ci{flex:1 1 280px}
+.card h2{margin:4px 0 0;font-size:var(--m);font-weight:600}
+.card p{margin:2px 0 0;color:var(--ink3)}
+.tag{display:inline-block;padding:0 8px;border-radius:10px;font-size:var(--xs);font-weight:600;background:var(--alertbg);color:var(--alert)}
+.tag.watch{background:var(--watchbg);color:var(--watch)}
+.nums{display:flex;gap:16px;color:var(--ink3);font-size:var(--s)}
+.nums b{display:block;font-size:var(--l);font-weight:600;color:var(--ink);line-height:1.2}
+.nav{display:flex;align-items:center;gap:8px;font-size:var(--xs);color:var(--ink3)}
+.nav .ghost{width:36px;padding:0;font-size:var(--m)}
+@media(max-width:600px){:root{--lw:56px}.wrap{padding:16px}.tl{padding:12px}.axis .o{display:none}.bar{gap:8px}.nums{gap:12px}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <aside class="cap" aria-label="About this mockup">
+    <h1>v1 · Calm summary ribbon</h1>
+    <p><b>Idea:</b> one quiet hospital-total ribbon with four signal markers; units appear only when you pick a marker or press Show units.</p>
+    <p><b>Removes:</b> 9 always-on lanes, the left control column, the big date block, the data-check box and the incident tile column.</p>
+    <p><b>Costs:</b> unit-by-unit comparison needs one extra click, and markers a few days apart (2 and 19 Jan) overlap on a phone.</p>
+  </aside>
+
+  <section class="tl" aria-label="Timeline">
+    <header class="bar">
+      <button class="play" id="play" aria-label="Play replay"></button>
+      <div class="clock"><span class="mut">Replay date</span><strong id="date"></strong></div>
+      <button class="ghost" id="more" aria-haspopup="true" aria-expanded="false" aria-controls="menu" aria-label="Replay options: step, speed, jump to date">&#8943;</button>
+      <button class="ghost sp" id="units" aria-pressed="false">Show units</button>
+      <div class="menu" id="menu" role="group" aria-label="Replay options" hidden>
+        <div class="g"><span class="mut">Step</span><div class="seg" id="stepSeg">
+          <button class="ghost" data-step="day">Day</button><button class="ghost" data-step="week">Week</button><button class="ghost" data-step="month">Month</button></div></div>
+        <div class="g"><span class="mut">Speed</span><div class="seg" id="speedSeg">
+          <button class="ghost" data-speed="slow">Slow</button><button class="ghost" data-speed="normal">Normal</button><button class="ghost" data-speed="fast">Fast</button></div></div>
+        <div class="g"><label class="mut" for="jump">Jump to date</label><input type="date" id="jump" min="2023-10-02" max="2025-05-31"></div>
+      </div>
+    </header>
+    <div class="stack" id="stack"></div>
+    <article class="card" id="card" aria-live="polite"></article>
+  </section>
+</main>
+<script>
+const $=s=>document.querySelector(s),DAY=864e5,WK=7*DAY,U=Date.UTC;
+const t0=U(2023,9,2),t1=U(2025,4,31),fr=t=>(t-t0)/(t1-t0);
+const fmt=t=>new Date(t).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'});
+const units=[['ED',14],['MED-A',9],['MED-B',8],['SURG',8],['URO',7],['ICU',6],['GER',5],['PHC-N',4],['PHC-S',4]];
+const sigs=[ // sorted by date
+ {u:'MED-A',t:U(2024,10,10),lvl:'watch',cls:'gap',short:'Gap',title:'Sampling gap',sum:'No MED-A samples reached the lab for 14 days, so this unit was not watched.',nums:[['0','samples in 14 days'],['11','expected']]},
+ {u:'ED',t:U(2025,0,2),lvl:'alert',short:'CPE',title:'CPE',sum:'A carbapenemase-producing isolate in the emergency department.',nums:[['1','seen'],['0.1','expected']]},
+ {u:'ICU',t:U(2025,0,19),lvl:'watch',short:'MRSA',title:'New MRSA carrier',sum:'First MRSA-positive screen for a patient in intensive care.',nums:[['1','new carrier'],['0.3','expected']]},
+ {u:'MED-A',t:U(2025,3,30),lvl:'alert',short:'ESBL',title:'ESBL cluster',sum:'More ESBL isolates on MED-A this week than the unit usually sees.',nums:[['7','seen'],['1.4','expected']]}];
+let seed=7;const rnd=()=>(seed=seed*16807%2147483647)/2147483647;
+const N=Math.floor((t1-t0)/WK)+1,near=(t,c,a,b)=>t>=c-a&&t<=c+b;
+const data=units.map(([n,b])=>Array.from({length:N},(_,i)=>{
+  const t=t0+i*WK;let v=b*(1+.15*Math.sin(i/8.3))*(.75+.5*rnd());
+  if(n==='MED-A'){if(near(t,sigs[3].t,3*WK,2*WK))v*=1.7;if(near(t,sigs[0].t,8*DAY,8*DAY))v=0}
+  if(n==='ICU'&&near(t,sigs[2].t,0,5*WK))v*=1.3;
+  if(n==='ED'&&near(t,sigs[1].t,0,3*WK))v*=1.2;
+  return Math.round(v)}));
+const tot=data[0].map((_,i)=>data.reduce((a,d)=>a+d[i],0));
+const path=(v,H)=>{const lo=Math.min(...v)*.6,mx=Math.max(...v)*1.05-lo;v=v.map(y=>y-lo);
+  const p=v.map((y,i)=>[+(fr(t0+i*WK)*1000).toFixed(1),+(H-2-y/mx*(H-8)).toFixed(1)]);
+  return{p,H,d:'M'+p.map(q=>q.join(' ')).join('L')}};
+const svg=r=>`<svg viewBox="0 0 1000 ${r.H}" preserveAspectRatio="none" aria-hidden="true"><path class="fill" d="${r.d}L${r.p.at(-1)[0]} ${r.H}L0 ${r.H}Z"/><path class="ln" vector-effect="non-scaling-stroke" d="${r.d}"/></svg>`;
+const rib=path(tot,72);
+const ticks=[0,1,2,3,4,5,6].map(k=>{const t=U(2023,9+3*k,1);
+  return`<span class="${k%2?'o':''}" style="left:${fr(t)*100}%">${new Date(t).toLocaleDateString('en-GB',{month:'short',year:'numeric',timeZone:'UTC'})}</span>`}).join('');
+
+let sel=3,shown=null,all=location.hash==='#expanded',clock=U(2025,4,12),step='week',speed='normal',playing=false,timer=null;
+const stack=$('#stack');
+
+function build(){
+  const vis=all?units.map(u=>u[0]):shown?[shown]:[],S=sigs[sel];
+  let h=`<div class="row"><div class="lab">All units</div><div class="strip" style="height:72px">${svg(rib)}
+    <div class="scrub" id="scrub" role="slider" tabindex="0" aria-label="Replay date" aria-valuemin="0" aria-valuemax="${Math.round((t1-t0)/DAY)}"></div>
+    ${sigs.map((g,i)=>`<button class="mk ${g.lvl} ${g.cls||''} ${i===sel?'sel':''}" data-k="r${i}" data-i="${i}" aria-pressed="${i===sel}"
+      aria-label="${g.title}, ${g.u}, ${fmt(g.t)}" title="${g.title} · ${g.u}" style="left:${fr(g.t)*100}%;top:${rib.p[Math.round((g.t-t0)/WK)][1]/72*100}%"><i></i></button>`).join('')}
+    </div></div>`;
+  vis.forEach(n=>{const k=units.findIndex(u=>u[0]===n);
+    h+=`<div class="row lane ${S.u===n?'on':''}"><div class="lab">${n}</div><div class="strip" style="height:34px">${svg(path(data[k],34))}
+    ${sigs.map((g,i)=>g.u!==n?'':`<button class="pill ${g.lvl} ${i===sel?'sel':''}" data-k="l${i}" data-i="${i}" aria-label="${g.title}, ${g.u}, ${fmt(g.t)}" style="left:${fr(g.t)*100}%">${g.short}</button>`).join('')}
+    </div></div>`});
+  h+=`<div class="row"><div class="lab"></div><div class="axis">${ticks}</div></div><div class="ov"><i class="fut"></i><i class="ph"></i></div>`;
+  stack.innerHTML=h;setClock(clock);
+}
+function card(){
+  const g=sigs[sel],c=$('#card');c.className='card '+g.lvl;
+  c.innerHTML=`<div class="ci"><span class="tag ${g.lvl}">${g.lvl==='alert'?'Alert':'Watch'}</span> <span class="mut">${fmt(g.t)}</span>
+    <h2>${g.title} · ${g.u}</h2><p>${g.sum}</p></div>
+    <div class="nums">${g.nums.map(([a,b])=>`<span><b>${a}</b>${b}</span>`).join('')}</div>
+    <div class="nav"><button class="ghost" data-k="prev" data-n="-1" aria-label="Previous signal">&#8249;</button>${sel+1} of ${sigs.length}
+    <button class="ghost" data-k="next" data-n="1" aria-label="Next signal">&#8250;</button></div>`;
+}
+function refresh(){ // rebuild, keep keyboard focus
+  const k=document.activeElement&&document.activeElement.dataset&&document.activeElement.dataset.k;
+  build();card();if(k){const e=document.querySelector(`[data-k="${k}"]`);e&&e.focus()}
+}
+function pick(i){if(i===sel&&shown===sigs[i].u)return;sel=i;shown=sigs[i].u;refresh()}
+function setClock(t){
+  clock=t;stack.style.setProperty('--p',fr(t)*100+'%');
+  $('#date').textContent=fmt(t);$('#jump').value=new Date(t).toISOString().slice(0,10);
+  const s=$('#scrub');if(s){s.setAttribute('aria-valuenow',Math.round((t-t0)/DAY));s.setAttribute('aria-valuetext',fmt(t))}
+}
+const stepMs={day:DAY,week:WK,month:30*DAY},speedMs={slow:700,normal:350,fast:120};
+const ICON={play:'<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M5 2.5v13l11-6.5z" fill="currentColor"/></svg>',
+  pause:'<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M4 2.5h3.5v13H4zM10.5 2.5H14v13h-3.5z" fill="currentColor"/></svg>'};
+function play(on){
+  if(on&&clock>=t1)setClock(t0);
+  playing=on;clearInterval(timer);
+  if(on)timer=setInterval(()=>{clock>=t1?play(false):setClock(Math.min(t1,clock+stepMs[step]))},speedMs[speed]);
+  $('#play').innerHTML=on?ICON.pause:ICON.play;$('#play').setAttribute('aria-label',on?'Pause replay':'Play replay');
+}
+function syncMenu(){
+  document.querySelectorAll('[data-step]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.step===step));
+  document.querySelectorAll('[data-speed]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.speed===speed));
+}
+function syncUnits(){const b=$('#units');b.textContent=all?'Hide units':'Show units';b.setAttribute('aria-pressed',all)}
+function menu(open){$('#menu').hidden=!open;$('#more').setAttribute('aria-expanded',open)}
+
+document.addEventListener('click',e=>{
+  const t=e.target,i=t.closest('[data-i]'),n=t.closest('[data-n]');
+  if(!t.closest('#menu,#more'))menu(false);
+  if(i)return pick(+i.dataset.i);
+  if(n)return pick((sel+ +n.dataset.n+sigs.length)%sigs.length);
+  if(t.closest('#play'))return play(!playing);
+  if(t.closest('#units')){all=!all;if(!all)shown=null;syncUnits();return refresh()}
+  if(t.closest('#more'))return menu($('#menu').hidden);
+  const st=t.closest('[data-step]'),sp=t.closest('[data-speed]');
+  if(st){step=st.dataset.step;syncMenu()}
+  if(sp){speed=sp.dataset.speed;syncMenu();if(playing)play(true)}
+});
+document.addEventListener('pointerover',e=>{const m=e.target.closest('.mk');if(m&&e.pointerType==='mouse')pick(+m.dataset.i)});
+$('#jump').addEventListener('change',e=>{const v=Date.parse(e.target.value);if(v>=t0&&v<=t1)setClock(v)});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&!$('#menu').hidden){menu(false);$('#more').focus()}
+  if(e.target.id==='scrub'){
+    const d={ArrowLeft:-stepMs[step],ArrowRight:stepMs[step]}[e.key];
+    if(d){e.preventDefault();setClock(Math.min(t1,Math.max(t0,clock+d)))}
+    if(e.key==='Home')setClock(t0);if(e.key==='End')setClock(t1);
+  }
+});
+let drag=false;
+const scr=e=>{const r=$('#scrub').getBoundingClientRect(),f=Math.min(1,Math.max(0,(e.clientX-r.left)/r.width));
+  setClock(Math.round((t0+f*(t1-t0))/DAY)*DAY)};
+stack.addEventListener('pointerdown',e=>{if(e.target.id==='scrub'){drag=true;e.target.setPointerCapture(e.pointerId);scr(e)}});
+stack.addEventListener('pointermove',e=>{if(drag)scr(e)});
+stack.addEventListener('pointerup',()=>drag=false);
+
+syncMenu();syncUnits();play(false);refresh();
+</script>
+</body>
+</html>

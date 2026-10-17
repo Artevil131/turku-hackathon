@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>YL Timeline v5 · Replay first</title>
+<style>
+:root{--chassis:#f8f8f8;--ink:#07081c;--ink-2:#1d204e;--ink-3:#5c6080;--line:#e4e6ee;--line-strong:#aebecb;
+--accent:#635bf1;--accent-soft:#ecebfc;--accent-line:#c6c4ed;--resist:#1d204e;--alert:#d0004b;--alert-bg:#fde3e9;
+--watch:#94590a;--watch-bg:#fdf3e2;--xs:13px;--s:14px;--m:16px;--l:22px;--r:10px;--rc:6px;--pop:0 4px 16px rgb(7 8 28/.12);
+--font:"Inter","Segoe UI",system-ui,sans-serif;--disp:"Bricolage Grotesque","Inter",system-ui,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:var(--chassis);color:var(--ink);font:var(--s)/1.4 var(--font);padding:24px 16px}
+.wrap{max-width:1200px;margin:0 auto}
+button,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.cap{background:#fff;border:1px solid var(--accent-line);border-left:4px solid var(--accent);border-radius:var(--r);padding:12px 16px;margin-bottom:16px}
+.cap h2{margin:0 0 6px;font:600 var(--m)/1.3 var(--disp)}
+.cap p{margin:2px 0;font-size:var(--s);color:var(--ink-2)}
+.cap b{color:var(--ink)}
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:16px 20px 12px;position:relative}
+.head{display:flex;align-items:baseline;gap:12px;margin-bottom:10px}
+.head h3{margin:0;font:600 var(--m)/1.3 var(--disp)}
+.head span{color:var(--ink-3);font-size:var(--xs)}
+/* since chips */
+.since{display:flex;flex-wrap:wrap;align-items:center;gap:8px;min-height:36px;margin-bottom:10px}
+.since strong{font-size:var(--s);margin-right:4px}
+.since .none{color:var(--ink-3);font-size:var(--s)}
+.chip{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:4px 12px;border-radius:999px;border:1px solid var(--line-strong);background:#fff;cursor:pointer;font-size:var(--s)}
+.chip:hover,.chip[aria-expanded=true]{background:var(--accent-soft);border-color:var(--accent)}
+.chip.alert{border-color:#e8a3b9}.chip.watch{border-color:#dcc089}
+.dia{display:inline-block;width:10px;height:10px;transform:rotate(45deg);background:var(--alert);flex:none}
+.watch .dia,.dia.watch{background:#fff;border:2px solid var(--watch)}
+.chip small{color:var(--ink-3);font-size:var(--xs)}
+.pop{position:absolute;z-index:5;width:300px;max-width:calc(100% - 24px);background:#fff;border:1px solid var(--line-strong);border-radius:var(--r);box-shadow:var(--pop);padding:12px 14px}
+.pop h4{margin:0 0 4px;font:600 var(--m)/1.3 var(--disp)}
+.pop p{margin:0 0 10px;font-size:var(--s);color:var(--ink-2)}
+.pop .row{display:flex;gap:8px;flex-wrap:wrap}
+.btn{min-height:36px;padding:6px 14px;border-radius:var(--rc);border:1px solid var(--line-strong);background:#fff;cursor:pointer}
+.btn:hover{background:var(--accent-soft)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}.btn.pri:hover{background:#4f47d8}
+/* transport */
+.bar{display:grid;grid-template-columns:48px 1fr 168px auto;align-items:center;gap:16px;min-height:72px}
+.play{width:48px;height:48px;border-radius:50%;border:0;background:var(--accent);color:#fff;display:grid;place-items:center;cursor:pointer}
+.play:hover{background:#4f47d8}
+.play svg{width:22px;height:22px;fill:currentColor}
+.scrub{position:relative;height:44px;touch-action:none;cursor:ew-resize;border-radius:var(--rc);outline-offset:4px;user-select:none;-webkit-user-select:none}
+.scrub>svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.scrub .base{position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--line-strong)}
+.clock{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--accent);margin-left:-1px;pointer-events:none}
+.clock::before{content:"";position:absolute;left:-7px;top:-2px;width:16px;height:16px;border-radius:50%;background:var(--accent);border:3px solid #fff;box-shadow:0 0 0 1px var(--accent)}
+.scrub:focus-visible .clock::before{box-shadow:0 0 0 3px #fff,0 0 0 6px var(--accent)}
+.mk{position:absolute;top:-2px;width:28px;height:28px;margin-left:-14px;border:0;background:none;display:grid;place-items:center;cursor:pointer;padding:0}
+.mk i{display:block;width:12px;height:12px;transform:rotate(45deg);background:var(--alert);border:2px solid #fff;box-shadow:0 0 0 1px var(--alert)}
+.mk.watch i{background:#fff;border:2px solid var(--watch);box-shadow:none}
+.mk.future{opacity:.35}
+.mk:hover i{transform:rotate(45deg) scale(1.3)}
+.ticks{display:flex;justify-content:space-between;color:var(--ink-3);font-size:var(--xs);margin-top:4px;position:relative;height:18px}
+.ticks span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+.ticks span:first-child{transform:none}
+.when{text-align:right}
+.when b{display:block;font:600 var(--l)/1.15 var(--disp);white-space:nowrap}
+.when span{font-size:var(--xs);color:var(--ink-3)}
+.spd{display:flex;flex-direction:column;font-size:var(--xs);color:var(--ink-3);gap:2px}
+.spd select{min-height:36px;border:1px solid var(--line-strong);border-radius:var(--rc);background:#fff;padding:4px 8px;font-size:var(--s);color:var(--ink)}
+/* details */
+.det{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}
+.det>button{display:flex;align-items:center;gap:8px;min-height:36px;background:none;border:0;padding:0 4px;cursor:pointer;color:var(--ink-2);font-size:var(--s);font-weight:600;border-radius:var(--rc)}
+.det>button svg{width:14px;height:14px;transition:transform .2s}
+.det>button[aria-expanded=true] svg{transform:rotate(90deg)}
+.lanes{display:none;margin-top:6px;padding-bottom:4px}
+.lanes.open{display:block}
+.lane{display:grid;grid-template-columns:64px 1fr 28px;gap:8px;align-items:center;height:30px}
+.lane b{font-size:var(--xs);font-weight:600}
+.lane output{font-size:var(--xs);text-align:right;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.lane.hot output{color:var(--alert);font-weight:700}
+.strip{position:relative;height:24px;background:var(--chassis);border-radius:4px;overflow:hidden}
+.strip svg{position:absolute;inset:0;width:100%;height:100%}
+.strip::before{content:"";position:absolute;top:0;bottom:0;left:calc(var(--p)*1%);right:0;background:rgb(255 255 255/.7)}
+.strip::after{content:"";position:absolute;top:0;bottom:0;left:calc(var(--p)*1%);width:2px;margin-left:-1px;background:var(--accent)}
+.strip .sg{position:absolute;top:50%;width:10px;height:10px;margin:-5px 0 0 -5px;transform:rotate(45deg);background:var(--alert);border:2px solid #fff;z-index:1}
+.strip .sg.watch{background:#fff;border-color:var(--watch)}
+.note{font-size:var(--xs);color:var(--ink-3);margin:6px 0 0}
+.toast{margin-top:10px;min-height:20px;font-size:var(--s);color:var(--ink-2)}
+.toast:not(:empty){background:var(--accent-soft);border-radius:var(--rc);padding:6px 12px;display:inline-block}
+@media (max-width:700px){
+ body{padding:12px 10px}.card{padding:12px}
+ .bar{grid-template-columns:48px 1fr auto;grid-template-areas:"p w s" "t t t";gap:8px 12px;padding-top:4px}
+ .play{grid-area:p}.when{grid-area:w;text-align:left}.spd{grid-area:s}.tw{grid-area:t}
+ .when b{font-size:var(--m)}
+ .ticks span:nth-child(even){display:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body><div class="wrap">
+<div class="cap"><h2>v5 · Replay first</h2>
+<p><b>Idea:</b> the timeline is a video player: play, one scrubber that is also the sparkline of resistant finds, signal diamonds, a date, one speed menu.</p>
+<p><b>Removes vs today:</b> the left control column, the 9 pill lanes by default, the incident tiles, the data-check block, the jump-to-date field and three button groups.</p>
+<p><b>Costs:</b> per-unit pills and tile detail move behind "Details" and popovers; one sparkline hides which unit drove a rise until you open it.</p></div>
+
+<section class="card" aria-label="Timeline">
+ <div class="head"><h3>Timeline</h3><span>All units · 1 Oct 2023 to 12 May 2025</span></div>
+ <div class="since" id="since" aria-live="polite"></div>
+ <div class="bar">
+  <button class="play" id="play" aria-label="Play replay"></button>
+  <div class="tw">
+   <div class="scrub" id="scrub" tabindex="0" role="slider" aria-label="Replay clock" aria-valuemin="0">
+    <div class="base"></div>
+    <svg id="spark" viewBox="0 0 1000 44" preserveAspectRatio="none" aria-hidden="true"></svg>
+    <div id="marks"></div><div class="clock" id="clock"></div>
+   </div>
+   <div class="ticks" id="ticks" aria-hidden="true"></div>
+  </div>
+  <div class="when" id="when" aria-live="off"><b id="date"></b><span id="sub"></span></div>
+  <label class="spd">Speed<select id="speed"><option value="7">Slow</option><option value="21" selected>Normal</option><option value="60">Fast</option></select></label>
+ </div>
+ <div class="det">
+  <button id="dbtn" aria-expanded="false" aria-controls="lanes"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 2l5 5-5 5"/></svg>Details by unit</button>
+  <div class="lanes" id="lanes" role="group" aria-label="Resistant finds per unit"></div>
+ </div>
+ <div class="toast" id="toast" role="status"></div>
+</section></div>
+<script>
+const $=id=>document.getElementById(id),DAY=864e5,T0=Date.UTC(2023,9,1),T1=Date.UTC(2025,4,12),DAYS=Math.round((T1-T0)/DAY);
+const dn=(y,m,d)=>Math.round((Date.UTC(y,m-1,d)-T0)/DAY);
+const fmt=(d,o={day:'numeric',month:'short',year:'numeric'})=>new Date(T0+d*DAY).toLocaleDateString('en-GB',{...o,timeZone:'UTC'});
+const UNITS=['ED','MED-A','MED-B','SURG','URO','ICU','GER','PHC-N','PHC-S'],W=Math.ceil(DAYS/7)+1;
+const SIG=[
+ {id:'esbl',unit:'MED-A',kind:'alert',d:dn(2025,4,30),short:'ESBL',title:'ESBL cluster · MED-A',text:'7 ESBL finds seen on MED-A on 30 Apr 2025, 1.4 expected. Worth a look at the ward before it spreads.'},
+ {id:'mrsa',unit:'ICU',kind:'alert',d:dn(2025,1,19),short:'MRSA',title:'New MRSA carrier · ICU',text:'A new MRSA carrier was identified in ICU on 19 Jan 2025.'},
+ {id:'cpe',unit:'ED',kind:'alert',d:dn(2025,1,2),short:'CPE',title:'CPE found · ED',text:'Carbapenemase-producing Enterobacterales found in ED on 2 Jan 2025.'},
+ {id:'gap',unit:'MED-A',kind:'watch',d:dn(2024,11,10),short:'Sampling gap',title:'Sampling gap · MED-A',text:'MED-A sent almost no samples for two weeks from 10 Nov 2024, so counts there may be too low.'}];
+/* fake data: weekly resistant finds per unit */
+const rnd=i=>{const x=Math.sin(i*127.1+311.7)*43758.5453;return x-Math.floor(x)};
+const base=[5,3,2,3,2,3,2,2,1.5],DATA=UNITS.map((u,ui)=>Array.from({length:W},(_,w)=>{
+ let v=base[ui]*(1+.25*Math.sin(w/8+ui))+rnd(w*9+ui)*1.6-.4;
+ SIG.forEach(s=>{if(s.unit!==u)return;const k=(w-s.d/7)/1.3;
+  if(s.id==='esbl')v+=6*Math.exp(-k*k);if(s.id==='mrsa'&&w>=s.d/7)v+=2.5*Math.exp(-k/6);if(s.id==='cpe')v+=3*Math.exp(-k*k/2);
+  if(s.id==='gap'&&Math.abs(w-s.d/7-.6)<1.1)v=0});
+ return Math.max(0,Math.round(v))}));
+const TOT=Array.from({length:W},(_,w)=>DATA.reduce((a,r)=>a+r[w],0)),MAX=Math.max(...TOT);
+const LASTVIEW=dn(2025,1,1);
+let clock=DAYS,timer=null,openChip=null;
+const pct=d=>d/DAYS*100,wk=d=>Math.min(W-1,Math.floor(d/7));
+/* build sparkline */
+const X=w=>Math.min(1000,w*7/DAYS*1000),Y=v=>40-v/MAX*36;
+const line=TOT.map((v,w)=>(w?'L':'M')+X(w).toFixed(1)+' '+Y(v).toFixed(1)).join('');
+$('spark').innerHTML=`<defs><clipPath id="cp"><rect id="cpr" x="0" y="0" width="1000" height="44"/></clipPath><clipPath id="cf"><rect id="cfr" x="1000" y="0" width="0" height="44"/></clipPath></defs>
+<g clip-path="url(#cf)"><path d="${line}L1000 44L0 44Z" fill="#e4e6ee"/><path d="${line}" fill="none" stroke="#aebecb" stroke-width="1.5" vector-effect="non-scaling-stroke"/></g>
+<g clip-path="url(#cp)"><path d="${line}L1000 44L0 44Z" fill="#c6c4ed" fill-opacity=".55"/><path d="${line}" fill="none" stroke="#1d204e" stroke-width="2" vector-effect="non-scaling-stroke"/></g>`;
+$('marks').innerHTML=SIG.map(s=>`<button class="mk ${s.kind}" data-id="${s.id}" style="left:${pct(s.d)}%;top:${4+(rnd(s.d)>.5?0:0)}px" aria-label="${s.title}, ${fmt(s.d)}. Jump to this date." title="${s.title} · ${fmt(s.d)}"><i></i></button>`).join('');
+$('ticks').innerHTML=[[2023,10],[2024,1],[2024,4],[2024,7],[2024,10],[2025,1],[2025,4]].map(([y,m])=>`<span style="left:${pct(dn(y,m,1))}%">${fmt(dn(y,m,1),{month:'short',year:'2-digit'})}</span>`).join('');
+/* lanes */
+$('lanes').innerHTML=UNITS.map((u,i)=>`<div class="lane" data-u="${i}"><b>${u}</b><div class="strip"><svg viewBox="0 0 ${W} 10" preserveAspectRatio="none" aria-hidden="true">${DATA[i].map((v,w)=>v?`<rect x="${w+.1}" y="${10-Math.min(10,v*1.4)}" width=".8" height="${Math.min(10,v*1.4)}" fill="#1d204e"/>`:'').join('')}</svg>${SIG.filter(s=>s.unit===u).map(s=>`<i class="sg ${s.kind}" style="left:${pct(s.d)}%" title="${s.title}"></i>`).join('')}</div><output></output></div>`).join('')+'<p class="note">Bars are resistant finds per week. Diamonds are signals. The number is that week at the clock.</p>';
+/* since chips + popover */
+function closePop(ret){const p=document.querySelector('.pop');if(p)p.remove();if(openChip){openChip.setAttribute('aria-expanded','false');if(ret)openChip.focus();openChip=null}}
+function renderSince(){
+ closePop();const anchor=Math.min(LASTVIEW,clock-45),list=SIG.filter(s=>s.d>anchor&&s.d<=clock).sort((a,b)=>a.d-b.d);
+ $('since').innerHTML=list.length?`<strong>+${list.length} since ${fmt(Math.max(0,anchor),{day:'numeric',month:'short'})}</strong>`+list.map(s=>`<button class="chip ${s.kind}" data-id="${s.id}" aria-expanded="false" aria-haspopup="dialog"><i class="dia ${s.kind}"></i>${s.short} ${s.unit==='MED-A'&&s.id==='gap'?'':s.unit}<small>${fmt(s.d,{day:'numeric',month:'short'})}</small></button>`).join(''):`<span class="none">Nothing new since ${fmt(Math.max(0,anchor),{day:'numeric',month:'short'})}.</span>`;
+}
+function say(t){$('toast').textContent=t}
+$('since').addEventListener('click',e=>{
+ const c=e.target.closest('.chip');if(!c)return;const was=c===openChip;closePop();if(was)return;
+ const s=SIG.find(x=>x.id===c.dataset.id),p=document.createElement('div');
+ p.className='pop';p.setAttribute('role','dialog');p.setAttribute('aria-label',s.title);
+ p.innerHTML=`<h4>${s.title}</h4><p>${s.text}</p><div class="row"><button class="btn pri" data-a="board">Show on board</button><button class="btn" data-a="jump">Go to ${fmt(s.d,{day:'numeric',month:'short'})}</button></div>`;
+ const card=document.querySelector('.card'),cr=card.getBoundingClientRect(),r=c.getBoundingClientRect();
+ card.appendChild(p);p.style.top=r.bottom-cr.top+6+'px';p.style.left=Math.max(12,Math.min(r.left-cr.left,cr.width-p.offsetWidth-12))+'px';
+ c.setAttribute('aria-expanded','true');openChip=c;p.querySelector('button').focus();
+ p.onclick=ev=>{const a=ev.target.dataset.a;if(a==='board'){say(`Board opened on ${s.unit} · ${s.title.split(' · ')[0]}, as of ${fmt(clock)}.`);closePop(true)}if(a==='jump'){setClock(s.d);}};
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closePop(true)});
+document.addEventListener('pointerdown',e=>{if(openChip&&!e.target.closest('.pop,.chip'))closePop()});
+/* clock */
+function setClock(d,keepChips){clock=Math.max(0,Math.min(DAYS,Math.round(d)));const p=pct(clock);
+ $('clock').style.left=p+'%';$('cpr').setAttribute('width',p*10);$('cfr').setAttribute('x',p*10);$('cfr').setAttribute('width',1000-p*10);
+ $('date').textContent=fmt(clock);$('sub').textContent=`${TOT[wk(clock)]} resistant finds that week`;
+ const s=$('scrub');s.setAttribute('aria-valuenow',clock);s.setAttribute('aria-valuemax',DAYS);s.setAttribute('aria-valuetext',fmt(clock));
+ document.querySelectorAll('.mk').forEach(m=>m.classList.toggle('future',SIG.find(x=>x.id===m.dataset.id).d>clock));
+ $('lanes').style.setProperty('--p',p);
+ document.querySelectorAll('.lane').forEach(l=>{const v=DATA[l.dataset.u][wk(clock)];l.querySelector('output').textContent=v;l.classList.toggle('hot',v>=6)});
+ if(!keepChips)renderSince()}
+const scrub=$('scrub');
+const fromX=x=>{const r=scrub.getBoundingClientRect();return (x-r.left)/r.width*DAYS};
+scrub.addEventListener('pointerdown',e=>{if(e.target.closest('.mk'))return;stop();scrub.setPointerCapture(e.pointerId);scrub.focus();setClock(fromX(e.clientX),true);scrub.dragging=true});
+scrub.addEventListener('pointermove',e=>{if(scrub.dragging)setClock(fromX(e.clientX),true)});
+const endDrag=()=>{if(scrub.dragging){scrub.dragging=false;renderSince()}};
+scrub.addEventListener('pointerup',endDrag);scrub.addEventListener('pointercancel',endDrag);
+scrub.addEventListener('keydown',e=>{const k=e.key,st=e.shiftKey?7:1;let d=null;
+ if(k==='ArrowLeft'||k==='ArrowDown')d=clock-st;else if(k==='ArrowRight'||k==='ArrowUp')d=clock+st;
+ else if(k==='PageDown')d=clock-30;else if(k==='PageUp')d=clock+30;else if(k==='Home')d=0;else if(k==='End')d=DAYS;
+ else if(k===' '){e.preventDefault();toggle();return}
+ if(d!==null){e.preventDefault();stop();setClock(d)}});
+$('marks').addEventListener('click',e=>{const m=e.target.closest('.mk');if(m){stop();setClock(SIG.find(s=>s.id===m.dataset.id).d);scrub.focus()}});
+/* play */
+const IC={play:'<svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg>',pause:'<svg viewBox="0 0 24 24"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>'};
+function stop(){if(timer){cancelAnimationFrame(timer);timer=null}$('play').innerHTML=IC.play;$('play').setAttribute('aria-label','Play replay')}
+function toggle(){if(timer){stop();return}
+ if(clock>=DAYS)setClock(0);$('play').innerHTML=IC.pause;$('play').setAttribute('aria-label','Pause replay');
+ let last=performance.now(),acc=clock,chipT=0;
+ const tick=t=>{acc+=(t-last)/1000*$('speed').value;last=t;
+  if(acc>=DAYS){setClock(DAYS);stop();return}
+  if(Math.round(acc)!==clock)setClock(acc,t-chipT<400);if(t-chipT>=400){chipT=t;renderSince()}
+  timer=requestAnimationFrame(tick)};timer=requestAnimationFrame(tick)}
+$('play').onclick=toggle;
+$('dbtn').onclick=()=>{const o=$('lanes').classList.toggle('open');$('dbtn').setAttribute('aria-expanded',o)};
+$('play').innerHTML=IC.play;setClock(DAYS);
+</script></body></html>

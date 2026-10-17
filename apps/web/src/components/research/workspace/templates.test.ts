@@ -23,8 +23,9 @@ describe("project template layouts", () => {
   });
   it("puts the timeline in every project, across the top (Treat a patient is a quick view without it)", () => {
     for (const template of TEMPLATES.filter((t) => t !== "patient")) {
-      const { timeline } = templateLayout(template).wins;
-      expect(timeline).toMatchObject({ open: true, x: 0, y: 0 });
+      const { timeline, answer } = templateLayout(template).wins;
+      // Across the top, or straight under the summary when the template opens one.
+      expect(timeline).toMatchObject({ open: true, x: 0, y: answer.open ? answer.y + answer.h : 0 });
     }
   });
   it("numbers launched projects after the names already taken", () => {

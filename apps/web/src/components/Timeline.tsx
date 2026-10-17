@@ -605,8 +605,17 @@ export function Timeline({
         {rangeLine}
         <div className="tl-ctl">
           {transport(false)}
-          {ctlGroups}
+          {variant ? null : ctlGroups}
         </div>
+        {variant ? (
+          <details className="tl-more">
+            <summary>{t(locale, "tlMore")}</summary>
+            <div className="tl-more-body">
+              {ctlGroups}
+              {dateJump}
+            </div>
+          </details>
+        ) : null}
         <div className="tl-read">
           <b className="tl-readout num">{readout}</b>
           <InfoPopover locale={locale}>
@@ -633,7 +642,7 @@ export function Timeline({
           <div className="tl-quality">
             <QualityStatus locale={locale} state={quality} />
           </div>
-          {dateJump}
+          {variant ? null : dateJump}
         </div>
       </div>
       <div className="tl-band-col">
@@ -645,7 +654,13 @@ export function Timeline({
           </InfoButton>
         </p>
       </div>
-      {eventsStrip()}
+      {variant ? (
+        <button type="button" className="tl-signals-link" onClick={openList}>
+          {t(locale, "tlSignalsLink", { n: incidents.length })}
+        </button>
+      ) : (
+        eventsStrip()
+      )}
     </div>
   );
 }

@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Timeline v2 · Events first</title>
+<style>
+:root{
+  --brand-accent:#635bf1;--brand-accent-soft:#ecebfc;--brand-accent-line:#c6c4ed;
+  --chassis:#f8f8f8;--glass:#fff;--ink:#07081c;--ink-2:#1d204e;--ink-3:#5c6080;
+  --line:#e4e6ee;--line-strong:#aebecb;
+  --st-alert:#d0004b;--st-alert-bg:#fde3e9;--st-watch:#94590a;--st-watch-bg:#fdf3e2;
+  --t-xs:13px;--t-s:14px;--t-m:16px;--t-l:22px;--radius:10px;--ctl:6px;
+  --font:"Inter","Segoe UI",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--chassis);color:var(--ink);font:var(--t-s)/1.4 var(--font)}
+.page{max-width:1232px;margin:0 auto;padding:16px}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--brand-accent);outline-offset:2px}
+
+/* caption */
+.cap{background:var(--brand-accent-soft);border:1px dashed var(--brand-accent-line);border-radius:var(--radius);padding:12px 16px;margin-bottom:16px}
+.cap h1{font-size:var(--t-m);margin:0 0 6px}
+.cap p{margin:2px 0;font-size:var(--t-s);color:var(--ink-2)}
+.cap b{color:var(--ink)}
+
+/* window */
+.win{background:var(--glass);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;padding:16px 16px 8px}
+.head h2{margin:0;font-size:var(--t-l);line-height:1.2}
+.clockinfo{display:flex;align-items:center;gap:8px;color:var(--ink-3);font-size:var(--t-s)}
+.clockinfo strong{color:var(--ink);font-weight:600}
+.clockinfo i{width:2px;height:16px;background:var(--brand-accent);display:inline-block}
+
+.chips{display:flex;gap:8px;padding:8px 16px 12px;overflow-x:auto;scrollbar-width:thin}
+.chip{flex:none;display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;background:var(--glass);
+  border:1px solid var(--line-strong);border-radius:999px;font-size:var(--t-s);font-weight:500}
+.chip small{font-size:var(--t-xs);color:var(--ink-3);font-variant-numeric:tabular-nums}
+.chip:hover{border-color:var(--ink-2)}
+.chip[aria-pressed=true]{background:var(--ink-2);border-color:var(--ink-2);color:#fff}
+.chip[aria-pressed=true] small{color:#d7d9f2}
+.chip.zero{color:var(--ink-3)}
+
+.stage{position:relative;border-top:1px solid var(--line)}
+.scroller{overflow-x:auto;overflow-y:hidden;height:446px;scrollbar-width:thin;scrollbar-color:var(--line-strong) transparent}
+.rail{position:relative;height:100%}
+.axis{position:absolute;left:0;right:0;top:220px;height:2px;background:var(--line-strong)}
+.tick{position:absolute;top:220px;width:1px;height:8px;background:var(--line-strong)}
+.tick.yr{height:14px;background:var(--ink-3)}
+.tlab{position:absolute;top:230px;padding:0 4px;background:var(--glass);font-size:var(--t-xs);color:var(--ink-3);z-index:2;white-space:nowrap}
+.tlab.yr{color:var(--ink);font-weight:600}
+.spark{position:absolute;left:0;top:252px;opacity:.4;pointer-events:none}
+.future{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(135deg,#f3f3f8 0 6px,#fff 6px 12px);opacity:.8}
+.clock{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--brand-accent);z-index:1}
+.clock span{position:absolute;top:10px;left:8px;white-space:nowrap;background:var(--brand-accent);color:#fff;font-size:var(--t-xs);font-weight:600;padding:3px 8px;border-radius:var(--ctl)}
+
+.ev{position:absolute;top:0;bottom:0;width:0}
+.dot{position:absolute;top:214px;left:-7px;width:14px;height:14px;border-radius:50%;border:2px solid #fff;z-index:3}
+.stem{position:absolute;left:-1px;width:2px;background:var(--line-strong)}
+.ev.up .stem{top:196px;height:24px}
+.ev.dn .stem{top:222px;height:56px}
+.card{position:absolute;left:-12px;width:224px;padding:10px 12px;background:var(--glass);border:1px solid var(--line-strong);
+  border-radius:var(--radius);z-index:2;text-align:left;display:block;color:inherit}
+.ev.up .card{bottom:calc(100% - 196px)}
+.ev.dn .card{top:278px}
+.card:hover{border-color:var(--ink-2);box-shadow:0 4px 16px rgb(7 8 28/.12)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.tag{font-size:var(--t-xs);font-weight:600;padding:1px 8px;border-radius:var(--ctl);background:#f1f2f7;border:1px solid var(--line);color:var(--ink-2)}
+.sev{display:inline-flex;align-items:center;gap:5px;font-size:var(--t-xs);font-weight:600}
+.sev::before{content:"";width:10px;height:10px;border-radius:50%;background:currentColor}
+.alert{color:var(--st-alert)} .watch{color:var(--st-watch)}
+.dot.alert{background:var(--st-alert)} .dot.watch{background:var(--st-watch)}
+.said{margin:0 0 6px;font-size:var(--t-m);line-height:1.3;font-weight:600;color:var(--ink)}
+.when{font-size:var(--t-xs);color:var(--ink-3)}
+.ev.off{display:none}
+
+.empty{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:24px;
+  color:var(--ink-3);font-size:var(--t-m);pointer-events:none;z-index:5}
+.empty div{background:var(--glass);border:1px dashed var(--line-strong);border-radius:var(--radius);padding:16px 20px;max-width:360px}
+.stage.none .empty{display:flex}
+
+.bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;padding:10px 16px;border-top:1px solid var(--line);font-size:var(--t-xs);color:var(--ink-3)}
+.nav{display:flex;gap:8px}
+.btn{min-height:36px;padding:0 12px;border:1px solid var(--line-strong);border-radius:var(--ctl);background:var(--glass);font-size:var(--t-s);font-weight:500}
+.btn:hover{border-color:var(--ink-2)}
+.btn.pri{background:var(--brand-accent);border-color:var(--brand-accent);color:#fff}
+.key{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:center}
+.key .sev{font-weight:500}
+
+@media (max-width:600px){
+  .page{padding:12px}
+  .chip,.btn{min-height:44px}
+  .head h2{font-size:20px}
+  .card{width:208px}
+  .bar{padding:10px 12px}
+  .nav{width:100%}.nav .btn{flex:1}
+}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="cap">
+  <h1>v2 · Events first</h1>
+  <p><b>Idea:</b> one thin time axis; every signal is a card on it with one plain sentence, a unit tag, a date and a severity word. Scroll sideways, filter by unit.</p>
+  <p><b>Removes:</b> the nine lanes, the coloured pills, the left control column (step, speed, big date, jump field) and the right incident tiles. One component instead of three.</p>
+  <p><b>Costs:</b> no side-by-side comparison of units over time; busy periods need alternating above/below cards, and very dense weeks will need grouping.</p>
+</div>
+
+<section class="win" aria-labelledby="ttl">
+  <div class="head">
+    <h2 id="ttl">Timeline</h2>
+    <div class="clockinfo"><i aria-hidden="true"></i>Replay clock <strong>12 May 2025</strong></div>
+  </div>
+  <div class="chips" id="chips" role="group" aria-label="Filter by unit"></div>
+
+  <div class="stage" id="stage">
+    <div class="scroller" id="sc" tabindex="0" role="region" aria-label="Events from October 2023 to May 2025, scroll sideways">
+      <div class="rail" id="rail"></div>
+    </div>
+    <div class="empty" role="status"><div id="emptyMsg"></div></div>
+  </div>
+
+  <div class="bar">
+    <span id="count" aria-live="polite"></span>
+    <div class="nav">
+      <button class="btn" id="prev" type="button">&lsaquo; Earlier</button>
+      <button class="btn" id="next" type="button">Later &rsaquo;</button>
+      <button class="btn pri" id="now" type="button">Jump to now</button>
+    </div>
+    <div class="key" aria-label="Legend">
+      <span class="sev alert">Alert</span><span class="sev watch">Watch</span>
+      <span>Faint line: resistant isolates per week</span>
+    </div>
+  </div>
+</section>
+</div>
+
+<script>
+(function(){
+  var UNITS=["ED","MED-A","MED-B","SURG","URO","ICU","GER","PHC-N","PHC-S"];
+  var EV=[
+    {d:[2024,2,22],u:"URO",s:"watch",t:"5 ciprofloxacin-resistant E. coli on URO, 2.1 usual"},
+    {d:[2024,4,9],u:"ICU",s:"alert",t:"4 CRAB isolates in ICU, 0.8 usual"},
+    {d:[2024,6,18],u:"PHC-N",s:"watch",t:"Nitrofurantoin resistance up 9 points in PHC-N"},
+    {d:[2024,8,14],u:"GER",s:"watch",t:"3 ESBL on GER, 0.9 usual"},
+    {d:[2024,11,10],u:"MED-A",s:"watch",t:"Sampling gap on MED-A: 2 days without cultures, 4 a day usual"},
+    {d:[2025,1,2],u:"ED",s:"alert",t:"CPE found in ED"},
+    {d:[2025,1,19],u:"ICU",s:"alert",t:"New MRSA carrier in ICU"},
+    {d:[2025,3,6],u:"SURG",s:"watch",t:"3 wound MRSA on SURG, 1.1 usual"},
+    {d:[2025,4,30],u:"MED-A",s:"alert",t:"7 ESBL on MED-A, 1.4 usual"}
+  ];
+  var MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  var PX=6,X0=40,START=Date.UTC(2023,9,1),CLOCK=Date.UTC(2025,4,12),END=Date.UTC(2025,4,31);
+  var DAY=864e5,W=X0+(END-START)/DAY*PX+240;
+  var $=function(id){return document.getElementById(id)};
+  var rail=$("rail"),sc=$("sc"),stage=$("stage");
+  var xOf=function(ms){return X0+(ms-START)/DAY*PX};
+  var el=function(tag,cls,html,parent){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;(parent||rail).appendChild(e);return e};
+  rail.style.width=W+"px";
+  el("div","axis");
+
+  // month ticks
+  for(var y=2023,m=9;Date.UTC(y,m,1)<=END;m++){
+    if(m>11){m=0;y++}
+    var t=Date.UTC(y,m,1),yr=(m===0||(y===2023&&m===9));
+    var tk=el("div","tick"+(yr?" yr":""));tk.style.left=xOf(t)+"px";
+    var lb=el("span","tlab"+(yr?" yr":""),MON[m]+(yr?" "+y:""));lb.style.left=xOf(t)+"px";
+  }
+
+  // faint weekly sparkline (fake data, bumps near events)
+  var evMs=EV.map(function(e){return Date.UTC(e.d[0],e.d[1]-1,e.d[2])});
+  var pts=[],wk=Math.floor((END-START)/DAY/7);
+  for(var w=0;w<=wk;w++){
+    var ms=START+w*7*DAY,v=14+4*Math.sin(w/3.1)+2*Math.sin(w*1.7);
+    evMs.forEach(function(e){var dd=(ms-e)/DAY/7;v+=9*Math.exp(-dd*dd/2)});
+    pts.push([xOf(ms),30-v]);
+  }
+  var d="M"+pts.map(function(p){return p[0].toFixed(0)+" "+p[1].toFixed(1)}).join("L");
+  rail.insertAdjacentHTML("beforeend",'<svg class="spark" width="'+W+'" height="32" aria-hidden="true"><path d="'+d+'L'+pts[pts.length-1][0]+' 32L'+X0+' 32Z" fill="#5c6080" fill-opacity=".25"/><path d="'+d+'" fill="none" stroke="#5c6080" stroke-width="1.5"/></svg>');
+
+  // future zone + clock
+  var fz=el("div","future");fz.style.left=xOf(CLOCK)+"px";fz.style.right="0";
+  var ck=el("div","clock",'<span>Now · 12 May 2025</span>');ck.style.left=xOf(CLOCK)+"px";
+
+  // events
+  function ago(ms){var n=Math.round((CLOCK-ms)/DAY);return n<14?n+" days ago":n<100?Math.round(n/7)+" weeks ago":Math.round(n/30.4)+" months ago"}
+  var nodes=EV.map(function(e,i){
+    var ms=evMs[i],up=i%2===0;
+    var n=el("div","ev "+(up?"up":"dn"));n.style.left=xOf(ms)+"px";
+    el("div","stem",null,n);
+    el("div","dot "+e.s,null,n);
+    var c=el("article","card",
+      '<div class="row"><span class="tag">'+e.u+'</span><span class="sev '+e.s+'">'+(e.s==="alert"?"Alert":"Watch")+'</span></div>'+
+      '<p class="said">'+e.t+'</p><div class="when">'+e.d[2]+" "+MON[e.d[1]-1]+" "+e.d[0]+" · "+ago(ms)+'</div>',n);
+    c.tabIndex=0;
+    return {n:n,u:e.u,x:xOf(ms)-12};
+  });
+
+  // chips
+  var on={},chips=$("chips");
+  var cnt=function(u){return EV.filter(function(e){return e.u===u}).length};
+  function chip(label,u){
+    var b=el("button","chip"+(u&&!cnt(u)?" zero":""),label+" <small>"+(u?cnt(u):EV.length)+"</small>",chips);
+    b.type="button";b.setAttribute("aria-pressed","false");b.dataset.u=u||"";return b;
+  }
+  var all=chip("All",null),btns=UNITS.map(function(u){return chip(u,u)});
+  function render(){
+    var sel=UNITS.filter(function(u){return on[u]}),vis=0,last=null;
+    all.setAttribute("aria-pressed",sel.length?"false":"true");
+    btns.forEach(function(b){b.setAttribute("aria-pressed",on[b.dataset.u]?"true":"false")});
+    nodes.forEach(function(o){
+      var show=!sel.length||on[o.u];o.n.classList.toggle("off",!show);
+      if(show){vis++;last=o}
+    });
+    stage.classList.toggle("none",!vis);
+    $("emptyMsg").textContent=vis?"":"No events on "+sel.join(", ")+" since Oct 2023. Nothing to review here.";
+    $("count").textContent=vis+" of "+EV.length+" events"+(sel.length?" · "+sel.join(", "):"");
+    return last;
+  }
+  function toggle(u){if(!u){on={}}else{on[u]=!on[u]}var l=render();if(l)go(l.x-40)}
+  chips.addEventListener("click",function(e){var b=e.target.closest(".chip");if(b)toggle(b.dataset.u)});
+
+  // scrolling
+  var go=function(x){sc.scrollTo({left:Math.max(0,x),behavior:matchMedia("(prefers-reduced-motion:reduce)").matches?"auto":"smooth"})};
+  var visible=function(){return nodes.filter(function(o){return !o.n.classList.contains("off")})};
+  var nowX=function(){return Math.min(xOf(CLOCK)-sc.clientWidth+80,nodes[nodes.length-1].x-24)};
+  $("now").onclick=function(){go(nowX())};
+  $("prev").onclick=function(){var p=visible().filter(function(o){return o.x<sc.scrollLeft-8}).pop();go(p?p.x-40:0)};
+  $("next").onclick=function(){var n=visible().filter(function(o){return o.x>sc.scrollLeft+48}).shift();if(n)go(n.x-40);else $("now").onclick()};
+  sc.addEventListener("keydown",function(e){
+    if(e.key==="ArrowRight")sc.scrollLeft+=120;if(e.key==="ArrowLeft")sc.scrollLeft-=120;
+  });
+
+  render();
+  var open=function(){sc.scrollLeft=nowX()}; // open on the newest events and the clock
+  open();addEventListener("load",open);
+})();
+</script>
+</body>
+</html>
