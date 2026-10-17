@@ -49,7 +49,7 @@
   max-width: 48ch;
 }
 
-/* The registry entry inside the ⓘ (D-070): formula, constants, code line, notebook copy. */
+/* The registry entry inside the ⓘ (D-075): formula, constants, code line, notebook copy. */
 .sig-method {
   display: grid;
   gap: 6px;

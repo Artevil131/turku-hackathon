@@ -5,7 +5,7 @@ import { betaDensity, logGamma } from "@aei/viz";
 
 // The researcher's first statistical tools: two shares, two rates, a trend, a Beta posterior and
 // the discounted Beta of D-041, shares by period. Pure functions; the interval and test choices
-// are D-068. The Python mirror is libs/utils/py/aei/compare.py (same arithmetic, parity-tested).
+// are D-074. The Python mirror is libs/utils/py/aei/compare.py (same arithmetic, parity-tested).
 
 export interface Interval {
   lo: number;

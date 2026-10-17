@@ -5,7 +5,7 @@ signal: what the card said, what the code computes (`libs/utils/detect`,
 `libs/utils/alerts`, `LIVE_SETTINGS`), what ENGINE.md A3 states, the
 verdict, and the fix. Fixes marked *done* are in `libs/utils/i18n/src/
 surfaces/card.ts` and `apps/web/src/components/research/math/AlertMath.tsx`.
-The wording itself is a proposal (DECISIONS D-067), pending Artem.
+The wording itself is a proposal (DECISIONS D-073), pending Artem.
 
 | Element | Card said | Code and ENGINE A3 | Verdict | Fix |
 |---|---|---|---|---|

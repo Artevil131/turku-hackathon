@@ -12,6 +12,7 @@ import { GeoMap } from "./geo/GeoMap.tsx";
 import { UnitGraph } from "./geo/UnitGraph.tsx";
 import { AlertMath } from "./math/AlertMath.tsx";
 import { ProjectControls } from "./projects/ProjectControls.tsx";
+import { type NotebookLanguage, Reproduce, ReproduceHost } from "./projects/Reproduce.tsx";
 import { useProject } from "./projects/useProject.ts";
 import { SignalFeed } from "./SignalFeed.tsx";
 import { UnitGrid } from "./UnitGrid.tsx";
@@ -36,6 +37,7 @@ export function ResearchBoard(props: Props) {
   const onChange = useCallback((patch: Partial<BoardState>) => setState((s) => ({ ...s, ...patch })), []);
   // The project (the friend's shell, D-057 on main) travels in the hash beside the board's own params.
   const project = useProject(client, asOf);
+  const [notebookLanguage, setNotebookLanguage] = useState<NotebookLanguage>("python");
   useEffect(() => writeHashParams({ ...boardToParams(state), project: hashParams().get("project") }), [state]);
   // A link followed inside the app (or the back button) changes the hash without remounting.
   // Also when another component (the timeline's pills and lanes) writes `inc=` or `unit=` through url.ts.
@@ -110,6 +112,9 @@ export function ResearchBoard(props: Props) {
     signals: (
       <SignalFeed {...panelProps} load={load} incidents={incidents} retry={retry} spansOf={spansOf} selected={selected?.key ?? null} />
     ),
+    reproduce: (
+      <Reproduce locale={locale} project={project.response?.project} language={notebookLanguage} onLanguage={setNotebookLanguage} />
+    ),
     map: <GeoMap {...panelProps} focusCounty={mapCounty} />,
     graph: <UnitGraph {...panelProps} />,
     grid: <UnitGrid {...panelProps} />,
@@ -142,7 +147,17 @@ export function ResearchBoard(props: Props) {
         content={content}
         initiallyOpen={initiallyOpen.current}
         reveal={reveal}
-        toolbar={<ProjectControls client={client} locale={locale} clock={asOf} board={state} selection={project} />}
+        toolbar={
+          <ProjectControls
+            client={client}
+            locale={locale}
+            clock={asOf}
+            board={state}
+            selection={project}
+            onReproduce={() => setReveal({ id: "reproduce", key: `reproduce-${Date.now()}` })}
+          />
+        }
+        overlay={<ReproduceHost locale={locale} projectId={project.id} language={notebookLanguage} />}
         primary={primary}
         answers={ANSWERS}
         lead={lead}

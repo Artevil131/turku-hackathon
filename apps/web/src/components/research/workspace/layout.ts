@@ -8,7 +8,7 @@ export const STORAGE_KEY = "aei.research.layout";
 /** The board grows downward as windows move down; this is only a sanity limit. */
 export const MAX_ROWS = 160;
 
-export const WIN_IDS = ["signals", "map", "graph", "math", "assistant", "grid"] as const;
+export const WIN_IDS = ["signals", "map", "graph", "math", "assistant", "grid", "reproduce"] as const;
 export type WinId = (typeof WIN_IDS)[number];
 
 export interface Rect {
@@ -34,6 +34,7 @@ export const MIN_SIZE: Record<WinId, { w: number; h: number }> = {
   math: { w: 3, h: 6 },
   assistant: { w: 3, h: 5 },
   grid: { w: 4, h: 8 },
+  reproduce: { w: 5, h: 14 },
 };
 
 const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
@@ -59,8 +60,9 @@ export function defaultLayout(): Layout {
     graph: { x: 7, y: 14, w: 5, h: 18, open: true },
     assistant: { x: 7, y: 32, w: 5, h: 8, open: true },
     grid: { x: 0, y: 0, w: 12, h: 30, open: false },
+    reproduce: { x: 0, y: 0, w: 12, h: 32, open: false },
   };
-  return { wins, order: ["signals", "map", "graph", "math", "assistant", "grid"] };
+  return { wins, order: ["signals", "map", "graph", "math", "assistant", "grid", "reproduce"] };
 }
 
 export type Preset = "default" | "map" | "signals" | "units";

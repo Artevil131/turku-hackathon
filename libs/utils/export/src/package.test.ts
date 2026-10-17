@@ -132,11 +132,11 @@ describe("research package", () => {
     expect(files["methods.json"]).toBe("[]\n");
   });
 
-  it("generates reproducibility notebooks with valid v4.5 cells and Python and xeus-r kernels", () => {
+  it("generates reproducibility notebooks with valid v4.5 cells and desktop Python and R kernels", () => {
     const files = filesOf();
     for (const [path, name, language] of [
       ["reproduce.ipynb", "python3", "python"],
-      ["reproduce-r.ipynb", "xr", "R"],
+      ["reproduce-r.ipynb", "ir", "R"],
     ]) {
       const notebook = JSON.parse(String(files[path ?? ""]));
       expect(notebook.nbformat).toBe(4);
@@ -163,7 +163,7 @@ describe("research package", () => {
     expect(python.cells[5].source).toBe("aei.reproduce(pkg)");
     expect(python.cells[7].source).toContain(".size().unstack(fill_value=0).tail()");
     const r = JSON.parse(String(files["reproduce-r.ipynb"]));
-    expect(r.metadata.kernelspec.display_name).toBe("R (xeus-r)");
+    expect(r.metadata.kernelspec.display_name).toBe("R");
     expect(r.cells[1].source).toBe('library(aei)\npkg <- read_package(".")');
     expect(r.cells[3].source).toBe("verify(pkg)");
     expect(r.cells[5].source).toBe("reproduce(pkg)");
@@ -172,6 +172,23 @@ describe("research package", () => {
     expect(files["analysis.py"]).toContain("print(aei.reproduce(pkg))");
     expect(files["analysis.R"]).toContain("print(verify(pkg))");
     expect(files["analysis.R"]).toContain("print(reproduce(pkg))");
+  });
+
+  it("uses the installed JupyterLite kernels only for browser packages", () => {
+    const files = Object.fromEntries(packageFiles(bundle, { target: "lite" }).map((file) => [file.path, file.data]));
+    expect(JSON.parse(String(files["reproduce.ipynb"])).metadata.kernelspec).toEqual({
+      name: "python",
+      display_name: "Python (Pyodide)",
+      language: "python",
+    });
+    expect(JSON.parse(String(files["reproduce-r.ipynb"])).metadata.kernelspec).toEqual({
+      name: "xr",
+      display_name: "R 4.5.1 (xr)",
+      language: "R",
+    });
+    for (const path of ["reproduce.ipynb", "reproduce-r.ipynb"]) {
+      expect(JSON.parse(String(files[path])).cells).toEqual(JSON.parse(String(filesOf()[path])).cells);
+    }
   });
 
   it("zips the package and a real Word report under the title slug", async () => {
@@ -187,6 +204,8 @@ describe("research package", () => {
         .sort(),
     ).toEqual(expectedPaths.map((path) => `study-a-spring/${path}`).sort());
     expect(await zip.file("study-a-spring/isolates.csv")?.async("string")).toBe(filesOf()["isolates.csv"]);
+    expect(JSON.parse(String(await zip.file("study-a-spring/reproduce.ipynb")?.async("string"))).metadata.kernelspec.name).toBe("python3");
+    expect(JSON.parse(String(await zip.file("study-a-spring/reproduce-r.ipynb")?.async("string"))).metadata.kernelspec.name).toBe("ir");
     const report = await zip.file("study-a-spring/report.docx")?.async("uint8array");
     expect(report).toBeDefined();
     const docx = await JSZip.loadAsync(report as Uint8Array);

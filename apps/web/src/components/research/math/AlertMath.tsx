@@ -279,7 +279,7 @@ function whereLine(locale: Locale, inc: Incident, win: { from: string; to: strin
   return parts.join(" · ");
 }
 
-/** The ⓘ of the how-section: the Poisson tail for the count detectors; sentinels and trends have none. The registry entry follows (D-070). */
+/** The ⓘ of the how-section: the Poisson tail for the count detectors; sentinels and trends have none. The registry entry follows (D-075). */
 function HowFigure({ locale, alert: a, values }: { locale: Locale; alert: Alert; values: SnippetValues }): ReactNode {
   const detail = howDetail(locale, a);
   if (!detail) return null;

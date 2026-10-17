@@ -1,6 +1,6 @@
 # @aei/compare
 
-The researcher's first statistical tools (D-068). Pure functions; the Tools window calls them, and
+The researcher's first statistical tools (D-074). Pure functions; the Tools window calls them, and
 `aei.compare` (libs/utils/py/aei/compare.py) mirrors them with the same arithmetic, parity-tested to 1e-9.
 
     proportionDifference(k1, n1, k2, n2)    // diff = p2 − p1, Newcombe hybrid score interval (Wilson, z = 1.96), pooled two-sided z test

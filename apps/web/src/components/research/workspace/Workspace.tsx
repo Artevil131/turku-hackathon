@@ -61,10 +61,11 @@ const TITLE_KEY = {
   math: "boardMath",
   assistant: "boardAssistant",
   grid: "boardGrid",
+  reproduce: "boardReproduce",
 } as const;
 
 /** The stacked order under 1100 px: the list first, the map last (as before). */
-const STACK_ORDER: readonly WinId[] = ["signals", "math", "assistant", "map", "graph", "grid"];
+const STACK_ORDER: readonly WinId[] = ["signals", "math", "assistant", "map", "graph", "grid", "reproduce"];
 
 function useWide(): boolean {
   const query = "(min-width: 1100px)";
@@ -107,6 +108,7 @@ export function Workspace({
   initiallyOpen,
   reveal,
   toolbar,
+  overlay,
   primary = null,
   answers = [],
   lead,
@@ -121,6 +123,8 @@ export function Workspace({
   reveal?: { id: WinId; key: string | null };
   /** Extra controls for the toolbar row (the project switcher and export). */
   toolbar?: ReactNode;
+  /** Rendered over the board (the friend's full-size notebook host). */
+  overlay?: ReactNode;
   /** The window that holds the selected signal: it gets the accent ring and is what F focuses. */
   primary?: WinId | null;
   /** The windows that answer the selected signal next (full tone); every other window steps back. */
@@ -536,6 +540,7 @@ export function Workspace({
         })}
       </div>
       {wide ? <div className="ws-rail">{tray}</div> : null}
+      {overlay}
       <p className="visually-hidden" role="status" aria-live="polite">
         {status}
       </p>

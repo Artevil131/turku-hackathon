@@ -1,7 +1,7 @@
 import { NEW_IN_UNIT_DAYS } from "@aei/alerts";
 import { LIVE_SETTINGS, SURVEILLANCE_PAIRS } from "@aei/detect";
 
-// One source of truth for what each detector computes (D-070). The signal card's ⓘ reads
+// One source of truth for what each detector computes (D-075). The signal card's ⓘ reads
 // it now; the Method page, the research package and the notebook are meant to read the same
 // entries, so the screen, the package and the notebook cannot describe different tests.
 // Formulas follow ENGINE.md A3; constants are read from the live settings, never retyped

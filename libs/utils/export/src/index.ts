@@ -1,5 +1,5 @@
 export type { ExportBundle, ExportColumn, ExportFigure, ExportFile, ExportNumber, ExportTable } from "./bundle.ts";
-export { pythonAnalysis, pythonNotebook, rAnalysis, rNotebook } from "./notebooks.ts";
+export { type NotebookTarget, pythonAnalysis, pythonNotebook, rAnalysis, rNotebook } from "./notebooks.ts";
 export { packageFiles, toResearchPackage } from "./package.ts";
 export { alertInScope, type ProjectBundleLabels, projectBundle } from "./project.ts";
 export { alertTable, isolateTable } from "./tables.ts";

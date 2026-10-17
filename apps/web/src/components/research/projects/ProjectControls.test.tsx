@@ -43,6 +43,15 @@ describe("project toolbar", () => {
     expect(html).toContain(">Project</button>");
     expect(html).toContain(">Export</button>");
   });
+  it("opens Reproduce only when a project is open", () => {
+    const props = { client: {} as AeiClient, locale: "en" as const, clock: "2025-06-12", board, onReproduce: vi.fn() };
+    expect(renderToStaticMarkup(<ProjectControls {...props} selection={selection} />)).toContain(
+      'data-open-reproduce="true">Reproduce</button>',
+    );
+    expect(renderToStaticMarkup(<ProjectControls {...props} selection={{ ...selection, id: null, response: null }} />)).not.toContain(
+      "data-open-reproduce",
+    );
+  });
   it("provides Finnish copy and leaves export disabled until the clock is known", () => {
     const html = renderToStaticMarkup(
       <ProjectControls client={{} as AeiClient} locale="fi" clock={null} board={board} selection={selection} />,

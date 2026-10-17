@@ -299,7 +299,7 @@ per detector saying what was counted, against which past, and the tail
 probability, with the test, its minimums, threshold and decision number
 behind the ⓘ (`libs/utils/i18n/src/surfaces/card.ts`, keys `cardHow*`
 and `cardDetail*`). The sentences state A3 as it runs; MATH-REVIEW.md
-holds the audit (D-067, pending Artem).
+holds the audit (D-073, pending Artem).
 
 ## B4. Unit graph and county map
 

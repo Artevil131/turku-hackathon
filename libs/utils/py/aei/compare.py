@@ -1,4 +1,4 @@
-"""The researcher's first statistical tools (mirrors @aei/compare; D-068): two shares, two rates, a trend, a Beta posterior,
+"""The researcher's first statistical tools (mirrors @aei/compare; D-074): two shares, two rates, a trend, a Beta posterior,
 the discounted Beta of D-041 and shares by period. Same arithmetic as the TypeScript, so the numbers agree to 1e-9."""
 
 from __future__ import annotations

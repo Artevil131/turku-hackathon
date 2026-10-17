@@ -148,7 +148,7 @@ and meaning. Ratios on the card name what they are a ratio of.
 
 Built (2026-10-17): CSS in `apps/web/src/styles.css`, `components/timeline.css`
 and `components/research/workspace/workspace.css`, all under
-`prefers-reduced-motion`; no dependency added (D-066).
+`prefers-reduced-motion`; no dependency added (D-072).
 
 - A motion system in `styles.css`: three durations (120, 200, 320 ms), one
   easing, all behind `prefers-reduced-motion`. No new dependency: CSS
@@ -221,4 +221,4 @@ card names its county's signal.
    slow trend (E4) be shown as a hospital-level signal?
 4. Motion with no new dependency (CSS + View Transitions), or add a library?
    **Answered (2026-10-17):** no motion dependency; CSS transitions and View
-   Transitions, three duration tokens, behind `prefers-reduced-motion` (D-066).
+   Transitions, three duration tokens, behind `prefers-reduced-motion` (D-072).
