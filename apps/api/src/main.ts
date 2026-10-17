@@ -71,7 +71,8 @@ const config = {
   // County polygons for the regional map, written by scripts/fetch_county_geometry.py.
   countiesFile: resolve(env.AEI_COUNTIES ?? "../../data/external/statfi/counties.geojson"),
   // Other hospitals connected to this server, with their units and tokens (D-051); unset: the home site alone.
-  sitesFile: env.AEI_SITES || undefined,
+  // A relative path is read from where the command was started (pnpm's INIT_CWD, e.g. the repository root).
+  sitesFile: env.AEI_SITES ? resolve(env.INIT_CWD ?? ".", env.AEI_SITES) : undefined,
 };
 const codeMaps: CodeMaps = config.codeMapFile
   ? extendCodeMaps(JSON.parse(readFileSync(resolve(config.codeMapFile), "utf8")) as Partial<CodeMaps>)
@@ -90,6 +91,8 @@ function openSites() {
     return loaded.registry;
   } catch (error) {
     if (error instanceof SitesFileError) console.error(`[aei-api] AEI_SITES=${config.sitesFile}: ${error.message}`);
+    // Stop with the message alone; under the test runner, throw so the test sees it.
+    if (error instanceof SitesFileError && !env.VITEST) process.exit(1);
     throw error;
   }
 }
