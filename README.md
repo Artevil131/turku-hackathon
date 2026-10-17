@@ -22,8 +22,7 @@ of one isolate. The full results are in
 
 ## The repository
 
-This
-repository lays the foundation so that whatever we build, a website and an
+This repository lays the foundation so that whatever we build, a website and an
 iPhone app among it, sits on one structure.
 
 The architecture tries to generalise and keep everything as untangled as
