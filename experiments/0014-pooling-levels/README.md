@@ -1,5 +1,5 @@
 ---
-status: proposed    # proposed, then accepted, rejected or superseded
+status: accepted    # proposed, then accepted, rejected or superseded
 by: Claude Code, operated by Artem (overnight run)
 data: [synthetic_microbiology_dataset, seed 2026, as received 2026-10-09]
 parent: 0004
@@ -209,4 +209,152 @@ more results, picked from rows dated up to 2024-09-30.
 
 ## Result
 
+Command: `uv run python experiments/0014-pooling-levels/run.py` (writes
+`out/results.md`, `out/metrics.json`, `out/grid.json`, `out/figure.png`).
+Tags: computed (by that run), measured (counted in the data), derived
+(calculated from numbers given here), assumed; every number is computed unless
+tagged. Deterministic; bootstrap draws are the harness's (seed 2026, 1,000
+resamples of 26 windows or 24 months). CPU time 59.8 s and 73.1 s in two runs
+(`aei.harness.Clock`, shared laptop; the committed outputs record the last) of
+the 600 s budget; all 12 rows scored in full, no cut.
+`uv run python scripts/verify_experiments.py --only 0014` says "reproduces".
+
+**Row chosen on TUNE only** (10 windows, 61,847 isolate × antibiotic predictions,
+Brier in `left_out`; difference to the lowest): P-H 0.13681 (chosen), P-IO
++0.00008, S-H +0.00012, P-WC +0.00018, S-IO +0.00027, S-WC +0.00037, P-U
++0.00067, S-U +0.00120. No tie. `tuned_on_test` false. The chosen row is P-H,
+which is hospital-365: its metrics equal `coverage-hospital-365.json` on all 150
+numbers compared (difference 0), so `out/metrics.json` repeats the baseline row.
+The finer rows are in `out/grid.json`, exploratory (scored on the scoring period).
+
+**Metrics** (95 % bootstrap intervals; 26 windows for C1 to C3(a) and C8 C1, 24
+months for C3(b), C4, C7, C8 C4). P-IO and P-U are shown beside the chosen row;
+all 12 rows are in `out/results.md`.
+
+| metric | P-H (chosen = hospital-365) | shipped | P-IO | P-U |
+|---|---|---|---|---|
+| C1 all | 0.1414 (0.1398 to 0.1431) | 0.1417 (0.1401 to 0.1435) | 0.1414 | 0.1418 |
+| C1 diff to hospital-365, all | 0 | +0.0003 (+0.0001 to +0.0005) | −0.00005 (−0.00011 to +0.00001) | +0.00036 (+0.00019 to +0.00053) |
+| C1 diff, small | 0 | +0.0008 (+0.0004 to +0.0013) | +0.00005 (−0.00017 to +0.00027) | +0.0011 (+0.0006 to +0.0016) |
+| C1 diff, all, counted | 0 | +0.0003 (+0.0002 to +0.0005) | −0.00003 (−0.00010 to +0.00003) | +0.00036 (+0.00018 to +0.00054) |
+| C2 diff, all | 0 | +0.0011 (+0.0006 to +0.0017) | −0.00011 (−0.00027 to +0.00005) | +0.0015 (+0.0009 to +0.0020) |
+| C3(a) slope, intercept | 1.038, 0.023 | 1.026, 0.031 | 1.037, 0.023 | 1.024, 0.032 |
+| C3(b) severe, observed of expected | 29 of 26.2 | 23 of 19.6 | 28 of 27.1 | 25 of 20.4 |
+| C4 mild spectrum | 0.9661 (0.9626 to 0.9697) | 0.9656 (0.9621 to 0.9693) | 0.9656 (0.9621 to 0.9693) | 0.9656 (0.9621 to 0.9693) |
+| C4 mild all organisms | 0.7542 (0.7471 to 0.7605) | 0.7543 (0.7471 to 0.7606) | 0.7542 | 0.7543 |
+| C4 severe | 0.9532 (0.9499 to 0.9559) | 0.9545 (0.9514 to 0.9572) | 0.9537 (0.9505 to 0.9564) | 0.9541 (0.9508 to 0.9568) |
+| C4 severe, counted | 0.9383 (0.9353 to 0.9412) | 0.9386 (0.9356 to 0.9412) | 0.9386 (0.9357 to 0.9413) | 0.9380 (0.9349 to 0.9409) |
+| C6 E1 CRO, E1 CXM, E2 CXM (days) | not reached ×3 | 47, not reached, not reached | not reached ×3 | 47, not reached, not reached |
+| C7(a), expected 0.907 | 0.899 (0.875 to 0.923) | 0.902 (0.877 to 0.925) | 0.903 (0.879 to 0.926) | 0.902 (0.877 to 0.925) |
+| C8 C1 | 0.1669 (0.1538 to 0.1931) | 0.1656 (0.1531 to 0.1928) | 0.1656 (0.1530 to 0.1919) | 0.1656 (0.1532 to 0.1930) |
+| C8 C1 diff to hospital-365 | 0 | −0.0013 (−0.0040 to +0.0026) | −0.0013 (−0.0025 to −0.0002) | −0.0013 (−0.0040 to +0.0027) |
+
+n: C1 all 163,666 predictions; C7(a) 1,993 blocks; C8 C1 2,692 (all rows). The
+other nine rows (computed, `out/results.md`): C1 diff all P-WC +0.00002
+(−0.00005 to +0.00009), S-H −0.00001 (−0.00005 to +0.00003), S-IO +0.00001, S-WC
++0.00007, S-U +0.00075 (+0.00057 to +0.00093), F-H −0.00006 (−0.00010 to
+−0.00002), F-IO −0.00005, F-WC +0.00002, F-U +0.00037 (+0.00020 to +0.00053). C5
+for *E. coli* TMP, hospital-365 0.1666: P-IO 0.1657, P-WC 0.1658, P-U 0.1662
+(−0.0009, −0.0008, −0.0004 against it); *E. coli* AMP 0.2452: −0.0014 for P-IO, P-WC
+and P-U; CIP −0.0001 (P-IO, P-WC), +0.0001 (P-U); MEC +0.0001 (P-IO), +0.0002
+(P-WC), +0.0007 (P-U).
+Predictions with under 30 results in the pool of their level: 0.7 % for U, 0.0 %
+for the other levels. C7(a) 0.898 to 0.905 and C3(b) passing for all 12 rows;
+E1 ceftriaxone C6 reached only by the U rows (47, 46, 46 days for P-U, S-U, F-U),
+E1 cefuroxime and E2 by no row.
+
+**Replacement rule against the shipped row** (readings of 0013; "points" and
+"interval" as in `out/results.md`). Chosen P-H: C1 passes (−0.0003 against the
+shipped row in both conventions); C4 fails by points and by interval (severe
+−0.0013, interval −0.0026 to −0.0001; mild spectrum +0.0005, −0.0000 to +0.0012;
+mild all −0.0001; severe counted −0.0003, −0.0015 to +0.0009); C8 fails (C1
+0.1669 against 0.1656, difference +0.0013, −0.0028 to +0.0040); C3(b) passes (29
+of 26.2, ratio 1.11); C7(a) passes (0.899): 3 of 5. P-IO: C1 passes (−0.0003,
+−0.0004); C4 fails by points (severe −0.0008, −0.0019 to +0.0002) and passes by
+interval; C8 fails (+0.00002, −0.0029 to +0.0018); C3(b) passes (28 of 27.1);
+C7(a) passes (0.903): 3 of 5 by points, 4 of 5 by interval. Across the twelve
+rows no row passes all five lines: every row fails C8 by points (difference +0.00002
+to +0.0013) and by interval; S-U and F-U pass C4 by points (severe +0.00006) and
+reach 4 of 5, the best.
+
+**Against the hypothesis.** (1) Held: TUNE's pick is P-H (not a unit row, not an
+S row) and the unit rows have the two highest TUNE Brier. (2) Held: P-IO −0.00005
+(inside −0.0003 to +0.0001), P-WC within 0.00007 of P-IO, P-U +0.00036 (a
+reproduction of 0004's estimator 2: +0.0004, small +0.0011); C5 for *E. coli* TMP
+0.0009 lower for P-IO (inside 0.0004 to 0.0024). (3) Held in part: S-H minus P-H
+−0.00001 (inside −0.0003 to 0), F-H within 0.00006 of P-H, F-U within 0.00001 of
+P-U (the identity holds); **refuted for S-U: its C1 is 0.00039 above P-U's**
+(+0.00075 against +0.00036, a point difference without an interval, beyond the
+0.0002 refutation line). (4) Held in part: no row passes every line and the U rows
+land at 47, 46 and 46 days; but C8 C1 of P-IO and P-WC is 0.1656, 0.00002 above the
+shipped row's (equal to four digits), so the dilution reading fails for IO and WC (it
+holds for H: 0.1669, +0.0013); C7(a) and C3(b) hold for all rows.
+
+**Checks** (all pass, `out/results.md`): P-H equals `hospital_365` and P-U equals
+`estimators_0004()[1]` on three views × three conventions (difference 0); S equals
+P at IO, WC, U on the 1,404 outpatient cells with a non-empty pool (702 empty-pool
+cells left out); with w_s := n_s/n the split equals k/n (1,404 cells, 1.1e-16); the
+matched Beta has the fold's mean and variance (1,872 cells, 1.1e-16 and 6.3e-16
+relative); F and S agree on C3(b), C4, C6, C7, C8 (C4) (24 of 24); every call reads
+only rows dated before `view.start` and within 365 days.
+
+**Figure** (`out/figure.png`, 7.5 × 4 inches, 120 dpi, 38 KB): the ladder of pools
+as of 2026-09-27 for the cell the plan's rule picked from rows up to 2024-09-30,
+ED blood cefuroxime. Hospital 218 of 290 (75.2 %, 90 % interval 70.8 to 79.1 %);
+inpatient/outpatient, ward class and unit all 75 of 102 (73.5 %, 65.9 to 80.2 %),
+because ED is the only outpatient unit with blood isolates that year (derived from
+the equal counts). The cell is outpatient, so the onset markers, drawn only for
+inpatient cells, are absent from the committed picture. The shipped rule would use
+the unit's pool.
+
+**Deviations from plan:** none in method or grid. The share of predictions under 30
+results is prediction-weighted, which the plan did not say.
+
 ## Interpretation
+
+On this data the pooling level moves the doctor's number very little. Against
+hospital-365, C1 differs by −0.00005 (−0.00011 to +0.00001) at inpatient/outpatient and
++0.00002 at ward class, both inside the interval of zero, and by +0.00036 at the unit,
+which is 0004's finding again. The one place a level shows is the pair 0004's review
+named: *E. coli* trimethoprim is 0.0009 better pooled by inpatient/outpatient (computed,
+C5, no interval). By METRICS.md's decision rules no row replaces the shipped estimate:
+every row fails C8. The row nearest is inpatient/outpatient: C1 0.0003 under the shipped
+row (point), C3(b) and C7(a) passing, C8 equal to the shipped row (+0.00002, interval
+−0.0029 to +0.0018), C4 below by points (severe −0.0008) but not by interval. Its C1
+interval against hospital-365 (−0.00011 to +0.00001) and the shipped row's (+0.0001 to
++0.0005) do not overlap (derived; not a paired test), so the shipped fallback is the
+costlier of the two on C1 here. Nothing is decided: a 0.0003 Brier is the size 0004
+said no doctor would notice.
+
+TUNE chose hospital-365 itself, so the reported row is the baseline; the scoring period
+then puts inpatient/outpatient 0.00005 below it where TUNE had it 0.00008 above. Both
+differences are under 0.0001 and inside their spread, and TUNE's windows see 84 to 336
+days of history, which favours coarse pools (assumed), so the sign flip is not a finding.
+
+Onset: the fold (F) at the hospital level is 0.00006 below P-H with an interval wholly
+below zero (−0.00010 to −0.00002; C2 −0.00016, −0.00026 to −0.00005), and the
+isolate-level S-H is no better (−0.00001), so knowing the patient's own onset adds
+nothing the unit's onset mix does not. The size is 0.0001 of a Brier and one of 12 rows,
+so it is a description, not a gain. S-U is the exception the plan did not predict: the
+folded split equals the unsplit estimate at the unit level (F-U +0.00037 against P-U
++0.00036, as derived), but the isolate-level split halves the pools and costs +0.00039
+(point) with no bias to repay it. The derivation covered the fold only; it said nothing
+about the isolate-level split. The C8 gain of IO and WC over hospital-365 (−0.0013,
+−0.0025 to −0.0002) is not outbreak response: C6 for E1 ceftriaxone is still not
+reached at those levels (only the unit rows reach it, at 46 to 47 days), so the gain is
+more likely the inpatient units' baseline differing from the hospital's, which
+includes outpatients (assumed).
+
+The strongest alternative explanation for how small the effects are is dilution, not
+absence: the cell pools every organism, so a type difference in *E. coli* TMP or AMP is
+averaged with organisms and drugs where units agree (0013: the organism mix is the same
+in every unit), and the generator may give type differences in few pairs. A second is
+that these data are synthetic and carry little onset signal; a third that TUNE's short
+history chose the wrong level and the scoring period's ordering is noise at 0.0001.
+
+Next, none run: (1) pool per organism × antibiotic with 0013's mix, where the *E. coli*
+TMP and AMP differences are not diluted; (2) partial pooling between inpatient/outpatient
+and the unit (method 2 of the brief) in place of hard levels, which would also settle the
+gate at 30; (3) a harness cell with onset, so C4 can judge the numbers an onset-specific
+doctor's list shows; (4) a paired row-to-row bootstrap in the harness, to give the S-U
+minus P-U difference an interval.

@@ -4,327 +4,327 @@ Every flattened metric key (dotted path into `metrics`) for every row, by family
 
 ## Coverage
 
-| key | [baseline-coverage-hospital-365](baselines/coverage-hospital-365.json) | [baseline-coverage-shipped](baselines/coverage-shipped.json) | [0012-discounted-beta-binomial](../../experiments/0012-discounted-beta-binomial/) | [0013-dirichlet-organism-mix](../../experiments/0013-dirichlet-organism-mix/) |
-|---|---|---|---|---|
-| mark | baseline | baseline, tuned on test |  |  |
-| method | Hospital, same specimen, last 365 days, first isolates per 365-day window (0004's estimator 3, the annual report); intervals are Jeffreys Beta(k + 0.5, n - k + 0.5) on the hospital cell (a harness choice) | The coverage list as shipped (D-023, D-033): unit if its pool has 30 first isolates, else ward type, else hospital; 365 days; Wilson intervals (95 % for C4, z = 1.644854 for 90 %); no estimate with fewer than 30 results (scored with the baseline's p on C1 to C3(a), C5 and C8) | Discounted Beta-binomial (ENGINE.md 2.2), delta 0.95 per week, M 10, per unit x specimen x onset x antibiotic, parent: hospital, same specimen and onset, 52 weeks before, own unit left out, Jeffreys; isolate-level p by the isolate's onset, cell-level Beta by mixing the onset strata by effective own count; untested results do not enter the filter. Chosen on the TUNE windows 2023-12-25 to 2024-09-29 only | Two-layer coverage: Dirichlet organism mix (M_pi 100) times per-organism Beta (M 30), one Dirichlet per drug over the organisms with an outcome, unit year shrunk to the hospital year with the unit left out, closed-form variance (ENGINE.md 2.4) and a matched Beta; setting chosen on TUNE windows only |
-| runtime_s | 4.7 | 9.5 | 34.4 | 45.5 |
-| cpu_s | 4.7 | 9.4 | 34 | 45.2 |
-| C1.all | 0.141 (0.140–0.143) | 0.142 (0.140–0.143) | 0.142 (0.140–0.143) | 0.142 (0.140–0.143) |
-| C1.all_counted | 0.145 (0.144–0.147) | 0.146 (0.144–0.147) | 0.154 (0.152–0.156) | 0.145 (0.144–0.147) |
-| C1.small | 0.161 (0.158–0.164) | 0.161 (0.158–0.165) | 0.161 (0.158–0.165) | 0.161 (0.158–0.164) |
-| C1.small_counted | 0.142 (0.139–0.144) | 0.142 (0.140–0.145) | 0.169 (0.166–0.172) | 0.142 (0.139–0.144) |
-| C1_diff.all | 0 (0–0) | 0.000299 (0.000138–0.000464) | 0.000182 (-6.62e-06 to 0.000357) | 9.97e-05 (-8.00e-06 to 0.00021) |
-| C1_diff.all_counted | 0 (0–0) | 0.000334 (0.000169–0.000508) | 0.00905 (0.0086–0.00956) | 0.00012 (1.01e-05 to 0.000235) |
-| C1_diff.small | 0 (0–0) | 0.000837 (0.000353–0.0013) | 0.000891 (0.000396–0.00134) | 0.000152 (-1.00e-04 to 0.000383) |
-| C1_diff.small_counted | 0 (0–0) | 0.00074 (0.000337–0.00114) | 0.0272 (0.0254–0.0289) | 0.000142 (-6.23e-05 to 0.000335) |
-| C2.all | 0.443 (0.439–0.448) | 0.444 (0.440–0.449) | 0.444 (0.440–0.449) | 0.444 (0.440–0.448) |
-| C2.all_counted | 0.453 (0.449–0.456) | 0.454 (0.450–0.458) | 0.485 (0.481–0.490) | 0.453 (0.449–0.457) |
-| C2.small | 0.489 (0.482–0.497) | 0.493 (0.484–0.501) | 0.492 (0.484–0.501) | 0.490 (0.482–0.498) |
-| C2.small_counted | 0.439 (0.433–0.446) | 0.442 (0.435–0.449) | 0.531 (0.523–0.539) | 0.440 (0.433–0.447) |
-| C2_diff.all | 0 (0–0) | 0.00113 (0.000627–0.00166) | 0.000762 (0.000154–0.00134) | 0.000365 (2.94e-05 to 0.000691) |
-| C2_diff.all_counted | 0 (0–0) | 0.00121 (0.000718–0.0017) | 0.0327 (0.0312–0.0343) | 0.00042 (0.00012–0.000741) |
-| C2_diff.small | 0 (0–0) | 0.00316 (0.00169–0.00465) | 0.0029 (0.00148–0.00428) | 0.000441 (-0.000248 to 0.00109) |
-| C2_diff.small_counted | 0 (0–0) | 0.00276 (0.00154–0.00399) | 0.0921 (0.0863–0.0975) | 0.00046 (-0.000113 to 0.00104) |
-| C3a.intercept | 0.0232 (0.00527–0.0387) | 0.0313 (0.0135–0.0466) | 0.000526 (-0.0177 to 0.0162) | 0.0264 (0.00823–0.0416) |
-| C3a.slope | 1.04 (1.02–1.05) | 1.03 (1.01–1.04) | 0.977 (0.964–0.990) | 1.04 (1.02–1.05) |
-| C3b.mild_exp | 0.128 | 0.309 | 0.231 | 0.217 |
-| C3b.mild_obs | 0 | 0 | 0 | 0 |
-| C3b.mild_ratio | 0 | 0 | 0 | 0 |
-| C3b.mild_tail_p | 1 | 1 | 1 | 1 |
-| C3b.pass | yes | yes | no | yes |
-| C3b.severe_exp | 26.2 | 19.6 | 7.28 | 27.8 |
-| C3b.severe_obs | 29 | 23 | 14 | 29 |
-| C3b.severe_ratio | 1.11 | 1.17 | 1.92 | 1.04 |
-| C3b.severe_tail_p | 0.314 | 0.249 | 0.0173 | 0.437 |
-| C3b_bb.mild_exp | 0.133 | 0.469 | 0.778 | 0.287 |
-| C3b_bb.mild_obs | 0 | 0 | 0 | 0 |
-| C3b_bb.mild_ratio | 0 | 0 | 0 | 0 |
-| C3b_bb.mild_tail_p | 1 | 1 | 1 | 1 |
-| C3b_bb.pass | yes | yes | yes | yes |
-| C3b_bb.severe_exp | 26.7 | 21.3 | 9.57 | 29.1 |
-| C3b_bb.severe_obs | 29 | 23 | 14 | 29 |
-| C3b_bb.severe_ratio | 1.08 | 1.08 | 1.46 | 0.998 |
-| C3b_bb.severe_tail_p | 0.357 | 0.387 | 0.106 | 0.529 |
-| C4.mild_all | 0.754 (0.747–0.761) | 0.754 (0.747–0.761) | 0.754 (0.747–0.760) | 0.754 (0.747–0.761) |
-| C4.mild_all_counted | 0.754 (0.747–0.761) | 0.754 (0.747–0.761) | 0.754 (0.747–0.760) | 0.754 (0.747–0.761) |
-| C4.mild_spectrum | 0.966 (0.963–0.970) | 0.966 (0.962–0.969) | 0.966 (0.963–0.970) | 0.966 (0.963–0.970) |
-| C4.mild_spectrum_counted | 0.966 (0.963–0.970) | 0.966 (0.962–0.969) | 0.966 (0.963–0.969) | 0.966 (0.963–0.970) |
-| C4.severe | 0.953 (0.950–0.956) | 0.954 (0.951–0.957) | 0.955 (0.951–0.958) | 0.954 (0.950–0.956) |
-| C4.severe_counted | 0.938 (0.935–0.941) | 0.939 (0.936–0.941) | 0.938 (0.935–0.941) | 0.938 (0.935–0.941) |
-| C5.Citrobacter freundii\|AMP | 0.249 | 0.252 | 0.266 | 0.250 |
-| C5.Citrobacter freundii\|CIP | 0.0578 | 0.0587 | 0.0593 | 0.0582 |
-| C5.Citrobacter freundii\|CLI | 0.0472 | 0.0469 | 0.0485 | 0.0471 |
-| C5.Citrobacter freundii\|CRO | 0.127 | 0.127 | 0.126 | 0.127 |
-| C5.Citrobacter freundii\|CXM | 0.269 | 0.270 | 0.276 | 0.269 |
-| C5.Citrobacter freundii\|MEC | 0.119 | 0.118 | 0.110 | 0.118 |
-| C5.Citrobacter freundii\|MEM | 0.0182 | 0.0184 | 0.0167 | 0.0186 |
-| C5.Citrobacter freundii\|NIT | 0.0577 | 0.0579 | 0.0519 | 0.0578 |
-| C5.Citrobacter freundii\|TMP | 0.142 | 0.140 | 0.137 | 0.140 |
-| C5.Citrobacter freundii\|TZP | 0.173 | 0.173 | 0.173 | 0.173 |
-| C5.Citrobacter freundii\|VAN | 0.0945 | 0.0947 | 0.0931 | 0.0947 |
-| C5.Enterococcus faecalis\|AMP | 0.250 | 0.251 | 0.238 | 0.251 |
-| C5.Enterococcus faecalis\|CAZ | 0.0454 | 0.0469 | 0.0464 | 0.0460 |
-| C5.Enterococcus faecalis\|CLI | 0.0395 | 0.0396 | 0.0410 | 0.0395 |
-| C5.Enterococcus faecalis\|CRO | 0.607 | 0.608 | 0.632 | 0.606 |
-| C5.Enterococcus faecalis\|CXM | 0.545 | 0.546 | 0.569 | 0.544 |
-| C5.Enterococcus faecalis\|MEC | 0.560 | 0.560 | 0.608 | 0.559 |
-| C5.Enterococcus faecalis\|MEM | 0.777 | 0.778 | 0.795 | 0.776 |
-| C5.Enterococcus faecalis\|NIT | 0.0399 | 0.0403 | 0.0322 | 0.0401 |
-| C5.Enterococcus faecalis\|TMP | 0.492 | 0.494 | 0.513 | 0.494 |
-| C5.Enterococcus faecalis\|TZP | 0.00683 | 0.00697 | 0.00699 | 0.00696 |
-| C5.Enterococcus faecalis\|VAN | 0.600 | 0.602 | 0.624 | 0.601 |
-| C5.Escherichia coli\|AMP | 0.245 | 0.244 | 0.240 | 0.244 |
-| C5.Escherichia coli\|CIP | 0.0751 | 0.0751 | 0.0751 | 0.0750 |
-| C5.Escherichia coli\|CLI | 0.0122 | 0.0124 | 0.0124 | 0.0123 |
-| C5.Escherichia coli\|CRO | 0.0677 | 0.0679 | 0.0622 | 0.0681 |
-| C5.Escherichia coli\|CXM | 0.107 | 0.107 | 0.101 | 0.107 |
-| C5.Escherichia coli\|MEC | 0.0757 | 0.0764 | 0.0630 | 0.0763 |
-| C5.Escherichia coli\|MEM | 0.0140 | 0.0142 | 0.0115 | 0.0143 |
-| C5.Escherichia coli\|NIT | 0.0357 | 0.0361 | 0.0279 | 0.0359 |
-| C5.Escherichia coli\|TMP | 0.167 | 0.166 | 0.164 | 0.166 |
-| C5.Escherichia coli\|TZP | 0.0377 | 0.0378 | 0.0379 | 0.0377 |
-| C5.Escherichia coli\|VAN | 0.0400 | 0.0405 | 0.0358 | 0.0402 |
-| C5.Klebsiella oxytoca\|AMP | 0.272 | 0.275 | 0.295 | 0.275 |
-| C5.Klebsiella oxytoca\|CIP | 0.0566 | 0.0564 | 0.0566 | 0.0568 |
-| C5.Klebsiella oxytoca\|CLI | 0.00653 | 0.00592 | 0.00606 | 0.0063 |
-| C5.Klebsiella oxytoca\|CRO | 0.0534 | 0.0540 | 0.0481 | 0.0542 |
-| C5.Klebsiella oxytoca\|CXM | 0.112 | 0.112 | 0.107 | 0.112 |
-| C5.Klebsiella oxytoca\|MEC | 0.0942 | 0.0943 | 0.0833 | 0.0945 |
-| C5.Klebsiella oxytoca\|MEM | 0.0156 | 0.0159 | 0.0133 | 0.0161 |
-| C5.Klebsiella oxytoca\|NIT | 0.0820 | 0.0828 | 0.0784 | 0.0824 |
-| C5.Klebsiella oxytoca\|TMP | 0.121 | 0.121 | 0.115 | 0.120 |
-| C5.Klebsiella oxytoca\|TZP | 0.0471 | 0.0473 | 0.0472 | 0.0474 |
-| C5.Klebsiella oxytoca\|VAN | 0.0320 | 0.0310 | 0.0269 | 0.0317 |
-| C5.Klebsiella pneumoniae\|AMP | 0.264 | 0.266 | 0.285 | 0.266 |
-| C5.Klebsiella pneumoniae\|CIP | 0.0938 | 0.0943 | 0.0941 | 0.0941 |
-| C5.Klebsiella pneumoniae\|CLI | 0.0205 | 0.0205 | 0.0212 | 0.0205 |
-| C5.Klebsiella pneumoniae\|CRO | 0.0879 | 0.0884 | 0.0839 | 0.0884 |
-| C5.Klebsiella pneumoniae\|CXM | 0.127 | 0.127 | 0.123 | 0.127 |
-| C5.Klebsiella pneumoniae\|MEC | 0.0873 | 0.0880 | 0.0766 | 0.0880 |
-| C5.Klebsiella pneumoniae\|MEM | 0.0149 | 0.0153 | 0.0125 | 0.0153 |
-| C5.Klebsiella pneumoniae\|NIT | 0.253 | 0.252 | 0.262 | 0.253 |
-| C5.Klebsiella pneumoniae\|TMP | 0.151 | 0.151 | 0.147 | 0.150 |
-| C5.Klebsiella pneumoniae\|TZP | 0.0701 | 0.0702 | 0.0703 | 0.0701 |
-| C5.Klebsiella pneumoniae\|VAN | 0.0529 | 0.0533 | 0.0493 | 0.0531 |
-| C5.Proteus mirabilis\|AMP | 0.251 | 0.251 | 0.243 | 0.251 |
-| C5.Proteus mirabilis\|CIP | 0.0584 | 0.0580 | 0.0579 | 0.0582 |
-| C5.Proteus mirabilis\|CLI | 0.0428 | 0.0437 | 0.0451 | 0.0433 |
-| C5.Proteus mirabilis\|CRO | 0.0589 | 0.0590 | 0.0539 | 0.0593 |
-| C5.Proteus mirabilis\|CXM | 0.0876 | 0.0871 | 0.0808 | 0.0878 |
-| C5.Proteus mirabilis\|MEC | 0.0760 | 0.0764 | 0.0628 | 0.0766 |
-| C5.Proteus mirabilis\|MEM | 0.0150 | 0.0151 | 0.0131 | 0.0153 |
-| C5.Proteus mirabilis\|NIT | 0.670 | 0.670 | 0.711 | 0.670 |
-| C5.Proteus mirabilis\|TMP | 0.168 | 0.167 | 0.165 | 0.167 |
-| C5.Proteus mirabilis\|TZP | 0.0135 | 0.0136 | 0.0137 | 0.0136 |
-| C5.Proteus mirabilis\|VAN | 0.0874 | 0.0885 | 0.0867 | 0.0880 |
-| C5.Pseudomonas aeruginosa\|AMP | 0.232 | 0.234 | 0.245 | 0.233 |
-| C5.Pseudomonas aeruginosa\|CAZ | 0.583 | 0.582 | 0.584 | 0.581 |
-| C5.Pseudomonas aeruginosa\|CIP | 0.0999 | 0.0997 | 0.100 | 0.1000 |
-| C5.Pseudomonas aeruginosa\|CLI | 0.0757 | 0.0759 | 0.0796 | 0.0758 |
-| C5.Pseudomonas aeruginosa\|CRO | 0.577 | 0.578 | 0.597 | 0.575 |
-| C5.Pseudomonas aeruginosa\|CXM | 0.523 | 0.524 | 0.543 | 0.522 |
-| C5.Pseudomonas aeruginosa\|MEC | 0.559 | 0.560 | 0.607 | 0.559 |
-| C5.Pseudomonas aeruginosa\|MEM | 0.0633 | 0.0638 | 0.0632 | 0.0636 |
-| C5.Pseudomonas aeruginosa\|NIT | 0.670 | 0.670 | 0.711 | 0.670 |
-| C5.Pseudomonas aeruginosa\|TMP | 0.491 | 0.495 | 0.516 | 0.495 |
-| C5.Pseudomonas aeruginosa\|TZP | 0.0887 | 0.0888 | 0.0887 | 0.0886 |
-| C5.Pseudomonas aeruginosa\|VAN | 0.139 | 0.139 | 0.141 | 0.139 |
-| C5.Staphylococcus aureus\|AMP | 0.201 | 0.199 | 0.200 | 0.198 |
-| C5.Staphylococcus aureus\|CAZ | 0.0394 | 0.0400 | 0.0407 | 0.0397 |
-| C5.Staphylococcus aureus\|CLI | 0.467 | 0.468 | 0.463 | 0.467 |
-| C5.Staphylococcus aureus\|CRO | 0.0892 | 0.0903 | 0.0885 | 0.0905 |
-| C5.Staphylococcus aureus\|CXM | 0.103 | 0.105 | 0.102 | 0.105 |
-| C5.Staphylococcus aureus\|MEC | 0.559 | 0.559 | 0.608 | 0.558 |
-| C5.Staphylococcus aureus\|MEM | 0.0435 | 0.0437 | 0.0432 | 0.0438 |
-| C5.Staphylococcus aureus\|NIT | 0.0378 | 0.0377 | 0.0296 | 0.0377 |
-| C5.Staphylococcus aureus\|TMP | 0.105 | 0.106 | 0.1000 | 0.105 |
-| C5.Staphylococcus aureus\|TZP | 0.0360 | 0.0363 | 0.0362 | 0.0361 |
-| C5.Staphylococcus aureus\|VAN | 0.339 | 0.340 | 0.342 | 0.339 |
-| C5.Staphylococcus saprophyticus\|CAZ | 0.0482 | 0.0492 | 0.0493 | 0.0485 |
-| C5.Staphylococcus saprophyticus\|MEC | 0.559 | 0.561 | 0.609 | 0.559 |
-| C5.Staphylococcus saprophyticus\|NIT | 0.0432 | 0.0440 | 0.0365 | 0.0436 |
-| C5.Staphylococcus saprophyticus\|TMP | 0.105 | 0.105 | 0.0987 | 0.105 |
-| C6.E1_CRO | n/a | 47 | 48 | 48 |
-| C6.E1_CXM | n/a | n/a | n/a | 117 |
-| C6.E2_CXM | n/a | n/a | n/a | n/a |
-| C7.a | 0.899 (0.875–0.923) | 0.902 (0.877–0.925) | 0.929 (0.908–0.948) | 0.905 (0.884–0.926) |
-| C7.a_expected | 0.907 | 0.907 | 0.908 | 0.907 |
-| C7.a_literal | 0.147 (0.130–0.165) | 0.343 (0.319–0.370) | 0.612 (0.574–0.647) | 0.314 (0.291–0.339) |
-| C7.a_minus_expected | -0.0085 (-0.0322 to 0.0161) | -0.00494 (-0.0296 to 0.0183) | 0.0216 (-0.000568 to 0.0409) | -0.00167 (-0.0235 to 0.0195) |
-| C7.b | 0.556 | 0.741 | 0.815 | 0.741 |
-| C7.b_expected | 0.901 | 0.905 | 0.901 | 0.906 |
-| C7.b_literal | 0.0741 | 0.333 | 0.630 | 0.296 |
-| C7.pass_a | yes | yes | yes | yes |
-| C7_lower_bound.cells | 4285 | 4285 | 4285 | 4285 |
-| C7_lower_bound.exp | 1691 | 1079 | 583 | 1243 |
-| C7_lower_bound.exp_bb | 1695 | 1114 | 707 | 1264 |
-| C7_lower_bound.obs | 1501 | 959 | 689 | 1106 |
-| C7_lower_bound.ratio | 0.888 | 0.889 | 1.18 | 0.890 |
-| C7_lower_bound.ratio_bb | 0.885 | 0.861 | 0.975 | 0.875 |
-| C8.C1 | 0.167 (0.154–0.193) | 0.166 (0.153–0.193) | 0.167 (0.154–0.194) | 0.165 (0.153–0.192) |
-| C8.C1_diff | 0 (0–0) | -0.00131 (-0.00405 to 0.0026) | -0.000251 (-0.0026 to 0.00317) | -0.00158 (-0.00349 to 0.000492) |
-| C8.C4_mild_spectrum | 0.964 (0.909–0.983) | 0.964 (0.909–0.983) | 0.958 (0.800–0.979) | 0.964 (0.909–0.983) |
-| C8.C4_severe | 0.906 (0.743–0.981) | 0.915 (0.756–0.973) | – | 0.920 (0.784–0.980) |
+| key | [baseline-coverage-hospital-365](baselines/coverage-hospital-365.json) | [baseline-coverage-shipped](baselines/coverage-shipped.json) | [0012-discounted-beta-binomial](../../experiments/0012-discounted-beta-binomial/) | [0013-dirichlet-organism-mix](../../experiments/0013-dirichlet-organism-mix/) | [0014-pooling-levels](../../experiments/0014-pooling-levels/) |
+|---|---|---|---|---|---|
+| mark | baseline | baseline, tuned on test |  |  |  |
+| method | Hospital, same specimen, last 365 days, first isolates per 365-day window (0004's estimator 3, the annual report); intervals are Jeffreys Beta(k + 0.5, n - k + 0.5) on the hospital cell (a harness choice) | The coverage list as shipped (D-023, D-033): unit if its pool has 30 first isolates, else ward type, else hospital; 365 days; Wilson intervals (95 % for C4, z = 1.644854 for 90 %); no estimate with fewer than 30 results (scored with the baseline's p on C1 to C3(a), C5 and C8) | Discounted Beta-binomial (ENGINE.md 2.2), delta 0.95 per week, M 10, per unit x specimen x onset x antibiotic, parent: hospital, same specimen and onset, 52 weeks before, own unit left out, Jeffreys; isolate-level p by the isolate's onset, cell-level Beta by mixing the onset strata by effective own count; untested results do not enter the filter. Chosen on the TUNE windows 2023-12-25 to 2024-09-29 only | Two-layer coverage: Dirichlet organism mix (M_pi 100) times per-organism Beta (M 30), one Dirichlet per drug over the organisms with an outcome, unit year shrunk to the hospital year with the unit left out, closed-form variance (ENGINE.md 2.4) and a matched Beta; setting chosen on TUNE windows only | Coverage pooled at one level over the last 365 days of first isolates, row P-H (P-H (hospital, unsplit)): p = k/n of the pool, Jeffreys Beta(k + 0.5, n - k + 0.5); the split rows use the target isolate's own onset stratum on the C1 windows and the strata folded by the unit's onset mix (moment-matched Beta) elsewhere; row chosen on the TUNE windows 2023-12-25 to 2024-09-29 only (lowest Brier among the eight P and S rows) |
+| runtime_s | 4.7 | 9.5 | 34.4 | 45.5 | 74.8 |
+| cpu_s | 4.7 | 9.4 | 34 | 45.2 | 73.1 |
+| C1.all | 0.141 (0.140–0.143) | 0.142 (0.140–0.143) | 0.142 (0.140–0.143) | 0.142 (0.140–0.143) | 0.141 (0.140–0.143) |
+| C1.all_counted | 0.145 (0.144–0.147) | 0.146 (0.144–0.147) | 0.154 (0.152–0.156) | 0.145 (0.144–0.147) | 0.145 (0.144–0.147) |
+| C1.small | 0.161 (0.158–0.164) | 0.161 (0.158–0.165) | 0.161 (0.158–0.165) | 0.161 (0.158–0.164) | 0.161 (0.158–0.164) |
+| C1.small_counted | 0.142 (0.139–0.144) | 0.142 (0.140–0.145) | 0.169 (0.166–0.172) | 0.142 (0.139–0.144) | 0.142 (0.139–0.144) |
+| C1_diff.all | 0 (0–0) | 0.000299 (0.000138–0.000464) | 0.000182 (-6.62e-06 to 0.000357) | 9.97e-05 (-8.00e-06 to 0.00021) | 0 (0–0) |
+| C1_diff.all_counted | 0 (0–0) | 0.000334 (0.000169–0.000508) | 0.00905 (0.0086–0.00956) | 0.00012 (1.01e-05 to 0.000235) | 0 (0–0) |
+| C1_diff.small | 0 (0–0) | 0.000837 (0.000353–0.0013) | 0.000891 (0.000396–0.00134) | 0.000152 (-1.00e-04 to 0.000383) | 0 (0–0) |
+| C1_diff.small_counted | 0 (0–0) | 0.00074 (0.000337–0.00114) | 0.0272 (0.0254–0.0289) | 0.000142 (-6.23e-05 to 0.000335) | 0 (0–0) |
+| C2.all | 0.443 (0.439–0.448) | 0.444 (0.440–0.449) | 0.444 (0.440–0.449) | 0.444 (0.440–0.448) | 0.443 (0.439–0.448) |
+| C2.all_counted | 0.453 (0.449–0.456) | 0.454 (0.450–0.458) | 0.485 (0.481–0.490) | 0.453 (0.449–0.457) | 0.453 (0.449–0.456) |
+| C2.small | 0.489 (0.482–0.497) | 0.493 (0.484–0.501) | 0.492 (0.484–0.501) | 0.490 (0.482–0.498) | 0.489 (0.482–0.497) |
+| C2.small_counted | 0.439 (0.433–0.446) | 0.442 (0.435–0.449) | 0.531 (0.523–0.539) | 0.440 (0.433–0.447) | 0.439 (0.433–0.446) |
+| C2_diff.all | 0 (0–0) | 0.00113 (0.000627–0.00166) | 0.000762 (0.000154–0.00134) | 0.000365 (2.94e-05 to 0.000691) | 0 (0–0) |
+| C2_diff.all_counted | 0 (0–0) | 0.00121 (0.000718–0.0017) | 0.0327 (0.0312–0.0343) | 0.00042 (0.00012–0.000741) | 0 (0–0) |
+| C2_diff.small | 0 (0–0) | 0.00316 (0.00169–0.00465) | 0.0029 (0.00148–0.00428) | 0.000441 (-0.000248 to 0.00109) | 0 (0–0) |
+| C2_diff.small_counted | 0 (0–0) | 0.00276 (0.00154–0.00399) | 0.0921 (0.0863–0.0975) | 0.00046 (-0.000113 to 0.00104) | 0 (0–0) |
+| C3a.intercept | 0.0232 (0.00527–0.0387) | 0.0313 (0.0135–0.0466) | 0.000526 (-0.0177 to 0.0162) | 0.0264 (0.00823–0.0416) | 0.0232 (0.00527–0.0387) |
+| C3a.slope | 1.04 (1.02–1.05) | 1.03 (1.01–1.04) | 0.977 (0.964–0.990) | 1.04 (1.02–1.05) | 1.04 (1.02–1.05) |
+| C3b.mild_exp | 0.128 | 0.309 | 0.231 | 0.217 | 0.128 |
+| C3b.mild_obs | 0 | 0 | 0 | 0 | 0 |
+| C3b.mild_ratio | 0 | 0 | 0 | 0 | 0 |
+| C3b.mild_tail_p | 1 | 1 | 1 | 1 | 1 |
+| C3b.pass | yes | yes | no | yes | yes |
+| C3b.severe_exp | 26.2 | 19.6 | 7.28 | 27.8 | 26.2 |
+| C3b.severe_obs | 29 | 23 | 14 | 29 | 29 |
+| C3b.severe_ratio | 1.11 | 1.17 | 1.92 | 1.04 | 1.11 |
+| C3b.severe_tail_p | 0.314 | 0.249 | 0.0173 | 0.437 | 0.314 |
+| C3b_bb.mild_exp | 0.133 | 0.469 | 0.778 | 0.287 | 0.133 |
+| C3b_bb.mild_obs | 0 | 0 | 0 | 0 | 0 |
+| C3b_bb.mild_ratio | 0 | 0 | 0 | 0 | 0 |
+| C3b_bb.mild_tail_p | 1 | 1 | 1 | 1 | 1 |
+| C3b_bb.pass | yes | yes | yes | yes | yes |
+| C3b_bb.severe_exp | 26.7 | 21.3 | 9.57 | 29.1 | 26.7 |
+| C3b_bb.severe_obs | 29 | 23 | 14 | 29 | 29 |
+| C3b_bb.severe_ratio | 1.08 | 1.08 | 1.46 | 0.998 | 1.08 |
+| C3b_bb.severe_tail_p | 0.357 | 0.387 | 0.106 | 0.529 | 0.357 |
+| C4.mild_all | 0.754 (0.747–0.761) | 0.754 (0.747–0.761) | 0.754 (0.747–0.760) | 0.754 (0.747–0.761) | 0.754 (0.747–0.761) |
+| C4.mild_all_counted | 0.754 (0.747–0.761) | 0.754 (0.747–0.761) | 0.754 (0.747–0.760) | 0.754 (0.747–0.761) | 0.754 (0.747–0.761) |
+| C4.mild_spectrum | 0.966 (0.963–0.970) | 0.966 (0.962–0.969) | 0.966 (0.963–0.970) | 0.966 (0.963–0.970) | 0.966 (0.963–0.970) |
+| C4.mild_spectrum_counted | 0.966 (0.963–0.970) | 0.966 (0.962–0.969) | 0.966 (0.963–0.969) | 0.966 (0.963–0.970) | 0.966 (0.963–0.970) |
+| C4.severe | 0.953 (0.950–0.956) | 0.954 (0.951–0.957) | 0.955 (0.951–0.958) | 0.954 (0.950–0.956) | 0.953 (0.950–0.956) |
+| C4.severe_counted | 0.938 (0.935–0.941) | 0.939 (0.936–0.941) | 0.938 (0.935–0.941) | 0.938 (0.935–0.941) | 0.938 (0.935–0.941) |
+| C5.Citrobacter freundii\|AMP | 0.249 | 0.252 | 0.266 | 0.250 | 0.249 |
+| C5.Citrobacter freundii\|CIP | 0.0578 | 0.0587 | 0.0593 | 0.0582 | 0.0578 |
+| C5.Citrobacter freundii\|CLI | 0.0472 | 0.0469 | 0.0485 | 0.0471 | 0.0472 |
+| C5.Citrobacter freundii\|CRO | 0.127 | 0.127 | 0.126 | 0.127 | 0.127 |
+| C5.Citrobacter freundii\|CXM | 0.269 | 0.270 | 0.276 | 0.269 | 0.269 |
+| C5.Citrobacter freundii\|MEC | 0.119 | 0.118 | 0.110 | 0.118 | 0.119 |
+| C5.Citrobacter freundii\|MEM | 0.0182 | 0.0184 | 0.0167 | 0.0186 | 0.0182 |
+| C5.Citrobacter freundii\|NIT | 0.0577 | 0.0579 | 0.0519 | 0.0578 | 0.0577 |
+| C5.Citrobacter freundii\|TMP | 0.142 | 0.140 | 0.137 | 0.140 | 0.142 |
+| C5.Citrobacter freundii\|TZP | 0.173 | 0.173 | 0.173 | 0.173 | 0.173 |
+| C5.Citrobacter freundii\|VAN | 0.0945 | 0.0947 | 0.0931 | 0.0947 | 0.0945 |
+| C5.Enterococcus faecalis\|AMP | 0.250 | 0.251 | 0.238 | 0.251 | 0.250 |
+| C5.Enterococcus faecalis\|CAZ | 0.0454 | 0.0469 | 0.0464 | 0.0460 | 0.0454 |
+| C5.Enterococcus faecalis\|CLI | 0.0395 | 0.0396 | 0.0410 | 0.0395 | 0.0395 |
+| C5.Enterococcus faecalis\|CRO | 0.607 | 0.608 | 0.632 | 0.606 | 0.607 |
+| C5.Enterococcus faecalis\|CXM | 0.545 | 0.546 | 0.569 | 0.544 | 0.545 |
+| C5.Enterococcus faecalis\|MEC | 0.560 | 0.560 | 0.608 | 0.559 | 0.560 |
+| C5.Enterococcus faecalis\|MEM | 0.777 | 0.778 | 0.795 | 0.776 | 0.777 |
+| C5.Enterococcus faecalis\|NIT | 0.0399 | 0.0403 | 0.0322 | 0.0401 | 0.0399 |
+| C5.Enterococcus faecalis\|TMP | 0.492 | 0.494 | 0.513 | 0.494 | 0.492 |
+| C5.Enterococcus faecalis\|TZP | 0.00683 | 0.00697 | 0.00699 | 0.00696 | 0.00683 |
+| C5.Enterococcus faecalis\|VAN | 0.600 | 0.602 | 0.624 | 0.601 | 0.600 |
+| C5.Escherichia coli\|AMP | 0.245 | 0.244 | 0.240 | 0.244 | 0.245 |
+| C5.Escherichia coli\|CIP | 0.0751 | 0.0751 | 0.0751 | 0.0750 | 0.0751 |
+| C5.Escherichia coli\|CLI | 0.0122 | 0.0124 | 0.0124 | 0.0123 | 0.0122 |
+| C5.Escherichia coli\|CRO | 0.0677 | 0.0679 | 0.0622 | 0.0681 | 0.0677 |
+| C5.Escherichia coli\|CXM | 0.107 | 0.107 | 0.101 | 0.107 | 0.107 |
+| C5.Escherichia coli\|MEC | 0.0757 | 0.0764 | 0.0630 | 0.0763 | 0.0757 |
+| C5.Escherichia coli\|MEM | 0.0140 | 0.0142 | 0.0115 | 0.0143 | 0.0140 |
+| C5.Escherichia coli\|NIT | 0.0357 | 0.0361 | 0.0279 | 0.0359 | 0.0357 |
+| C5.Escherichia coli\|TMP | 0.167 | 0.166 | 0.164 | 0.166 | 0.167 |
+| C5.Escherichia coli\|TZP | 0.0377 | 0.0378 | 0.0379 | 0.0377 | 0.0377 |
+| C5.Escherichia coli\|VAN | 0.0400 | 0.0405 | 0.0358 | 0.0402 | 0.0400 |
+| C5.Klebsiella oxytoca\|AMP | 0.272 | 0.275 | 0.295 | 0.275 | 0.272 |
+| C5.Klebsiella oxytoca\|CIP | 0.0566 | 0.0564 | 0.0566 | 0.0568 | 0.0566 |
+| C5.Klebsiella oxytoca\|CLI | 0.00653 | 0.00592 | 0.00606 | 0.0063 | 0.00653 |
+| C5.Klebsiella oxytoca\|CRO | 0.0534 | 0.0540 | 0.0481 | 0.0542 | 0.0534 |
+| C5.Klebsiella oxytoca\|CXM | 0.112 | 0.112 | 0.107 | 0.112 | 0.112 |
+| C5.Klebsiella oxytoca\|MEC | 0.0942 | 0.0943 | 0.0833 | 0.0945 | 0.0942 |
+| C5.Klebsiella oxytoca\|MEM | 0.0156 | 0.0159 | 0.0133 | 0.0161 | 0.0156 |
+| C5.Klebsiella oxytoca\|NIT | 0.0820 | 0.0828 | 0.0784 | 0.0824 | 0.0820 |
+| C5.Klebsiella oxytoca\|TMP | 0.121 | 0.121 | 0.115 | 0.120 | 0.121 |
+| C5.Klebsiella oxytoca\|TZP | 0.0471 | 0.0473 | 0.0472 | 0.0474 | 0.0471 |
+| C5.Klebsiella oxytoca\|VAN | 0.0320 | 0.0310 | 0.0269 | 0.0317 | 0.0320 |
+| C5.Klebsiella pneumoniae\|AMP | 0.264 | 0.266 | 0.285 | 0.266 | 0.264 |
+| C5.Klebsiella pneumoniae\|CIP | 0.0938 | 0.0943 | 0.0941 | 0.0941 | 0.0938 |
+| C5.Klebsiella pneumoniae\|CLI | 0.0205 | 0.0205 | 0.0212 | 0.0205 | 0.0205 |
+| C5.Klebsiella pneumoniae\|CRO | 0.0879 | 0.0884 | 0.0839 | 0.0884 | 0.0879 |
+| C5.Klebsiella pneumoniae\|CXM | 0.127 | 0.127 | 0.123 | 0.127 | 0.127 |
+| C5.Klebsiella pneumoniae\|MEC | 0.0873 | 0.0880 | 0.0766 | 0.0880 | 0.0873 |
+| C5.Klebsiella pneumoniae\|MEM | 0.0149 | 0.0153 | 0.0125 | 0.0153 | 0.0149 |
+| C5.Klebsiella pneumoniae\|NIT | 0.253 | 0.252 | 0.262 | 0.253 | 0.253 |
+| C5.Klebsiella pneumoniae\|TMP | 0.151 | 0.151 | 0.147 | 0.150 | 0.151 |
+| C5.Klebsiella pneumoniae\|TZP | 0.0701 | 0.0702 | 0.0703 | 0.0701 | 0.0701 |
+| C5.Klebsiella pneumoniae\|VAN | 0.0529 | 0.0533 | 0.0493 | 0.0531 | 0.0529 |
+| C5.Proteus mirabilis\|AMP | 0.251 | 0.251 | 0.243 | 0.251 | 0.251 |
+| C5.Proteus mirabilis\|CIP | 0.0584 | 0.0580 | 0.0579 | 0.0582 | 0.0584 |
+| C5.Proteus mirabilis\|CLI | 0.0428 | 0.0437 | 0.0451 | 0.0433 | 0.0428 |
+| C5.Proteus mirabilis\|CRO | 0.0589 | 0.0590 | 0.0539 | 0.0593 | 0.0589 |
+| C5.Proteus mirabilis\|CXM | 0.0876 | 0.0871 | 0.0808 | 0.0878 | 0.0876 |
+| C5.Proteus mirabilis\|MEC | 0.0760 | 0.0764 | 0.0628 | 0.0766 | 0.0760 |
+| C5.Proteus mirabilis\|MEM | 0.0150 | 0.0151 | 0.0131 | 0.0153 | 0.0150 |
+| C5.Proteus mirabilis\|NIT | 0.670 | 0.670 | 0.711 | 0.670 | 0.670 |
+| C5.Proteus mirabilis\|TMP | 0.168 | 0.167 | 0.165 | 0.167 | 0.168 |
+| C5.Proteus mirabilis\|TZP | 0.0135 | 0.0136 | 0.0137 | 0.0136 | 0.0135 |
+| C5.Proteus mirabilis\|VAN | 0.0874 | 0.0885 | 0.0867 | 0.0880 | 0.0874 |
+| C5.Pseudomonas aeruginosa\|AMP | 0.232 | 0.234 | 0.245 | 0.233 | 0.232 |
+| C5.Pseudomonas aeruginosa\|CAZ | 0.583 | 0.582 | 0.584 | 0.581 | 0.583 |
+| C5.Pseudomonas aeruginosa\|CIP | 0.0999 | 0.0997 | 0.100 | 0.1000 | 0.0999 |
+| C5.Pseudomonas aeruginosa\|CLI | 0.0757 | 0.0759 | 0.0796 | 0.0758 | 0.0757 |
+| C5.Pseudomonas aeruginosa\|CRO | 0.577 | 0.578 | 0.597 | 0.575 | 0.577 |
+| C5.Pseudomonas aeruginosa\|CXM | 0.523 | 0.524 | 0.543 | 0.522 | 0.523 |
+| C5.Pseudomonas aeruginosa\|MEC | 0.559 | 0.560 | 0.607 | 0.559 | 0.559 |
+| C5.Pseudomonas aeruginosa\|MEM | 0.0633 | 0.0638 | 0.0632 | 0.0636 | 0.0633 |
+| C5.Pseudomonas aeruginosa\|NIT | 0.670 | 0.670 | 0.711 | 0.670 | 0.670 |
+| C5.Pseudomonas aeruginosa\|TMP | 0.491 | 0.495 | 0.516 | 0.495 | 0.491 |
+| C5.Pseudomonas aeruginosa\|TZP | 0.0887 | 0.0888 | 0.0887 | 0.0886 | 0.0887 |
+| C5.Pseudomonas aeruginosa\|VAN | 0.139 | 0.139 | 0.141 | 0.139 | 0.139 |
+| C5.Staphylococcus aureus\|AMP | 0.201 | 0.199 | 0.200 | 0.198 | 0.201 |
+| C5.Staphylococcus aureus\|CAZ | 0.0394 | 0.0400 | 0.0407 | 0.0397 | 0.0394 |
+| C5.Staphylococcus aureus\|CLI | 0.467 | 0.468 | 0.463 | 0.467 | 0.467 |
+| C5.Staphylococcus aureus\|CRO | 0.0892 | 0.0903 | 0.0885 | 0.0905 | 0.0892 |
+| C5.Staphylococcus aureus\|CXM | 0.103 | 0.105 | 0.102 | 0.105 | 0.103 |
+| C5.Staphylococcus aureus\|MEC | 0.559 | 0.559 | 0.608 | 0.558 | 0.559 |
+| C5.Staphylococcus aureus\|MEM | 0.0435 | 0.0437 | 0.0432 | 0.0438 | 0.0435 |
+| C5.Staphylococcus aureus\|NIT | 0.0378 | 0.0377 | 0.0296 | 0.0377 | 0.0378 |
+| C5.Staphylococcus aureus\|TMP | 0.105 | 0.106 | 0.1000 | 0.105 | 0.105 |
+| C5.Staphylococcus aureus\|TZP | 0.0360 | 0.0363 | 0.0362 | 0.0361 | 0.0360 |
+| C5.Staphylococcus aureus\|VAN | 0.339 | 0.340 | 0.342 | 0.339 | 0.339 |
+| C5.Staphylococcus saprophyticus\|CAZ | 0.0482 | 0.0492 | 0.0493 | 0.0485 | 0.0482 |
+| C5.Staphylococcus saprophyticus\|MEC | 0.559 | 0.561 | 0.609 | 0.559 | 0.559 |
+| C5.Staphylococcus saprophyticus\|NIT | 0.0432 | 0.0440 | 0.0365 | 0.0436 | 0.0432 |
+| C5.Staphylococcus saprophyticus\|TMP | 0.105 | 0.105 | 0.0987 | 0.105 | 0.105 |
+| C6.E1_CRO | n/a | 47 | 48 | 48 | n/a |
+| C6.E1_CXM | n/a | n/a | n/a | 117 | n/a |
+| C6.E2_CXM | n/a | n/a | n/a | n/a | n/a |
+| C7.a | 0.899 (0.875–0.923) | 0.902 (0.877–0.925) | 0.929 (0.908–0.948) | 0.905 (0.884–0.926) | 0.899 (0.875–0.923) |
+| C7.a_expected | 0.907 | 0.907 | 0.908 | 0.907 | 0.907 |
+| C7.a_literal | 0.147 (0.130–0.165) | 0.343 (0.319–0.370) | 0.612 (0.574–0.647) | 0.314 (0.291–0.339) | 0.147 (0.130–0.165) |
+| C7.a_minus_expected | -0.0085 (-0.0322 to 0.0161) | -0.00494 (-0.0296 to 0.0183) | 0.0216 (-0.000568 to 0.0409) | -0.00167 (-0.0235 to 0.0195) | -0.0085 (-0.0322 to 0.0161) |
+| C7.b | 0.556 | 0.741 | 0.815 | 0.741 | 0.556 |
+| C7.b_expected | 0.901 | 0.905 | 0.901 | 0.906 | 0.901 |
+| C7.b_literal | 0.0741 | 0.333 | 0.630 | 0.296 | 0.0741 |
+| C7.pass_a | yes | yes | yes | yes | yes |
+| C7_lower_bound.cells | 4285 | 4285 | 4285 | 4285 | 4285 |
+| C7_lower_bound.exp | 1691 | 1079 | 583 | 1243 | 1691 |
+| C7_lower_bound.exp_bb | 1695 | 1114 | 707 | 1264 | 1695 |
+| C7_lower_bound.obs | 1501 | 959 | 689 | 1106 | 1501 |
+| C7_lower_bound.ratio | 0.888 | 0.889 | 1.18 | 0.890 | 0.888 |
+| C7_lower_bound.ratio_bb | 0.885 | 0.861 | 0.975 | 0.875 | 0.885 |
+| C8.C1 | 0.167 (0.154–0.193) | 0.166 (0.153–0.193) | 0.167 (0.154–0.194) | 0.165 (0.153–0.192) | 0.167 (0.154–0.193) |
+| C8.C1_diff | 0 (0–0) | -0.00131 (-0.00405 to 0.0026) | -0.000251 (-0.0026 to 0.00317) | -0.00158 (-0.00349 to 0.000492) | 0 (0–0) |
+| C8.C4_mild_spectrum | 0.964 (0.909–0.983) | 0.964 (0.909–0.983) | 0.958 (0.800–0.979) | 0.964 (0.909–0.983) | 0.964 (0.909–0.983) |
+| C8.C4_severe | 0.906 (0.743–0.981) | 0.915 (0.756–0.973) | – | 0.920 (0.784–0.980) | 0.906 (0.743–0.981) |
 
 ## Detection
 
-| key | [baseline-live-set-retuned-year1](baselines/live-set-retuned-year1.json) | [baseline-live-set-shipped](baselines/live-set-shipped.json) |
-|---|---|---|
-| mark | baseline | baseline, tuned on test |
-| method | The live detector set with cluster and data alphas re-tuned on year 1 (Choices 5), trend and new-in-unit as shipped | The live detector set as shipped (D-020, D-021, D-022, D-031, D-034), scored on D1 to D7 and I1 over 2024-10-01 to 2026-09-27 |
-| runtime_s | 93.3 | 115 |
-| cpu_s | 93.2 | 114 |
-| D1.E1 | 0 | 0 |
-| D1.E1_corrected | 5 | 5 |
-| D1.E2 | 0 | 0 |
-| D1.E2_corrected | 0 | 0 |
-| D1.E3 | 0 | 0 |
-| D1.E4 | 2026-02-15 | 2026-05-10 |
-| D2.common_esbl_k0 | 0.0650 (0.0384–0.108) | 0 (0–0.0188) |
-| D2.common_esbl_k2 | 0.265 (0.209–0.330) | 0.0450 (0.0239–0.0833) |
-| D2.common_esbl_k3 | 0.700 (0.633–0.759) | 0.345 (0.283–0.413) |
-| D2.common_esbl_k4 | 0.880 (0.828–0.918) | 0.610 (0.541–0.675) |
-| D2.common_esbl_k6 | 0.995 (0.972–0.999) | 0.945 (0.904–0.969) |
-| D2.common_resistant_k0 | 0 (0–0.0188) | 0 (0–0.0188) |
-| D2.common_resistant_k2 | 0.0150 (0.00511–0.0432) | 0.0100 (0.00275–0.0357) |
-| D2.common_resistant_k3 | 0.0200 (0.0078–0.0503) | 0.005 (0.000883–0.0278) |
-| D2.common_resistant_k4 | 0.0100 (0.00275–0.0357) | 0.005 (0.000883–0.0278) |
-| D2.common_resistant_k6 | 0.0350 (0.0171–0.0705) | 0 (0–0.0188) |
-| D2.rare_k0 | 0.0500 (0.0274–0.0896) | 0.0100 (0.00275–0.0357) |
-| D2.rare_k2 | 0.380 (0.316–0.449) | 0.165 (0.120–0.223) |
-| D2.rare_k3 | 0.860 (0.805–0.901) | 0.615 (0.546–0.680) |
-| D2.rare_k4 | 0.980 (0.950–0.992) | 0.890 (0.839–0.926) |
-| D2.rare_k6 | 1 (0.981–1) | 1 (0.981–1) |
-| D2.two_unit_k0 | 0.0750 (0.0460–0.120) | 0.0200 (0.0078–0.0503) |
-| D2.two_unit_k2 | 0.255 (0.200–0.320) | 0.135 (0.0945–0.189) |
-| D2.two_unit_k3 | 0.475 (0.407–0.544) | 0.210 (0.159–0.272) |
-| D2.two_unit_k4 | 0.565 (0.496–0.632) | 0.240 (0.186–0.304) |
-| D2.two_unit_k6 | 0.965 (0.930–0.983) | 0.805 (0.745–0.854) |
-| D2.wild_type_k0 | 0.0100 (0.00275–0.0357) | 0 (0–0.0188) |
-| D2.wild_type_k2 | 0.005 (0.000883–0.0278) | 0 (0–0.0188) |
-| D2.wild_type_k3 | 0.005 (0.000883–0.0278) | 0 (0–0.0188) |
-| D2.wild_type_k4 | 0 (0–0.0188) | 0 (0–0.0188) |
-| D2.wild_type_k6 | 0 (0–0.0188) | 0 (0–0.0188) |
-| D2_delay.common_esbl_k0 | 14 | n/a |
-| D2_delay.common_esbl_k2 | 7 | 10 |
-| D2_delay.common_esbl_k3 | 6 | 8 |
-| D2_delay.common_esbl_k4 | 6 | 7 |
-| D2_delay.common_esbl_k6 | 5 | 7 |
-| D2_delay.common_resistant_k0 | n/a | n/a |
-| D2_delay.common_resistant_k2 | 8 | 0 |
-| D2_delay.common_resistant_k3 | 8 | 23 |
-| D2_delay.common_resistant_k4 | 6 | 25 |
-| D2_delay.common_resistant_k6 | 13 | n/a |
-| D2_delay.rare_k0 | 11 | 1 |
-| D2_delay.rare_k2 | 3 | 2 |
-| D2_delay.rare_k3 | 7 | 7 |
-| D2_delay.rare_k4 | 5 | 6 |
-| D2_delay.rare_k6 | 3 | 4 |
-| D2_delay.two_unit_k0 | 11 | 4 |
-| D2_delay.two_unit_k2 | 1 | 0 |
-| D2_delay.two_unit_k3 | 4 | 3 |
-| D2_delay.two_unit_k4 | 7 | 3 |
-| D2_delay.two_unit_k6 | 6 | 7 |
-| D2_delay.wild_type_k0 | 10 | n/a |
-| D2_delay.wild_type_k2 | 12 | n/a |
-| D2_delay.wild_type_k3 | 0 | n/a |
-| D2_delay.wild_type_k4 | n/a | n/a |
-| D2_delay.wild_type_k6 | n/a | n/a |
-| D2_heldout.common_esbl_k0 | 0.0650 (0.0384–0.108) | 0.0150 (0.00511–0.0432) |
-| D2_heldout.common_esbl_k2 | 0.330 (0.269–0.398) | 0.0750 (0.0460–0.120) |
-| D2_heldout.common_esbl_k3 | 0.625 (0.556–0.689) | 0.285 (0.227–0.351) |
-| D2_heldout.common_esbl_k4 | 0.880 (0.828–0.918) | 0.590 (0.521–0.656) |
-| D2_heldout.common_esbl_k6 | 1 (0.981–1) | 0.930 (0.886–0.958) |
-| D2_heldout.common_resistant_k0 | 0.0150 (0.00511–0.0432) | 0.0100 (0.00275–0.0357) |
-| D2_heldout.common_resistant_k2 | 0 (0–0.0188) | 0 (0–0.0188) |
-| D2_heldout.common_resistant_k3 | 0.0300 (0.0138–0.0639) | 0.005 (0.000883–0.0278) |
-| D2_heldout.common_resistant_k4 | 0 (0–0.0188) | 0 (0–0.0188) |
-| D2_heldout.common_resistant_k6 | 0.0250 (0.0107–0.0572) | 0.0100 (0.00275–0.0357) |
-| D2_heldout.rare_k0 | 0.0500 (0.0274–0.0896) | 0 (0–0.0188) |
-| D2_heldout.rare_k2 | 0.370 (0.306–0.439) | 0.175 (0.129–0.234) |
-| D2_heldout.rare_k3 | 0.885 (0.833–0.922) | 0.680 (0.612–0.741) |
-| D2_heldout.rare_k4 | 0.970 (0.936–0.986) | 0.890 (0.839–0.926) |
-| D2_heldout.rare_k6 | 1 (0.981–1) | 1 (0.981–1) |
-| D2_heldout.two_unit_k0 | 0.100 (0.0657–0.149) | 0.0350 (0.0171–0.0705) |
-| D2_heldout.two_unit_k2 | 0.220 (0.168–0.282) | 0.115 (0.0779–0.167) |
-| D2_heldout.two_unit_k3 | 0.405 (0.339–0.474) | 0.210 (0.159–0.272) |
-| D2_heldout.two_unit_k4 | 0.555 (0.486–0.622) | 0.285 (0.227–0.351) |
-| D2_heldout.two_unit_k6 | 0.975 (0.943–0.989) | 0.785 (0.723–0.836) |
-| D2_heldout.wild_type_k0 | 0 (0–0.0188) | 0 (0–0.0188) |
-| D2_heldout.wild_type_k2 | 0.005 (0.000883–0.0278) | 0 (0–0.0188) |
-| D2_heldout.wild_type_k3 | 0.0100 (0.00275–0.0357) | 0 (0–0.0188) |
-| D2_heldout.wild_type_k4 | 0 (0–0.0188) | 0 (0–0.0188) |
-| D2_heldout.wild_type_k6 | 0.0100 (0.00275–0.0357) | 0.0100 (0.00275–0.0357) |
-| D2_heldout_delay.common_esbl_k0 | 10 | 15 |
-| D2_heldout_delay.common_esbl_k2 | 7 | 7 |
-| D2_heldout_delay.common_esbl_k3 | 7 | 8 |
-| D2_heldout_delay.common_esbl_k4 | 6 | 7 |
-| D2_heldout_delay.common_esbl_k6 | 4 | 6 |
-| D2_heldout_delay.common_resistant_k0 | 5 | 5 |
-| D2_heldout_delay.common_resistant_k2 | n/a | n/a |
-| D2_heldout_delay.common_resistant_k3 | 11 | 6 |
-| D2_heldout_delay.common_resistant_k4 | n/a | n/a |
-| D2_heldout_delay.common_resistant_k6 | 9 | 8 |
-| D2_heldout_delay.rare_k0 | 9 | n/a |
-| D2_heldout_delay.rare_k2 | 6 | 2 |
-| D2_heldout_delay.rare_k3 | 6 | 7 |
-| D2_heldout_delay.rare_k4 | 5 | 5 |
-| D2_heldout_delay.rare_k6 | 3 | 5 |
-| D2_heldout_delay.two_unit_k0 | 12 | 20 |
-| D2_heldout_delay.two_unit_k2 | 2 | 2 |
-| D2_heldout_delay.two_unit_k3 | 4 | 4 |
-| D2_heldout_delay.two_unit_k4 | 6 | 6 |
-| D2_heldout_delay.two_unit_k6 | 6 | 7 |
-| D2_heldout_delay.wild_type_k0 | n/a | n/a |
-| D2_heldout_delay.wild_type_k2 | 0 | n/a |
-| D2_heldout_delay.wild_type_k3 | 7 | n/a |
-| D2_heldout_delay.wild_type_k4 | n/a | n/a |
-| D2_heldout_delay.wild_type_k6 | 0 | 0 |
-| D3.gap2 | 0.655 (0.587–0.717) | 0.640 (0.571–0.703) |
-| D3.gap3 | 0.950 (0.910–0.973) | 0.945 (0.904–0.969) |
-| D3.gap5 | 1 (0.981–1) | 1 (0.981–1) |
-| D3.gap7 | 1 (0.981–1) | 1 (0.981–1) |
-| D3.half7 | 0.430 (0.363–0.499) | 0.280 (0.222–0.346) |
-| D3_delay.gap2 | 0 | 0 |
-| D3_delay.gap3 | 1 | 1 |
-| D3_delay.gap5 | 2 | 2 |
-| D3_delay.gap7 | 2 | 2 |
-| D3_delay.half7 | 5 | 5 |
-| D3_heldout.gap2 | 0.635 (0.566–0.699) | 0.600 (0.531–0.665) |
-| D3_heldout.gap3 | 0.915 (0.868–0.946) | 0.915 (0.868–0.946) |
-| D3_heldout.gap5 | 1 (0.981–1) | 1 (0.981–1) |
-| D3_heldout.gap7 | 1 (0.981–1) | 1 (0.981–1) |
-| D3_heldout.half7 | 0.390 (0.325–0.459) | 0.245 (0.191–0.309) |
-| D3_heldout_delay.gap2 | 0 | 0 |
-| D3_heldout_delay.gap3 | 1 | 1 |
-| D3_heldout_delay.gap5 | 1 | 1 |
-| D3_heldout_delay.gap7 | 1 | 1 |
-| D3_heldout_delay.half7 | 5 | 6 |
-| D4.alerts_per_week | 0.183 | 0.0867 |
-| D4.cluster | 4.52 (2.07–8.58) | 1.00 (0.122–3.63) |
-| D4.data | 3.52 (1.41–7.25) | 2.01 (0.548–5.15) |
-| D4.divergence | 0 (0–1.85) | 0 (0–1.85) |
-| D4.episodes_per_year | 9.55 (5.75–14.9) | 4.52 (2.07–8.58) |
-| D4.sentinel | 1.51 (0.311–4.40) | 1.51 (0.311–4.40) |
-| D4.trend | 0 (0–1.85) | 0 (0–1.85) |
-| D5.common_esbl | 0.750 (0.686–0.805) | 0.750 (0.686–0.805) |
-| D5.common_esbl_delay | 6 | 6 |
-| D5.level | 0.300 | 3 |
-| D5.noise | 3.01 | 3.01 |
-| D5.rare | 0.920 (0.874–0.950) | 0.920 (0.874–0.950) |
-| D5.rare_delay | 6 | 6 |
-| D5_heldout.common_esbl | 0.695 (0.628–0.755) | 0.695 (0.628–0.755) |
-| D5_heldout.common_esbl_delay | 7 | 7 |
-| D5_heldout.level | 0.300 | 3 |
-| D5_heldout.noise | 3.01 | 3.01 |
-| D5_heldout.rare | 0.940 (0.898–0.965) | 0.940 (0.898–0.965) |
-| D5_heldout.rare_delay | 5 | 5 |
-| D6 | 0.0260 (0.0178–0.0378) | 0.0120 (0.00688–0.0209) |
-| D7 | 0.987 (0.981–0.991) | 0.974 (0.966–0.980) |
-| I1.alerts | 29 | 18 |
-| I1.alerts_per_incident | 1.12 | 1.20 |
-| I1.incidents | 26 | 15 |
+| key | [baseline-live-set-retuned-year1](baselines/live-set-retuned-year1.json) | [baseline-live-set-shipped](baselines/live-set-shipped.json) | [0015-gamma-poisson-guard-band](../../experiments/0015-gamma-poisson-guard-band/) | [0016-cusum](../../experiments/0016-cusum/) | [0018-bocpd](../../experiments/0018-bocpd/) |
+|---|---|---|---|---|---|
+| mark | baseline | baseline, tuned on test | proposed |  | proposed |
+| method | The live detector set with cluster and data alphas re-tuned on year 1 (Choices 5), trend and new-in-unit as shipped | The live detector set as shipped (D-020, D-021, D-022, D-031, D-034), scored on D1 to D7 and I1 over 2024-10-01 to 2026-09-27 | Gamma-Poisson surprise (negative binomial predictive), baseline 26 weeks, guard band 0 weeks, window 1 weeks, k 0.1, minimum count 2, Benjamini-Hochberg q-values over the series tested each day (unit x phenotype and unit x organism x specimen), read at q < 0.005 (the loosest level whose year-1 noise was at most 5 episodes a year); D5 is read at its own headline level as the harness defines it. | Poisson CUSUM (theta 8, weekly, guard 0 wk) and Bernoulli CUSUM (theta 8, guard 4 wk) per unit x series, limits from Siegmund's run length, operating level by simulation on year 1 | Bayesian online change-point detection (Adams and MacKay 2007), counts and %R, H = 1/26, w = 2, p < 0.5 |
+| runtime_s | 93.3 | 115 | 350 | 77 | 310 |
+| cpu_s | 93.2 | 114 | 336 | 71 | 303 |
+| D1.E1 | 0 | 0 | 6 | 4 | n/a |
+| D1.E1_corrected | 5 | 5 | 11 | 9 | n/a |
+| D1.E2 | 0 | 0 | 2 | 4 | 4 |
+| D1.E2_corrected | 0 | 0 | 2 | 4 | 4 |
+| D1.E3 | 0 | 0 | n/a | n/a | n/a |
+| D1.E4 | 2026-02-15 | 2026-05-10 | n/a | n/a | n/a |
+| D2.common_esbl_k0 | 0.0650 (0.0384–0.108) | 0 (0–0.0188) | 0.0100 (0.00275–0.0357) | 0.005 (0.000883–0.0278) | 0.0400 (0.0204–0.0769) |
+| D2.common_esbl_k2 | 0.265 (0.209–0.330) | 0.0450 (0.0239–0.0833) | 0.0250 (0.0107–0.0572) | 0.0550 (0.0310–0.0958) | 0.0400 (0.0204–0.0769) |
+| D2.common_esbl_k3 | 0.700 (0.633–0.759) | 0.345 (0.283–0.413) | 0.0800 (0.0498–0.126) | 0.230 (0.177–0.293) | 0.120 (0.0820–0.172) |
+| D2.common_esbl_k4 | 0.880 (0.828–0.918) | 0.610 (0.541–0.675) | 0.240 (0.186–0.304) | 0.485 (0.417–0.554) | 0.135 (0.0945–0.189) |
+| D2.common_esbl_k6 | 0.995 (0.972–0.999) | 0.945 (0.904–0.969) | 0.560 (0.491–0.627) | 0.885 (0.833–0.922) | 0.295 (0.236–0.362) |
+| D2.common_resistant_k0 | 0 (0–0.0188) | 0 (0–0.0188) | 0.005 (0.000883–0.0278) | 0.0350 (0.0171–0.0705) | 0.0750 (0.0460–0.120) |
+| D2.common_resistant_k2 | 0.0150 (0.00511–0.0432) | 0.0100 (0.00275–0.0357) | 0.005 (0.000883–0.0278) | 0.0250 (0.0107–0.0572) | 0.0600 (0.0347–0.102) |
+| D2.common_resistant_k3 | 0.0200 (0.0078–0.0503) | 0.005 (0.000883–0.0278) | 0.0350 (0.0171–0.0705) | 0.0250 (0.0107–0.0572) | 0.0300 (0.0138–0.0639) |
+| D2.common_resistant_k4 | 0.0100 (0.00275–0.0357) | 0.005 (0.000883–0.0278) | 0.0350 (0.0171–0.0705) | 0.0400 (0.0204–0.0769) | 0.0300 (0.0138–0.0639) |
+| D2.common_resistant_k6 | 0.0350 (0.0171–0.0705) | 0 (0–0.0188) | 0.0750 (0.0460–0.120) | 0.115 (0.0779–0.167) | 0.0650 (0.0384–0.108) |
+| D2.rare_k0 | 0.0500 (0.0274–0.0896) | 0.0100 (0.00275–0.0357) | 0.0150 (0.00511–0.0432) | 0.0250 (0.0107–0.0572) | 0.0150 (0.00511–0.0432) |
+| D2.rare_k2 | 0.380 (0.316–0.449) | 0.165 (0.120–0.223) | 0.0800 (0.0498–0.126) | 0.0850 (0.0537–0.132) | 0.0500 (0.0274–0.0896) |
+| D2.rare_k3 | 0.860 (0.805–0.901) | 0.615 (0.546–0.680) | 0.200 (0.150–0.261) | 0.345 (0.283–0.413) | 0.0950 (0.0617–0.144) |
+| D2.rare_k4 | 0.980 (0.950–0.992) | 0.890 (0.839–0.926) | 0.375 (0.311–0.444) | 0.665 (0.597–0.727) | 0.140 (0.0987–0.195) |
+| D2.rare_k6 | 1 (0.981–1) | 1 (0.981–1) | 0.670 (0.602–0.731) | 0.920 (0.874–0.950) | 0.250 (0.195–0.314) |
+| D2.two_unit_k0 | 0.0750 (0.0460–0.120) | 0.0200 (0.0078–0.0503) | 0.0450 (0.0239–0.0833) | 0.0300 (0.0138–0.0639) | 0.0750 (0.0460–0.120) |
+| D2.two_unit_k2 | 0.255 (0.200–0.320) | 0.135 (0.0945–0.189) | 0.005 (0.000883–0.0278) | 0.0650 (0.0384–0.108) | 0.0750 (0.0460–0.120) |
+| D2.two_unit_k3 | 0.475 (0.407–0.544) | 0.210 (0.159–0.272) | 0.125 (0.0861–0.178) | 0.130 (0.0903–0.184) | 0.100 (0.0657–0.149) |
+| D2.two_unit_k4 | 0.565 (0.496–0.632) | 0.240 (0.186–0.304) | 0.135 (0.0945–0.189) | 0.190 (0.142–0.250) | 0.105 (0.0697–0.155) |
+| D2.two_unit_k6 | 0.965 (0.930–0.983) | 0.805 (0.745–0.854) | 0.305 (0.245–0.372) | 0.545 (0.476–0.613) | 0.205 (0.155–0.266) |
+| D2.wild_type_k0 | 0.0100 (0.00275–0.0357) | 0 (0–0.0188) | 0.0100 (0.00275–0.0357) | 0.0250 (0.0107–0.0572) | 0.0500 (0.0274–0.0896) |
+| D2.wild_type_k2 | 0.005 (0.000883–0.0278) | 0 (0–0.0188) | 0.0250 (0.0107–0.0572) | 0.0350 (0.0171–0.0705) | 0.0300 (0.0138–0.0639) |
+| D2.wild_type_k3 | 0.005 (0.000883–0.0278) | 0 (0–0.0188) | 0.0150 (0.00511–0.0432) | 0.0250 (0.0107–0.0572) | 0.0600 (0.0347–0.102) |
+| D2.wild_type_k4 | 0 (0–0.0188) | 0 (0–0.0188) | 0.0450 (0.0239–0.0833) | 0.0250 (0.0107–0.0572) | 0.0450 (0.0239–0.0833) |
+| D2.wild_type_k6 | 0 (0–0.0188) | 0 (0–0.0188) | 0.0400 (0.0204–0.0769) | 0.0150 (0.00511–0.0432) | 0.0550 (0.0310–0.0958) |
+| D2_delay.common_esbl_k0 | 14 | n/a | 0 | 0 | 16 |
+| D2_delay.common_esbl_k2 | 7 | 10 | 4 | 5 | 1 |
+| D2_delay.common_esbl_k3 | 6 | 8 | 4 | 7 | 2 |
+| D2_delay.common_esbl_k4 | 6 | 7 | 5 | 6 | 3 |
+| D2_delay.common_esbl_k6 | 5 | 7 | 5 | 6 | 3 |
+| D2_delay.common_resistant_k0 | n/a | n/a | 12 | 0 | 15 |
+| D2_delay.common_resistant_k2 | 8 | 0 | 0 | 0 | 4 |
+| D2_delay.common_resistant_k3 | 8 | 23 | 17 | 8 | 0 |
+| D2_delay.common_resistant_k4 | 6 | 25 | 3 | 5 | 5 |
+| D2_delay.common_resistant_k6 | 13 | n/a | 6 | 10 | 8 |
+| D2_delay.rare_k0 | 11 | 1 | 15 | 1 | 17 |
+| D2_delay.rare_k2 | 3 | 2 | 2 | 4 | 3 |
+| D2_delay.rare_k3 | 7 | 7 | 4 | 8 | 3 |
+| D2_delay.rare_k4 | 5 | 6 | 4 | 7 | 3 |
+| D2_delay.rare_k6 | 3 | 4 | 5 | 6 | 3 |
+| D2_delay.two_unit_k0 | 11 | 4 | 9 | 0 | 12 |
+| D2_delay.two_unit_k2 | 1 | 0 | 0 | 0 | 3 |
+| D2_delay.two_unit_k3 | 4 | 3 | 5 | 8 | 4 |
+| D2_delay.two_unit_k4 | 7 | 3 | 6 | 7 | 4 |
+| D2_delay.two_unit_k6 | 6 | 7 | 7 | 8 | 5 |
+| D2_delay.wild_type_k0 | 10 | n/a | 7 | 2 | 14 |
+| D2_delay.wild_type_k2 | 12 | n/a | 4 | 0 | 6 |
+| D2_delay.wild_type_k3 | 0 | n/a | 4 | 0 | 2 |
+| D2_delay.wild_type_k4 | n/a | n/a | 6 | 0 | 4 |
+| D2_delay.wild_type_k6 | n/a | n/a | 10 | 0 | 10 |
+| D2_heldout.common_esbl_k0 | 0.0650 (0.0384–0.108) | 0.0150 (0.00511–0.0432) | – | – | – |
+| D2_heldout.common_esbl_k2 | 0.330 (0.269–0.398) | 0.0750 (0.0460–0.120) | – | – | – |
+| D2_heldout.common_esbl_k3 | 0.625 (0.556–0.689) | 0.285 (0.227–0.351) | – | – | – |
+| D2_heldout.common_esbl_k4 | 0.880 (0.828–0.918) | 0.590 (0.521–0.656) | – | – | – |
+| D2_heldout.common_esbl_k6 | 1 (0.981–1) | 0.930 (0.886–0.958) | – | – | – |
+| D2_heldout.common_resistant_k0 | 0.0150 (0.00511–0.0432) | 0.0100 (0.00275–0.0357) | – | – | – |
+| D2_heldout.common_resistant_k2 | 0 (0–0.0188) | 0 (0–0.0188) | – | – | – |
+| D2_heldout.common_resistant_k3 | 0.0300 (0.0138–0.0639) | 0.005 (0.000883–0.0278) | – | – | – |
+| D2_heldout.common_resistant_k4 | 0 (0–0.0188) | 0 (0–0.0188) | – | – | – |
+| D2_heldout.common_resistant_k6 | 0.0250 (0.0107–0.0572) | 0.0100 (0.00275–0.0357) | – | – | – |
+| D2_heldout.rare_k0 | 0.0500 (0.0274–0.0896) | 0 (0–0.0188) | – | – | – |
+| D2_heldout.rare_k2 | 0.370 (0.306–0.439) | 0.175 (0.129–0.234) | – | – | – |
+| D2_heldout.rare_k3 | 0.885 (0.833–0.922) | 0.680 (0.612–0.741) | – | – | – |
+| D2_heldout.rare_k4 | 0.970 (0.936–0.986) | 0.890 (0.839–0.926) | – | – | – |
+| D2_heldout.rare_k6 | 1 (0.981–1) | 1 (0.981–1) | – | – | – |
+| D2_heldout.two_unit_k0 | 0.100 (0.0657–0.149) | 0.0350 (0.0171–0.0705) | – | – | – |
+| D2_heldout.two_unit_k2 | 0.220 (0.168–0.282) | 0.115 (0.0779–0.167) | – | – | – |
+| D2_heldout.two_unit_k3 | 0.405 (0.339–0.474) | 0.210 (0.159–0.272) | – | – | – |
+| D2_heldout.two_unit_k4 | 0.555 (0.486–0.622) | 0.285 (0.227–0.351) | – | – | – |
+| D2_heldout.two_unit_k6 | 0.975 (0.943–0.989) | 0.785 (0.723–0.836) | – | – | – |
+| D2_heldout.wild_type_k0 | 0 (0–0.0188) | 0 (0–0.0188) | – | – | – |
+| D2_heldout.wild_type_k2 | 0.005 (0.000883–0.0278) | 0 (0–0.0188) | – | – | – |
+| D2_heldout.wild_type_k3 | 0.0100 (0.00275–0.0357) | 0 (0–0.0188) | – | – | – |
+| D2_heldout.wild_type_k4 | 0 (0–0.0188) | 0 (0–0.0188) | – | – | – |
+| D2_heldout.wild_type_k6 | 0.0100 (0.00275–0.0357) | 0.0100 (0.00275–0.0357) | – | – | – |
+| D2_heldout_delay.common_esbl_k0 | 10 | 15 | – | – | – |
+| D2_heldout_delay.common_esbl_k2 | 7 | 7 | – | – | – |
+| D2_heldout_delay.common_esbl_k3 | 7 | 8 | – | – | – |
+| D2_heldout_delay.common_esbl_k4 | 6 | 7 | – | – | – |
+| D2_heldout_delay.common_esbl_k6 | 4 | 6 | – | – | – |
+| D2_heldout_delay.common_resistant_k0 | 5 | 5 | – | – | – |
+| D2_heldout_delay.common_resistant_k2 | n/a | n/a | – | – | – |
+| D2_heldout_delay.common_resistant_k3 | 11 | 6 | – | – | – |
+| D2_heldout_delay.common_resistant_k4 | n/a | n/a | – | – | – |
+| D2_heldout_delay.common_resistant_k6 | 9 | 8 | – | – | – |
+| D2_heldout_delay.rare_k0 | 9 | n/a | – | – | – |
+| D2_heldout_delay.rare_k2 | 6 | 2 | – | – | – |
+| D2_heldout_delay.rare_k3 | 6 | 7 | – | – | – |
+| D2_heldout_delay.rare_k4 | 5 | 5 | – | – | – |
+| D2_heldout_delay.rare_k6 | 3 | 5 | – | – | – |
+| D2_heldout_delay.two_unit_k0 | 12 | 20 | – | – | – |
+| D2_heldout_delay.two_unit_k2 | 2 | 2 | – | – | – |
+| D2_heldout_delay.two_unit_k3 | 4 | 4 | – | – | – |
+| D2_heldout_delay.two_unit_k4 | 6 | 6 | – | – | – |
+| D2_heldout_delay.two_unit_k6 | 6 | 7 | – | – | – |
+| D2_heldout_delay.wild_type_k0 | n/a | n/a | – | – | – |
+| D2_heldout_delay.wild_type_k2 | 0 | n/a | – | – | – |
+| D2_heldout_delay.wild_type_k3 | 7 | n/a | – | – | – |
+| D2_heldout_delay.wild_type_k4 | n/a | n/a | – | – | – |
+| D2_heldout_delay.wild_type_k6 | 0 | 0 | – | – | – |
+| D3.gap2 | 0.655 (0.587–0.717) | 0.640 (0.571–0.703) | 0 (0–0.0188) | – | – |
+| D3.gap3 | 0.950 (0.910–0.973) | 0.945 (0.904–0.969) | 0 (0–0.0188) | – | – |
+| D3.gap5 | 1 (0.981–1) | 1 (0.981–1) | 0 (0–0.0188) | – | – |
+| D3.gap7 | 1 (0.981–1) | 1 (0.981–1) | 0 (0–0.0188) | – | – |
+| D3.half7 | 0.430 (0.363–0.499) | 0.280 (0.222–0.346) | 0 (0–0.0188) | – | – |
+| D3_delay.gap2 | 0 | 0 | n/a | – | – |
+| D3_delay.gap3 | 1 | 1 | n/a | – | – |
+| D3_delay.gap5 | 2 | 2 | n/a | – | – |
+| D3_delay.gap7 | 2 | 2 | n/a | – | – |
+| D3_delay.half7 | 5 | 5 | n/a | – | – |
+| D3_heldout.gap2 | 0.635 (0.566–0.699) | 0.600 (0.531–0.665) | – | – | – |
+| D3_heldout.gap3 | 0.915 (0.868–0.946) | 0.915 (0.868–0.946) | – | – | – |
+| D3_heldout.gap5 | 1 (0.981–1) | 1 (0.981–1) | – | – | – |
+| D3_heldout.gap7 | 1 (0.981–1) | 1 (0.981–1) | – | – | – |
+| D3_heldout.half7 | 0.390 (0.325–0.459) | 0.245 (0.191–0.309) | – | – | – |
+| D3_heldout_delay.gap2 | 0 | 0 | – | – | – |
+| D3_heldout_delay.gap3 | 1 | 1 | – | – | – |
+| D3_heldout_delay.gap5 | 1 | 1 | – | – | – |
+| D3_heldout_delay.gap7 | 1 | 1 | – | – | – |
+| D3_heldout_delay.half7 | 5 | 6 | – | – | – |
+| D4.alerts_per_week | 0.183 | 0.0867 | 0.0963 | 0.0674 | 0.125 |
+| D4.cluster | 4.52 (2.07–8.58) | 1.00 (0.122–3.63) | 5.02 (2.41–9.24) | 3.52 (1.41–7.25) | 1.51 (0.311–4.40) |
+| D4.data | 3.52 (1.41–7.25) | 2.01 (0.548–5.15) | 0 (0–1.85) | 0 (0–1.85) | 0 (0–1.85) |
+| D4.divergence | 0 (0–1.85) | 0 (0–1.85) | 0 (0–1.85) | 0 (0–1.85) | 5.02 (2.41–9.24) |
+| D4.episodes_per_year | 9.55 (5.75–14.9) | 4.52 (2.07–8.58) | 5.02 (2.41–9.24) | 3.52 (1.41–7.25) | 6.53 (3.48–11.2) |
+| D4.sentinel | 1.51 (0.311–4.40) | 1.51 (0.311–4.40) | 0 (0–1.85) | 0 (0–1.85) | 0 (0–1.85) |
+| D4.trend | 0 (0–1.85) | 0 (0–1.85) | 0 (0–1.85) | 0 (0–1.85) | 0 (0–1.85) |
+| D5.common_esbl | 0.750 (0.686–0.805) | 0.750 (0.686–0.805) | 0.0950 (0.0617–0.144) | 0.485 (0.417–0.554) | 0.135 (0.0945–0.189) |
+| D5.common_esbl_delay | 6 | 6 | 5 | 6 | 3 |
+| D5.level | 0.300 | 3 | 0.001 | 3.80e-05 | 0.500 |
+| D5.noise | 3.01 | 3.01 | 1.00 | 3.52 | 1.51 |
+| D5.rare | 0.920 (0.874–0.950) | 0.920 (0.874–0.950) | 0.205 (0.155–0.266) | 0.665 (0.597–0.727) | 0.140 (0.0987–0.195) |
+| D5.rare_delay | 6 | 6 | 5 | 7 | 3 |
+| D5_heldout.common_esbl | 0.695 (0.628–0.755) | 0.695 (0.628–0.755) | – | – | – |
+| D5_heldout.common_esbl_delay | 7 | 7 | – | – | – |
+| D5_heldout.level | 0.300 | 3 | – | – | – |
+| D5_heldout.noise | 3.01 | 3.01 | – | – | – |
+| D5_heldout.rare | 0.940 (0.898–0.965) | 0.940 (0.898–0.965) | – | – | – |
+| D5_heldout.rare_delay | 5 | 5 | – | – | – |
+| D6 | 0.0260 (0.0178–0.0378) | 0.0120 (0.00688–0.0209) | 0.0190 (0.0122–0.0295) | 0.0710 (0.0567–0.0886) | 0.0120 (0.00688–0.0209) |
+| D7 | 0.987 (0.981–0.991) | 0.974 (0.966–0.980) | 0.998 (0.991–1.000) | 0.999 (0.994–1.000) | 0.171 (0.137–0.211) |
+| I1.alerts | 29 | 18 | 13 | 16 | 14 |
+| I1.alerts_per_incident | 1.12 | 1.20 | 1.08 | 1.78 | 1 |
+| I1.incidents | 26 | 15 | 12 | 9 | 14 |
 
 ## Prediction
 

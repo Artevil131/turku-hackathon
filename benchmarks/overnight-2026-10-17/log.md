@@ -44,3 +44,4 @@ Code, Opus 5.5, operated by Artem).
 | 08:43 | 0014 pooling levels (m6) | plan start | Sonnet 5.5 | | plan then implement |
 | 08:49 | 0016 | plan committed | Sonnet 5.5 | 9 min | Poisson θ {2.5,4,8} × daily/weekly × guard {0,4}; Bernoulli θ {2.5,4,8} × guard; p = 1/ARL(S_t) per series |
 | 08:52 | 0014 | plan committed | Sonnet 5.5 | 9 min | 4 levels × {unsplit, onset-split, folded}; chosen on TUNE |
+| 09:08 | 0014 | result committed | Sonnet 5.5 | 60–73 s CPU | TUNE chose the hospital pool (= hospital-365); in/out pool C1 −0.00005 (−0.00011 to +0.00001), unit +0.00036; no row passes the replacement rule (all fail C8); no Fable review |
