@@ -1,6 +1,6 @@
 # Design night, 2026-10-17: morning report
 
-Final, written 11:00–11:55. The night ran 00:50–02:30 and stopped on a
+Final, written 11:00–11:55, re-checked against the final state at 11:55. The night ran 00:50–02:30 and stopped on a
 usage limit; it resumed at 08:34. At 08:50 Artem redirected the design
 (less text, a Mylab-like look, everything useful on screen, the timeline
 as the key element, the engine's math on screen, deadline 12:00), and the
@@ -15,16 +15,36 @@ come from the running app through `design/shoot.mjs` (headless Chrome,
 true 390 px phone emulation at 2×, laptop 1280×860). "Before" is the
 pre-night commit 98cfd99; replay date in every shot 12 May 2025.
 
-**Merged into `main` at Artem's request (11:05).** `origin/main` had 49
-new commits, among them a rewritten web app by teammates. Artem chose this
+**Merged into `main` at Artem's explicit request (11:05–11:50), overriding
+the brief's "never merge into main".** `main` is at `71b1157` (a
+fast-forward). `origin/main` had gained 49 and then 63 more commits,
+among them a rewritten web app by teammates and the experiments night's
+results. Artem chose this
 design: `apps/web` on `main` is now the design branch's, and the previous
 web app remains in `main`'s history. Everything else from `main` was kept
 (API, quality checks, containers, the pitch film, scripts); contract
 routes from both sides are combined; `main` had already used D-038 to
 D-040, so Artem's Beta-binomial and raw-counts decisions are D-041 and
-D-042 there and the county route is D-043. `main`'s CI smoke job, which
-drives the previous screens, is paused (`if: false`, with a note) until
-it is ported; typecheck, lint, tests and the container builds still run.
+D-042 there and the county route is D-043. CI is unchanged: `main`'s
+smoke test was ported to the new screens (18/18 without data, as CI runs
+it) instead of being paused, and it caught a real bug (one live stream
+per tab, so a seventh tab hung), fixed with `main`'s shared cross-tab
+stream. A first attempt that paused the smoke job was blocked by the
+permission check and dropped. At the last push: typecheck clean,
+`pnpm check` clean, 208 tests, smoke 18/18, production build.
+
+**Where the run departed from the brief.** The build stopped from 02:30 to
+08:34 on a usage limit, so the overnight designer loop ran its three-hourly
+pass only up front; Fable 5.1 then wrote the redesign direction (spec-v2)
+and the two final UX reviews, per Artem's addendum (one Fable at a time,
+the per-wave reviews on Sonnet). Work continued past the 08:30 cut-off
+because the goal said to keep going and Artem kept directing it. The Method
+page's formula section was written by the experiments session at Artem's
+request (commits 57606cd, 44e0adf, 0abcfe5), reviewed and pushed here. For
+a few minutes five builders ran at once (cap four). U7 fell from 5 of 5 to
+4 of 5 on Artem's instruction and was kept; U4 regressions were fixed
+within the hour. Everything was merged into `main` on Artem's request, as
+described above.
 
 ## 1. What changed, by surface
 
@@ -35,7 +55,7 @@ Files in `design/`: `<surface>-before-{phone,laptop}.png` and
 |---|---|---|---|---|
 | Timeline (every page) | From a date and two buttons to the hero: a continuous weekly stream of resistant finds by phenotype with sampling volume, nine unit lanes, signal pills that name their cause ("ESBL 7/1,4", "MRSA new", "no samples") with a −log10 p bar, a week readout, the axis ending at today with nothing after it; play, steps, speeds, date entry, demo jumps; a subtle Layers popover (lines, count or per 100 cultures, stacked or overlaid, lanes, signal kinds, window) whose choices persist and travel in the URL | `home-before-*` | `home-final-*`, `research-final-*` | PRODUCT principle 4; Artem's "timeline is the key element"; U7 |
 | Doctor (`#doctor`) | From a form over example figures to a one-screen workspace from `/api/coverage`: one dense row of one-click filters (unit remembered; age group and day 3+ tagged not applied), the list as a forest plot (Wilson interval against the bar line, "94 % · n 356", result glyph and word, ⓘ per row), level ladder, likely organisms bar, unit signal chips, details on demand; prints as one A4 page | `doctor-before-*` | `doctor-final-*` | Usability criterion; principles 1 and 5; U1, U3 |
-| Researcher (`#research`) | From a table of finds with example trends to a workspace of chrome-less panels (hover reveals move, resize and close; a subtle tray reopens them; layout persists; the page may scroll): signals (unfiltered by default, each showing the units it spans with counts), one Finland map (THL county rates and signals, the referral graph), the Tyks unit graph (flows, lit units, spread arrows with share · n), the alert math (observed vs usual, −log10 p, the test in one line, isolates inline), the unit grid, and an Assistant panel that words the selected signal (local model when configured, labelled; template otherwise) | `research-before-*` | `research-final-*` | Principles 2 and 3; detection criterion; Artem's points on multi-unit signals, one map, windows, the LLM; U2 |
+| Researcher (`#research`) | From a table of finds with example trends to a workspace of chrome-less panels (hover reveals move, resize and close; a subtle tray reopens them; layout persists; the page may scroll): signals (unfiltered by default, each showing the units it spans with counts), one Finland map (THL county rates and signals, the referral graph), the unit flow view (a three-column Sankey around the signal's unit: senders, the unit, where its patients went next, bands by patients, click to re-centre), the alert math (observed vs usual, −log10 p, the test in one line, isolates inline), the unit grid, and an Assistant panel that words the selected signal (local model when configured, labelled; template otherwise) | `research-before-*` | `research-final-*` | Principles 2 and 3; detection criterion; Artem's points on multi-unit signals, one map, windows, the LLM; U2 |
 | Method (`#method`) | New: the live rules drawn with live numbers (coverage as Beta(k+1, n−k+1) with the Wilson interval; the detector's Poisson tail, its −log10 p against α, the weekly window) beside the experiment figures 0012–0020; the discounted Beta-binomial and every live rule typeset in MathML (formula section by the experiments session at Artem's request) | none | `method-final-*` | Artem's "show the engine's math"; demonstrated understanding |
 | Home | "What changed since yesterday" as three dated numbers and two role cards; the doctor card names the unit it opens | `home-before-*` | `home-final-*` | Principle 2 |
 | Pitch intro (`#intro`) | Terraced contour surface of the THL county rate, hospitals on the referral tree, month slider, labelled a picture | none | `intro-final-*` | Pitch opening |
@@ -56,15 +76,15 @@ because the API cannot filter by them. Wording stays within "covers",
 began, one lane per unit, with every signal named on its lane; today is
 the right edge. Below it the panels: the signal list (13 in the 365 days
 to 12 May 2025 at the demo start) where each row shows the units the
-signal spans ("MED-A → ED 31 % · n 41"); the map; the unit graph with the
-spread; the alert math; the Assistant.
+signal spans ("MED-A → ED 31 % · n 41"); the map; the unit flow view around the
+signal's unit; the alert math; the Assistant.
 
 **A judge's first two minutes.** Home: what arrived today → Doctor: the
 list is already there → F, 65+, severe: the bar moves to 90 % and rows
 fall below the line with reasons → Research: the timeline's lanes show
 MED-A's ESBL rise → click the signal: its first 3 of 7 isolates inline, observed 7
 against usual 1.4, −log10 p 3.1, its patients went on to ED and PHC-S →
-the unit graph lights the spread → Method: the same signal's Poisson
+the flow view shows MED-A's senders and where its patients went → Method: the same signal's Poisson
 tail and the formulas → Demo jumps → "ICU MRSA" (10 Feb 2026): every
 panel moves to the new date, and still nothing after it is shown.
 
@@ -97,7 +117,7 @@ Live streams 2 → 1; relation requests deduplicated.
 - Timeline as a continuous stream with unit lanes; the earlier discrete seismograph was rejected by Artem as saying nothing about the metrics.
 - The axis ends at today and nothing later is drawn; scrubbing the band was given up for it.
 - Panels without window chrome; explicit windows with title bars were built and rejected by Artem the same hour.
-- Network and regional map merged into one geographic view, then the Tyks unit graph given its own panel so both stay readable.
+- Network and regional map merged into one geographic view, then the unit graph given its own panel; the ring of nine units tangled however it was drawn, so it became a focused Sankey around one unit (rejected: the full graph, which Artem twice found messy).
 - The doctor types nothing: no organism input, age group and day 3+ shown but not applied rather than filtered in the browser.
 - Certainty as the level reached, not n cut-offs the team has not chosen; hospital onset does not raise the bar on its own (ENGINE 2.6 open).
 - The Assistant only words existing alerts through `/api/explain`; numbers never come from the model (D-019, D-029).
@@ -144,9 +164,9 @@ clinical; no brand voice written.
 
 ## 8. With another night
 
-1. Port the CI smoke test (`apps/web/scripts/smoke.mjs` in `main`'s
-   history) to the new routes and re-enable the job; show `main`'s
-   data-quality route (`/api/quality`) in the new design.
+1. Show `main`'s data-quality route (`/api/quality`) in the new design;
+   tell the teammate who was building the previous web app this morning
+   that it was replaced (it remains in history).
 2. The proposed routes above, starting with relations by window and
    weekly expected counts, so the lanes can show surprise rather than
    counts.
