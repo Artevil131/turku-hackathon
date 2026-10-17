@@ -723,3 +723,17 @@
     margin-left: 0;
   }
 }
+
+/* Long code lines scroll inside their block; they never widen the page (phones). */
+.connect,
+.cx-try,
+.im,
+.cx-send {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.connect > *,
+.cx-try > *,
+.im > * {
+  min-width: 0;
+}

@@ -1439,3 +1439,16 @@ fieldset.setting {
   outline: 2px solid var(--live);
   outline-offset: 2px;
 }
+
+/* Phones: the five tabs share one row; the Connect pill keeps its outline, loses its icon. */
+@media (max-width: 560px) {
+  .sections {
+    gap: 2px;
+  }
+  .section-tab-connect svg {
+    display: none;
+  }
+  .section-tab {
+    padding: 0 4px;
+  }
+}
