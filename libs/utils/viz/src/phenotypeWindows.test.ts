@@ -24,6 +24,6 @@ describe("hospital phenotype windows", () => {
   });
   it("does not pretend fewer than eight weeks are two four-week windows", () => {
     expect(phenotypeWindows({ ...series, weeks: series.weeks.slice(0, 7) }, "mrsa")).toBeNull();
-    expect(phenotypeWindows({ weeks: [], units: {} } as WeeklySeries, "mrsa")).toBeNull();
+    expect(phenotypeWindows({ weeks: [], units: {} } as unknown as WeeklySeries, "mrsa")).toBeNull();
   });
 });
