@@ -1,9 +1,12 @@
 import type { AeiClient, ClockCommand, ClockState } from "@aei/contract";
 import { type Locale, t } from "@aei/i18n";
-import { type KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, useId, useRef, useState } from "react";
+import { type KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { type LiveAlerts, useAlertsSinceStart } from "../alertsSince.ts";
 import type { Connection } from "../live.ts";
+import { useHashParam } from "../url.ts";
+import { EventsStrip } from "./EventsStrip.tsx";
+import { type ResolvedEvent, resolveEvents } from "./events.ts";
 import { compactDate, dayNumber, isoFromDay } from "./hero/geometry.ts";
 import { useLayers } from "./hero/layers.ts";
 import { useWeekly } from "./hero/useWeekly.ts";
@@ -47,13 +50,6 @@ function writeCollapsed(value: boolean) {
 }
 
 const clampDate = (iso: string, start: string, end: string) => (iso < start ? start : iso > end ? end : iso);
-
-type EventKey = "tlEventUro" | "tlEventGap" | "tlEventIcu";
-const EVENTS: readonly { date: string; key: EventKey }[] = [
-  { date: "2025-05-12", key: "tlEventUro" },
-  { date: "2025-11-17", key: "tlEventGap" },
-  { date: "2026-02-10", key: "tlEventIcu" },
-];
 
 type SpeedKey = "tlSpeedDay2s" | "tlSpeedDay" | "tlSpeedWeek" | "tlSpeedMonth";
 const SPEEDS: readonly { key: SpeedKey; tickMs: number; daysPerTick: number }[] = [
@@ -127,7 +123,6 @@ export function Timeline({
   const rootRef = useRef<HTMLDivElement>(null);
   const [seekingTo, setSeekingTo] = useState<string | null>(null);
   const [sheet, setSheet] = useState(false);
-  const [menu, setMenu] = useState(false);
   const [stepStop, setStepStop] = useState(1);
   const [folded, setFolded] = useState(readCollapsed);
   const fold = (value: boolean) => {
@@ -176,10 +171,12 @@ export function Timeline({
     [clock, command, seek, seekingTo],
   );
 
-  const jumpToEvent = (date: string) => {
+  const events = useMemo(() => resolveEvents(alerts), [alerts]);
+  const [inc, setInc] = useHashParam("inc");
+  const pickEvent = (ev: ResolvedEvent) => {
     command({ action: "pause" });
-    seek(date);
-    setMenu(false);
+    seek(ev.date);
+    if (ev.incident) setInc(ev.incident);
     setSheet(false);
   };
 
@@ -363,54 +360,21 @@ export function Timeline({
         command({ action: "pause" });
         seek(iso);
         if (keepOpen) return;
-        setMenu(false);
         setSheet(false);
       }}
     />
   );
 
-  const eventList = (
-    <ul className="tl-event-list">
-      {EVENTS.map((ev) => (
-        <li key={ev.key}>
-          <button type="button" className="tl-event" disabled={!ready} onClick={() => jumpToEvent(ev.date)}>
-            <span className="tl-diamond" aria-hidden="true" />
-            <span className="tl-event-text">{t(locale, ev.key)}</span>
-            <span className="tl-event-date num">{compactDate(ev.date)}</span>
-          </button>
-        </li>
-      ))}
-    </ul>
-  );
-
-  const eventsMenu = (
-    <div className="tl-menu-wrap">
-      <button
-        type="button"
-        className="tl-seg tl-events-btn"
-        aria-expanded={menu}
-        aria-haspopup="true"
-        disabled={!ready}
-        onClick={() => setMenu((m) => !m)}
-      >
-        {t(locale, "tlEvents")}
-      </button>
-      {menu ? (
-        // biome-ignore lint/a11y/noStaticElementInteractions: Esc handling for the popup
-        <div
-          className="tl-menu"
-          onKeyDown={(e: ReactKeyboardEvent) => {
-            if (e.key === "Escape") {
-              e.stopPropagation();
-              setMenu(false);
-            }
-          }}
-        >
-          {eventList}
-          {dateJump}
-        </div>
-      ) : null}
-    </div>
+  const eventsStrip = (compact = false) => (
+    <EventsStrip
+      locale={locale}
+      events={events}
+      asOf={clock?.asOf ?? null}
+      selected={inc}
+      disabled={!ready}
+      onPick={pickEvent}
+      compact={compact}
+    />
   );
 
   if (phone) {
@@ -439,6 +403,7 @@ export function Timeline({
             <Chevron />
           </button>
         </div>
+        {eventsStrip()}
         {sheet ? (
           <Sheet locale={locale} onClose={() => setSheet(false)} still={reducedMotion}>
             <div className="tl-sheet-read">
@@ -454,7 +419,6 @@ export function Timeline({
               {transport(true)}
               {speed}
             </div>
-            {eventList}
             {dateJump}
           </Sheet>
         ) : null}
@@ -473,7 +437,7 @@ export function Timeline({
         {speed}
         {arrivals ? <span className="tl-folded-fresh">{arrivals}</span> : null}
         {status}
-        {eventsMenu}
+        {eventsStrip(true)}
         <button
           type="button"
           className="tl-btn tl-fold"
@@ -520,10 +484,11 @@ export function Timeline({
           <div className="tl-quality">
             <QualityStatus locale={locale} state={quality} />
           </div>
-          {eventsMenu}
+          {dateJump}
         </div>
       </div>
       {band(false)}
+      {eventsStrip()}
     </div>
   );
 }
