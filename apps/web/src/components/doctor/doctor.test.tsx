@@ -74,7 +74,7 @@ describe("doctor list disclosure", () => {
       "severe",
     );
     expect(list(data)).toContain("92 %</b> (83–97 %)");
-    expect(list(data)).toContain("95 %:n väli ulottuu rajan 90 % molemmille puolille.");
+    expect(list(data)).toContain("rajaa arvioidaan 95 %:n välin alapään mukaan, ja se on 83 %.");
   });
   it("leads with the first API-ranked pair when no severe single clears", () => {
     const data = response(
