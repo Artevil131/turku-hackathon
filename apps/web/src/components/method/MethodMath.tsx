@@ -2,7 +2,7 @@ import { type Locale, type MessageKey, t } from "@aei/i18n";
 import type { ReactNode } from "react";
 
 // Formulas for the Method page, typeset as native MathML (no library). Each block states the rule the tool runs or
-// the experiment tested, with the decision or record it rests on. LaTeX source sits behind a disclosure for slides.
+// the experiment tested, with the decision or record it rests on. Each rule shows the decision or record it rests on.
 
 const I = ({ children }: { children: ReactNode }) => <mi>{children}</mi>;
 const N = ({ children }: { children: ReactNode }) => <mn>{children}</mn>;
@@ -40,22 +40,20 @@ const tt1 = (
   </Row>
 );
 
-function Display({ label, children }: { label: string; children: ReactNode }) {
-  // Inline math in a block wrapper, so the equation keeps display style (CSS math-style) but sits left-aligned.
+function Display({ n, label, children }: { n: number; label: string; children: ReactNode }) {
+  // One step of the filter: a number, its caption, and the equation in display style, left-aligned.
   return (
-    <div className="mt-eq">
-      <math aria-label={label}>{children}</math>
-    </div>
+    <li className="mt-eqrow">
+      <span className="mt-eqnum" aria-hidden="true">
+        {n}
+      </span>
+      <span className="mt-eqtag">{label}</span>
+      <div className="mt-eq">
+        <math aria-label={label}>{children}</math>
+      </div>
+    </li>
   );
 }
-
-const LATEX = String.raw`a_{t\mid t-1} = \delta\,a_{t-1} + (1-\delta)\,M p_0, \qquad
-b_{t\mid t-1} = \delta\,b_{t-1} + (1-\delta)\,M (1-p_0)
-
-p_t \mid \mathcal{D}_t \sim \mathrm{Beta}\big(a_{t\mid t-1} + s_t,\; b_{t\mid t-1} + n_t - s_t\big) = \mathrm{Beta}(a_t, b_t)
-
-s_{t+1} \mid \mathcal{D}_t \sim \mathrm{BetaBin}(n_{t+1}, a_t, b_t), \qquad
-\mathbb{E}[p_t] = \frac{a_t}{a_t + b_t}, \qquad w_t = \frac{n^{\mathrm{eff}}_t}{n^{\mathrm{eff}}_t + M},\; n^{\mathrm{eff}}_t = a_t + b_t - M`;
 
 /** The discounted Beta-binomial: why it stays conjugate week after week (ENGINE.md 2.2, D-038, experiment 0012). */
 export function BetaBinomialMath({ locale }: { locale: Locale }) {
@@ -67,95 +65,80 @@ export function BetaBinomialMath({ locale }: { locale: Locale }) {
   const one = <N>1</N>;
   return (
     <section className="mt-math" aria-labelledby="mt-bb">
-      <h3 className="mt-label" id="mt-bb">
+      <h3 className="mt-math-title" id="mt-bb">
         {t(locale, "methodBbTitle")}
       </h3>
-      <p className="mt-math-line">{t(locale, "methodBbConjugate")}</p>
-      <Display label={t(locale, "methodBbDiscountLabel")}>
-        <Sub b={a} s={tt1} />
-        <O>=</O>
-        {d}
-        <Sub b={a} s={t1} />
-        <O>+</O>
-        <Row>
-          <O>(</O>
-          {one}
-          <O>−</O>
-          {d}
-          <O>)</O>
-        </Row>
-        {M}
-        {p0}
-        <mspace width="1.5em" />
-        <Sub b={b} s={tt1} />
-        <O>=</O>
-        {d}
-        <Sub b={b} s={t1} />
-        <O>+</O>
-        <Row>
-          <O>(</O>
-          {one}
-          <O>−</O>
-          {d}
-          <O>)</O>
-        </Row>
-        {M}
-        <Row>
-          <O>(</O>
-          {one}
-          <O>−</O>
-          {p0}
-          <O>)</O>
-        </Row>
-      </Display>
-      <Display label={t(locale, "methodBbUpdateLabel")}>
-        <Sub b={<I>p</I>} s={t0} />
-        <O>∣</O>
-        <Sub b={<I>𝒟</I>} s={t0} />
-        <O>∼</O>
-        <mi mathvariant="normal">Beta</mi>
-        <Row>
-          <O>(</O>
+      <p className="mt-math-lead">{t(locale, "methodBbConjugate")}</p>
+      <ol className="mt-eqs">
+        <Display n={1} label={t(locale, "methodBbDiscountLabel")}>
           <Sub b={a} s={tt1} />
+          <O>=</O>
+          {d}
+          <Sub b={a} s={t1} />
           <O>+</O>
-          <Sub b={<I>s</I>} s={t0} />
-          <O>,</O>
+          <Row>
+            <O>(</O>
+            {one}
+            <O>−</O>
+            {d}
+            <O>)</O>
+          </Row>
+          {M}
+          {p0}
+          <mspace width="1.5em" />
           <Sub b={b} s={tt1} />
+          <O>=</O>
+          {d}
+          <Sub b={b} s={t1} />
           <O>+</O>
-          <Sub b={<I>n</I>} s={t0} />
-          <O>−</O>
-          <Sub b={<I>s</I>} s={t0} />
-          <O>)</O>
-        </Row>
-        <O>=</O>
-        <mi mathvariant="normal">Beta</mi>
-        <Row>
-          <O>(</O>
-          <Sub b={a} s={t0} />
-          <O>,</O>
-          <Sub b={b} s={t0} />
-          <O>)</O>
-        </Row>
-      </Display>
-      <Display label={t(locale, "methodBbPredictLabel")}>
-        <Sub
-          b={<I>s</I>}
-          s={
-            <Row>
-              <I>t</I>
-              <O>+</O>
-              <N>1</N>
-            </Row>
-          }
-        />
-        <O>∣</O>
-        <Sub b={<I>𝒟</I>} s={t0} />
-        <O>∼</O>
-        <mi mathvariant="normal">BetaBin</mi>
-        <Row>
-          <O>(</O>
+          <Row>
+            <O>(</O>
+            {one}
+            <O>−</O>
+            {d}
+            <O>)</O>
+          </Row>
+          {M}
+          <Row>
+            <O>(</O>
+            {one}
+            <O>−</O>
+            {p0}
+            <O>)</O>
+          </Row>
+        </Display>
+        <Display n={2} label={t(locale, "methodBbUpdateLabel")}>
+          <Sub b={<I>p</I>} s={t0} />
+          <O>∣</O>
+          <Sub b={<I>𝒟</I>} s={t0} />
+          <O>∼</O>
+          <mi mathvariant="normal">Beta</mi>
+          <Row>
+            <O>(</O>
+            <Sub b={a} s={tt1} />
+            <O>+</O>
+            <Sub b={<I>s</I>} s={t0} />
+            <O>,</O>
+            <Sub b={b} s={tt1} />
+            <O>+</O>
+            <Sub b={<I>n</I>} s={t0} />
+            <O>−</O>
+            <Sub b={<I>s</I>} s={t0} />
+            <O>)</O>
+          </Row>
+          <O>=</O>
+          <mi mathvariant="normal">Beta</mi>
+          <Row>
+            <O>(</O>
+            <Sub b={a} s={t0} />
+            <O>,</O>
+            <Sub b={b} s={t0} />
+            <O>)</O>
+          </Row>
+        </Display>
+        <Display n={3} label={t(locale, "methodBbPredictLabel")}>
           <Sub
-            b={<I>n</I>}
+            b={<I>s</I>}
             s={
               <Row>
                 <I>t</I>
@@ -164,46 +147,59 @@ export function BetaBinomialMath({ locale }: { locale: Locale }) {
               </Row>
             }
           />
+          <O>∣</O>
+          <Sub b={<I>𝒟</I>} s={t0} />
+          <O>∼</O>
+          <mi mathvariant="normal">BetaBin</mi>
+          <Row>
+            <O>(</O>
+            <Sub
+              b={<I>n</I>}
+              s={
+                <Row>
+                  <I>t</I>
+                  <O>+</O>
+                  <N>1</N>
+                </Row>
+              }
+            />
+            <O>,</O>
+            <Sub b={a} s={t0} />
+            <O>,</O>
+            <Sub b={b} s={t0} />
+            <O>)</O>
+          </Row>
           <O>,</O>
-          <Sub b={a} s={t0} />
-          <O>,</O>
-          <Sub b={b} s={t0} />
-          <O>)</O>
-        </Row>
-        <O>,</O>
-        <mspace width="1.5em" />
-        <mi mathvariant="normal">E</mi>
-        <Row>
-          <O>[</O>
-          <Sub b={<I>p</I>} s={t0} />
-          <O>]</O>
-        </Row>
-        <O>=</O>
-        <Frac
-          n={<Sub b={a} s={t0} />}
-          d={
-            <Row>
-              <Sub b={a} s={t0} />
-              <O>+</O>
-              <Sub b={b} s={t0} />
-            </Row>
-          }
-        />
-      </Display>
-      <ul className="mt-math-notes">
-        <li>{t(locale, "methodBbSymbols")}</li>
-        <li>{t(locale, "methodBbExact")}</li>
-        <li>{t(locale, "methodBbStatus")}</li>
-      </ul>
-      <details className="mt-latex">
-        <summary>LaTeX</summary>
-        <pre>
-          <code>{LATEX}</code>
-        </pre>
-      </details>
+          <mspace width="1.5em" />
+          <mi mathvariant="normal">E</mi>
+          <Row>
+            <O>[</O>
+            <Sub b={<I>p</I>} s={t0} />
+            <O>]</O>
+          </Row>
+          <O>=</O>
+          <Frac
+            n={<Sub b={a} s={t0} />}
+            d={
+              <Row>
+                <Sub b={a} s={t0} />
+                <O>+</O>
+                <Sub b={b} s={t0} />
+              </Row>
+            }
+          />
+        </Display>
+      </ol>
+      <p className="mt-math-foot">{t(locale, "methodBbSymbols")}</p>
+      <p className="mt-math-foot">{t(locale, "methodBbExact")}</p>
+      <p className="mt-status">{t(locale, "methodBbStatus")}</p>
     </section>
   );
 }
+
+/** Card widths in the three-column grid: wide spans two columns, full spans the row. */
+const WIDE = new Set(["wilson", "poisson", "drop"]);
+const FULL = new Set(["trend"]);
 
 /** One formula line per rule the tool runs, with the decision it rests on. */
 export function LiveRulesMath({
@@ -302,10 +298,12 @@ export function LiveRulesMath({
       <math aria-label="Poisson excess">
         <I>X</I>
         <O>∼</O>
-        <mi mathvariant="normal">Poisson</mi>
-        <O>(</O>
-        <I>μ</I>
-        <O>)</O>
+        <Row>
+          <mi mathvariant="normal">Poisson</mi>
+          <O>(</O>
+          <I>μ</I>
+          <O>)</O>
+        </Row>
         <O>,</O>
         <mspace width="0.6em" />
         <I>μ</I>
@@ -330,12 +328,14 @@ export function LiveRulesMath({
         />
         <O>,</O>
         <mspace width="0.6em" />
-        <I>P</I>
-        <O>(</O>
-        <I>X</I>
-        <O>≥</O>
-        <I>x</I>
-        <O>)</O>
+        <Row>
+          <I>P</I>
+          <O>(</O>
+          <I>X</I>
+          <O>≥</O>
+          <I>x</I>
+          <O>)</O>
+        </Row>
         <O>&lt;</O>
         <I>α</I>
       </math>
@@ -485,16 +485,14 @@ export function LiveRulesMath({
     ),
   };
   return (
-    <dl className="mt-rules">
+    <ul className="mt-rules">
       {rules.map((r) => (
-        <div key={r} className="mt-rule">
-          <dt>{t(locale, `methodRule_${r}` as MessageKey)}</dt>
-          <dd>
-            {formulas[r]}
-            <span className="mt-rule-note">{t(locale, `methodRuleNote_${r}` as MessageKey)}</span>
-          </dd>
-        </div>
+        <li key={r} className={FULL.has(r) ? "mt-rule mt-rule-full" : WIDE.has(r) ? "mt-rule mt-rule-wide" : "mt-rule"}>
+          <span className="mt-rule-name">{t(locale, `methodRule_${r}` as MessageKey)}</span>
+          <div className="mt-rule-eq">{formulas[r]}</div>
+          <span className="mt-rule-note">{t(locale, `methodRuleNote_${r}` as MessageKey)}</span>
+        </li>
       ))}
-    </dl>
+    </ul>
   );
 }

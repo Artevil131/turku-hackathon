@@ -140,91 +140,155 @@
   color: var(--m-ink-3);
 }
 
-/* Formulas: native MathML, one rule per row, the Beta-binomial block with its LaTeX source behind a disclosure. */
+/* Formulas: native MathML in a math font. The filter as three numbered steps on a soft panel; each live rule a card. */
 .mt-mathrow {
   display: grid;
-  gap: 8px;
-  margin-top: 12px;
+  gap: 10px;
+  margin-top: 14px;
   padding-top: 12px;
   border-top: 1px solid var(--m-line);
   min-width: 0;
 }
 
 .mt-mathrow math {
-  font-size: 1.15em;
+  font-family: "STIX Two Math", "Latin Modern Math", "Cambria Math", math;
   math-style: normal;
-}
-
-.mt-rules {
-  display: grid;
-  gap: 6px;
-  margin: 0;
-}
-
-.mt-rule {
-  display: grid;
-  grid-template-columns: minmax(140px, 200px) 1fr;
-  gap: 4px 12px;
-  align-items: baseline;
-}
-
-.mt-rule dt {
-  font-weight: 600;
-}
-
-.mt-rule dd {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 12px;
-  margin: 0;
-  min-width: 0;
-  overflow-x: auto;
-}
-
-.mt-rule-note,
-.mt-math-line,
-.mt-math-notes {
-  color: var(--m-ink-3);
+  color: var(--m-ink);
 }
 
 .mt-math {
   display: grid;
-  gap: 6px;
+  gap: 10px;
+  padding: 16px 18px;
+  background: color-mix(in srgb, var(--m-acc-soft) 55%, #fff);
+  border: 1px solid var(--m-line);
+  border-radius: var(--brand-radius, 10px);
   min-width: 0;
-  overflow-x: auto;
 }
 
-.mt-eq {
-  margin: 4px 0;
-  overflow-x: auto;
-}
-
-.mt-math-line {
+.mt-math-title {
   margin: 0;
-  max-width: 80ch;
-}
-
-.mt-math-notes {
-  margin: 0;
-  padding-left: 18px;
-  max-width: 80ch;
-}
-
-.mt-latex summary {
-  cursor: pointer;
-  color: var(--m-acc);
+  font-size: var(--t-m, 15px);
   font-weight: 600;
 }
 
-.mt-latex pre {
-  margin: 6px 0 0;
+.mt-math-lead {
+  margin: 0;
+  max-width: 78ch;
+  line-height: 1.5;
+}
+
+.mt-eqs {
+  display: grid;
+  gap: 8px;
+  margin: 2px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mt-eqrow {
+  display: grid;
+  grid-template-columns: 24px minmax(150px, 240px) minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--glass-3, #fff);
+  border: 1px solid var(--m-line);
+  border-radius: 8px;
+}
+
+.mt-eqnum {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--m-acc);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.mt-eqtag {
+  color: var(--m-ink-3);
+  line-height: 1.35;
+}
+
+.mt-eq {
+  overflow-x: auto;
+  min-width: 0;
+}
+
+.mt-eq math {
+  font-size: 1.35em;
+}
+
+.mt-math-foot {
+  margin: 0;
+  max-width: 78ch;
+  color: var(--m-ink-3);
+  line-height: 1.5;
+}
+
+.mt-status {
+  margin: 2px 0 0;
+  max-width: 78ch;
+  padding: 6px 0 6px 12px;
+  border-left: 3px solid var(--m-acc);
+  line-height: 1.5;
+}
+
+.mt-rules {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-flow: dense;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mt-rule {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 8px;
+  padding: 12px 14px;
+  background: var(--glass-3, #fff);
+  border: 1px solid var(--m-line);
+  border-radius: 8px;
+  min-width: 0;
+}
+
+.mt-rule-wide {
+  grid-column: span 2;
+}
+
+.mt-rule-full {
+  grid-column: 1 / -1;
+}
+
+.mt-rule-name {
+  font-weight: 600;
+}
+
+.mt-rule-eq {
+  display: grid;
+  place-items: center;
+  min-height: 64px;
   padding: 8px;
-  background: var(--m-acc-soft);
+  background: color-mix(in srgb, var(--m-acc-soft) 45%, #fff);
   border-radius: 6px;
   overflow-x: auto;
+}
+
+.mt-rule-eq math {
+  font-size: 1.2em;
+}
+
+.mt-rule-note {
+  color: var(--m-ink-3);
   font-size: 12px;
-  white-space: pre;
+  line-height: 1.45;
 }
 
 .mt-result {
@@ -233,8 +297,34 @@
   color: var(--m-ink);
 }
 
+@media (max-width: 900px) {
+  .mt-rules {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 640px) {
-  .mt-rule {
-    grid-template-columns: 1fr;
+  .mt-rules {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mt-rule-wide,
+  .mt-rule-full {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .mt-eqrow {
+    grid-template-columns: 24px minmax(0, 1fr);
+  }
+
+  .mt-eq {
+    grid-column: 1 / -1;
+  }
+
+  .mt-eq math,
+  .mt-rule-eq math {
+    font-size: 1.05em;
   }
 }

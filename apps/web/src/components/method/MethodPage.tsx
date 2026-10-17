@@ -254,8 +254,8 @@ export function MethodPage({ client, locale, asOf }: { client: AeiClient; locale
         live={detection}
         math={
           <>
-            <LiveRulesMath locale={locale} rules={["poisson", "drop", "empty", "trend", "sentinel"]} />
-            <p className="mt-math-line">{t(locale, "methodAlsoTested")}</p>
+            <LiveRulesMath locale={locale} rules={["poisson", "empty", "drop", "sentinel", "trend"]} />
+            <p className="mt-math-foot">{t(locale, "methodAlsoTested")}</p>
           </>
         }
         candidates={
