@@ -1,10 +1,14 @@
 // Copy for the home page. Keys are global: prefix them `home`.
 
 export const homeEn = {
+  homeOpenNote: "Latest alert within 28 days. This page lists alerts from that period; open the calculation for earlier related alerts.",
+  homePeriod: "New activity period",
+  homePeriod7: "7 days",
+  homePeriod28: "28 days",
   homeSinceTitle: "Since yesterday",
   homeIsolates: "Isolates",
   homeFinds: "New resistant",
-  homeAlerts: "New signals",
+  homeAlerts: "Incidents in period",
   homeNone: "none",
   homeNothing: "Nothing new on {date}.",
   homeConnecting: "Connecting…",
@@ -25,10 +29,15 @@ export const homeEn = {
 } as const;
 
 export const homeFi: Record<keyof typeof homeEn, string> = {
+  homeOpenNote:
+    "Viimeisin hälytys 28 päivän sisällä. Etusivu näyttää tämän jakson hälytykset; laskennasta näet myös aiemmat liittyvät hälytykset.",
+  homePeriod: "Uusien havaintojen jakso",
+  homePeriod7: "7 päivää",
+  homePeriod28: "28 päivää",
   homeSinceTitle: "Eilisestä",
   homeIsolates: "Löydökset",
   homeFinds: "Uudet resistentit",
-  homeAlerts: "Uudet signaalit",
+  homeAlerts: "Tapahtumat jaksolla",
   homeNone: "ei yhtään",
   homeNothing: "Ei uutta {date}.",
   homeConnecting: "Yhdistetään…",
