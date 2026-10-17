@@ -2,7 +2,7 @@
 .geo {
   --geo-ink: var(--ink, #07081c);
   --geo-ink2: var(--ink-2, #1d204e);
-  --geo-ink3: var(--ink-3, #6f7292);
+  --geo-ink3: var(--ink-3, #5c6080);
   --geo-line: var(--line, #e4e6ee);
   --geo-accent: var(--live, var(--brand-accent, #635bf1));
   --geo-alert: var(--st-alert, #d0004b);

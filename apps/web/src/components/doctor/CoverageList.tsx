@@ -78,7 +78,7 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
 
   const onKeyDown = (e: KeyboardEvent<HTMLUListElement>) => {
     if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(e.key)) return;
-    const opts = Array.from(listRef.current?.querySelectorAll<HTMLElement>('[role="option"]') ?? []);
+    const opts = Array.from(listRef.current?.querySelectorAll<HTMLElement>('[role="option"]:not([aria-disabled="true"])') ?? []);
     const i = opts.indexOf(document.activeElement as HTMLElement);
     if (i < 0) return;
     e.preventDefault();
@@ -288,7 +288,7 @@ function ListFragment({ divider, children }: { divider: string | null; children:
   return (
     <>
       {divider ? (
-        <li className="cl-divider" role="presentation">
+        <li className="cl-divider" aria-hidden="true">
           <span>{divider}</span>
         </li>
       ) : null}
