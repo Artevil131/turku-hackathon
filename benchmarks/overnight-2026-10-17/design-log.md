@@ -100,3 +100,5 @@ Screenshots come from headless Chrome through
 | 09:37 | quality (Haiku 5.5) | Redesign 0c283ee: U4 100 / 92 / 97 (doctor and research regressed: list divider inside the listbox, 1 contrast item on doctor, 34 on research); U5 0 (239 keys); U6 3.5 / 4.2 / 4.7 s (noisy) |
 | 09:37 | orchestrator (Opus 5.5) | U4 regression fixed instead of reverted (the redesign is Artem's order): --ink-3 #6f7292 → #5c6080, the list divider hidden from assistive tech (rows state their result in words); to be re-measured after the timeline polish |
 | 09:39 | builder (Sonnet 5.5) | Timeline polish: all band text 11 px, pills merge into 'N signals' instead of overlapping, one-line legend, strong 'Today' edge with the partial week marked, y-axis ticks and lane baselines; band 212 px |
+| 09:51 | UX reviewer (Fable 5.1) | Final doctor review (review-final-doctor.md): one screen, no page scroll at 1280×860; U1 4 clicks ~7 s laptop, 5 taps ~12 s phone; U3 yes except the details pane; seven small finish fixes |
+| 09:51 | orchestrator (Opus 5.5) | Started: doctor finish fixes and the Method page's stuck loading (Sonnet 5.5); final researcher review (Fable 5.1) |
