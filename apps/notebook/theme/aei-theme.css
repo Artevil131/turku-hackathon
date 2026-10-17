@@ -1,0 +1,92 @@
+/*
+ * AEI theme for the JupyterLite site (D-062). Applied at build time by
+ * build.sh: copied to the site root and linked from lab/index.html, so it
+ * loads after JupyterLab's own theme and wins on equal specificity.
+ *
+ * The values are the research page's tokens in apps/web/src/styles.css,
+ * written out as hex because the notebook is a separate static app and
+ * cannot read the web app's custom properties. Keep them in step by hand.
+ * Light only: the notebook follows the JupyterLab light theme.
+ */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap");
+
+:root {
+  /* Type: the app's UI and data stack (--font-ui, --font-data). */
+  --jp-ui-font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  --jp-content-font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  --jp-code-font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --jp-ui-font-size1: 13px;
+  --jp-content-font-size1: 14px;
+  --jp-code-font-size: 13px;
+
+  /* Surfaces: a pale ground with flat white panels (--line, --ink). */
+  --jp-layout-color0: #ffffff;
+  --jp-layout-color1: #ffffff;
+  --jp-layout-color2: #f6f7fa;
+  --jp-layout-color3: #eef0f5;
+  --jp-layout-color4: #e4e6ee;
+  --jp-inverse-layout-color0: #07081c;
+  --jp-inverse-layout-color1: #1d204e;
+  --jp-inverse-layout-color2: #5c6080;
+  --jp-inverse-layout-color3: #aebecb;
+  --jp-inverse-layout-color4: #e4e6ee;
+
+  /* Ink (--ink, --ink-2, --ink-3). */
+  --jp-ui-font-color0: #07081c;
+  --jp-ui-font-color1: #1d204e;
+  --jp-ui-font-color2: #5c6080;
+  --jp-ui-font-color3: #aebecb;
+  --jp-content-font-color0: #07081c;
+  --jp-content-font-color1: #1d204e;
+  --jp-content-font-color2: #5c6080;
+  --jp-content-font-color3: #aebecb;
+
+  /* One violet accent (--brand-accent, --brand-accent-soft). */
+  --jp-brand-color0: #635bf1;
+  --jp-brand-color1: #635bf1;
+  --jp-brand-color2: #c6c4ed;
+  --jp-brand-color3: #ecebfc;
+  --jp-accent-color0: #635bf1;
+  --jp-accent-color1: #635bf1;
+  --jp-accent-color2: #c6c4ed;
+  --jp-accent-color3: #ecebfc;
+  --jp-selected-color: #ecebfc;
+  --jp-cell-editor-active-background: #ffffff;
+
+  /* Lines (--line, --line-strong) and corners (--radius-panel). */
+  --jp-border-color0: #e4e6ee;
+  --jp-border-color1: #aebecb;
+  --jp-border-color2: #e4e6ee;
+  --jp-border-color3: #aebecb;
+  --jp-border-radius: 10px;
+}
+
+body {
+  background: #ffffff;
+  color: #07081c;
+}
+
+/* Square chrome becomes the panel corner: menus, tabs and dialogs. */
+.lm-Widget.jp-Dialog,
+.lm-Menu,
+.jp-Notebook .jp-Cell,
+.jp-DirListing,
+.jp-Launcher-card {
+  border-radius: var(--jp-border-radius);
+}
+
+/* The status bar is a second strip the app does not have. */
+#jp-main-statusbar {
+  display: none;
+}
+
+/*
+ * Launcher clutter: the reproduction uses Python and R notebooks and the
+ * file browser. Console and the terminal section are not available in the
+ * browser kernel anyway. Selectors follow JupyterLab 4's launcher markup;
+ * verify them on a built site (see apps/notebook/README.md).
+ */
+.jp-Launcher-section[data-category="Console"],
+.jp-Launcher-section[data-category="Other"] {
+  display: none;
+}
