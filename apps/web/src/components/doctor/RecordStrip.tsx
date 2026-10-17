@@ -2,18 +2,7 @@ import type { Severity } from "@aei/contract";
 import type { Sex, Specimen, WardCode } from "@aei/domain";
 import { type Locale, type MessageKey, specimenName, t, wardName } from "@aei/i18n";
 import { type ReactNode, useState } from "react";
-import {
-  AGE_GROUPS,
-  AGE_KEYS,
-  type AgeGroup,
-  barOf,
-  DEFAULTS,
-  type DoctorFilters,
-  type Period,
-  SITES,
-  sexWord,
-  unitGroups,
-} from "./filters.ts";
+import { AGE_GROUPS, AGE_KEYS, type AgeGroup, barOf, type DoctorFilters, type Period, SITES, sexWord, unitGroups } from "./filters.ts";
 import { useMedia } from "./useMedia.ts";
 import "./RecordStrip.css";
 
@@ -179,22 +168,6 @@ export function RecordStrip({ locale, filters, onChange, patientId = "", onPatie
     </Group>
   );
 
-  const severeBloodOn = filters.site === "blood" && filters.sev === "severe";
-  const severeBlood = (
-    <button
-      type="button"
-      className="rs-choice rs-quick"
-      aria-pressed={severeBloodOn}
-      onClick={() => {
-        // A second tap turns the shortcut off: back to the default site and severity.
-        onChange(severeBloodOn ? { site: DEFAULTS.site, sev: DEFAULTS.sev } : { site: "blood", sev: "severe" });
-        setMore(false);
-      }}
-    >
-      {tr("drSevereBlood")}
-    </button>
-  );
-
   const patient = onPatientId ? (
     <label className="rs-group rs-patient" title={tr("drPatientHint")}>
       <span className="rs-label">{tr("drPatientId")}</span>
@@ -215,7 +188,6 @@ export function RecordStrip({ locale, filters, onChange, patientId = "", onPatie
     </label>
   ) : null;
 
-  // Keep the severe blood shortcut visible even when phone filters are collapsed.
   if (wide) {
     return (
       <form className="rs" data-wide="" aria-label={tr("drRecord")} onSubmit={(e) => e.preventDefault()}>
@@ -229,7 +201,6 @@ export function RecordStrip({ locale, filters, onChange, patientId = "", onPatie
           {period}
           {patient}
         </div>
-        {severeBlood}
       </form>
     );
   }
@@ -241,7 +212,6 @@ export function RecordStrip({ locale, filters, onChange, patientId = "", onPatie
         </span>
         <span aria-hidden="true">{more ? "▴" : "▾"}</span>
       </button>
-      {severeBlood}
       {more ? (
         <div className="rs-body rs-more" id="rs-more">
           {unit}
