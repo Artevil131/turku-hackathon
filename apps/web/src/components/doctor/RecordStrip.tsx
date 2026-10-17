@@ -8,6 +8,7 @@ import "./RecordStrip.css";
 
 interface Props {
   locale: Locale;
+  wide?: boolean;
   filters: DoctorFilters;
   onChange: (patch: Partial<DoctorFilters>) => void;
   /** The optional patient id (D-050): typed or scanned, never stored in the URL or localStorage. */
@@ -54,9 +55,10 @@ function Choices<T extends string | number>(props: {
 }
 
 /** The patient record as a row of one-click filters, each with its default already chosen. The doctor types nothing. */
-export function RecordStrip({ locale, filters, onChange, patientId = "", onPatientId, onPatientCommit }: Props) {
+export function RecordStrip({ locale, filters, onChange, patientId = "", onPatientId, onPatientCommit, wide: containerWide }: Props) {
   const tr = (key: MessageKey) => t(locale, key);
-  const wide = useMedia("(min-width: 960px)");
+  const viewportWide = useMedia("(min-width: 960px)");
+  const wide = containerWide ?? viewportWide;
   const [more, setMore] = useState(false);
   const change = onChange;
   const summary = [
@@ -225,9 +227,13 @@ export function RecordStrip({ locale, filters, onChange, patientId = "", onPatie
           <button
             type="button"
             className="rs-done"
-            onClick={() => {
+            onClick={(event) => {
+              const list = event.currentTarget.closest(".doctor")?.querySelector<HTMLElement>("#dr-list");
               setMore(false);
-              document.getElementById("dr-list")?.focus();
+              requestAnimationFrame(() => {
+                list?.scrollIntoView({ block: "start" });
+                list?.focus({ preventScroll: true });
+              });
             }}
           >
             {tr("drShowList")}

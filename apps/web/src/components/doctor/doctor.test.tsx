@@ -7,7 +7,17 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { coverage, suggest, suggestCombinations } from "../../../../../libs/utils/coverage/src/index.ts";
 import { CoverageList, itemsOf } from "./CoverageList.tsx";
 import { Details } from "./Details.tsx";
-import { barOf, chooseSyndrome, coverageQuery, DEFAULTS, filtersFromUrl, filtersToParams, patchFilters, syndromeOf } from "./filters.ts";
+import {
+  barOf,
+  chooseSyndrome,
+  coverageQuery,
+  DEFAULTS,
+  doctorParamsToWindow,
+  filtersFromUrl,
+  filtersToParams,
+  patchFilters,
+  syndromeOf,
+} from "./filters.ts";
 import { PatientPanel } from "./Patient.tsx";
 import { RecordStrip } from "./RecordStrip.tsx";
 import { SyndromePicker } from "./SyndromePicker.tsx";
@@ -116,6 +126,27 @@ describe("doctor list disclosure", () => {
     const summary = list(borderline).split('class="cl-pair-summary"')[1]?.split('class="cl-scroll"')[0];
     expect(summary).toContain("arvio ylittää, väli ei");
     expect(summary).toContain("83–97\u00a0%");
+  });
+});
+
+describe("legacy doctor deep links", () => {
+  it("namespaces every doctor filter without carrying workspace or private patient params", () => {
+    const params = new URLSearchParams(
+      "unit=URO&site=blood&sex=F&age=older&onset=hospital&sev=severe&period=28&syn=sepsis&hospital=sata&panel=grid&patient=P123",
+    );
+    const before = params.toString();
+    expect(doctorParamsToWindow(params)).toEqual({
+      "cov.unit": "URO",
+      "cov.site": "blood",
+      "cov.sex": "F",
+      "cov.age": "older",
+      "cov.onset": "hospital",
+      "cov.sev": "severe",
+      "cov.period": "28",
+      "cov.syn": "sepsis",
+    });
+    expect(params.toString()).toBe(before);
+    expect(doctorParamsToWindow(new URLSearchParams())).toEqual({});
   });
 });
 

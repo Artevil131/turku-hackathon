@@ -44,8 +44,9 @@ const TITLE_KEY = {
   assistant: "boardAssistant",
   grid: "boardGrid",
   reproduce: "boardReproduce",
+  coverage: "boardCoverage",
 } as const;
-const STACK_ORDER: readonly WinId[] = ["signals", "math", "assistant", "map", "graph", "grid", "reproduce"];
+const STACK_ORDER: readonly WinId[] = ["signals", "coverage", "math", "assistant", "map", "graph", "grid", "reproduce"];
 const PRESETS = ["default", "map", "signals", "units"] as const;
 const PRESET_KEY = { default: "wsDefault", map: "wsMap", signals: "wsSignals", units: "wsUnits" } as const;
 function loadLayout(): Layout {

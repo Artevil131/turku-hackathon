@@ -1,3 +1,27 @@
+/* Both the full-page route and dock window respond to their own available width. */
+.coverage-surface {
+  container: coverage / inline-size;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+}
+
+.coverage-window {
+  padding: 8px;
+}
+
+.doctor-main[hidden] {
+  display: none;
+}
+
+.doctor .dp-sheet-contained {
+  position: static;
+  max-height: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
 /* Doctor workspace: one screen, a 40 px banner over two columns, inner panels scroll themselves. */
 .doctor {
   --d-ink: var(--ink, #07081c);
@@ -107,7 +131,7 @@
 }
 
 /* Wide: no page scroll; the two columns fill the height and scroll inside. */
-@media (min-width: 960px) {
+@container coverage (min-width: 960px) {
   .doctor {
     /* The console grid gives the page row exactly the height left under the top bar and timeline. */
     height: 100%;
@@ -260,6 +284,24 @@
 }
 
 @media print {
+  .coverage-surface {
+    container-type: normal;
+    height: auto;
+    padding: 0;
+  }
+  /* Only the coverage sheet prints, even when other workspace tools are open. */
+  body:has(.coverage-window) #root *:not(:has(.coverage-window)):not(.coverage-window):not(.coverage-window *) {
+    display: none !important;
+  }
+  body:has(.coverage-window) #root *:has(.coverage-window) {
+    display: block !important;
+    position: static !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    border: 0 !important;
+  }
   html,
   body,
   #root {
@@ -269,7 +311,7 @@
   .chassis,
   .banner,
   .console > :not(.page),
-  .page > :not(.doctor) {
+  .page > :not(.coverage-surface):not(:has(.coverage-window)) {
     display: none !important;
   }
   .console,

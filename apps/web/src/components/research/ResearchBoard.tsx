@@ -1,8 +1,9 @@
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { hashParams, writeHashParams } from "../../url.ts";
+import { CoverageWindow } from "../doctor/CoverageWindow.tsx";
 import { Assistant } from "./assistant/Assistant.tsx";
 import { type BoardState, boardFromUrl, boardToParams, type FeedProps } from "./board.ts";
-import { applyFilters } from "./feed/model.ts";
+import { applyFilters, shift } from "./feed/model.ts";
 import { computeSpans, useRelations } from "./feed/spans.ts";
 import { useIncidents } from "./feed/useIncidents.ts";
 import { GeoMap } from "./geo/GeoMap.tsx";
@@ -33,7 +34,10 @@ export function ResearchBoard(props: Props) {
   const [reveal, setReveal] = useState<{ id: WinId; key: string | null }>({ id: "math", key: state.incident });
   useEffect(() => setReveal({ id: "math", key: state.incident }), [state.incident]);
   const onChange = useCallback((patch: Partial<BoardState>) => setState((s) => ({ ...s, ...patch })), []);
-  useEffect(() => writeHashParams({ ...boardToParams(state), project: hashParams().get("project") }), [state]);
+  useEffect(() => {
+    const coverage = Object.fromEntries([...hashParams()].filter(([key]) => key.startsWith("cov.")));
+    writeHashParams({ ...coverage, ...boardToParams(state), project: hashParams().get("project") });
+  }, [state]);
   // A link followed inside the app (or the back button) changes the hash without remounting.
   useEffect(() => {
     const onHash = () => setState(boardFromUrl());
@@ -66,6 +70,20 @@ export function ResearchBoard(props: Props) {
   const loading = load.status === "loading";
 
   const content: Record<WinId, ReactNode> = {
+    coverage: (
+      <CoverageWindow
+        client={client}
+        locale={locale}
+        asOf={asOf}
+        alerts={load.status === "ready" ? load.alerts.filter((a) => a.date >= shift(load.asOf, 1 - 28)) : []}
+        alertsStatus={load.status}
+        onRetryAlerts={retry}
+        onOpenSignals={(unit) => {
+          onChange({ unit });
+          setReveal({ id: "signals", key: `coverage-signals-${Date.now()}` });
+        }}
+      />
+    ),
     signals: (
       <SignalFeed {...panelProps} load={load} incidents={incidents} retry={retry} spansOf={spansOf} selected={selected?.key ?? null} />
     ),
@@ -93,7 +111,11 @@ export function ResearchBoard(props: Props) {
   };
 
   // The URL's `panel` follows the last of the map and the unit grid that was opened or closed.
-  const initiallyOpen = useRef<WinId[] | undefined>(state.panel === "grid" ? ["grid"] : undefined);
+  // A coverage deep link opens its window even in a browser with no saved layout.
+  const initiallyOpen = useRef<WinId[]>([
+    ...(state.panel === "grid" ? ["grid" as const] : []),
+    ...([...hashParams().keys()].some((key) => key.startsWith("cov.")) ? ["coverage" as const] : []),
+  ]);
   return (
     <div className="section board">
       <Workspace

@@ -1,6 +1,6 @@
 // Dock geometry only: ordered stacks, fractional sizes and a tray. No DOM or storage access.
 export const STORAGE_KEY = "aei.research.layout.v2";
-export const WIN_IDS = ["signals", "map", "graph", "math", "assistant", "grid", "reproduce"] as const;
+export const WIN_IDS = ["signals", "map", "graph", "math", "assistant", "grid", "reproduce", "coverage"] as const;
 export type WinId = (typeof WIN_IDS)[number];
 export type Preset = "default" | "map" | "signals" | "units";
 export interface DockWindow {
@@ -106,6 +106,7 @@ export const MIN_BODY: Readonly<Record<WinId, number>> = {
   assistant: 220,
   grid: 320,
   reproduce: 360,
+  coverage: 400,
 };
 /** A window's header (40 px) and its 1 px border, top and bottom. */
 export const WINDOW_CHROME = 42;
@@ -116,7 +117,7 @@ export function stackNeed(ids: readonly WinId[]): number {
   return ids.reduce((s, id) => s + minWindowHeight(id), 0) + Math.max(0, ids.length - 1) * SPLITTER;
 }
 /** Lowest priority first: what leaves a crowded column for the tray. */
-const TRAY_ORDER: readonly WinId[] = ["assistant", "graph", "grid", "math", "map", "signals"];
+const TRAY_ORDER: readonly WinId[] = ["assistant", "graph", "grid", "math", "map", "signals", "coverage"];
 
 /**
  * Fit a layout to a board `height` px tall: while a column needs more than the
@@ -167,6 +168,7 @@ export function defaultLayout(height = Number.POSITIVE_INFINITY): Layout {
         },
       ],
       closed: {
+        coverage: { column: "map", columnIndex: 2, index: 4, size: 0.6 },
         grid: { column: "map", columnIndex: 2, index: 2, size: 0.4 },
         reproduce: { column: "map", columnIndex: 2, index: 3, size: 0.6 },
       },
@@ -195,6 +197,7 @@ export function presetLayout(preset: Preset, height = Number.POSITIVE_INFINITY):
           },
         ],
         closed: {
+          coverage: { column: "detail", columnIndex: 1, index: 4, size: 0.6 },
           reproduce: { column: "detail", columnIndex: 1, index: 2, size: 0.6 },
           map: { column: "detail", columnIndex: 1, index: 2, size: 0.5 },
           graph: { column: "detail", columnIndex: 1, index: 3, size: 0.4 },
@@ -211,6 +214,7 @@ export function presetLayout(preset: Preset, height = Number.POSITIVE_INFINITY):
       { id: "map", width: 0.74, windows: [{ id: big, size: 1 }] },
     ],
     closed: {
+      coverage: { column: "map", columnIndex: 1, index: 2, size: 0.6 },
       reproduce: { column: "map", columnIndex: 1, index: 1, size: 0.6 },
       graph: { column: "map", columnIndex: 1, index: 1, size: 0.4 },
       math: { column: "signals", columnIndex: 0, index: 1, size: 0.5 },

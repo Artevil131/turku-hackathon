@@ -46,7 +46,7 @@ describe("docked layout", () => {
   it("fits the default to the board: at most two windows a column, and none below its minimum", () => {
     // A 900 px screen with the timeline expanded leaves about 600 px.
     expect(ids(defaultLayout(600))).toEqual([["signals"], ["math"], ["map"]]);
-    expect(Object.keys(defaultLayout(600).closed).sort()).toEqual(["assistant", "graph", "grid", "reproduce"]);
+    expect(Object.keys(defaultLayout(600).closed).sort()).toEqual(["assistant", "coverage", "graph", "grid", "reproduce"]);
     expect(ids(defaultLayout(700))).toEqual([["signals"], ["math", "assistant"], ["map"]]);
     expect(ids(defaultLayout(stackNeed(["map", "graph"])))).toEqual(ids(defaultLayout()));
     for (const height of [300, 500, 600, 620, 700, 800, 900, 1000, 1400]) {
@@ -56,6 +56,17 @@ describe("docked layout", () => {
         expect(c.windows.length).toBeLessThanOrEqual(2);
         if (c.windows.length > 1) expect(stackNeed(c.windows.map((w) => w.id))).toBeLessThanOrEqual(height);
       }
+    }
+  });
+  it("keeps coverage in the tray in every preset, and can reopen and maximize it", () => {
+    for (const preset of ["default", "map", "signals", "units"] as const) {
+      const base = presetLayout(preset);
+      expect(locate(base, "coverage")).toBeNull();
+      expect(base.closed.coverage).toBeDefined();
+      const opened = reopenWindow(base, "coverage");
+      expect(locate(opened, "coverage")).not.toBeNull();
+      expect(maximizeWindow(opened, "coverage").maximized).toBe("coverage");
+      valid(opened);
     }
   });
   it("gives every window a useful minimum, the map room for its 440 px stage", () => {
@@ -237,6 +248,7 @@ describe("persistence and migration", () => {
         },
       ],
       closed: {
+        coverage: { column: "map", columnIndex: 1, index: 3, size: 0.6 },
         grid: { column: "map", columnIndex: 1, index: 1, size: 0.5 },
         reproduce: { column: "map", columnIndex: 1, index: 2, size: 0.6 },
       },
