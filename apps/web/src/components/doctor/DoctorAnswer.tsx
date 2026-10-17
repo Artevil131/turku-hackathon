@@ -1,30 +1,12 @@
 import { formatDate, type Locale, specimenName, t, wardName } from "@aei/i18n";
-import type React from "react";
 import { type DoctorFilters, num, pct } from "./filters.ts";
 import { type Item, recentText } from "./reason.ts";
 
 // The top of the coverage window, before any control: what to start with, then the others in rows of one shape
 // (glyph, name, share). The list below is the evidence.
 
-function Rows({ items, mark, bar, locale }: { items: readonly Item[]; mark: string; bar: number; locale: Locale }) {
-  return (
-    <ul className="dr-answer-rows">
-      {items.map((i) => (
-        <li key={i.id}>
-          <span className="dr-mark" aria-hidden="true">
-            {mark}
-          </span>
-          <span className="dr-name">{i.name}</span>
-          <span className="dr-bar" aria-hidden="true" style={{ "--w": `${pct(i.share ?? 0)}%`, "--bar": `${bar}%` } as React.CSSProperties}>
-            <i />
-          </span>
-          <b>{pct(i.share ?? 0)}&nbsp;%</b>
-          <span className="dr-recent num">{recentText(locale, i.recent)}</span>
-        </li>
-      ))}
-    </ul>
-  );
-}
+/** "nitrofurantoin 94 %, fosfomycin 93 %": the drugs of one standing, names and shares in a row. */
+const listed = (locale: Locale, items: readonly Item[]) => items.map((i) => `${i.name} ${pct(i.share ?? 0)} %`).join(", ");
 
 export function DoctorAnswer({
   locale,
@@ -109,18 +91,20 @@ export function DoctorAnswer({
                     ],
               )}
           </p>
-          <p className="dr-answer-line">{t(locale, "drAnswerCovers", { share: pct(first.share ?? 0), n: num(locale, first.n) })}</p>
+          <p className="dr-answer-line">
+            {t(locale, "drAnswerCovers", { share: pct(first.share ?? 0), n: num(locale, first.n) })}
+            {first.recent ? <span className="dr-answer-recent"> · {recentText(locale, first.recent)}</span> : null}
+          </p>
+          {/* The rest of the list in one breath each; the table below has the bars and the details. */}
           {clears.length > 1 ? (
-            <>
-              <h3 className="dr-answer-sub">{t(locale, "drAnswerAlsoHead", { bar })}</h3>
-              <Rows locale={locale} items={clears.slice(1)} mark="✓" bar={bar} />
-            </>
+            <p className="dr-answer-alt">
+              <b>{t(locale, "drAnswerAlsoHead", { bar })}:</b> {listed(locale, clears.slice(1))}
+            </p>
           ) : null}
           {below.length ? (
-            <>
-              <h3 className="dr-answer-sub dr-answer-low">{t(locale, "drAnswerBelowHead", { bar })}</h3>
-              <Rows locale={locale} items={below} mark="✕" bar={bar} />
-            </>
+            <p className="dr-answer-alt dr-answer-low">
+              <b>{t(locale, "drAnswerBelowHead", { bar })}:</b> {listed(locale, below)}
+            </p>
           ) : null}
         </>
       ) : (
@@ -132,7 +116,11 @@ export function DoctorAnswer({
             date: formatDate(locale, asOf, "long"),
             days: windowDays ?? 365,
             unit: wardName(locale, filters.unit as never),
-          })}
+          })}{" "}
+          {/* The doctor's view hands the board its ward: one click to this unit's signals. */}
+          <a className="dr-answer-pivot" href={`#research?unit=${encodeURIComponent(filters.unit)}`}>
+            {t(locale, "drAnswerBoard", { unit: wardName(locale, filters.unit as never) })}
+          </a>
         </p>
       ) : null}
       <p className="dr-answer-note">{t(locale, "drAnswerNote")}</p>

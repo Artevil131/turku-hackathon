@@ -266,7 +266,7 @@ export function CoverageWindow({
     if (scrolled.current || !focus.ab || !item) return;
     scrolled.current = true;
     requestAnimationFrame(() =>
-      surfaceRef.current?.querySelector<HTMLElement>(`[data-row="${CSS.escape(item.id)}"]`)?.scrollIntoView({ block: "center" }),
+      surfaceRef.current?.querySelector<HTMLElement>(`[data-row="${CSS.escape(item.id)}"]`)?.scrollIntoView({ block: "nearest" }),
     );
   }, [focus.ab, item]);
   const pickRow = (id: string | null) => {

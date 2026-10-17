@@ -317,7 +317,8 @@ export function Workspace({
     } else if (!projectId) saveLayout(layout);
   };
   // Another project (or none) in the same tab: save the old one's last change, then load the new one's layout.
-  const identity = `${projectId ?? ""}:${project?.id ?? ""}`;
+  // The patient quick view and the board share no layout: a switch between them re-seeds too.
+  const identity = `${projectId ?? ""}:${project?.id ?? ""}:${hashParams().get("quick") ?? ""}`;
   const loadedIdentity = useRef(identity);
   useEffect(() => {
     if (loadedIdentity.current === identity) return;

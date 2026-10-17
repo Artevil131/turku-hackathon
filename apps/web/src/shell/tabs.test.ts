@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 import { closeTab, patchTab, tabFromHash, tabKey, upsertTab } from "./tabs.ts";
 
 describe("open project tabs", () => {
-  it("keys a tab by its project, and every project-less view to one tab", () => {
+  it("keys a tab by its project; the project-less patient view and the project-less board are two tabs", () => {
     expect(tabKey("#project?project=abc&inc=x")).toBe("p:abc");
-    expect(tabKey("#project?quick=patient")).toBe("view");
+    expect(tabKey("#project?quick=patient")).toBe("view:patient");
+    expect(tabKey("#project?quick=patient&cov.unit=URO")).toBe("view:patient");
     expect(tabKey("#project")).toBe("view");
+    expect(tabKey("#project?unit=MED-A&ph=esbl")).toBe("view");
     expect(tabFromHash("#project?quick=patient")).toMatchObject({ project: null, quick: "patient" });
     expect(tabFromHash("#project?project=a&quick=patient").quick).toBeNull();
   });
@@ -16,7 +18,7 @@ describe("open project tabs", () => {
     expect(tabs).toHaveLength(1);
     expect(tabs[0]).toMatchObject({ name: "Study", frozen: true, hash: "#project?project=a&unit=URO" });
     tabs = upsertTab(tabs, "#project?quick=patient");
-    expect(tabs.map((t) => t.key)).toEqual(["p:a", "view"]);
+    expect(tabs.map((t) => t.key)).toEqual(["p:a", "view:patient"]);
   });
   it("shows the right neighbour after closing, else the left, else nothing", () => {
     const tabs = ["a", "b", "c"].reduce(

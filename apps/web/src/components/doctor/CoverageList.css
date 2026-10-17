@@ -627,6 +627,34 @@
 .dr-answer-low {
   color: var(--ink-3);
 }
+.dr-answer-recent {
+  color: var(--ink-3);
+  font-size: var(--t-s);
+}
+.dr-answer-alt {
+  margin: 6px 0 0;
+  color: var(--ink-2);
+  font-size: var(--t-s);
+  line-height: 1.5;
+}
+.dr-answer-alt b {
+  font-weight: 600;
+  color: var(--ink);
+}
+.dr-answer-alt.dr-answer-low b {
+  color: var(--ink-2);
+}
+.dr-answer-pivot,
+.sig-pivot {
+  color: var(--live);
+  text-decoration: none;
+  font-size: var(--t-s);
+  white-space: nowrap;
+}
+.dr-answer-pivot:hover,
+.sig-pivot:hover {
+  text-decoration: underline;
+}
 .dr-answer-when {
   margin: 2px 0 0;
   color: var(--ink-3);
