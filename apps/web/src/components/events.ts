@@ -10,6 +10,8 @@ type EventWhat = "tlEvN1What" | "tlEvN2What" | "tlEvN3What" | "tlEvN4What";
 export interface PlantedEvent {
   code: "E1" | "E2" | "E3" | "E4";
   fallbackDate: string;
+  /** Alerts before this date are another story (the ICU had an MRSA in January 2025; E2 is March 2026). */
+  notBefore: string;
   /** Ward code, or null for the hospital-wide trend. */
   unit: string | null;
   name: EventName;
@@ -26,6 +28,7 @@ export interface ResolvedEvent extends PlantedEvent {
 export const PLANTED_EVENTS: readonly PlantedEvent[] = [
   {
     code: "E1",
+    notBefore: "2025-05-01",
     fallbackDate: "2025-06-02",
     unit: "URO",
     name: "tlEvN1Name",
@@ -37,6 +40,7 @@ export const PLANTED_EVENTS: readonly PlantedEvent[] = [
   },
   {
     code: "E2",
+    notBefore: "2026-02-01",
     fallbackDate: "2026-03-01",
     unit: "ICU",
     name: "tlEvN2Name",
@@ -48,6 +52,7 @@ export const PLANTED_EVENTS: readonly PlantedEvent[] = [
   },
   {
     code: "E3",
+    notBefore: "2025-11-15",
     fallbackDate: "2025-12-08",
     unit: "PHC-S",
     name: "tlEvN3Name",
@@ -56,6 +61,7 @@ export const PLANTED_EVENTS: readonly PlantedEvent[] = [
   },
   {
     code: "E4",
+    notBefore: "2024-10-01",
     fallbackDate: "2026-01-01",
     unit: null,
     name: "tlEvN4Name",
@@ -64,11 +70,11 @@ export const PLANTED_EVENTS: readonly PlantedEvent[] = [
   },
 ];
 
-/** Each event with its earliest matching alert's date and incident, else the fallback; sorted by date. */
+/** Each event with its earliest matching alert on or after `notBefore`, else the fallback; sorted by date. */
 export function resolveEvents(alerts: readonly Alert[]): ResolvedEvent[] {
   return PLANTED_EVENTS.map((ev): ResolvedEvent => {
     let first: Alert | null = null;
-    for (const a of alerts) if (ev.matches(a) && (first === null || a.date < first.date)) first = a;
+    for (const a of alerts) if (a.date >= ev.notBefore && ev.matches(a) && (first === null || a.date < first.date)) first = a;
     return first ? { ...ev, date: first.date, incident: first.incident ?? first.id } : { ...ev, date: ev.fallbackDate, incident: null };
   }).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
 }
