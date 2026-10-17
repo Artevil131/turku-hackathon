@@ -270,6 +270,15 @@ importers:
 
   libs/utils/replay: {}
 
+  libs/utils/sites:
+    dependencies:
+      '@aei/domain':
+        specifier: workspace:*
+        version: link:../domain
+      '@aei/ingest':
+        specifier: workspace:*
+        version: link:../ingest
+
   libs/utils/viz:
     dependencies:
       '@aei/detect':

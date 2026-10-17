@@ -1,4 +1,18 @@
-import { ANTIBIOTICS, type AntibioticCode, HOME_AREAS, type Phenotype, SPECIMENS, type Specimen, WARDS, type WardCode } from "@aei/domain";
+import {
+  ANTIBIOTICS,
+  type AntibioticCode,
+  bareWardCode,
+  HOME_AREAS,
+  HOME_SITE,
+  type Phenotype,
+  type Site,
+  type SiteId,
+  SPECIMENS,
+  type Specimen,
+  WARDS,
+  type Ward,
+  type WardCode,
+} from "@aei/domain";
 import { en } from "./en.ts";
 import { fi } from "./fi.ts";
 
@@ -21,9 +35,36 @@ export function t(locale: Locale, key: MessageKey, vars?: Record<string, string 
   return template.replace(/\{(\w+)\}/g, (_, name: string) => String(vars[name] ?? `{${name}}`));
 }
 
+// The ward registry names and types come from (D-051): the dataset's units until an app
+// registers the server's list (`/api/meta` wards in the web, the sites file on the server).
+let registry = new Map<WardCode, Ward>(WARDS.map((w) => [w.code, w]));
+
+/** Replaces the units `wardName` and `alertPriority` know with the server's ward registry; the dataset's units stay. */
+export function registerWards(wards: readonly Ward[]): void {
+  registry = new Map<WardCode, Ward>([...WARDS, ...wards].map((w) => [w.code, w]));
+}
+
+let sites = new Map<SiteId, Site>([[HOME_SITE.id, HOME_SITE]]);
+
+/** Replaces the sites `siteName` knows (the server's `/api/meta` sites); the home site stays. */
+export function registerSites(list: readonly Site[]): void {
+  sites = new Map<SiteId, Site>([HOME_SITE, ...list].map((s) => [s.id, s]));
+}
+
+/** A site's name, or its id when unknown. */
+export function siteName(locale: Locale, id: SiteId): string {
+  return sites.get(id)?.[locale] ?? id;
+}
+
+/** A registered unit, or undefined. */
+export function wardInfo(code: WardCode): Ward | undefined {
+  return registry.get(code);
+}
+
+/** A unit's name; an unknown unit falls back to its code without the site ("sata/CARD" is "CARD"). */
 export function wardName(locale: Locale, code: WardCode): string {
-  const ward = WARDS.find((w) => w.code === code);
-  return ward ? ward[locale] : code;
+  const ward = registry.get(code);
+  return ward ? ward[locale] : bareWardCode(code);
 }
 
 export function antibioticName(locale: Locale, code: AntibioticCode): string {

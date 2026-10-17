@@ -1,4 +1,4 @@
-import { type Culture, type IsoDate, type IsolateRecord, PHENOTYPES, type Phenotype, WARDS, type WardCode } from "@aei/domain";
+import { type Culture, type IsoDate, type IsolateRecord, PHENOTYPES, type Phenotype, WARDS, type Ward, type WardCode } from "@aei/domain";
 import { addDays } from "@aei/replay";
 
 /** Monday of the ISO week containing `date`. */
@@ -24,15 +24,22 @@ export interface WeeklySeries {
  * Weekly raw counts per unit from `from` to `to` inclusive (D-042: detection
  * reads raw weekly counts, never smoothed estimates). Records and cultures
  * after `to` are ignored, so a series cut at the replay date never shows
- * later days.
+ * later days. One series per unit in `wards` (default: the dataset's units);
+ * rows of other units are left out, so a site's series holds its units only (D-051).
  */
-export function weeklySeries(records: readonly IsolateRecord[], cultures: readonly Culture[], from: IsoDate, to: IsoDate): WeeklySeries {
+export function weeklySeries(
+  records: readonly IsolateRecord[],
+  cultures: readonly Culture[],
+  from: IsoDate,
+  to: IsoDate,
+  wards: readonly Pick<Ward, "code">[] = WARDS,
+): WeeklySeries {
   const weeks: IsoDate[] = [];
   for (let w = weekStart(from); w <= to; w = addDays(w, 7)) weeks.push(w);
   const index = new Map(weeks.map((w, i) => [w, i]));
   const empty = () => weeks.map(() => 0);
   const units = Object.fromEntries(
-    WARDS.map((w) => [
+    wards.map((w) => [
       w.code,
       { cultures: empty(), phenotypes: Object.fromEntries(PHENOTYPES.map((p) => [p, empty()])) as Record<Phenotype, number[]> },
     ]),
@@ -41,18 +48,19 @@ export function weeklySeries(records: readonly IsolateRecord[], cultures: readon
   for (const c of cultures) {
     if (c.sampleDate < from || c.sampleDate > to) continue;
     const i = index.get(weekStart(c.sampleDate));
-    if (i !== undefined) units[c.ward].cultures[i] = (units[c.ward].cultures[i] ?? 0) + 1;
+    const unit = units[c.ward];
+    if (i !== undefined && unit) unit.cultures[i] = (unit.cultures[i] ?? 0) + 1;
   }
   const seen = new Set<string>();
   for (const r of records) {
     if (r.sampleDate < from || r.sampleDate > to) continue;
     const i = index.get(weekStart(r.sampleDate));
-    if (i === undefined) continue;
+    if (i === undefined || !units[r.ward]) continue;
     for (const p of r.phenotypes) {
       const key = `${r.ward}|${p}|${i}|${r.patientId}`;
       if (seen.has(key)) continue;
       seen.add(key);
-      const series = units[r.ward].phenotypes[p];
+      const series = (units[r.ward] as UnitWeeks).phenotypes[p];
       series[i] = (series[i] ?? 0) + 1;
     }
   }

@@ -1,4 +1,4 @@
-import type { Culture, IsoDate, IsolateRecord } from "@aei/domain";
+import { bySite, type Culture, HOME_SITE, type IsoDate, type IsolateRecord } from "@aei/domain";
 import { addDays } from "@aei/replay";
 import { emptyRun, episodes, type Pair, phenotypeExcess, profileExcess, risingTrend, type Signal, samplingDrop } from "./detectors.ts";
 
@@ -46,8 +46,24 @@ export const LIVE_SETTINGS = {
  * samples up to its date. Isolates of a cluster already detected are left
  * out of the trend test from the day it was detected, so an outbreak raises
  * cluster alerts, not also a hospital-wide trend.
+ *
+ * Each site is run on its own rows (D-051): a unit is compared with the rest
+ * of its own hospital and hospital-wide trends are per hospital. A trend of a
+ * site other than the home site carries `site` and a key prefixed with it.
  */
 export function liveSignals(records: readonly IsolateRecord[], cultures: readonly Culture[]): Signal[] {
+  const recordsBySite = bySite(records);
+  const culturesBySite = bySite(cultures);
+  const sites = new Set([...recordsBySite.keys(), ...culturesBySite.keys()]);
+  if (sites.size <= 1) return siteSignals(records, cultures);
+  return [...sites].flatMap((site) =>
+    siteSignals(recordsBySite.get(site) ?? [], culturesBySite.get(site) ?? []).map((s) =>
+      s.ward === null && site !== HOME_SITE.id ? { ...s, site, key: `${site}/${s.key}` } : s,
+    ),
+  );
+}
+
+function siteSignals(records: readonly IsolateRecord[], cultures: readonly Culture[]): Signal[] {
   const clusters = clusterSignals(records);
   return [
     ...clusters,

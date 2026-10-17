@@ -4,7 +4,14 @@
 
 export type IsoDate = string; // YYYY-MM-DD
 
-export type WardCode = "ED" | "MED-A" | "MED-B" | "SURG" | "URO" | "ICU" | "GER" | "PHC-N" | "PHC-S";
+/**
+ * A unit. The dataset's nine units keep their bare codes ("URO") and belong to
+ * the home site; a connected site's units are stored qualified as
+ * `<siteId>/<code>` ("sata/ICU"), so two hospitals may both have an ICU (D-051).
+ */
+export type WardCode = string;
+/** A hospital or organisation connected to the server (D-051). */
+export type SiteId = string;
 export type Specimen = "urine" | "blood" | "wound";
 export type CultureResult = "positive" | "negative" | "mixed_growth";
 export type SR = "S" | "R";
@@ -26,11 +33,39 @@ export type Organism =
 
 export interface Ward {
   code: WardCode;
+  /** The site the unit belongs to (D-051). */
+  site: SiteId;
   fi: string;
   en: string;
   type: "in" | "out";
   institution: "hospital" | "primary_care";
 }
+
+/** One hospital or organisation that sends results (D-051). */
+export interface Site {
+  id: SiteId;
+  fi: string;
+  en: string;
+  /** Wellbeing services county as the regional data names it, e.g. "Varsinais-Suomen hyvinvointialue". */
+  county: string;
+  /** The site whose units have bare codes: the dataset's hospital. */
+  home?: boolean;
+  /** The id of the treatment guide table the site uses (D-047); `DEFAULT_GUIDE` when not given. */
+  guide?: string;
+}
+
+/** The treatment guide table a site uses unless its entry names another (D-047). */
+export const DEFAULT_GUIDE = "varha";
+
+/** The dataset's hospital (D-051): the only site when no sites file is given. */
+export const HOME_SITE: Site = {
+  id: "tyks",
+  fi: "Tyks",
+  en: "Tyks",
+  county: "Varsinais-Suomen hyvinvointialue",
+  home: true,
+  guide: DEFAULT_GUIDE,
+};
 
 export interface Antibiotic {
   code: AntibioticCode;
@@ -99,15 +134,15 @@ export interface IsolateRecord {
 }
 
 export const WARDS: readonly Ward[] = [
-  { code: "ED", fi: "Päivystys", en: "Emergency department", type: "out", institution: "hospital" },
-  { code: "MED-A", fi: "Sisätaudit A", en: "Internal medicine A", type: "in", institution: "hospital" },
-  { code: "MED-B", fi: "Sisätaudit B", en: "Internal medicine B", type: "in", institution: "hospital" },
-  { code: "SURG", fi: "Kirurgia", en: "Surgery", type: "in", institution: "hospital" },
-  { code: "URO", fi: "Urologia", en: "Urology", type: "in", institution: "hospital" },
-  { code: "ICU", fi: "Teho-osasto", en: "Intensive care unit", type: "in", institution: "hospital" },
-  { code: "GER", fi: "Geriatria", en: "Geriatrics", type: "in", institution: "hospital" },
-  { code: "PHC-N", fi: "Terveysasema Pohjoinen", en: "Health centre North", type: "out", institution: "primary_care" },
-  { code: "PHC-S", fi: "Terveysasema Etelä", en: "Health centre South", type: "out", institution: "primary_care" },
+  { code: "ED", site: "tyks", fi: "Päivystys", en: "Emergency department", type: "out", institution: "hospital" },
+  { code: "MED-A", site: "tyks", fi: "Sisätaudit A", en: "Internal medicine A", type: "in", institution: "hospital" },
+  { code: "MED-B", site: "tyks", fi: "Sisätaudit B", en: "Internal medicine B", type: "in", institution: "hospital" },
+  { code: "SURG", site: "tyks", fi: "Kirurgia", en: "Surgery", type: "in", institution: "hospital" },
+  { code: "URO", site: "tyks", fi: "Urologia", en: "Urology", type: "in", institution: "hospital" },
+  { code: "ICU", site: "tyks", fi: "Teho-osasto", en: "Intensive care unit", type: "in", institution: "hospital" },
+  { code: "GER", site: "tyks", fi: "Geriatria", en: "Geriatrics", type: "in", institution: "hospital" },
+  { code: "PHC-N", site: "tyks", fi: "Terveysasema Pohjoinen", en: "Health centre North", type: "out", institution: "primary_care" },
+  { code: "PHC-S", site: "tyks", fi: "Terveysasema Etelä", en: "Health centre South", type: "out", institution: "primary_care" },
 ];
 
 export const ANTIBIOTICS: readonly Antibiotic[] = [
@@ -161,6 +196,34 @@ export function shortOrganism(name: Organism): string {
   return `${genus?.[0] ?? ""}. ${species ?? ""}`;
 }
 
+/**
+ * The site of a unit from its code alone: the part before "/" of a qualified
+ * code, else the home site (D-051).
+ */
+export function siteOfWard(code: WardCode, home: SiteId = HOME_SITE.id): SiteId {
+  const i = code.indexOf("/");
+  return i > 0 ? code.slice(0, i) : home;
+}
+
+/** Rows split by the site of their unit, home site first when present, so statistics never pool sites (D-051). */
+export function bySite<T extends { ward: WardCode | null }>(rows: readonly T[], home: SiteId = HOME_SITE.id): Map<SiteId, T[]> {
+  const out = new Map<SiteId, T[]>([[home, []]]);
+  for (const r of rows) {
+    const site = r.ward === null ? home : siteOfWard(r.ward, home);
+    const list = out.get(site);
+    if (list) list.push(r);
+    else out.set(site, [r]);
+  }
+  if (out.get(home)?.length === 0) out.delete(home);
+  return out;
+}
+
+/** A unit's code without its site: "sata/ICU" is "ICU". */
+export function bareWardCode(code: WardCode): string {
+  return code.slice(code.indexOf("/") + 1);
+}
+
+/** One of the dataset's own units (the home site's nine); other sites' units come from the ward registry (@aei/sites). */
 export function isWardCode(value: string): value is WardCode {
   return WARDS.some((w) => w.code === value);
 }

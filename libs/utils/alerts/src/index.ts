@@ -1,13 +1,16 @@
 import { type DetectorName, episodes, liveSignals, type Signal } from "@aei/detect";
 import {
   type AntibioticCode,
+  bySite,
   type Culture,
   type IsoDate,
   type IsolateRecord,
   type Organism,
   type Phenotype,
+  type SiteId,
   type Specimen,
   WARDS,
+  type Ward,
   type WardCode,
 } from "@aei/domain";
 import type { CarrierArrival, DateWindow } from "@aei/relations";
@@ -57,6 +60,8 @@ export interface DetectorAlert {
   date: IsoDate;
   /** Null for hospital-wide trends. */
   ward: WardCode | null;
+  /** The hospital of a hospital-wide trend from a site other than the home site (D-051). */
+  site?: SiteId;
   detector: DetectorName;
   organism?: Organism;
   antibiotic?: AntibioticCode;
@@ -87,21 +92,31 @@ export interface NewInUnitAlert {
 
 export type Alert = CpeAlert | NewInUnitAlert | DetectorAlert | CarrierAlert;
 
-/** "New in a unit" is about transmission on a ward: inpatient units only (D-034). */
-const INPATIENT = new Set<WardCode>(WARDS.filter((w) => w.type === "in").map((w) => w.code));
-
 /** Look-back for "new in a unit" (D-021). */
 export const NEW_IN_UNIT_DAYS = 180;
 
 /**
  * An isolate with the phenotype in a unit that had none in the `lookbackDays`
  * before it. Nothing fires during the first `lookbackDays` of the data,
- * where the look-back would reach before the data begins.
+ * where the look-back would reach before the data begins. "New in a unit" is
+ * about transmission on a ward: inpatient units of `wards` only (D-034; default
+ * the dataset's units). Each site's quiet start is its own first sample (D-051).
  */
 export function newInUnitAlerts(
   records: readonly IsolateRecord[],
   phenotypes: readonly Phenotype[] = ["mrsa", "vre"],
   lookbackDays = NEW_IN_UNIT_DAYS,
+  wards: readonly Ward[] = WARDS,
+): NewInUnitAlert[] {
+  const inpatient = new Set<WardCode>(wards.filter((w) => w.type === "in").map((w) => w.code));
+  return [...bySite(records).values()].flatMap((rows) => newInUnitOfSite(rows, phenotypes, lookbackDays, inpatient));
+}
+
+function newInUnitOfSite(
+  records: readonly IsolateRecord[],
+  phenotypes: readonly Phenotype[],
+  lookbackDays: number,
+  INPATIENT: ReadonlySet<WardCode>,
 ): NewInUnitAlert[] {
   const start = records.reduce<string | null>((min, r) => (min === null || r.sampleDate < min ? r.sampleDate : min), null);
   if (!start) return [];
@@ -174,6 +189,7 @@ export function detectorAlerts(signals: readonly Signal[]): DetectorAlert[] {
       id: `detector:${s.detector}:${s.key}:${s.date}`,
       date: s.date,
       ward: s.ward,
+      ...(s.site ? { site: s.site } : {}),
       detector: s.detector,
       ...(s.organism ? { organism: s.organism } : {}),
       ...(s.antibiotic ? { antibiotic: s.antibiotic } : {}),
@@ -191,10 +207,15 @@ export function detectorAlerts(signals: readonly Signal[]): DetectorAlert[] {
  * (D-022): in this data almost none is confirmed in the new unit; they stay
  * available per patient through `carrierAlerts`. Each alert depends only on samples up to its date,
  * so a server computes them once and releases them as its clock moves.
+ * Each site is assessed on its own rows (D-051); `wards` gives each unit's type (default: the dataset's units).
  */
-export function buildAlerts(records: readonly IsolateRecord[], cultures: readonly Culture[]): Alert[] {
+export function buildAlerts(records: readonly IsolateRecord[], cultures: readonly Culture[], wards: readonly Ward[] = WARDS): Alert[] {
   return sortAlerts<Alert>(
-    groupIncidents([...cpeAlerts(records), ...newInUnitAlerts(records), ...detectorAlerts(liveSignals(records, cultures))]),
+    groupIncidents([
+      ...cpeAlerts(records),
+      ...newInUnitAlerts(records, undefined, undefined, wards),
+      ...detectorAlerts(liveSignals(records, cultures)),
+    ]),
   );
 }
 

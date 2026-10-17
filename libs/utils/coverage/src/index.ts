@@ -7,7 +7,9 @@ import {
   type Organism,
   type Sex,
   type Specimen,
+  siteOfWard,
   WARDS,
+  type Ward,
   type WardCode,
 } from "@aei/domain";
 import { effectiveResult, suitsSpecimen } from "@aei/eucast";
@@ -93,8 +95,6 @@ export interface CoverageResult {
   combinations: CombinationCoverage[];
 }
 
-const WARD_TYPE = new Map(WARDS.map((w) => [w.code, w.type]));
-
 /** 95 % Wilson score interval for k of n. */
 export function wilson(k: number, n: number, z = 1.959964): [number, number] {
   if (n === 0) return [0, 1];
@@ -128,18 +128,25 @@ export function offeredFor(specimen: Specimen): readonly AntibioticCode[] {
   return ANTIBIOTICS.filter((a) => suitsSpecimen(a.code, specimen) && !NOT_OFFERED[specimen]?.includes(a.code)).map((a) => a.code);
 }
 
-export function coverage(records: readonly IsolateRecord[], q: CoverageQuery): CoverageResult {
+/**
+ * The coverage list for one unit. Every level stays within the unit's site (D-051): "hospital" is the
+ * unit's own hospital, never the pool of every connected site. `wards` gives each unit's type
+ * (default: the dataset's units; a server passes its ward registry).
+ */
+export function coverage(records: readonly IsolateRecord[], q: CoverageQuery, wards: readonly Ward[] = WARDS): CoverageResult {
+  const wardType = new Map(wards.map((w) => [w.code, w.type]));
+  const site = siteOfWard(q.ward);
   const windowDays = q.windowDays ?? 365;
   const minTested = q.minTested ?? 30;
   const from = addDays(q.asOf, 1 - windowDays);
   const inWindow = (r: IsolateRecord, since: IsoDate) => r.sampleDate >= since && r.sampleDate <= q.asOf && r.specimen === q.specimen;
   const all = firstIsolates(
-    records.filter((r) => inWindow(r, from)),
+    records.filter((r) => inWindow(r, from) && siteOfWard(r.ward) === site),
     { from, to: q.asOf },
   );
   const inLevel: Record<Level, (r: IsolateRecord) => boolean> = {
     unit: (r) => r.ward === q.ward,
-    "ward type": (r) => WARD_TYPE.get(r.ward) === WARD_TYPE.get(q.ward),
+    "ward type": (r) => wardType.get(r.ward) === wardType.get(q.ward),
     hospital: () => true,
   };
   // The sex filter is dropped before the unit is (D-033).

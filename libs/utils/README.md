@@ -35,6 +35,7 @@ interface or behind the API contract (D-006).
 | `coverage/` | The doctor's coverage list: share covered per antibiotic, with fallback level and counts |
 | `ingest/` | Lab results in: HL7 v2 ORU^R01, FHIR R4 Bundles and flat exports to the dataset's rows |
 | `quality/` | Plausibility checks on lab rows: broken links, impossible dates, results that contradict EUCAST |
+| `sites/` | Hospitals on one server (D-051): the sites file, the ward registry, token to site, qualified unit codes |
 | `py/` | Python analysis helpers, package `aei` (D-024): load the dataset into pandas. Not a pnpm package |
 
 The coverage list (D-023) and the live detection set (D-020 to D-022) are
