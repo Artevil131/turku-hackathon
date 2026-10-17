@@ -1,5 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { COLS, compactLayout, defaultLayout, focusLayout, patchWin, WIN_IDS } from "./layout.ts";
+import { defaultSpec } from "../charts/spec.ts";
+import {
+  addChart,
+  CHART_MIN_SIZE,
+  COLS,
+  compactLayout,
+  defaultLayout,
+  fitLayout,
+  focusLayout,
+  parseLayout,
+  patchWin,
+  presetLayout,
+  removeChart,
+  WIN_IDS,
+  withCharts,
+} from "./layout.ts";
 
 const noOverlap = (l: ReturnType<typeof defaultLayout>) => {
   const open = WIN_IDS.filter((id) => l.wins[id].open).map((id) => l.wins[id]);
@@ -47,5 +62,54 @@ describe("focusLayout", () => {
     expect(f.wins.signals.h).toBe(40);
     expect(d.wins.math.open).toBe(true);
     expect(d.wins.signals.w).toBe(3);
+  });
+});
+
+describe("chart windows in the layout", () => {
+  const spec = defaultSpec({ unit: "ICU", window: { from: "2026-09-01", to: "2026-09-28" } });
+  const saved = (extra: object) => JSON.stringify({ v: 1, ...defaultLayout(), ...extra });
+
+  it("migrates a layout saved before charts existed to an empty charts record", () => {
+    const old = { v: 1, wins: defaultLayout().wins, order: [...defaultLayout().order] };
+    const l = parseLayout(JSON.stringify(old));
+    expect(l?.charts).toEqual({});
+    expect(l?.order).toEqual(defaultLayout().order);
+  });
+  it("adds a chart window that is closable, raised and not overlapping, and removes it again", () => {
+    const { layout, id } = addChart(defaultLayout(), spec);
+    expect(id).toBe("chart:1");
+    expect(layout.order[layout.order.length - 1]).toBe(id);
+    const c = compactLayout(fitLayout(layout), id);
+    expect(c.charts[id]).toMatchObject({ w: 6, open: true, type: "share", unit: "ICU" });
+    expect(c.charts[id]?.h).toBeGreaterThanOrEqual(CHART_MIN_SIZE.h);
+    expect(addChart(layout, spec).id).toBe("chart:2");
+    const gone = removeChart(layout, id);
+    expect(gone.charts).toEqual({});
+    expect(gone.order).not.toContain(id);
+  });
+  it("keeps charts through save and load, with the chart's spec", () => {
+    const { layout } = addChart(defaultLayout(), spec);
+    const back = parseLayout(JSON.stringify({ v: 1, ...layout }));
+    expect(back?.charts["chart:1"]).toMatchObject({ ...spec, open: true });
+    expect(back?.order).toContain("chart:1");
+  });
+  it("drops a malformed chart and keeps the rest", () => {
+    const { layout } = addChart(defaultLayout(), spec);
+    const bad = { "chart:1": { ...layout.charts["chart:1"], type: "pie" }, nope: layout.charts["chart:1"] };
+    const l = parseLayout(saved({ charts: bad, order: [...layout.order, "chart:1"] }));
+    expect(l?.charts).toEqual({});
+    expect(l?.order).not.toContain("chart:1");
+  });
+  it("focuses a chart and takes everything else off the board", () => {
+    const { layout, id } = addChart(defaultLayout(), spec);
+    const f = focusLayout(layout, id, 30);
+    expect(f.charts[id]).toMatchObject({ x: 0, w: COLS, open: true });
+    expect(f.wins.math.open).toBe(false);
+  });
+  it("carries the charts over a preset", () => {
+    const { layout, id } = addChart(defaultLayout(), spec);
+    const p = withCharts(presetLayout("map"), layout);
+    expect(p.charts[id]).toBeDefined();
+    expect(p.order).toContain(id);
   });
 });

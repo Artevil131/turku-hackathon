@@ -253,7 +253,18 @@ function Detector({ r, locale }: { r: DetectorResult; locale: Locale }) {
   );
 }
 
-export function ResultCell({ cell, locale, onRemove }: { cell: Cell; locale: Locale; onRemove?: (id: number) => void }) {
+export function ResultCell({
+  cell,
+  locale,
+  onRemove,
+  onChart,
+}: {
+  cell: Cell;
+  locale: Locale;
+  onRemove?: (id: number) => void;
+  /** Adds this result as a chart window; not offered for a detector run (it is a table). */
+  onChart?: (result: Cell["result"]) => void;
+}) {
   const r = cell.result;
   const [copied, setCopied] = useState(false);
   const event =
@@ -301,6 +312,11 @@ export function ResultCell({ cell, locale, onRemove }: { cell: Cell; locale: Loc
         <button type="button" className="btn" onClick={() => downloadFile(toCsv(cellTable(r)))}>
           {t(locale, "toolsExportCsv")}
         </button>
+        {onChart && r.kind !== "detector" && (
+          <button type="button" className="btn" data-add-chart onClick={() => onChart(r)}>
+            {t(locale, "chartAddAs")}
+          </button>
+        )}
       </footer>
     </article>
   );
