@@ -18,6 +18,8 @@ import pandas as pd
 import statsmodels.api as sm
 from scipy import stats
 
+from aei.forecasts import FORECAST_METHOD, monthly_forecasts
+
 SIGNAL_COLUMNS = ["group", "region", "month", "cases", "expected", "dispersion", "p"]
 
 
@@ -111,11 +113,13 @@ def regional_view(thl: pd.DataFrame, *, fetched: str) -> dict:
             "minCases": cfg["min_cases"],
             "familyAlpha": FAMILY_ALPHA,
             "testedSeriesMonths": tested,
+            "forecastMethod": FORECAST_METHOD,
         },
         "months": months,
         "groups": sorted(series["group"].unique()),
         "regions": sorted(r for r in series["region"].unique() if r != NATIONAL) + [NATIONAL],
         "series": out_series,
+        "forecasts": monthly_forecasts(series, fetched=fetched, national_region=NATIONAL),
         "signals": [
             {"group": r.group, "region": r.region, "month": r.month, "cases": int(r.cases),
              "expected": round(float(r.expected), 3), "dispersion": round(float(r.dispersion), 3), "p": float(f"{r.p:.3g}"),

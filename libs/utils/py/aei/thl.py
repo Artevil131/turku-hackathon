@@ -28,6 +28,14 @@ GROUPS = {
     877958: "CPE carriage, E. coli",
     878164: "CPE carriage, E. cloacae",
 }
+# The four phenotype series: sums of THL report groups (harness-spec.md "Prediction").
+PHENOTYPE_GROUPS: dict[str, tuple[str, ...]] = {
+    "MRSA": ("MRSA carriage", "MRSA blood/CSF"),
+    "ESBL": ("ESBL carriage, E. coli", "ESBL carriage, K. pneumoniae", "ESBL blood/CSF, E. coli", "ESBL blood/CSF, K. pneumoniae"),
+    "VRE": ("VRE carriage", "VRE blood/CSF"),
+    "CPE": ("CPE carriage, K. pneumoniae", "CPE carriage, E. coli", "CPE carriage, E. cloacae"),
+}
+
 MONTH_LEVEL = 1209312  # any month: "L" asks for every member of its level
 REGION_LEVEL = 878211  # Varsinais-Suomi: its level is every county
 MEASURES = {877837: "cases", 931297: "incidence_per_100k"}
