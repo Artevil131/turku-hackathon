@@ -40,10 +40,7 @@ export function PrintSheet({ locale, filters, data, asOf, signals, singles, pair
     const flags = item.row ? flagsOf(item.row) : null;
     return (
       <li key={item.id} className="pr-row">
-        <b className="pr-name">
-          {item.name}
-          {item.aware ? ` (${item.aware})` : ""}
-        </b>
+        <b className="pr-name">{item.name}</b>
         <span className="pr-num">
           {assessable && item.share !== null ? `${pct(item.share)} % ` : ""}
           {item.interval && assessable ? `(${pct(item.interval[0])}–${pct(item.interval[1])}) ` : ""}n {num(locale, item.n)}

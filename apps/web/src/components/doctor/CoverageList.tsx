@@ -97,11 +97,6 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
         >
           <span className="cl-name">
             <b title={item.name}>{item.name}</b>
-            {item.aware ? (
-              <span className="cl-tier" data-tier={item.aware} title={item.aware === "Access" ? "AWaRe Access" : "AWaRe Watch"}>
-                {item.aware[0]}
-              </span>
-            ) : null}
           </span>
           <span className="cl-plot" aria-hidden="true">
             <i className="cl-axis" />

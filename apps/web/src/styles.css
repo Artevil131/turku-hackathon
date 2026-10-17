@@ -1287,6 +1287,24 @@ fieldset.setting {
   }
 }
 
+/* Phones: the five sections keep their natural width and the row scrolls sideways instead of squeezing labels and badges together. */
+@media (max-width: 560px) {
+  .sections {
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    scroll-snap-type: x proximity;
+  }
+  .sections::-webkit-scrollbar {
+    display: none;
+  }
+  .section-tab {
+    flex: 0 0 auto;
+    padding: 0 12px;
+    scroll-snap-align: start;
+  }
+}
+
 /* The page area: the third row of the console grid; focus target of the skip link. */
 .page {
   display: grid;

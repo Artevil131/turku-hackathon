@@ -31,11 +31,6 @@ export function Details({ client, locale, filters, data, item, signals }: Props)
     <div className="dt">
       <h3 className="dt-name">
         <span>{item.name}</span>
-        {item.aware ? (
-          <span className="cl-tier" data-tier={item.aware}>
-            {item.aware[0]}
-          </span>
-        ) : null}
         <span className="cl-res" data-standing={item.standing}>
           <span className="cl-glyph" aria-hidden="true">
             {st.glyph}
