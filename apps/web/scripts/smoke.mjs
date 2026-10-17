@@ -370,10 +370,10 @@ async function main() {
 
   // ---------- interactions (desktop) ----------
   let cdp = null;
-  const interaction = async (name, body) => {
+  const interaction = async (name, body, viewport = VIEWPORTS[0]) => {
     const reasons = [];
     const file = join(outDir, `interaction-${name}.png`);
-    cdp = await browser.newPage(VIEWPORTS[0]);
+    cdp = await browser.newPage(viewport);
     const problems = await watching(cdp, async (idle) => {
       try {
         await body(idle, reasons);
@@ -384,7 +384,7 @@ async function main() {
     });
     await cdp.close();
     const all = judge(problems, reasons);
-    rows.push({ check: name, viewport: "desktop", ok: all.length === 0, heading: "", reasons: all, warnings: problems.other, file });
+    rows.push({ check: name, viewport: viewport.name, ok: all.length === 0, heading: "", reasons: all, warnings: problems.other, file });
     console.log(`${all.length ? "FAIL" : "ok  "} ${name}${all.length ? `: ${all.join("; ")}` : ""}`);
   };
   const waitIn = async (expr, ms = 8000) => {
@@ -454,6 +454,104 @@ async function main() {
     const changed = await waitIn(`(document.querySelector("nav.app-tabs")?.textContent ?? "") !== ${JSON.stringify(before)}`);
     if (!changed) reasons.push(`tab labels unchanged after choosing "${clicked}"`);
     await idle();
+  });
+
+  await interaction(
+    "treat-phone-context",
+    async (idle, reasons) => {
+      await load(cdp, `${base}/#treat`, idle);
+      const initial = await evaluate(
+        cdp,
+        `(() => {
+      const bar = document.querySelector(".app-tabs.is-bottom").getBoundingClientRect();
+      const fits = (selector) => {
+        const r = document.querySelector(selector)?.getBoundingClientRect();
+        return !!r && r.height > 0 && r.top >= 0 && r.bottom <= bar.top;
+      };
+      return [".treat-context .k-pick-trigger", ".treat-context [role=radiogroup]", ".treat-context .k-field:last-child", ".treat-top-name", ".treat-top .k-share-pct"].every(fits);
+    })()`,
+      );
+      if (!initial) reasons.push("unit, site, severity, answer name and figure must fit above the phone tabs");
+      await cdp.send("Emulation.setTouchEmulationEnabled", { enabled: true });
+      const requests = [];
+      const onRequest = (m) => {
+        if (m.method === "Network.requestWillBeSent" && m.params.request.url.includes("/api/coverage?"))
+          requests.push(m.params.request.url);
+      };
+      cdp.on(onRequest);
+      for (const labels of [
+        ["Veri", "Blood"],
+        ["Vaikea", "Severe"],
+      ]) {
+        const label = labels.join(" / ");
+        const point = await evaluate(
+          cdp,
+          `(() => {
+        const el = [...document.querySelectorAll(".treat-context [role=radio]")].find(x => ${JSON.stringify(labels)}.includes(x.textContent.trim()));
+        if (!el) return null;
+        const r = el.getBoundingClientRect(), x = r.x + r.width / 2, y = r.y + r.height / 2;
+        return el.contains(document.elementFromPoint(x, y)) ? { x, y } : null;
+      })()`,
+        );
+        if (!point) throw new Error(`${label} is missing or covered`);
+        await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [point] });
+        await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+        if (
+          !(await waitIn(
+            `!![...document.querySelectorAll('.treat-context [role=radio][aria-checked=true]')].find(x => ${JSON.stringify(labels)}.includes(x.textContent.trim()))`,
+          ))
+        )
+          reasons.push(`${label} did not select with one tap`);
+      }
+      await idle();
+      cdp.off(onRequest);
+      if (!requests.some((url) => url.includes("specimen=blood") && url.includes("severity=severe")))
+        reasons.push("context did not refresh the coverage answer");
+      if (!(await evaluate(cdp, `location.hash === '#treat' && window.scrollY === 0`))) reasons.push("context taps scrolled or left Treat");
+      const clear = await evaluate(
+        cdp,
+        `(() => {
+      const b = [...document.querySelectorAll('main button')].at(-1);
+      b.scrollIntoView({ block: 'end', behavior: 'instant' });
+      return b.getBoundingClientRect().bottom <= document.querySelector('.app-tabs.is-bottom').getBoundingClientRect().top;
+    })()`,
+      );
+      if (!clear) reasons.push("last Treat control scrolls under the tab bar");
+    },
+    VIEWPORTS[1],
+  );
+
+  await interaction("report-unit-to-treat", async (idle, reasons) => {
+    await load(cdp, `${base}/#report`, idle);
+    await evaluate(cdp, `document.querySelector('.report-filters-row .k-pick-trigger').click()`);
+    await waitIn(`!!document.querySelector('.k-pick-opt')`);
+    const unit = await evaluate(
+      cdp,
+      `(() => {
+      const options = [...document.querySelectorAll('.k-pick-opt')];
+      const next = options.find(x => /Urologia|Urology/.test(x.textContent));
+      if (!next) throw new Error('Urologia option missing');
+      next.click(); return 'URO';
+    })()`,
+    );
+    await idle();
+    if (!(await evaluate(cdp, `JSON.parse(localStorage.getItem('aei.ward')) === ${JSON.stringify(unit)}`)))
+      reasons.push("Report did not remember its unit");
+    await evaluate(cdp, `document.querySelector('nav.app-tabs a[href="#treat"]').click()`);
+    await idle();
+    if (!(await evaluate(cdp, `/Urologia|Urology/.test(document.querySelector('.treat-patient .k-pick-value').textContent)`)))
+      reasons.push("Treat did not inherit Report's unit");
+    await evaluate(cdp, `document.querySelector('nav.app-tabs a[href="#report"]').click()`);
+    await idle();
+    await evaluate(cdp, `document.querySelector('.report-treat').click()`);
+    await idle();
+    if (
+      !(await evaluate(
+        cdp,
+        `location.hash === '#treat' && /Urologia|Urology/.test(document.querySelector('.treat-patient .k-pick-value').textContent)`,
+      ))
+    )
+      reasons.push("Report's Open Treat link lost its unit");
   });
 
   // Eight tabs at once in one browser: HTTP/1.1 allows six connections per host, so the app must share one

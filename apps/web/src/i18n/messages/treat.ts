@@ -42,6 +42,7 @@ const en = {
 
   // ---- Basis: what the answer rests on ----
   "treat.result.label": "What has worked",
+  "treat.basis.demo": "Demo: the organisers' synthetic Tyks dataset",
   "treat.basis.lead": "Based on {n} first isolates",
   "treat.basis.leadOne": "Based on 1 first isolate",
   "treat.basis.year": "last {months} months",
@@ -72,8 +73,8 @@ const en = {
   "treat.standing.na": "Not assessable: fewer than {min} results, or over a fifth not tested",
 
   // ---- Figures side by side ----
-  "treat.fig.spectrum": "Of what it is meant for",
-  "treat.fig.all": "Of everything that grows",
+  "treat.fig.spectrum": "Of the bacteria it is meant for",
+  "treat.fig.all": "Of everything that grows here",
   "treat.fig.recent": "Last {weeks} weeks on this unit",
   "treat.fig.value": "{percent} · {works}/{n}",
   "treat.fig.tooFew": "{n} results — too few",
@@ -161,6 +162,7 @@ const fi: Record<keyof typeof en, string> = {
   "treat.institution.primary_care": "Perusterveydenhuolto",
 
   "treat.result.label": "Mikä on tehonnut",
+  "treat.basis.demo": "Demo: järjestäjien synteettinen Tyks-aineisto",
   "treat.basis.lead": "Perustuu {n} ensimmäiseen löydökseen",
   "treat.basis.leadOne": "Perustuu 1 ensimmäiseen löydökseen",
   "treat.basis.year": "viimeiset {months} kuukautta",
@@ -190,8 +192,8 @@ const fi: Record<keyof typeof en, string> = {
   "treat.standing.below": "Alle {threshold}",
   "treat.standing.na": "Ei arvioitavissa: alle {min} tulosta tai yli viidennes testaamatta",
 
-  "treat.fig.spectrum": "Bakteereista, joihin se on tarkoitettu",
-  "treat.fig.all": "Kaikista kasvaneista",
+  "treat.fig.spectrum": "Niistä bakteereista, joihin se on tarkoitettu",
+  "treat.fig.all": "Kaikista täällä kasvaneista bakteereista",
   "treat.fig.recent": "Viimeiset {weeks} viikkoa tässä yksikössä",
   "treat.fig.value": "{percent} · {works}/{n}",
   "treat.fig.tooFew": "{n} tulosta – liian vähän",

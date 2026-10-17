@@ -3,6 +3,7 @@ import type { FeedMeta, IsoDate, Result } from "../../feed/types.ts";
 import { type Locale, t } from "../../i18n/index.ts";
 import { MIN_ISOLATES } from "../../model/rules.ts";
 import type { Signal } from "../../model/types.ts";
+import { ContextControls } from "./ContextControls.tsx";
 import { sexesIn, signalsFor, type TreatChoice } from "./model.ts";
 import { PatientCard } from "./PatientCard.tsx";
 import { ResultView } from "./Result.tsx";
@@ -36,6 +37,9 @@ export function TreatScreen(p: {
   return (
     <div className="treat">
       <h1 className="u-sr">{t(locale, "treat.title")}</h1>
+      <div className="treat-context" role="group" aria-label={t(locale, "treat.patient.title")}>
+        <ContextControls locale={locale} meta={meta} prefs={prefs} onPrefs={onPrefs} />
+      </div>
       <SignalStrip locale={locale} meta={meta} signals={mine} ward={prefs.ward} min={min} onOpenSignal={onOpenSignal} />
       <div className="treat-cols">
         <div className="treat-side" id="treat-patient">

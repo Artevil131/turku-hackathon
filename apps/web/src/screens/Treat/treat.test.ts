@@ -169,6 +169,9 @@ describe("ResultView (the server's coverage list)", () => {
     expect(html).toContain("Based on 100 first isolates");
     expect(html).toContain("Mecillinam");
     expect(html).toContain("Covers 80% of everything that grows here");
+    expect(html).toContain("Of the bacteria it is meant for");
+    expect(html).toContain("Last 4 weeks on this unit");
+    expect(html).toContain("Demo: the organisers&#x27; synthetic Tyks dataset");
     expect(html).toContain("Does not cover");
     expect(html).not.toContain("Vancomycin"); // not offered for urine
   });
@@ -187,6 +190,9 @@ describe("ResultView (the server's coverage list)", () => {
     const html = view(response(pool(100), "URO", "mild"), {}, "fi");
     expect(html).toContain("Perustuu");
     expect(html).toContain("kaikista täällä kasvaneista bakteereista");
+    expect(html).toContain("Niistä bakteereista, joihin se on tarkoitettu");
+    expect(html).toContain("Viimeiset 4 viikkoa tässä yksikössä");
+    expect(html).toContain("Demo: järjestäjien synteettinen Tyks-aineisto");
   });
 });
 

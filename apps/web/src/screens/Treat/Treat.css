@@ -191,6 +191,11 @@
   color: var(--ink-2);
   line-height: 1.55;
 }
+.treat-basis-demo {
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
 .treat-basis-line strong {
   color: var(--ink);
   font-weight: var(--fw-semibold);
@@ -594,16 +599,25 @@
   }
 }
 
-/* Phones: the answer first, for the unit the doctor last chose; the patient card follows it. */
+/* Phones: the essential context and answer lead; the full form follows. */
+.treat-context {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
 .treat-jump {
   align-self: flex-start;
 }
 @media (max-width: 1023px) {
+  .treat-signals {
+    order: 1;
+  }
   .treat-main {
     order: -1;
   }
 }
 @media (min-width: 1024px) {
+  .treat-context,
   .treat-jump {
     display: none;
   }
