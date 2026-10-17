@@ -2,6 +2,7 @@ import { type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState }
 import type { FeedMeta, IsoDate, Result } from "../../feed/types.ts";
 import { formatDate, formatNumber, type Locale, named, t } from "../../i18n/index.ts";
 import type { Severity, Signal, SignalKind } from "../../model/types.ts";
+import { DemoLabel } from "../../ui/DemoLabel.tsx";
 import { store } from "../../ui/hooks.ts";
 import {
   Card,
@@ -273,6 +274,7 @@ export function AlertsScreen(p: {
           </button>
         ) : null}
       </div>
+      <DemoLabel locale={locale} />
       {signals.length > 0 ? (
         <p className="alerts-summary u-num" aria-live="polite">
           {summary.node}
@@ -420,6 +422,7 @@ export function AlertsScreen(p: {
             <div className="alerts-sum">
               <Tags locale={locale} s={s} isNew={isNew} />
               <Summary
+                locale={locale}
                 d={d}
                 control={
                   <button
@@ -445,6 +448,7 @@ export function AlertsScreen(p: {
           <div className="alerts-sum">
             <Tags locale={locale} s={s} isNew={isNew} />
             <Summary
+              locale={locale}
               d={d}
               control={
                 <button
@@ -509,7 +513,7 @@ export function AlertsScreen(p: {
         <div className="alerts-detail-scroll" ref={detailRef}>
           <Card key={current.id} tone={current.severity} pad="md" className={`alerts-pane${flash === current.id ? " is-flash" : ""}`}>
             <Tags locale={locale} s={current} isNew={!seen.has(current.id)} />
-            <Summary d={currentD} control={currentD.title.node} level={2} short={false} />
+            <Summary locale={locale} d={currentD} control={currentD.title.node} level={2} />
             <Body {...bodyProps} s={current} d={currentD} seen={seen.has(current.id)} />
           </Card>
         </div>

@@ -379,7 +379,22 @@ export function App() {
       </button>
       {/* Desktop: the simulation band stays with the header. Phones: only the header sticks, the band scrolls away. */}
       <div className="app-top">
-        <Header locale={locale} route={route} desktop={desktop} fresh={fresh} alertsBadge={alertsBadge} ask={askButton} />
+        <Header
+          locale={locale}
+          route={route}
+          desktop={desktop}
+          fresh={fresh}
+          alertsBadge={alertsBadge}
+          ask={askButton}
+          demoPeriod={
+            clock
+              ? t(locale, "common.sim.range", {
+                  start: formatDate(locale, clock.start, "long"),
+                  end: formatDate(locale, clock.end, "long"),
+                })
+              : undefined
+          }
+        />
         {clock && desktop ? <SimControl locale={locale} clock={clock} onControl={control} desktop /> : null}
       </div>
       {clock && !desktop ? <SimControl locale={locale} clock={clock} onControl={control} desktop={false} /> : null}

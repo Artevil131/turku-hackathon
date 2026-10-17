@@ -5,6 +5,7 @@ import { toDayNumber } from "../../model/dates.ts";
 import type { Severity, Signal, SignalKind } from "../../model/types.ts";
 import { Badge, SeverityBadge } from "../../ui/Badge.tsx";
 import { Card } from "../../ui/Card.tsx";
+import { DemoLabel } from "../../ui/DemoLabel.tsx";
 import { signalKindLabel, unitName } from "../../ui/defaults.ts";
 import { EmptyState } from "../../ui/EmptyState.tsx";
 import { useIsDesktop } from "../../ui/hooks.ts";
@@ -110,6 +111,7 @@ export function TimelineScreen(p: {
         <div className="timeline-head-top">
           <div className="u-stack-sm">
             <h1 className="timeline-title">{t(locale, "common.tab.timeline")}</h1>
+            <DemoLabel locale={locale} />
             <p className="timeline-period u-num">
               {t(locale, "timeline.period", { start: formatDate(locale, meta.start, "long"), end: formatDate(locale, meta.end, "long") })}
             </p>

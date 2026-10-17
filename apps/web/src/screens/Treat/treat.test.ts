@@ -171,6 +171,9 @@ describe("ResultView (the server's coverage list)", () => {
     expect(html).toContain("Of everything that grows here");
     expect(html).toContain('class="treat-answer-figures"');
     expect(html.match(/class="treat-answer-percent u-num"/g)).toHaveLength(2);
+    expect(html).toContain("Of the bacteria it is meant for, the whole 95% range is above 80%");
+    const figures = html.slice(html.indexOf('class="treat-answer-figures"'), html.indexOf("</dl>"));
+    expect(figures.indexOf("the whole 95% range")).toBeLessThan(figures.indexOf("Of everything that grows here"));
     expect(html).toContain("80%");
     expect(html).toContain("80/100");
     expect(html).toContain("Of the bacteria it is meant for");
@@ -178,6 +181,17 @@ describe("ResultView (the server's coverage list)", () => {
     expect(html).toContain("Demo: the organisers&#x27; synthetic Tyks dataset");
     expect(html).toContain("Does not cover");
     expect(html).not.toContain("Vancomycin"); // not offered for urine
+  });
+
+  it("judges severe infections on everything that grows, immediately below that figure", () => {
+    const data = response(pool(100), "URO", "severe");
+    const single = data.suggestions[0];
+    if (!single) throw new Error("test needs a single drug");
+    data.suggestions = [{ ...single, standing: "clears" }];
+    const html = view(data, { severity: "severe" });
+    expect(html).toContain("Of everything that grows, the whole 95% range is above 90%");
+    expect(html.indexOf('class="k-share is-lg')).toBeLessThan(html.indexOf("the whole 95% range"));
+    expect(html.indexOf("the whole 95% range")).toBeLessThan(html.indexOf('class="treat-facts"'));
   });
 
   it("says when the figures come from units like this one", () => {
@@ -215,7 +229,7 @@ describe("ResultView (the server's coverage list)", () => {
     expect(html.indexOf('class="treat-top treat-pairs"')).toBeLessThan(html.indexOf('class="treat-basis"'));
     expect(html.indexOf("Ampicillin + Ciprofloxacin")).toBeLessThan(html.indexOf("Single drugs (not reliably enough)"));
     expect(html).toContain("No single antibiotic reliably reaches 90%");
-    expect(html).toContain("Estimate 92%, but the range 83%–97% dips below 90%");
+    expect(html).toContain("Of everything that grows: estimate 92%, but the range 83%–97% dips below 90%");
     data.suggestions = [{ ...single, standing: "clears" }];
     expect(view(data, { severity: "severe" })).not.toContain('class="treat-top treat-pairs"');
   });
@@ -223,6 +237,9 @@ describe("ResultView (the server's coverage list)", () => {
   it("renders in Finnish", () => {
     const html = view(response(pool(100), "URO", "mild"), {}, "fi");
     expect(html).toContain("Perustuu");
+    expect(html.replaceAll("\u00a0", " ")).toContain(
+      "Bakteereista, joihin lääke on tarkoitettu: koko 95 %:n vaihteluväli on tason 80 % yläpuolella",
+    );
     expect(html).toContain("Kaikista täällä kasvaneista bakteereista");
     expect(html).toContain("Niistä bakteereista, joihin se on tarkoitettu");
     expect(html).toContain("Viimeiset 4 viikkoa tässä yksikössä");

@@ -105,6 +105,20 @@
   }
 }
 
+.app-demo-label {
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+
+.app-demo-period {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 0 var(--gutter) var(--sp-2);
+  text-align: right;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
 /* Freshness chip */
 .app-fresh {
   display: inline-flex;
@@ -121,6 +135,20 @@
   color: var(--ink-2);
   white-space: nowrap;
 }
+@media (max-width: 1023px) {
+  .app-header-tools {
+    min-width: 0;
+  }
+  .app-fresh {
+    height: auto;
+    min-height: 34px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    white-space: normal;
+    font-size: var(--fs-xs);
+  }
+}
+
 .app-fresh-dot {
   position: relative;
   width: 8px;
@@ -311,7 +339,12 @@
   align-items: center;
   gap: var(--sp-1);
 }
-.app-sim.is-phone .app-sim-group {
+.app-sim.is-phone .app-sim-inner {
+  min-height: 44px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.app-sim-toggle {
   margin-left: auto;
 }
 .app-sim-state {

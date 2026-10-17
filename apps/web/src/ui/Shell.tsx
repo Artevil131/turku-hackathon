@@ -127,6 +127,7 @@ export function Header({
   fresh,
   alertsBadge,
   ask,
+  demoPeriod,
 }: {
   locale: Locale;
   route: Route;
@@ -135,6 +136,7 @@ export function Header({
   alertsBadge: number;
   /** The Ask button, only when the AI layer is available. */
   ask: ReactNode;
+  demoPeriod?: string;
 }) {
   return (
     <header className="app-header">
@@ -160,6 +162,7 @@ export function Header({
           </a>
         </div>
       </div>
+      {demoPeriod ? <p className="app-demo-period u-num">{demoPeriod}</p> : null}
     </header>
   );
 }

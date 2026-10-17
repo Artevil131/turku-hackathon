@@ -232,9 +232,6 @@
   font-weight: var(--fw-semibold);
   color: var(--ink);
 }
-.alerts-card.is-open .alerts-short {
-  display: none;
-}
 .alerts-chev {
   position: absolute;
   top: 0;
@@ -618,4 +615,19 @@
        resting on the detail never traps scrolling (it did while the pane had only a few pixels to move). */
     scrollbar-width: thin;
   }
+}
+
+.alerts-heading-facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: var(--sp-3);
+}
+.alerts-owner {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
 }
