@@ -48,7 +48,7 @@ export const introFi: Record<keyof typeof introEn, string> = {
   introMonthShown: "Näytetty kuukausi: {month}",
   introMonthLatest: "viimeisin täysi kuukausi",
   introSlider: "Kuvassa näytetty kuukausi (ei siirrä toiston kelloa)",
-  introLegend: "Tasoitettu ilmaantuvuus: {lo}–{hi} tapausta / 100 000 asukasta, {month}, {n} maakuntaluvusta",
+  introLegend: "Tasoitettu ilmaantuvuus: {lo}–{hi} tapausta / 100\u00a0000 asukasta, {month}, {n} maakuntaluvusta",
   introLegendLow: "matalampi",
   introLegendHigh: "korkeampi",
   introTerraces: "Kuusi tasaista porrasta, kukin tasoitetun ilmaantuvuuden vyöhyke.",

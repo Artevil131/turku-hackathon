@@ -605,11 +605,30 @@ async function main() {
     "research-workspace-close",
     async (idle, reasons) => {
       await cleanWorkspace(idle);
+      const columns = `document.querySelectorAll('.ws-column').length`;
+      const empty = `[...document.querySelectorAll('.ws-column')].some(c => !c.querySelector('.ws-win'))`;
       for (const id of ["math", "map"]) {
+        const before = await evaluate(cdp, columns);
+        // In the fitted 1440x900 default, Alert math and Map are each alone in their column.
+        const alone = await evaluate(
+          cdp,
+          `document.querySelector('#ws-win-${id}')?.closest('.ws-column')?.querySelectorAll('.ws-win').length === 1`,
+        );
+        if (!alone) reasons.push(`${id} is not alone in its column in the fitted default`);
         await click(`#ws-win-${id} .ws-close`);
         if (!(await waitIn(`!document.querySelector('#ws-win-${id}')`, 1000)))
           reasons.push(`${id} not dismissed by its first real close click`);
+        // Closing a column's only window removes the column; the others take its width.
+        if (alone && !(await waitIn(`${columns} === ${before - 1}`, 1000)))
+          reasons.push(`closing ${id}, alone in its column, left ${await evaluate(cdp, columns)} columns (was ${before})`);
+        if (await evaluate(cdp, empty)) reasons.push(`an empty column remains after closing ${id}`);
       }
+      const fill = await evaluate(
+        cdp,
+        `(() => { const a = document.querySelector('.ws-area').getBoundingClientRect(); const c = [...document.querySelectorAll('.ws-column')];
+          return Math.abs(c.reduce((s, e) => s + e.getBoundingClientRect().width, 0) + (c.length - 1) * 8 - a.width) < 4; })()`,
+      );
+      if (!fill) reasons.push("the remaining columns do not fill the board after closing");
     },
     { name: "desktop-900", width: 1440, height: 900, mobile: false },
   );
@@ -683,7 +702,7 @@ async function main() {
       await key("Escape");
       await mouse("mouseReleased", target, { button: "left", buttons: 0, clickCount: 1 });
       if ((await evaluate(cdp, `localStorage.getItem('aei.research.layout.v2')`)) !== before) reasons.push("Esc did not cancel the move");
-      // Drop into the map column (its own emptied column yields), then move left using only the keyboard.
+      // Drop into the map column (its own emptied column is removed), then move left using only the keyboard.
       await mouse("mousePressed", source, { button: "left", buttons: 1, clickCount: 1 });
       await mouse("mouseMoved", target, { buttons: 1 });
       await mouse("mouseReleased", target, { button: "left", buttons: 0, clickCount: 1 });

@@ -160,7 +160,7 @@ export function CommandField({ locale, alerts, asOf = null }: Props) {
   let lastGroup: Group | null = null;
   const status = query
     ? results.length
-      ? t(locale, "cmdResultsN", { n: results.length })
+      ? t(locale, results.length === 1 ? "cmdResultsOne" : "cmdResultsN", { n: results.length })
       : t(locale, alerts ? "cmdNone" : "cmdNotLoaded")
     : "";
 

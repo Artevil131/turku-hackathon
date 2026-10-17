@@ -1,5 +1,5 @@
 import { ApiError, type CountiesResponse, type RegionalResponse, type RegionalSeries, type RegionalSignal } from "@aei/contract";
-import { formatDate, formatMonth, type Locale, t } from "@aei/i18n";
+import { countyName, formatDate, formatMonth, type Locale, t } from "@aei/i18n";
 import { useEffect, useMemo, useState } from "react";
 import { AsOf } from "../AsOf.tsx";
 import type { PanelProps } from "./board.ts";
@@ -38,7 +38,6 @@ function useLoad<T>(fetcher: () => Promise<T>, deps: unknown[], attempt: number)
 }
 
 // Region names exactly as THL and Statistics Finland give them (Finnish genitive forms are official names, not cut).
-const shortName = (region: string) => region;
 const monthDate = (m: string) => `${m}-01`;
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 
@@ -297,12 +296,12 @@ export function RegionalMap({ client, locale, asOf }: PanelProps) {
                   const label =
                     data && month
                       ? t(locale, "mapCountyLabel", {
-                          region: shortName(c.name),
+                          region: countyName(locale, c.name),
                           cases: cases ?? 0,
                           month: monthLong(month),
                           rate: rateText(c.name),
                         })
-                      : shortName(c.name);
+                      : countyName(locale, c.name);
                   return (
                     <path
                       key={c.name}
@@ -417,7 +416,7 @@ export function RegionalMap({ client, locale, asOf }: PanelProps) {
                 <h3>{t(locale, "mapFocusTitle")}</h3>
                 {focusName && focusSeries && month ? (
                   <>
-                    <p className="map-focus-name">{shortName(focusName)}</p>
+                    <p className="map-focus-name">{countyName(locale, focusName)}</p>
                     <dl>
                       <div>
                         <dt>{t(locale, "mapFocusCases", { month: monthLong(month) })}</dt>
@@ -462,7 +461,7 @@ export function RegionalMap({ client, locale, asOf }: PanelProps) {
                             <circle cx="8" cy="8" r="6" className={s.strong ? "map-glyph map-glyph-strong" : "map-glyph map-glyph-weak"} />
                           </svg>
                           <span>
-                            <strong>{shortName(s.region)}</strong>, {monthLong(s.month)}
+                            <strong>{countyName(locale, s.region)}</strong>, {monthLong(s.month)}
                             <br />
                             <span className="map-note">
                               {t(locale, s.strong ? "mapSignalStrong" : "mapSignalWeak")}:{" "}

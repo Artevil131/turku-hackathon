@@ -1,5 +1,5 @@
 import type { RegionalForecast, RegionalSignal } from "@aei/contract";
-import { formatMonth, type Locale, t } from "@aei/i18n";
+import { countyName, formatMonth, type Locale, t } from "@aei/i18n";
 import type { ReactNode, Ref } from "react";
 import { CountyForecasts } from "./CountyForecasts.tsx";
 
@@ -28,7 +28,7 @@ export function CountyDetail({
     <section className="geo-detail" aria-labelledby="geo-county-title" onKeyDown={(e) => e.key === "Escape" && onClose()}>
       <header className="geo-detail-head">
         <h3 id="geo-county-title" className="geo-title" tabIndex={-1} ref={headingRef}>
-          {t(locale, "geoCountyDetail", { region: region.replace(/ hyvinvointialue$/, "") })}
+          {t(locale, "geoCountyDetail", { region: countyName(locale, region) })}
         </h3>
         <button type="button" className="geo-chip" onClick={onClose}>
           {t(locale, "geoBackToMap")}
