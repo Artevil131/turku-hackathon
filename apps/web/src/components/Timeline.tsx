@@ -112,7 +112,17 @@ const Info = () => (
   </svg>
 );
 
-export function Timeline({ locale, clock, connection, lastArrivals, command, reducedMotion, client, liveAlerts, collapsible = false }: TimelineProps) {
+export function Timeline({
+  locale,
+  clock,
+  connection,
+  lastArrivals,
+  command,
+  reducedMotion,
+  client,
+  liveAlerts,
+  collapsible = false,
+}: TimelineProps) {
   const phone = useMediaQuery("(max-width: 760px)");
   const rootRef = useRef<HTMLDivElement>(null);
   const [seekingTo, setSeekingTo] = useState<string | null>(null);

@@ -84,7 +84,14 @@ export function InfoButton({ locale, children, label, align = "start" }: Props) 
         <InfoIcon />
       </button>
       {open ? (
-        <span id={id} ref={pop} className="info-pop" role="note" data-align={align} style={shift ? { translate: `${shift}px 0` } : undefined}>
+        <span
+          id={id}
+          ref={pop}
+          className="info-pop"
+          role="note"
+          data-align={align}
+          style={shift ? { translate: `${shift}px 0` } : undefined}
+        >
           {children}
         </span>
       ) : null}

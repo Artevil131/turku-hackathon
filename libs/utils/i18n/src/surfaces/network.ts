@@ -71,7 +71,8 @@ export const networkEn = {
   netViewAria: "Patient flow view",
   netViewAround: "Around {unit}",
   netViewAll: "All units",
-  netMatrixCaption: "Patients sampled in the row's unit and later in the column's unit, last 28 days. This is the observed sampling order; it does not establish a transfer or transmission.",
+  netMatrixCaption:
+    "Patients sampled in the row's unit and later in the column's unit, last 28 days. This is the observed sampling order; it does not establish a transfer or transmission.",
   netMatrixCorner: "from ↓ · to →",
   netMatrixCell: "{from} to {to}: {n} patients",
   netMatrixCellNone: "{from} to {to}: no patients",
@@ -125,7 +126,8 @@ export const networkFi: Record<keyof typeof networkEn, string> = {
   netPatients: "{n} potilasta",
   netNoneListed: "ei yhtään jaksolla",
   netLegendTitle: "Selite",
-  netLegendEdge: "viivan paksuus: potilaat, joilta otettiin näyte toisessa kahdesta yksiköstä ja myöhemmin toisessa, molemmat suunnat yhteensä",
+  netLegendEdge:
+    "viivan paksuus: potilaat, joilta otettiin näyte toisessa kahdesta yksiköstä ja myöhemmin toisessa, molemmat suunnat yhteensä",
   netLegendLit: "kehystetty yksikkö ja merkki: resistenssisignaali 28 päivässä (laji · fenotyyppi tai bakteeri, ×lukumäärä)",
   netLegendData: "katkoviivakehys ja !-merkki: aineisto-ongelma, ei resistenssiä",
   netLegendShade: "sininen täyttö: osuus sytytetyn yksikön potilaista, joilta otettiin myöhemmin näyte täällä, ei altistuma",
@@ -147,11 +149,13 @@ export const networkFi: Record<keyof typeof networkEn, string> = {
   netBandOthersOut: "{from} muihin ({list}): {n} potilasta, {share} % yksiköstä {from} lähteneistä",
   netFlowRecentre: "näytä sen virta",
   netCentreAria: "{unit}, {name}: {nIn} potilasta tuli, {nOut} lähti 28 päivässä",
-  netFlowEmpty: "Yksikön {unit} ja toisen yksikön välillä ei ollut potilaita, joilta olisi otettu näyte molemmissa, viimeisen 28 päivän aikana.",
+  netFlowEmpty:
+    "Yksikön {unit} ja toisen yksikön välillä ei ollut potilaita, joilta olisi otettu näyte molemmissa, viimeisen 28 päivän aikana.",
   netViewAria: "Potilasvirran näkymä",
   netViewAround: "Yksikön {unit} ympärillä",
   netViewAll: "Kaikki yksiköt",
-  netMatrixCaption: "Potilaat, joilta otettiin näyte rivin yksikössä ja myöhemmin sarakkeen yksikössä, viimeiset 28 päivää. Tämä on havaittu näytteenottojärjestys; se ei osoita siirtoa eikä tartuntaa.",
+  netMatrixCaption:
+    "Potilaat, joilta otettiin näyte rivin yksikössä ja myöhemmin sarakkeen yksikössä, viimeiset 28 päivää. Tämä on havaittu näytteenottojärjestys; se ei osoita siirtoa eikä tartuntaa.",
   netMatrixCorner: "mistä ↓ · minne →",
   netMatrixCell: "{from} yksikköön {to}: {n} potilasta",
   netMatrixCellNone: "{from} yksikköön {to}: ei potilaita",
