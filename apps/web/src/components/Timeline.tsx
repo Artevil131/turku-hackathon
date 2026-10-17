@@ -24,7 +24,7 @@ interface TimelineProps {
   client?: AeiClient;
   /** The app's live alert list; the history appends from it instead of opening its own stream. */
   liveAlerts: LiveAlerts;
-  /** Outside the research page the chart can be folded to one line; the choice is remembered. */
+  /** The chart can be folded to one line of controls; the choice is remembered (folded by default). */
   collapsible?: boolean;
 }
 
@@ -188,7 +188,8 @@ export function Timeline({
     const onKey = (e: KeyboardEvent) => {
       if (!ready || !clock || e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
       const target = e.target instanceof Element ? e.target : null;
-      if (target?.closest(IGNORED_TARGET) || rootRef.current?.contains(target)) return;
+      // Inside the timeline only the band's slider passes keys on (Space plays; it keeps the arrows for reading weeks).
+      if (target?.closest(IGNORED_TARGET) || (rootRef.current?.contains(target) && !target?.closest(".hs-slider"))) return;
       if (e.key === " " || e.key === "Spacebar") {
         if (target?.closest("button, a, summary")) return;
         e.preventDefault();
@@ -222,7 +223,7 @@ export function Timeline({
       disabled={!ready || atEnd}
       onClick={() => command({ action: running ? "pause" : "play" })}
       aria-label={running ? t(locale, "pause") : t(locale, "play")}
-      title={running ? t(locale, "pause") : t(locale, "play")}
+      title={`${running ? t(locale, "pause") : t(locale, "play")} (${t(locale, "tlShortcuts")})`}
     >
       {running ? <Pause /> : <Play />}
     </button>
@@ -291,6 +292,14 @@ export function Timeline({
           <StepWeek />
         </button>
       ) : null}
+    </div>
+  );
+
+  // Play and the day (and week) steps read as one segmented control.
+  const transport = (weeks: boolean) => (
+    <div className="tl-transport">
+      {playButton}
+      {steps(weeks)}
     </div>
   );
 
@@ -374,6 +383,36 @@ export function Timeline({
     </ul>
   );
 
+  const eventsMenu = (
+    <div className="tl-menu-wrap">
+      <button
+        type="button"
+        className="tl-seg tl-events-btn"
+        aria-expanded={menu}
+        aria-haspopup="true"
+        disabled={!ready}
+        onClick={() => setMenu((m) => !m)}
+      >
+        {t(locale, "tlEvents")}
+      </button>
+      {menu ? (
+        // biome-ignore lint/a11y/noStaticElementInteractions: Esc handling for the popup
+        <div
+          className="tl-menu"
+          onKeyDown={(e: ReactKeyboardEvent) => {
+            if (e.key === "Escape") {
+              e.stopPropagation();
+              setMenu(false);
+            }
+          }}
+        >
+          {eventList}
+          {dateJump}
+        </div>
+      ) : null}
+    </div>
+  );
+
   if (phone) {
     return (
       <div className="timeline timeline-phone" ref={rootRef} aria-busy={seekingTo ? true : undefined}>
@@ -412,8 +451,7 @@ export function Timeline({
             </div>
             <div className="tl-sheet-band">{band(false)}</div>
             <div className="tl-sheet-ctl">
-              {playButton}
-              {steps(true)}
+              {transport(true)}
               {speed}
             </div>
             {eventList}
@@ -426,13 +464,16 @@ export function Timeline({
 
   if (collapsible && folded) {
     return (
-      <div className="timeline timeline-folded" ref={rootRef} aria-busy={seekingTo ? true : undefined}>
-        {playButton}
-        {steps(false)}
-        <span className="tl-folded-label">{t(locale, "tlCollapsedLabel")}</span>
-        <b className="tl-readout num">{readout}</b>
+      <div className="timeline timeline-folded" ref={rootRef} aria-busy={seekingTo ? true : undefined} data-running={running || undefined}>
+        {transport(true)}
+        <span className="tl-when">
+          <span className="tl-folded-label">{t(locale, "tlCollapsedLabel")}</span>
+          <b className="tl-readout num">{readout}</b>
+        </span>
+        {speed}
         {arrivals ? <span className="tl-folded-fresh">{arrivals}</span> : null}
         {status}
+        {eventsMenu}
         <button
           type="button"
           className="tl-btn tl-fold"
@@ -448,11 +489,10 @@ export function Timeline({
   }
 
   return (
-    <div className="timeline" ref={rootRef} aria-busy={seekingTo ? true : undefined}>
+    <div className="timeline" ref={rootRef} aria-busy={seekingTo ? true : undefined} data-running={running || undefined}>
       <div className="tl-left">
         <div className="tl-ctl">
-          {playButton}
-          {steps(false)}
+          {transport(false)}
           {speed}
         </div>
         <div className="tl-read">
@@ -460,6 +500,7 @@ export function Timeline({
           <InfoPopover locale={locale}>
             <p>{note}</p>
             {arrivals ? <p>{arrivals}</p> : null}
+            <p>{t(locale, "tlShortcuts")}</p>
           </InfoPopover>
           {status}
           {collapsible ? (
@@ -475,38 +516,14 @@ export function Timeline({
             </button>
           ) : null}
         </div>
-        <div className="tl-quality">
-          <QualityStatus locale={locale} state={quality} />
+        <div className="tl-foot">
+          <div className="tl-quality">
+            <QualityStatus locale={locale} state={quality} />
+          </div>
+          {eventsMenu}
         </div>
       </div>
       {band(false)}
-      <div className="tl-menu-wrap">
-        <button
-          type="button"
-          className="tl-seg tl-events-btn"
-          aria-expanded={menu}
-          aria-haspopup="true"
-          disabled={!ready}
-          onClick={() => setMenu((m) => !m)}
-        >
-          {t(locale, "tlEvents")}
-        </button>
-        {menu ? (
-          // biome-ignore lint/a11y/noStaticElementInteractions: Esc handling for the popup
-          <div
-            className="tl-menu"
-            onKeyDown={(e: ReactKeyboardEvent) => {
-              if (e.key === "Escape") {
-                e.stopPropagation();
-                setMenu(false);
-              }
-            }}
-          >
-            {eventList}
-            {dateJump}
-          </div>
-        ) : null}
-      </div>
     </div>
   );
 }
