@@ -85,12 +85,18 @@
   --sim-line: #d8cdf4;
 
   /* ---- Type ---- */
-  --font: "Inter", "Inter var", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, system-ui, sans-serif;
+  /* Atkinson Hyperlegible Next (Braille Institute, OFL; public/fonts): built so characters a tired eye
+     confuses stay apart (1 l I, 0 O, 5 S), which matters for counts and doses on a ward screen. Self-hosted:
+     hospital networks may block font CDNs. One variable file covers every weight below. */
+  --font:
+    "Atkinson Hyperlegible Next", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, system-ui, sans-serif;
   --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
-  --fs-xs: 0.75rem; /* 12 */
-  --fs-sm: 0.8125rem; /* 13 */
-  --fs-base: 0.9375rem; /* 15 */
-  --fs-md: 1.0625rem; /* 17 */
+  /* One pixel up from the Inter scale at the three smallest steps: Atkinson sets smaller and lighter at equal
+     size, and body text reaches the 16 px floor. */
+  --fs-xs: 0.8125rem; /* 13 */
+  --fs-sm: 0.875rem; /* 14 */
+  --fs-base: 1rem; /* 16 */
+  --fs-md: 1.125rem; /* 18 */
   --fs-lg: 1.25rem; /* 20 */
   --fs-xl: 1.625rem; /* 26 */
   --fs-2xl: 2.125rem; /* 34: the figure a doctor reads first */
