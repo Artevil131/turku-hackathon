@@ -7,21 +7,10 @@
 }
 /* The board flows: windows take their own height and the page scrolls (Artem, 2026-10-17:
    no windows stacked on top of each other, no inner scrolling). */
-@media (min-width: 1100px) {
-  .app-main:has(> .page > .board) {
-    height: auto;
-    min-height: 100%;
-  }
-  .board {
-    height: auto;
-  }
+.app-main:has(> .page > .board) {
+  height: auto;
+  min-height: 100%;
 }
-@media (max-width: 1099px) {
-  .page:has(> .board) {
-    display: block;
-    overflow: auto;
-  }
-  .board {
-    padding-bottom: 12px;
-  }
+.board {
+  height: auto;
 }

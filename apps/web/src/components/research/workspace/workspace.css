@@ -723,3 +723,42 @@
     left: 16px;
   }
 }
+
+/* Room under the last window for the bottom-left buttons, so they never cover content. */
+.ws {
+  padding-bottom: 72px;
+}
+
+/* The timeline window reflows to the room it has: controls, band and the signal tiles wrap instead of overlapping. */
+.timeline[data-variant="window"] {
+  flex-wrap: wrap;
+  row-gap: 8px;
+}
+.timeline[data-variant="window"] .tl-left {
+  flex: 1 1 228px;
+  width: auto;
+  max-width: 100%;
+}
+.timeline[data-variant="window"] .tl-band-col {
+  flex: 3 1 340px;
+}
+.timeline[data-variant="window"] .tl-events {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+.timeline[data-variant="window"] {
+  overflow-y: auto;
+}
+
+/* Phones: the two buttons shrink so they cover less of the page. */
+@media (max-width: 560px) {
+  .ws-float-bar {
+    bottom: 10px;
+    gap: 6px;
+  }
+  .ws-add-float,
+  .ws-tool-float {
+    min-height: 36px;
+    padding: 0 12px;
+  }
+}

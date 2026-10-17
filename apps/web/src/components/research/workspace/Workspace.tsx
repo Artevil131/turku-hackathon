@@ -5,6 +5,7 @@ import {
   type KeyboardEvent,
   type PointerEvent,
   type ReactNode,
+  type RefObject,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -98,6 +99,7 @@ export interface ChartRequest {
 /** The stacked order under 1100 px: the list first, the map last (as before). */
 const STACK_ORDER: readonly WinId[] = [
   "answer",
+  "timeline",
   "signals",
   "notebook",
   "math",
@@ -107,7 +109,6 @@ const STACK_ORDER: readonly WinId[] = [
   "grid",
   "reproduce",
   "coverage",
-  "timeline",
 ];
 
 const RAIL_KEY = "aei.research.rail";
@@ -127,17 +128,23 @@ function saveRail(open: boolean): void {
   }
 }
 
-function useWide(): boolean {
-  const query = "(min-width: 1100px)";
-  const [wide, setWide] = useState(() => typeof matchMedia === "function" && matchMedia(query).matches);
-  useEffect(() => {
-    if (typeof matchMedia !== "function") return;
-    const mq = matchMedia(query);
-    const on = () => setWide(mq.matches);
-    mq.addEventListener("change", on);
-    on();
-    return () => mq.removeEventListener("change", on);
-  }, []);
+/**
+ * Whether the board has room for the free grid: its own width, not the screen's, so a collapsed or open sidebar,
+ * a split pane or a small window each get the layout that fits. Until it is measured, the screen's width decides.
+ */
+const WIDE_BOARD_PX = 840;
+function useWide(ref: RefObject<HTMLElement | null>): boolean {
+  const [wide, setWide] = useState(() => typeof matchMedia === "function" && matchMedia("(min-width: 1100px)").matches);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const measure = () => setWide(el.getBoundingClientRect().width >= WIDE_BOARD_PX);
+    measure();
+    if (typeof ResizeObserver !== "function") return;
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [ref]);
   return wide;
 }
 
@@ -222,7 +229,8 @@ export function Workspace({
   /** Each new value shows the rail (the card's "Open in Tools" sends the slice there). */
   revealRail?: number;
 }) {
-  const wide = useWide();
+  const rootRef = useRef<HTMLDivElement>(null);
+  const wide = useWide(rootRef);
   const [railOpen, setRailOpen] = useState(loadRail);
   const seenRailReveal = useRef(revealRail ?? 0);
   useEffect(() => {
@@ -718,7 +726,14 @@ export function Workspace({
   });
 
   return (
-    <div className="ws" data-float={wide} data-animate={animate} data-focus={focused !== null} data-selection={primary !== null}>
+    <div
+      className="ws"
+      ref={rootRef}
+      data-float={wide}
+      data-animate={animate}
+      data-focus={focused !== null}
+      data-selection={primary !== null}
+    >
       {wide ? null : <div className="ws-tray-row">{tray}</div>}
       {wide ? (
         <div className="ws-toolbar">

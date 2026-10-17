@@ -593,7 +593,13 @@ export function Timeline({
   }
 
   return (
-    <div className="timeline" ref={rootRef} aria-busy={seekingTo ? true : undefined} data-running={running || undefined}>
+    <div
+      className="timeline"
+      ref={rootRef}
+      aria-busy={seekingTo ? true : undefined}
+      data-running={running || undefined}
+      data-variant={variant}
+    >
       <div className="tl-left">
         {title}
         {rangeLine}
