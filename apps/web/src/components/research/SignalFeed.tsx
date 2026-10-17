@@ -143,7 +143,7 @@ export function SignalFeed(props: Props) {
                   onClick={() => toggleKind(k)}
                 >
                   <KindGlyph kind={k} />
-                  <span className="visually-hidden">{kindLabel(locale, k)}</span>
+                  <span className="feed-chip-name">{k === "data" ? t(locale, "feedKindDataChip") : kindLabel(locale, k)}</span>
                   <span className="feed-chip-count">{kindCounts.get(k) ?? 0}</span>
                 </button>
               ))}
