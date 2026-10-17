@@ -1,4 +1,4 @@
-import { type Locale, specimenName, t, wardName } from "@aei/i18n";
+import { formatDate, type Locale, specimenName, t, wardName } from "@aei/i18n";
 import type React from "react";
 import { type DoctorFilters, num, pct } from "./filters.ts";
 import { type Item, recentText } from "./reason.ts";
@@ -36,6 +36,8 @@ export function DoctorAnswer({
   editing,
   onEdit,
   showCase = true,
+  asOf,
+  windowDays,
 }: {
   locale: Locale;
   filters: DoctorFilters;
@@ -49,6 +51,9 @@ export function DoctorAnswer({
   onEdit: () => void;
   /** The case summary and its change button; off when the case panel is already open beside the answer. */
   showCase?: boolean;
+  /** The last day of results the answer rests on, and how many days back it looks: said under the answer so a doctor knows it is current. */
+  asOf?: string | null;
+  windowDays?: number;
 }) {
   const singles = items.filter((i) => i.row !== null);
   const clears = singles.filter((i) => i.standing === "clears");
@@ -121,6 +126,15 @@ export function DoctorAnswer({
       ) : (
         <p className="dr-answer-head">{t(locale, "drAnswerNone", { bar })}</p>
       )}
+      {asOf && !loading && !failed ? (
+        <p className="dr-answer-when">
+          {t(locale, "drAnswerWhen", {
+            date: formatDate(locale, asOf, "long"),
+            days: windowDays ?? 365,
+            unit: wardName(locale, filters.unit as never),
+          })}
+        </p>
+      ) : null}
       <p className="dr-answer-note">{t(locale, "drAnswerNote")}</p>
     </section>
   );

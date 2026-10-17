@@ -14,7 +14,7 @@ import type { DemoId, DemoSpec, TourId } from "./demo/demos.ts";
 import { FillOverlay } from "./demo/FillOverlay.tsx";
 import type { FillPlan } from "./demo/openDemo.ts";
 import { openDemo } from "./demo/openDemo.ts";
-import { Pointer } from "./demo/Pointer.tsx";
+import { POINT_EVENT, Pointer } from "./demo/Pointer.tsx";
 import { DemoTour } from "./demo/tour/Tour.tsx";
 import { useLive } from "./live.ts";
 import { FlowsContext } from "./relations.ts";
@@ -144,9 +144,7 @@ export function App() {
   const [tour, setTour] = useState<{ demo: TourId; key: number } | null>(null);
   // First visit: the full tour is offered once; "Not now" leaves a way back on the start page and in the sidebar.
   // biome-ignore lint/correctness/useExhaustiveDependencies: only on first load
-  useEffect(() => {
-    if (page === "home" && stored("yl.welcomed", "", () => true) === "") setTour({ demo: "overview", key: Date.now() });
-  }, []);
+  // The full tour is not pushed on a first visit any more: the start page's "Take the tour" card and the sidebar offer it.
   // A demo filling itself in: the screen is locked until it is done (or skipped); a full play then offers the tour, a skip does not.
   const [filling, setFilling] = useState<{ demo: DemoId; plan: FillPlan; key: number } | null>(null);
   // When a demo fills itself in: the first time each demo opens (default), every time, or never. Without the
@@ -175,6 +173,16 @@ export function App() {
   const phone = useMedia(PHONE);
   const live = useLive();
   const reducedMotion = usePrefersReducedMotion();
+  // A question asked (search, a chip): the hand points at its answer, unless a demo is filling itself in anyway.
+  const pointable = useRef({ filling: false, reducedMotion: false });
+  pointable.current = { filling: filling !== null, reducedMotion };
+  useEffect(() => {
+    const onPoint = () => {
+      if (!pointable.current.filling && !pointable.current.reducedMotion) setPointer(Date.now());
+    };
+    addEventListener(POINT_EVENT, onPoint);
+    return () => removeEventListener(POINT_EVENT, onPoint);
+  }, []);
 
   // The selected hospital (D-051): one source of truth, in the URL as `hospital`, remembered, the home site by
   // default. Everything below reads it: the client asks for that hospital and the live data is cut to it.

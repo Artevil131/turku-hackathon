@@ -28,6 +28,7 @@ import { TemplateArt } from "./TemplateArt.tsx";
 import "../home/home.css";
 import "../research/SignalFeed.css";
 import "./start.css";
+import { POINT_EVENT } from "../../demo/Pointer.tsx";
 
 function ago(locale: Locale, date: string) {
   const minutes = Math.max(0, Math.floor((Date.now() - new Date(date).getTime()) / 60_000));
@@ -136,8 +137,12 @@ export function StartPage({
     if (action.kind === "demo") {
       const d = DEMOS.find((x) => x.id === action.id);
       if (d) onDemo(d);
-    } else if (action.kind === "view") shell.openView(action.template, action.params);
-    else location.hash = action.href.slice(1);
+    } else {
+      if (action.kind === "view") shell.openView(action.template, action.params);
+      else location.hash = action.href.slice(1);
+      // A question chip: the hand points at the answer once it is on screen (demo/Pointer.tsx).
+      dispatchEvent(new CustomEvent(POINT_EVENT));
+    }
   };
   const [projects, setProjects] = useState<Project[] | null>(null);
   const [failed, setFailed] = useState(false);

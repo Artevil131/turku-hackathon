@@ -2,6 +2,8 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   max-width: 1320px;
+  /* One column, centred: on a wide screen the page sits in the middle rather than hugging the sidebar. */
+  margin-inline: auto;
   gap: 32px;
   padding: 28px 12px 64px;
   align-items: start;
@@ -644,7 +646,8 @@
 }
 .start-demo-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  /* auto-fit: the four demo cards share the row's width instead of leaving an empty fifth column. */
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
   gap: 16px;
 }
 .start-demo {

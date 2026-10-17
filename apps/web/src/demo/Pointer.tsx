@@ -7,8 +7,17 @@ import "./perform/perform.css";
 // to look: the performance's drawn hand glides to the first window's title, rests a moment and fades. Nothing is
 // locked; the hand takes no clicks. Reduced motion skips it (the caller does not render it).
 
-/** How long the hand rests on the window before it fades, ms. */
+/** Dispatched on `window` when a question was asked (search, a question chip): the hand then points at the answer. */
+export const POINT_EVENT = "aei:point";
+/** How long the hand rests on the answer before it fades, ms. */
 const REST_MS = 900;
+/** How long the hand waits for the answer to render before giving up, ms. */
+const PATIENCE_MS = 2500;
+const visible = (el: Element | null): el is HTMLElement => {
+  if (!el) return false;
+  const box = el.getBoundingClientRect();
+  return box.width > 0 && box.height > 0;
+};
 /** The window the hand points at: the top-most, left-most one on the board. */
 function firstWindow(): HTMLElement | null {
   const wins = [...document.querySelectorAll<HTMLElement>("[id^='ws-win-']")];
@@ -19,6 +28,18 @@ function firstWindow(): HTMLElement | null {
       .filter(({ box }) => box.width > 0 && box.height > 0)
       .sort((a, b) => a.box.top - b.box.top || a.box.left - b.box.left)[0]?.el ?? null
   );
+}
+/** What answers the question, most specific first: the drug a search asked for, the organism it highlighted, the doctor's headline, the Summary window, the first window. */
+function answer(patient = false): HTMLElement | null {
+  // A drug was asked for: the hand waits for its row (the list loads after the headline) unless patience runs out.
+  const row = document.querySelector<HTMLElement>("[data-row][data-selected]");
+  if (visible(row)) return row;
+  if (location.hash.includes("cov.ab=") && patient) return null;
+  for (const sel of ["[data-row][data-selected]", "[data-marked]", ".dr-answer-head", "#ws-win-answer", "#ws-win-coverage"]) {
+    const el = document.querySelector<HTMLElement>(sel);
+    if (visible(el)) return el;
+  }
+  return firstWindow();
 }
 
 export function Pointer({ onDone }: { onDone: () => void }) {
@@ -37,20 +58,29 @@ export function Pointer({ onDone }: { onDone: () => void }) {
       done.current();
     };
     (async () => {
-      // The windows appear with their own transition; give the board a beat to settle.
+      // The windows appear with their own transition, and an answer may still be loading: wait for it a little.
       await clock.wait(350);
-      const target = firstWindow();
+      let target = answer(true);
+      for (let waited = 350; !target && waited < PATIENCE_MS && !clock.stopped; waited += 150) {
+        await clock.wait(150);
+        target = answer(true);
+      }
+      if (!target) target = answer();
       if (!target || clock.stopped) return finish();
+      target.scrollIntoView({ block: "nearest" });
       const box = target.getBoundingClientRect();
       const hand = new Hand(el, clock, innerWidth * 0.6, innerHeight * 0.55);
       hand.show();
-      await hand.moveTo(box.left + Math.min(120, box.width * 0.3), box.top + 22, { min: 480, max: 1200 });
+      const whole = target.id.startsWith("ws-win-");
+      const x = whole ? box.left + Math.min(120, box.width * 0.3) : box.left + Math.min(40, box.width * 0.2);
+      const y = whole ? box.top + 22 : box.top + box.height / 2;
+      await hand.moveTo(x, y, { min: 480, max: 1200 });
       await clock.wait(REST_MS);
       hand.hide();
       await clock.wait(340);
       finish();
     })();
-    const safety = setTimeout(finish, 4000);
+    const safety = setTimeout(finish, 7000);
     // Unmounted early (or re-run in development): stop quietly; `onDone` is for a hand that has pointed.
     return () => {
       clearTimeout(safety);
