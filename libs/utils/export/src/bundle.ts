@@ -1,6 +1,7 @@
 export interface ExportColumn {
   key: string;
   label: string;
+  type?: "string" | "integer" | "number" | "date" | "datetime" | "boolean";
   description?: string;
   unit?: string;
 }
@@ -31,6 +32,7 @@ export interface ExportNumber {
 export interface ExportBundle {
   title: string;
   generatedAt: string;
+  appVersion?: string;
   asOf?: string;
   mode?: "continuous" | "frozen";
   scope: Record<string, string | string[]>;

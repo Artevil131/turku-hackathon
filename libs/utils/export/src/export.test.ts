@@ -162,7 +162,7 @@ it("handles bundles without tables, figures or numbers", async () => {
   expect(toMarkdown(empty).data).toContain("Column dictionary");
   expect(toLatex(empty).data).toContain("\\end{document}");
   expect((await toDocx(empty)).data.length).toBeGreaterThan(0);
-  expect(exportFormats.map((f) => f.id)).toEqual(["csv", "json", "md", "tex", "docx", "py"]);
+  expect(exportFormats.map((f) => f.id)).toEqual(["zip", "csv", "json", "md", "tex", "docx", "py"]);
 });
 
 describe("domain tables", () => {
