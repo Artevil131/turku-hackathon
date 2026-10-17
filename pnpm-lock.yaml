@@ -47,6 +47,9 @@ importers:
       '@aei/eucast':
         specifier: workspace:*
         version: link:../../libs/utils/eucast
+      '@aei/export':
+        specifier: workspace:*
+        version: link:../../libs/utils/export
       '@aei/i18n':
         specifier: workspace:*
         version: link:../../libs/utils/i18n
@@ -282,9 +285,15 @@ importers:
 
   libs/utils/export:
     dependencies:
+      '@aei/contract':
+        specifier: workspace:*
+        version: link:../contract
       '@aei/domain':
         specifier: workspace:*
         version: link:../domain
+      '@aei/projects':
+        specifier: workspace:*
+        version: link:../projects
       docx:
         specifier: ^9.12.0
         version: 9.12.0

@@ -11,7 +11,9 @@
     "typecheck": "tsc -p ."
   },
   "dependencies": {
+    "@aei/contract": "workspace:*",
     "@aei/domain": "workspace:*",
+    "@aei/projects": "workspace:*",
     "docx": "^9.12.0",
     "jszip": "^3.10.2"
   }

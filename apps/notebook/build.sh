@@ -30,4 +30,6 @@ PATH="$(dirname "$(command -v "$mm")"):$PATH" uv run jupyter lite build \
   --piplite-wheels build/wheels/aei-*.whl \
   --XeusAddon.prefix="$env" \
   --output-dir "$out"
+# Keep the static root entry, but never shadow the API's live project listings.
+rm -rf "$out/api/contents/projects"
 echo "JupyterLite site in $out ($(du -sh "$out" | cut -f1))"

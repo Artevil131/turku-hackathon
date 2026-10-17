@@ -50,7 +50,8 @@ import {
   type WardCode,
 } from "@aei/domain";
 import { defeatedBy } from "@aei/eucast";
-import { antibioticName, phenotypeName, registerSites, registerWards, specimenName, wardName } from "@aei/i18n";
+import { packageFiles, projectBundle } from "@aei/export";
+import { antibioticName, phenotypeName, registerSites, registerWards, specimenName, t, wardName } from "@aei/i18n";
 import { asResult, type CodeMaps, DEFAULT_CODE_MAPS, detectFormat, extendCodeMaps, ingest, mergeResults } from "@aei/ingest";
 import { isProjectId, matchesScope, type Project, type ProjectInput, parseProjectInput } from "@aei/projects";
 import { createProjectStore, fingerprintRows, newProjectId } from "@aei/projects/node";
@@ -260,6 +261,66 @@ function projectFingerprint(input: ProjectInput) {
   );
 }
 
+const litePackages = new Map<string, { key: string; files: ReturnType<typeof packageFiles> }>();
+
+/** One package per saved project and replay date; ingestion invalidates corrected rows too. */
+function liteFiles(project: Project) {
+  const date = clock.state().asOf;
+  const key = JSON.stringify([project.id, project.updatedAt, date]);
+  const cached = litePackages.get(project.id);
+  if (cached?.key === key) return cached.files;
+  const asOf = project.mode === "frozen" && project.asOf && project.asOf < date ? project.asOf : date;
+  const files = packageFiles(
+    projectBundle({
+      project,
+      clock: date,
+      records: state.released.upTo(asOf).filter((record) => matches(record, { site: project.scope.site })),
+      alerts: state.alerts
+        .upTo(asOf)
+        .filter((alert) => !project.scope.site || alertSite(alert, registry.siteOfWard) === project.scope.site),
+      antibiotics: ANTIBIOTICS.map((antibiotic) => antibiotic.code),
+      labels: {
+        isolates: t("en", "exportIsolates"),
+        patients: t("en", "exportPatients"),
+        alerts: t("en", "exportAlerts"),
+        isolateMethod: t("en", "exportIsolateMethod"),
+        patientMethod: t("en", "exportPatientMethod"),
+        alertMethod: t("en", "exportAlertMethod"),
+        frozenNote: t("en", "exportFrozenNote"),
+      },
+    }),
+  );
+  litePackages.set(project.id, { key, files });
+  return files;
+}
+
+function liteMime(path: string): string {
+  if (path.endsWith(".ipynb")) return "application/x-ipynb+json";
+  if (path.endsWith(".json")) return "application/json";
+  if (path.endsWith(".csv")) return "text/csv";
+  if (path.endsWith(".md")) return "text/markdown";
+  if (path.endsWith(".py")) return "text/x-python";
+  return "text/x-r-source";
+}
+
+/** Jupyter Server contents model, as emitted by the static JupyterLite build. */
+function liteModel(path: string, created: string, modified: string, file?: { path: string; data: string | Uint8Array }) {
+  return {
+    name: path.split("/").at(-1) ?? "",
+    path,
+    type: file ? (path.endsWith(".ipynb") ? "notebook" : "file") : "directory",
+    format: null,
+    mimetype: file ? liteMime(path) : null,
+    size: file ? Buffer.byteLength(file.data) : null,
+    created,
+    last_modified: modified,
+    writable: true,
+    hash: null,
+    hash_algorithm: null,
+    content: null,
+  };
+}
+
 /** Every site with its units, rows up to the clock and feed status (D-051). */
 function sites(): SitesResponse {
   const asOf = clock.state().asOf;
@@ -334,6 +395,7 @@ function ingestPayload(body: string, contentType: string, from: ConnectedSite = 
   coverages.clear();
   failsTogethers.clear();
   qualityCache.clear();
+  litePackages.clear();
   const ids = new Set(result.cultures.map((c) => c.cultureId));
   const arrived = state.records.filter((r) => ids.has(r.cultureId));
   const latest =
@@ -413,6 +475,37 @@ export const server = createServer(async (req, res) => {
 
   const url = new URL(req.url ?? "/", "http://localhost");
   try {
+    if (url.pathname.startsWith("/api/lite/")) {
+      if (req.method !== "GET") return send(res, 405, { error: "method not allowed" });
+      if (url.pathname === "/api/lite/contents/projects/all.json") {
+        const all = projects.list();
+        const timestamp = new Date().toISOString();
+        return send(res, 200, {
+          ...liteModel("projects", timestamp, timestamp),
+          format: "json",
+          content: all.map((project) => liteModel(`projects/${project.id}`, project.createdAt, project.updatedAt)),
+        });
+      }
+      const contents = /^\/api\/lite\/contents\/projects\/([^/]+)\/all\.json$/.exec(url.pathname);
+      const download = /^\/api\/lite\/files\/projects\/([^/]+)\/([^/]+)$/.exec(url.pathname);
+      const match = contents ?? download;
+      if (!match || !isProjectId(match[1])) return send(res, 404, { error: "unknown project path" });
+      const project = projects.get(match[1]);
+      if (!project) return send(res, 404, { error: "unknown project" });
+      const files = liteFiles(project);
+      const path = `projects/${project.id}`;
+      if (contents) {
+        return send(res, 200, {
+          ...liteModel(path, project.createdAt, project.updatedAt),
+          format: "json",
+          content: files.map((file) => liteModel(`${path}/${file.path}`, project.createdAt, project.updatedAt, file)),
+        });
+      }
+      const file = files.find((file) => file.path === download?.[2]);
+      if (!file) return send(res, 404, { error: "unknown project file" });
+      res.writeHead(200, { "content-type": liteMime(file.path), "content-length": Buffer.byteLength(file.data) });
+      return void res.end(file.data);
+    }
     if (url.pathname === ROUTES.projects || url.pathname.startsWith(`${ROUTES.projects}/`)) {
       const id = url.pathname === ROUTES.projects ? undefined : decodeURIComponent(url.pathname.slice(ROUTES.projects.length + 1));
       if (id !== undefined && !isProjectId(id)) return send(res, 400, { error: "invalid project id" });
@@ -427,6 +520,7 @@ export const server = createServer(async (req, res) => {
       }
       if (previous && req.method === "DELETE") {
         projects.delete(previous.id);
+        litePackages.delete(previous.id);
         return void res.writeHead(204).end();
       }
       if ((id === undefined && req.method === "POST") || (previous && req.method === "PUT")) {
@@ -454,6 +548,7 @@ export const server = createServer(async (req, res) => {
           ...(fingerprint ? { fingerprint } : {}),
         };
         projects.put(project);
+        litePackages.delete(project.id);
         return send(res, previous ? 200 : 201, { project });
       }
       return send(res, 405, { error: "method not allowed" });

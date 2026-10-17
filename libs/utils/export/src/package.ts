@@ -55,6 +55,7 @@ export function packageFiles(bundle: ExportBundle, opts?: { docx?: Uint8Array })
           title: column.label,
           ...(column.description !== undefined ? { description: column.description } : {}),
           ...(column.unit !== undefined ? { unit: column.unit } : {}),
+          ...(column.role !== undefined ? { role: column.role } : {}),
         })),
       },
     })),
