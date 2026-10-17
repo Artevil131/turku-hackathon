@@ -3,7 +3,7 @@ import type { FeedMeta, IsoDate, Result } from "../../feed/types.ts";
 import { type Locale, t } from "../../i18n/index.ts";
 import { MIN_ISOLATES } from "../../model/rules.ts";
 import type { Signal } from "../../model/types.ts";
-import { ContextControls } from "./ContextControls.tsx";
+import { ContextControls, UnitPicker } from "./ContextControls.tsx";
 import { sexesIn, signalsFor, type TreatChoice } from "./model.ts";
 import { PatientCard } from "./PatientCard.tsx";
 import { ResultView } from "./Result.tsx";
@@ -18,7 +18,7 @@ import "./Treat.css";
 
 export type TreatPrefs = TreatChoice;
 
-export function TreatScreen(p: {
+type TreatScreenProps = {
   locale: Locale;
   meta: FeedMeta;
   results: readonly Result[];
@@ -27,7 +27,21 @@ export function TreatScreen(p: {
   prefs: TreatPrefs;
   onPrefs: (patch: Partial<TreatPrefs>) => void;
   onOpenSignal: (id: string) => void;
-}) {
+};
+
+export function TreatScreen(p: TreatScreenProps) {
+  if (!p.prefs.ward) {
+    return (
+      <div className="treat treat-first-use">
+        <h1 className="treat-top-name">{t(p.locale, "treat.first.unit")}</h1>
+        <UnitPicker locale={p.locale} meta={p.meta} ward="" onChange={(ward) => p.onPrefs({ ward })} />
+      </div>
+    );
+  }
+  return <TreatAnswer {...p} />;
+}
+
+function TreatAnswer(p: TreatScreenProps) {
   const { locale, meta, results, asOf, signals, prefs, onPrefs, onOpenSignal } = p;
   const min = MIN_ISOLATES;
   const { data, failed, pending } = useCoverage(prefs, asOf);

@@ -9,7 +9,7 @@ import { type ReportPrefs, ReportScreen } from "./screens/Report/index.tsx";
 import { TimelineScreen } from "./screens/Timeline/index.tsx";
 import { type TreatPrefs, TreatScreen } from "./screens/Treat/index.tsx";
 import { AskSheet } from "./ui/AskSheet.tsx";
-import { defaultSpecimen, defaultWard, signalKindLabel, unitName } from "./ui/defaults.ts";
+import { defaultSpecimen, signalKindLabel, unitName } from "./ui/defaults.ts";
 import { EmptyState } from "./ui/EmptyState.tsx";
 import { store, useIsDesktop, useMedia, useStored } from "./ui/hooks.ts";
 import { Icon } from "./ui/Icon.tsx";
@@ -41,7 +41,7 @@ function routeFromHash(): Route | null {
 
 function initialTreat(meta: FeedMeta): TreatPrefs {
   const saved = store.get<string>("ward");
-  const ward = saved && meta.units.some((u) => u.code === saved) ? saved : defaultWard(meta);
+  const ward = saved && meta.units.some((u) => u.code === saved) ? saved : "";
   return { ward, specimen: defaultSpecimen(meta), sex: null, severity: "mild" };
 }
 

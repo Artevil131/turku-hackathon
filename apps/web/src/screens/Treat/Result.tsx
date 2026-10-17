@@ -55,13 +55,17 @@ export function ResultView({
   const { coverage, suggestions, combinationSuggestions, severity } = data;
   const threshold = pct(locale, THRESHOLDS[severity]);
   const top = suggestions[0];
-  const rest = suggestions.slice(1);
+  const combinationFirst = severity === "severe" && !suggestions.some((s) => s.standing === "clears");
+  const rest = combinationFirst ? suggestions : suggestions.slice(1);
 
-  const live = top
-    ? top.share !== null
-      ? t(locale, "treat.live.summary", { name: drugName(locale, meta, top.antibiotic), percent: pct(locale, top.share) })
-      : `${drugName(locale, meta, top.antibiotic)}. ${t(locale, "treat.live.few")}`
-    : t(locale, "treat.empty.title");
+  const pair = combinationFirst ? combinationSuggestions[0] : undefined;
+  const live = pair
+    ? `${pair.antibiotics.map((a) => drugName(locale, meta, a)).join(" + ")}. ${pair.coverage.share === null ? t(locale, "treat.live.few") : pct(locale, pair.coverage.share)}`
+    : top
+      ? top.share !== null
+        ? t(locale, "treat.live.summary", { name: drugName(locale, meta, top.antibiotic), percent: pct(locale, top.share) })
+        : `${drugName(locale, meta, top.antibiotic)}. ${t(locale, "treat.live.few")}`
+      : t(locale, "treat.empty.title");
 
   return (
     <section className="treat-result" aria-label={t(locale, "treat.result.label")}>
@@ -69,6 +73,9 @@ export function ResultView({
         {live}
       </p>
 
+      {combinationFirst && top && coverage.isolates > 0 ? (
+        <Pairs locale={locale} meta={meta} pairs={combinationSuggestions} threshold={threshold} />
+      ) : null}
       <Basis locale={locale} meta={meta} prefs={prefs} data={data} min={min} />
 
       {!top || coverage.isolates === 0 ? (
@@ -85,19 +92,18 @@ export function ResultView({
         </Card>
       ) : (
         <>
-          <TopMatch
-            key={`${prefs.ward}|${prefs.specimen}|${prefs.severity}|${prefs.sex ?? ""}|${top.antibiotic}`}
-            locale={locale}
-            meta={meta}
-            s={top}
-            threshold={threshold}
-            min={min}
-          />
-          {severity === "severe" && top.standing !== "clears" ? (
-            <Pairs locale={locale} meta={meta} pairs={combinationSuggestions} threshold={threshold} />
+          {!combinationFirst ? (
+            <TopMatch
+              key={`${prefs.ward}|${prefs.specimen}|${prefs.severity}|${prefs.sex ?? ""}|${top.antibiotic}`}
+              locale={locale}
+              meta={meta}
+              s={top}
+              threshold={threshold}
+              min={min}
+            />
           ) : null}
           {rest.length > 0 ? (
-            <DrugList locale={locale} meta={meta} rest={rest} threshold={threshold} min={min} />
+            <DrugList locale={locale} meta={meta} rest={rest} threshold={threshold} min={min} singles={combinationFirst} />
           ) : (
             <HowCounted locale={locale} min={min} />
           )}
@@ -189,9 +195,16 @@ function Facts({ locale, items, min }: { locale: Locale; items: { label: string;
   );
 }
 
-function standingText(locale: Locale, standing: Standing, threshold: string, min: number): string {
+function standingText(locale: Locale, s: Suggestion, threshold: string, min: number): string {
+  const { standing } = s;
   if (standing === "clears") return t(locale, "treat.standing.clears", { threshold });
-  if (standing === "borderline") return t(locale, "treat.standing.borderline", { threshold });
+  if (standing === "borderline")
+    return t(locale, "treat.standing.borderline", {
+      threshold,
+      percent: pct(locale, s.share ?? 0),
+      lo: s.interval ? pct(locale, s.interval[0]) : "—",
+      hi: s.interval ? pct(locale, s.interval[1]) : "—",
+    });
   if (standing === "below") return t(locale, "treat.standing.below", { threshold });
   return t(locale, "treat.standing.na", { min: formatNumber(locale, min) });
 }
@@ -241,31 +254,28 @@ function TopMatch({ locale, meta, s, threshold, min }: { locale: Locale; meta: F
           {t(locale, "treat.top.labelFew")}
         </p>
       )}
-      <ShareBar
-        locale={locale}
-        share={asShare(basisCounts)}
-        min={min}
-        size="lg"
-        label={t(locale, s.basis === "spectrum" ? "treat.fig.spectrum" : "treat.fig.all")}
-        caption={caption}
-      />
-      <p className={`treat-top-standing is-${s.standing.replace(" ", "-")}`}>{standingText(locale, s.standing, threshold, min)}</p>
       {s.basis === "spectrum" ? (
-        <p className="treat-top-all">
-          {all !== null ? (
-            <>
-              <strong>{t(locale, "treat.top.allOrganisms", { percent: pct(locale, all) })}</strong>
-              <span className="treat-top-all-range u-num">
-                {" · "}
-                {formatNumber(locale, c.counts.covered)}/{formatNumber(locale, c.counts.known)}
-              </span>
-              {allRange ? <span className="treat-top-all-range"> · {allRange}</span> : null}
-            </>
-          ) : (
-            t(locale, "treat.top.allOrganismsFew")
-          )}
-        </p>
-      ) : null}
+        <dl className="treat-answer-figures">
+          {[
+            { label: t(locale, "treat.fig.spectrum"), share: s.share, range, counts: basisCounts },
+            { label: t(locale, "treat.fig.all"), share: all, range: allRange, counts: c.counts },
+          ].map((figure) => (
+            <div key={figure.label}>
+              <dt>{figure.label}</dt>
+              <dd>
+                <strong className="treat-answer-percent u-num">{figure.share === null ? "—" : pct(locale, figure.share)}</strong>
+                <span className="treat-answer-range">{figure.range ?? t(locale, "treat.live.few")}</span>
+                <span className="u-num">
+                  {formatNumber(locale, figure.counts.covered)}/{formatNumber(locale, figure.counts.known)}
+                </span>
+              </dd>
+            </div>
+          ))}
+        </dl>
+      ) : (
+        <ShareBar locale={locale} share={asShare(basisCounts)} min={min} size="lg" label={t(locale, "treat.fig.all")} caption={caption} />
+      )}
+      <p className={`treat-top-standing is-${s.standing.replace(" ", "-")}`}>{standingText(locale, s, threshold, min)}</p>
       {c.notCovering.length > 0 ? (
         <p className="treat-top-notfor">
           <Icon name="info" size={16} />
@@ -273,7 +283,7 @@ function TopMatch({ locale, meta, s, threshold, min }: { locale: Locale; meta: F
         </p>
       ) : null}
       <Facts locale={locale} min={min} items={[{ label: t(locale, "treat.fig.recent", { weeks: WEEKS }), share: asShare(c.recent) }]} />
-      {!reaches ? <p className="treat-note is-few">{t(locale, "treat.top.none", { threshold })}</p> : null}
+      {s.standing !== "clears" ? <p className="treat-note is-few">{t(locale, "treat.top.none", { threshold })}</p> : null}
       <p className="treat-top-decide">{t(locale, "treat.top.decide")}</p>
     </article>
   );
@@ -292,40 +302,53 @@ function Pairs({
   pairs: readonly CombinationSuggestion[];
   threshold: string;
 }) {
+  const [first, ...others] = pairs;
+  const gainText = (p: CombinationSuggestion) =>
+    t(locale, "treat.combo.gain", {
+      points: formatNumber(locale, Math.round(100 * p.gain)),
+      name: drugName(locale, meta, p.antibiotics[p.coverage.alone[0] >= p.coverage.alone[1] ? 0 : 1]),
+    });
   return (
-    <Card className="treat-pairs" title={t(locale, "treat.combo.title")}>
-      {pairs.length === 0 ? (
-        <p className="treat-pairs-lead">{t(locale, "treat.combo.none")}</p>
-      ) : (
+    <article className="treat-top treat-pairs" aria-label={t(locale, "treat.combo.title")}>
+      {first ? (
         <>
-          <p className="treat-pairs-lead">{t(locale, "treat.combo.lead", { threshold })}</p>
-          <ul className="treat-rows">
-            {pairs.map((p) => {
-              const [a, b] = p.antibiotics;
-              const better = p.coverage.alone[0] >= p.coverage.alone[1] ? a : b;
-              const range = interval(locale, p.coverage.interval);
-              return (
-                <li key={`${a}+${b}`} className="treat-row">
-                  <div className="treat-row-main">
-                    <div className="treat-row-head">
-                      <span className="treat-row-name">
-                        {drugName(locale, meta, a)} + {drugName(locale, meta, b)}
-                      </span>
-                    </div>
-                    <ShareBar
-                      locale={locale}
-                      share={asShare(p.coverage.counts)}
-                      size="sm"
-                      caption={`${t(locale, "treat.combo.gain", { points: formatNumber(locale, Math.round(100 * p.gain)), name: drugName(locale, meta, better) })}${range ? ` · ${range}` : ""}`}
-                    />
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+          <h2 className="treat-top-name">{first.antibiotics.map((a) => drugName(locale, meta, a)).join(" + ")}</h2>
+          <ShareBar
+            locale={locale}
+            share={asShare(first.coverage.counts)}
+            size="lg"
+            label={t(locale, "treat.fig.all")}
+            caption={`${formatNumber(locale, first.coverage.counts.covered)}/${formatNumber(locale, first.coverage.counts.known)} · ${interval(locale, first.coverage.interval) ?? t(locale, "treat.live.few")} · ${gainText(first)}`}
+          />
         </>
+      ) : (
+        <h2 className="treat-top-name">{t(locale, "treat.combo.title")}</h2>
       )}
-    </Card>
+      <p className="treat-top-standing">{t(locale, "treat.top.none", { threshold })}</p>
+      {first ? (
+        <p className="treat-pairs-lead">{t(locale, "treat.combo.lead")}</p>
+      ) : (
+        <p className="treat-pairs-lead">{t(locale, "treat.combo.none")}</p>
+      )}
+      {others.length > 0 ? (
+        <ul className="treat-rows">
+          {others.map((p) => (
+            <li key={p.antibiotics.join("+")} className="treat-row">
+              <div className="treat-row-main">
+                <span>{p.antibiotics.map((a) => drugName(locale, meta, a)).join(" + ")}</span>
+                <ShareBar
+                  locale={locale}
+                  share={asShare(p.coverage.counts)}
+                  size="sm"
+                  caption={`${formatNumber(locale, p.coverage.counts.covered)}/${formatNumber(locale, p.coverage.counts.known)} · ${interval(locale, p.coverage.interval) ?? t(locale, "treat.live.few")} · ${gainText(p)}`}
+                />
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      <p className="treat-top-decide">{t(locale, "treat.top.decide")}</p>
+    </article>
   );
 }
 
@@ -342,17 +365,23 @@ function DrugList({
   locale,
   meta,
   rest,
+  singles,
   threshold,
   min,
 }: {
   locale: Locale;
   meta: FeedMeta;
   rest: readonly Suggestion[];
+  singles: boolean;
   threshold: string;
   min: number;
 }) {
   return (
-    <Card className="treat-list" title={t(locale, "treat.list.title")} footer={<HowCounted locale={locale} min={min} />}>
+    <Card
+      className="treat-list"
+      title={t(locale, singles ? "treat.list.singles" : "treat.list.title")}
+      footer={<HowCounted locale={locale} min={min} />}
+    >
       {GROUPS.map((g) => {
         const drugs = rest.filter((s) => s.standing === g.standing);
         if (drugs.length === 0) return null;
@@ -364,7 +393,15 @@ function DrugList({
             <h3 className="treat-group-title">{t(locale, g.key, { threshold })}</h3>
             <ul className="treat-rows">
               {drugs.map((s) => (
-                <DrugRow key={s.antibiotic} locale={locale} meta={meta} s={s} min={min} weak={g.standing !== "clears"} />
+                <DrugRow
+                  key={s.antibiotic}
+                  locale={locale}
+                  meta={meta}
+                  s={s}
+                  min={min}
+                  threshold={threshold}
+                  weak={g.standing !== "clears"}
+                />
               ))}
             </ul>
           </div>
@@ -374,7 +411,21 @@ function DrugList({
   );
 }
 
-function DrugRow({ locale, meta, s, min, weak }: { locale: Locale; meta: FeedMeta; s: Suggestion; min: number; weak: boolean }) {
+function DrugRow({
+  locale,
+  meta,
+  s,
+  min,
+  threshold,
+  weak,
+}: {
+  locale: Locale;
+  meta: FeedMeta;
+  s: Suggestion;
+  min: number;
+  threshold: string;
+  weak: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const bodyId = useId();
   const c = s.coverage;
@@ -402,6 +453,7 @@ function DrugRow({ locale, meta, s, min, weak }: { locale: Locale; meta: FeedMet
             ) : undefined
           }
         />
+        {s.standing === "borderline" ? <p className="treat-top-standing">{standingText(locale, s, threshold, min)}</p> : null}
       </div>
       <div id={bodyId} className="treat-row-body" hidden={!open}>
         {open ? (

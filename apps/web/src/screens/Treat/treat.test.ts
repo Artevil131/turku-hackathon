@@ -168,7 +168,11 @@ describe("ResultView (the server's coverage list)", () => {
     const html = view(response(pool(100), "URO", "mild"));
     expect(html).toContain("Based on 100 first isolates");
     expect(html).toContain("Mecillinam");
-    expect(html).toContain("Covers 80% of everything that grows here");
+    expect(html).toContain("Of everything that grows here");
+    expect(html).toContain('class="treat-answer-figures"');
+    expect(html.match(/class="treat-answer-percent u-num"/g)).toHaveLength(2);
+    expect(html).toContain("80%");
+    expect(html).toContain("80/100");
     expect(html).toContain("Of the bacteria it is meant for");
     expect(html).toContain("Last 4 weeks on this unit");
     expect(html).toContain("Demo: the organisers&#x27; synthetic Tyks dataset");
@@ -186,10 +190,40 @@ describe("ResultView (the server's coverage list)", () => {
     expect(view(response([], "URO", "mild"))).toContain("No results for these patients yet");
   });
 
+  it("puts combinations before all singles when none reliably clears the severe bar", () => {
+    const data = response(pool(100), "URO", "severe");
+    const single = data.suggestions[0];
+    if (!single) throw new Error("test needs a single drug");
+    data.suggestions = [{ ...single, standing: "borderline", share: 0.92, interval: [0.83, 0.97] }];
+    data.combinationSuggestions = [
+      {
+        antibiotics: ["AMP", "CIP"],
+        access: 1,
+        standing: "clears",
+        gain: 0.05,
+        coverage: {
+          antibiotics: ["AMP", "CIP"],
+          untested: 0,
+          share: 0.97,
+          interval: [0.91, 0.99],
+          counts: { covered: 97, known: 100 },
+          alone: [0.92, 0.85],
+        },
+      },
+    ];
+    const html = view(data, { severity: "severe" });
+    expect(html.indexOf('class="treat-top treat-pairs"')).toBeLessThan(html.indexOf('class="treat-basis"'));
+    expect(html.indexOf("Ampicillin + Ciprofloxacin")).toBeLessThan(html.indexOf("Single drugs (not reliably enough)"));
+    expect(html).toContain("No single antibiotic reliably reaches 90%");
+    expect(html).toContain("Estimate 92%, but the range 83%–97% dips below 90%");
+    data.suggestions = [{ ...single, standing: "clears" }];
+    expect(view(data, { severity: "severe" })).not.toContain('class="treat-top treat-pairs"');
+  });
+
   it("renders in Finnish", () => {
     const html = view(response(pool(100), "URO", "mild"), {}, "fi");
     expect(html).toContain("Perustuu");
-    expect(html).toContain("kaikista täällä kasvaneista bakteereista");
+    expect(html).toContain("Kaikista täällä kasvaneista bakteereista");
     expect(html).toContain("Niistä bakteereista, joihin se on tarkoitettu");
     expect(html).toContain("Viimeiset 4 viikkoa tässä yksikössä");
     expect(html).toContain("Demo: järjestäjien synteettinen Tyks-aineisto");
@@ -211,6 +245,14 @@ describe("TreatScreen", () => {
         ...props,
       }),
     );
+
+  it("asks for a unit before rendering any patient context or answer", () => {
+    const html = render({ prefs: { ...prefs, ward: "" } });
+    expect(html).toContain("Which unit do you work on?");
+    expect(html).toContain("k-pick-trigger");
+    expect(html).not.toContain('class="treat-context"');
+    expect(html).not.toContain('class="treat-result"');
+  });
 
   it("shows the unit's recent signals as plain lines, at most two, then a link to the rest", () => {
     const html = render({
