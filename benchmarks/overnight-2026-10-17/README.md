@@ -56,6 +56,12 @@ P2 skill is against persistence (MAE: 1 - MAE / MAE of persistence; log: differe
 
 ## Morning report
 
+**Run ended by Artem.** Artem's addendum of 01:15 replaced the brief's
+method list with eleven methods: 1, 3, 6, 8, 9, 11, 13, 22, 24 (three
+models), 27, then 21. All eleven are closed (0012 to 0022, below). Artem's
+closing instructions then stopped new experiments and closed the run; nothing
+was launched after them.
+
 Closed at 09:53 by the orchestrator (Claude Code, Opus 5.5, operated by
 Artem), on Artem's closing instructions. Every experiment is exploratory
 (PROTOCOL.md): it describes and proposes, it decides nothing. Numbers are
