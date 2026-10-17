@@ -153,7 +153,7 @@ export function App() {
               lastRole={lastRole}
               onRole={setPage}
               connection={live.connection}
-              alerts={live.alerts}
+              alerts={live.alertsLoaded ? live.alerts : undefined}
               records={live.records}
             />
           ) : null}

@@ -26,14 +26,14 @@ export function shortTitle(locale: Locale, a: Alert): string {
     case "cpe":
       return `CPE · ${a.organism}`;
     case "new-in-unit":
-      return t(locale, "feedNewTitle", { phenotype: phenotypeName(a.phenotype) }).replace(/ (in the unit|yksikössä)$/, "");
+      return `${t(locale, "feedNewTitle", { phenotype: phenotypeName(a.phenotype) }).replace(/ (in the unit|yksikössä)$/, "")} · ${a.organism}`;
     case "carrier":
       return unitLabel(locale, a.ward);
     case "detector":
       if (a.detector === "sampling-drop" || a.detector === "empty-run") return t(locale, "feedKindData");
       if (a.detector === "rising-trend")
         return [a.antibiotic ? antibioticName(locale, a.antibiotic) : "", a.organism ?? ""].filter(Boolean).join(" · ");
-      if (a.phenotype) return phenotypeName(a.phenotype);
+      if (a.phenotype) return [phenotypeName(a.phenotype), a.organism].filter(Boolean).join(" · ");
       return a.profile ? t(locale, "feedRareProfile", { organism: a.organism ?? "" }) : (a.organism ?? "");
   }
 }

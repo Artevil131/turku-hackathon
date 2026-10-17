@@ -1,5 +1,5 @@
 import type { AeiClient, Alert } from "@aei/contract";
-import { formatDate, formatDateNumeric, type Locale, t } from "@aei/i18n";
+import { alertEvidence, formatDate, formatDateNumeric, incidentResponsibility, type Locale, t } from "@aei/i18n";
 import { useEffect, useMemo, useState } from "react";
 import type { Finding } from "../../../live.ts";
 import { AlertExplanation } from "../../AlertExplanation.tsx";
@@ -100,28 +100,29 @@ export function AlertMath({ client, locale, incident: inc, spans, findings, onCh
             <b className="math-name">{shortTitle(locale, lead)}</b>
             <span className="math-meta">
               {unitLabel(locale, inc.ward)} · {formatDateNumeric(inc.date)}
-              {inc.members.length > 1 ? ` · ${t(locale, "feedAlerts", { n: inc.members.length })}` : ""}
             </span>
+            <span>{t(locale, inc.members.length === 1 ? "feedIncidentOne" : "feedIncidentMany", { n: inc.members.length })}</span>
+            <span className="feed-evidence">{t(locale, "feedLatestEvidence", { evidence: alertEvidence(locale, lead) })}</span>
+            <span className="feed-owner">{incidentResponsibility(locale, inc.members)}</span>
+          </div>
+
+          <div className="math-explain">
+            <AlertExplanation client={client} id={lead.id} locale={locale} />
           </div>
 
           <AlertNumbers locale={locale} alert={lead} />
 
-          {inc.members.length > 1 ? (
-            <ul className="math-members" aria-label={t(locale, "feedMembers")}>
-              {inc.members.map((a) => {
-                const s = surpriseOf(a);
-                return (
-                  <li key={a.id} aria-current={a.id === lead.id ? "true" : undefined}>
-                    <span>{formatDateNumeric(a.date)}</span>
-                    <span className="math-mem-what">{shortTitle(locale, a)}</span>
-                    <span className="math-mem-n">
-                      {s === null ? t(locale, "feedRuleNoTest") : `${t(locale, "feedSurprise")} ${oneDecimal(locale, s)}`}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          ) : null}
+          <ul className="math-members" aria-label={t(locale, "feedMembers")}>
+            {inc.members.map((a) => (
+              <li key={a.id} aria-current={a.id === lead.id ? "true" : undefined}>
+                <time dateTime={a.date}>{formatDateNumeric(a.date)}</time>
+                <span className="math-mem-what">
+                  {shortTitle(locale, a)} · {alertEvidence(locale, a)}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p className="feed-note">{t(locale, "feedMembersNote")}</p>
 
           {spans ? (
             <section className="math-spans" aria-labelledby="math-spans-title">
@@ -151,10 +152,6 @@ export function AlertMath({ client, locale, incident: inc, spans, findings, onCh
               />
             </section>
           ) : null}
-
-          <div className="math-explain">
-            <AlertExplanation client={client} id={lead.id} locale={locale} />
-          </div>
         </div>
       )}
 

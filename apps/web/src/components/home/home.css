@@ -61,6 +61,30 @@
   color: var(--ink);
 }
 
+.hm-period {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: var(--t-s);
+  color: var(--ink-2);
+}
+
+.hm-period select {
+  min-height: 32px;
+  padding: 4px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control);
+  background: var(--glass-1, #fff);
+  color: var(--ink);
+  font: inherit;
+}
+
+.hm-incidents {
+  min-width: 0;
+  overflow: hidden;
+}
+
 .hm-stats {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

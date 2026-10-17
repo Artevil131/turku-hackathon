@@ -1,7 +1,7 @@
-import { formatDateNumeric, type Locale, t } from "@aei/i18n";
+import { alertEvidence, formatDateNumeric, incidentPriority, incidentResponsibility, type Locale, t } from "@aei/i18n";
 import { KindGlyph } from "./glyphs.tsx";
-import { type Incident, oneDecimal } from "./model.ts";
-import { incidentTitle, kindLabel, shortTitle, surpriseOf, surpriseShare } from "./names.ts";
+import type { Incident } from "./model.ts";
+import { kindLabel, shortTitle, unitLabel } from "./names.ts";
 import { SpanLine } from "./SpanChips.tsx";
 import type { Spans } from "./spans.ts";
 
@@ -13,43 +13,58 @@ interface Props {
   onSelect: (key: string) => void;
 }
 
-/** One list row: kind glyph and name, date, the units it spans, and the surprise bar. */
+/** Task summary first; the calculation and the dated member explanations are one action away. */
 export function IncidentRow({ locale, incident: inc, selected, spans, onSelect }: Props) {
-  const share = surpriseShare(inc);
-  const top = Math.max(...inc.members.map((a) => surpriseOf(a) ?? 0));
-  const label =
-    inc.kind === "sentinel" ? t(locale, "feedRuleNoTest") : share === null ? "" : `${t(locale, "feedSurprise")} ${oneDecimal(locale, top)}`;
+  const priority = incidentPriority(inc.members);
   return (
-    <button
-      type="button"
-      className="feed-row"
-      data-kind={inc.kind}
-      aria-current={selected ? "true" : undefined}
-      data-key={inc.key}
-      title={incidentTitle(locale, inc.lead)}
-      onClick={() => onSelect(inc.key)}
-    >
-      <span className="feed-row-top">
-        <span className="feed-kind" title={kindLabel(locale, inc.kind)}>
-          <KindGlyph kind={inc.kind} />
-          <span className="visually-hidden">{kindLabel(locale, inc.kind)}</span>
-        </span>
-        <span className="feed-name">{shortTitle(locale, inc.lead)}</span>
-        {inc.members.length > 1 ? <span className="feed-n">×{inc.members.length}</span> : null}
-        <time className="feed-date" dateTime={inc.date}>
-          {formatDateNumeric(inc.date)}
-        </time>
-      </span>
-      <span className="feed-row-bottom">
-        <SpanLine locale={locale} spans={spans} ward={inc.ward} />
-        <span className="feed-surp" title={label}>
-          <span className="feed-bar" aria-hidden="true">
-            <i style={{ width: `${Math.round((share ?? 0) * 100)}%` }} data-rule={inc.kind === "sentinel"} />
+    <article className="feed-incident">
+      <button
+        type="button"
+        className="feed-row"
+        data-kind={inc.kind}
+        aria-current={selected ? "true" : undefined}
+        data-key={inc.key}
+        onClick={() => onSelect(inc.key)}
+        aria-label={`${t(locale, "feedMathOpen")}: ${shortTitle(locale, inc.lead)}, ${unitLabel(locale, inc.ward)}, ${formatDateNumeric(inc.date)}`}
+      >
+        <span className="feed-row-top">
+          <span className="feed-kind" title={kindLabel(locale, inc.kind)}>
+            <KindGlyph kind={inc.kind} />
+            <span className="visually-hidden">{kindLabel(locale, inc.kind)}</span>
           </span>
-          <span className="feed-surp-n">{inc.kind === "sentinel" ? "▲" : share === null ? "–" : oneDecimal(locale, top)}</span>
-          <span className="visually-hidden">{label}</span>
+          <span className="feed-name">{shortTitle(locale, inc.lead)}</span>
+          <time className="feed-date" dateTime={inc.date}>
+            {formatDateNumeric(inc.date)}
+          </time>
         </span>
-      </span>
-    </button>
+        <span className="feed-summary">
+          {unitLabel(locale, inc.ward)} · {t(locale, priority === "high" ? "feedSeverityHigh" : "feedSeverityMedium")}
+        </span>
+        <span className="feed-summary">
+          {t(locale, inc.members.length === 1 ? "feedIncidentOne" : "feedIncidentMany", { n: inc.members.length })}
+        </span>
+        <span className="feed-evidence">{t(locale, "feedLatestEvidence", { evidence: alertEvidence(locale, inc.lead) })}</span>
+        <span className="feed-owner">{incidentResponsibility(locale, inc.members)}</span>
+        {spans ? (
+          <span className="feed-row-bottom">
+            <SpanLine locale={locale} spans={spans} ward={inc.ward} />
+          </span>
+        ) : null}
+        <span className="feed-open">{t(locale, "feedMathOpen")} →</span>
+      </button>
+      <details className="feed-members">
+        <summary>{t(locale, "feedMembers")}</summary>
+        <p>{t(locale, "feedMembersNote")}</p>
+        <ul>
+          {inc.members.map((a) => (
+            <li key={a.id}>
+              <time dateTime={a.date}>{formatDateNumeric(a.date)}</time>
+              {" · "}
+              {shortTitle(locale, a)} · {alertEvidence(locale, a)}
+            </li>
+          ))}
+        </ul>
+      </details>
+    </article>
   );
 }
