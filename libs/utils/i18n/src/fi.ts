@@ -66,7 +66,7 @@ export const fi: Record<keyof typeof en, string> = {
   alertRisingTrend: "Resistenssi kasvaa",
   alertDetector: "Tilastollinen signaali",
 
-  appName: "AEI",
+  appName: "YL",
   appTagline: "Antibioottien tehoindikaattori",
   askLabel: "Kysy aineistolta",
   askPlaceholder: "Kysy aineistosta, esim. ESBL E. coli virtsassa urologialla tässä kuussa",

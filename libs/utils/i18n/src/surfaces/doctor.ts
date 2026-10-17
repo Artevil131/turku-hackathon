@@ -1,6 +1,15 @@
 // Copy for the doctor's list (spec-doctor.md with spec-amendments.md). Keys are global: prefix `dr`.
 
 export const doctorEn = {
+  drAnswerLabel: "What to start with",
+  drAnswerCase: "For {where}",
+  drAnswerChange: "Change the case",
+  drAnswerDone: "Hide the case",
+  drAnswerStart: "Start with {name}: it covers {share} % of the likely bacteria (n {n}).",
+  drAnswerAlso: "Also clears the {bar} % bar: {list}.",
+  drAnswerBelow: "Below the {bar} % bar, so not a first choice: {list}.",
+  drAnswerNone: "No single antibiotic clears the {bar} % bar for this case. Look at the combinations below.",
+  drAnswerNote: "Based on this hospital's own results. Supports the decision; the doctor decides.",
   drTargetMicrobes: "target organisms",
   drWithinSpectrum: "within spectrum",
   drAllOrgShort: "all organisms",
@@ -188,6 +197,15 @@ export const doctorEn = {
 } as const;
 
 export const doctorFi: Record<keyof typeof doctorEn, string> = {
+  drAnswerLabel: "Mistä aloittaa",
+  drAnswerCase: "Tapaukselle {where}",
+  drAnswerChange: "Muuta tapausta",
+  drAnswerDone: "Piilota tapaus",
+  drAnswerStart: "Aloita lääkkeellä {name}: se kattaa {share} % todennäköisistä bakteereista (n {n}).",
+  drAnswerAlso: "Ylittää myös {bar} %:n rajan: {list}.",
+  drAnswerBelow: "Alle {bar} %:n rajan, joten ei ensisijainen: {list}.",
+  drAnswerNone: "Yksikään antibiootti ei yksin ylitä {bar} %:n rajaa tässä tapauksessa. Katso yhdistelmät alla.",
+  drAnswerNote: "Perustuu tämän sairaalan omiin tuloksiin. Tukee päätöstä; lääkäri päättää.",
   drTargetMicrobes: "kohdemikrobit",
   drWithinSpectrum: "kattavuusalueella",
   drAllOrgShort: "kaikki bakteerit",

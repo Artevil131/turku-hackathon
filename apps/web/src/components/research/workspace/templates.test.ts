@@ -21,8 +21,8 @@ describe("project template layouts", () => {
     expect(openIds("patient")).toEqual(["coverage"]);
     expect(openIds("antibiogram")).toEqual(["grid", "coverage"]);
   });
-  it("puts the timeline in every project, across the top", () => {
-    for (const template of TEMPLATES) {
+  it("puts the timeline in every project, across the top (Treat a patient is a quick view without it)", () => {
+    for (const template of TEMPLATES.filter((t) => t !== "patient")) {
       const { timeline } = templateLayout(template).wins;
       expect(timeline).toMatchObject({ open: true, x: 0, y: 0 });
     }

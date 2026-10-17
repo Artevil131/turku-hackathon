@@ -103,9 +103,20 @@ export function defaultLayout(): Layout {
 /** Rows of the timeline window every project starts with, across the top of the board. */
 export const TIMELINE_ROWS = 11;
 
-/** Opens the timeline across the top of the board and moves every other open window down below it. */
-export function withTimeline(layout: Layout): Layout {
+/**
+ * Opens the timeline across the top of the board and moves every other open window down below it. `bottom` puts it
+ * under the other windows instead (a screen whose first job is another window), `none` leaves it closed.
+ */
+export function withTimeline(layout: Layout, place: "top" | "bottom" | "none" = "top"): Layout {
   const wins = { ...layout.wins };
+  if (place !== "top") {
+    const bottom = Math.max(
+      0,
+      ...WIN_IDS.filter((id) => id !== "timeline" && wins[id].open).map((id) => (wins[id] as WinState).y + (wins[id] as WinState).h),
+    );
+    wins.timeline = { x: 0, y: bottom, w: COLS, h: TIMELINE_ROWS, open: place === "bottom" };
+    return { ...layout, wins };
+  }
   for (const id of WIN_IDS) if (id !== "timeline" && wins[id].open) wins[id] = { ...wins[id], y: wins[id].y + TIMELINE_ROWS };
   const copies = Object.fromEntries(Object.entries(layout.copies).map(([id, c]) => [id, c.open ? { ...c, y: c.y + TIMELINE_ROWS } : c]));
   wins.timeline = { x: 0, y: 0, w: COLS, h: TIMELINE_ROWS, open: true };

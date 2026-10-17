@@ -26,19 +26,20 @@ const OPEN: Record<Template, Partial<Record<WinId, Partial<WinState>>>> = {
 };
 
 /** A layout on the researcher's grid: the named windows open at their rectangles, every other window closed, the timeline across the top. */
-export function gridLayout(open: Partial<Record<WinId, Partial<WinState>>>): Layout {
+export function gridLayout(open: Partial<Record<WinId, Partial<WinState>>>, timeline: "top" | "bottom" | "none" = "top"): Layout {
   const base = baseLayout();
   const wins = { ...base.wins };
   for (const id of WIN_IDS) {
     const patch = open[id];
     wins[id] = patch ? { ...wins[id], ...patch, open: true } : { ...wins[id], open: false };
   }
-  return withTimeline({ wins, copies: {}, charts: {}, order: base.order });
+  return withTimeline({ wins, copies: {}, charts: {}, order: base.order }, timeline);
 }
 
 /** The template's layout on the researcher's grid. Every template also gets the timeline across the top. */
 export function templateLayout(template: Template): Layout {
-  return gridLayout(OPEN[template]);
+  // Treat a patient is a quick view, not a project: the coverage list comes first and the timeline stays out of its way.
+  return gridLayout(OPEN[template], template === "patient" ? "none" : "top");
 }
 export function templateJson(template: Template): Record<string, unknown> {
   return JSON.parse(serializeLayout(templateLayout(template)));

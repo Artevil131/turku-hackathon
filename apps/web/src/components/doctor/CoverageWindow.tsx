@@ -10,9 +10,11 @@ import { AsOf } from "../AsOf.tsx";
 import { DataQuality } from "../DataQuality.tsx";
 import { CoverageList, itemsOf, type ListStatus } from "./CoverageList.tsx";
 import { Details } from "./Details.tsx";
+import { DoctorAnswer } from "./DoctorAnswer.tsx";
 import { FailsTogether } from "./FailsTogether.tsx";
 import "./DoctorPage.css";
 import {
+  barOf,
   chooseSyndrome,
   coverageQuery,
   type DoctorFilters,
@@ -91,6 +93,7 @@ export function CoverageWindow({
   const [attempt, setAttempt] = useState(0);
   const flows = useFlows();
   const [selected, setSelected] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
   const sheetRef = useRef<HTMLDivElement>(null);
   const [national, setNational] = useState<NationalResponse | null>(null);
   // The patient id (D-050) lives here only: never in the URL or localStorage, cleared when the unit changes.
@@ -242,16 +245,28 @@ export function CoverageWindow({
           {t(locale, "drSkip")}
         </button>
         <div className="doctor-main" hidden={embedded && !wide && !!current && !!item}>
-          <SyndromePicker locale={locale} value={filters.syn} onPick={onSyndrome} />
-          <RecordStrip
+          <DoctorAnswer
             locale={locale}
-            wide={wide}
             filters={filters}
-            onChange={onChange}
-            patientId={patientId}
-            onPatientId={setPatientId}
-            onPatientCommit={commitPatient}
+            items={items}
+            bar={barOf(current, filters)}
+            loading={status2 === "loading" && !current}
+            editing={editing}
+            onEdit={() => setEditing((v) => !v)}
           />
+          {/* The controls that describe the case wait behind "Change the case"; the answer above is what you read first. */}
+          <div className="dr-case" data-open={editing || undefined}>
+            <SyndromePicker locale={locale} value={filters.syn} onPick={onSyndrome} />
+            <RecordStrip
+              locale={locale}
+              wide={wide}
+              filters={filters}
+              onChange={onChange}
+              patientId={patientId}
+              onPatientId={setPatientId}
+              onPatientCommit={commitPatient}
+            />
+          </div>
           <div className="doctor-body">
             <CoverageList
               source={<DataQuality client={client} locale={locale} />}
