@@ -192,7 +192,7 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
       tabIndex={-1}
     >
       <header className="cl-head" ref={headRef} tabIndex={-1}>
-        <h2 id="dr-list-title">{t(locale, "drCoverage")}</h2>
+        <h1 id="dr-list-title">{t(locale, "drCoverage")}</h1>
         {date ? <span className="cl-date num">{dmy(date)}</span> : null}
         <span className="cl-where">
           {unit} · {site}

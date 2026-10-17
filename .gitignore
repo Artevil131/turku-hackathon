@@ -42,3 +42,6 @@ xcuserdata/
 # impeccable's font index sits in a folder named data/; keep it
 !.claude/skills/impeccable/scripts/data/
 !.agents/skills/impeccable/scripts/data/
+
+# smoke-test screenshots and report (apps/web/scripts/smoke.mjs)
+apps/web/smoke-out/
