@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { resolve } from "node:path";
-import { buildAlerts, sortAlerts } from "@aei/alerts";
+import { buildAlerts, patientFindings, sortAlerts } from "@aei/alerts";
 import { alertExplainInput, createLlm, explainAlert, fillSlots, LlmError, llmConfigFromEnv, parseQuestion } from "@aei/ask";
 import {
   type ClockCommand,
@@ -10,6 +10,7 @@ import {
   type LiveEvent,
   type Meta,
   type NationalResponse,
+  type PatientFindingsResponse,
   type QualityResponse,
   type RegionalData,
   type RegionalQuery,
@@ -17,9 +18,20 @@ import {
   ROUTES,
   regionalUpTo,
 } from "@aei/contract";
-import { type CoverageResult, coverage, suggest, suggestCombinations } from "@aei/coverage";
+import { barFor, type CoverageResult, coverage, ONSETS, type Onset, suggest, suggestCombinations } from "@aei/coverage";
 import { type Dataset, joinIsolates, loadDataset } from "@aei/dataset";
-import { ANTIBIOTICS, type IsolateRecord, ORGANISMS, SPECIMENS, type Specimen, WARDS, type WardCode } from "@aei/domain";
+import {
+  ANTIBIOTICS,
+  type AntibioticCode,
+  type IsolateRecord,
+  ORGANISMS,
+  type Phenotype,
+  SPECIMENS,
+  type Specimen,
+  WARDS,
+  type WardCode,
+} from "@aei/domain";
+import { inferredResistantFrom } from "@aei/eucast";
 import { antibioticName, phenotypeName, specimenName, wardName } from "@aei/i18n";
 import { asResult, type CodeMaps, DEFAULT_CODE_MAPS, detectFormat, extendCodeMaps, ingest, mergeResults } from "@aei/ingest";
 import { checkRows, type Finding, summarize } from "@aei/quality";
@@ -312,12 +324,14 @@ export const server = createServer(async (req, res) => {
       if (!meta.wards.some((w) => w.code === ward)) return send(res, 400, { error: "ward is required and must be a ward code" });
       if (!meta.specimens.some((x) => x.code === specimen)) return send(res, 400, { error: "specimen is required" });
       if (sex !== null && sex !== "F" && sex !== "M") return send(res, 400, { error: "sex must be F or M" });
+      const onset = url.searchParams.get("onset") ?? "any";
+      if (!ONSETS.includes(onset as Onset)) return send(res, 400, { error: "onset must be hospital, community or any" });
       const days = windowDays === null ? undefined : Number(windowDays);
       if (days !== undefined && (!Number.isInteger(days) || days < 1))
         return send(res, 400, { error: "windowDays must be a positive integer" });
       const asOf = clock.state().asOf;
       // Only released records, so nothing after the replay date leaks in.
-      const key = JSON.stringify([asOf, ward, specimen, sex, days]);
+      const key = JSON.stringify([asOf, ward, specimen, sex, days, onset]);
       let result = coverages.get(key);
       if (!result) {
         if (coverages.size > 500) coverages.clear();
@@ -327,16 +341,28 @@ export const server = createServer(async (req, res) => {
           specimen: specimen as Specimen,
           ...(sex ? { sex } : {}),
           ...(days ? { windowDays: days } : {}),
+          onset: onset as Onset,
         });
         coverages.set(key, result);
       }
       return send(res, 200, {
         asOf,
         severity,
+        bar: barFor(result.query, severity),
         coverage: result,
         suggestions: suggest(result, severity),
         combinationSuggestions: suggestCombinations(result, severity),
       });
+    }
+    if (url.pathname === ROUTES.patientFindings) {
+      const id = url.searchParams.get("id")?.trim();
+      if (!id) return send(res, 400, { error: "id is required" });
+      const asOf = clock.state().asOf;
+      // Only released records, so nothing after the replay date leaks in (D-050).
+      const findings = patientFindings(state.released.upTo(asOf), id, asOf);
+      const affects: Partial<Record<Phenotype, AntibioticCode[]>> = {};
+      for (const f of findings) affects[f.phenotype] ??= inferredResistantFrom(f.phenotype);
+      return send(res, 200, { asOf, patientId: id, findings, affects } satisfies PatientFindingsResponse);
     }
     if (url.pathname === ROUTES.ingest && req.method === "POST") {
       const out = ingestPayload(await readText(req), req.headers["content-type"] ?? "");

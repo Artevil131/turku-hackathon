@@ -1,4 +1,4 @@
-import { ANTIBIOTICS, type AntibioticCode, type IsolateRecord, type Organism, type Specimen, type SR } from "@aei/domain";
+import { ANTIBIOTICS, type AntibioticCode, type IsolateRecord, type Organism, type Phenotype, type Specimen, type SR } from "@aei/domain";
 
 // Microbiology facts for the dataset's 9 organisms and 13 antibiotics:
 // which pairs are resistant by nature, which have no clinical breakpoint,
@@ -118,4 +118,27 @@ export function effectiveResult(record: Pick<IsolateRecord, "organism" | "result
   if (inferred) return { result: inferred, basis: "inferred" };
   if (hasNoBreakpoint(record.organism, antibiotic)) return { result: null, basis: "no-breakpoint" };
   return { result: null, basis: "untested" };
+}
+
+/**
+ * The isolate a resistant phenotype implies, as the inference rules read it:
+ * MRSA is a Staphylococcus aureus with cefoxitin R. ESBL, VRE and CPE have no
+ * rule here that infers another result, so they imply nothing.
+ */
+const PHENOTYPE_MARKERS: Partial<Record<Phenotype, Pick<IsolateRecord, "organism" | "results">>> = {
+  mrsa: { organism: "Staphylococcus aureus", results: { FOX: "R" } },
+};
+
+/**
+ * Antibiotics `effectiveResult` infers resistant (basis "inferred") from a
+ * phenotype, in the dataset's order: for MRSA the beta-lactams the cefoxitin
+ * screen decides; empty for phenotypes the rules infer nothing from (D-050).
+ */
+export function inferredResistantFrom(phenotype: Phenotype): AntibioticCode[] {
+  const marker = PHENOTYPE_MARKERS[phenotype];
+  if (!marker) return [];
+  return ANTIBIOTICS.map((a) => a.code).filter((code) => {
+    const e = effectiveResult(marker, code);
+    return e.basis === "inferred" && e.result === "R";
+  });
 }

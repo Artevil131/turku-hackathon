@@ -248,3 +248,59 @@ def test_month_ends():
 def test_offered_leaves_out_what_does_not_suit_or_is_not_offered():
     assert "FOX" not in cl.offered("blood") and "VAN" not in cl.offered("urine") and "CLI" not in cl.offered("urine")
     assert "VAN" in cl.offered("wound") and "MEC" in cl.offered("urine") and "MEC" not in cl.offered("blood")
+
+
+# --- onset (D-049) -----------------------------------------------------------------------------------------------------
+
+
+def _iso(i: int, admission: str | None, sample: str = "2026-06-01", sex: str = "F", ward: str = "URO", nit: str = "S"):
+    from aei.dataset import IsolateRecord
+
+    return IsolateRecord(
+        isolate_id=f"C{i}-1",
+        culture_id=f"C{i}",
+        patient_id=f"P{i}",
+        sample_date=sample,
+        admission_date=admission,
+        ward=ward,
+        specimen="urine",
+        organism="Escherichia coli",
+        sex=sex,
+        age_years=60,
+        home_area="North",
+        phenotypes=(),
+        results={"NIT": nit},
+    )
+
+
+def test_day_three_of_the_stay_is_hospital_onset():
+    # admitted 1 June: sampled that day is day 1, the next day 2 (community), the day after day 3 (hospital)
+    assert cl.onset_of(_iso(0, "2026-06-01", "2026-06-01")) == "community"
+    assert cl.onset_of(_iso(0, "2026-06-01", "2026-06-02")) == "community"
+    assert cl.onset_of(_iso(0, "2026-06-01", "2026-06-03")) == "hospital"
+    assert cl.onset_of(_iso(0, None, "2026-06-03")) == "community"
+
+
+def test_onset_dropped_before_sex_before_unit_and_the_hospital_bar():
+    def make(hf: int, hm: int, cf: int, cm: int):
+        groups = [("2026-05-20", "F", hf), ("2026-05-20", "M", hm), (None, "F", cf), (None, "M", cm)]
+        return [_iso(i * 1000 + j, adm, sex=sex) for i, (adm, sex, n) in enumerate(groups) for j in range(n)]
+
+    def pick(records):
+        r = cl.coverage(records, as_of="2026-06-30", ward="URO", specimen="urine", sex="F", onset="hospital")
+        return (r.level, r.isolates, r.onset_applied, r.sex_applied)
+
+    assert pick(make(30, 5, 5, 5)) == ("unit", 30, True, True)
+    assert pick(make(20, 15, 20, 0)) == ("unit", 40, False, True)
+    assert pick(make(10, 10, 10, 15)) == ("unit", 45, False, False)
+    sparse = make(5, 5, 5, 5) + [_iso(9000 + j, "2026-05-20", sex="F", ward="SURG") for j in range(30)]
+    assert pick(sparse) == ("ward type", 35, True, True)
+
+    assert cl.bar_for("hospital", "mild") == 0.9 and cl.bar_for("any", "mild") == 0.8 and cl.bar_for(None, "severe") == 0.9
+    records = [_iso(j, "2026-05-20", nit="S" if j < 85 else "R") for j in range(100)]
+
+    def nit(onset: str) -> str:
+        r = cl.coverage(records, as_of="2026-06-30", ward="URO", specimen="urine", onset=onset)
+        return next(s.standing for s in cl.suggest(r, "mild") if s.antibiotic == "NIT")
+
+    assert nit("any") == "borderline" and nit("hospital") == "below"

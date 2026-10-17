@@ -25,6 +25,15 @@ D-021) and the live statistical detectors (D-020).
 Every alert depends only on samples up to its date, so a server builds
 them once and releases them as its replay clock moves.
 
+A patient's earlier findings (D-050):
+
+    patientFindings(records, patientId, asOf, days = 365)
+
+the patient's ESBL, MRSA, VRE and CPE isolates sampled in the `days` days
+up to and including `asOf`, one row per isolate and phenotype (phenotype,
+date, ward, organism, isolateId), newest first. Records after `asOf` are
+ignored. The doctor's screen annotates, it does not re-estimate.
+
 Not here yet: ward against hospital.
 
-Relies on: D-004, D-012, D-014, D-020, D-021, D-022. Tests: `src/alerts.test.ts`.
+Relies on: D-004, D-012, D-014, D-020, D-021, D-022, D-050. Tests: `src/alerts.test.ts`, `src/findings.test.ts`.
