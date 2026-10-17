@@ -53,6 +53,30 @@ Then we take their result back as notes in the project (VISION.md §2).
 The rule for every hand-over: **what leaves the tool can be loaded in one
 line, and says how it was made.**
 
+## The promise: every number is reproducible
+
+What we offer researchers is not "we also have notebooks"; it is that
+**every number the tool shows can be reproduced, outside the tool, from the
+same cut of the data, by the same method, and checked.** The pieces already
+add up to that:
+
+- **The same data**: a frozen project pins an as-of date and a fingerprint
+  of its rows (D-058); `project.verify()` proves the rows a notebook loads are
+  the rows the tool used, or says that they changed.
+- **The same method**: the `aei` Python package carries our detectors and
+  the coverage figure, each with a parity test against the TypeScript the
+  app runs (D-061), so a recomputed number is the app's number, not an
+  approximation of it.
+- **The same parameters**: `methods.json` and the bundle record each
+  number's method, parameters and decision ids (D-059, D-060).
+- **A place to check it**: the Reproduce notebook opens in the tool
+  (JupyterLite, D-062) or the researcher's own Jupyter, loads the project,
+  verifies the fingerprint and recomputes the signal: "the app said 1 in
+  50 000; recomputed: 1 in 50 000".
+
+This is what the judge asked for in other words: a research tool whose
+numbers can go into a paper, because a reviewer can rerun them.
+
 ## The hand-overs, from simplest to deepest
 
 ### 1. The research package (one download)
@@ -139,14 +163,14 @@ Quarto is for the finished, top-to-bottom report and runs Python through a
 Jupyter kernel anyway; `quarto render analysis.ipynb` turns the same
 notebook into HTML, PDF or Word, so we keep one template, not two.
 
-### 4b. Jupyter inside the system (D-062)
+### 4b. Reproduce it in Jupyter, inside the system (D-062)
 
 In this order:
 
 1. **Copy to notebook**: a project offers a ready cell for the
    researcher's own Jupyter (`aei.connect(url).project(id)`).
 2. **`analysis.ipynb`** in the research package.
-3. **JupyterLite in the research workspace**: a Notebook window running
+3. **JupyterLite in the research workspace**: a Reproduce window running
    JupyterLab in the browser (Pyodide), with the open project's data loaded
    and `aei` importable. Static files only: no code runs on our server and
    the data stays in the browser. Costs tens of MB on first load and a build
