@@ -49,7 +49,14 @@ export function Roles({ locale, lastRole, unit, asOf, signals, onRole }: Props) 
               ? t(locale, "homeResearchOne")
               : t(locale, "homeResearchCount", { n: signals })
       }
-      asOf={signals !== null && asOf ? <AsOf locale={locale} date={asOf} /> : null}
+      asOf={
+        signals !== null && asOf ? (
+          <>
+            <span aria-hidden="true">·</span>
+            <AsOf locale={locale} date={asOf} />
+          </>
+        ) : null
+      }
       action={t(locale, "homeResearchOpen")}
       onRole={onRole}
     />

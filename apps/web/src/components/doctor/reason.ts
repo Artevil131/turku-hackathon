@@ -24,16 +24,13 @@ export function reasonOf(locale: Locale, row: Row, data: CoverageResponse, filte
   const lo = row.interval ? pct(row.interval[0]) : 0;
   const hi = row.interval ? pct(row.interval[1]) : 0;
   if (row.standing === "clears") {
-    const accessClears = data.suggestions.some((s) => s.standing === "clears" && s.aware === "Access");
-    const base = t(locale, "drReasonClears", {
+    return t(locale, "drReasonClears", {
       bar,
       n: num(locale, rowN(row)),
       specimen: specimenName(locale, filters.site).toLowerCase(),
       level: t(locale, LEVEL_KEYS[data.coverage.level]),
       from: dmy(data.coverage.from),
-      tier: row.aware,
     });
-    return row.aware === "Watch" && accessClears ? `${base}; ${t(locale, "drAfterAccess")}` : base;
   }
   if (row.standing === "borderline") return t(locale, "drReasonBorderline", { lo, hi, bar });
   if (row.standing === "below") return t(locale, "drReasonBelow", { share: pct(row.share ?? 0), bar });
@@ -53,7 +50,6 @@ export function flagsOf(row: Row) {
 export interface Item {
   id: string;
   name: string;
-  aware: "Access" | "Watch" | null;
   standing: Row["standing"];
   share: number | null;
   interval: [number, number] | null;

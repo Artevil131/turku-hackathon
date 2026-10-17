@@ -52,10 +52,8 @@ export function hasAcquiredResistance(r: Pick<IsolateRecord, "organism" | "resul
   return PROFILE_ANTIBIOTICS.some((a) => r.results[a] === "R" && !isIntrinsic(r.organism, a));
 }
 
-/** Sampled on day 3 or later of the stay (CONTEXT.md). */
-export function isHospitalOnset(r: Pick<IsolateRecord, "admissionDate" | "sampleDate">): boolean {
-  return !!r.admissionDate && daysBetween(r.admissionDate, r.sampleDate) >= 2;
-}
+/** Sampled on day 3 or later of the stay (CONTEXT.md); defined in @aei/domain, which the coverage list shares. */
+export { isHospitalOnset } from "@aei/domain";
 
 // ---------- helpers ----------
 

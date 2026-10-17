@@ -1,6 +1,7 @@
 .math-cshape {
   margin: 0;
-  max-width: 480px;
+  /* 360 px keeps the 12-unit axis labels near page text size (viewBox 320 wide). */
+  max-width: 360px;
   font-family: var(--brand-font-data, system-ui, sans-serif);
   color: var(--ink, #07081c);
 }

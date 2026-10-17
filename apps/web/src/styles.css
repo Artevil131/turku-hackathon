@@ -1270,12 +1270,38 @@ fieldset.setting {
   .sections {
     order: 3;
     width: 100%;
+    min-width: 0;
+    gap: 2px;
   }
   .section-tab {
     flex: 1;
+    min-width: 0;
     justify-content: center;
-    padding: 0 8px;
+    gap: 4px;
+    padding: 0 4px;
     font-size: var(--t-s);
+  }
+  .section-tab .badge {
+    min-width: 18px;
+    padding: 0 4px;
+  }
+}
+
+/* Phones: the five sections keep their natural width and the row scrolls sideways instead of squeezing labels and badges together. */
+@media (max-width: 560px) {
+  .sections {
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    scroll-snap-type: x proximity;
+  }
+  .sections::-webkit-scrollbar {
+    display: none;
+  }
+  .section-tab {
+    flex: 0 0 auto;
+    padding: 0 12px;
+    scroll-snap-align: start;
   }
 }
 

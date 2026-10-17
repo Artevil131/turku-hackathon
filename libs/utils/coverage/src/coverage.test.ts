@@ -70,14 +70,15 @@ describe("coverage", () => {
 });
 
 describe("suggest", () => {
-  it("puts Access before Watch among those that clear, and marks borderline and untested", () => {
+  it("orders those that clear by coverage, with no WHO tier, and marks borderline and untested", () => {
     const records = Array.from({ length: 200 }, (_, i) =>
       iso({ results: { NIT: i < 196 ? "S" : "R", CIP: i < 198 ? "S" : "R", TMP: i < 170 ? "S" : "R", MEC: i < 184 ? "S" : "R" } }),
     );
     const list = suggest(coverage(records, { asOf: "2026-06-30", ward: "URO", specimen: "urine" }), "severe");
     const standing = Object.fromEntries(list.map((s) => [s.antibiotic, s.standing]));
-    expect(list[0]?.antibiotic).toBe("NIT"); // Access, 98 %, clears 90 %
-    expect(list.findIndex((s) => s.antibiotic === "NIT")).toBeLessThan(list.findIndex((s) => s.antibiotic === "CIP")); // CIP is Watch
+    expect(list[0]?.antibiotic).toBe("CIP"); // 99 %, the highest that clears 90 %
+    expect(list.findIndex((s) => s.antibiotic === "CIP")).toBeLessThan(list.findIndex((s) => s.antibiotic === "NIT")); // 98 %
+    expect(list.some((s) => "aware" in s)).toBe(false);
     expect(standing.MEC).toBe("borderline"); // 92 %, interval reaches below 90 %
     expect(standing.TMP).toBe("below"); // 85 %
     expect(standing.CAZ).toBe("not assessable"); // never tested on E. coli
@@ -216,5 +217,70 @@ describe("onset (D-049)", () => {
     expect(nit("any")?.standing).toBe("borderline");
     expect(nit("hospital")?.standing).toBe("below");
     expect(nit("hospital")?.basis).toBe("spectrum"); // only the bar changes, not the basis
+  });
+});
+
+describe("age group and onset (D-053)", () => {
+  const day3 = { admissionDate: "2026-05-30", sampleDate: "2026-06-01" }; // day 3 of the stay
+  const day2 = { admissionDate: "2026-05-31", sampleDate: "2026-06-01" };
+
+  it("keeps only the age group and hospital-onset isolates asked for", () => {
+    const records = [
+      ...Array.from({ length: 30 }, () => iso({ ageYears: 70, ...day3, results: { CIP: "R" } })),
+      ...Array.from({ length: 30 }, () => iso({ ageYears: 40, ...day3, results: { CIP: "S" } })),
+      ...Array.from({ length: 30 }, () => iso({ ageYears: 70, ...day2, results: { CIP: "S" } })),
+      ...Array.from({ length: 30 }, () => iso({ ageYears: 70, results: { CIP: "S" } })), // outpatient: no admission
+    ];
+    const r = coverage(records, { asOf: "2026-06-30", ward: "URO", specimen: "urine", ageGroup: "older", onset: "hospital" });
+    expect(r.level).toBe("unit");
+    expect(r.isolates).toBe(30);
+    expect(r.ageGroupApplied).toBe(true);
+    expect(r.onsetApplied).toBe(true);
+    expect(r.query).toMatchObject({ ageGroup: "older", onset: "hospital" });
+    expect(r.antibiotics.find((a) => a.antibiotic === "CIP")?.share).toBe(0);
+    expect(coverage(records, { asOf: "2026-06-30", ward: "URO", specimen: "urine", ageGroup: "adult" }).isolates).toBe(30);
+  });
+
+  it("uses the fixed table's bounds, 80+ inside 65+", () => {
+    const records = [17, 18, 64, 65, 79, 80].map((ageYears) => iso({ ageYears }));
+    const n = (ageGroup: "child" | "adult" | "older" | "veryOld") =>
+      coverage(records, { asOf: "2026-06-30", ward: "URO", specimen: "urine", ageGroup }).isolates;
+    expect([n("child"), n("adult"), n("older"), n("veryOld")]).toEqual([1, 2, 3, 1]);
+  });
+
+  it("drops age group, then onset, then sex before giving up the unit's own data", () => {
+    const records = [
+      ...Array.from({ length: 20 }, () => iso({ sex: "M", ageYears: 70, ...day3 })),
+      ...Array.from({ length: 15 }, () => iso({ sex: "M", ageYears: 40, ...day3 })),
+      ...Array.from({ length: 20 }, () => iso({ sex: "F", ageYears: 70 })),
+    ];
+    const q = { asOf: "2026-06-30", ward: "URO", specimen: "urine", sex: "M", ageGroup: "older", onset: "hospital" } as const;
+    const r = coverage(records, q);
+    expect([r.level, r.isolates, r.ageGroupApplied, r.onsetApplied, r.sexApplied]).toEqual(["unit", 35, false, true, true]);
+    const fewer = coverage(
+      [
+        ...Array.from({ length: 15 }, () => iso({ sex: "M", ageYears: 70, ...day3 })),
+        ...Array.from({ length: 15 }, () => iso({ sex: "M", ageYears: 40 })),
+        ...Array.from({ length: 20 }, () => iso({ sex: "F", ageYears: 70 })),
+      ],
+      q,
+    ); // 30 men, 15 of them hospital-onset: age and onset go, sex stays
+    expect([fewer.level, fewer.isolates, fewer.ageGroupApplied, fewer.onsetApplied, fewer.sexApplied]).toEqual([
+      "unit",
+      30,
+      false,
+      false,
+      true,
+    ]);
+  });
+
+  it("keeps every filter and widens the level when the unit is short even without them", () => {
+    const records = [
+      ...Array.from({ length: 10 }, () => iso({ ward: "ICU", ageYears: 85, ...day3 })),
+      ...Array.from({ length: 40 }, () => iso({ ward: "MED-A", ageYears: 85, ...day3 })),
+      ...Array.from({ length: 40 }, () => iso({ ward: "MED-A", ageYears: 30 })),
+    ];
+    const r = coverage(records, { asOf: "2026-06-30", ward: "ICU", specimen: "urine", ageGroup: "veryOld", onset: "hospital" });
+    expect([r.level, r.isolates, r.ageGroupApplied, r.onsetApplied]).toEqual(["ward type", 50, true, true]);
   });
 });

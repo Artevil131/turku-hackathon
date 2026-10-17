@@ -1,4 +1,4 @@
-import type { AeiClient, Alert, CoverageResponse } from "@aei/contract";
+import type { AeiClient, Alert, CoverageResponse, FailsTogetherResponse } from "@aei/contract";
 import type { WardCode } from "@aei/domain";
 import type { Locale } from "@aei/i18n";
 import { t } from "@aei/i18n";
@@ -9,6 +9,7 @@ import { AsOf } from "../AsOf.tsx";
 import { DataQuality } from "../DataQuality.tsx";
 import { CoverageList, itemsOf, type ListStatus } from "./CoverageList.tsx";
 import { Details } from "./Details.tsx";
+import { FailsTogether } from "./FailsTogether.tsx";
 import "./DoctorPage.css";
 import { type DoctorFilters, filtersFromUrl, filtersToParams, storeUnit } from "./filters.ts";
 import { RecordStrip } from "./RecordStrip.tsx";
@@ -34,8 +35,8 @@ export interface DoctorPageProps {
   onOpenSignals: (ward: WardCode) => void;
 }
 
-/** The part of the filters the coverage API understands; age group and onset are shown but not sent. */
-const queryKey = (f: DoctorFilters) => [f.unit, f.site, f.sex, f.sev, f.period].join("|");
+/** Every filter the coverage call sends, so a change refetches. */
+const queryKey = (f: DoctorFilters) => [f.unit, f.site, f.sex, f.age, f.onset, f.sev, f.period].join("|");
 
 export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetryAlerts, onOpenSignals }: DoctorPageProps) {
   const [filters, setFilters] = useState<DoctorFilters>(() => filtersFromUrl(hashParams()));
@@ -73,6 +74,8 @@ export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetry
         severity: filters.sev,
         windowDays: filters.period,
         ...(filters.sex === "any" ? {} : { sex: filters.sex }),
+        ...(filters.age === "any" ? {} : { ageGroup: filters.age }),
+        ...(filters.onset ? { onset: "hospital" as const } : {}),
       })
       .then((response) => {
         if (stale) return;
@@ -86,6 +89,31 @@ export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetry
       stale = true;
     };
   }, [client, asOf, key, attempt]);
+
+  // "Fails together" (D-054) for the same filters, fetched beside the coverage list.
+  const [fails, setFails] = useState<{ key: string; response: FailsTogetherResponse } | null>(null);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `key` stands for the filters it covers.
+  useEffect(() => {
+    if (!asOf) return;
+    let stale = false;
+    client
+      .failsTogether({
+        ward: filters.unit,
+        specimen: filters.site,
+        windowDays: filters.period,
+        ...(filters.sex === "any" ? {} : { sex: filters.sex }),
+        ...(filters.age === "any" ? {} : { ageGroup: filters.age }),
+        ...(filters.onset ? { onset: "hospital" as const } : {}),
+      })
+      .then((response) => {
+        if (!stale) setFails({ key, response });
+      })
+      .catch(() => {});
+    return () => {
+      stale = true;
+    };
+  }, [client, asOf, key]);
+  const currentFails = fails && fails.key === key ? fails.response : null;
 
   const onChange = useCallback((patch: Partial<DoctorFilters>) => setFilters((f) => ({ ...f, ...patch })), []);
   // Figures from a different query are never shown under the new filters; only a clock tick keeps the old list while it refreshes.
@@ -157,7 +185,12 @@ export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetry
                   ) : null}
                 </h3>
                 {current && item ? (
-                  <Details client={client} locale={locale} filters={filters} data={current} item={item} signals={signals} />
+                  <>
+                    <Details client={client} locale={locale} filters={filters} data={current} item={item} signals={signals} />
+                    {item.row ? (
+                      <FailsTogether locale={locale} antibiotic={item.row.antibiotic} data={currentFails} loading={!currentFails} />
+                    ) : null}
+                  </>
                 ) : (
                   <p className="dt-empty">{t(locale, "drSelectRow")}</p>
                 )}
@@ -193,6 +226,7 @@ export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetry
             </button>
           </div>
           <Details client={client} locale={locale} filters={filters} data={current} item={item} signals={signals} />
+          {item.row ? <FailsTogether locale={locale} antibiotic={item.row.antibiotic} data={currentFails} loading={!currentFails} /> : null}
         </div>
       ) : null}
     </div>

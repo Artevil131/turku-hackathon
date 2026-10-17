@@ -18,7 +18,7 @@ export function Since({ locale, asOf, changes, state, period, onPeriod, openCoun
     <section className="hm-since glass" aria-labelledby="hm-since-title">
       <header className="hm-head">
         <h1 id="hm-since-title">{openCount === null ? t(locale, "homeResearchWait") : t(locale, "feedOpen", { n: openCount })}</h1>
-        {asOf ? <AsOf locale={locale} date={asOf} /> : null}
+        {(asOf ?? changes?.asOf) ? <AsOf locale={locale} date={(asOf ?? changes?.asOf) as string} /> : null}
       </header>
       <p className="hm-lead">{t(locale, "homeLead")}</p>
       {state === "connecting" ? (
@@ -84,10 +84,6 @@ function Stats({ locale, changes }: { locale: Locale; changes: Changes }) {
           <a className="hm-stat" href={s.href} data-zero={s.n === 0} title={s.title}>
             <b className="hm-n">{s.n}</b>
             <span className="hm-label">{s.label}</span>
-            <span className="hm-date">
-              <span className="visually-hidden">{spoken}</span>
-              <span aria-hidden="true">{date}</span>
-            </span>
           </a>
         </li>
       ))}

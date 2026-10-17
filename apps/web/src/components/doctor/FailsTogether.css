@@ -1,0 +1,64 @@
+/* "Fails together" lines inside the details disclosure (D-048). Tokens from DoctorPage.css. */
+.ft {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 6px;
+  border-top: 1px solid var(--d-line);
+}
+
+.ft-title {
+  margin: 0;
+  font-size: var(--d-xs);
+  font-weight: 600;
+  color: var(--d-ink-3);
+  cursor: help;
+}
+
+.ft-empty {
+  margin: 0;
+  font-size: var(--d-xs);
+  color: var(--d-ink-3);
+}
+
+.ft-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ft-line {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-size: var(--d-s);
+  color: var(--d-ink-2);
+}
+
+.ft-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 6px;
+  font-size: var(--d-xs);
+  color: var(--d-ink-3);
+}
+
+.ft-class {
+  padding: 0 6px;
+  border: 1px solid var(--d-line);
+  border-radius: 999px;
+}
+
+.ft-dropped {
+  color: var(--d-watch);
+}
+
+@media print {
+  .ft {
+    break-inside: avoid;
+  }
+}

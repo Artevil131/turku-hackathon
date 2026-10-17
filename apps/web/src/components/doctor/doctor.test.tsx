@@ -112,25 +112,49 @@ describe("doctor list disclosure", () => {
   });
 });
 
-describe("available filters", () => {
-  it("discards legacy unavailable URL selections and never writes them back", () => {
-    const parsed = filtersFromUrl(new URLSearchParams("age=older&onset=1"));
-    expect(parsed.age).toBe("any");
-    expect(parsed.onset).toBe(false);
-    expect(filtersToParams({ ...filters, age: "older", onset: true })).toMatchObject({ age: null, onset: null });
+describe("age group and onset filters (D-047)", () => {
+  it("reads and writes them in the URL, dropping unknown values", () => {
+    const parsed = filtersFromUrl(new URLSearchParams("age=older&onset=hospital"));
+    expect(parsed.age).toBe("older");
+    expect(parsed.onset).toBe(true);
+    expect(filtersFromUrl(new URLSearchParams("age=old&onset=1"))).toMatchObject({ age: "any", onset: false });
+    expect(filtersToParams({ ...filters, age: "veryOld", onset: true })).toMatchObject({ age: "veryOld", onset: "hospital" });
+    expect(filtersToParams(filters)).toMatchObject({ age: null, onset: null });
   });
   it("keeps the severe blood shortcut visible outside collapsed phone filters", () => {
     vi.stubGlobal("window", { matchMedia: () => ({ matches: false }) });
     const html = renderToStaticMarkup(<RecordStrip locale="fi" filters={{ ...filters, age: "older", onset: true }} onChange={() => {}} />);
     expect(html).toContain("Vaikea veri-infektio");
-    expect(html).not.toContain("65+");
+    expect(html).toContain("ikäryhmä 65+");
     expect(html).not.toContain("Hoitopäivä 3 tai myöhemmin");
   });
-  it("disables and labels every unavailable control on desktop", () => {
+  it("enables every control on desktop and marks the chosen ones", () => {
     vi.stubGlobal("window", { matchMedia: () => ({ matches: true }) });
     const html = renderToStaticMarkup(<RecordStrip locale="en" filters={{ ...filters, age: "older", onset: true }} onChange={() => {}} />);
-    expect(html.match(/disabled=""/g)).toHaveLength(6);
-    expect(html.match(/not applied yet/g)).toHaveLength(2);
-    expect(html).not.toMatch(/aria-pressed="true"[^>]*>65\+/);
+    expect(html).not.toContain("disabled");
+    expect(html).not.toContain("not applied");
+    expect(html).toMatch(/aria-pressed="true"[^>]*>65\+/);
+    expect(html).toMatch(/aria-pressed="true"[^>]*>Day 3\+/);
+  });
+  it("says when the server dropped a filter to keep the unit's own data", () => {
+    // 40 isolates on the unit, 10 of them 65+: the age group is dropped, the unit kept.
+    const records = Array.from({ length: 40 }, (_, i) => record(i, { ageYears: i < 10 ? 70 : 40 }));
+    const result = coverage(records, { asOf: "2026-06-30", ward: "URO", specimen: "urine", ageGroup: "older" });
+    expect(result.ageGroupApplied).toBe(false);
+    const data = { ...response(records), coverage: result };
+    const sheet = renderToStaticMarkup(
+      <CoverageList
+        locale="en"
+        filters={{ ...filters, age: "older" }}
+        asOf={data.asOf}
+        status="ready"
+        data={data}
+        signals={[]}
+        selected={null}
+        onSelect={() => {}}
+        onRetry={() => {}}
+      />,
+    );
+    expect(sheet).toContain("Age group filter dropped to keep the unit&#x27;s own data.");
   });
 });

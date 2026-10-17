@@ -26,7 +26,7 @@ export function Ask({ locale, question }: { locale: Locale; question: Question }
     }
     if (filters.from || filters.to) chips.push(["dates", `${filters.from ?? "…"} – ${filters.to ?? "…"}`]);
   }
-  if (!question.available && !question.active && !question.error) return null;
+  if (!question.available && !question.offline && !question.active && !question.error) return null;
   return (
     <div className="ask-box" role="search" aria-label={t(locale, "askLabel")}>
       {question.available ? (
@@ -71,13 +71,17 @@ export function Ask({ locale, question }: { locale: Locale; question: Question }
             </div>
           ) : null}
         </>
+      ) : question.offline ? (
+        <p role="status" className="field-hint">
+          {t(locale, "askOffline")}
+        </p>
       ) : null}
       {question.pending ? (
         <p role="status" className="field-hint">
           {t(locale, "askLoading")}
         </p>
       ) : null}
-      {question.error ? (
+      {question.error && !question.offline ? (
         <p role="alert" className="field-hint">
           {t(locale, "askUnavailable")}
         </p>
