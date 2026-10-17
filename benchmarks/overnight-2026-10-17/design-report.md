@@ -91,7 +91,7 @@ Live streams 2 → 1; relation requests deduplicated.
 - Certainty as the level reached, not n cut-offs the team has not chosen; hospital onset does not raise the bar on its own (ENGINE 2.6 open).
 - The Assistant only words existing alerts through `/api/explain`; numbers never come from the model (D-019, D-029).
 - The math drawn from fields the API already returns (the Poisson tail equals each alert's p to 1e-9 in tests); Beta posteriors with a team prior, CUSUM paths and funnel limits left as proposals.
-- Per 100 cultures offered as a plain ratio of the same raw counts (D-039), not a model.
+- Per 100 cultures offered as a plain ratio of the same raw counts (D-042), not a model.
 - AWaRe tier names kept as "Access" and "Watch" in Finnish.
 
 ## 5. Accessibility and bilingual results
@@ -103,11 +103,11 @@ Live streams 2 → 1; relation requests deduplicated.
 
 ## 6. Contract fields and routes proposed
 
-Collected here (addendum point 4); D-040 stays as written.
+Collected here (addendum point 4); D-043 stays as written.
 
 | Proposal | View that needs it | State |
 |---|---|---|
-| `GET /api/counties`, county polygons (D-040) | Map, pitch intro | built, pending Artem |
+| `GET /api/counties`, county polygons (D-043) | Map, pitch intro | built, pending Artem |
 | `GET /api/weekly`, raw weekly counts per unit (patients per phenotype, cultures), cut at the clock; `@aei/viz` `weeklySeries` | Timeline stream and lanes | built, pending Artem |
 | `THRESHOLDS` re-exported from `@aei/contract` | Doctor's bar labels | built (additive) |
 | `RelationsQuery.from` / `to` | Spanned units of older signals (today the window always ends at today, so shares include later movement) | proposed |

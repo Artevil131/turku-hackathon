@@ -93,7 +93,7 @@ const per100 = (n: number, cultures: number) => (cultures > 0 ? (n / cultures) *
 
 /**
  * Each week under the chosen metric. A ratio is the same raw counts divided by the same week's
- * cultures x 100 (D-039); a week with no cultures is null (a gap), never a division by zero.
+ * cultures x 100 (D-042); a week with no cultures is null (a gap), never a division by zero.
  * Hidden phenotypes leave the totals and the unit lanes.
  */
 export function viewRows(rows: readonly WeekRow[], l: Layers): ViewRow[] {

@@ -1,0 +1,23 @@
+# Build context for deploy/container (podman and docker both read this file).
+# The organisers' dataset and THL data are mounted at run time, never copied in.
+data/
+materials/
+**/node_modules/
+**/dist/
+.venv/
+**/__pycache__/
+build/
+.claude/
+.agents/
+.codex/
+.git/
+.github/
+.env
+.env.*
+experiments/
+benchmarks/
+research/
+scripts/
+libs/utils/py/
+**/*.test.ts
+**/*.test.tsx

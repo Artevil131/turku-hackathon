@@ -2,6 +2,7 @@ import type { Alert } from "@aei/alerts";
 import type { AgeGroup } from "@aei/ask";
 import type { CombinationSuggestion, CoverageResult, CoverageQuery as GearCoverageQuery, Severity, Suggestion } from "@aei/coverage";
 import type { Antibiotic, IsoDate, IsolateRecord, Organism, Sex, Specimen, Ward, WardCode } from "@aei/domain";
+import type { CheckSummary } from "@aei/quality";
 import type { Flow, TrailLink } from "@aei/relations";
 import type { ClockState } from "@aei/replay";
 import type { WeeklySeries } from "@aei/viz";
@@ -26,14 +27,16 @@ export const ROUTES = {
   regional: "/api/regional",
   /**
    * Wellbeing services county polygons (Statistics Finland, CC BY 4.0) for the regional map, as
-   * GeoJSON. Optional: 404 when the server has no geometry file. Proposed by Claude Code, pending Artem.
+   * GeoJSON. Optional: 404 when the server has no geometry file. Proposed by Claude Code, pending Artem (D-043).
    */
   counties: "/api/counties",
   /**
    * Raw weekly counts per unit up to the clock: distinct patients per resistant phenotype and
-   * cultures sampled (D-039). Optional; proposed by Claude Code, pending Artem.
+   * cultures sampled (D-042). Optional; proposed by Claude Code, pending Artem.
    */
   weekly: "/api/weekly",
+  /** Plausibility checks over the rows the server holds (D-038). */
+  quality: "/api/quality",
 } as const;
 
 export interface Meta {
@@ -238,6 +241,14 @@ export interface WeeklyResponse extends WeeklySeries {
   asOf: IsoDate;
 }
 
+export type { CheckName, CheckSummary, Finding, Severity as FindingSeverity } from "@aei/quality";
+
+/** Every check run over every row the server holds, grouped by check; no findings means every check passed. */
+export interface QualityResponse {
+  checked: { patients: number; cultures: number; isolates: number; results: number };
+  summary: CheckSummary[];
+}
+
 /** Server-sent events on ROUTES.live. The event name is the `type`. */
 export type LiveEvent =
   | { type: "clock"; clock: ClockState }
@@ -286,6 +297,7 @@ export interface AeiClient {
   counties(): Promise<CountiesResponse>;
   /** Weekly raw counts per unit up to the clock (optional route). */
   weekly(query: WeeklyQuery): Promise<WeeklyResponse>;
+  quality(): Promise<QualityResponse>;
   /** Opens the live stream; returns a function that closes it. */
   live(onEvent: (event: LiveEvent) => void, onError?: (error: Event) => void): () => void;
 }
@@ -333,6 +345,7 @@ export function createAeiClient(options: AeiClientOptions): AeiClient {
     regional: (query) => json<RegionalResponse>(withQuery(ROUTES.regional, query)),
     counties: () => json<CountiesResponse>(ROUTES.counties),
     weekly: (query) => json<WeeklyResponse>(withQuery(ROUTES.weekly, query)),
+    quality: () => json<QualityResponse>(ROUTES.quality),
     live(onEvent, onError) {
       const source = new ES(url(ROUTES.live));
       for (const type of LIVE_EVENT_TYPES) {

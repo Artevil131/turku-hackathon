@@ -13,6 +13,8 @@ import {
 import type { CarrierArrival, DateWindow } from "@aei/relations";
 import { addDays, daysBetween } from "@aei/replay";
 
+export { patientOverlap } from "./overlap.ts";
+
 // Infection-control alerts. Rules that fire on a single result (D-014) and
 // the live statistical detectors (D-020), one alert per signal episode.
 

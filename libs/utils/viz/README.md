@@ -9,11 +9,11 @@ DECISIONS.md or ENGINE.md already fixes, and says which.
 
 - `weeklySeries(records, cultures, from, to)`: per ISO week (Monday
   start), per unit, the distinct patients with each resistant phenotype
-  and the number of cultures sampled. Raw counts (D-039: detection reads
+  and the number of cultures sampled. Raw counts (D-042: detection reads
   raw weekly counts).
 - `weeklyPatients(records, ward, phenotype, from, to)`: distinct patients
   per 7-day week anchored at `from` (not Monday), whole weeks only, so a
-  window can end on the as-of date. Raw counts (D-039).
+  window can end on the as-of date. Raw counts (D-042).
 - `addDaysIso(date, n)`: date arithmetic on ISO dates.
 - `poissonPmf(k, mean)`: P(X = k), log space (ENGINE.md 3.2, 3.3).
 - `poissonTailMass(tail, k, mean)`: the shaded tail, X >= k (`upper`) or

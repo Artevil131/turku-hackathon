@@ -16,7 +16,7 @@ export const methodEn = {
     "Live rule (D-023, D-033): the unit's last 365 days if it has 30 isolates, else its ward type, else the hospital. Experiments 0012 and 0014 test other estimates; the list does not use them.",
   methodInfo2: "Experiment 0013 multiplies each organism's share by its susceptibility. The live list pools all organisms.",
   methodInfo3:
-    "Live test (D-020): the count over 28 days against a Poisson mean from the 365 days before, raised at the detector's level. It reads raw weekly counts (D-039). Experiments 0015, 0016 and 0018 are candidates.",
+    "Live test (D-020): the count over 28 days against a Poisson mean from the 365 days before, raised at the detector's level. It reads raw weekly counts (D-042). Experiments 0015, 0016 and 0018 are candidates.",
   methodInfo4:
     "Experiment 0019 ranks units by exposure on the patient-flow graph against rewired graphs. Experiment 0020 forecasts county counts a month ahead against last month's count.",
   methodLiveRule: "the live rule (D-023, D-033)",
@@ -60,7 +60,7 @@ export const methodEn = {
   methodBbDiscountLabel: "Discount toward the hospital share",
   methodBbUpdateLabel: "Add this week's counts",
   methodBbPredictLabel: "Predict the next isolates",
-  methodBbStatus: "Accepted method (D-038), constants open (B1, B3). Experiment 0012 found no gain over the hospital year.",
+  methodBbStatus: "Accepted method (D-041), constants open (B1, B3). Experiment 0012 found no gain over the hospital year.",
   methodRule_wilson: "Coverage share, 95 % Wilson interval",
   methodRuleNote_wilson: "Last 365 days: the unit with 30 or more isolates, else its ward type, else the hospital · D-023, D-033",
   methodRule_poisson: "Profile and phenotype excess",
@@ -101,7 +101,7 @@ export const methodFi: Record<keyof typeof methodEn, string> = {
     "Käytössä oleva sääntö (D-023, D-033): yksikön viimeiset 365 päivää, jos löydöksiä on 30, muuten osastotyyppi, muuten sairaala. Kokeet 0012 ja 0014 kokeilevat muita arvioita; lista ei käytä niitä.",
   methodInfo2: "Koe 0013 kertoo kunkin bakteerin osuuden sen herkkyydellä. Käytössä oleva lista yhdistää kaikki bakteerit.",
   methodInfo3:
-    "Käytössä oleva testi (D-020): 28 päivän määrä verrattuna edeltävien 365 päivän Poisson-keskiarvoon, hälytys tunnistimen tasolla. Se lukee raakoja viikkomääriä (D-039). Kokeet 0015, 0016 ja 0018 ovat ehdokkaita.",
+    "Käytössä oleva testi (D-020): 28 päivän määrä verrattuna edeltävien 365 päivän Poisson-keskiarvoon, hälytys tunnistimen tasolla. Se lukee raakoja viikkomääriä (D-042). Kokeet 0015, 0016 ja 0018 ovat ehdokkaita.",
   methodInfo4:
     "Koe 0019 järjestää yksiköt altistuksen mukaan potilasvirtaverkossa suhteessa satunnaistettuihin verkkoihin. Koe 0020 ennustaa maakuntien määrät kuukauden eteenpäin ja vertaa edellisen kuun määrään.",
   methodLiveRule: "käytössä oleva sääntö (D-023, D-033)",
@@ -145,7 +145,7 @@ export const methodFi: Record<keyof typeof methodEn, string> = {
   methodBbDiscountLabel: "Diskonttaa kohti sairaalan osuutta",
   methodBbUpdateLabel: "Lisää tämän viikon määrät",
   methodBbPredictLabel: "Ennusta seuraavat löydökset",
-  methodBbStatus: "Hyväksytty menetelmä (D-038), vakiot auki (B1, B3). Koe 0012 ei löytänyt parannusta sairaalan vuoteen.",
+  methodBbStatus: "Hyväksytty menetelmä (D-041), vakiot auki (B1, B3). Koe 0012 ei löytänyt parannusta sairaalan vuoteen.",
   methodRule_wilson: "Kattavuusosuus, 95 %:n Wilson-väli",
   methodRuleNote_wilson:
     "Viimeiset 365 päivää: yksikkö, jos löydöksiä on vähintään 30, muuten osastotyyppi, muuten sairaala · D-023, D-033",

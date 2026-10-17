@@ -21,7 +21,7 @@ export interface WeeklySeries {
 }
 
 /**
- * Weekly raw counts per unit from `from` to `to` inclusive (D-039: detection
+ * Weekly raw counts per unit from `from` to `to` inclusive (D-042: detection
  * reads raw weekly counts, never smoothed estimates). Records and cultures
  * after `to` are ignored, so a series cut at the replay date never shows
  * later days.
@@ -71,7 +71,7 @@ export const addDaysIso = (d: IsoDate, n: number): IsoDate => addDays(d, n);
  * Distinct patients per week with `phenotype` in `ward`, for the weeks that start at `from`, `from + 7`, … and end
  * at or before `to` (a last partial week is dropped). Unlike `weeklySeries`, weeks are anchored at `from`, not on a
  * Monday, so a window can end on the as-of date: pass `from = addDaysIso(asOf, −7·n + 1)` and `to = asOf`.
- * Weeks without a patient are returned with count 0. Counts are raw (D-039).
+ * Weeks without a patient are returned with count 0. Counts are raw (D-042).
  */
 export function weeklyPatients(
   records: readonly Pick<IsolateRecord, "patientId" | "sampleDate" | "ward" | "phenotypes">[],

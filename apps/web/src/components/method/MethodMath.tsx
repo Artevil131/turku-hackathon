@@ -55,7 +55,7 @@ function Display({ n, label, children }: { n: number; label: string; children: R
   );
 }
 
-/** The discounted Beta-binomial: why it stays conjugate week after week (ENGINE.md 2.2, D-038, experiment 0012). */
+/** The discounted Beta-binomial: why it stays conjugate week after week (ENGINE.md 2.2, D-041, experiment 0012). */
 export function BetaBinomialMath({ locale }: { locale: Locale }) {
   const a = <I>a</I>;
   const b = <I>b</I>;

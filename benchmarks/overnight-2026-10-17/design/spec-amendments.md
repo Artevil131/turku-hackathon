@@ -60,7 +60,7 @@ choices), and what the orchestrator already built.
    through `onChange`. Do not edit the shell or board.ts; ask the
    orchestrator.
 2. Regional map polygons come from the API: `client.counties()`
-   (`GET /api/counties`, D-040, already live). Do not copy the GeoJSON into
+   (`GET /api/counties`, D-043, already live). Do not copy the GeoJSON into
    `public/`. 404 → the panel says the server has no county geometry.
 3. Copy per panel in its own file: feed → `surfaces/feed.ts` (prefix
    `feed`), grid → `surfaces/grid.ts` (`grid`), network →

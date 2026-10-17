@@ -20,7 +20,7 @@ draft and the code meet:
 | Section here | In the code today | Decision |
 |---|---|---|
 | 1 table, first-isolate rule, masks | `@aei/counting`, `@aei/eucast`; Python mirrors in `libs/utils/py/aei` | D-023, D-033 |
-| 2.1–2.4 Beta-binomial, discount, Dirichlet mix | Not built. The shipped coverage list uses the raw share over 365 days at one level (unit, ward type, hospital) with a Wilson interval; experiments/0004 found blends no better than the hospital year | D-038 accepted the method; the overnight experiments test it (benchmarks/METRICS.md C1, C6) before it replaces D-023/D-033 |
+| 2.1–2.4 Beta-binomial, discount, Dirichlet mix | Not built. The shipped coverage list uses the raw share over 365 days at one level (unit, ward type, hospital) with a Wilson interval; experiments/0004 found blends no better than the hospital year | D-041 accepted the method; the overnight experiments test it (benchmarks/METRICS.md C1, C6) before it replaces D-023/D-033 |
 | 2.6 ranking | `@aei/coverage` `suggest`: thresholds 80/90, Access first, spectrum basis for mild, pairs for severe | D-026 to D-028, D-033 |
 | 3.1 data-quality | sampling-drop and empty-run detectors | D-020, D-031 |
 | 3.2 sentinel rules | CPE isolate; MRSA or VRE new in an inpatient unit after 180 days | D-014, D-021, D-034 |

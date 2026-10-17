@@ -165,3 +165,21 @@ describe("assistant HTTP routes", () => {
     expect(fallback.text).toContain("Teho-osasto");
   });
 });
+
+describe("data checks", () => {
+  it("reports every check passed on clean rows, and findings for implausible ingested results", async () => {
+    const base = await startApi();
+    const clean = await (await fetch(`${base}/api/quality`)).json();
+    expect(clean).toEqual({ checked: { patients: 3, cultures: 4, isolates: 4, results: 4 }, summary: [] });
+    // Klebsiella pneumoniae reported susceptible to ampicillin, which it resists by nature.
+    const csv = [
+      "patient_id,sex,birth_year,culture_id,sample_date,ward,specimen,organism,AMP",
+      "p9,F,1950,c9,2025-05-02,ICU,urine,Klebsiella pneumoniae,S",
+    ].join("\n");
+    const sent = await (await fetch(`${base}/api/ingest`, { method: "POST", headers: { "content-type": "text/csv" }, body: csv })).json();
+    expect(sent.accepted).toBe(1);
+    expect(sent.quality.map((f: { check: string }) => f.check)).toEqual(["intrinsic-susceptible"]);
+    const after = await (await fetch(`${base}/api/quality`)).json();
+    expect(after.summary).toEqual([expect.objectContaining({ check: "intrinsic-susceptible", severity: "suspect", count: 1 })]);
+  });
+});
