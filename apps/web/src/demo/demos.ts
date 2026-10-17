@@ -9,14 +9,14 @@ import { gridLayout } from "../components/research/workspace/templates.ts";
 // for each. A demo is only a project spec plus a notebook page; opening one creates the project once (openDemo.ts).
 // The slices use fixed dates, so a demo reads the same whenever it is opened.
 
-export type DemoId = "clinician" | "control" | "researcher" | "regional" | "steward";
+export type DemoId = "clinician" | "control" | "researcher";
 
 export interface DemoSpec {
   id: DemoId;
   /** The role label, shown as a tag. */
-  roleKey: "demoRoleClinician" | "demoRoleControl" | "demoRoleResearcher" | "demoRoleRegional" | "demoRoleSteward";
-  titleKey: "demoClinicianTitle" | "demoControlTitle" | "demoResearcherTitle" | "demoRegionalTitle" | "demoStewardTitle";
-  blurbKey: "demoClinicianBlurb" | "demoControlBlurb" | "demoResearcherBlurb" | "demoRegionalBlurb" | "demoStewardBlurb";
+  roleKey: "demoRoleClinician" | "demoRoleControl" | "demoRoleResearcher";
+  titleKey: "demoClinicianTitle" | "demoControlTitle" | "demoResearcherTitle";
+  blurbKey: "demoClinicianBlurb" | "demoControlBlurb" | "demoResearcherBlurb";
   mode: "continuous" | "frozen";
   /** A frozen cut's date (before the replay clock's start of 12 May 2025, so it is always released). */
   asOf?: string;
@@ -118,46 +118,6 @@ export const DEMOS: readonly DemoSpec[] = [
           spec: defaultSpec({ unit: "MED-A", window: { from: "2024-11-01", to: "2025-04-30" }, event: "phenotype:esbl", periodDays: 14 }),
         },
         note(t(locale, "demoNoteResearcherRead")),
-      ]);
-    },
-  },
-  {
-    id: "regional",
-    roleKey: "demoRoleRegional",
-    titleKey: "demoRegionalTitle",
-    blurbKey: "demoRegionalBlurb",
-    mode: "continuous",
-    board: "ph=esbl",
-    layout: gridLayout({ map: { x: 0, y: 0, w: 7, h: 38 }, notebook: { x: 7, y: 0, w: 5, h: 38 } }),
-    page: (locale, site) => {
-      const s = slice(site, { from: "2024-05-12", to: "2025-05-11", phenotype: "esbl" });
-      return page([
-        note(t(locale, "demoNoteRegionalHead")),
-        sliceCell(s),
-        analysis("shares", s, { period: 28 }),
-        { id: newId(), kind: "chart", spec: defaultSpec({ window: { weeks: 52 }, event: "phenotype:esbl", periodDays: 28 }) },
-      ]);
-    },
-  },
-  {
-    id: "steward",
-    roleKey: "demoRoleSteward",
-    titleKey: "demoStewardTitle",
-    blurbKey: "demoStewardBlurb",
-    mode: "continuous",
-    board: "panel=grid&unit=MED-A&cov.unit=MED-A",
-    layout: gridLayout({
-      grid: { x: 0, y: 0, w: 12, h: 26 },
-      coverage: { x: 0, y: 26, w: 6, h: 32 },
-      notebook: { x: 6, y: 26, w: 6, h: 32 },
-    }),
-    page: (locale, site) => {
-      const s = slice(site, { from: "2025-02-11", to: "2025-05-11", unit: "MED-A", phenotype: "esbl" });
-      return page([
-        note(t(locale, "demoNoteStewardHead")),
-        sliceCell(s),
-        analysis("compare", s, { bMode: "unit", bUnit: "URO" }),
-        { id: newId(), kind: "chart", spec: defaultSpec({ type: "bars", window: { weeks: 12 }, unit: "MED-A", event: "phenotype:esbl" }) },
       ]);
     },
   },
