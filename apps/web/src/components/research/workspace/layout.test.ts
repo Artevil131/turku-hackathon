@@ -10,6 +10,7 @@ import {
   fillLayout,
   fitLayout,
   focusLayout,
+  insertBetween,
   makeRoom,
   parseLayout,
   patchWin,
@@ -212,5 +213,42 @@ describe("windows of the same kind", () => {
   it("starts every layout with the timeline across the top", () => {
     for (const l of [defaultLayout(), presetLayout("map"), presetLayout("units"), presetLayout("analysis")])
       expect(l.wins.timeline).toMatchObject({ open: true, x: 0, y: 0, w: COLS, h: TIMELINE_ROWS });
+  });
+});
+
+describe("a window between two windows", () => {
+  const side = () => {
+    let l = defaultLayout();
+    l = patchWin(l, "signals", { x: 0, y: 11, w: 6, h: 30, open: true });
+    return patchWin(l, "map", { x: 6, y: 11, w: 6, h: 30, open: true });
+  };
+  it("takes columns from both neighbours and keeps them touching it", () => {
+    const l = insertBetween(side(), "assistant", "signals", "map", "x");
+    expect(l).not.toBeNull();
+    const { layout, id } = l as NonNullable<typeof l>;
+    const n = layout.wins.assistant;
+    expect(id).toBe("assistant");
+    expect(layout.wins.signals.x + layout.wins.signals.w).toBe(n.x);
+    expect(n.x + n.w).toBe(layout.wins.map.x);
+    expect(layout.wins.map.x + layout.wins.map.w).toBe(COLS);
+    expect(layout.wins.signals.w).toBeGreaterThanOrEqual(3);
+  });
+  it("gives up when the neighbours cannot spare the room", () => {
+    let l = patchWin(side(), "signals", { w: 3 });
+    l = patchWin(l, "map", { x: 3, w: 3 });
+    expect(insertBetween(l, "grid", "signals", "map", "x")).toBeNull();
+  });
+  it("opens a window above another and pushes it down", () => {
+    const l = patchWin(patchWin(defaultLayout(), "signals", { x: 0, y: 11, w: 6, h: 10, open: true }), "map", {
+      x: 0,
+      y: 21,
+      w: 6,
+      h: 10,
+      open: true,
+    });
+    const r = insertBetween(l, "graph", "signals", "map", "y") as NonNullable<ReturnType<typeof insertBetween>>;
+    const c = compactLayout(r.layout, r.id);
+    expect(c.wins.graph.y).toBeLessThan(c.wins.map.y);
+    expect(c.wins.map.y).toBeGreaterThanOrEqual(c.wins.graph.y + c.wins.graph.h);
   });
 });

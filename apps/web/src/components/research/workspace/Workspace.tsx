@@ -27,6 +27,7 @@ import {
   fillLayout,
   fitLayout,
   focusLayout,
+  insertBetween,
   isChartId,
   isCopyId,
   kindOf,
@@ -157,6 +158,13 @@ type Drag = {
   pointer: { x: number; y: number };
   raf: number | null;
 };
+
+/** Two touching windows, by id: a window put between them (`axis` "x": `a` left of `b`; "y": `a` above `b`). */
+interface Between {
+  a: string;
+  b: string;
+  axis: "x" | "y";
+}
 
 export function Workspace({
   projectId,
@@ -420,8 +428,8 @@ export function Workspace({
   };
   const toggle = (id: WinId) => (base.wins[id].open ? close(id) : open(id));
   // A new window of any kind, as often as the grid allows: where the researcher asked, else under the others.
-  const add = (kind: WinId, at?: Partial<Rect>) => {
-    const added = addWindow(base, kind, at);
+  const add = (kind: WinId, at?: Partial<Rect>, between?: Between) => {
+    const added = (between ? insertBetween(base, kind, between.a, between.b, between.axis) : null) ?? addWindow(base, kind, at);
     commit(added.layout, added.id);
     focusAfter.current = `ws-win-${added.id}`;
     if (focus) setFocusTo(added.id);
@@ -430,8 +438,8 @@ export function Workspace({
   };
   const countOf = (kind: WinId) => allIds(base).filter((id) => kindOf(base, id) === kind && winOf(base, id).open).length;
   // The picker (a click on empty board, or the + on a frame's empty side) and the + hint near a frame's edge.
-  const [picker, setPicker] = useState<{ x: number; y: number; at: Partial<Rect> } | null>(null);
-  const [hint, setHint] = useState<{ x: number; y: number; at: Rect; side: string } | null>(null);
+  const [picker, setPicker] = useState<{ x: number; y: number; at: Partial<Rect>; between?: Between } | null>(null);
+  const [hint, setHint] = useState<{ x: number; y: number; at: Partial<Rect>; side: string; between?: Between } | null>(null);
   const free = (r: Rect) =>
     r.x >= 0 &&
     r.x + r.w <= COLS &&
@@ -469,6 +477,36 @@ export function Workspace({
         if (free(at)) return { x: (left + right) / 2, y: bottom, at, side: "bottom" };
       }
     }
+    // No empty side: the line where two windows touch offers a new window between them.
+    const open = allIds(base).filter((id) => winOf(base, id).open);
+    for (const a of open)
+      for (const b of open) {
+        if (a === b) continue;
+        const A = winOf(base, a);
+        const B = winOf(base, b);
+        const rows = Math.min(A.y + A.h, B.y + B.h) - Math.max(A.y, B.y);
+        const cols = Math.min(A.x + A.w, B.x + B.w) - Math.max(A.x, B.x);
+        if (A.x + A.w === B.x && rows >= 4) {
+          const x = B.x * colW;
+          const top = Math.max(A.y, B.y) * ROW_PX;
+          const bottom = Math.min(A.y + A.h, B.y + B.h) * ROW_PX;
+          if (Math.abs(px - x) <= NEAR && py >= top && py <= bottom)
+            return {
+              x,
+              y: (top + bottom) / 2,
+              at: { x: A.x, y: A.y, w: 4, h: rows },
+              side: "between-x",
+              between: { a, b, axis: "x" as const },
+            };
+        }
+        if (A.y + A.h === B.y && cols >= 3) {
+          const y = B.y * ROW_PX;
+          const left = Math.max(A.x, B.x) * colW;
+          const right = Math.min(A.x + A.w, B.x + B.w) * colW;
+          if (Math.abs(py - y) <= NEAR && px >= left && px <= right)
+            return { x: (left + right) / 2, y, at: { x: A.x, y: B.y, w: cols }, side: "between-y", between: { a, b, axis: "y" as const } };
+        }
+      }
     return null;
   };
   const onAreaMove = (e: PointerEvent<HTMLDivElement>) => {
@@ -721,7 +759,7 @@ export function Workspace({
             title={t(locale, "wsEmptyAdd")}
             onClick={(e) => {
               const b = e.currentTarget.getBoundingClientRect();
-              setPicker({ x: b.right + 6, y: b.top, at: hint.at });
+              setPicker({ x: b.right + 6, y: b.top, at: hint.at, between: hint.between });
               setHint(null);
             }}
           >
@@ -876,7 +914,7 @@ export function Workspace({
           y={picker.y}
           count={countOf}
           onPick={(kind) => {
-            add(kind, picker.at);
+            add(kind, picker.at, picker.between);
             setPicker(null);
           }}
           onClose={() => setPicker(null)}

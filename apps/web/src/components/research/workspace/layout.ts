@@ -374,6 +374,39 @@ export function addWindow(layout: Layout, kind: WinId, at?: Partial<Rect>): { la
   return { layout: raise(next, id), id };
 }
 
+/**
+ * Puts a new window of `kind` between two windows that touch. Side by side (`axis` "x", `a` on the left): both give up
+ * columns (as evenly as their minimum sizes allow) and the new window takes the band between them on the rows they share.
+ * One above the other (`axis` "y"): the new window takes `b`'s place and `b` is pushed down by the next compaction.
+ * Null when there is no room to make the new window its minimum size.
+ */
+export function insertBetween(layout: Layout, kind: WinId, a: string, b: string, axis: "x" | "y"): { layout: Layout; id: string } | null {
+  const A = winOf(layout, a);
+  const B = winOf(layout, b);
+  const min = MIN_SIZE[kind];
+  if (axis === "y") {
+    const x = Math.max(A.x, B.x);
+    const w = Math.min(A.x + A.w, B.x + B.w) - x;
+    return w < min.w ? null : addWindow(layout, kind, { x, y: B.y, w, h: Math.max(min.h, DEFAULT_SIZE[kind].h) });
+  }
+  const roomA = A.w - minSize(a).w;
+  const roomB = B.w - minSize(b).w;
+  const w = Math.min(Math.max(min.w, 4), roomA + roomB);
+  if (w < min.w) return null;
+  let fromA = Math.min(roomA, Math.ceil(w / 2));
+  let fromB = w - fromA;
+  if (fromB > roomB) {
+    fromB = roomB;
+    fromA = w - fromB;
+  }
+  const y = Math.max(A.y, B.y);
+  const h = Math.max(min.h, Math.min(A.y + A.h, B.y + B.h) - y);
+  const x = A.x + A.w - fromA;
+  let next = patchWin(layout, a, { w: A.w - fromA });
+  next = patchWin(next, b, { x: x + w, w: B.w - fromB });
+  return addWindow(next, kind, { x, y, w, h });
+}
+
 /** Closing a copy removes it. */
 export function removeCopy(layout: Layout, id: string): Layout {
   const { [id]: _gone, ...copies } = layout.copies;
