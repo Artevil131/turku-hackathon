@@ -61,7 +61,14 @@ export function EventsStrip({ locale, incidents, selected, disabled, onPick, onM
 
   return (
     <div className={`tl-events${selected ? " has-selection" : ""}`} role="group" aria-label={label}>
-      <p className="tl-events-label">{label}</p>
+      <p className="tl-events-label">
+        {label}
+        {more > 0 ? (
+          <button type="button" className="tl-ev-more" disabled={disabled} onClick={onMore}>
+            {t(locale, "tlFoundMore", { n: more })}
+          </button>
+        ) : null}
+      </p>
       {newest.length === 0 ? <p className="tl-ev-none">{t(locale, "tlFoundNone")}</p> : null}
       <ul className="tl-events-list">
         {newest.map((i) => {
@@ -87,13 +94,6 @@ export function EventsStrip({ locale, incidents, selected, disabled, onPick, onM
             </li>
           );
         })}
-        {more > 0 ? (
-          <li>
-            <button type="button" className="tl-ev tl-ev-more" disabled={disabled} onClick={onMore}>
-              <span className="tl-ev-name">{t(locale, "tlFoundMore", { n: more })}</span>
-            </button>
-          </li>
-        ) : null}
       </ul>
     </div>
   );

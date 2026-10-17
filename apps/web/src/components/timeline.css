@@ -896,3 +896,27 @@
 .tl-ctl .tl-ctl-label {
   min-width: 42px;
 }
+
+/* The strip never grows past the timeline's box (it covered the board's toolbar below). */
+.timeline .tl-events {
+  align-self: stretch;
+  max-height: 100%;
+  overflow: hidden;
+  justify-content: center;
+}
+.tl-events-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.tl-ev-more {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--t-xs, 12px);
+  font-weight: 600;
+  color: var(--brand-accent, #635bf1);
+  cursor: pointer;
+}
