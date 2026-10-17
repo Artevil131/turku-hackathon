@@ -363,7 +363,6 @@ export function Workspace({
   return (
     <div className="ws" data-docked={wide}>
       <div className="ws-toolbar">
-        <span className="ws-instruction">{t(locale, wide ? "wsDockHint" : "wsStackHint")}</span>
         <Tray locale={locale} layout={layout} onToggle={(id) => (locate(layout, id) ? close(id) : open(id))} onPreset={preset} />
       </div>
       <div

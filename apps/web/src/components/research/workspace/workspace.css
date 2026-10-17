@@ -11,14 +11,10 @@
 .ws-toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 12px;
   flex: none;
   min-height: 32px;
-}
-.ws-instruction {
-  color: var(--ink-3);
-  font-size: var(--t-xs, 12px);
 }
 .ws-area {
   position: relative;
@@ -142,10 +138,10 @@
   min-width: 0;
   box-sizing: border-box;
 }
-.ws-body > :is(.feed, .geo) {
+.ws-body > .feed {
   height: 100%;
 }
-.ws-body > :is(.math, .ug) {
+.ws-body > :is(.math, .ug, .geo) {
   height: auto;
   min-height: 100%;
 }

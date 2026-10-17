@@ -739,7 +739,13 @@ async function main() {
       await click("#ws-tray-button");
       await click(".ws-pop-reset");
       await cdp.send("Emulation.setDeviceMetricsOverride", { width: 1100, height: 768, deviceScaleFactor: 1, mobile: false });
-      if ((await evaluate(cdp, "document.documentElement.lang")) !== "en") await click(".top-tools button[lang]");
+      // The language is chosen only in Settings; switch there when an earlier interaction has not already.
+      if ((await evaluate(cdp, "document.documentElement.lang")) !== "en") {
+        await load(cdp, urlOf("settings"), idle);
+        await click(".settings button[lang='en']");
+        await waitIn(`document.documentElement.lang === "en"`);
+        await load(cdp, urlOf("research"), idle);
+      }
       const compact = await evaluate(
         cdp,
         `(() => {
