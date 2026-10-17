@@ -64,8 +64,8 @@ export const winOf = (l: Layout, id: string): WinState =>
 /** Smallest size of each window, in columns and rows. */
 export const MIN_SIZE: Record<WinId, { w: number; h: number }> = {
   signals: { w: 3, h: 8 },
-  map: { w: 3, h: 8 },
-  graph: { w: 3, h: 7 },
+  map: { w: 4, h: 8 },
+  graph: { w: 4, h: 7 },
   math: { w: 3, h: 6 },
   assistant: { w: 3, h: 5 },
   grid: { w: 4, h: 8 },
@@ -135,11 +135,11 @@ export function withTimeline(layout: Layout, place: "top" | "bottom" | "none" = 
 /** The arrangement without the timeline: the starting point of the default and the presets. */
 export function baseLayout(): Layout {
   const wins: Record<WinId, WinState> = {
-    signals: { x: 0, y: 0, w: 4, h: 40, open: true },
+    signals: { x: 0, y: 0, w: 3, h: 40, open: true },
     // The notebook in the centre, as tall as Signals: the page the researcher works on, visible from the start.
-    notebook: { x: 4, y: 0, w: 5, h: 40, open: true },
-    map: { x: 9, y: 0, w: 3, h: 20, open: true },
-    graph: { x: 9, y: 20, w: 3, h: 20, open: true },
+    notebook: { x: 3, y: 0, w: 3, h: 40, open: true },
+    map: { x: 6, y: 0, w: 6, h: 20, open: true },
+    graph: { x: 6, y: 20, w: 6, h: 20, open: true },
     math: { x: 9, y: 22, w: 3, h: 14, open: false },
     assistant: { x: 9, y: 36, w: 3, h: 8, open: false },
     grid: { x: 0, y: 0, w: 12, h: 30, open: false },
@@ -373,8 +373,8 @@ export function addChart(layout: Layout, spec: ChartSpec): { layout: Layout; id:
 export const DEFAULT_SIZE: Record<WinId, { w: number; h: number }> = {
   signals: { w: 4, h: 30 },
   notebook: { w: 5, h: 30 },
-  map: { w: 4, h: 20 },
-  graph: { w: 4, h: 20 },
+  map: { w: 6, h: 20 },
+  graph: { w: 6, h: 20 },
   math: { w: 4, h: 16 },
   assistant: { w: 4, h: 10 },
   grid: { w: 6, h: 24 },
@@ -479,8 +479,8 @@ export function parseLayout(raw: string | null): Layout | null {
       copies?: Record<string, Partial<WinState> & { kind?: unknown }>;
       order?: unknown;
     };
-    // v3 (2026-10-17): the notebook took the centre column; earlier layouts (v1 card window, v2 notebook below the fold) start over.
-    if (v.v !== 3 || !v.wins || !Array.isArray(v.order)) return null;
+    // v4 (2026-10-17): map and graph are six columns wide; earlier layouts (v1 card window, v2 notebook below the fold, v3 three-column map and graph) start over.
+    if (v.v !== 4 || !v.wins || !Array.isArray(v.order)) return null;
     const wins = {} as Record<WinId, WinState>;
     const fallback = defaultLayout().wins;
     for (const id of WIN_IDS) {
@@ -532,13 +532,13 @@ export function loadLayout(): Layout | null {
 
 /** The layout as the JSON a project stores (the same shape as the browser's saved layout). */
 export function serializeLayout(layout: Layout): string {
-  return JSON.stringify({ v: 3, ...layout });
+  return JSON.stringify({ v: 4, ...layout });
 }
 
 export function saveLayout(layout: Layout | null): void {
   try {
     if (layout === null) localStorage.removeItem(STORAGE_KEY);
-    else localStorage.setItem(STORAGE_KEY, JSON.stringify({ v: 3, ...layout }));
+    else localStorage.setItem(STORAGE_KEY, JSON.stringify({ v: 4, ...layout }));
   } catch {
     // Private mode or blocked storage: the layout simply does not persist.
   }

@@ -573,6 +573,10 @@
   background: var(--brand-accent-soft, #ecebfc);
   color: var(--ink);
 }
+.ws-toolbar .ws-tool-open {
+  height: 32px;
+  border-radius: 999px;
+}
 .ws-toolbar .ws-tool-open[aria-pressed="true"] {
   background: var(--brand-accent, #635bf1);
   border-color: var(--brand-accent, #635bf1);
@@ -648,7 +652,7 @@
 }
 
 /* The visible way to make a window, at the end of the toolbar row. */
-.ws-toolbar .ws-add-open {
+.ws-add-open {
   min-height: 32px;
   padding: 0 12px;
   border: 1px solid var(--live);
@@ -660,73 +664,10 @@
   font-weight: 600;
   cursor: pointer;
 }
-.ws-toolbar .ws-add-open:hover,
-.ws-toolbar .ws-add-open:focus-visible {
+.ws-add-open:hover,
+.ws-add-open:focus-visible {
   background: var(--live);
   color: #fff;
-}
-
-/* "+ Add a window": the bottom left corner of the project screen, always in view. */
-.ws-float-bar {
-  position: fixed;
-  bottom: 16px;
-  left: calc(var(--sb-w, 232px) + 16px);
-  z-index: 190;
-  display: flex;
-  gap: 8px;
-}
-.ws-tool-float {
-  min-height: 40px;
-  padding: 0 16px;
-  border: 1px solid var(--line-strong, var(--line));
-  border-radius: 999px;
-  background: var(--glass-1);
-  box-shadow: var(--pop-shadow);
-  color: var(--ink);
-  font: inherit;
-  font-size: var(--t-s);
-  font-weight: 600;
-  cursor: pointer;
-}
-.ws-tool-float:hover,
-.ws-tool-float:focus-visible {
-  border-color: var(--live);
-  color: var(--live);
-}
-.ws-tool-float[aria-pressed="true"] {
-  border-color: var(--live);
-  background: var(--live-soft);
-  color: var(--live);
-}
-.ws-add-float {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 40px;
-  padding: 0 16px;
-  border: 1px solid var(--live);
-  border-radius: 999px;
-  background: var(--live);
-  box-shadow: var(--pop-shadow);
-  color: #fff;
-  font: inherit;
-  font-size: var(--t-s);
-  font-weight: 600;
-  cursor: pointer;
-}
-.ws-add-float:hover,
-.ws-add-float:focus-visible {
-  filter: brightness(1.1);
-}
-@media (max-width: 760px) {
-  .ws-float-bar {
-    left: 16px;
-  }
-}
-
-/* Room under the last window for the bottom-left buttons, so they never cover content. */
-.ws {
-  padding-bottom: 72px;
 }
 
 /* The timeline window reflows to the room it has: controls, band and the signal tiles wrap instead of overlapping. */
@@ -750,17 +691,12 @@
   overflow-y: auto;
 }
 
-/* Phones: the two buttons shrink so they cover less of the page. */
-@media (max-width: 560px) {
-  .ws-float-bar {
-    bottom: 10px;
-    gap: 6px;
-  }
-  .ws-add-float,
-  .ws-tool-float {
-    min-height: 36px;
-    padding: 0 12px;
-  }
+/* Narrow screens have no toolbar: the Add button sits alone above the stack. */
+.ws-narrow-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
 /* The ⓘ of a window: always visible, left of the focus and close marks. */

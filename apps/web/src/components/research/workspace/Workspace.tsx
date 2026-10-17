@@ -805,6 +805,33 @@ export function Workspace({
     height: r.h * ROW_PX,
   });
 
+  // "Add a window" and the Tools toggle: in the toolbar on a wide screen, the one Add button above the stack on a narrow one.
+  const addButton = (
+    <button
+      type="button"
+      className="ws-add-open"
+      data-add-window
+      onClick={(e) => {
+        const b = e.currentTarget.getBoundingClientRect();
+        setPicker({ x: b.left, y: b.bottom + 6, at: {} });
+      }}
+    >
+      + {t(locale, "wsEmptyAdd")}
+    </button>
+  );
+  const toolsButton = rail ? (
+    <button
+      type="button"
+      className="ws-tool-open"
+      aria-pressed={railOpen}
+      aria-keyshortcuts="T"
+      title={`${t(locale, railOpen ? "toolsRailHide" : "toolsRailShow")} · T`}
+      onClick={() => toggleRail()}
+    >
+      {t(locale, "toolsWindow")}
+    </button>
+  ) : null;
+
   return (
     <div
       className="ws"
@@ -815,19 +842,12 @@ export function Workspace({
       data-selection={primary !== null}
     >
       {wide ? null : <div className="ws-tray-row">{tray}</div>}
+      {wide ? null : <div className="ws-narrow-bar">{addButton}</div>}
       {wide ? (
         <div className="ws-toolbar">
           {focusBar ?? layouts}
-          <button
-            type="button"
-            className="ws-add-open"
-            onClick={(e) => {
-              const b = e.currentTarget.getBoundingClientRect();
-              setPicker({ x: b.left, y: b.bottom + 6, at: {} });
-            }}
-          >
-            + {t(locale, "wsEmptyAdd")}
-          </button>
+          {addButton}
+          {toolsButton}
         </div>
       ) : null}
       {rail ? (
@@ -982,35 +1002,6 @@ export function Workspace({
         })}
       </div>
       {wide ? <div className="ws-traydock">{tray}</div> : null}
-      {/* The two things you reach for most, bottom left of the project screen and always in view: add a window, the tools. */}
-      <div className="ws-float-bar">
-        <button
-          type="button"
-          className="ws-add-float"
-          data-add-window
-          onClick={(e) => {
-            const b = e.currentTarget.getBoundingClientRect();
-            setPicker({ x: b.left, y: b.top - 440, at: {} });
-          }}
-        >
-          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false">
-            <path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-          </svg>
-          {t(locale, "wsEmptyAdd")}
-        </button>
-        {rail ? (
-          <button
-            type="button"
-            className="ws-tool-float"
-            aria-pressed={railOpen}
-            aria-keyshortcuts="T"
-            title={`${t(locale, railOpen ? "toolsRailHide" : "toolsRailShow")} · T`}
-            onClick={() => toggleRail()}
-          >
-            {t(locale, "toolsWindow")}
-          </button>
-        ) : null}
-      </div>
       {picker ? (
         <WindowPicker
           locale={locale}

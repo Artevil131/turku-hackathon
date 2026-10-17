@@ -44,12 +44,12 @@ describe("compactLayout", () => {
   });
   it("opens with the Signals window large, the notebook wide beside it, and the card and the assistant in the tray", () => {
     const d = defaultLayout();
-    expect(d.wins.signals.w).toBeGreaterThanOrEqual(4);
+    expect(d.wins.signals.w).toBeGreaterThanOrEqual(3);
     expect(d.wins.math.open).toBe(false);
     expect(d.wins.assistant.open).toBe(false);
     expect(WIN_IDS.filter((id) => d.wins[id].open)).toEqual(["signals", "map", "graph", "notebook", "timeline"]);
     expect(d.wins.notebook.x).toBe(d.wins.signals.x + d.wins.signals.w);
-    expect(d.wins.notebook.w).toBeGreaterThanOrEqual(5);
+    expect(d.wins.notebook.w).toBeGreaterThanOrEqual(3);
     noOverlap(d);
   });
   it("opens the notebook in the analysis layout, beside Signals", () => {
@@ -60,7 +60,7 @@ describe("compactLayout", () => {
   });
   it("gives a layout saved before the notebook existed the notebook's default place", () => {
     const { notebook: _n, ...wins } = defaultLayout().wins;
-    const l = parseLayout(JSON.stringify({ v: 3, wins, charts: {}, order: ["signals", "map", "graph"] }));
+    const l = parseLayout(JSON.stringify({ v: 4, wins, charts: {}, order: ["signals", "map", "graph"] }));
     expect(l?.wins.notebook.open).toBe(true);
     expect(l?.wins.signals.open).toBe(true);
   });
@@ -90,16 +90,16 @@ describe("focusLayout", () => {
     const f = focusLayout(d, "signals", 20);
     expect(f.wins.signals.h).toBe(d.wins.signals.h);
     expect(d.wins.map.open).toBe(true);
-    expect(d.wins.signals.w).toBe(4);
+    expect(d.wins.signals.w).toBe(3);
   });
 });
 
 describe("chart windows in the layout", () => {
   const spec = defaultSpec({ unit: "ICU", window: { from: "2026-09-01", to: "2026-09-28" } });
-  const saved = (extra: object) => JSON.stringify({ v: 3, ...defaultLayout(), ...extra });
+  const saved = (extra: object) => JSON.stringify({ v: 4, ...defaultLayout(), ...extra });
 
   it("migrates a layout saved before charts existed to an empty charts record", () => {
-    const old = { v: 3, wins: defaultLayout().wins, order: [...defaultLayout().order] };
+    const old = { v: 4, wins: defaultLayout().wins, order: [...defaultLayout().order] };
     const l = parseLayout(JSON.stringify(old));
     expect(l?.charts).toEqual({});
     expect(l?.order).toEqual(defaultLayout().order);
@@ -118,7 +118,7 @@ describe("chart windows in the layout", () => {
   });
   it("keeps charts through save and load, with the chart's spec", () => {
     const { layout } = addChart(defaultLayout(), spec);
-    const back = parseLayout(JSON.stringify({ v: 3, ...layout }));
+    const back = parseLayout(JSON.stringify({ v: 4, ...layout }));
     expect(back?.charts["chart:1"]).toMatchObject({ ...spec, open: true });
     expect(back?.order).toContain("chart:1");
   });
