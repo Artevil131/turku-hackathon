@@ -2,6 +2,7 @@ import type { Alert } from "@aei/contract";
 import { HOME_SITE, type IsolateRecord, siteOfWard } from "@aei/domain";
 import { matchesScope, type Project, type ProjectScope } from "@aei/projects";
 import type { ExportBundle } from "./bundle.ts";
+import { methodNumber } from "./methods.ts";
 import { alertTable, isolateTable } from "./tables.ts";
 
 function signalKind(alert: Alert): string | null {
@@ -81,28 +82,38 @@ export function projectBundle({
     sourceNote: project.mode === "frozen" ? labels.frozenNote : undefined,
     tables: [isolateTable(selectedRecords, antibiotics), alertTable(selectedAlerts)],
     figures: [],
+    methodIds: ["liveSignals", "cpeAlerts", "newInUnitAlerts"],
     numbers: [
-      {
-        id: "isolates",
-        label: labels.isolates,
-        value: selectedRecords.length,
-        method: labels.isolateMethod,
-        recipe: { op: "count", table: "isolates" },
-      },
-      {
-        id: "patients",
-        label: labels.patients,
-        value: new Set(selectedRecords.map((record) => record.patientId)).size,
-        method: labels.patientMethod,
-        recipe: { op: "distinct", table: "isolates", column: "patientId" },
-      },
-      {
-        id: "alerts",
-        label: labels.alerts,
-        value: selectedAlerts.length,
-        method: labels.alertMethod,
-        recipe: { op: "count", table: "alerts" },
-      },
+      methodNumber(
+        {
+          id: "isolates",
+          label: labels.isolates,
+          value: selectedRecords.length,
+          method: labels.isolateMethod,
+          recipe: { op: "count", table: "isolates" },
+        },
+        "isolates",
+      ),
+      methodNumber(
+        {
+          id: "patients",
+          label: labels.patients,
+          value: new Set(selectedRecords.map((record) => record.patientId)).size,
+          method: labels.patientMethod,
+          recipe: { op: "distinct", table: "isolates", column: "patientId" },
+        },
+        "patients",
+      ),
+      methodNumber(
+        {
+          id: "alerts",
+          label: labels.alerts,
+          value: selectedAlerts.length,
+          method: labels.alertMethod,
+          recipe: { op: "count", table: "alerts" },
+        },
+        "alerts",
+      ),
     ],
   };
 }

@@ -157,18 +157,20 @@ describe("research package", () => {
     }
     const python = JSON.parse(String(files["reproduce.ipynb"]));
     expect(python.cells[1].source).toBe(
-      'import sys\nif sys.platform == "emscripten":\n    import piplite\n    await piplite.install("aei")\nimport aei\npkg = aei.read_package(".")\npkg',
+      'import sys\nif sys.platform == "emscripten":\n    import piplite\n    await piplite.install("aei")\nimport aei\npkg = aei.read_package(".")\nmethod_registry = {entry["id"]: entry for entry in aei.methods_registry()}\npkg',
     );
     expect(python.cells[3].source).toBe("pkg.verify()");
     expect(python.cells[5].source).toBe("aei.reproduce(pkg)");
     expect(python.cells[7].source).toContain(".size().unstack(fill_value=0).tail()");
     const r = JSON.parse(String(files["reproduce-r.ipynb"]));
     expect(r.metadata.kernelspec.display_name).toBe("R");
-    expect(r.cells[1].source).toBe('library(aei)\npkg <- read_package(".")');
+    expect(r.cells[1].source).toBe('library(aei)\npkg <- read_package(".")\nmethod_registry <- methods_registry()');
     expect(r.cells[3].source).toBe("verify(pkg)");
     expect(r.cells[5].source).toBe("reproduce(pkg)");
     expect(r.cells[7].source).toContain("table(week, isolates$ward)");
     expect(files["analysis.py"]).toContain("print(pkg.verify())");
+    expect(files["analysis.py"]).toContain("aei.methods_registry()");
+    expect(files["analysis.R"]).toContain("methods_registry()");
     expect(files["analysis.py"]).toContain("print(aei.reproduce(pkg))");
     expect(files["analysis.R"]).toContain("print(verify(pkg))");
     expect(files["analysis.R"]).toContain("print(reproduce(pkg))");

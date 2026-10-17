@@ -28,6 +28,11 @@ import { addDays, daysBetween } from "@aei/replay";
 
 export type Level = "unit" | "ward type" | "hospital";
 
+export const COVERAGE_DEFAULTS = { windowDays: 365, minTested: 30, onset: "any" } as const;
+export const RECENT_DAYS = 28;
+export const WILSON_Z = 1.959964;
+export const COMBINATION_LIMIT = 5;
+
 /** Where an infection was acquired (D-049): in hospital, in the community, or either. */
 export type Onset = "hospital" | "community" | "any";
 export const ONSETS: readonly Onset[] = ["hospital", "community", "any"];
@@ -133,7 +138,7 @@ export interface CoverageResult {
 }
 
 /** 95 % Wilson score interval for k of n. */
-export function wilson(k: number, n: number, z = 1.959964): [number, number] {
+export function wilson(k: number, n: number, z = WILSON_Z): [number, number] {
   if (n === 0) return [0, 1];
   const p = k / n;
   const d = 1 + (z * z) / n;
@@ -173,8 +178,8 @@ export function offeredFor(specimen: Specimen): readonly AntibioticCode[] {
 export function coverage(records: readonly IsolateRecord[], q: CoverageQuery, wards: readonly Ward[] = WARDS): CoverageResult {
   const wardType = new Map(wards.map((w) => [w.code, w.type]));
   const site = siteOfWard(q.ward);
-  const windowDays = q.windowDays ?? 365;
-  const minTested = q.minTested ?? 30;
+  const windowDays = q.windowDays ?? COVERAGE_DEFAULTS.windowDays;
+  const minTested = q.minTested ?? COVERAGE_DEFAULTS.minTested;
   const from = addDays(q.asOf, 1 - windowDays);
   const inWindow = (r: IsolateRecord, since: IsoDate) => r.sampleDate >= since && r.sampleDate <= q.asOf && r.specimen === q.specimen;
   const all = firstIsolates(
@@ -207,7 +212,7 @@ export function coverage(records: readonly IsolateRecord[], q: CoverageQuery, wa
   const base = all.filter(applied);
   const level = (["unit", "ward type"] as Level[]).find((l) => base.filter(inLevel[l]).length >= minTested) ?? "hospital";
   const pool = base.filter(inLevel[level]);
-  const recentFrom = addDays(q.asOf, -27);
+  const recentFrom = addDays(q.asOf, 1 - RECENT_DAYS);
   const recentPool = firstIsolates(
     records.filter((r) => inWindow(r, recentFrom) && r.ward === q.ward && applied(r)),
     { from: recentFrom, to: q.asOf },
@@ -278,7 +283,7 @@ export function coverage(records: readonly IsolateRecord[], q: CoverageQuery, wa
       specimen: q.specimen,
       sex: q.sex ?? null,
       ageGroup: q.ageGroup ?? null,
-      onset: q.onset ?? "any",
+      onset: q.onset ?? COVERAGE_DEFAULTS.onset,
       windowDays,
       minTested,
     },
@@ -399,7 +404,7 @@ export interface CombinationSuggestion {
  * Clears before borderline, then by coverage. Severe
  * infections only: a mild one is treated with one antibiotic.
  */
-export function suggestCombinations(result: CoverageResult, severity: Severity, limit = 5): CombinationSuggestion[] {
+export function suggestCombinations(result: CoverageResult, severity: Severity, limit = COMBINATION_LIMIT): CombinationSuggestion[] {
   // Two antibiotics at once is for severe infections only.
   if (severity !== "severe" || suggest(result, severity).some((s) => s.standing === "clears")) return [];
   const threshold = barFor(result.query, severity);

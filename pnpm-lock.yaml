@@ -108,6 +108,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@aei/methods':
+        specifier: workspace:*
+        version: link:../../libs/utils/methods
       '@aei/ask':
         specifier: workspace:*
         version: link:../../libs/utils/ask
@@ -285,6 +288,9 @@ importers:
 
   libs/utils/export:
     dependencies:
+      '@aei/methods':
+        specifier: workspace:*
+        version: link:../methods
       '@aei/contract':
         specifier: workspace:*
         version: link:../contract
@@ -321,6 +327,18 @@ importers:
       '@aei/domain':
         specifier: workspace:*
         version: link:../domain
+
+  libs/utils/methods:
+    dependencies:
+      '@aei/alerts':
+        specifier: workspace:*
+        version: link:../alerts
+      '@aei/coverage':
+        specifier: workspace:*
+        version: link:../coverage
+      '@aei/detect':
+        specifier: workspace:*
+        version: link:../detect
 
   libs/utils/projects:
     dependencies:
@@ -365,6 +383,9 @@ importers:
       '@aei/domain':
         specifier: workspace:*
         version: link:../domain
+      '@aei/methods':
+        specifier: workspace:*
+        version: link:../methods
       '@aei/replay':
         specifier: workspace:*
         version: link:../replay

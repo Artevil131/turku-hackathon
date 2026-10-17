@@ -1,5 +1,6 @@
 import type { AeiClient, Alert } from "@aei/contract";
 import { alertEvidence, formatDate, formatDateNumeric, incidentResponsibility, type Locale, t } from "@aei/i18n";
+import { detectorMethodIds, fillSentence, methods } from "@aei/methods";
 import { useEffect, useMemo, useState } from "react";
 import type { Finding } from "../../../live.ts";
 import { AlertExplanation } from "../../AlertExplanation.tsx";
@@ -19,14 +20,6 @@ import "./math.css";
 
 /** Isolates shown in the panel itself (U2: one click, not two); the rest open in the full list. */
 const INLINE_ISOLATES = 3;
-
-const TEST = {
-  "phenotype-excess": "feedTestPhenotype",
-  "profile-excess": "feedTestProfile",
-  "rising-trend": "feedTestTrend",
-  "sampling-drop": "feedTestSampling",
-  "empty-run": "feedTestSampling",
-} as const;
 
 interface Props {
   client: AeiClient;
@@ -65,6 +58,14 @@ export function AlertMath({ client, locale, incident: inc, spans, findings, onCh
   const mine = findings.filter((f) => ids.has(f.record.isolateId) && (inc.phenotypes.length === 0 || inc.phenotypes.includes(f.phenotype)));
   const unseen = mine.filter((f) => !f.seen);
   const lead = inc.lead;
+  const method =
+    lead.kind === "detector"
+      ? methods[detectorMethodIds[lead.detector]]
+      : lead.kind === "cpe"
+        ? methods.cpeAlerts
+        : lead.kind === "new-in-unit"
+          ? methods.newInUnitAlerts
+          : null;
   const win = windowOf(inc);
   const specimen = lead.kind === "cpe" ? lead.specimen : null;
   const doctor = `#doctor?${new URLSearchParams({ ...(inc.ward ? { unit: inc.ward } : {}), ...(specimen ? { site: specimen } : {}) }).toString()}`;
@@ -78,7 +79,7 @@ export function AlertMath({ client, locale, incident: inc, spans, findings, onCh
       <header className="math-head">
         <h2 id="math-title">{t(locale, "feedMathTitle")}</h2>
         <InfoButton locale={locale} align="end">
-          {t(locale, "feedMathHelp")}
+          {method ? fillSentence(method, {}, locale) : ""} {t(locale, "feedMathHelp")}
         </InfoButton>
       </header>
 
@@ -192,7 +193,13 @@ function AlertNumbers({ locale, alert: a }: { locale: Locale; alert: Alert }) {
   if (a.kind !== "detector") {
     return (
       <div className="math-block">
-        <p className="math-rule">{t(locale, "feedRuleNoTest")}</p>
+        <p className="math-rule">
+          {a.kind === "cpe"
+            ? fillSentence(methods.cpeAlerts, {}, locale)
+            : a.kind === "new-in-unit"
+              ? fillSentence(methods.newInUnitAlerts, {}, locale)
+              : t(locale, "feedRuleNoTest")}
+        </p>
         <p className="math-line">
           {a.kind === "new-in-unit"
             ? a.previous
@@ -247,7 +254,7 @@ function AlertNumbers({ locale, alert: a }: { locale: Locale; alert: Alert }) {
           {exp !== undefined ? <Bar label={t(locale, "feedUsual")} value={fmt(exp)} share={exp / max} tone="usual" /> : null}
         </div>
       )}
-      {empty ? null : <p className="math-line">{t(locale, TEST[a.detector])}</p>}
+      <p className="math-line">{fillSentence(methods[detectorMethodIds[a.detector]], {}, locale)}</p>
       {a.detector === "profile-excess" && a.profile ? (
         <p className="math-line">{t(locale, "feedResistantTo", { names: resistantFromProfile(locale, a.profile).join(", ") })}</p>
       ) : null}

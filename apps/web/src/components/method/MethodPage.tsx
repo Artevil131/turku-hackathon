@@ -1,5 +1,6 @@
-import { type AeiClient, type Alert, type CoverageResponse, THRESHOLDS, type WeeklyResponse } from "@aei/contract";
+import type { AeiClient, Alert, CoverageResponse, WeeklyResponse } from "@aei/contract";
 import { antibioticName, formatDate, type Locale, type MessageKey, phenotypeName, t, wardName } from "@aei/i18n";
+import { fillSentence, type MethodId, methods, parameterDefaults, registry } from "@aei/methods";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { DEFAULT_UNIT, readStoredUnit } from "../doctor/filters.ts";
@@ -69,9 +70,19 @@ function Step({
         </span>
         <h2 id={`mt-h${n}`}>{title}</h2>
         <InfoButton locale={locale} align="start">
-          {t(locale, `methodInfo${n}` as MessageKey)}
+          {n === 1
+            ? fillSentence(methods.coverage, {}, locale)
+            : n === 3
+              ? fillSentence(methods.liveSignals, {}, locale)
+              : t(locale, `methodInfo${n}` as MessageKey)}
         </InfoButton>
-        <p>{t(locale, `methodSentence${n}` as MessageKey)}</p>
+        <p>
+          {n === 1
+            ? fillSentence(methods.coverage, {}, locale)
+            : n === 3
+              ? fillSentence(methods.liveSignals, {}, locale)
+              : t(locale, `methodSentence${n}` as MessageKey)}
+        </p>
       </header>
       <div className={live ? "mt-grid" : "mt-grid mt-grid-cand"}>
         {live ? <div className="mt-live">{live}</div> : null}
@@ -94,7 +105,7 @@ function useCoverage(client: AeiClient, asOf: string | null) {
     if (!asOf) return;
     let stale = false;
     client
-      .coverage({ ward: unit, specimen: "urine", severity: "mild", windowDays: 365 })
+      .coverage({ ward: unit, specimen: "urine", severity: "mild", windowDays: parameterDefaults.coverage.windowDays })
       .then((r) => !stale && setData(r))
       .catch(() => !stale && setData("error"));
     return () => {
@@ -171,7 +182,7 @@ export function MethodPage({ client, locale, asOf }: { client: AeiClient; locale
             covered={c.counts.covered}
             known={c.counts.known}
             interval={s.interval}
-            bar={THRESHOLDS[cov.severity]}
+            bar={parameterDefaults.suggest[cov.severity]}
             locale={locale}
           />
           <p className="mt-line">
@@ -201,7 +212,7 @@ export function MethodPage({ client, locale, asOf }: { client: AeiClient; locale
         {win.length > 0 ? (
           <WeeklyWindow
             weeks={win}
-            windowStart={addDaysIso(alert.date, -27)}
+            windowStart={addDaysIso(alert.date, 1 - parameterDefaults.phenotypeExcess.windowDays)}
             observed={alert.observed}
             expected={alert.expected}
             p={alert.p}
@@ -240,7 +251,12 @@ export function MethodPage({ client, locale, asOf }: { client: AeiClient; locale
       <Step
         n={1}
         locale={locale}
-        live={coverage}
+        live={
+          <>
+            {coverage}
+            <RegisteredMethods locale={locale} ids={["coverage", "suggest", "suggestCombinations"]} />
+          </>
+        }
         math={
           <>
             <LiveRulesMath locale={locale} rules={["wilson"]} />
@@ -258,7 +274,12 @@ export function MethodPage({ client, locale, asOf }: { client: AeiClient; locale
       <Step
         n={3}
         locale={locale}
-        live={detection}
+        live={
+          <>
+            {detection}
+            <RegisteredMethods locale={locale} ids={registry.filter((m) => m.kind === "detector").map((m) => m.id)} />
+          </>
+        }
         math={
           <>
             <LiveRulesMath locale={locale} rules={["poisson", "empty", "drop", "sentinel", "trend"]} />
@@ -289,6 +310,37 @@ export function MethodPage({ client, locale, asOf }: { client: AeiClient; locale
           </>
         }
       />
+      <RegisteredMethods locale={locale} ids={["isolates", "patients", "alerts"]} />
     </main>
+  );
+}
+
+function RegisteredMethods({ locale, ids }: { locale: Locale; ids: readonly MethodId[] }) {
+  return (
+    <div className="mt-registered">
+      {ids.map((id) => {
+        const method = methods[id];
+        return (
+          <section key={id} aria-labelledby={`method-${id}`}>
+            <h3 className="mt-label" id={`method-${id}`}>
+              {method.name[locale]}
+            </h3>
+            <p className="mt-note">{fillSentence(method, {}, locale)}</p>
+            <dl>
+              {method.parameters.map((parameter) => (
+                <div key={parameter.name}>
+                  <dt>{parameter.description[locale]}</dt>
+                  <dd>
+                    {typeof parameter.default === "object" ? JSON.stringify(parameter.default) : String(parameter.default)}{" "}
+                    {parameter.unit ?? ""} · {parameter.decision}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+            <p className="mt-note">{[...method.decisions, ...method.experiments].join(" · ")}</p>
+          </section>
+        );
+      })}
+    </div>
   );
 }

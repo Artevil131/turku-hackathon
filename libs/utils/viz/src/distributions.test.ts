@@ -1,3 +1,4 @@
+import { detectorMethodIds, parameterDefaults } from "@aei/methods";
 import { describe, expect, it } from "vitest";
 import { ALPHA, betaDensity, betaGrid, logGamma, poissonPmf, poissonTailMass, surprise } from "./index.ts";
 
@@ -26,6 +27,7 @@ describe("viz helpers", () => {
     expect(surprise(1e-9)).toBe(6);
     expect(ALPHA["profile-excess"]).toBe(1e-4);
     expect(ALPHA["phenotype-excess"]).toBe(1e-3);
+    for (const [detector, id] of Object.entries(detectorMethodIds)) expect(ALPHA[detector]).toBe(parameterDefaults[id].alpha);
   });
   it("poissonTailMass is the detector's tail and the two tails overlap on k", () => {
     const upper = poissonTailMass("upper", 5, 0.608);

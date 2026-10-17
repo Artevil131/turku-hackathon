@@ -2,8 +2,8 @@ import type { ExportBundle } from "./bundle.ts";
 
 export type NotebookTarget = "lite" | "desktop";
 
-const pythonLoad = 'import aei\npkg = aei.read_package(".")';
-const rLoad = 'library(aei)\npkg <- read_package(".")';
+const pythonLoad = 'import aei\npkg = aei.read_package(".")\nmethod_registry = {entry["id"]: entry for entry in aei.methods_registry()}';
+const rLoad = 'library(aei)\npkg <- read_package(".")\nmethod_registry <- methods_registry()';
 const pythonExample = 'pkg.isolates.groupby([pd.Grouper(key="sampleDate", freq="W"), "ward"]).size().unstack(fill_value=0).tail()';
 const rExample = 'isolates <- pkg$isolates\nweek <- cut(as.Date(isolates$sampleDate), breaks = "week")\ntail(table(week, isolates$ward))';
 

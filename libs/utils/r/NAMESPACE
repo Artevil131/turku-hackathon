@@ -1,3 +1,4 @@
+export(methods_registry)
 export(read_package)
 export(connect)
 export(verify)
