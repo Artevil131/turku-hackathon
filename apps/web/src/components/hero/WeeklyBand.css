@@ -70,7 +70,7 @@
   stroke-width: 1;
 }
 .hs-lane-line {
-  opacity: 0.55;
+  opacity: 0.4;
 }
 .hs-base {
   stroke: var(--line-strong, #aebecb);
@@ -170,6 +170,9 @@
 }
 .hs-pill-hit {
   fill: transparent;
+}
+.hs-pill-bg {
+  filter: drop-shadow(0 1px 1.5px rgb(7 8 28 / 0.25));
 }
 .hs-pill-text {
   font: 600 11px var(--brand-font-ui, system-ui, sans-serif);

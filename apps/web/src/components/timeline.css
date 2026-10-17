@@ -15,7 +15,14 @@
   min-width: 0;
   border: 1px solid var(--line, #e4e6ee);
   border-radius: var(--brand-radius, 10px);
-  background: var(--glass-1, #fff);
+  background: linear-gradient(
+    180deg,
+    var(--glass-1, #fff) 0%,
+    color-mix(in oklab, var(--brand-accent, #635bf1) 4%, var(--glass-1, #fff)) 100%
+  );
+  box-shadow:
+    0 1px 0 rgb(7 8 28 / 0.03),
+    0 10px 24px -16px rgb(7 8 28 / 0.22);
 }
 
 .timeline :focus-visible,

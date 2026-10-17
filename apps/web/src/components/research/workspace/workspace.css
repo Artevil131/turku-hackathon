@@ -305,3 +305,16 @@
 .ws .math-head {
   padding-right: 32px;
 }
+
+/* panel heads without a feed/math header: clear of the close mark too */
+.ws .hnet-head,
+.ws .geo-head,
+.ws .ug-head,
+.ws .ugrid-head,
+.ws .map-head,
+.ws .assist-title {
+  padding-right: 24px;
+}
+.ws-close {
+  box-shadow: 0 0 0 1px var(--line);
+}

@@ -6,7 +6,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 14px;
+  padding: 12px;
   border-radius: var(--radius-panel);
   background: var(--glass-2);
   border: 1px solid var(--glass-edge);
@@ -25,7 +25,7 @@
 .map-title {
   margin: 0;
   font-size: var(--step-2);
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .map-asof {
@@ -196,7 +196,7 @@
 .map-side h3 {
   margin: 0 0 6px;
   font-size: var(--step-0);
-  font-weight: 650;
+  font-weight: 600;
 }
 
 /* Fills: steps of --resist mixed into white. */
@@ -318,7 +318,7 @@
 .map-national {
   margin: 8px 0 0;
   font-size: var(--step-1);
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .map-focus,
@@ -331,7 +331,7 @@
 .map-focus-name {
   margin: 0 0 6px;
   font-size: var(--step-1);
-  font-weight: 650;
+  font-weight: 600;
 }
 .map-focus dl {
   display: flex;
@@ -345,7 +345,7 @@
 .map-focus dd {
   margin: 0;
   font-size: var(--step-3);
-  font-weight: 650;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 .map-focus-line {
