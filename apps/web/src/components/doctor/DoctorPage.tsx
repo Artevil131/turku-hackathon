@@ -1,5 +1,6 @@
 import type { AeiClient, Alert, CoverageResponse } from "@aei/contract";
 import type { WardCode } from "@aei/domain";
+import type { Syndrome } from "@aei/guideline";
 import type { Locale } from "@aei/i18n";
 import { t } from "@aei/i18n";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -10,8 +11,9 @@ import { DataQuality } from "../DataQuality.tsx";
 import { CoverageList, itemsOf, type ListStatus } from "./CoverageList.tsx";
 import { Details } from "./Details.tsx";
 import "./DoctorPage.css";
-import { coverageQuery, type DoctorFilters, filtersFromUrl, filtersToParams, storeUnit } from "./filters.ts";
+import { chooseSyndrome, coverageQuery, type DoctorFilters, filtersFromUrl, filtersToParams, patchFilters, storeUnit } from "./filters.ts";
 import { RecordStrip } from "./RecordStrip.tsx";
+import { SyndromePicker } from "./SyndromePicker.tsx";
 import { unitSignals } from "./signals.ts";
 import { UnitContext } from "./UnitContext.tsx";
 import { useMedia } from "./useMedia.ts";
@@ -81,7 +83,8 @@ export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetry
     };
   }, [client, asOf, key, attempt]);
 
-  const onChange = useCallback((patch: Partial<DoctorFilters>) => setFilters((f) => ({ ...f, ...patch })), []);
+  const onChange = useCallback((patch: Partial<DoctorFilters>) => setFilters((f) => patchFilters(f, patch)), []);
+  const onSyndrome = useCallback((s: Syndrome | null) => setFilters((f) => chooseSyndrome(f, s)), []);
   // Figures from a different query are never shown under the new filters; only a clock tick keeps the old list while it refreshes.
   const current = data && data.key === key ? data.response : null;
   const feeders = useMemo(() => previousUnits(flows, filters.unit, 3).map((p) => p.ward), [flows, filters.unit]);
@@ -111,6 +114,7 @@ export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetry
         {t(locale, "drSkip")}
       </button>
       <div className="doctor-main">
+        <SyndromePicker locale={locale} value={filters.syn} onPick={onSyndrome} />
         <RecordStrip locale={locale} filters={filters} onChange={onChange} />
         <div className="doctor-body">
           <CoverageList

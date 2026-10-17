@@ -1,5 +1,6 @@
 import { barFor, type CoverageQuery, type CoverageResponse, type Level, type Severity, THRESHOLDS } from "@aei/contract";
 import { isWardCode, type Sex, type Specimen, WARDS, type WardCode } from "@aei/domain";
+import { guide, type Syndrome, type SyndromeId, syndromeDefaults } from "@aei/guideline";
 import { type Locale, type MessageKey, t } from "@aei/i18n";
 
 // The doctor's one-click filters, their defaults, and how they travel in the URL
@@ -15,10 +16,12 @@ export interface DoctorFilters {
   onset: boolean;
   sev: Severity;
   period: Period;
+  /** The guide's syndrome the doctor chose (D-047), or null. Marks the guide's first choice; never filters or reorders. */
+  syn: SyndromeId | null;
 }
 
 export const DEFAULT_UNIT: WardCode = "MED-A";
-export const DEFAULTS: Omit<DoctorFilters, "unit"> = { site: "urine", sex: "any", onset: false, sev: "mild", period: 365 };
+export const DEFAULTS: Omit<DoctorFilters, "unit"> = { site: "urine", sex: "any", onset: false, sev: "mild", period: 365, syn: null };
 export const SITES: readonly Specimen[] = ["urine", "blood", "wound"];
 /** The bar a severity is judged against, in percent (D-026, D-027), from the contract. */
 export const BAR: Record<Severity, number> = { mild: THRESHOLDS.mild * 100, severe: THRESHOLDS.severe * 100 };
@@ -53,6 +56,29 @@ export function storeUnit(unit: WardCode): void {
   }
 }
 
+/** The guide's syndrome by id, from the site's guide (only Varha's for now; a sites registry will name it). */
+export function syndromeOf(id: string | null | undefined): Syndrome | undefined {
+  return id ? guide().syndromes.find((s) => s.id === id) : undefined;
+}
+
+/**
+ * Choosing a syndrome sets the filters it implies (specimen, severity, onset, and sex when the syndrome has one).
+ * Community or any onset leaves the onset toggle off: only hospital onset is sent (D-049). Choosing the chosen one
+ * again, or null, clears it and leaves the filters as they are.
+ */
+export function chooseSyndrome(f: DoctorFilters, syndrome: Syndrome | null): DoctorFilters {
+  if (!syndrome || syndrome.id === f.syn) return { ...f, syn: null };
+  const d = syndromeDefaults(syndrome);
+  return { ...f, syn: syndrome.id, site: d.specimen, sev: d.severity, onset: d.onset === "hospital", sex: d.sex ?? f.sex };
+}
+
+/** A filter change; changing the specimen clears the chosen syndrome, other changes keep it. */
+export function patchFilters(f: DoctorFilters, patch: Partial<DoctorFilters>): DoctorFilters {
+  const next = { ...f, ...patch };
+  if (!("syn" in patch) && patch.site !== undefined && patch.site !== f.site) next.syn = null;
+  return next;
+}
+
 /** What the coverage API is asked for these filters: sex and onset only when set (D-049: hospital onset or nothing). */
 export function coverageQuery(f: DoctorFilters): CoverageQuery {
   return {
@@ -78,6 +104,7 @@ export function filtersFromUrl(params: URLSearchParams): DoctorFilters {
     onset: params.get("onset") === "hospital",
     sev: sev === "severe" ? "severe" : "mild",
     period: params.get("period") === "28" ? 28 : 365,
+    syn: syndromeOf(params.get("syn"))?.id ?? null,
   };
 }
 
@@ -91,6 +118,7 @@ export function filtersToParams(f: DoctorFilters): Record<string, string | null>
     onset: f.onset ? "hospital" : null,
     sev: f.sev === "mild" ? null : f.sev,
     period: f.period === 365 ? null : String(f.period),
+    syn: f.syn,
   };
 }
 

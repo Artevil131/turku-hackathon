@@ -1,11 +1,13 @@
 import type { CoverageResponse, Severity } from "@aei/contract";
 import type { IsolateRecord } from "@aei/domain";
+import { guide } from "@aei/guideline";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { coverage, suggest, suggestCombinations } from "../../../../../libs/utils/coverage/src/index.ts";
 import { CoverageList, itemsOf } from "./CoverageList.tsx";
-import { barOf, coverageQuery, DEFAULTS, filtersFromUrl, filtersToParams } from "./filters.ts";
+import { barOf, chooseSyndrome, coverageQuery, DEFAULTS, filtersFromUrl, filtersToParams, patchFilters, syndromeOf } from "./filters.ts";
 import { RecordStrip } from "./RecordStrip.tsx";
+import { SyndromePicker } from "./SyndromePicker.tsx";
 import { UnitContext } from "./UnitContext.tsx";
 
 const filters = { ...DEFAULTS, unit: "URO" as const };
@@ -163,5 +165,33 @@ describe("available filters", () => {
     expect(html).not.toContain("not applied");
     expect(html).toMatch(/aria-pressed="true"[^>]*>Day 3\+/);
     expect(html).toContain("mild 90");
+  });
+});
+
+describe("syndrome chooser (D-047)", () => {
+  it("sets specimen, severity, onset and sex from the guide and travels as syn=", () => {
+    const healthcare = syndromeOf("sepsis-healthcare");
+    const cystitis = syndromeOf("cystitis-woman");
+    if (!healthcare || !cystitis) throw new Error("guide must carry both syndromes");
+    const chosen = chooseSyndrome({ ...filters, sex: "M" }, healthcare);
+    expect(chosen).toMatchObject({ syn: "sepsis-healthcare", site: "blood", sev: "severe", onset: true, sex: "M" });
+    expect(chooseSyndrome(chosen, cystitis)).toMatchObject({ syn: "cystitis-woman", site: "urine", sev: "mild", onset: false, sex: "F" });
+    expect(filtersToParams(chosen).syn).toBe("sepsis-healthcare");
+    expect(filtersFromUrl(new URLSearchParams("syn=sepsis-healthcare")).syn).toBe("sepsis-healthcare");
+    expect(filtersFromUrl(new URLSearchParams("syn=nonsense")).syn).toBeNull();
+    // Tapping the chosen chip again clears it; the filters stay.
+    expect(chooseSyndrome(chosen, healthcare)).toEqual({ ...chosen, syn: null });
+  });
+  it("clears when the specimen changes and survives other changes", () => {
+    const chosen = chooseSyndrome(filters, syndromeOf("pyelonephritis") ?? null);
+    expect(patchFilters(chosen, { sev: "mild", sex: "F", period: 28 }).syn).toBe("pyelonephritis");
+    expect(patchFilters(chosen, { site: "urine" }).syn).toBe("pyelonephritis");
+    expect(patchFilters(chosen, { site: "blood" }).syn).toBeNull();
+  });
+  it("renders one chip per syndrome grouped by specimen, the chosen one pressed", () => {
+    const html = renderToStaticMarkup(<SyndromePicker locale="en" value="pyelonephritis" onPick={() => {}} />);
+    expect(html.match(/class="sp-chip"/g)).toHaveLength(guide().syndromes.length);
+    expect(html.indexOf('aria-label="urine"')).toBeLessThan(html.indexOf('aria-label="blood"'));
+    expect(html).toMatch(/aria-pressed="true"[^>]*>Pyelonephritis</);
   });
 });

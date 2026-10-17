@@ -1,0 +1,85 @@
+/* The guide's syndromes above the record strip: one row of chips grouped by specimen; scrolls sideways when narrow. */
+.sp {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.sp-label {
+  font-size: var(--t-xs, 12px);
+  font-weight: 600;
+  color: var(--ink-3, #6f7292);
+  white-space: nowrap;
+}
+
+.sp-row {
+  display: flex;
+  gap: 12px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  padding: 2px;
+  scroll-snap-type: x proximity;
+}
+
+.sp-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  scroll-snap-align: start;
+}
+
+.sp-site {
+  font-size: var(--t-xs, 12px);
+  color: var(--ink-3, #6f7292);
+  white-space: nowrap;
+  margin-right: 2px;
+}
+
+.sp-chip {
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong, #aebecb);
+  background: var(--glass-3, #fff);
+  color: var(--ink-2, #1d204e);
+  font: inherit;
+  font-size: var(--t-s, 13px);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.sp-chip:hover {
+  background: var(--brand-accent-soft, #ecebfc);
+}
+
+.sp-chip[aria-pressed="true"] {
+  background: var(--brand-accent, #635bf1);
+  border-color: var(--brand-accent, #635bf1);
+  color: var(--brand-accent-ink, #fff);
+}
+
+.sp-chip:focus-visible {
+  outline: 2px solid var(--brand-accent, #635bf1);
+  outline-offset: 2px;
+}
+
+@media (max-width: 959px) {
+  .sp {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+  }
+  .sp-chip {
+    height: 44px;
+  }
+}
+
+@media print {
+  .sp {
+    display: none;
+  }
+}

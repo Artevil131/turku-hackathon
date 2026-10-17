@@ -41,7 +41,7 @@
 
 .doctor-main {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr);
   gap: 8px;
   max-width: 1600px;
   margin: 0 auto;
@@ -115,7 +115,7 @@
     overflow: hidden;
   }
   .doctor-main {
-    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr);
     height: 100%;
     min-height: 0;
   }
