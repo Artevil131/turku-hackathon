@@ -122,8 +122,8 @@ The lazy export chunk is above Vite's 500 kB warning limit; it loads only when a
 First visit to `#home` before: `index` 365 212 and `jsx-runtime` 172 354, 537 566 bytes in total (the list in the
 browser had only these two files). The after-step-2 home figure is in the table at the end.
 
-Smoke: the full smoke passes (`apps/web/scripts/smoke.mjs` against the dev server, 23 of 23, including the
-projects interaction that downloads each export format). The per-route wall times below are dev-server runs
+Smoke: run after steps 2 and 3 (see step 3), `apps/web/scripts/smoke.mjs` against the dev server, 23 of 23,
+including the projects interaction that downloads each export format. The per-route wall times below are dev-server runs
 with `--interactions none`; they measure the harness and Chrome start, not the bundle, because the dev server
 does not bundle.
 
