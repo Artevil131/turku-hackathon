@@ -399,3 +399,8 @@
   margin: 4px 0 0;
   color: var(--d-ink-2);
 }
+
+/* Inside a workspace window the window's own ⓘ and × sit in the top-right corner: the sheet's header keeps clear of them. */
+.coverage-window .dp-sheet-contained .dp-sheet-head {
+  padding-right: 72px;
+}

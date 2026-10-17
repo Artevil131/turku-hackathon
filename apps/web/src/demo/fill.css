@@ -1,11 +1,130 @@
-/* While a demo fills itself in: windows wait invisible until their turn, and the lock catches every press. */
+/* While a demo fills itself in (demo/FillOverlay.tsx plays demo/fillScripts.ts): windows wait unseen until their beat,
+   cells show their body only once the colleague has reached them, and every motion is opacity, transform or clip-path.
+   Durations and easing come from the beat (--fill-for, --fill-ease); the app's tokens are the fallback. */
+
+@keyframes fill-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@keyframes fill-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes fill-wipe {
+  from {
+    opacity: 0.4;
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+  }
+}
+@keyframes fill-caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* ---------- windows ---------- */
 .ws[data-fill] .ws-win:not([data-shown]) {
   opacity: 0;
   pointer-events: none;
 }
-.ws[data-fill] .ws-win[data-shown] {
-  animation: appear-fade 600ms var(--mo-ease) both;
+.ws[data-fill] .ws-win .ws-frame {
+  will-change: opacity, transform;
 }
+.ws[data-fill] .ws-win[data-shown] .ws-frame {
+  animation: fill-rise var(--fill-for, 500ms) var(--fill-ease, var(--mo-ease)) both;
+}
+.ws[data-fill] .ws-win[data-shown][data-fill-how="wipe"] .ws-frame {
+  animation-name: fill-wipe;
+  animation-timing-function: linear;
+}
+
+/* ---------- notebook cells ---------- */
+.ws[data-fill] .nb-slot {
+  animation: fill-rise 320ms var(--mo-ease) both;
+}
+/* A cell's body waits until the colleague reaches it (its title is already there). */
+.ws[data-fill] .nb-cell:not([data-fill-active]):not([data-fill-done]) .nb-body {
+  visibility: hidden;
+}
+.ws[data-fill] .nb-cell[data-fill-active] {
+  border-left-color: var(--live);
+}
+.ws[data-fill] .nb-cell[data-kind="note"][data-fill-active] {
+  border-left-color: var(--live);
+}
+
+/* A note being typed: blocks not reached are not there yet; the line being written carries a soft caret. */
+.ws[data-fill] .nb-note [data-fill-pending] {
+  display: none;
+}
+.ws[data-fill] .nb-note [data-fill-writing]::after {
+  content: "";
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  margin-left: 1px;
+  vertical-align: -0.18em;
+  border-radius: 1px;
+  background: var(--live);
+  animation: fill-caret 1s steps(2, start) infinite;
+}
+/* The note's Edit link waits for the last word. */
+.ws[data-fill] .nb-cell[data-kind="note"]:not([data-fill-done]) .nb-note-btn {
+  opacity: 0;
+}
+
+/* A slice being placed: the sentence grows a field at a time; its buttons arrive when the sentence is whole. */
+.ws[data-fill] .nb-actions {
+  transition: opacity 320ms var(--mo-ease);
+}
+.ws[data-fill] .nb-cell[data-fill-placing] .nb-actions {
+  opacity: 0;
+}
+
+/* An analysis: Run looks pressed while the tool thinks; the result rises, the method follows a breath later. */
+.ws[data-fill] [data-fill-pressed] {
+  transform: translateY(1px) scale(0.98);
+  filter: brightness(0.9);
+  transition:
+    transform 100ms var(--mo-ease),
+    filter 100ms var(--mo-ease);
+}
+.ws[data-fill] .nb-cell[data-fill-result] .tl-cell {
+  animation: fill-rise var(--fill-for, 500ms) var(--fill-ease, var(--mo-ease)) both;
+}
+.ws[data-fill] .nb-cell[data-fill-result] .nb-method {
+  animation: fill-fade var(--fill-for, 500ms) var(--fill-ease, var(--mo-ease)) both;
+  animation-delay: 160ms;
+}
+
+/* A chart drawing itself: the line's dash offset glides to zero (set inline by the player), dots and band follow. */
+.ws[data-fill] .nb-cell[data-fill-drawing] .ch-dot {
+  opacity: 0;
+  animation: fill-fade 300ms var(--fill-ease, var(--mo-ease)) var(--fill-for, 1000ms) forwards;
+}
+.ws[data-fill] .nb-cell[data-fill-drawing] .ch-band {
+  animation: fill-fade 700ms var(--fill-ease, var(--mo-ease)) both;
+}
+
+/* ---------- the coverage window: the answer waits for the case ---------- */
+.ws[data-fill] .ws-win[data-win="coverage"] :is(.dr-answer > :not(.dr-answer-case), .cl) {
+  transition:
+    opacity 450ms var(--mo-ease),
+    transform 450ms var(--mo-ease);
+}
+.ws[data-fill] .ws-win[data-fill-veil="answer"] :is(.dr-answer > :not(.dr-answer-case), .cl) {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+/* ---------- the lock and its quiet progress line ---------- */
 .fill-lock {
   position: fixed;
   inset: 0;
@@ -13,28 +132,48 @@
   display: grid;
   align-items: end;
   justify-items: center;
-  padding-bottom: 28px;
+  padding-bottom: 22px;
   cursor: progress;
+  animation: fill-fade 300ms var(--mo-ease) both;
 }
 .fill-pill {
   position: relative;
   overflow: hidden;
-  padding: 10px 20px;
+  padding: 8px 18px 10px;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: var(--glass-1);
   box-shadow: var(--pop-shadow);
-  color: var(--ink);
-  font-size: var(--t-s);
-  font-weight: 600;
-}
-.fill-pill span {
-  position: relative;
-  z-index: 1;
+  color: var(--ink-2);
+  font-size: var(--t-xs);
+  font-weight: 500;
+  letter-spacing: 0.01em;
 }
 .fill-pill i {
   position: absolute;
-  inset: 0 auto 0 0;
-  background: var(--live-soft);
-  transition: width 600ms var(--mo-ease);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--live);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ws[data-fill] .ws-win[data-shown] .ws-frame,
+  .ws[data-fill] .nb-slot,
+  .ws[data-fill] .nb-cell[data-fill-result] .tl-cell,
+  .ws[data-fill] .nb-cell[data-fill-result] .nb-method,
+  .ws[data-fill] .nb-cell[data-fill-drawing] .ch-dot,
+  .ws[data-fill] .nb-cell[data-fill-drawing] .ch-band,
+  .ws[data-fill] .nb-note [data-fill-writing]::after,
+  .fill-lock {
+    animation: none;
+  }
+  .ws[data-fill] .nb-cell[data-fill-drawing] .ch-dot,
+  .ws[data-fill] .ws-win[data-fill-veil] :is(.dr-answer > :not(.dr-answer-case), .cl) {
+    opacity: 1;
+    transform: none;
+  }
 }
