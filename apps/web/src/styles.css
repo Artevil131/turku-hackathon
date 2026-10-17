@@ -82,6 +82,25 @@
   --gap: 8px;
   --well: 44px;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Motion: three durations, one easing (research-unified.md §7).
+     1 = immediate feedback, 2 = routine state change, 3 = composition change. */
+  --mo-1: 120ms;
+  --mo-2: 200ms;
+  --mo-3: 320ms;
+  --mo-ease: var(--ease-out);
+  /* Dimmed state of everything that is not the selection: marks step back further
+     than anything that carries text (pills, nodes), which must stay readable. */
+  --dim-mark: 0.42;
+  --dim-text: 0.7;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --mo-1: 0ms;
+    --mo-2: 0ms;
+    --mo-3: 0ms;
+  }
 }
 
 :root[data-theme="dark"] {
@@ -1384,4 +1403,338 @@ fieldset.setting {
 .info-pop[data-align="end"] {
   left: auto;
   right: 0;
+}
+
+/* ---------- Glossary (research-unified.md §6) ---------- */
+
+/* Any abbreviation on screen: dotted underline, the full name in the title and the tooltip. */
+abbr.gloss {
+  text-decoration: underline dotted;
+  text-decoration-color: var(--ink-3);
+  text-underline-offset: 2px;
+  cursor: help;
+}
+
+.gloss-tip {
+  position: absolute;
+  z-index: 50;
+  max-width: 280px;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--glass-1);
+  box-shadow: var(--pop-shadow);
+  color: var(--ink);
+  font-size: var(--t-xs);
+  line-height: 1.4;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(2px);
+  transition:
+    opacity var(--mo-1) var(--mo-ease),
+    transform var(--mo-1) var(--mo-ease);
+}
+
+.gloss-tip[data-open="true"] {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---------- The signal card (research-unified.md §3) ---------- */
+
+.sig {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--glass-1);
+  overflow: visible;
+}
+
+.sig-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 12px 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+.sig-head h2 {
+  margin: 0;
+  font-size: var(--t-m);
+  font-weight: 600;
+}
+
+.sig-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  padding: 12px;
+  overflow-y: auto;
+}
+
+/* Cross-fade between incidents: the body leaves fast and enters slow; the frame never moves. */
+.sig-body.is-leaving {
+  animation: sig-leave var(--mo-1) var(--mo-ease) forwards;
+}
+
+.sig-body.is-entering {
+  animation: sig-enter var(--mo-3) var(--mo-ease);
+}
+
+@keyframes sig-leave {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes sig-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+.sig-kind {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.sig[data-kind="sentinel"] .sig-kind {
+  color: var(--st-alert);
+}
+
+.sig[data-kind="data"] .sig-kind {
+  color: var(--ink-3);
+}
+
+.sig-title {
+  margin: 2px 0 0;
+  font-size: var(--t-m);
+  font-weight: 600;
+  line-height: 1.3;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+.sig-where {
+  margin: 2px 0 0;
+  font-size: var(--t-xs);
+  color: var(--ink-2);
+}
+
+/* Two bars on one scale: observed solid, usual dashed. */
+.sig-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sig-bar {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--t-xs);
+}
+
+.sig-bar-label {
+  color: var(--ink-2);
+}
+
+.sig-bar-track {
+  height: 10px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: var(--chassis);
+}
+
+.sig-bar-track i {
+  display: block;
+  height: 100%;
+  min-width: 2px;
+  transition: width var(--mo-3) var(--mo-ease);
+}
+
+.sig-bar[data-tone="obs"] i {
+  background: var(--ink-2);
+}
+
+.sig-bar[data-tone="usual"] i {
+  box-sizing: border-box;
+  border: 1px dashed var(--ink-2);
+  background: var(--line);
+}
+
+.sig-bar-value {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.sig-bar-value small {
+  font-weight: 400;
+  color: var(--ink-2);
+}
+
+.sig-surprise {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+/* The one display-size figure. The tween runs on a registered property; the real number stays in the DOM. */
+@property --sig-n {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+.sig-num {
+  font-family: var(--font-display);
+  font-size: var(--t-l);
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  transition: --sig-n var(--mo-3) var(--mo-ease);
+}
+
+.sig-surprise-label {
+  font-size: var(--t-xs);
+  color: var(--ink-2);
+}
+
+.sig-how {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sig-how-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  font-size: var(--t-s);
+  font-weight: 600;
+}
+
+.sig-how-text {
+  margin: 0;
+  font-size: var(--t-xs);
+  line-height: 1.5;
+  color: var(--ink);
+  max-width: 62ch;
+}
+
+.sig-how-text b {
+  font-weight: 600;
+}
+
+.sig-reach {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  font-size: var(--t-xs);
+  color: var(--ink-2);
+}
+
+.sig-reach-label {
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.sig-isolates {
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+
+.sig-isolates > summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: var(--t-s);
+  font-weight: 600;
+  list-style: none;
+}
+
+.sig-isolates > summary::-webkit-details-marker {
+  display: none;
+}
+
+.sig-isolates > summary::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-right: 1.6px solid currentColor;
+  border-bottom: 1.6px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform var(--mo-1) var(--mo-ease);
+}
+
+.sig-isolates[open] > summary::before {
+  transform: rotate(45deg);
+}
+
+.sig-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 8px 12px 12px;
+  border-top: 1px solid var(--line);
+}
+
+.sig-primary,
+.sig-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: var(--control-h);
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control);
+  background: var(--glass-1);
+  color: var(--ink);
+  font-size: var(--t-s);
+  font-weight: 500;
+  text-decoration: none;
+  transition:
+    border-color var(--mo-1) var(--mo-ease),
+    background-color var(--mo-1) var(--mo-ease),
+    color var(--mo-1) var(--mo-ease);
+}
+
+.sig-primary {
+  grid-column: 1 / -1;
+  border-color: var(--live);
+  background: var(--live);
+  color: var(--live-ink);
+  font-weight: 600;
+}
+
+.sig-btn:hover:not(:disabled) {
+  border-color: var(--live);
+}
+
+.sig-btn:disabled {
+  border-style: dashed;
+  color: var(--ink-3);
+}
+
+.sig-empty {
+  margin: 12px;
+  font-size: var(--t-s);
+  line-height: 1.5;
+  color: var(--ink-2);
+  max-width: 40ch;
 }
