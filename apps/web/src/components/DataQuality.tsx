@@ -23,7 +23,12 @@ const CHECK_LABELS: Record<CheckName, MessageKey> = {
 export function QualityResult({ locale, data, expanded = false }: { locale: Locale; data: QualityResponse; expanded?: boolean }) {
   const n = data.summary.reduce((sum, check) => sum + check.count, 0);
   const fmt = (value: number) => new Intl.NumberFormat(locale).format(value);
-  if (!expanded) return <a href="#settings?section=data">{t(locale, "qualityLink", { n: fmt(n) })}</a>;
+  if (!expanded)
+    return (
+      <a className="link" href="#settings?section=data">
+        {t(locale, "qualityLink", { n: fmt(n) })}
+      </a>
+    );
   return (
     <div className="quality-results">
       <p>{t(locale, "qualityScope", Object.fromEntries(Object.entries(data.checked).map(([key, value]) => [key, fmt(value)])))}</p>

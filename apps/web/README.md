@@ -17,8 +17,9 @@ Pages (URL hash; each page keeps its view state in the hash, so any view is a li
   role entries; the doctor's names the remembered unit.
 - **Doctor** (`#doctor?unit&site&sex&age&onset&sev&period`): the doctor's
   list from `/api/coverage` (D-023, D-026, D-027, D-033). One-click filters
-  with defaults, unit remembered; age group and inpatient day 3 or later
-  are shown but not applied (the API has no such filter). Each row: covers
+  with defaults, unit remembered; sex, age group and inpatient day 3 or
+  later are sent to the server, which may drop them to keep the unit's own
+  data (D-047), and the list says so. Each row: covers
   %, 95 % interval against the bar, n, the level the data came from,
   standing in words and glyph, and why it sits where it does. Likely
   organisms for the specimen on the unit beside the list. Printable.

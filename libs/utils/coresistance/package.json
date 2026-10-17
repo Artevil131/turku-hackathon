@@ -1,0 +1,19 @@
+{
+  "name": "@aei/coresistance",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./route": "./src/route.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@aei/counting": "workspace:*",
+    "@aei/coverage": "workspace:*",
+    "@aei/domain": "workspace:*",
+    "@aei/replay": "workspace:*"
+  }
+}

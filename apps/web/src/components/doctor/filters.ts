@@ -1,22 +1,23 @@
 import { type CoverageResponse, type Level, type Severity, THRESHOLDS } from "@aei/contract";
-import type { Sex, Specimen, WardCode } from "@aei/domain";
+import { type AgeGroup as AgeBand, isAgeGroup, type Sex, type Specimen, type WardCode } from "@aei/domain";
 import { type Locale, type MessageKey, t } from "@aei/i18n";
 import { inSite, knownWard, siteWards } from "../../sites.ts";
 
 // The doctor's one-click filters, their defaults, and how they travel in the URL
-// (`#doctor?unit=URO&site=urine&sex=F&sev=severe&period=28`) and in localStorage (`aei.unit`).
+// (`#doctor?unit=URO&site=urine&sex=F&age=older&onset=hospital&sev=severe&period=28`) and in localStorage (`aei.unit`).
 
-export const AGE_GROUPS = ["any", "child", "adult", "older", "veryold"] as const;
-export type AgeGroup = (typeof AGE_GROUPS)[number];
+/** "any" and D-019's groups (`AGE_GROUPS` in @aei/domain), in the order the strip shows them. */
+export const AGE_GROUPS: readonly AgeGroup[] = ["any", "child", "adult", "older", "veryOld"];
+export type AgeGroup = "any" | AgeBand;
 export type Period = 365 | 28;
 
 export interface DoctorFilters {
   unit: WardCode;
   site: Specimen;
   sex: Sex | "any";
-  /** Disabled, not applied: the coverage API has no age filter. */
+  /** Sent to the coverage API; the server may drop it to keep the unit's own data (D-047). */
   age: AgeGroup;
-  /** Disabled, not applied: the API has no onset filter and the bar it implies is undecided (ENGINE 2.6). */
+  /** Inpatient day 3 or later (hospital onset), sent as `onset=hospital`; may be dropped like age (D-047). */
   onset: boolean;
   sev: Severity;
   period: Period;
@@ -33,7 +34,7 @@ export const AGE_KEYS: Record<AgeGroup, MessageKey> = {
   child: "drAgeChild",
   adult: "drAgeAdult",
   older: "drAgeOlder",
-  veryold: "drAgeVeryOld",
+  veryOld: "drAgeVeryOld",
 };
 
 const UNIT_KEY = "aei.unit";
@@ -68,12 +69,13 @@ export function filtersFromUrl(params: URLSearchParams): DoctorFilters {
   const site = params.get("site");
   const sex = params.get("sex");
   const sev = params.get("sev");
+  const age = params.get("age");
   return {
     unit: unit && knownWard(unit) && inSite(unit) ? unit : (readStoredUnit() ?? defaultUnit()),
     site: SITES.find((s) => s === site) ?? DEFAULTS.site,
     sex: sex === "F" || sex === "M" ? sex : DEFAULTS.sex,
-    age: DEFAULTS.age,
-    onset: DEFAULTS.onset,
+    age: age && isAgeGroup(age) ? age : DEFAULTS.age,
+    onset: params.get("onset") === "hospital",
     sev: sev === "severe" ? "severe" : "mild",
     period: params.get("period") === "28" ? 28 : 365,
   };
@@ -85,8 +87,8 @@ export function filtersToParams(f: DoctorFilters): Record<string, string | null>
     unit: f.unit,
     site: f.site === DEFAULTS.site ? null : f.site,
     sex: f.sex === "any" ? null : f.sex,
-    age: null,
-    onset: null,
+    age: f.age === "any" ? null : f.age,
+    onset: f.onset ? "hospital" : null,
     sev: f.sev === "mild" ? null : f.sev,
     period: f.period === 365 ? null : String(f.period),
   };
@@ -134,6 +136,15 @@ export type Row = CoverageResponse["suggestions"][number];
 /** n behind a row's headline share: within-spectrum (mild) or all-organism (severe) known results. */
 export function rowN(row: Row): number {
   return row.basis === "spectrum" ? row.coverage.spectrum.counts.known : row.coverage.counts.known;
+}
+
+/** Patient filters asked for that the server dropped to keep the unit's own data (D-033, D-047): the sentence and the chip. */
+export function droppedFilters(f: DoctorFilters, cov: CoverageResponse["coverage"]): { long: MessageKey; chip: MessageKey }[] {
+  return [
+    f.sex !== "any" && !cov.sexApplied ? ({ long: "drSexDropped", chip: "drSexDroppedChip" } as const) : null,
+    f.age !== "any" && !cov.ageGroupApplied ? ({ long: "drAgeDropped", chip: "drAgeDroppedChip" } as const) : null,
+    f.onset && !cov.onsetApplied ? ({ long: "drOnsetDropped", chip: "drOnsetDroppedChip" } as const) : null,
+  ].filter((d) => d !== null);
 }
 
 /** The sex chip's label: Finnish N/M, English F/M, "any" spelled out. */

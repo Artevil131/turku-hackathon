@@ -15,21 +15,6 @@ const Bar = ({ share, color, grow, label, strong }: { share: number; color: stri
   </div>
 );
 
-const Aware = ({ group }: { group: string }) => (
-  <span
-    style={{
-      fontSize: 26,
-      fontWeight: 600,
-      padding: "6px 16px",
-      borderRadius: 999,
-      color: group === "Access" ? C.access : C.watch,
-      background: group === "Access" ? C.accessBg : C.watchBg,
-    }}
-  >
-    {group === "Access" ? "First choice" : "Use with care"}
-  </span>
-);
-
 // Mild first: the share of the bacteria each drug is meant for, then the share of everything that grows,
 // which the backtest (experiment 0010) showed is what the patient actually gets. Then severe.
 const TreatInner = () => {
@@ -54,7 +39,6 @@ const TreatInner = () => {
           <div key={s.antibiotic} style={{ marginBottom: 34, opacity: g(0.4 + i * 0.5, 0.6) }}>
             <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 6 }}>
               <span style={{ fontSize: 42, fontWeight: 700, color: C.ink }}>{ANTIBIOTIC[s.antibiotic]}</span>
-              <Aware group={s.aware} />
             </div>
             <Bar share={s.share ?? 0} color={C.blue} grow={g(0.6 + i * 0.5)} label="of the bacteria it is meant for" />
             {i === 0 ? (
@@ -68,7 +52,6 @@ const TreatInner = () => {
         <p style={{ margin: "0 0 26px", fontSize: 40, fontWeight: 600, color: C.high }}>Severe: judged on everything that grows</p>
         <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 6 }}>
           <span style={{ fontSize: 56, fontWeight: 700, color: C.ink }}>{ANTIBIOTIC[severe.antibiotic]}</span>
-          <Aware group={severe.aware} />
         </div>
         <Bar share={severe.share ?? 0} color={C.blue} grow={g(9, 1.2)} label="of everything that grows" strong />
         <p style={{ margin: "18px 0 0", fontSize: 34, color: C.ink3, opacity: g(10.2) }}>

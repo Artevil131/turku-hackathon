@@ -1,14 +1,55 @@
-import { type AeiClient, ApiError, type AskResponse, type IsolateQuery } from "@aei/contract";
+import type { AiStatus } from "@aei/ask";
+import { type AeiClient, ApiError, type AskResponse, type IsolateQuery, type Meta } from "@aei/contract";
 import type { IsolateRecord } from "@aei/domain";
 import type { Locale } from "@aei/i18n";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export type FilterChip = "ward" | "specimen" | "organism" | "sex" | "age" | "dates";
+
+/** How often the page reads /api/meta again; the server itself probes the model every minute (D-049). */
+const AI_RECHECK_MS = 30_000;
+
+/** A server without `aiStatus` reports only whether a model is configured. */
+const statusOf = (m: Meta): AiStatus => m.aiStatus ?? (m.ai ? "ready" : "off");
+
+/**
+ * The assistant's live status from /api/meta, read again every half minute, when the
+ * tab comes back into view and on `recheck`, so it switches back on by itself when the
+ * model returns. null until the first answer; "off" if the server cannot be read.
+ */
+export function useAiStatus(client: AeiClient): { status: AiStatus | null; recheck: () => void } {
+  const [status, setStatus] = useState<AiStatus | null>(null);
+  const [nudge, setNudge] = useState(0);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `nudge` is the recheck trigger.
+  useEffect(() => {
+    let stale = false;
+    const read = () => {
+      client
+        .meta()
+        .then((m) => !stale && setStatus(statusOf(m)))
+        .catch(() => !stale && setStatus((s) => s ?? "off"));
+    };
+    const onView = () => {
+      if (document.visibilityState === "visible") read();
+    };
+    read();
+    const timer = setInterval(onView, AI_RECHECK_MS);
+    window.addEventListener("focus", onView);
+    document.addEventListener("visibilitychange", onView);
+    return () => {
+      stale = true;
+      clearInterval(timer);
+      window.removeEventListener("focus", onView);
+      document.removeEventListener("visibilitychange", onView);
+    };
+  }, [client, nudge]);
+  return { status, recheck: useCallback(() => setNudge((n) => n + 1), []) };
+}
 
 /** Shared request lifecycle; invalidated requests cannot replace newer filters or replay data. */
 export function useQuestion(
   client: AeiClient,
-  enabled: boolean,
+  ai: AiStatus | null,
   asOf: string | null,
   visible: IsolateQuery,
   apply: (filters: IsolateQuery) => void,
@@ -21,6 +62,10 @@ export function useQuestion(
   const sequence = useRef(0);
   const baseline = useRef<IsolateQuery>({});
   const mounted = useRef(true);
+  // A failure from before the model came back no longer applies.
+  useEffect(() => {
+    if (ai === "ready") setError(false);
+  }, [ai]);
   useEffect(() => {
     mounted.current = true;
     return () => {
@@ -86,7 +131,9 @@ export function useQuestion(
 
   const current = loaded?.stamp === `${asOf}:${key}` ? loaded : null;
   return {
-    available: enabled && !disabled,
+    available: ai === "ready" && !disabled,
+    /** A model is configured but does not answer right now. */
+    offline: ai === "offline" && !disabled,
     answer: answer && filters ? { ...answer, filters } : null,
     parsed: answer,
     active: answer !== null,

@@ -2,7 +2,17 @@ import { existsSync, readFileSync } from "node:fs";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { resolve } from "node:path";
 import { buildAlerts, patientFindings, sortAlerts } from "@aei/alerts";
-import { alertExplainInput, createLlm, explainAlert, fillSlots, LlmError, llmConfigFromEnv, parseQuestion } from "@aei/ask";
+import {
+  alertExplainInput,
+  createAiMonitor,
+  createLlm,
+  explainAlert,
+  fillSlots,
+  LlmError,
+  llmConfigFromEnv,
+  parseQuestion,
+  probeLlm,
+} from "@aei/ask";
 import {
   type ClockCommand,
   type ExplainResponse,
@@ -19,12 +29,20 @@ import {
   regionalUpTo,
   type SitesResponse,
 } from "@aei/contract";
+import {
+  type FailsTogetherResponse,
+  cacheKey as failsKey,
+  handle as failsTogetherHandle,
+  parseQuery as parseFailsQuery,
+} from "@aei/coresistance/route";
 import { barFor, type CoverageResult, coverage, ONSETS, type Onset, suggest, suggestCombinations } from "@aei/coverage";
 import { type Dataset, joinIsolates, loadDataset } from "@aei/dataset";
 import {
+  AGE_GROUPS,
   ANTIBIOTICS,
   type AntibioticCode,
   type IsolateRecord,
+  isAgeGroup,
   ORGANISMS,
   type Phenotype,
   SPECIMENS,
@@ -60,10 +78,22 @@ import { type WeeklySeries, weeklySeries } from "@aei/viz";
 const env = process.env;
 const llmConfig = llmConfigFromEnv();
 const llm = llmConfig && createLlm(llmConfig);
-console.log(`[aei-api] AI ${llm ? `on; model ${llmConfig.model}` : "off"}`);
+console.log(`[aei-api] AI ${llm ? `configured; model ${llmConfig.model}` : "off"}`);
+// Whether the model answers now (D-049): the team's model server runs only while its job is up, so
+// it is probed at start, every minute and after a failed question; /api/meta reports the result.
+const ai = createAiMonitor({
+  probe: llmConfig && (() => probeLlm(llmConfig)),
+  onChange: (status) => console.log(`[aei-api] AI ${status}`),
+});
+ai.start();
+void ai.settled().then((status) => {
+  if (status === "offline") console.log("[aei-api] AI offline: the model server does not answer; checking every minute");
+});
 const explanations = new Map<string, ExplainResponse>();
 // coverage() takes about 0.25 s (pairs over three levels), so cache by query and replay date.
 const coverages = new Map<string, CoverageResult>();
+// "Fails together" (D-048), cached by query and replay date like coverage.
+const failsTogethers = new Map<string, FailsTogetherResponse>();
 const config = {
   port: Number(env.AEI_PORT ?? 8787),
   dataDir: resolve(env.AEI_DATA_DIR ?? "../../data/synthetic_microbiology_dataset"),
@@ -176,8 +206,8 @@ const clock = createReplayClock({
   daysPerTick: config.daysPerTick,
 });
 
-const meta: Meta = {
-  ai: Boolean(llm),
+// The static part of Meta; `ai` and `aiStatus` are added per request from the live status.
+const meta: Omit<Meta, "ai" | "aiStatus"> = {
   datasetStart,
   datasetEnd,
   wards: registry.wards,
@@ -289,6 +319,7 @@ function ingestPayload(body: string, contentType: string, from: ConnectedSite = 
   dataset = mergeResults(asResult(dataset), result);
   state = derive(dataset);
   coverages.clear();
+  failsTogethers.clear();
   qualityCache.clear();
   const ids = new Set(result.cultures.map((c) => c.cultureId));
   const arrived = state.records.filter((r) => ids.has(r.cultureId));
@@ -383,7 +414,12 @@ export const server = createServer(async (req, res) => {
           organisms: [...meta.organisms],
           specimens: [...meta.specimens],
         },
+      }).catch(async (error: unknown) => {
+        // Probe again before answering, so the client's next read of /api/meta is current.
+        if (error instanceof LlmError) await ai.report(false);
+        throw error;
       });
+      void ai.report(true);
       return send(res, 200, { asOf, ...parsed });
     }
     if (url.pathname === ROUTES.explain && req.method === "GET") {
@@ -418,20 +454,23 @@ export const server = createServer(async (req, res) => {
       const ward = coverageWard(url);
       const specimen = url.searchParams.get("specimen");
       const sex = url.searchParams.get("sex");
+      const ageGroup = url.searchParams.get("ageGroup");
+      const onset = url.searchParams.get("onset");
       const windowDays = url.searchParams.get("windowDays");
       const severity = url.searchParams.get("severity") ?? "mild";
       if (severity !== "mild" && severity !== "severe") return send(res, 400, { error: "severity must be mild or severe" });
       if (!meta.wards.some((w) => w.code === ward)) return send(res, 400, { error: "ward is required and must be a ward code" });
       if (!meta.specimens.some((x) => x.code === specimen)) return send(res, 400, { error: "specimen is required" });
       if (sex !== null && sex !== "F" && sex !== "M") return send(res, 400, { error: "sex must be F or M" });
-      const onset = url.searchParams.get("onset") ?? "any";
-      if (!ONSETS.includes(onset as Onset)) return send(res, 400, { error: "onset must be hospital, community or any" });
+      if (ageGroup !== null && !isAgeGroup(ageGroup))
+        return send(res, 400, { error: `ageGroup must be one of ${Object.keys(AGE_GROUPS).join(", ")}` });
+      if (onset !== null && !ONSETS.includes(onset as Onset)) return send(res, 400, { error: "onset must be hospital, community or any" });
       const days = windowDays === null ? undefined : Number(windowDays);
       if (days !== undefined && (!Number.isInteger(days) || days < 1))
         return send(res, 400, { error: "windowDays must be a positive integer" });
       const asOf = clock.state().asOf;
       // Only released records, so nothing after the replay date leaks in.
-      const key = JSON.stringify([asOf, ward, specimen, sex, days, onset]);
+      const key = JSON.stringify([asOf, ward, specimen, sex, ageGroup, onset, days]);
       let result = coverages.get(key);
       if (!result) {
         if (coverages.size > 500) coverages.clear();
@@ -442,6 +481,8 @@ export const server = createServer(async (req, res) => {
             ward: ward as WardCode,
             specimen: specimen as Specimen,
             ...(sex ? { sex } : {}),
+            ...(ageGroup ? { ageGroup } : {}),
+            ...(onset ? { onset } : {}),
             ...(days ? { windowDays: days } : {}),
             onset: onset as Onset,
           },
@@ -467,6 +508,27 @@ export const server = createServer(async (req, res) => {
       const affects: Partial<Record<Phenotype, AntibioticCode[]>> = {};
       for (const f of findings) affects[f.phenotype] ??= defeatedBy(f.phenotype);
       return send(res, 200, { asOf, patientId: id, findings, affects } satisfies PatientFindingsResponse);
+    }
+    if (url.pathname === ROUTES.failsTogether) {
+      const parsed = parseFailsQuery(
+        url.searchParams,
+        meta.wards.map((w) => w.code),
+        meta.specimens.map((x) => x.code),
+      );
+      if (!parsed.ok) return send(res, 400, { error: parsed.error });
+      const asOf = clock.state().asOf;
+      // Only released records, so nothing after the replay date leaks in.
+      const key = failsKey(asOf, parsed.query);
+      let result = failsTogethers.get(key);
+      if (!result) {
+        if (failsTogethers.size > 500) failsTogethers.clear();
+        // Within the unit's own hospital (D-051).
+        const site = registry.siteOfWard(parsed.query.ward);
+        const own = state.released.upTo(asOf).filter((r) => registry.siteOfWard(r.ward) === site);
+        result = failsTogetherHandle({ asOf, ...parsed.query }, own);
+        failsTogethers.set(key, result);
+      }
+      return send(res, 200, result);
     }
     if (url.pathname === ROUTES.ingest && req.method === "POST") {
       // The token names the sending site (D-051); no token is the home site unless it has one.
@@ -517,7 +579,11 @@ export const server = createServer(async (req, res) => {
         return send(res, 404, { error: "No county geometry; run `uv run python scripts/fetch_county_geometry.py`" });
       return send(res, 200, JSON.parse(readFileSync(config.countiesFile, "utf8")));
     }
-    if (url.pathname === ROUTES.meta) return send(res, 200, meta);
+    if (url.pathname === ROUTES.meta) {
+      // Waits for the first probe only, so the first answer after a start is already honest.
+      const aiStatus = await ai.settled().then(() => ai.status());
+      return send(res, 200, { ...meta, ai: aiStatus === "ready", aiStatus } satisfies Meta);
+    }
     if (url.pathname === ROUTES.clock && req.method === "GET") return send(res, 200, clock.state());
     if (url.pathname === ROUTES.clock && req.method === "POST") {
       runCommand((await readJson(req)) as ClockCommand);

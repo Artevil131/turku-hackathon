@@ -5,7 +5,7 @@ import { type Locale, specimenName, t, wardName } from "@aei/i18n";
 import { AlertExplanation } from "../AlertExplanation.tsx";
 import { AlertTri } from "../Icons.tsx";
 import type { ListStatus } from "./CoverageList.tsx";
-import { certaintyOf, type DoctorFilters, dmy, num, pct } from "./filters.ts";
+import { certaintyOf, type DoctorFilters, dmy, droppedFilters, num, pct } from "./filters.ts";
 import { Popover } from "./Popover.tsx";
 import { signalDate, type UnitSignal } from "./signals.ts";
 import "./UnitContext.css";
@@ -48,7 +48,11 @@ function Ladder({ locale, filters, cov }: { locale: Locale; filters: DoctorFilte
           </li>
         );
       })}
-      {filters.sex !== "any" && !cov.sexApplied ? <li className="uc-chip">{t(locale, "drSexDroppedChip")}</li> : null}
+      {droppedFilters(filters, cov).map((d) => (
+        <li key={d.chip} className="uc-chip">
+          {t(locale, d.chip)}
+        </li>
+      ))}
     </ol>
   );
 }

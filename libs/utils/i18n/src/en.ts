@@ -2,6 +2,7 @@ import { boardEn } from "./surfaces/board.ts";
 import { commandEn } from "./surfaces/command.ts";
 import { connectEn } from "./surfaces/connect.ts";
 import { doctorEn } from "./surfaces/doctor.ts";
+import { failsTogetherEn } from "./surfaces/failsTogether.ts";
 import { feedEn } from "./surfaces/feed.ts";
 import { gridEn } from "./surfaces/grid.ts";
 import { homeEn } from "./surfaces/home.ts";
@@ -18,6 +19,7 @@ export const en = {
   askSubmit: "Ask",
   askLoading: "Understanding…",
   askUnavailable: "The assistant is unavailable, use the filters.",
+  askOffline: "Assistant offline right now — the filters work as usual.",
   askUnmatched: "Not understood: {words}",
   removeFilter: "Remove filter: {filter}",
   clearQuestion: "Clear question filters",
@@ -273,4 +275,5 @@ export const en = {
   ...introEn,
   ...commandEn,
   ...timelineEn,
+  ...failsTogetherEn,
 } as const;

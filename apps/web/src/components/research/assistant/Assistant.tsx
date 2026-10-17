@@ -1,6 +1,7 @@
 import type { AeiClient, ExplainResponse } from "@aei/contract";
 import { formatDate, type Locale, phenotypeName, t } from "@aei/i18n";
 import { useEffect, useMemo, useState } from "react";
+import { useAiStatus } from "../../../ai.ts";
 import type { Incident } from "../feed/model.ts";
 import { kindLabel, shortTitle, unitLabel } from "../feed/names.ts";
 import type { Spans } from "../feed/spans.ts";
@@ -31,17 +32,9 @@ export function Assistant({
   /** The incident list is still loading. */
   waiting: boolean;
 }) {
-  const [ai, setAi] = useState<boolean | null>(null);
-  useEffect(() => {
-    let stale = false;
-    client
-      .meta()
-      .then((m) => !stale && setAi(m.ai))
-      .catch(() => !stale && setAi(false));
-    return () => {
-      stale = true;
-    };
-  }, [client]);
+  // Model wording only while the model answers (D-049); the template otherwise.
+  const { status } = useAiStatus(client);
+  const ai = status === null ? null : status === "ready";
 
   const alerts = useMemo(() => (incident ? incident.members.slice(0, MAX_ALERTS) : []), [incident]);
   const ids = alerts.map((a) => a.id).join("|");

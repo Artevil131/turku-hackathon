@@ -3,6 +3,7 @@ import { boardFi } from "./surfaces/board.ts";
 import { commandFi } from "./surfaces/command.ts";
 import { connectFi } from "./surfaces/connect.ts";
 import { doctorFi } from "./surfaces/doctor.ts";
+import { failsTogetherFi } from "./surfaces/failsTogether.ts";
 import { feedFi } from "./surfaces/feed.ts";
 import { gridFi } from "./surfaces/grid.ts";
 import { homeFi } from "./surfaces/home.ts";
@@ -19,6 +20,7 @@ export const fi: Record<keyof typeof en, string> = {
   askSubmit: "Kysy",
   askLoading: "Tulkitaan…",
   askUnavailable: "Avustaja ei ole käytettävissä. Käytä rajauksia.",
+  askOffline: "Avustaja ei ole juuri nyt käytössä — rajaukset toimivat tavalliseen tapaan.",
   askUnmatched: "Ei ymmärretty: {words}",
   removeFilter: "Poista rajaus: {filter}",
   clearQuestion: "Poista kysymyksen rajaukset",
@@ -275,4 +277,5 @@ export const fi: Record<keyof typeof en, string> = {
   ...introFi,
   ...commandFi,
   ...timelineFi,
+  ...failsTogetherFi,
 };

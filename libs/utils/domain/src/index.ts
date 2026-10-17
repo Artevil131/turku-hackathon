@@ -231,3 +231,29 @@ export function isWardCode(value: string): value is WardCode {
 export function isAntibioticCode(value: string): value is AntibioticCode {
   return ANTIBIOTICS.some((a) => a.code === value);
 }
+
+// ---------- two fixed definitions several gears share ----------
+
+/** Age words map through one fixed table (D-019): [lowest, highest] age in years, null for no upper bound. */
+export const AGE_GROUPS = {
+  child: [0, 17],
+  adult: [18, 64],
+  older: [65, null],
+  veryOld: [80, null],
+} as const;
+
+export type AgeGroup = keyof typeof AGE_GROUPS;
+
+export function isAgeGroup(value: string): value is AgeGroup {
+  return Object.hasOwn(AGE_GROUPS, value);
+}
+
+export function inAgeGroup(ageYears: number, group: AgeGroup): boolean {
+  const [min, max] = AGE_GROUPS[group];
+  return ageYears >= min && (max === null || ageYears <= max);
+}
+
+/** Sampled on day 3 or later of the stay: sample date − admission date ≥ 2 days (CONTEXT.md, ENGINE.md A1). */
+export function isHospitalOnset(r: Pick<IsolateRecord, "admissionDate" | "sampleDate">): boolean {
+  return !!r.admissionDate && Date.parse(`${r.sampleDate}T00:00:00Z`) - Date.parse(`${r.admissionDate}T00:00:00Z`) >= 2 * 86_400_000;
+}

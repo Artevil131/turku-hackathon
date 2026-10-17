@@ -141,11 +141,6 @@
   margin-bottom: 2px;
 }
 
-.hm-date {
-  font-size: var(--t-xs);
-  color: var(--ink-3);
-}
-
 .hm-roles {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

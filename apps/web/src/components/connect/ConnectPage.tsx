@@ -175,6 +175,36 @@ export function ConnectPage({ client, locale }: { client: AeiClient; locale: Loc
   const fmtLabel = FORMATS.find((x) => x.id === result?.format)?.label ?? "";
   const contentType = FORMATS.find((x) => x.id === format)?.type ?? "";
 
+  // Open national sources: listed as connected only when this server answers for them.
+  const thl = (
+    <Source
+      key="thl"
+      locale={locale}
+      title={t(locale, "connectThlTitle")}
+      status={regional.state === "checking" ? "checking" : r ? "on" : "off"}
+    >
+      {r?.months.length
+        ? t(locale, "connectThlBody", {
+            from: month(locale, r.months[0] as string),
+            to: month(locale, r.months[r.months.length - 1] as string),
+            fetched: formatDate(locale, r.fetched),
+          })
+        : t(locale, "connectThlSource")}
+    </Source>
+  );
+  const geo = (
+    <Source
+      key="geo"
+      locale={locale}
+      title={t(locale, "connectGeoTitle")}
+      status={counties.state === "checking" ? "checking" : counties.state === "ok" ? "on" : "off"}
+    >
+      {t(locale, "connectGeoBody")}
+    </Source>
+  );
+  const thlOff = regional.state === "off";
+  const geoOff = counties.state === "off";
+
   const checker = (
     <section className="cx-try" aria-labelledby="cx-try-title">
       <h2 id="cx-try-title" className="cx-h2" tabIndex={-1}>
@@ -412,30 +442,16 @@ export function ConnectPage({ client, locale }: { client: AeiClient; locale: Loc
                 cultures: num(locale, q.cultures),
                 isolates: num(locale, q.isolates),
                 results: num(locale, q.results),
-                from: formatDate(locale, m.datasetStart),
-                to: formatDate(locale, m.datasetEnd),
+                from: formatDate(locale, m.datasetStart, "long"),
+                to: formatDate(locale, m.datasetEnd, "long"),
               })
             : "–"}
         </Source>
         <Source locale={locale} title={t(locale, "connectLisTitle")} status={meta.state === "checking" ? "checking" : m ? "ready" : "off"}>
           {t(locale, "connectLisBody")}
         </Source>
-        <Source locale={locale} title={t(locale, "connectThlTitle")} status={regional.state === "checking" ? "checking" : r ? "on" : "off"}>
-          {r && r.months.length
-            ? t(locale, "connectThlBody", {
-                from: month(locale, r.months[0] as string),
-                to: month(locale, r.months[r.months.length - 1] as string),
-                fetched: formatDate(locale, r.fetched),
-              })
-            : t(locale, "connectThlBody", { from: "–", to: "–", fetched: "–" })}
-        </Source>
-        <Source
-          locale={locale}
-          title={t(locale, "connectGeoTitle")}
-          status={counties.state === "checking" ? "checking" : counties.state === "ok" ? "on" : "off"}
-        >
-          {t(locale, "connectGeoBody")}
-        </Source>
+        {thlOff ? null : thl}
+        {geoOff ? null : geo}
         <Source locale={locale} title={t(locale, "connectCodesTitle")} status="on">
           {t(locale, "connectCodesBody")}
         </Source>
@@ -443,6 +459,8 @@ export function ConnectPage({ client, locale }: { client: AeiClient; locale: Loc
 
       <h2 className="cx-h2">{t(locale, "connectNext")}</h2>
       <ul className="cx-grid">
+        {thlOff ? thl : null}
+        {geoOff ? geo : null}
         <Source locale={locale} title={t(locale, "connectEhrTitle")} status="planned">
           {t(locale, "connectEhrBody")}
         </Source>

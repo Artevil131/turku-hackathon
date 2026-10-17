@@ -10,3 +10,4 @@ export {
   parseQuestion,
   type Vocabulary,
 } from "./parse.ts";
+export { type AiMonitor, type AiMonitorOptions, type AiStatus, createAiMonitor, probeLlm } from "./status.ts";
