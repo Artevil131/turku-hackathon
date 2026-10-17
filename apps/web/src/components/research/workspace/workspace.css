@@ -845,6 +845,14 @@
   position: relative;
   margin-left: 8px;
 }
+/* Open, the chip's month must float over the windows below the toolbar. */
+.ws-date[open] {
+  z-index: 70;
+}
+.ws-toolbar:has(.ws-date[open]) {
+  position: relative;
+  z-index: 70;
+}
 .ws-date-chip {
   display: inline-flex;
   align-items: center;
