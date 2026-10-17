@@ -54,6 +54,44 @@ export const methodEn = {
     "Bars: each unit's share of inflow from the source unit against the band of 1,000 rewired graphs, with the eight-week outcome beside it.",
   methodAlt0020:
     "Interval plot: one-month-ahead forecast skill against persistence, pooled and by phenotype, for the Poisson model and seasonal naive.",
+  methodMath: "Formulas",
+  methodBbTitle: "Beta-binomial over time: why each week is two additions",
+  methodBbConjugate:
+    "A Beta belief about the share times a binomial count gives a Beta again. Shrinking last week's counts by δ before adding this week's keeps it a Beta: old isolates fade, and the cell drifts back toward the hospital share p₀ with the weight of M isolates.",
+  methodBbDiscountLabel: "Discount: last week's Beta shrinks toward the hospital prior",
+  methodBbUpdateLabel: "Update: add this week's susceptible and resistant isolates",
+  methodBbPredictLabel: "Predict: the next isolates follow a Beta-binomial; the estimate is its mean",
+  methodBbSymbols:
+    "sₜ of nₜ isolates susceptible in week t; an isolate k weeks old weighs δᵏ; own-data weight w = n_eff / (n_eff + M) with n_eff = aₜ + bₜ − M.",
+  methodBbExact:
+    "Exact as a conjugate filter (Smith 1979; Harvey and Fernandes 1989): discounting keeps the mean and widens the Beta. It is not literally a random walk on the log-odds.",
+  methodBbStatus:
+    "Status: the method is accepted (D-038), δ and M are open (QUESTIONS B1, B3). Experiment 0012 (δ 0.95, M 10): Brier +0.0002 against the hospital year, E1 seen after 48 days, so the live list keeps the 365-day share.",
+  methodRule_wilson: "Coverage share, 95 % Wilson interval",
+  methodRuleNote_wilson:
+    "k of n first isolates covered over 365 days; the unit if n ≥ 30, else its ward type, else the hospital (D-023, D-033).",
+  methodRule_poisson: "Profile and phenotype excess",
+  methodRuleNote_poisson:
+    "Patients in 28 days against the unit's share over the 365 days before; α 10⁻⁴ for a profile, 10⁻³ for a phenotype (D-020).",
+  methodRule_drop: "Sampling drop",
+  methodRuleNote_drop: "Cultures in the last 7 days against the 56-day daily mean (D-020).",
+  methodRule_empty: "Empty run",
+  methodRuleNote_empty: "L days in a row without cultures; λ is the unit's daily mean over the 56 days before (D-031).",
+  methodRule_trend: "Rising trend",
+  methodRuleNote_trend: "Cochran-Armitage over 28-day bins for 22 organism-drug pairs, one-sided, α 10⁻³ (D-020, D-022).",
+  methodRule_sentinel: "New in unit",
+  methodRuleNote_sentinel: "The first MRSA or VRE in an inpatient unit for 180 days alerts without a test (D-021, D-034).",
+  methodResult0012: "Brier +0.0002 (−0.0000 to +0.0004) against the hospital year; E1 seen after 48 days.",
+  methodResult0013:
+    "Brier +0.0001 (−0.0000 to +0.0002); counting two-organism cultures as one episode lowers the top severe pick by 0.5 points.",
+  methodResult0014: "The first year picks the hospital pool; no finer pool beats it.",
+  methodResult0015: "Four-patient rare clusters: 21 % found at 1 episode a year (live set: 92 % at 3).",
+  methodResult0016: "Four-patient rare clusters: 67 % at 3.5 episodes a year, 66 % on held-out seeds (live set: 92 %).",
+  methodResult0018: "Four-patient rare clusters: 14 % at 1.5 episodes a year.",
+  methodResult0019: "Pooled AUC 0.63 over 24 real episodes, not above rewired graphs (p 0.22).",
+  methodResult0020: "Log score +0.40 (0.31 to 0.48) and MAE +0.14 against last month's count.",
+  methodAlsoTested:
+    "Also tested: Farrington-Noufaily (0017), 31 %; an ensemble of the live set and CUSUM (0022), level with the live set at 5 episodes a year. Every rate is for injected copies of one isolate, seed 2026, 200 trials.",
 };
 
 export const methodFi: Record<keyof typeof methodEn, string> = {
@@ -110,4 +148,43 @@ export const methodFi: Record<keyof typeof methodEn, string> = {
     "Palkit: kunkin yksikön osuus lähdeyksikön potilasvirrasta 1 000 satunnaistetun verkon vyöhykettä vasten, vieressä kahdeksan viikon tulos.",
   methodAlt0020:
     "Välikuvio: yhden kuukauden ennusteen taito suhteessa edelliseen kuukauteen, yhteensä ja fenotyypeittäin, Poisson-mallille ja kausittaiselle naiville mallille.",
+  methodMath: "Kaavat",
+  methodBbTitle: "Beta-binomiaali ajassa: miksi jokainen viikko on kaksi yhteenlaskua",
+  methodBbConjugate:
+    "Beta-jakauma osuudesta kertaa binomiaalinen määrä on taas Beta. Kun edellisen viikon määriä pienennetään kertoimella δ ennen tämän viikon lisäämistä, jakauma pysyy Betana: vanhat löydökset haalistuvat ja solu palautuu kohti sairaalan osuutta p₀ M löydöksen painolla.",
+  methodBbDiscountLabel: "Diskonttaus: edellisen viikon Beta kutistuu kohti sairaalan prioria",
+  methodBbUpdateLabel: "Päivitys: lisää tämän viikon herkät ja resistentit löydökset",
+  methodBbPredictLabel: "Ennuste: seuraavat löydökset noudattavat Beta-binomiaalia; arvio on sen keskiarvo",
+  methodBbSymbols:
+    "sₜ herkkää nₜ löydöksestä viikolla t; k viikkoa vanha löydös painaa δᵏ; oman datan paino w = n_eff / (n_eff + M), n_eff = aₜ + bₜ − M.",
+  methodBbExact:
+    "Tarkka konjugaattisuodin (Smith 1979; Harvey ja Fernandes 1989): diskonttaus säilyttää keskiarvon ja leventää Betaa. Se ei ole kirjaimellisesti satunnaiskävely log-vetosuhteella.",
+  methodBbStatus:
+    "Tila: menetelmä on hyväksytty (D-038), δ ja M ovat auki (QUESTIONS B1, B3). Koe 0012 (δ 0,95, M 10): Brier +0,0002 sairaalan vuoteen verrattuna, E1 näkyi 48 päivän jälkeen, joten käytössä oleva lista pitää 365 päivän osuuden.",
+  methodRule_wilson: "Kattavuusosuus, 95 %:n Wilson-väli",
+  methodRuleNote_wilson:
+    "k n:stä ensimmäisestä löydöksestä katettu 365 päivässä; yksikkö jos n ≥ 30, muuten osastotyyppi, muuten sairaala (D-023, D-033).",
+  methodRule_poisson: "Profiilin ja fenotyypin ylimäärä",
+  methodRuleNote_poisson:
+    "Potilaat 28 päivässä verrattuna yksikön osuuteen edeltävän 365 päivän aikana; α 10⁻⁴ profiilille, 10⁻³ fenotyypille (D-020).",
+  methodRule_drop: "Näytteiden väheneminen",
+  methodRuleNote_drop: "Viljelyt viimeisen 7 päivän aikana verrattuna 56 päivän päiväkeskiarvoon (D-020).",
+  methodRule_empty: "Tyhjä jakso",
+  methodRuleNote_empty: "L peräkkäistä päivää ilman viljelyjä; λ on yksikön päiväkeskiarvo edeltävän 56 päivän aikana (D-031).",
+  methodRule_trend: "Nouseva trendi",
+  methodRuleNote_trend: "Cochran-Armitage 28 päivän jaksoissa 22 bakteeri–lääkeparille, yksisuuntainen, α 10⁻³ (D-020, D-022).",
+  methodRule_sentinel: "Uusi yksikössä",
+  methodRuleNote_sentinel: "Ensimmäinen MRSA tai VRE vuodeosastolla 180 päivään hälyttää ilman testiä (D-021, D-034).",
+  methodResult0012: "Brier +0,0002 (−0,0000…+0,0004) sairaalan vuoteen verrattuna; E1 näkyi 48 päivän jälkeen.",
+  methodResult0013:
+    "Brier +0,0001 (−0,0000…+0,0002); kahden bakteerin viljelyn laskeminen yhdeksi jaksoksi laskee vakavan infektion kärkivalintaa 0,5 prosenttiyksikköä.",
+  methodResult0014: "Ensimmäinen vuosi valitsee sairaalan joukon; mikään tarkempi joukko ei voita sitä.",
+  methodResult0015: "Neljän potilaan harvinaiset rypäät: 21 % löydetty, 1 jakso vuodessa (käytössä oleva joukko: 92 %, 3 jaksoa).",
+  methodResult0016:
+    "Neljän potilaan harvinaiset rypäät: 67 % 3,5 jaksolla vuodessa, 66 % erillisillä siemenillä (käytössä oleva joukko: 92 %).",
+  methodResult0018: "Neljän potilaan harvinaiset rypäät: 14 % 1,5 jaksolla vuodessa.",
+  methodResult0019: "Yhdistetty AUC 0,63 24 todellisessa jaksossa, ei satunnaistettuja verkkoja parempi (p 0,22).",
+  methodResult0020: "Log-pistemäärä +0,40 (0,31…0,48) ja MAE +0,14 edellisen kuun määrään verrattuna.",
+  methodAlsoTested:
+    "Lisäksi kokeiltu: Farrington-Noufaily (0017), 31 %; käytössä olevan joukon ja CUSUMin yhdistelmä (0022), sama kuin käytössä oleva joukko 5 jaksolla vuodessa. Jokainen osuus koskee yhden löydöksen ruiskutettuja kopioita, siemen 2026, 200 koetta.",
 };

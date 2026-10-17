@@ -6,6 +6,7 @@ import { DEFAULT_UNIT, readStoredUnit } from "../doctor/filters.ts";
 import { InfoButton } from "../Info.tsx";
 import { CoverageShape, PoissonTail, SurpriseScale, WeeklyWindow } from "../math/index.ts";
 import { addDaysIso } from "../math/mathHelpers.ts";
+import { BetaBinomialMath, LiveRulesMath } from "./MethodMath.tsx";
 import "./method.css";
 
 // The Method page (#method): one compact section per ENGINE step. Left, what the tool runs now, drawn from
@@ -38,12 +39,27 @@ function Candidate({ fig, locale, eager }: { fig: Fig; locale: Locale; eager?: b
         decoding="async"
         alt={t(locale, `methodAlt${fig.n}` as MessageKey)}
       />
-      <figcaption>{t(locale, "methodCaption", { n: fig.n, name })}</figcaption>
+      <figcaption>
+        {t(locale, "methodCaption", { n: fig.n, name })}
+        <span className="mt-result">{t(locale, `methodResult${fig.n}` as MessageKey)}</span>
+      </figcaption>
     </figure>
   );
 }
 
-function Step({ n, locale, live, candidates }: { n: 1 | 2 | 3 | 4; locale: Locale; live?: ReactNode; candidates: ReactNode }) {
+function Step({
+  n,
+  locale,
+  live,
+  candidates,
+  math,
+}: {
+  n: 1 | 2 | 3 | 4;
+  locale: Locale;
+  live?: ReactNode;
+  candidates: ReactNode;
+  math?: ReactNode;
+}) {
   const title = t(locale, `methodStep${n}` as MessageKey);
   return (
     <section className="mt-step" aria-labelledby={`mt-h${n}`}>
@@ -61,6 +77,12 @@ function Step({ n, locale, live, candidates }: { n: 1 | 2 | 3 | 4; locale: Local
         {live ? <div className="mt-live">{live}</div> : null}
         <div className="mt-cands">{candidates}</div>
       </div>
+      {math ? (
+        <div className="mt-mathrow">
+          <h3 className="mt-label">{t(locale, "methodMath")}</h3>
+          {math}
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -212,6 +234,12 @@ export function MethodPage({ client, locale, asOf }: { client: AeiClient; locale
         n={1}
         locale={locale}
         live={coverage}
+        math={
+          <>
+            <LiveRulesMath locale={locale} rules={["wilson"]} />
+            <BetaBinomialMath locale={locale} />
+          </>
+        }
         candidates={
           <>
             <Candidate fig={FIGS["0012"]} locale={locale} eager />
@@ -224,6 +252,12 @@ export function MethodPage({ client, locale, asOf }: { client: AeiClient; locale
         n={3}
         locale={locale}
         live={detection}
+        math={
+          <>
+            <LiveRulesMath locale={locale} rules={["poisson", "drop", "empty", "trend", "sentinel"]} />
+            <p className="mt-math-line">{t(locale, "methodAlsoTested")}</p>
+          </>
+        }
         candidates={
           <>
             <Candidate fig={FIGS["0015"]} locale={locale} />

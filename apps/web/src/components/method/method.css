@@ -139,3 +139,102 @@
   font-size: var(--t-xs, 12px);
   color: var(--m-ink-3);
 }
+
+/* Formulas: native MathML, one rule per row, the Beta-binomial block with its LaTeX source behind a disclosure. */
+.mt-mathrow {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--m-line);
+  min-width: 0;
+}
+
+.mt-mathrow math {
+  font-size: 1.15em;
+  math-style: normal;
+}
+
+.mt-rules {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+}
+
+.mt-rule {
+  display: grid;
+  grid-template-columns: minmax(140px, 200px) 1fr;
+  gap: 4px 12px;
+  align-items: baseline;
+}
+
+.mt-rule dt {
+  font-weight: 600;
+}
+
+.mt-rule dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin: 0;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.mt-rule-note,
+.mt-math-line,
+.mt-math-notes {
+  color: var(--m-ink-3);
+}
+
+.mt-math {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.mt-eq {
+  margin: 4px 0;
+  overflow-x: auto;
+}
+
+.mt-math-line {
+  margin: 0;
+  max-width: 80ch;
+}
+
+.mt-math-notes {
+  margin: 0;
+  padding-left: 18px;
+  max-width: 80ch;
+}
+
+.mt-latex summary {
+  cursor: pointer;
+  color: var(--m-acc);
+  font-weight: 600;
+}
+
+.mt-latex pre {
+  margin: 6px 0 0;
+  padding: 8px;
+  background: var(--m-acc-soft);
+  border-radius: 6px;
+  overflow-x: auto;
+  font-size: 12px;
+  white-space: pre;
+}
+
+.mt-result {
+  display: block;
+  margin-top: 2px;
+  color: var(--m-ink);
+}
+
+@media (max-width: 640px) {
+  .mt-rule {
+    grid-template-columns: 1fr;
+  }
+}
