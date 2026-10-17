@@ -1,0 +1,18 @@
+[project]
+name = "aei"
+version = "0.1.0"
+description = "AEI research packages, API client and analysis helpers"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = ["numpy", "pandas", "scipy"]
+
+[project.optional-dependencies]
+analysis = ["statsmodels", "matplotlib"]
+
+[build-system]
+requires = ["uv_build>=0.8,<0.11"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "aei"
+module-root = "."

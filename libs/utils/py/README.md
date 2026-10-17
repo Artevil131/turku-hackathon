@@ -1,7 +1,66 @@
-# libs/utils/py
+# aei: research packages and Python helpers
 
-Python helpers for data analysis (D-024), installed into the root uv
-environment as the package `aei`:
+Install on Python 3.12 or newer directly from git (D-061):
+
+```sh
+pip install "aei @ git+https://github.com/Artevil131/turku-hackathon.git#subdirectory=libs/utils/py"
+# Optional regional modelling and plotting dependencies:
+pip install "aei[analysis] @ git+https://github.com/Artevil131/turku-hackathon.git#subdirectory=libs/utils/py"
+```
+
+## Read a research package
+
+```python
+import aei
+
+pkg = aei.read_package("esbl-urology-spring-2025.zip")  # or its unpacked folder
+print(pkg)                                            # tables and shapes
+print(pkg.meta)                                       # scope, as-of date, fingerprint
+pkg.isolates.groupby("ward").size()                   # also pkg.tables["isolates"]
+print(pkg.fields["isolates"])                         # types, titles, descriptions, units
+print(pkg.methods)                                   # numbers, methods and parameters
+```
+
+The D-060 package contains `datapackage.json`, UTF-8 CSVs, `methods.json`
+and `README.md`. The reader applies nullable string, integer and boolean
+columns, floating-point numbers and parsed dates/datetimes. Empty cells
+become missing values; literal strings such as `NA` and isolate ids with
+leading zeroes stay intact. Units remain in `pkg.fields`; figures and
+reports are not loaded. Unsupported package versions and paths outside
+the package are rejected. Zip files are read without extracting them.
+
+## Connect to the live API
+
+```python
+live = aei.connect("http://localhost:8787", token=None, site="tyks")
+iso = live.isolates(ward="URO", **{"from": "2025-03-01"})
+# `from` is a Python keyword; query names follow the API contract, not `since`.
+print(iso["phenotypes"])       # e.g. "ESBL;CPE"
+print(iso["phenotype_list"])   # e.g. ["ESBL", "CPE"]
+print(live.alerts())
+print(live.weekly())           # one row per ward/week, cultures and phenotype counts
+print(live.clock())
+print(live.sites())
+print(live.projects())
+proj = live.project("esbl-urology-x1y2")
+print(proj.drift)              # server's drift result, when provided
+print(proj.verify())           # frozen only: refetch rows and compare count + SHA-256
+```
+
+`site` defaults data queries to one hospital and can be overridden per
+call (including `site=None` for the route's unfiltered/default behaviour).
+Project verification uses the project's own scope instead. It filters the
+currently released isolates with `to` capped at the frozen `asOf`; it does
+not move the shared replay clock or retrieve rows not yet released. A
+replayed clock before the frozen cut may therefore fail verification.
+Continuous projects cannot be verified. API failures raise
+`aei.AeiApiError`, with `status` and `message` attributes. The HTTP client
+uses only the Python standard library; pandas is imported when a table is
+actually requested, not by `import aei`.
+
+## Analysis helpers
+
+The root uv workspace keeps the experiment dependencies (D-024):
 
     uv sync                                   # once, from the repository root
     uv run python experiments/NNNN-slug/analysis.py
@@ -72,9 +131,23 @@ benchmarks/overnight-2026-10-17/harness-spec.md), Python only:
 - `aei.inject` gained generic trials that take any detector (`seed_trials`, `rare_hits`, `common_hits`,
   `two_unit_hits`, `gap_hits`); its earlier functions are unchanged.
 
+## Parity rule (D-061)
+
+A method becomes public only with a parity test against the TypeScript
+gear on the same input. The app continues to run TypeScript; installability
+does not stabilise the detectors' existing experimental interfaces. The
+client fingerprint test runs `@aei/projects`' actual `fingerprintRows` on
+three fixture records and compares the SHA-256 and count. Fingerprint
+ordering assumes ASCII isolate ids and antibiotic codes (JavaScript uses
+UTF-16 code units, Python uses Unicode code points).
+
 ## Tests
 
-    uv run pytest libs/utils/py/tests         # about 30 s; needs the dataset in data/ and Node 22
+    uv run pytest -q libs/utils/py/tests     # about 30 s with the dataset and Node 22+
+
+Package and HTTP-client tests use temporary fixtures and a local test
+server. The fingerprint parity test skips only when Node is unavailable;
+other dataset-dependent parity tests skip when the dataset is absent.
 
 `tests/ts_dump.ts` runs the TypeScript gears on the full dataset through
 Node (in the background while pytest computes the Python side), and
