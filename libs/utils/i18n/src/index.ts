@@ -17,6 +17,7 @@ import { en } from "./en.ts";
 import { fi } from "./fi.ts";
 
 export { alertEvidence, alertPriority, incidentPriority, incidentResponsibility, openIncidents } from "./incidents.ts";
+export { GLOSS_TERMS, GLOSSARY, type GlossEntry, type GlossTerm } from "./surfaces/glossary.ts";
 
 // UI copy in Finnish and English, plus the dataset's own names for wards,
 // antibiotics and specimens. Shared by every app so wording stays the same.

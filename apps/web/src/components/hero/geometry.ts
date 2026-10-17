@@ -186,12 +186,12 @@ function num(locale: Locale, v: number): string {
   }).format(v);
 }
 
-/** What caused the alert, in a few characters: "ESBL 7/1.4", "MRSA new", "no samples". */
+/** What caused the alert, in a few characters: "ESBL 7 · 1.4", "MRSA new", "no samples". */
 export function pillLabel(locale: Locale, a: Alert): string {
   if (a.kind === "cpe") return phenotypeName("cpe");
   if (a.kind === "new-in-unit") return `${phenotypeName(a.phenotype)} ${t(locale, "tlPillNew")}`;
   if (a.kind === "carrier") return `${phenotypeName(a.phenotype)} ${t(locale, "tlPillCarrier")}`;
-  const ratio = a.expected === undefined ? num(locale, a.observed) : `${num(locale, a.observed)}/${num(locale, a.expected)}`;
+  const ratio = a.expected === undefined ? num(locale, a.observed) : `${num(locale, a.observed)} · ${num(locale, a.expected)}`;
   switch (a.detector) {
     case "phenotype-excess":
       return `${a.phenotype ? phenotypeName(a.phenotype) : t(locale, "tlCluster")} ${ratio}`;

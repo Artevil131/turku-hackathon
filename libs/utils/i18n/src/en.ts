@@ -4,6 +4,7 @@ import { connectEn } from "./surfaces/connect.ts";
 import { doctorEn } from "./surfaces/doctor.ts";
 import { failsTogetherEn } from "./surfaces/failsTogether.ts";
 import { feedEn } from "./surfaces/feed.ts";
+import { glossaryEn } from "./surfaces/glossary.ts";
 import { gridEn } from "./surfaces/grid.ts";
 import { homeEn } from "./surfaces/home.ts";
 import { introEn } from "./surfaces/intro.ts";
@@ -268,6 +269,7 @@ export const en = {
   ...connectEn,
   ...sitesEn,
   ...feedEn,
+  ...glossaryEn,
   ...gridEn,
   ...networkEn,
   ...mapEn,

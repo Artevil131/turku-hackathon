@@ -5,6 +5,7 @@ import { connectFi } from "./surfaces/connect.ts";
 import { doctorFi } from "./surfaces/doctor.ts";
 import { failsTogetherFi } from "./surfaces/failsTogether.ts";
 import { feedFi } from "./surfaces/feed.ts";
+import { glossaryFi } from "./surfaces/glossary.ts";
 import { gridFi } from "./surfaces/grid.ts";
 import { homeFi } from "./surfaces/home.ts";
 import { introFi } from "./surfaces/intro.ts";
@@ -270,6 +271,7 @@ export const fi: Record<keyof typeof en, string> = {
   ...connectFi,
   ...sitesFi,
   ...feedFi,
+  ...glossaryFi,
   ...gridFi,
   ...networkFi,
   ...mapFi,
