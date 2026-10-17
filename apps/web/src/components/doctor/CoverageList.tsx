@@ -125,13 +125,13 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
           <span className="cl-num num">
             <span>
               {t(locale, item.row?.basis === "spectrum" ? "drWithinSpectrum" : "drAllOrgShort")}{" "}
-              <b>{assessable && item.share !== null ? `${pct(item.share)} %` : "–"}</b>
-              {item.standing === "borderline" && range ? ` (${range} %)` : ""}
+              <b>{assessable && item.share !== null ? `${pct(item.share)}\u00a0%` : "–"}</b>
+              {item.standing === "borderline" && range ? ` (${range}\u00a0%)` : ""}
               <span className="cl-n"> · n {num(locale, item.n)}</span>
             </span>
             {item.row?.basis === "spectrum" ? (
               <span className="cl-secondary">
-                {t(locale, "drAllOrgShort")} {item.row.allOrganisms.share === null ? "–" : `${pct(item.row.allOrganisms.share)} %`}
+                {t(locale, "drAllOrgShort")} {item.row.allOrganisms.share === null ? "–" : `${pct(item.row.allOrganisms.share)}\u00a0%`}
                 <span className="cl-n"> · n {num(locale, item.row.coverage.counts.known)}</span>
               </span>
             ) : null}
@@ -214,7 +214,7 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
           {bestPair.standing !== "clears" ? (
             <p>
               {t(locale, STANDING[bestPair.standing].long)}
-              {bestPair.interval ? ` · ${t(locale, "drInterval")}: ${pct(bestPair.interval[0])}–${pct(bestPair.interval[1])} %` : ""}
+              {bestPair.interval ? ` · ${t(locale, "drInterval")}: ${pct(bestPair.interval[0])}–${pct(bestPair.interval[1])}\u00a0%` : ""}
             </p>
           ) : null}
         </div>
