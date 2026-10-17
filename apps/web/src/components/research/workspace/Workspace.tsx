@@ -375,7 +375,7 @@ export function Workspace({
         const frame = win.querySelector<HTMLElement>(".ws-frame");
         const body = win.querySelector<HTMLElement>(".ws-body");
         if (!frame || !body || body.scrollHeight <= body.clientHeight + 1) continue;
-        next[id] = Math.min(MAX_GROW_ROWS, Math.ceil((frame.clientHeight - body.clientHeight + body.scrollHeight + 4) / ROW_PX));
+        next[id] = Math.min(MAX_GROW_ROWS, Math.ceil((frame.clientHeight - body.clientHeight + body.scrollHeight + 16) / ROW_PX));
       }
       setNeeded((prev) => {
         const merged = { ...prev };

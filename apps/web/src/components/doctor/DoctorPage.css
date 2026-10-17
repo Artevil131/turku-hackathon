@@ -65,8 +65,8 @@
 
 .doctor-main {
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
-  gap: 8px;
+  grid-template-rows: auto auto;
+  gap: 12px;
   max-width: 1600px;
   margin: 0 auto;
   min-height: 100%;
@@ -130,30 +130,15 @@
   outline-offset: 2px;
 }
 
-/* Wide: no page scroll; the two columns fill the height and scroll inside. */
+/* Wide: the answer and its case side by side, then the list and the context side by side. Nothing scrolls inside:
+   the window grows to its content. */
 @container coverage (min-width: 960px) {
-  .doctor {
-    /* The console grid gives the page row exactly the height left under the top bar and timeline. */
-    height: 100%;
-    min-height: 0;
-    overflow: hidden;
-  }
   .doctor-main {
-    grid-template-rows: auto auto minmax(0, 1fr);
-    height: 100%;
-    min-height: 0;
+    grid-template-rows: auto auto;
   }
   .doctor-body {
     grid-template-columns: minmax(0, 62fr) minmax(0, 38fr);
-    height: 100%;
-    align-items: stretch;
-  }
-  .dp-side {
-    overflow-y: auto;
-    padding-right: 1px;
-  }
-  .dp-side > .dt-panel {
-    flex: 1 0 auto;
+    align-items: start;
   }
 }
 
@@ -403,4 +388,11 @@
 /* Inside a workspace window the window's own ⓘ and × sit in the top-right corner: the sheet's header keeps clear of them. */
 .coverage-window .dp-sheet-contained .dp-sheet-head {
   padding-right: 72px;
+}
+
+/* In a workspace window nothing scrolls inside: the window grows to the content (Workspace measures the body). */
+.coverage-window .doctor {
+  height: auto;
+  min-height: 0;
+  overflow: visible;
 }
