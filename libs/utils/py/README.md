@@ -162,3 +162,7 @@ compared while their TypeScript existed (D-030) and stand alone since
 
 The live tool does not import these; logic the app needs is ported to the
 TypeScript gears.
+
+## Licence
+
+Not chosen yet (the team decides; work in progress). `DESCRIPTION` says `Unlimited` and `pyproject.toml` names none only as placeholders, not as a choice.

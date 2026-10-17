@@ -47,3 +47,7 @@ there rather than connecting to a server.
 The repository has no root LICENSE. The package's required License metadata
 is provisionally `Unlimited`; this is not a new repository-wide license grant
 and needs the team's licensing decision before distribution.
+
+## Licence
+
+Not chosen yet (the team decides; work in progress). `DESCRIPTION` says `Unlimited` and `pyproject.toml` names none only as placeholders, not as a choice.
