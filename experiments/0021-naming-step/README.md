@@ -1,5 +1,5 @@
 ---
-status: proposed    # proposed, then accepted, rejected or superseded
+status: accepted    # proposed, then accepted, rejected or superseded
 by: Claude Code, operated by Artem (overnight run)
 data: [synthetic_microbiology_dataset, seed 2026, as received 2026-10-09]
 parent: 0015
@@ -219,4 +219,211 @@ March 2026 (E2) as one incident, with E1, E3 and E4 as single rows.
 
 ## Result
 
+Command, from the repository root:
+
+    uv run python experiments/0021-naming-step/run.py
+
+Outputs in `out/`: `results.md` (every table below and more: the incident
+rules for each feed, level and with or without CPE finds, incidents per
+injected trial, the confusion cells, the checks), `metrics.json` (family
+`interpretation`; D7, D6, I1 of the live set as shipped; `tuned_on_test`
+true because that feed is; both feeds, the added measures and the rule
+tables in `by_feed`), `alerts.csv` (the 40 alerts of the scoring period
+of the two feeds, the live feed's with CPE finds, with kind, rule number, R1 incident and both
+sentences), `figure.png` (the picture of "Proposed visualisation", drawn
+from the live set's alerts of E2, E1, E3 and E4). Also
+`libs/utils/py/aei/gamma_poisson.py` (0015's detector moved unchanged;
+experiments/0015 untouched) with `libs/utils/py/tests/test_gamma_poisson.py`,
+four tests passing, one of them reproducing 0015's committed full-data
+numbers at S 26, g 0, L 1, q < 0.005: 10 noise episodes, 5.02 a year, 13
+alerts in 12 incidents (computed). `uv run python
+scripts/verify_experiments.py --only 0021` says "reproduces". CPU time
+63 s for the final run (measured, `aei.harness.Clock`; 63 s to 78 s over
+four full runs, the spread being other jobs on the laptop); the budget
+was 10 minutes and nothing was cut. Seed 2026 only, 200 trials per cell
+from one `mulberry32(2026)` stream (seeds 2027 to 2030 untouched);
+Wilson 95 % intervals for proportions, exact Poisson 95 % intervals for
+incident counts. Everything below is computed by this run through
+`aei.score_detection`'s blocks, except the baseline columns, which are
+the committed rows (baselines/, 0015 out/metrics.json) computed by the
+same harness. `tuned_on_test`: the rules were written from ENGINE.md 3.6
+before any number and nothing was tuned; the live feed was tuned on the
+scoring period (D-020, D-021, D-031); 0015's feed was chosen on year 1.
+
+**Naming against the harness's table** (computed). Every signal of both
+feeds is named the same by the rule and by the table, none unnamed: the
+live set's 356 signals of the full run (319 cluster, 23 data, 8 sentinel,
+6 trend) and the 18,083 signals of the injected trials; 0015's 2,148
+signals and 29,934 trial signals, all cluster. Agreement 100 % (hypothesis
+1 holds). Rule 1 (CPE find) named 9 alerts and rule 2 named 4, rule 3
+one, rule 5 six, rule 6 seven in the live feed's 27 alerts of the scoring
+period; rule 6 named all 13 of 0015's detector alerts, and its 9 CPE finds
+are sentinels by rule 1.
+
+**D7, D6 and I1 against the committed rows** (computed; I1 is R1 =
+D-034's rule on the detector alerts without CPE finds, as the harness):
+
+| | live set, rule | live set, committed | 0015 test, rule | 0015, committed |
+|---|---|---|---|---|
+| D7, of detected (n) | 97.38 % (96.6 to 98.0; 1,930 of 1,982) | same | 99.84 % (99.1 to 100; 616 of 617) | same |
+| D7 first (earliest matching signal) | 94.30 % (93.2 to 95.2; 1,869 of 1,982) | not measured | 100.0 % (99.4 to 100; 617 of 617) | not measured |
+| D7 over all 5,004 events | 38.57 % (1,930) | not measured | 12.31 % (616) | not measured |
+| D6, gaps with any non-data signal (n 1,000) | 1.2 % (0.7 to 2.1) | 1.2 % | 1.9 % (1.2 to 2.9) | 1.9 % |
+| D6 annotated (not preceded by a data signal within 14 d) | 0.4 % (0.2 to 1.0; 4 gaps) | not measured | 1.9 % (1.2 to 2.9; 19 gaps) | not measured |
+| I1 alerts, incidents (alerts per incident; incidents 95 %) | 18, 15 (1.20; 8.4 to 24.7) | 18, 15 | 13, 12 (1.08; 6.2 to 21.0) | 13, 12 |
+
+The live set re-tuned on year 1 has committed D7 98.68 %, D6 2.6 % and I1
+29 alerts in 26 incidents; it was not rerun through the rule.
+With CPE finds the live feed is 27 alerts in 24 incidents and 0015's 22
+in 21 (R1; the first equals the committed `I1_full_tool`).
+
+**D7 by event family** (computed; detected, right, first right):
+
+| family | live set | 0015 test |
+|---|---|---|
+| rare clone | 534, 524, 490 | 265, 265, 265 |
+| common resistant | 4, 4, 4 | 30, 30, 30 |
+| wild type | 0 | 25, 25, 25 |
+| common ESBL *E. coli* | 389, 389, 389 | 181, 181, 181 |
+| two units | 278, 236, 209 | 114, 114, 114 |
+| gaps (2, 3, 5, 7 days, halved week) | 773, 773, 773 | 0 detected |
+
+The 52 live detections not named right are 10 rare clones and 42 two-unit
+clusters with a sentinel but no cluster signal (derived: right minus
+detected per family); the rule names each of those sentinels a sentinel,
+which is right for the alert and not the label's "cluster". D7 on gaps is
+100 % by construction, since a gap counts as detected only through a data
+signal. Planted events: the live feed finds E1 (cluster, 2025-06-04), E2
+(sentinel 2026-03-03, then cluster), E3 (data 2025-12-08) and E4 (trend
+2026-05-10), all named right and first right. 0015's test finds E1
+(cluster, 2025-06-10) and E2 as a cluster only (2026-03-05), so E2 is
+found and not named right (no sentinel), and does not find E3 or E4.
+
+**Incidents under the rules** (computed; incidents over the scoring
+period, detector alerts without CPE finds, R1 to R7; 'stress' is live at
+level 10 and 0015 at q < 0.05):
+
+| feed, level (alerts) | R1 D-034 | R2 14 d | R3 56 d | R4 unit only | R5 tag, any unit | R6 patient | R7 R1 or R6 |
+|---|---|---|---|---|---|---|---|
+| live, operating (18) | 15 | 15 | 15 | 14 | 13 | 15 | 15 |
+| 0015, operating (13) | 12 | 12 | 12 | 12 | 9 | 12 | 12 |
+| both, operating (31) | 25 | 25 | 25 | 23 | 18 | 24 | 24 |
+| live, stress (25) | 22 | 22 | 22 | 21 | 17 | 22 | 22 |
+| 0015, stress (88) | 82 | 85 | 75 | 63 | 50 | 63 | 63 |
+| both, stress (113) | 98 | 102 | 87 | 68 | 40 | 78 | 77 |
+
+R1 reproduces `group_incidents` on every feed and the committed I1
+(asserted). At the operating level the window of 14, 28 and 56 days
+changes no incident count (15 and 12); the intervals of every cell
+overlap, as 13 to 31 alerts allow. The checks that merging does not
+fuse (computed): at the operating level every rule puts E1, E2, E3, E4
+and the two quarantined zones each in one incident; R4 (unit only) makes
+one incident mix a zone with outside alerts (longest incident 15 days)
+in the live feed; R5 (tag in any unit) makes one live incident span two
+units (longest 40 days), and in 0015's feed one mixed and two multi-unit
+incidents; R6 and R7 (shared patients across units) fuse one incident
+across units in the combined feed, and 7 in 0015's stress feed; in the
+combined stress feed R5 has 16 multi-unit incidents and one 186 days
+long. On the stress feeds the window matters: 0015's 82, 85 and 75
+incidents for 28, 14 and 56 days, with E1 split in two incidents at 28
+and 14 days and in one at 56 (the longest incident 93 days); R6 and R7
+split E1 into three incidents in the combined stress feed. Alerts with
+patients behind them: 11 of the live feed's 18 and all 13 of 0015's.
+Shared patients (R6) add no link in either feed alone (15 and 12 as R1)
+and one in the combined feed (24 against 25). Per detected injected
+trial R1 gives 1.00 incidents in every family but the two-unit one and 1.41 (live; 165 of 278 with one) and 1.12 (0015; 100 of 114)
+in the two-unit family, where R5 gives 1.00; R2 gives 8 rare and 10
+common ESBL live trials more than one incident.
+
+**Slot coverage** (computed). 26 of the live feed's 27 alerts and all 22
+of 0015's have every slot of their sentence filled by a field or a
+setting; the one incomplete is the trend alert (E4), whose starting share
+and span no `Signal` field holds. Sentinel sentences are complete because
+the template says "in 180 days", a setting; OBJECTIVES.md's "in 12
+months" needs the date of the previous isolate, which no field holds
+(derived from `Signal`, not measured).
+
+**Hypotheses against the numbers.** (1) Held: 100 % agreement, D7 equal to
+the committed rows. (2) Held at the edge for the live set: D7 first is 3.1
+points below D7 (94.30 % against 97.38 %), the lower end of 3 to 12; for
+0015's test D7 first (100 %) is not equal to D7 (99.84 %), the difference
+being E2, where D7 asks for a sentinel and a cluster and D7 first for
+either. (3) Held at the operating level for windows (0 incidents apart,
+inside 3) and for R5 across units; shared patients added no pair in
+either feed alone and one in the combined feed (inside 2). (4) Half held:
+only the trend template has a slot no field fills; the sentinel's slot is
+a setting under the template as written.
+
+**Deviations from plan** (none cuts a trial or a cell).
+- Rule 2 tests only `p` absent (no test on `ward`), as the table says; the
+  rare-profile rule of ENGINE.md 3.2 (a sentinel there, a cluster in the
+  harness's table) is in neither feed and was not exercised.
+- Patients behind an alert for an organism series (profile excess, 0015's
+  organism series) are all of the organism's patients in the unit in 28
+  days, broader than the count the test used; every one of 0015's alerts
+  therefore has patients. An alert joins the first open incident that
+  meets the rule and incidents are never merged afterwards, so R6 and R7
+  are not full single-linkage.
+- D7 first takes ties on the earliest date as right when any signal of
+  that date has an expected kind; for E2 the expected kinds are either.
+- `metrics.json` carries the live set as shipped as its row; 0015's feed
+  and the added measures are in `by_feed`. The first-step texts of the
+  picture are proposals for method 28 and not scored. The picture's
+  Finnish sentence is set in a smaller font where it is long.
+
 ## Interpretation
+
+Against METRICS.md's "Decision rules" this changes no headline number and
+decides nothing: D7, D6 and I1 are not headline metrics, the live set
+and its D-034 are untouched, and what follows is for Artem to read.
+
+What the numbers say, inside their intervals. A rule over five fields
+names every alert of the live set and of 0015's test, including a
+detector the harness's table has never seen, with a kind that matches the
+table on all 50,521 signals (18,439 of the live set, 32,082 of 0015's),
+so the naming step needs no model and no per-detector table once the
+signal carries those fields. It breaks nothing in the two feeds, but it
+rests on two fields' being unambiguous: `profile` (overloaded by 0015)
+was kept out of it by design. D7 is 97.4 % and 99.8 % because the labels
+and the rule share one taxonomy, not because anyone read the names; the
+shortfall of the live set is not misnaming but 52 injected clusters
+with no cluster signal (a sentinel only, derived), and read on the first alert D7 falls to
+94.3 % (93.2 to 95.2), most in the two-unit family (75.2 %). The
+annotation for D6 cuts the live set's gap alerts that look like a
+resistance change from 12 of 1,000 gaps to 4 (derived: 1.2 % to 0.4 %);
+0015's test, having no data signal, cannot annotate (1.9 %). The slot
+check says what the signal store must add for the sentences ENGINE.md
+promises: the trend's starting share and span, and the previous
+isolate's date for "first MRSA in 12 months".
+
+The incident rules are not separated at the operating level: 18 and 13
+alerts give 15 and 12 incidents under D-034's 28 days, 14 and 56 days
+alike, and every interval overlaps. What the data do say is where a rule
+is dangerous: tag in any unit (R5) and unit alone (R4) fuse unrelated
+alerts (incidents across two units, one 186 days long, a zone merged with
+outside alerts), and a 56-day window chains (93 days longest in 0015's
+stress feed) while 14 days splits E1 in two. D-034's rule, like
+R2 and R3, fuses nothing and keeps E1 to E4 whole at the operating level,
+so the data give no reason to change it, and no evidence that 28 days is
+best: the stress feed shows it sitting between a window that splits and
+one that chains. Shared patients add almost nothing over D-034 here and,
+linking across units, fuse a few incidents (by the zone check's measure;
+the link is the one infection control would draw).
+
+Strongest alternative explanation: circularity. The injection labels,
+the table and the rule are built from one five-kind taxonomy and read the
+same fields, so 100 % agreement and a D7 near 100 % show that the rule
+implements the table, not that a doctor reads the right name; the
+sentence's wording and the first step are unscored, and I2 was not
+measured. The incident counts rest on 13 to 31 alerts, E1 to E3 are the
+only planted events to merge, and the stress levels were chosen to have
+alerts to group, not by any criterion. Organism-level patient evidence
+is broader than the alert's own count, which should favour R6 and did not.
+
+Next: score the sentences, not only the kinds (I2 over `alerts.csv`'s
+sentences with the D-019 digit check); add the trend's start share and
+span and the sentinel's previous-isolate date to the signals and rescore
+slot coverage; decide the kind of ENGINE.md 3.2's rare-profile rule;
+rescore I1 on a noisier or longer feed and on held-out seeds 2027 to 2030
+for the injected-trial grouping; and write the first-step text per kind as
+method 28 proposes. Proposals for Artem, none decided.

@@ -365,10 +365,10 @@ Every flattened metric key (dotted path into `metrics`) for every row, by family
 
 | key | [0021-naming-step](../../experiments/0021-naming-step/) |
 |---|---|
-| mark | tuned on test, proposed |
+| mark | tuned on test |
 | method | Naming step: a decision list over alert fields gives the kind and the sentence; D7 and D6 on planted and injected events, I1 under incident rules R1 to R7 |
-| runtime_s | 77.5 |
-| cpu_s | 77.1 |
+| runtime_s | 63.5 |
+| cpu_s | 63.3 |
 | D6 | 0.0120 (0.00688–0.0209) |
 | D7 | 0.974 (0.966–0.980) |
 | I1.alerts | 18 |

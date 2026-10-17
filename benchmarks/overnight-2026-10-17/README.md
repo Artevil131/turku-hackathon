@@ -51,7 +51,7 @@ P2 skill is against persistence (MAE: 1 - MAE / MAE of persistence; log: differe
 
 | Row | Mark | I1 alerts per incident ↓ | I1 incidents | I1 alerts | D7 named right ↑ | D6 attribution ↑ | runtime_s | cpu_s | Method |
 |---|---|---|---|---|---|---|---|---|---|
-| [0021-naming-step](../../experiments/0021-naming-step/) | tuned on test, proposed | 1.20 | 15 (8.40–24.7) | 18 | 0.974 (0.966–0.980) | 0.0120 (0.00688–0.0209) | 77.5 | 77.1 | Naming step: a decision list over alert fields gives the kind and the sentence; D7 and D6 on planted and injected events, I1 under incident rules R1 to R7 |
+| [0021-naming-step](../../experiments/0021-naming-step/) | tuned on test | 1.20 | 15 (8.40–24.7) | 18 | 0.974 (0.966–0.980) | 0.0120 (0.00688–0.0209) | 63.5 | 63.3 | Naming step: a decision list over alert fields gives the kind and the sentence; D7 and D6 on planted and injected events, I1 under incident rules R1 to R7 |
 <!-- leaderboard:end -->
 
 ## Morning report
