@@ -1,6 +1,8 @@
-import { type CoverageResponse, type Level, type Severity, THRESHOLDS } from "@aei/contract";
-import { type AgeGroup as AgeBand, isAgeGroup, isWardCode, type Sex, type Specimen, WARDS, type WardCode } from "@aei/domain";
+import { barFor, type CoverageQuery, type CoverageResponse, type Level, type Severity, THRESHOLDS } from "@aei/contract";
+import { type AgeGroup as AgeBand, isAgeGroup, type Sex, type Specimen, type WardCode } from "@aei/domain";
+import { guide, type Syndrome, type SyndromeId, syndromeDefaults } from "@aei/guideline";
 import { type Locale, type MessageKey, t } from "@aei/i18n";
+import { inSite, knownWard, siteWards } from "../../sites.ts";
 
 // The doctor's one-click filters, their defaults, and how they travel in the URL
 // (`#doctor?unit=URO&site=urine&sex=F&age=older&onset=hospital&sev=severe&period=28`) and in localStorage (`aei.unit`).
@@ -20,14 +22,34 @@ export interface DoctorFilters {
   onset: boolean;
   sev: Severity;
   period: Period;
+  /** The guide's syndrome the doctor chose (D-047), or null. Marks the guide's first choice; never filters or reorders. */
+  syn: SyndromeId | null;
 }
 
 export const DEFAULT_UNIT: WardCode = "MED-A";
-export const DEFAULTS: Omit<DoctorFilters, "unit"> = { site: "urine", sex: "any", age: "any", onset: false, sev: "mild", period: 365 };
+export const DEFAULTS: Omit<DoctorFilters, "unit"> = {
+  site: "urine",
+  sex: "any",
+  age: "any",
+  onset: false,
+  sev: "mild",
+  period: 365,
+  syn: null,
+};
 export const SITES: readonly Specimen[] = ["urine", "blood", "wound"];
 /** The bar a severity is judged against, in percent (D-026, D-027), from the contract. */
 export const BAR: Record<Severity, number> = { mild: THRESHOLDS.mild * 100, severe: THRESHOLDS.severe * 100 };
 
+/**
+ * The bar the list is judged against, in percent: the response's own `bar` when it gives one (D-049: 90 for
+ * hospital onset whatever the severity), else what `barFor` gives for the response's query, else for the filters.
+ */
+export function barOf(data: CoverageResponse | null, filters: Pick<DoctorFilters, "sev" | "onset">): number {
+  const fraction = data
+    ? (data.bar ?? barFor(data.coverage.query, data.severity))
+    : barFor({ onset: filters.onset ? "hospital" : "any" }, filters.sev);
+  return Math.round(fraction * 100);
+}
 export const AGE_KEYS: Record<AgeGroup, MessageKey> = {
   any: "drAgeAny",
   child: "drAgeChild",
@@ -41,7 +63,7 @@ const UNIT_KEY = "aei.unit";
 export function readStoredUnit(): WardCode | null {
   try {
     const v = localStorage.getItem(UNIT_KEY);
-    return v && isWardCode(v) ? v : null;
+    return v && knownWard(v) && inSite(v) ? v : null;
   } catch {
     return null;
   }
@@ -55,7 +77,50 @@ export function storeUnit(unit: WardCode): void {
   }
 }
 
-/** URL first, then the remembered unit, then the default. */
+/** The selected hospital's default unit (D-051): MED-A at the home site, else the hospital's first inpatient unit. */
+export function defaultUnit(): WardCode {
+  if (knownWard(DEFAULT_UNIT) && inSite(DEFAULT_UNIT)) return DEFAULT_UNIT;
+  const wards = siteWards();
+  return (wards.find((w) => w.type === "in") ?? wards[0])?.code ?? DEFAULT_UNIT;
+}
+
+/** The guide's syndrome by id, from the site's guide (only Varha's for now; a sites registry will name it). */
+export function syndromeOf(id: string | null | undefined): Syndrome | undefined {
+  return id ? guide().syndromes.find((s) => s.id === id) : undefined;
+}
+
+/**
+ * Choosing a syndrome sets the filters it implies (specimen, severity, onset, and sex when the syndrome has one).
+ * Community or any onset leaves the onset toggle off: only hospital onset is sent (D-049). Choosing the chosen one
+ * again, or null, clears it and leaves the filters as they are.
+ */
+export function chooseSyndrome(f: DoctorFilters, syndrome: Syndrome | null): DoctorFilters {
+  if (!syndrome || syndrome.id === f.syn) return { ...f, syn: null };
+  const d = syndromeDefaults(syndrome);
+  return { ...f, syn: syndrome.id, site: d.specimen, sev: d.severity, onset: d.onset === "hospital", sex: d.sex ?? f.sex };
+}
+
+/** A filter change; changing the specimen clears the chosen syndrome, other changes keep it. */
+export function patchFilters(f: DoctorFilters, patch: Partial<DoctorFilters>): DoctorFilters {
+  const next = { ...f, ...patch };
+  if (!("syn" in patch) && patch.site !== undefined && patch.site !== f.site) next.syn = null;
+  return next;
+}
+
+/** What the coverage API is asked for these filters: sex and onset only when set (D-049: hospital onset or nothing). */
+export function coverageQuery(f: DoctorFilters): CoverageQuery {
+  return {
+    ward: f.unit,
+    specimen: f.site,
+    severity: f.sev,
+    windowDays: f.period,
+    ...(f.sex === "any" ? {} : { sex: f.sex }),
+    ...(f.age === "any" ? {} : { ageGroup: f.age }),
+    ...(f.onset ? { onset: "hospital" as const } : {}),
+  };
+}
+
+/** URL first, then the remembered unit, then the default; a unit of a hospital other than the selected one is not used. */
 export function filtersFromUrl(params: URLSearchParams): DoctorFilters {
   const unit = params.get("unit");
   const site = params.get("site");
@@ -63,13 +128,14 @@ export function filtersFromUrl(params: URLSearchParams): DoctorFilters {
   const sev = params.get("sev");
   const age = params.get("age");
   return {
-    unit: unit && isWardCode(unit) ? unit : (readStoredUnit() ?? DEFAULT_UNIT),
+    unit: unit && knownWard(unit) && inSite(unit) ? unit : (readStoredUnit() ?? defaultUnit()),
     site: SITES.find((s) => s === site) ?? DEFAULTS.site,
     sex: sex === "F" || sex === "M" ? sex : DEFAULTS.sex,
     age: age && isAgeGroup(age) ? age : DEFAULTS.age,
     onset: params.get("onset") === "hospital",
     sev: sev === "severe" ? "severe" : "mild",
     period: params.get("period") === "28" ? 28 : 365,
+    syn: syndromeOf(params.get("syn"))?.id ?? null,
   };
 }
 
@@ -83,14 +149,19 @@ export function filtersToParams(f: DoctorFilters): Record<string, string | null>
     onset: f.onset ? "hospital" : null,
     sev: f.sev === "mild" ? null : f.sev,
     period: f.period === 365 ? null : String(f.period),
+    syn: f.syn,
   };
 }
 
+/** The ward picker's units: the selected hospital's, or every hospital's (D-051). */
 export const unitGroups = {
-  hospital: WARDS.filter((w) => w.institution === "hospital"),
-  primary: WARDS.filter((w) => w.institution === "primary_care"),
+  get hospital() {
+    return siteWards().filter((w) => w.institution === "hospital");
+  },
+  get primary() {
+    return siteWards().filter((w) => w.institution === "primary_care");
+  },
 };
-
 // ---- certainty: what the figures rest on, a lookup on the level D-023/D-033 reached ----
 
 export interface Certainty {

@@ -1,5 +1,6 @@
-import type { AeiClient, Alert, CoverageResponse, FailsTogetherResponse } from "@aei/contract";
+import type { AeiClient, Alert, CoverageResponse, FailsTogetherResponse, NationalResponse } from "@aei/contract";
 import type { WardCode } from "@aei/domain";
+import type { Syndrome } from "@aei/guideline";
 import type { Locale } from "@aei/i18n";
 import { t } from "@aei/i18n";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -11,8 +12,19 @@ import { CoverageList, itemsOf, type ListStatus } from "./CoverageList.tsx";
 import { Details } from "./Details.tsx";
 import { FailsTogether } from "./FailsTogether.tsx";
 import "./DoctorPage.css";
-import { type DoctorFilters, filtersFromUrl, filtersToParams, storeUnit } from "./filters.ts";
+import {
+  chooseSyndrome,
+  coverageQuery,
+  type DoctorFilters,
+  filtersFromUrl,
+  filtersToParams,
+  patchFilters,
+  storeUnit,
+  syndromeOf,
+} from "./filters.ts";
+import { PatientPanel, type PatientState } from "./Patient.tsx";
 import { RecordStrip } from "./RecordStrip.tsx";
+import { SyndromePicker } from "./SyndromePicker.tsx";
 import { unitSignals } from "./signals.ts";
 import { UnitContext } from "./UnitContext.tsx";
 import { useMedia } from "./useMedia.ts";
@@ -35,6 +47,9 @@ export interface DoctorPageProps {
   onOpenSignals: (ward: WardCode) => void;
 }
 
+/** How long typing pauses before the patient id is looked up. */
+const PATIENT_PAUSE_MS = 600;
+
 /** Every filter the coverage call sends, so a change refetches. */
 const queryKey = (f: DoctorFilters) => [f.unit, f.site, f.sex, f.age, f.onset, f.sev, f.period].join("|");
 
@@ -47,6 +62,48 @@ export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetry
   const [selected, setSelected] = useState<string | null>(null);
   const wide = useMedia("(min-width: 960px)");
   const sheetRef = useRef<HTMLDivElement>(null);
+  const [national, setNational] = useState<NationalResponse | null>(null);
+  // The patient id (D-050) lives here only: never in the URL or localStorage, cleared when the unit changes.
+  const [patientId, setPatientId] = useState("");
+  const [patientQuery, setPatientQuery] = useState("");
+  const [patient, setPatient] = useState<PatientState | null>(null);
+  const commitPatient = useCallback(() => setPatientQuery(patientId.trim()), [patientId]);
+  useEffect(() => {
+    const id = setTimeout(() => setPatientQuery(patientId.trim()), PATIENT_PAUSE_MS);
+    return () => clearTimeout(id);
+  }, [patientId]);
+  useEffect(() => {
+    if (!patientQuery || !asOf) {
+      setPatient(null);
+      return;
+    }
+    let stale = false;
+    setPatient((p) => ({ status: "loading", response: p?.response?.patientId === patientQuery ? p.response : null }));
+    client
+      .patientFindings(patientQuery)
+      .then((response) => {
+        if (!stale) setPatient({ status: "ready", response });
+      })
+      .catch(() => {
+        if (!stale) setPatient({ status: "error", response: null });
+      });
+    return () => {
+      stale = true;
+    };
+  }, [client, asOf, patientQuery]);
+  // The national reference (D-048) once per page; a server without the file answers 404, which means no national line.
+  useEffect(() => {
+    let stale = false;
+    client
+      .national()
+      .then((n) => {
+        if (!stale) setNational(n);
+      })
+      .catch(() => {});
+    return () => {
+      stale = true;
+    };
+  }, [client]);
 
   useEffect(() => {
     storeUnit(filters.unit);
@@ -68,15 +125,7 @@ export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetry
     let stale = false;
     setStatus("loading");
     client
-      .coverage({
-        ward: filters.unit,
-        specimen: filters.site,
-        severity: filters.sev,
-        windowDays: filters.period,
-        ...(filters.sex === "any" ? {} : { sex: filters.sex }),
-        ...(filters.age === "any" ? {} : { ageGroup: filters.age }),
-        ...(filters.onset ? { onset: "hospital" as const } : {}),
-      })
+      .coverage(coverageQuery(filters))
       .then((response) => {
         if (stale) return;
         setData({ key, response });
@@ -90,7 +139,7 @@ export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetry
     };
   }, [client, asOf, key, attempt]);
 
-  // "Fails together" (D-048) for the same filters, fetched beside the coverage list.
+  // "Fails together" (D-054) for the same filters, fetched beside the coverage list.
   const [fails, setFails] = useState<{ key: string; response: FailsTogetherResponse } | null>(null);
   // biome-ignore lint/correctness/useExhaustiveDependencies: `key` stands for the filters it covers.
   useEffect(() => {
@@ -115,18 +164,27 @@ export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetry
   }, [client, asOf, key]);
   const currentFails = fails && fails.key === key ? fails.response : null;
 
-  const onChange = useCallback((patch: Partial<DoctorFilters>) => setFilters((f) => ({ ...f, ...patch })), []);
+  const onChange = useCallback((patch: Partial<DoctorFilters>) => {
+    if (patch.unit !== undefined) {
+      setPatientId("");
+      setPatientQuery("");
+    }
+    setFilters((f) => patchFilters(f, patch));
+  }, []);
+  const syndrome = useMemo(() => syndromeOf(filters.syn) ?? null, [filters.syn]);
+  const onSyndrome = useCallback((s: Syndrome | null) => setFilters((f) => chooseSyndrome(f, s)), []);
   // Figures from a different query are never shown under the new filters; only a clock tick keeps the old list while it refreshes.
   const current = data && data.key === key ? data.response : null;
   const feeders = useMemo(() => previousUnits(flows, filters.unit, 3).map((p) => p.ward), [flows, filters.unit]);
   const signals = useMemo(() => unitSignals(alerts, filters.unit, feeders, locale), [alerts, filters.unit, feeders, locale]);
 
+  const patientFindings = patient?.response ?? null;
   const status2 = current ? status : status === "error" ? "error" : "loading";
   const items = useMemo(() => {
     if (!current) return [];
-    const { singles, pairs } = itemsOf(current, locale);
+    const { singles, pairs } = itemsOf(current, locale, patientFindings);
     return [...singles, ...pairs];
-  }, [current, locale]);
+  }, [current, locale, patientFindings]);
   const detailsDate = current?.asOf ?? null;
   const item = items.find((i) => i.id === selected) ?? null;
   const closeSheet = () => {
@@ -145,7 +203,15 @@ export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetry
         {t(locale, "drSkip")}
       </button>
       <div className="doctor-main">
-        <RecordStrip locale={locale} filters={filters} onChange={onChange} />
+        <SyndromePicker locale={locale} value={filters.syn} onPick={onSyndrome} />
+        <RecordStrip
+          locale={locale}
+          filters={filters}
+          onChange={onChange}
+          patientId={patientId}
+          onPatientId={setPatientId}
+          onPatientCommit={commitPatient}
+        />
         <div className="doctor-body">
           <CoverageList
             source={<DataQuality client={client} locale={locale} />}
@@ -158,6 +224,8 @@ export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetry
             selected={item ? item.id : null}
             onSelect={setSelected}
             onRetry={() => setAttempt((a) => a + 1)}
+            syndrome={syndrome}
+            patient={patientFindings}
           />
           <aside className="dp-side" aria-label={t(locale, "drInUnit")}>
             <UnitContext
@@ -173,6 +241,7 @@ export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetry
               onRetryAlerts={onRetryAlerts}
               onOpenSignals={onOpenSignals}
             />
+            <PatientPanel locale={locale} state={patient} syndrome={syndrome} />
             {wide ? (
               <section id="dr-details" className="dt-panel dp-panel" aria-labelledby="dt-title" aria-live="polite">
                 <h3 id="dt-title" className="dt-title">
@@ -186,7 +255,16 @@ export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetry
                 </h3>
                 {current && item ? (
                   <>
-                    <Details client={client} locale={locale} filters={filters} data={current} item={item} signals={signals} />
+                    <Details
+                      client={client}
+                      locale={locale}
+                      filters={filters}
+                      data={current}
+                      item={item}
+                      signals={signals}
+                      syndrome={syndrome}
+                      national={national}
+                    />
                     {item.row ? (
                       <FailsTogether locale={locale} antibiotic={item.row.antibiotic} data={currentFails} loading={!currentFails} />
                     ) : null}
@@ -225,7 +303,16 @@ export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetry
               {t(locale, "drClose")}
             </button>
           </div>
-          <Details client={client} locale={locale} filters={filters} data={current} item={item} signals={signals} />
+          <Details
+            client={client}
+            locale={locale}
+            filters={filters}
+            data={current}
+            item={item}
+            signals={signals}
+            syndrome={syndrome}
+            national={national}
+          />
           {item.row ? <FailsTogether locale={locale} antibiotic={item.row.antibiotic} data={currentFails} loading={!currentFails} /> : null}
         </div>
       ) : null}

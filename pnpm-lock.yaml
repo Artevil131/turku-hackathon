@@ -44,6 +44,9 @@ importers:
       '@aei/domain':
         specifier: workspace:*
         version: link:../../libs/utils/domain
+      '@aei/eucast':
+        specifier: workspace:*
+        version: link:../../libs/utils/eucast
       '@aei/i18n':
         specifier: workspace:*
         version: link:../../libs/utils/i18n
@@ -59,6 +62,9 @@ importers:
       '@aei/replay':
         specifier: workspace:*
         version: link:../../libs/utils/replay
+      '@aei/sites':
+        specifier: workspace:*
+        version: link:../../libs/utils/sites
       '@aei/viz':
         specifier: workspace:*
         version: link:../../libs/utils/viz
@@ -108,6 +114,9 @@ importers:
       '@aei/domain':
         specifier: workspace:*
         version: link:../../libs/utils/domain
+      '@aei/guideline':
+        specifier: workspace:*
+        version: link:../../libs/utils/guideline
       '@aei/i18n':
         specifier: workspace:*
         version: link:../../libs/utils/i18n
@@ -117,6 +126,9 @@ importers:
       '@aei/relations':
         specifier: workspace:*
         version: link:../../libs/utils/relations
+      '@aei/sites':
+        specifier: workspace:*
+        version: link:../../libs/utils/sites
       '@aei/viz':
         specifier: workspace:*
         version: link:../../libs/utils/viz
@@ -256,6 +268,12 @@ importers:
         specifier: workspace:*
         version: link:../domain
 
+  libs/utils/guideline:
+    dependencies:
+      '@aei/domain':
+        specifier: workspace:*
+        version: link:../domain
+
   libs/utils/i18n:
     dependencies:
       '@aei/domain':
@@ -290,6 +308,15 @@ importers:
         version: link:../replay
 
   libs/utils/replay: {}
+
+  libs/utils/sites:
+    dependencies:
+      '@aei/domain':
+        specifier: workspace:*
+        version: link:../domain
+      '@aei/ingest':
+        specifier: workspace:*
+        version: link:../ingest
 
   libs/utils/viz:
     dependencies:

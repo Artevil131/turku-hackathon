@@ -46,7 +46,7 @@ const UNIT_POINT: Record<WardCode, [number, number]> = {
   "MED-B": [186, 202],
 };
 
-export const unitPoint = (code: WardCode): [number, number] => UNIT_POINT[code];
+export const unitPoint = (code: WardCode): [number, number] => UNIT_POINT[code] ?? [0, 0];
 
 export const NODE_HALF_W = 29;
 export const NODE_HALF_H = 13;

@@ -1,9 +1,22 @@
-import type { Alert } from "@aei/alerts";
+import type { Alert, PatientFinding } from "@aei/alerts";
 import type { AgeGroup, AiStatus } from "@aei/ask";
 import type { FailsTogetherResponse, FailsTogetherRouteQuery } from "@aei/coresistance/route";
 import type { CombinationSuggestion, CoverageResult, CoverageQuery as GearCoverageQuery, Severity, Suggestion } from "@aei/coverage";
-import type { Antibiotic, IsoDate, IsolateRecord, Organism, Sex, Specimen, Ward, WardCode } from "@aei/domain";
-import type { CheckSummary } from "@aei/quality";
+import type {
+  Antibiotic,
+  AntibioticCode,
+  IsoDate,
+  IsolateRecord,
+  Organism,
+  Phenotype,
+  Sex,
+  Site,
+  SiteId,
+  Specimen,
+  Ward,
+  WardCode,
+} from "@aei/domain";
+import type { CheckSummary, Finding } from "@aei/quality";
 import type { Flow, TrailLink } from "@aei/relations";
 import type { ClockState } from "@aei/replay";
 import type { WeeklySeries } from "@aei/viz";
@@ -38,7 +51,13 @@ export const ROUTES = {
   weekly: "/api/weekly",
   /** Plausibility checks over the rows the server holds (D-038). */
   quality: "/api/quality",
-  /** Antibiotics that fail together, from the hospital's own first isolates (D-048). */
+  /** The hospitals connected to this server, each with its units, counts and feed status (D-051). */
+  sites: "/api/sites",
+  /** National reference per genus, antibiotic and specimen from THL's Finres cube (D-048); 404 without the file. */
+  national: "/api/national",
+  /** A patient's ESBL, MRSA, VRE and CPE findings of the year before the replay date (D-050). */
+  patientFindings: "/api/patient/findings",
+  /** Antibiotics that fail together, from the hospital's own first isolates (D-054). */
   failsTogether: "/api/fails-together",
 } as const;
 
@@ -53,6 +72,57 @@ export interface Meta {
   antibiotics: readonly Antibiotic[];
   organisms: readonly Organism[];
   specimens: readonly { code: Specimen; en: string; fi: string }[];
+  /** Every site, home first; each `wards` entry names its site (D-051). Absent from servers older than D-051. */
+  sites?: readonly Site[];
+}
+
+/** One site's feed of lab messages since the server started (wall-clock time, not the replay clock). */
+export interface SiteFeed {
+  /** Messages received on POST /api/ingest under this site, accepted or not. */
+  messages: number;
+  /** When the last message arrived, ISO 8601 wall-clock; null before the first. */
+  lastAt: string | null;
+  lastFormat: "hl7v2" | "fhir" | "csv" | null;
+  /** Cultures accepted from the last message. */
+  lastAccepted: number;
+  /** Warnings over every message, including units the site did not register. */
+  warnings: number;
+  /** Cultures kept with a unit the site did not register. */
+  unregistered: number;
+  /** Messages refused (unknown format, nothing usable). */
+  rejected: number;
+}
+
+export interface SiteStatus extends Site {
+  home: boolean;
+  /** The site's registered units, qualified. */
+  wards: WardCode[];
+  /** "home": the dataset's hospital; "connected": a site that has sent at least one message; "awaiting": none yet. */
+  status: "home" | "connected" | "awaiting";
+  /** Rows of the site up to the clock. */
+  counts: { cultures: number; isolates: number; patients: number };
+  feed: SiteFeed;
+}
+
+/** What POST /api/ingest answers (D-035, D-051): 200 with what was accepted, 422 with nothing usable, 401 or 415 with an error. */
+export interface IngestResponse {
+  format?: "hl7v2" | "fhir" | "csv";
+  /** The site the token named (D-051). */
+  site?: SiteId;
+  accepted?: number;
+  isolates?: number;
+  results?: number;
+  /** The clock after the results arrived; it moves forward to results dated after it. */
+  asOf?: IsoDate;
+  newAlerts?: string[];
+  warnings?: string[];
+  quality?: Finding[];
+  error?: string;
+}
+
+export interface SitesResponse {
+  asOf: IsoDate;
+  sites: SiteStatus[];
 }
 
 export type { ClockState } from "@aei/replay";
@@ -74,26 +144,50 @@ export interface IsolateQuery {
   sex?: Sex;
   ageMin?: number;
   ageMax?: number;
+  /** Only this site's units (D-051). */
+  site?: SiteId;
 }
 
 export type { AntibioticCoverage, CombinationSuggestion, Counts, CoverageResult, Level, Onset, Severity, Suggestion } from "@aei/coverage";
-/** The bar each severity is judged against (D-026, D-027), so clients label it from the same source. */
-export { THRESHOLDS } from "@aei/coverage";
+/**
+ * The bar each severity is judged against (D-026, D-027), so clients label it from the same source;
+ * `barFor` gives the one a query uses (hospital onset: 90 % whatever the severity, D-049).
+ */
+export { barFor, ONSETS, THRESHOLDS } from "@aei/coverage";
 
 /** The doctor's coverage list (D-023). The server sets the as-of date from its clock. */
 export type CoverageQuery = Omit<GearCoverageQuery, "asOf" | "minTested"> & {
   /** How suggestions are judged (D-026, D-027); "mild" when omitted. */
   severity?: Severity;
+  /** The site `ward` belongs to; a bare ward code is then that site's unit (D-051). */
+  site?: SiteId;
 };
 
 export interface CoverageResponse {
   asOf: IsoDate;
   severity: Severity;
+  /**
+   * The bar the suggestions were judged against: `barFor(coverage.query, severity)` (D-049). Optional so
+   * servers and fixtures from before D-049 still type; a client missing it computes `barFor` itself.
+   */
+  bar?: number;
   coverage: CoverageResult;
   /** Ordered: clears, borderline, below, not assessable. Decision support only. */
   suggestions: Suggestion[];
   /** Pairs, only when no single antibiotic clears (D-028). */
   combinationSuggestions: CombinationSuggestion[];
+}
+
+export type { PatientFinding } from "@aei/alerts";
+
+/** A patient's earlier resistant findings (D-050), from released records only. */
+export interface PatientFindingsResponse {
+  asOf: IsoDate;
+  patientId: string;
+  /** ESBL, MRSA, VRE and CPE isolates sampled in the 365 days up to and including `asOf`, newest first. */
+  findings: PatientFinding[];
+  /** For each phenotype found, the antibiotics `@aei/eucast` infers resistant from it (empty when none). */
+  affects: Partial<Record<Phenotype, AntibioticCode[]>>;
 }
 
 export interface AskResponse {
@@ -122,6 +216,8 @@ export type { Flow, TrailLink } from "@aei/relations";
 /** Relation layers for the `days` days up to the clock's as-of date (D-011 to D-013). */
 export interface RelationsQuery {
   days?: number;
+  /** Only flows and links that touch this site's units: moves within it and to or from it (D-051). */
+  site?: SiteId;
 }
 
 export interface RelationsResponse {
@@ -136,6 +232,8 @@ export interface RelationsResponse {
 /** Alerts dated from `from` (inclusive) up to the clock's as-of date. */
 export interface AlertsQuery {
   from?: IsoDate;
+  /** Only this site's alerts; all sites when omitted (D-051). */
+  site?: SiteId;
 }
 
 export interface AlertsResponse {
@@ -270,6 +368,8 @@ export type { UnitWeeks, WeeklySeries } from "@aei/viz";
 /** Weeks from `from` (default: the dataset start) up to the clock's as-of date, never later. */
 export interface WeeklyQuery {
   from?: IsoDate;
+  /** One series per unit of this site; the home site when omitted (D-051). */
+  site?: SiteId;
 }
 
 export interface WeeklyResponse extends WeeklySeries {
@@ -278,10 +378,73 @@ export interface WeeklyResponse extends WeeklySeries {
 
 export type { CheckName, CheckSummary, Finding, Severity as FindingSeverity } from "@aei/quality";
 
-/** Every check run over every row the server holds, grouped by check; no findings means every check passed. */
+/** Which site's rows the checks summarise; the home site when omitted (D-051). */
+export interface QualityQuery {
+  site?: SiteId;
+}
+
+/** Every check run over every row of one site, grouped by check; no findings means every check passed. */
 export interface QualityResponse {
   checked: { patients: number; cultures: number; isolates: number; results: number };
   summary: CheckSummary[];
+}
+
+/** The genera Finres reports (D-048); Finres has no species. */
+export type FinresGenus = "Escherichia" | "Klebsiella" | "Staphylococcus" | "Enterococcus" | "Pseudomonas";
+
+/** Our antibiotic codes as Finres reports them, plus its three phenotype flags; the cefoxitin screen is the MRSA flag. */
+export type NationalAntibiotic = Exclude<Antibiotic["code"], "FOX"> | "ESBL" | "MRSA" | "VRE";
+
+/** One Finres cell; null where the cube has no figure (for example tested but %R not published). */
+export interface NationalCell {
+  genus: FinresGenus;
+  antibiotic: NationalAntibiotic;
+  specimen: Specimen;
+  tests: number | null;
+  resistant: number | null;
+  /** Percent resistant, 0 to 100. */
+  pctR: number | null;
+  /** 95 % interval of `pctR`, in percent. */
+  interval: [number, number] | null;
+}
+
+/** The file `scripts/fetch_finres.py` writes (`aei.finres`): the latest year with figures. */
+export interface NationalResponse {
+  source: string;
+  licence: string;
+  fetched: IsoDate;
+  year: number;
+  cells: NationalCell[];
+}
+
+/** The dataset's species to the Finres genus (D-048, mirrors `aei.finres.SPECIES_GENUS`); others have no national line. */
+export const FINRES_GENUS: Partial<Record<Organism, FinresGenus>> = {
+  "Escherichia coli": "Escherichia",
+  "Klebsiella pneumoniae": "Klebsiella",
+  "Klebsiella oxytoca": "Klebsiella",
+  "Enterococcus faecalis": "Enterococcus",
+  "Staphylococcus aureus": "Staphylococcus",
+  "Pseudomonas aeruginosa": "Pseudomonas",
+};
+
+/** Our specimens to the Finres spec_type labels (mirrors `aei.finres.SPECIMEN_LABELS`). */
+export const FINRES_SPECIMEN: Record<Specimen, string> = {
+  urine: "virtsa",
+  blood: "veri",
+  wound: "märkä- ja muut löydökset",
+};
+
+/** The national cell for one of our species, antibiotics (or a flag) and specimens; undefined means no national line. */
+export function nationalCell(
+  response: NationalResponse,
+  organism: Organism,
+  antibiotic: Antibiotic["code"] | NationalAntibiotic,
+  specimen: Specimen,
+): NationalCell | undefined {
+  const genus = FINRES_GENUS[organism];
+  if (!genus) return undefined;
+  const code = antibiotic === "FOX" ? "MRSA" : antibiotic;
+  return response.cells.find((c) => c.genus === genus && c.antibiotic === code && c.specimen === specimen);
 }
 
 /** Server-sent events on ROUTES.live. The event name is the `type`. */
@@ -333,7 +496,19 @@ export interface AeiClient {
   counties(): Promise<CountiesResponse>;
   /** Weekly raw counts per unit up to the clock (optional route). */
   weekly(query: WeeklyQuery): Promise<WeeklyResponse>;
-  quality(): Promise<QualityResponse>;
+  /** The checks over one site's rows; the home site's when `site` is omitted (D-051). */
+  quality(query?: QualityQuery): Promise<QualityResponse>;
+  /** The connected hospitals with their status (D-051). */
+  sites(): Promise<SitesResponse>;
+  /**
+   * Sends lab results to POST /api/ingest with the sending site's token (none for the home site without one).
+   * Resolves with the server's answer and its HTTP status, also for 401, 415 and 422, which carry a reason.
+   */
+  ingest(body: string, contentType: string, token?: string): Promise<{ status: number; body: IngestResponse }>;
+  /** Finres national reference (D-048); 404 when the server has no file. */
+  national(): Promise<NationalResponse>;
+  /** The patient's prior resistant findings (D-050); 400 without an id, an empty list for an unknown one. */
+  patientFindings(id: string): Promise<PatientFindingsResponse>;
   /** Opens the live stream; returns a function that closes it. */
   live(onEvent: (event: LiveEvent) => void, onError?: (error: Event) => void): () => void;
 }
@@ -382,7 +557,25 @@ export function createAeiClient(options: AeiClientOptions): AeiClient {
     regional: (query) => json<RegionalResponse>(withQuery(ROUTES.regional, query)),
     counties: () => json<CountiesResponse>(ROUTES.counties),
     weekly: (query) => json<WeeklyResponse>(withQuery(ROUTES.weekly, query)),
-    quality: () => json<QualityResponse>(ROUTES.quality),
+    quality: (query = {}) => json<QualityResponse>(withQuery(ROUTES.quality, query)),
+    sites: () => json<SitesResponse>(ROUTES.sites),
+    async ingest(body, contentType, token) {
+      const res = await doFetch(url(ROUTES.ingest), {
+        method: "POST",
+        headers: { "content-type": contentType, ...(token ? { authorization: `Bearer ${token}` } : {}) },
+        body,
+      });
+      const text = await res.text();
+      let parsed: IngestResponse;
+      try {
+        parsed = JSON.parse(text) as IngestResponse;
+      } catch {
+        parsed = { error: text };
+      }
+      return { status: res.status, body: parsed };
+    },
+    national: () => json<NationalResponse>(ROUTES.national),
+    patientFindings: (id) => json<PatientFindingsResponse>(withQuery(ROUTES.patientFindings, { id })),
     live(onEvent, onError) {
       const source = new ES(url(ROUTES.live));
       for (const type of LIVE_EVENT_TYPES) {

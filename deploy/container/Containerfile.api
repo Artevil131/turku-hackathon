@@ -7,7 +7,8 @@ ENV NODE_ENV=production \
     COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
     AEI_PORT=8787 \
     AEI_DATA_DIR=/data \
-    AEI_REGIONAL=/regional/regional.json
+    AEI_REGIONAL=/regional/regional.json \
+    AEI_NATIONAL=/regional/finres.json
 
 WORKDIR /app
 RUN corepack enable

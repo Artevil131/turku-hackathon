@@ -1,6 +1,6 @@
 # @aei/coresistance
 
-"Fails together" (D-048): when antibiotic A failed on an isolate here, how
+"Fails together" (D-054): when antibiotic A failed on an isolate here, how
 often did antibiotic B fail on the same isolate? Asked for by a doctor the
 team consulted: "if it doesn't work for antibiotic A, similar ones likely
 won't either". Measured from the hospital's own data; no drug pairs or
@@ -18,7 +18,7 @@ resisted B, `resistedBoth / resisted`, with a 95 % Wilson interval
 no inferred or intrinsic values (the data omits intrinsically resistant
 pairs). A pair is reported only when `resisted >= 30`, the organiser's
 floor. Each pair takes the narrowest level that reaches it, widening as
-the coverage list does (D-033, D-047): patient filters are dropped at the
+the coverage list does (D-033, D-053): patient filters are dropped at the
 unit in `DROP_ORDER`, then the unit widens to its ward type, then the
 hospital. Every link carries its `level` and the `filters` still applied.
 
@@ -29,4 +29,4 @@ hospital. Every link carries its `level` and the `filters` still applied.
 The contract of the future route `GET /api/fails-together` (response type
 `FailsTogetherResponse`, validation like `/api/coverage`). Not wired yet.
 
-Relies on D-023, D-033, D-047, D-048.
+Relies on D-023, D-033, D-053, D-054.

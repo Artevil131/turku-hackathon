@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { resolve } from "node:path";
-import { buildAlerts, sortAlerts } from "@aei/alerts";
+import { buildAlerts, patientFindings, sortAlerts } from "@aei/alerts";
 import {
   alertExplainInput,
   createAiMonitor,
@@ -19,12 +19,15 @@ import {
   type IsolateQuery,
   type LiveEvent,
   type Meta,
+  type NationalResponse,
+  type PatientFindingsResponse,
   type QualityResponse,
   type RegionalData,
   type RegionalQuery,
   type RelationsResponse,
   ROUTES,
   regionalUpTo,
+  type SitesResponse,
 } from "@aei/contract";
 import {
   type FailsTogetherResponse,
@@ -32,24 +35,38 @@ import {
   handle as failsTogetherHandle,
   parseQuery as parseFailsQuery,
 } from "@aei/coresistance/route";
-import { type CoverageResult, coverage, suggest, suggestCombinations } from "@aei/coverage";
+import { barFor, type CoverageResult, coverage, ONSETS, type Onset, suggest, suggestCombinations } from "@aei/coverage";
 import { type Dataset, joinIsolates, loadDataset } from "@aei/dataset";
 import {
   AGE_GROUPS,
   ANTIBIOTICS,
+  type AntibioticCode,
   type IsolateRecord,
   isAgeGroup,
   ORGANISMS,
+  type Phenotype,
   SPECIMENS,
   type Specimen,
-  WARDS,
   type WardCode,
 } from "@aei/domain";
-import { antibioticName, phenotypeName, specimenName, wardName } from "@aei/i18n";
+import { defeatedBy } from "@aei/eucast";
+import { antibioticName, phenotypeName, registerSites, registerWards, specimenName, wardName } from "@aei/i18n";
 import { asResult, type CodeMaps, DEFAULT_CODE_MAPS, detectFormat, extendCodeMaps, ingest, mergeResults } from "@aei/ingest";
 import { checkRows, type Finding, summarize } from "@aei/quality";
 import { countFlows, patientMoves, phenotypeTrails, trailLinks } from "@aei/relations";
 import { addDays, createReleaseIndex, createReplayClock } from "@aei/replay";
+import {
+  alertSite,
+  authorize,
+  type ConnectedSite,
+  createFeedLog,
+  qualifyResult,
+  qualifyWard,
+  rowsOfSite,
+  SitesFileError,
+  touchingSite,
+} from "@aei/sites";
+import { loadSites } from "@aei/sites/node";
 import { type WeeklySeries, weeklySeries } from "@aei/viz";
 
 // Development server for the AEI contract (libs/utils/contract). It loads
@@ -95,10 +112,49 @@ const config = {
   regionalFile: resolve(env.AEI_REGIONAL ?? "../../data/external/thl/regional.json"),
   // County polygons for the regional map, written by scripts/fetch_county_geometry.py.
   countiesFile: resolve(env.AEI_COUNTIES ?? "../../data/external/statfi/counties.geojson"),
+  // Other hospitals connected to this server, with their units and tokens (D-051); unset: the home site alone.
+  // A relative path is read from where the command was started (pnpm's INIT_CWD, e.g. the repository root).
+  sitesFile: env.AEI_SITES ? resolve(env.INIT_CWD ?? ".", env.AEI_SITES) : undefined,
+  // THL Finres national reference, written by scripts/fetch_finres.py (D-048); read on each request.
+  nationalFile: resolve(env.AEI_NATIONAL ?? "../../data/external/thl/finres.json"),
 };
 const codeMaps: CodeMaps = config.codeMapFile
   ? extendCodeMaps(JSON.parse(readFileSync(resolve(config.codeMapFile), "utf8")) as Partial<CodeMaps>)
   : DEFAULT_CODE_MAPS;
+const registry = openSites();
+const feeds = createFeedLog();
+
+/** The sites file, or stop with every problem listed (D-051). */
+function openSites() {
+  try {
+    const loaded = loadSites(config.sitesFile, { homeMaps: codeMaps, homeGuideline: config.guideline });
+    for (const note of loaded.notes) console.warn(`[aei-api] ${note}`);
+    registerWards(loaded.registry.wards);
+    registerSites(loaded.registry.sites);
+    if (config.sitesFile) console.log(`[aei-api] sites: ${loaded.registry.sites.map((s) => s.id).join(", ")}`);
+    return loaded.registry;
+  } catch (error) {
+    if (error instanceof SitesFileError) console.error(`[aei-api] AEI_SITES=${config.sitesFile}: ${error.message}`);
+    // Stop with the message alone; under the test runner, throw so the test sees it.
+    if (error instanceof SitesFileError && !env.VITEST) process.exit(1);
+    throw error;
+  }
+}
+
+/** The coverage query's unit: with `site`, a bare code is that site's unit ("ICU" at sata is "sata/ICU"). */
+function coverageWard(url: URL): string | null {
+  const ward = url.searchParams.get("ward");
+  const site = url.searchParams.get("site");
+  if (!ward || !site) return ward;
+  return registry.site(site) ? qualifyWard(site, ward, registry.home.id) : null;
+}
+
+/** A `site` query parameter: absent, or a registered site; anything else is a 400. */
+function siteParam(url: URL): { site?: string; error?: string } {
+  const site = url.searchParams.get("site");
+  if (!site) return {};
+  return registry.site(site) ? { site } : { error: `unknown site ${site}` };
+}
 
 console.log(`[aei-api] loading ${config.dataDir}`);
 const full = await loadDataset(config.dataDir);
@@ -126,16 +182,20 @@ function derive(d: Dataset) {
     released: createReleaseIndex(records, (r) => r.sampleDate),
     moves: patientMoves(d.cultures),
     trails,
-    alerts: createReleaseIndex(buildAlerts(records, d.cultures), (a) => a.date),
+    alerts: createReleaseIndex(buildAlerts(records, d.cultures, registry.wards), (a) => a.date),
   };
 }
 let state = derive(dataset);
 const weeklyCache = new Map<string, WeeklySeries>();
 const DEFAULT_RELATION_DAYS = 28;
 
-function relations(asOf: string, days: number): RelationsResponse {
+function relations(asOf: string, days: number, site?: string): RelationsResponse {
   const window = { from: addDays(asOf, 1 - days), to: asOf };
-  return { asOf, ...window, flows: countFlows(state.moves, window), links: trailLinks(state.trails, window) };
+  // Flow and trails are global, so a move between hospitals is a flow; a site sees those touching its units (D-051).
+  const flows = countFlows(state.moves, window);
+  const links = trailLinks(state.trails, window);
+  if (!site) return { asOf, ...window, flows, links };
+  return { asOf, ...window, flows: touchingSite(flows, site, registry.siteOfWard), links: touchingSite(links, site, registry.siteOfWard) };
 }
 
 const clock = createReplayClock({
@@ -150,10 +210,11 @@ const clock = createReplayClock({
 const meta: Omit<Meta, "ai" | "aiStatus"> = {
   datasetStart,
   datasetEnd,
-  wards: WARDS,
+  wards: registry.wards,
   antibiotics: ANTIBIOTICS,
   organisms: ORGANISMS,
   specimens: SPECIMENS,
+  sites: registry.sites,
 };
 
 const streams = new Set<ServerResponse>();
@@ -181,8 +242,34 @@ function matches(r: IsolateRecord, q: IsolateQuery): boolean {
     (!q.organism || r.organism === q.organism) &&
     (!q.sex || r.sex === q.sex) &&
     (q.ageMin === undefined || r.ageYears >= q.ageMin) &&
-    (q.ageMax === undefined || r.ageYears <= q.ageMax)
+    (q.ageMax === undefined || r.ageYears <= q.ageMax) &&
+    (!q.site || registry.siteOfWard(r.ward) === q.site)
   );
+}
+
+/** Every site with its units, rows up to the clock and feed status (D-051). */
+function sites(): SitesResponse {
+  const asOf = clock.state().asOf;
+  const released = state.released.upTo(asOf);
+  return {
+    asOf,
+    sites: registry.sites.map((s) => {
+      const cultures = dataset.cultures.filter((c) => c.sampleDate <= asOf && registry.siteOfWard(c.ward) === s.id);
+      const feed = feeds.status(s.id);
+      return {
+        ...s,
+        home: s.id === registry.home.id,
+        wards: registry.wardsOf(s.id).map((w) => w.code),
+        status: s.id === registry.home.id ? "home" : feed.messages > 0 ? "connected" : "awaiting",
+        counts: {
+          cultures: cultures.length,
+          isolates: released.filter((r) => registry.siteOfWard(r.ward) === s.id).length,
+          patients: new Set(cultures.map((c) => c.patientId)).size,
+        },
+        feed,
+      };
+    }),
+  };
 }
 
 function send(res: ServerResponse, status: number, body: unknown) {
@@ -207,19 +294,33 @@ async function readJson(req: IncomingMessage): Promise<unknown> {
  * New results are pushed to open clients; if they are dated after the clock, the
  * clock moves to them, as a live feed would.
  */
-function ingestPayload(body: string, contentType: string) {
+function ingestPayload(body: string, contentType: string, from: ConnectedSite = registry.connection(registry.home.id) as ConnectedSite) {
   const format = detectFormat(body, contentType);
-  if (!format) return { status: 415, body: { error: "unknown format: send HL7 v2 (MSH...), a FHIR Bundle (JSON) or CSV" } };
-  const result = ingest(body, format, { maps: codeMaps, guideline: config.guideline });
+  if (!format) {
+    feeds.record(from.site.id, { format: null, accepted: 0, warnings: 0, unregistered: 0 });
+    return { status: 415, body: { error: "unknown format: send HL7 v2 (MSH...), a FHIR Bundle (JSON) or CSV" } };
+  }
+  // The sending site's codes and guideline; its units are qualified right after parsing (D-051).
+  const { result, unregistered } = qualifyResult(
+    ingest(body, format, { maps: from.maps, guideline: from.guideline }),
+    from,
+    registry.home.id,
+  );
+  feeds.record(from.site.id, {
+    format,
+    accepted: result.cultures.length,
+    warnings: result.warnings.length,
+    unregistered: unregistered.length,
+  });
   // Plausibility checks on what arrived (D-038): reported with the response, rows kept as sent.
-  const quality: Finding[] = checkRows(result, { asOf: new Date().toISOString().slice(0, 10) });
+  const quality: Finding[] = checkRows(result, { asOf: new Date().toISOString().slice(0, 10), wards: registry.wards });
   if (!result.cultures.length) return { status: 422, body: { format, accepted: 0, warnings: result.warnings, quality } };
   const before = new Set(state.alerts.upTo(datasetEnd).map((a) => a.id));
   dataset = mergeResults(asResult(dataset), result);
   state = derive(dataset);
   coverages.clear();
   failsTogethers.clear();
-  qualityCache = undefined;
+  qualityCache.clear();
   const ids = new Set(result.cultures.map((c) => c.cultureId));
   const arrived = state.records.filter((r) => ids.has(r.cultureId));
   const latest =
@@ -240,6 +341,7 @@ function ingestPayload(body: string, contentType: string) {
     status: 200,
     body: {
       format,
+      site: from.site.id,
       accepted: result.cultures.length,
       isolates: result.isolates.length,
       results: result.susceptibility.length,
@@ -251,20 +353,25 @@ function ingestPayload(body: string, contentType: string) {
   };
 }
 
-let qualityCache: QualityResponse | undefined;
+const qualityCache = new Map<string, QualityResponse>();
 
-/** The plausibility checks over every row the server holds (D-038), computed once per change of the data. */
-function quality(): QualityResponse {
-  qualityCache ??= {
-    checked: {
-      patients: dataset.patients.length,
-      cultures: dataset.cultures.length,
-      isolates: dataset.isolates.length,
-      results: dataset.susceptibility.length,
-    },
-    summary: summarize(checkRows(dataset)),
-  };
-  return qualityCache;
+/** The plausibility checks over one site's rows (D-038, D-051), computed once per change of the data. */
+function quality(site: string = registry.home.id): QualityResponse {
+  let cached = qualityCache.get(site);
+  if (!cached) {
+    const rows = registry.sites.length > 1 ? rowsOfSite(dataset, site, registry.siteOfWard) : dataset;
+    cached = {
+      checked: {
+        patients: rows.patients.length,
+        cultures: rows.cultures.length,
+        isolates: rows.isolates.length,
+        results: rows.susceptibility.length,
+      },
+      summary: summarize(checkRows(rows, { wards: registry.wards })),
+    };
+    qualityCache.set(site, cached);
+  }
+  return cached;
 }
 
 function runCommand(command: ClockCommand) {
@@ -287,7 +394,7 @@ function runCommand(command: ClockCommand) {
 export const server = createServer(async (req, res) => {
   // The web dev server proxies /api, so CORS is only for other local clients.
   res.setHeader("access-control-allow-origin", "*");
-  res.setHeader("access-control-allow-headers", "content-type");
+  res.setHeader("access-control-allow-headers", "content-type, authorization");
   if (req.method === "OPTIONS") return void res.writeHead(204).end();
 
   const url = new URL(req.url ?? "/", "http://localhost");
@@ -344,7 +451,7 @@ export const server = createServer(async (req, res) => {
       return send(res, 200, explanation);
     }
     if (url.pathname === ROUTES.coverage) {
-      const ward = url.searchParams.get("ward");
+      const ward = coverageWard(url);
       const specimen = url.searchParams.get("specimen");
       const sex = url.searchParams.get("sex");
       const ageGroup = url.searchParams.get("ageGroup");
@@ -357,7 +464,7 @@ export const server = createServer(async (req, res) => {
       if (sex !== null && sex !== "F" && sex !== "M") return send(res, 400, { error: "sex must be F or M" });
       if (ageGroup !== null && !isAgeGroup(ageGroup))
         return send(res, 400, { error: `ageGroup must be one of ${Object.keys(AGE_GROUPS).join(", ")}` });
-      if (onset !== null && onset !== "hospital") return send(res, 400, { error: "onset must be hospital" });
+      if (onset !== null && !ONSETS.includes(onset as Onset)) return send(res, 400, { error: "onset must be hospital, community or any" });
       const days = windowDays === null ? undefined : Number(windowDays);
       if (days !== undefined && (!Number.isInteger(days) || days < 1))
         return send(res, 400, { error: "windowDays must be a positive integer" });
@@ -367,24 +474,40 @@ export const server = createServer(async (req, res) => {
       let result = coverages.get(key);
       if (!result) {
         if (coverages.size > 500) coverages.clear();
-        result = coverage(state.released.upTo(asOf), {
-          asOf,
-          ward: ward as WardCode,
-          specimen: specimen as Specimen,
-          ...(sex ? { sex } : {}),
-          ...(ageGroup ? { ageGroup } : {}),
-          ...(onset ? { onset } : {}),
-          ...(days ? { windowDays: days } : {}),
-        });
+        result = coverage(
+          state.released.upTo(asOf),
+          {
+            asOf,
+            ward: ward as WardCode,
+            specimen: specimen as Specimen,
+            ...(sex ? { sex } : {}),
+            ...(ageGroup ? { ageGroup } : {}),
+            ...(onset ? { onset } : {}),
+            ...(days ? { windowDays: days } : {}),
+            onset: onset as Onset,
+          },
+          registry.wards,
+        );
         coverages.set(key, result);
       }
       return send(res, 200, {
         asOf,
         severity,
+        bar: barFor(result.query, severity),
         coverage: result,
         suggestions: suggest(result, severity),
         combinationSuggestions: suggestCombinations(result, severity),
       });
+    }
+    if (url.pathname === ROUTES.patientFindings) {
+      const id = url.searchParams.get("id")?.trim();
+      if (!id) return send(res, 400, { error: "id is required" });
+      const asOf = clock.state().asOf;
+      // Only released records, so nothing after the replay date leaks in (D-050).
+      const findings = patientFindings(state.released.upTo(asOf), id, asOf);
+      const affects: Partial<Record<Phenotype, AntibioticCode[]>> = {};
+      for (const f of findings) affects[f.phenotype] ??= defeatedBy(f.phenotype);
+      return send(res, 200, { asOf, patientId: id, findings, affects } satisfies PatientFindingsResponse);
     }
     if (url.pathname === ROUTES.failsTogether) {
       const parsed = parseFailsQuery(
@@ -399,16 +522,26 @@ export const server = createServer(async (req, res) => {
       let result = failsTogethers.get(key);
       if (!result) {
         if (failsTogethers.size > 500) failsTogethers.clear();
-        result = failsTogetherHandle({ asOf, ...parsed.query }, state.released.upTo(asOf));
+        // Within the unit's own hospital (D-051).
+        const site = registry.siteOfWard(parsed.query.ward);
+        const own = state.released.upTo(asOf).filter((r) => registry.siteOfWard(r.ward) === site);
+        result = failsTogetherHandle({ asOf, ...parsed.query }, own);
         failsTogethers.set(key, result);
       }
       return send(res, 200, result);
     }
     if (url.pathname === ROUTES.ingest && req.method === "POST") {
-      const out = ingestPayload(await readText(req), req.headers["content-type"] ?? "");
+      // The token names the sending site (D-051); no token is the home site unless it has one.
+      const auth = authorize(registry, req.headers.authorization);
+      if (!auth.ok) return send(res, auth.status, { error: auth.error });
+      const out = ingestPayload(await readText(req), req.headers["content-type"] ?? "", auth.site);
       return send(res, out.status, out.body);
     }
-    if (url.pathname === ROUTES.quality) return send(res, 200, quality());
+    if (url.pathname === ROUTES.sites) return send(res, 200, sites());
+    if (url.pathname === ROUTES.quality) {
+      const { site, error } = siteParam(url);
+      return error ? send(res, 400, { error }) : send(res, 200, quality(site));
+    }
     if (url.pathname === ROUTES.regional) {
       if (!existsSync(config.regionalFile))
         return send(res, 404, { error: "No regional data; run `uv run python scripts/fetch_thl_ttr.py`" });
@@ -416,16 +549,27 @@ export const server = createServer(async (req, res) => {
       const query: RegionalQuery = { group: url.searchParams.get("group") ?? "", region: url.searchParams.get("region") ?? "" };
       return send(res, 200, regionalUpTo(data, clock.state().asOf, query));
     }
+    if (url.pathname === ROUTES.national) {
+      if (!existsSync(config.nationalFile))
+        return send(res, 404, { error: "No national data; run `uv run python scripts/fetch_finres.py`" });
+      return send(res, 200, JSON.parse(readFileSync(config.nationalFile, "utf8")) as NationalResponse);
+    }
     if (url.pathname === ROUTES.weekly) {
       const asOf = clock.state().asOf;
       const from = url.searchParams.get("from") || datasetStart;
       if (!/^\d{4}-\d{2}-\d{2}$/.test(from)) return send(res, 400, { error: "from must be YYYY-MM-DD" });
-      const key = `${asOf}|${from}`;
+      const { site = registry.home.id, error } = siteParam(url);
+      if (error) return send(res, 400, { error });
+      const key = `${asOf}|${from}|${site}`;
       let series = weeklyCache.get(key);
       if (!series) {
         if (weeklyCache.size > 50) weeklyCache.clear();
         // Only released rows: the series ends at the clock and never shows later days.
-        series = weeklySeries(state.released.upTo(asOf), dataset.cultures, from, asOf);
+        // One site's units and rows (D-051); with the home site alone, every row as before.
+        const own = registry.sites.length > 1;
+        const records = state.released.upTo(asOf).filter((r) => !own || registry.siteOfWard(r.ward) === site);
+        const cultures = own ? dataset.cultures.filter((c) => registry.siteOfWard(c.ward) === site) : dataset.cultures;
+        series = weeklySeries(records, cultures, from, asOf, registry.wardsOf(site));
         weeklyCache.set(key, series);
       }
       return send(res, 200, { asOf, ...series });
@@ -455,6 +599,7 @@ export const server = createServer(async (req, res) => {
           q[key] = value;
         }
       }
+      if (siteParam(url).error) return send(res, 400, { error: siteParam(url).error });
       const asOf = clock.state().asOf;
       const to = q.to && q.to < asOf ? q.to : asOf;
       return send(res, 200, { asOf, records: state.released.upTo(to).filter((r) => matches(r, { ...q, to })) });
@@ -462,12 +607,17 @@ export const server = createServer(async (req, res) => {
     if (url.pathname === ROUTES.relations) {
       const days = Number(url.searchParams.get("days") ?? DEFAULT_RELATION_DAYS);
       if (!Number.isInteger(days) || days < 1) return send(res, 400, { error: "days must be a positive integer" });
-      return send(res, 200, relations(clock.state().asOf, days));
+      const { site, error } = siteParam(url);
+      if (error) return send(res, 400, { error });
+      return send(res, 200, relations(clock.state().asOf, days, site));
     }
     if (url.pathname === ROUTES.alerts) {
       const asOf = clock.state().asOf;
       const from = url.searchParams.get("from") ?? "";
-      return send(res, 200, { asOf, alerts: sortAlerts(state.alerts.upTo(asOf).filter((a) => a.date >= from)) });
+      const { site, error } = siteParam(url);
+      if (error) return send(res, 400, { error });
+      const alerts = state.alerts.upTo(asOf).filter((a) => a.date >= from && (!site || alertSite(a, registry.siteOfWard) === site));
+      return send(res, 200, { asOf, alerts: sortAlerts(alerts) });
     }
     if (url.pathname === ROUTES.live) {
       res.writeHead(200, { "content-type": "text/event-stream", "cache-control": "no-cache", connection: "keep-alive" });

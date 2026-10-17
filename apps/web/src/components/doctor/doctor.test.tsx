@@ -1,11 +1,17 @@
-import type { CoverageResponse, Severity } from "@aei/contract";
+import type { CoverageResponse, NationalResponse, PatientFindingsResponse, Severity } from "@aei/contract";
 import type { IsolateRecord } from "@aei/domain";
+import { guide } from "@aei/guideline";
+import type { ComponentProps } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { coverage, suggest, suggestCombinations } from "../../../../../libs/utils/coverage/src/index.ts";
 import { CoverageList, itemsOf } from "./CoverageList.tsx";
-import { DEFAULTS, filtersFromUrl, filtersToParams } from "./filters.ts";
+import { Details } from "./Details.tsx";
+import { barOf, chooseSyndrome, coverageQuery, DEFAULTS, filtersFromUrl, filtersToParams, patchFilters, syndromeOf } from "./filters.ts";
+import { PatientPanel } from "./Patient.tsx";
 import { RecordStrip } from "./RecordStrip.tsx";
+import { SyndromePicker } from "./SyndromePicker.tsx";
+import { UnitContext } from "./UnitContext.tsx";
 
 const filters = { ...DEFAULTS, unit: "URO" as const };
 const record = (i: number, patch: Partial<IsolateRecord> = {}): IsolateRecord => ({
@@ -34,9 +40,10 @@ function response(records: IsolateRecord[], severity: Severity = "mild"): Covera
     combinationSuggestions: suggestCombinations(result, severity),
   };
 }
-function list(data: CoverageResponse, locale: "fi" | "en" = "fi") {
+function list(data: CoverageResponse, locale: "fi" | "en" = "fi", extra: Partial<ComponentProps<typeof CoverageList>> = {}) {
   return renderToStaticMarkup(
     <CoverageList
+      {...extra}
       locale={locale}
       filters={{ ...filters, sev: data.severity }}
       asOf={data.asOf}
@@ -60,21 +67,23 @@ describe("doctor list disclosure", () => {
     );
     const html = list(data);
     const row = html.slice(html.indexOf('data-row="MEC"'), html.indexOf("</button>", html.indexOf('data-row="MEC"')));
-    expect(row).toMatch(/kohdemikrobit.*95 %/);
-    expect(row).toMatch(/kaikki kasvavat.*75 %/);
+    expect(row).toMatch(/kattavuusalueella.*95\u00a0%/);
+    expect(row).toMatch(/kaikki bakteerit.*75\u00a0%/);
     expect(row).toContain("Tiedot");
     expect(html).not.toContain('class="info-btn cl-info"');
     expect(itemsOf(data, "fi").singles.map((item) => item.id)).toEqual(data.suggestions.map((item) => item.antibiotic));
-    expect(list(data, "en")).toContain("target organisms");
-    expect(list(data, "en")).toContain("all growth");
+    expect(list(data, "en")).toContain("within spectrum");
+    expect(list(data, "en")).toContain("all organisms");
+    expect(list(data, "en")).toContain("365 days");
+    expect(list(data, "en")).toContain("not the chance treatment works");
   });
   it("explains a borderline row and its interval without a popover", () => {
     const data = response(
       Array.from({ length: 65 }, (_, i) => record(i, { specimen: "blood", results: { CIP: i < 60 ? "S" : "R" } })),
       "severe",
     );
-    expect(list(data)).toContain("92 %</b> (83–97 %)");
-    expect(list(data)).toContain("95 %:n väli ulottuu rajan 90 % molemmille puolille.");
+    expect(list(data)).toContain("92\u00a0%</b> (83–97\u00a0%)");
+    expect(list(data)).toContain("rajaa arvioidaan 95\u00a0%:n välin alapään mukaan, ja se on 83\u00a0%.");
   });
   it("leads with the first API-ranked pair when no severe single clears", () => {
     const data = response(
@@ -89,7 +98,7 @@ describe("doctor list disclosure", () => {
     expect(data.combinationSuggestions[0]?.coverage.share).toBe(1);
     const html = list(data);
     expect(html.indexOf("Yksikään antibiootti ei yksin")).toBeLessThan(html.indexOf('class="cl-scroll"'));
-    expect(html).toContain("100 %, n 65 — tiedot");
+    expect(html).toContain("100\u00a0%, n 65 — tiedot");
     expect(html).toContain("Synteettinen demoaineisto · ei potilashoitoon");
     expect(html).toContain("Tukee päätöstä; lääkäri päättää.");
     const first = data.combinationSuggestions[0];
@@ -106,7 +115,7 @@ describe("doctor list disclosure", () => {
     };
     const summary = list(borderline).split('class="cl-pair-summary"')[1]?.split('class="cl-scroll"')[0];
     expect(summary).toContain("arvio ylittää, väli ei");
-    expect(summary).toContain("83–97 %");
+    expect(summary).toContain("83–97\u00a0%");
   });
 });
 
@@ -119,10 +128,9 @@ describe("age group and onset filters (D-047)", () => {
     expect(filtersToParams({ ...filters, age: "veryOld", onset: true })).toMatchObject({ age: "veryOld", onset: "hospital" });
     expect(filtersToParams(filters)).toMatchObject({ age: null, onset: null });
   });
-  it("keeps the severe blood shortcut visible outside collapsed phone filters", () => {
+  it("shows age group and onset in the collapsed phone summary", () => {
     vi.stubGlobal("window", { matchMedia: () => ({ matches: false }) });
     const html = renderToStaticMarkup(<RecordStrip locale="fi" filters={{ ...filters, age: "older", onset: true }} onChange={() => {}} />);
-    expect(html).toContain("Vaikea veri-infektio");
     expect(html).toContain("ikäryhmä 65+");
     expect(html).not.toContain("Hoitopäivä 3 tai myöhemmin");
   });
@@ -154,5 +162,204 @@ describe("age group and onset filters (D-047)", () => {
       />,
     );
     expect(sheet).toContain("Age group filter dropped to keep the unit&#x27;s own data.");
+  });
+});
+
+describe("onset (D-049)", () => {
+  it("travels in the URL as onset=hospital and in the query only when on", () => {
+    expect(filtersFromUrl(new URLSearchParams("onset=hospital")).onset).toBe(true);
+    expect(filtersFromUrl(new URLSearchParams("onset=1")).onset).toBe(false);
+    expect(filtersToParams({ ...filters, onset: true }).onset).toBe("hospital");
+    expect(filtersToParams(filters)).toMatchObject({ onset: null, age: null });
+    expect(coverageQuery({ ...filters, onset: true })).toMatchObject({ onset: "hospital" });
+    expect("onset" in coverageQuery(filters)).toBe(false);
+  });
+  it("labels the list with the bar the response used", () => {
+    const data = response(Array.from({ length: 40 }, (_, i) => record(i)));
+    expect(barOf(data, filters)).toBe(80);
+    const hospital = { ...data, bar: 0.9 };
+    expect(barOf(hospital, { ...filters, onset: true })).toBe(90);
+    expect(list(hospital)).toContain("raja 90\u00a0%");
+    expect(barOf(null, { sev: "mild", onset: true })).toBe(90);
+  });
+  it("chips the ladder when the onset filter was dropped", () => {
+    const data = response(Array.from({ length: 40 }, (_, i) => record(i)));
+    const dropped = { ...data, bar: 0.9, coverage: { ...data.coverage, onsetApplied: false } };
+    const html = renderToStaticMarkup(
+      <UnitContext
+        client={{} as never}
+        locale="en"
+        filters={{ ...filters, onset: true }}
+        asOf={data.asOf}
+        data={dropped}
+        signals={[]}
+        status="ready"
+        onRetry={() => {}}
+        onOpenSignals={() => {}}
+      />,
+    );
+    expect(html).toContain("onset filter dropped to keep the unit&#x27;s data; bar still 90\u00a0%");
+  });
+});
+
+describe("syndrome chooser (D-047)", () => {
+  it("sets specimen, severity, onset and sex from the guide and travels as syn=", () => {
+    const healthcare = syndromeOf("sepsis-healthcare");
+    const cystitis = syndromeOf("cystitis-woman");
+    if (!healthcare || !cystitis) throw new Error("guide must carry both syndromes");
+    const chosen = chooseSyndrome({ ...filters, sex: "M" }, healthcare);
+    expect(chosen).toMatchObject({ syn: "sepsis-healthcare", site: "blood", sev: "severe", onset: true, sex: "M" });
+    expect(chooseSyndrome(chosen, cystitis)).toMatchObject({ syn: "cystitis-woman", site: "urine", sev: "mild", onset: false, sex: "F" });
+    expect(filtersToParams(chosen).syn).toBe("sepsis-healthcare");
+    expect(filtersFromUrl(new URLSearchParams("syn=sepsis-healthcare")).syn).toBe("sepsis-healthcare");
+    expect(filtersFromUrl(new URLSearchParams("syn=nonsense")).syn).toBeNull();
+    // Tapping the chosen chip again clears it; the filters stay.
+    expect(chooseSyndrome(chosen, healthcare)).toEqual({ ...chosen, syn: null });
+  });
+  it("clears when the specimen changes and survives other changes", () => {
+    const chosen = chooseSyndrome(filters, syndromeOf("pyelonephritis") ?? null);
+    expect(patchFilters(chosen, { sev: "mild", sex: "F", period: 28 }).syn).toBe("pyelonephritis");
+    expect(patchFilters(chosen, { site: "urine" }).syn).toBe("pyelonephritis");
+    expect(patchFilters(chosen, { site: "blood" }).syn).toBeNull();
+  });
+  it("renders one chip per syndrome grouped by specimen, the chosen one pressed", () => {
+    const html = renderToStaticMarkup(<SyndromePicker locale="en" value="pyelonephritis" onPick={() => {}} />);
+    expect(html.match(/class="syn-chip"/g)).toHaveLength(guide().syndromes.length);
+    expect(html.indexOf('aria-label="urine"')).toBeLessThan(html.indexOf('aria-label="blood"'));
+    expect(html).toMatch(/aria-pressed="true"[^>]*>Pyelonephritis</);
+  });
+});
+
+/** Urine isolates with results for the cystitis drugs and ciprofloxacin. */
+const urine = () =>
+  response(
+    Array.from({ length: 60 }, (_, i) => record(i, { results: { MEC: "S", NIT: i < 55 ? "S" : "R", TMP: i < 40 ? "S" : "R", CIP: "S" } })),
+  );
+const rowOf = (html: string, id: string) => {
+  const at = html.indexOf(`data-row="${id}"`);
+  return at < 0 ? "" : html.slice(at, html.indexOf("</button>", at));
+};
+
+describe("guide beside the data (D-047)", () => {
+  it("marks the guide's first choices, gives each its line, and keeps the order", () => {
+    const data = urine();
+    const html = list(data, "en", { syndrome: syndromeOf("cystitis-woman") });
+    for (const code of ["MEC", "NIT", "TMP"]) expect(rowOf(html, code)).toContain('class="cl-guide"');
+    expect(rowOf(html, "CIP")).not.toContain('class="cl-guide"');
+    expect(html).toContain(
+      "Mikrobilääkesuositus (Varsinais-Suomen hyvinvointialue), 13.4.2026, p. 37: first choice nitrofurantoin covers 92\u00a0% here (bar 80\u00a0%)",
+    );
+    expect(html).toContain('href="https://hoito-ohjeet.fi/');
+    expect(html).toContain('target="_blank"');
+    const order = [...html.matchAll(/data-row="([^"]+)"/g)].map((m) => m[1]);
+    expect(order).toEqual(itemsOf(data, "en").singles.map((i) => i.id));
+  });
+  it("names the guide's drugs the laboratory does not test", () => {
+    const html = list(urine(), "en", { syndrome: syndromeOf("cystitis-man") });
+    expect(html).toContain("also named: sulfamethoxazole-trimethoprim, fosfomycin (not in this laboratory&#x27;s panel)");
+  });
+  it("shows nothing guide-related without a syndrome", () => {
+    const html = list(urine(), "en");
+    expect(html).not.toContain("cl-guide");
+    expect(html).not.toContain("hoito-ohjeet.fi");
+  });
+  it("adds the guide's dose, route and duration to a marked row's details", () => {
+    const data = urine();
+    const item = itemsOf(data, "en").singles.find((i) => i.id === "NIT");
+    if (!item) throw new Error("fixture must carry nitrofurantoin");
+    const html = renderToStaticMarkup(
+      <Details
+        client={{} as never}
+        locale="en"
+        filters={filters}
+        data={data}
+        item={item}
+        signals={[]}
+        syndrome={syndromeOf("cystitis-woman")}
+      />,
+    );
+    expect(html).toContain("The guide (7.4.1 A, p. 37) names: nitrofurantoin 75 mg × 2 po");
+    expect(html).toContain("route: oral");
+    expect(html).toContain("Duration: 3 days.");
+  });
+});
+
+const NATIONAL: NationalResponse = {
+  source: "THL Finres cube",
+  licence: "CC BY 4.0, (c) THL and the FiRe laboratory network",
+  fetched: "2026-10-17",
+  year: 2025,
+  cells: [
+    { genus: "Escherichia", antibiotic: "NIT", specimen: "urine", tests: 81234, resistant: 1625, pctR: 2, interval: [1.9, 2.1] },
+    { genus: "Escherichia", antibiotic: "TMP", specimen: "urine", tests: 80000, resistant: 16000, pctR: 20, interval: [19.7, 20.3] },
+  ],
+};
+const details = (data: CoverageResponse, id: string, national: NationalResponse | null) => {
+  const item = itemsOf(data, "en").singles.find((i) => i.id === id);
+  if (!item) throw new Error(`fixture must carry ${id}`);
+  return renderToStaticMarkup(
+    <Details client={{} as never} locale="en" filters={filters} data={data} item={item} signals={[]} national={national} />,
+  );
+};
+
+describe("national line (D-048)", () => {
+  it("gives Finres's genus figure with its source, and no difference sentence under 10 points", () => {
+    const html = details(urine(), "NIT", NATIONAL);
+    expect(html).toContain("Finland 2025, Escherichia (genus): 2\u00a0% resistant, 81,234 tests");
+    expect(html).toContain("CC BY 4.0");
+    expect(html).not.toContain("nationally");
+  });
+  it("says in words when the leading organism differs by 10 points or more", () => {
+    // Trimethoprim covers 40 of 60 here: 33\u00a0% resistant against 20\u00a0% nationally.
+    expect(details(urine(), "TMP", NATIONAL)).toContain("more resistance here than nationally (33\u00a0% here, 20\u00a0% in Finland)");
+  });
+  it("shows nothing without a national figure", () => {
+    expect(details(urine(), "MEC", NATIONAL)).not.toContain("dt-national");
+    expect(details(urine(), "NIT", null)).not.toContain("dt-national");
+  });
+});
+
+const PATIENT: PatientFindingsResponse = {
+  asOf: "2026-06-30",
+  patientId: "P1",
+  findings: [
+    { phenotype: "esbl", date: "2025-03-12", ward: "URO", organism: "Escherichia coli", isolateId: "C1-1" },
+    { phenotype: "esbl", date: "2026-02-01", ward: "MED-A", organism: "Klebsiella pneumoniae", isolateId: "C2-1" },
+  ],
+  affects: { esbl: ["MEC", "CIP"] },
+};
+
+describe("patient's prior finding (D-050)", () => {
+  it("annotates affected rows and places them below the unaffected rows of the same standing, shares unchanged", () => {
+    const data = urine();
+    const before = itemsOf(data, "en").singles;
+    const after = itemsOf(data, "en", PATIENT).singles;
+    const standing = (items: typeof before) => items.map((i) => i.standing);
+    expect(standing(after)).toEqual(standing(before));
+    const clears = after.filter((i) => i.standing === "clears");
+    const firstAffected = clears.findIndex((i) => i.prior);
+    expect(firstAffected).toBeGreaterThan(0);
+    expect(clears.slice(firstAffected).every((i) => i.prior)).toBe(true);
+    expect(after.filter((i) => i.prior).map((i) => i.id)).toEqual(before.filter((i) => ["MEC", "CIP"].includes(i.id)).map((i) => i.id));
+    for (const item of after) expect(item.share).toBe(before.find((b) => b.id === item.id)?.share);
+    const html = list(data, "en", { patient: PATIENT });
+    expect(rowOf(html, "MEC")).toContain("patient&#x27;s ESBL finding 1.2.2026: inferred resistant");
+    expect(rowOf(html, "NIT")).not.toContain("cl-prior");
+    expect(itemsOf(data, "en", { ...PATIENT, findings: [], affects: {} }).singles).toEqual(before);
+  });
+  it("lists the findings newest first with the guide's carrier rule, or says there are none", () => {
+    const html = renderToStaticMarkup(
+      <PatientPanel locale="en" state={{ status: "ready", response: PATIENT }} syndrome={syndromeOf("cystitis-woman") ?? null} />,
+    );
+    expect(html.indexOf("ESBL 1.2.2026")).toBeLessThan(html.indexOf("ESBL 12.3.2025"));
+    expect(html).toContain("The guide, Acute cystitis in a woman, ESBL carrier: ESBL cystitis: by susceptibility");
+    const none = renderToStaticMarkup(
+      <PatientPanel locale="en" state={{ status: "ready", response: { ...PATIENT, findings: [], affects: {} } }} syndrome={null} />,
+    );
+    expect(none).toContain("No ESBL, MRSA, VRE or CPE finding in the past year");
+    expect(renderToStaticMarkup(<PatientPanel locale="en" state={null} syndrome={null} />)).toBe("");
+  });
+  it("never puts the patient id in the URL", () => {
+    expect(Object.keys(filtersToParams(filters))).not.toContain("patient");
   });
 });

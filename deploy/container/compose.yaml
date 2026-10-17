@@ -21,6 +21,9 @@ services:
       AEI_GUIDELINE: ${AEI_GUIDELINE:-}
       # A site's own code map, mounted under /config: AEI_CODE_MAP=/config/codes.json
       AEI_CODE_MAP: ${AEI_CODE_MAP:-}
+      # Other hospitals sending to this server, with their units and tokens (D-051), mounted under /config:
+      # AEI_SITES=/config/sites.json (start from config/sites.example.json; chmod 600, it holds tokens).
+      AEI_SITES: ${AEI_SITES:-}
       AEI_COUNTIES: /statfi/counties.geojson
       # Optional language model for Ask and AI wording (off when unset).
       AEI_LLM_URL: ${AEI_LLM_URL:-}
@@ -31,7 +34,7 @@ services:
     volumes:
       # The organisers' dataset, read-only (z: relabel for SELinux hosts).
       - ${AEI_DATASET:-../../data/synthetic_microbiology_dataset}:/data:ro,z
-      # THL county data from scripts/fetch_thl_ttr.py; without it /api/regional answers 404.
+      # THL data from scripts/fetch_thl_ttr.py and scripts/fetch_finres.py; without them /api/regional and /api/national answer 404.
       - ${AEI_THL_DIR:-../../data/external/thl}:/regional:ro,z
       # County shapes from scripts/fetch_county_geometry.py; without them /api/counties answers 404 and the map is empty.
       - ${AEI_STATFI_DIR:-../../data/external/statfi}:/statfi:ro,z

@@ -49,14 +49,14 @@ export function CoverageShape({ covered, known, interval, bar, locale }: Coverag
         <circle className="cs-dot" cx={px(share)} cy={dotY} r="4" />
         {[0, 25, 50, 75, 100].map((v) => (
           <text key={v} className="cs-tick" x={px(v / 100)} y={H - 8} textAnchor={v === 0 ? "start" : v === 100 ? "end" : "middle"}>
-            {v} %
+            {v}&nbsp;%
           </text>
         ))}
       </svg>
       <figcaption className="cs-cap">
         {interval && (
           <span className="cs-int">
-            <i className="cs-sw" aria-hidden="true" /> {t(locale, "mathInterval", { lo, hi })} · {covered}/{known} = {pct(share)} %
+            <i className="cs-sw" aria-hidden="true" /> {t(locale, "mathInterval", { lo, hi })} · {covered}/{known} = {pct(share)}&nbsp;%
           </span>
         )}
         <span className="cs-text">{caption}</span>

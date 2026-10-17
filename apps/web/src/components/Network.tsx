@@ -27,8 +27,8 @@ export const POS: Record<WardCode, [number, number]> = {
 };
 
 export function curve(a: WardCode, b: WardCode): string {
-  const [x1, y1] = POS[a];
-  const [x2, y2] = POS[b];
+  const [x1, y1] = POS[a] ?? [0, 0];
+  const [x2, y2] = POS[b] ?? [0, 0];
   const mx = (x1 + x2) / 2;
   const my = (y1 + y2) / 2;
   const dx = x2 - x1;
@@ -127,7 +127,7 @@ export function Network({ locale, findings, onOpenWard, reducedMotion }: Props) 
           </svg>
 
           {WARDS.map((w) => {
-            const [x, y] = POS[w.code];
+            const [x, y] = POS[w.code] ?? [0, 0];
             const lit = sightings.get(w.code);
             return (
               <button
@@ -183,7 +183,7 @@ export function Network({ locale, findings, onOpenWard, reducedMotion }: Props) 
                   <span className="bar-track">
                     <i style={{ width: `${Math.round(n.share * 100)}%`, background: "var(--live)" }} />
                   </span>
-                  <span className="num">{Math.round(n.share * 100)} %</span>
+                  <span className="num">{Math.round(n.share * 100)}&nbsp;%</span>
                 </button>
               </li>
             ))}

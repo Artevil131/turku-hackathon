@@ -74,6 +74,71 @@ The script sends each day's real cultures from the dataset as HL7 v2
 messages (or `--format fhir` / `csv`); the Urology outbreak alert fires
 when the 4 June results arrive.
 
+## Connecting a second hospital
+
+One running AEI can take results from several hospitals (D-051). Tyks,
+the dataset's hospital, is the home site and needs no configuration;
+every other hospital is one entry in a sites file, not code.
+
+**The file.** `AEI_SITES` names a JSON file (in the containers,
+`/config/sites.json`; start from `deploy/container/config/sites.example.json`):
+the site's `id` (lower case, e.g. `sata`), names in Finnish and English,
+its wellbeing services county as the regional data names it (e.g.
+`Satakunnan hyvinvointialue`, so the map can place it), a `token`, and its
+units (`code`, `fi`, `en`, `type` in/out, `institution` hospital or
+primary_care). Optional: `codeMap`, a code map file relative to the sites
+file, merged over the THL defaults for that site only; `guideline`, the
+label stored on its results; `guide`, the treatment guide table it uses
+(default `varha`). Listing `{ "id": "tyks", "token": "..." }` gives Tyks a
+token too; then results without one are refused. A file with a duplicate
+id, a duplicate unit code within a site, a missing field or an unknown
+county stops the server at startup with every problem listed. The
+Connect page (Yhdistä) writes an entry with a fresh random token.
+
+**The token.** A long random shared secret per site, sent as
+`Authorization: Bearer <token>` on `POST /api/ingest`. It tells the server
+which hospital sent a result; an unknown token is a 401. Keep the file
+mode 600 (the server warns otherwise) and out of git. This is pilot
+packaging, not hardened authentication (deploy/README.md): no TLS, no
+rotation, no per-user access.
+
+**What to send.** The same HL7 v2 ORU^R01, FHIR R4 Bundle or flat export
+as Tyks, to the same route, with the header. PV1-3 (HL7), the
+Encounter's location (FHIR) or the `ward` column (CSV) carries the
+hospital's own unit code; the server stores it qualified as
+`<site>/<code>` (`sata/ICU`), so two hospitals may both have an ICU. A
+unit the site did not register is kept, stored qualified anyway, with a
+warning in the response, and counted on the Connect page. Organisms,
+antibiotics and S/I/R use THL's national codes out of the box. Culture
+ids must not collide with another hospital's (a culture sent again
+replaces the earlier one); a lab-system prefix is enough.
+
+**What the site sees.** Its own units in the doctor's list and the
+research views, with every figure computed within that hospital: a unit
+falls back to the same hospital's ward type and hospital, never to the
+pool of all sites, and the detectors compare a unit with the rest of its
+own hospital. `GET /api/sites` lists every site with its status (home,
+connected, awaiting its first message), its rows up to the clock and its
+feed (messages, last arrival, warnings, rejected).
+
+**What is shared.** Patient flow and carrier trails are computed over
+every site: a patient sampled at Tyks Urology and later at Satasairaala's
+ICU is a move between hospitals, and a carrier's trail follows them. That
+needs patient identifiers that are the same at both hospitals (the
+pseudonymisation step must be shared). The network view shows those
+moves; the alerts feed can show all hospitals together.
+
+**Try it (demo only).** The organisers' data has one hospital, so the
+demo relabels the same synthetic cultures as Satasairaala's: culture and
+patient ids are prefixed `sata-`, except a seeded fraction of patients
+who keep their ids and so appear at both hospitals. These are not
+Satasairaala's data.
+
+    AEI_LOAD_UNTIL=2025-06-01 AEI_SITES=deploy/container/config/sites.example.json pnpm dev:api
+    uv run python scripts/send_lab_results.py --from 2025-06-02 --to 2025-06-05 --format hl7 \
+        --site sata --token example-sata-token-replace-me-7f3c91d2a4b8e605 --shared-patients 0.2
+    curl -s localhost:8787/api/sites
+
 ## Sources
 
 - Mylab at Tyks: https://mylabgroup.com/fi/asiakastarinat/tyks-laboratoriot/ ; https://www.mylab.fi/fi/ratkaisut/

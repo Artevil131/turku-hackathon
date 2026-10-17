@@ -26,14 +26,14 @@ export function shortTitle(locale: Locale, a: Alert): string {
     case "cpe":
       return `CPE · ${a.organism}`;
     case "new-in-unit":
-      return t(locale, "feedNewTitle", { phenotype: phenotypeName(a.phenotype) }).replace(/ (in the unit|yksikössä)$/, "");
+      return `${t(locale, "feedNewTitle", { phenotype: phenotypeName(a.phenotype) }).replace(/ (in the unit|yksikössä)$/, "")} · ${a.organism}`;
     case "carrier":
       return unitLabel(locale, a.ward);
     case "detector":
       if (a.detector === "sampling-drop" || a.detector === "empty-run") return t(locale, "feedKindData");
       if (a.detector === "rising-trend")
         return [a.antibiotic ? antibioticName(locale, a.antibiotic) : "", a.organism ?? ""].filter(Boolean).join(" · ");
-      if (a.phenotype) return phenotypeName(a.phenotype);
+      if (a.phenotype) return [phenotypeName(a.phenotype), a.organism].filter(Boolean).join(" · ");
       return a.profile ? t(locale, "feedRareProfile", { organism: a.organism ?? "" }) : (a.organism ?? "");
   }
 }
@@ -55,7 +55,7 @@ export function incidentTitle(locale: Locale, a: Alert): string {
         return t(locale, "feedTrendTitle", {
           antibiotic: a.antibiotic ? antibioticName(locale, a.antibiotic) : "",
           organism: a.organism ?? "",
-          observed: `${Math.round(a.observed * 100)} %`,
+          observed: `${Math.round(a.observed * 100)}\u00a0%`,
         });
       return t(locale, "feedClusterTitle", {
         what: a.phenotype ? phenotypeName(a.phenotype) : (a.organism ?? ""),
@@ -88,8 +88,8 @@ export function baselineLine(locale: Locale, a: Alert): string {
   if (a.kind !== "detector") return "";
   const parts: string[] = [];
   if (a.detector === "rising-trend") {
-    parts.push(t(locale, "feedObserved", { n: `${Math.round(a.observed * 100)} %` }));
-    if (a.expected !== undefined) parts.push(t(locale, "feedExpected", { n: `${Math.round(a.expected * 100)} %` }));
+    parts.push(t(locale, "feedObserved", { n: `${Math.round(a.observed * 100)}\u00a0%` }));
+    if (a.expected !== undefined) parts.push(t(locale, "feedExpected", { n: `${Math.round(a.expected * 100)}\u00a0%` }));
   } else {
     parts.push(t(locale, "feedObserved", { n: a.observed }));
     if (a.expected !== undefined) parts.push(t(locale, "feedExpected", { n: oneDecimal(locale, a.expected) }));

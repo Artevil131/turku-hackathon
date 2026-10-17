@@ -1,5 +1,5 @@
 import { type Locale, t } from "@aei/i18n";
-import { type ReactNode, useEffect, useId, useRef, useState } from "react";
+import { type ReactNode, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { Info as InfoIcon } from "./Icons.tsx";
 
 interface Props {
@@ -22,6 +22,33 @@ export function InfoButton({ locale, children, label, align = "start" }: Props) 
   const id = useId();
   const button = useRef<HTMLButtonElement>(null);
   const root = useRef<HTMLSpanElement>(null);
+  const pop = useRef<HTMLSpanElement>(null);
+  const [shift, setShift] = useState(0);
+
+  // Keeps the popover inside the viewport: measured unshifted, then moved sideways by the overflow.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: re-measure whenever the popover opens or its align changes
+  useLayoutEffect(() => {
+    if (!open) {
+      setShift(0);
+      return;
+    }
+    const place = () => {
+      const el = pop.current;
+      if (!el) return;
+      el.style.translate = "0 0";
+      const { left, right } = el.getBoundingClientRect();
+      const edge = 8;
+      const width = document.documentElement.clientWidth;
+      let dx = 0;
+      if (right > width - edge) dx = width - edge - right;
+      if (left + dx < edge) dx = edge - left;
+      el.style.translate = "";
+      setShift(Math.round(dx));
+    };
+    place();
+    addEventListener("resize", place);
+    return () => removeEventListener("resize", place);
+  }, [open, align]);
 
   useEffect(() => {
     if (!open) return;
@@ -57,7 +84,14 @@ export function InfoButton({ locale, children, label, align = "start" }: Props) 
         <InfoIcon />
       </button>
       {open ? (
-        <span id={id} className="info-pop" role="note" data-align={align}>
+        <span
+          id={id}
+          ref={pop}
+          className="info-pop"
+          role="note"
+          data-align={align}
+          style={shift ? { translate: `${shift}px 0` } : undefined}
+        >
           {children}
         </span>
       ) : null}

@@ -1,6 +1,6 @@
 import type { Alert, WeeklyResponse } from "@aei/contract";
-import { WARDS, type WardCode } from "@aei/domain";
-import { type Locale, phenotypeName, t, wardName } from "@aei/i18n";
+import { bareWardCode, type WardCode } from "@aei/domain";
+import { type Locale, phenotypeName, siteName, t, wardName } from "@aei/i18n";
 import {
   type KeyboardEvent,
   memo,
@@ -14,6 +14,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { allWards, currentSite, isMulti, siteWards } from "../../sites.ts";
 import {
   bandPath,
   compactDate,
@@ -36,7 +37,7 @@ import {
   weekRows,
 } from "./geometry.ts";
 import { LayersControl } from "./LayersControl.tsx";
-import { type Layers, type LineKey, type ViewRow, viewRows, WARD_CODES, windowRows, windowStart } from "./layers.ts";
+import { type Layers, type LineKey, type ViewRow, viewRows, windowRows, windowStart } from "./layers.ts";
 import "./WeeklyBand.css";
 
 // The hero band: the weekly stream (resistant finds stacked by phenotype, cultures on its own
@@ -55,14 +56,14 @@ interface Layout {
   /** Bottom of the unit lanes. */
   lanesEnd: number;
 }
-/** The full band: nine lanes make 218 px; fewer lanes make it shorter. A 15 px pitch keeps a visible gap between 12 px pills in neighbouring lanes. */
+/** The full band: nine lanes make 150 px, so the expanded timeline stays about 160 px tall; fewer lanes make it shorter. */
 const fullLayout = (n: number): Layout => {
-  const lanesEnd = 68 + n * 15;
-  return { gutter: 46, height: lanesEnd + 15, legend: 14, top: 20, base: 62, lanes: 68, pitch: 15, axis: lanesEnd + 12, lanesEnd };
+  const lanesEnd = 47 + n * 10;
+  return { gutter: 46, height: lanesEnd + 13, legend: 14, top: 17, base: 44, lanes: 47, pitch: 10, axis: lanesEnd + 11, lanesEnd };
 };
 const SMALL: Layout = { gutter: 0, height: 44, legend: 0, top: 3, base: 26, lanes: 0, pitch: 0, axis: 43, lanesEnd: 26 };
 
-const PILL_H = 12;
+const PILL_H = 10;
 const READ_W = 276;
 
 interface Props {
@@ -452,7 +453,7 @@ const StaticLayer = memo(function StaticLayer({
               {l.path ? <path className="hs-ribbon" d={l.path} /> : null}
               <text className="hs-lane-label" x={L.gutter - 6} y={l.mid + 4} textAnchor="end">
                 <title>{wardName(locale, l.ward)}</title>
-                {l.ward}
+                {currentSite() === null ? l.ward : bareWardCode(l.ward)}
               </text>
             </g>
           ))
@@ -466,7 +467,7 @@ const StaticLayer = memo(function StaticLayer({
           <text className="hs-ylab" x={L.gutter - 6} y={m.yTop + 4} textAnchor="end">
             {ratioLabel(layers, m.ymax)}
           </text>
-          <text className="hs-ylab" x={L.gutter - 6} y={L.base + 4} textAnchor="end">
+          <text className="hs-ylab" x={L.gutter - 6} y={L.base + 1} textAnchor="end">
             0
           </text>
           <Legend id={id} L={L} locale={locale} right={m.right - reserve} layers={layers} onToggle={onToggle} />
@@ -524,8 +525,8 @@ const StaticLayer = memo(function StaticLayer({
           <title>{`${p.members.map((x) => pillLine(locale, x)).join("\n")}\n${t(locale, "tlOpenIncident")}`}</title>
           <rect className="hs-pill-hit" x={p.x - 2} y={p.y - 1} width={p.w + 4} height={PILL_H + 2} />
           <rect className="hs-pill-bg" x={p.x} y={p.y} width={p.w} height={PILL_H} rx={2.5} />
-          {p.kind === "sentinel" ? <path className="hs-pill-glyph" d={`M${p.x + 5} ${p.y + 2.5}l3.5 6h-7z`} /> : null}
-          <text className="hs-pill-text" x={p.x + (p.kind === "sentinel" ? 12 : 4)} y={p.y + 9}>
+          {p.kind === "sentinel" ? <path className="hs-pill-glyph" d={`M${p.x + 5} ${p.y + 2}l3.5 6h-7z`} /> : null}
+          <text className="hs-pill-text" x={p.x + (p.kind === "sentinel" ? 12 : 4)} y={p.y + 7.5}>
             {p.label}
           </text>
           {p.s !== null ? (
@@ -700,11 +701,8 @@ export function WeeklyBand(p: Props) {
   const rawRows = useMemo(() => weekRows(weekly, asOf), [weekly, asOf]);
   const win = useMemo(() => windowRows(rawRows, layers.window), [rawRows, layers.window]);
   const rows = useMemo(() => viewRows(win, layers), [win, layers]);
-  const wards = useMemo(
-    () => WARD_CODES.filter((c) => layers.units[c] !== false && weekly?.units[c] !== undefined),
-    [weekly, layers.units],
-  );
-  const L = useMemo(() => (compact ? SMALL : fullLayout(weekly ? wards.length : WARD_CODES.length)), [compact, weekly, wards.length]);
+  const wards = useMemo(() => Object.keys(weekly?.units ?? {}).filter((c) => layers.units[c] !== false), [weekly, layers.units]);
+  const L = useMemo(() => (compact ? SMALL : fullLayout(weekly ? wards.length : siteWards().length)), [compact, weekly, wards.length]);
   const d0 = windowStart(start, win[0], layers.window);
   const shownAlerts = useMemo(() => alerts.filter((a) => layers.kinds[pillKind(a)]), [alerts, layers.kinds]);
   const m = useMemo(
@@ -908,6 +906,11 @@ export function WeeklyBand(p: Props) {
           <div className="hs-read-head">
             <b className="num">{t(locale, "tlWeekRange", { from: compactDate(row.date), to: compactDate(row.last) })}</b>
             {row.partial ? <span className="hs-read-partial">{t(locale, "tlPartial", { to: compactDate(row.last) })}</span> : null}
+            {isMulti() ? (
+              <span className="hs-read-site">
+                {currentSite() === null ? t(locale, "siteAll") : siteName(locale, currentSite() as string)}
+              </span>
+            ) : null}
           </div>
           {row.hidden ? null : (
             <>
@@ -928,11 +931,14 @@ export function WeeklyBand(p: Props) {
                 ) : null}
               </div>
               <div className="hs-read-grid hs-read-units">
-                {WARDS.filter((w) => wards.includes(w.code) && row.v.units[w.code] !== undefined).map((w) => (
-                  <span key={w.code} className="hs-read-item" title={wardName(locale, w.code)}>
-                    {w.code} <b className="num">{fmtVal(row.v.units[w.code] ?? null, layers)}</b>
-                  </span>
-                ))}
+                {allWards()
+                  .filter((w) => wards.includes(w.code) && row.v.units[w.code] !== undefined)
+                  .map((w) => (
+                    <span key={w.code} className="hs-read-item" title={wardName(locale, w.code)}>
+                      {currentSite() === null ? w.code : bareWardCode(w.code)}{" "}
+                      <b className="num">{fmtVal(row.v.units[w.code] ?? null, layers)}</b>
+                    </span>
+                  ))}
               </div>
             </>
           )}

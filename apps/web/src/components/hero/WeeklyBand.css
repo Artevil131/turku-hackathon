@@ -114,7 +114,7 @@
 }
 .hs-lane-label,
 .hs-ylab {
-  font: 500 11px var(--brand-font-ui, system-ui, sans-serif);
+  font: 500 10px var(--brand-font-ui, system-ui, sans-serif);
   fill: var(--ink-2, #1d204e);
 }
 .hs-yaxis {
@@ -175,7 +175,7 @@
   filter: drop-shadow(0 1px 1.5px rgb(7 8 28 / 0.25));
 }
 .hs-pill-text {
-  font: 600 11px var(--brand-font-ui, system-ui, sans-serif);
+  font: 600 10px var(--brand-font-ui, system-ui, sans-serif);
   fill: #fff;
   pointer-events: none;
 }
@@ -281,6 +281,11 @@
 }
 .hs-read-partial {
   color: var(--ink-3, #6f7292);
+}
+.hs-read-site {
+  margin-left: auto;
+  color: var(--ink-2, #1d204e);
+  font-weight: 500;
 }
 .hs-read-grid {
   display: grid;

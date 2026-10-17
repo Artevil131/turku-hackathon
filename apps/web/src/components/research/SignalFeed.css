@@ -64,6 +64,7 @@
 
 .feed-kinds {
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
 }
 
@@ -78,6 +79,21 @@
   background: var(--glass-1, #fff);
   color: var(--ink-2);
   font-size: var(--t-xs, 12px);
+}
+
+.feed-chip {
+  position: relative;
+}
+
+/* A 44 px hit area around the 28 px chip. */
+.feed-chip::after {
+  content: "";
+  position: absolute;
+  inset: -8px -2px;
+}
+
+.feed-chip-name {
+  white-space: nowrap;
 }
 
 .feed-chip:hover {
@@ -134,7 +150,7 @@
   min-height: 52px;
   padding: 8px 12px;
   border: 0;
-  border-left: 3px solid transparent;
+  border-left: 1px solid transparent;
   background: none;
   text-align: left;
   color: var(--ink);
@@ -182,9 +198,7 @@
 .feed-name {
   min-width: 0;
   flex: 1 1 auto;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
   font-size: var(--t-s, 13px);
   font-weight: 600;
 }
@@ -287,6 +301,57 @@
   font-size: var(--t-xs, 12px);
   text-align: right;
   color: var(--ink-2);
+}
+
+.feed-section-title {
+  margin: 16px 12px 4px;
+  font-size: var(--t-s, 13px);
+  font-weight: 600;
+}
+
+.feed-section-note {
+  margin: 0 12px 8px;
+  color: var(--ink-2);
+  font-size: var(--t-xs, 12px);
+}
+
+.feed-summary,
+.feed-evidence,
+.feed-owner,
+.feed-open {
+  font-size: var(--t-xs, 12px);
+  overflow-wrap: anywhere;
+}
+
+.feed-summary {
+  color: var(--ink-2);
+}
+
+.feed-owner {
+  font-weight: 500;
+}
+
+.feed-open {
+  color: var(--live);
+  margin-top: 4px;
+}
+
+.feed-members {
+  margin: 0 12px 10px;
+  font-size: var(--t-xs, 12px);
+  color: var(--ink-2);
+}
+
+.feed-members summary {
+  padding: 6px 0;
+  cursor: pointer;
+}
+
+.feed-members ul {
+  display: grid;
+  gap: 8px;
+  padding-left: 20px;
+  margin: 4px 0 0;
 }
 
 .feed-note {

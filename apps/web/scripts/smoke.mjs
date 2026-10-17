@@ -6,7 +6,7 @@
 //   SMOKE_URL=http://localhost:5173 pnpm smoke   # test an app that is already running
 //
 // Options: --data DIR, --as-of YYYY-MM-DD, --api-port 8798, --web-port 5176, --out DIR (default
-// apps/web/smoke-out), --routes home,doctor,... (home is the empty hash), --interactions all|doctor|name,..., --headed. Chrome comes from $CHROME, else google-chrome,
+// apps/web/smoke-out), --desktop WxH (laptop sizes, default 1440x1000), --routes home,doctor,... (home is the empty hash), --interactions all|doctor|name,..., --headed. Chrome comes from $CHROME, else google-chrome,
 // google-chrome-stable, chromium or chromium-browser on the PATH.
 //
 // Per route and viewport it checks: no uncaught exception or console error, no /api request that failed or
@@ -44,8 +44,10 @@ const outDir = resolve(opt("out", join(WEB, "smoke-out")));
 const interactionGroup = opt("interactions", "all");
 const ROUTES = opt("routes", "home,doctor,research,method,settings,intro").split(",");
 const INTERACTIONS = interactionGroup === "all" || interactionGroup === "doctor" ? [] : interactionGroup.split(",").filter(Boolean);
+// --desktop 1366x768 runs the desktop checks and interactions at a laptop-sized window instead of 1440x1000.
+const desktopSize = /^(\d+)x(\d+)$/.exec(opt("desktop", "1440x1000")) ?? ["", "1440", "1000"];
 const VIEWPORTS = [
-  { name: "desktop", width: 1440, height: 1000, mobile: false },
+  { name: "desktop", width: Number(desktopSize[1]), height: Number(desktopSize[2]), mobile: false },
   { name: "phone", width: 390, height: 844, mobile: true },
 ];
 const external = process.env.SMOKE_URL?.replace(/\/$/, "");
@@ -223,9 +225,9 @@ async function watching(cdp, body) {
     }
     if (m.method === "Network.responseReceived") {
       const u = p.response.url;
-      // /api/regional (D-037) and /api/counties (D-043) answer 404 when their files are not mounted, as in CI
+      // /api/regional (D-037), /api/counties (D-043) and /api/national (D-048) answer 404 when their files are not mounted, as in CI
       // where data/ is not in git: the app shows an empty state, so a warning, not a failure.
-      const optional = p.response.status === 404 && (u.includes("/api/regional") || u.includes("/api/counties"));
+      const optional = p.response.status === 404 && ["/api/regional", "/api/counties", "/api/national"].some((r) => u.includes(r));
       if (p.response.status >= 400)
         (u.includes("/api/") && !optional ? problems.api : problems.other).push(`${p.response.status} ${u.replace(base, "")}`);
     }
@@ -420,33 +422,40 @@ async function main() {
     await interaction(
       `doctor-usability-${vp.name}`,
       async (idle, reasons) => {
-        await load(cdp, `${urlOf("doctor")}?age=older&onset=1`, idle);
+        // Age group and onset are live filters (D-049, D-053): a link carrying them keeps them and presses their controls.
+        await load(cdp, `${urlOf("doctor")}?age=older&onset=hospital`, idle);
         const initial = await evaluate(
           cdp,
           `(() => {
         const row = document.querySelector('.cl-row');
         return { row: row?.textContent, disclosure: document.querySelector('.cl-disclosure')?.textContent,
-          unavailableInSummary: /65+|Hoitopäivä/.test(document.querySelector('.rs-sum')?.textContent ?? '') };
+          liveInUrl: location.hash.includes('age=older') && location.hash.includes('onset=hospital') };
       })()`,
         );
-        if (!initial.row?.includes("kaikki kasvavat")) reasons.push("unopened row omits all-growth denominator");
+        if (!/kaikki (kasvavat|bakteerit)/.test(initial.row ?? "")) reasons.push("unopened row omits all-growth denominator");
         if (!initial.disclosure?.includes("ei potilashoitoon") || !initial.disclosure?.includes("Tukee päätöstä"))
           reasons.push("demo/decision disclosure missing");
-        if (initial.unavailableInSummary) reasons.push("unavailable filters appear active");
+        if (!initial.liveInUrl) reasons.push("age group or onset did not stay in the link");
         await evaluate(cdp, `document.querySelector('.rs-sumrow')?.click()`);
-        const unavailable = await evaluate(cdp, `document.querySelectorAll('.rs-choice:disabled').length`);
-        if (unavailable !== 6) reasons.push(`expected 6 unavailable controls, saw ${unavailable}`);
-        const shortcut = await evaluate(
+        const controls = await evaluate(
           cdp,
-          `(() => { const b = document.querySelector('.rs-quick'); const r = b?.getBoundingClientRect(); if (!b || r.height < 44) return false; b.click(); return true; })()`,
+          `(() => { const pressed = [...document.querySelectorAll('.rs-choice[aria-pressed=true]')].map((b) => b.textContent);
+        return { disabled: document.querySelectorAll('.rs-choice:disabled').length, age: pressed.includes('65+'),
+          onset: !!document.querySelector('.rs-toggle[aria-pressed=true]') }; })()`,
         );
-        if (!shortcut) reasons.push("severe blood shortcut missing or below 44 px");
+        if (controls.disabled !== 0) reasons.push(`expected no disabled filter controls, saw ${controls.disabled}`);
+        if (!controls.age || !controls.onset) reasons.push("age group or onset control not shown as chosen");
+        // Blood and severe, set through the URL the way a shared link would (the filters follow the hash).
+        await evaluate(
+          cdp,
+          `(() => { const q = new URLSearchParams(location.hash.split('?')[1] ?? ''); q.set('site', 'blood'); q.set('sev', 'severe'); location.hash = 'doctor?' + q; return true; })()`,
+        );
         if (
           !(await waitIn(
             `location.hash.includes('site=blood') && location.hash.includes('sev=severe') && !!document.querySelector('.cl[aria-busy=false] .cl-row')`,
           ))
         )
-          reasons.push("severe blood shortcut did not load coverage");
+          reasons.push("blood + severe did not load coverage");
         await idle();
         await screenshot(cdp, join(outDir, `doctor-severe-${vp.name}.png`));
         const pair = await evaluate(
@@ -457,7 +466,11 @@ async function main() {
         if (pair !== null) {
           if (!(await waitIn(`!!document.querySelector('.cl-row[aria-expanded=true]')`)))
             reasons.push("combination summary did not open its details");
-          await evaluate(cdp, `document.querySelector('.dp-close')?.click()`);
+          // Phone closes the drawer; desktop has no drawer, so collapse the open row before the tap below.
+          await evaluate(
+            cdp,
+            `(() => { const c = document.querySelector('.dp-close'); if (c) c.click(); else document.querySelector('.cl-row[aria-expanded=true]')?.click(); return true; })()`,
+          );
         }
         await evaluate(cdp, `document.querySelector('.cl-li:last-child .cl-row')?.scrollIntoView({block:'end'})`);
         const target = await evaluate(
@@ -605,11 +618,33 @@ async function main() {
     "research-workspace-close",
     async (idle, reasons) => {
       await cleanWorkspace(idle);
-      for (const id of ["math", "graph"]) {
+      const columns = `document.querySelectorAll('.ws-column').length`;
+      const empty = `[...document.querySelectorAll('.ws-column')].some(c => !c.querySelector('.ws-win'))`;
+      // What the fitted default shows depends on the board's measured height, so each
+      // expectation is read from the page: a window alone in its column takes the column with it.
+      let collapsed = 0;
+      for (const id of ["math", "map"]) {
+        const before = await evaluate(cdp, columns);
+        const alone = await evaluate(
+          cdp,
+          `document.querySelector('#ws-win-${id}')?.closest('.ws-column')?.querySelectorAll('.ws-win').length === 1`,
+        );
         await click(`#ws-win-${id} .ws-close`);
         if (!(await waitIn(`!document.querySelector('#ws-win-${id}')`, 1000)))
           reasons.push(`${id} not dismissed by its first real close click`);
+        const expected = alone ? before - 1 : before;
+        if (!(await waitIn(`${columns} === ${expected}`, 1000)))
+          reasons.push(`closing ${id} (${alone ? "alone" : "stacked"}) left ${await evaluate(cdp, columns)} columns, expected ${expected}`);
+        if (alone) collapsed++;
+        if (await evaluate(cdp, empty)) reasons.push(`an empty column remains after closing ${id}`);
       }
+      if (!collapsed) reasons.push("neither Alert math nor Map was alone in its column: column removal went untested");
+      const fill = await evaluate(
+        cdp,
+        `(() => { const a = document.querySelector('.ws-area').getBoundingClientRect(); const c = [...document.querySelectorAll('.ws-column')];
+          return Math.abs(c.reduce((s, e) => s + e.getBoundingClientRect().width, 0) + (c.length - 1) * 8 - a.width) < 4; })()`,
+      );
+      if (!fill) reasons.push("the remaining columns do not fill the board after closing");
     },
     { name: "desktop-900", width: 1440, height: 900, mobile: false },
   );
@@ -634,10 +669,31 @@ async function main() {
       if (geometry.bottom > 900 || geometry.height < 200 || geometry.overflow > 1)
         reasons.push(`board does not fit viewport: ${JSON.stringify(geometry)}`);
       if (!geometry.mapFits) reasons.push("map SVG clipped in its default dock");
-      // Reopen into the previous right-hand stack, maximize, then restore exactly.
+      // No open window is squashed to its header: each body keeps its minimum (the column scrolls instead).
+      const squashed = `JSON.stringify([...document.querySelectorAll('.ws-win')].filter(w => w.getBoundingClientRect().width > 0)
+        .map(w => ({ id: w.dataset.win, body: Math.round(w.querySelector('.ws-body').getBoundingClientRect().height), min: Number(w.dataset.minBody) }))
+        .filter(w => w.body < w.min - 1))`;
+      for (const width of [1440, 1920]) {
+        await cdp.send("Emulation.setDeviceMetricsOverride", { width, height: 900, deviceScaleFactor: 1, mobile: false });
+        await cdp.send("Page.navigate", { url: "about:blank" });
+        await load(cdp, urlOf("research"), idle);
+        const bad = await evaluate(cdp, squashed);
+        if (bad !== "[]") reasons.push(`window bodies below their minimum at ${width}x900: ${bad}`);
+        const many = await evaluate(
+          cdp,
+          `[...document.querySelectorAll('.ws-column')].some(c => c.querySelectorAll('.ws-win').length > 2)`,
+        );
+        if (many) reasons.push(`default layout stacks more than two windows in a column at ${width}x900`);
+      }
+      // The tray button says what its number is.
+      const label = await evaluate(cdp, `document.querySelector('#ws-tray-button').textContent`);
+      if (!/\d+ (closed|suljettuna)/.test(label)) reasons.push(`tray button does not name its closed count: ${label}`);
+      // Reopen into the previous stack, maximize, then restore exactly.
       await click("#ws-win-math .ws-close");
       await click("#ws-tray-button");
-      await click(".ws-pop-list li:nth-child(4) input");
+      const listed = `(() => { const l = [...document.querySelectorAll('.ws-pop-list')]; return !!l[0]?.querySelector('[data-reopen="math"]') && !l[0].querySelector('input') && !!l[1]?.querySelector('input'); })()`;
+      if (!(await evaluate(cdp, listed))) reasons.push("the tray does not list closed windows first, with an open button");
+      await click('[data-reopen="math"]');
       if (!(await waitIn(`${order} === ${JSON.stringify(initial)}`))) reasons.push("reopen changed the stack order");
       await key("Escape");
       await click("#ws-win-math .ws-maximize");
@@ -662,16 +718,60 @@ async function main() {
       await key("Escape");
       await mouse("mouseReleased", target, { button: "left", buttons: 0, clickCount: 1 });
       if ((await evaluate(cdp, `localStorage.getItem('aei.research.layout.v2')`)) !== before) reasons.push("Esc did not cancel the move");
-      // Drop into the map column, then move back using only the keyboard.
+      // Drop into the map column (its own column is removed only if Alert math was alone in it),
+      // then move one column left using only the keyboard.
+      const shape = JSON.parse(initial);
+      const mathAlone = shape.find((c) => c.includes("math"))?.length === 1;
+      const expectColumns = shape.length - (mathAlone ? 1 : 0);
       await mouse("mousePressed", source, { button: "left", buttons: 1, clickCount: 1 });
       await mouse("mouseMoved", target, { buttons: 1 });
       await mouse("mouseReleased", target, { button: "left", buttons: 0, clickCount: 1 });
-      if (!(await waitIn(`document.querySelector('#ws-win-math')?.closest('.ws-column')?.dataset.columnIndex === '1'`)))
-        reasons.push("drop did not insert into target column");
+      const mathColumn = `Number(document.querySelector('#ws-win-math')?.closest('.ws-column')?.dataset.columnIndex)`;
+      if (
+        !(await waitIn(
+          `document.querySelector('#ws-win-math')?.closest('.ws-column')?.querySelector('#ws-win-map') && document.querySelectorAll('.ws-column').length === ${expectColumns}`,
+        ))
+      )
+        reasons.push(`drop did not insert into target column: ${await evaluate(cdp, order)}, expected ${expectColumns} columns`);
+      const dropped = await evaluate(cdp, mathColumn);
       await evaluate(cdp, `document.querySelector('#ws-title-math').focus()`);
-      await key("ArrowRight", 1);
-      if (!(await waitIn(`document.querySelector('#ws-win-math')?.closest('.ws-column')?.dataset.columnIndex === '2'`)))
-        reasons.push("Alt + arrow did not move the window");
+      await key("ArrowLeft", 1);
+      if (!(await waitIn(`${mathColumn} === ${dropped - 1}`)))
+        reasons.push(`Alt + arrow did not move the window one column left: ${await evaluate(cdp, order)}`);
+      // A stack splitter dragged far past either neighbour stops at that window's own minimum
+      // (checked on the stored fractions, not only on the CSS floor that would hide a bad clamp).
+      const mathStack = `document.querySelector('#ws-win-math').closest('.ws-column')`;
+      // Stored heights in px against each window's minimum (body + 42 px chrome), for Alert math's stack.
+      const stackHeights = `(() => {
+        const col = ${mathStack};
+        const stored = JSON.parse(localStorage.getItem('aei.research.layout.v2')).columns.find(c => c.windows.some(w => w.id === 'math'));
+        const span = col.clientHeight - (stored.windows.length - 1) * 8;
+        const rows = stored.windows.map(w => ({ id: w.id, px: Math.round(w.size * span), min: Number(col.querySelector('#ws-win-' + w.id).dataset.minBody) + 42 }));
+        return JSON.stringify({ fits: rows.reduce((s, r) => s + r.min, 0) <= span, rows });
+      })()`;
+      for (const edge of ["bottom", "top"]) {
+        const handle = await evaluate(
+          cdp,
+          `(() => { const s = ${mathStack}.querySelector('.ws-splitter-row'); s.scrollIntoView({ block: 'nearest' });
+            const r = s.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`,
+        );
+        // Drag to the board's edge, far past the neighbour's floor but still inside the viewport,
+        // so the release reaches the page and ends the gesture.
+        const far = await evaluate(cdp, `document.querySelector('.ws-area').getBoundingClientRect().${edge}`);
+        const dy = far + (edge === "bottom" ? -2 : 2) - handle.y;
+        await mouse("mousePressed", handle, { button: "left", buttons: 1, clickCount: 1 });
+        await mouse("mouseMoved", { x: handle.x, y: handle.y + dy / 2 }, { buttons: 1 });
+        await mouse("mouseMoved", { x: handle.x, y: handle.y + dy }, { buttons: 1 });
+        await mouse("mouseReleased", { x: handle.x, y: handle.y + dy }, { button: "left", buttons: 0, clickCount: 1 });
+        const { fits, rows } = JSON.parse(await evaluate(cdp, stackHeights));
+        const pinned = edge === "bottom" ? rows.at(-1) : rows[0];
+        if (rows.length < 2) reasons.push(`Alert math's column has no stack splitter to test: ${await evaluate(cdp, order)}`);
+        else if (
+          (await evaluate(cdp, squashed)) !== "[]" ||
+          (fits && (rows.some((r) => r.px < r.min - 2) || Math.abs(pinned.px - pinned.min) > 6))
+        )
+          reasons.push(`stack splitter dragged ${Math.round(dy)} px did not stop at the window minimum: ${JSON.stringify(rows)}`);
+      }
       // Focusable splitters change the fraction, reset equally on double click/Enter.
       await evaluate(cdp, `document.querySelector('.ws-splitter-col').focus()`);
       const width = await evaluate(cdp, `document.querySelector('.ws-splitter-col').getAttribute('aria-valuenow')`);
@@ -681,7 +781,7 @@ async function main() {
       await click(".ws-splitter-col", 2);
       const equal = await evaluate(
         cdp,
-        `JSON.parse(localStorage.getItem('aei.research.layout.v2')).columns.every(c=>Math.abs(c.width-1/3)<0.001)`,
+        `(() => { const c = JSON.parse(localStorage.getItem('aei.research.layout.v2')).columns; return c.every(x=>Math.abs(x.width-1/c.length)<0.001); })()`,
       );
       if (!equal) reasons.push("double-click did not equalize columns");
       const divider = await pointOf(".ws-splitter-col");
@@ -698,18 +798,31 @@ async function main() {
         1000,
       );
       if (!clamped) reasons.push("column pointer drag did not clamp at its minimum");
-      const row = await pointOf(".ws-splitter-row");
-      const stackBefore = await evaluate(cdp, `document.querySelector('.ws-splitter-row').getAttribute('aria-valuenow')`);
+      // On a tall board Alert math's stack fits without scrolling, so a pointer drag moves the splitter.
+      await cdp.send("Emulation.setDeviceMetricsOverride", { width: 1440, height: 1400, deviceScaleFactor: 1, mobile: false });
+      await waitIn(`${mathStack}.scrollHeight <= ${mathStack}.clientHeight + 1`, 2000);
+      const rowSplitter = `${mathStack}.querySelector('.ws-splitter-row')`;
+      const row = await evaluate(
+        cdp,
+        `(() => { const r = ${rowSplitter}.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`,
+      );
+      const stackBefore = await evaluate(cdp, `${rowSplitter}.getAttribute('aria-valuenow')`);
       await mouse("mousePressed", row, { button: "left", buttons: 1, clickCount: 1 });
       await mouse("mouseMoved", { x: row.x, y: row.y + 40 }, { buttons: 1 });
       await mouse("mouseReleased", { x: row.x, y: row.y + 40 }, { button: "left", buttons: 0, clickCount: 1 });
-      if ((await evaluate(cdp, `document.querySelector('.ws-splitter-row').getAttribute('aria-valuenow')`)) === stackBefore)
+      if ((await evaluate(cdp, `${rowSplitter}.getAttribute('aria-valuenow')`)) === stackBefore)
         reasons.push("pointer stack resize did not change the fraction");
-      await evaluate(cdp, `document.querySelector('.ws-splitter-row').focus()`);
+      await evaluate(cdp, `${rowSplitter}.focus()`);
       await key("ArrowDown");
       await key("Enter");
-      const heights = await evaluate(cdp, `JSON.parse(localStorage.getItem('aei.research.layout.v2')).columns[2].windows.map(w=>w.size)`);
-      if (heights.some((h) => Math.abs(h - 1 / 3) > 0.001)) reasons.push("Enter did not equalize stack heights");
+      const heights = await evaluate(
+        cdp,
+        `JSON.parse(localStorage.getItem('aei.research.layout.v2')).columns.find(c => c.windows.some(w => w.id === 'math')).windows.map(w=>w.size)`,
+      );
+      if (heights.some((h) => Math.abs(h - 1 / heights.length) > 0.001)) reasons.push("Enter did not equalize stack heights");
+      const floors = await evaluate(cdp, `${mathStack}.querySelectorAll('.ws-win').length === 2 && ${squashed} === "[]"`);
+      if (!floors) reasons.push("stack splitter let a window below its minimum");
+      await cdp.send("Emulation.setDeviceMetricsOverride", { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
       // Presets and reset must change visible geometry, and a fresh load must keep the new model.
       for (const p of ["map", "signals", "units"]) {
         await click("#ws-tray-button");
@@ -724,7 +837,9 @@ async function main() {
       if ((await evaluate(cdp, order)) !== initial) reasons.push("layout was not persisted across reload");
       // Edge drop from a two-column preset creates a third column, never a free-floating window.
       await click("#ws-tray-button");
-      await click('[data-preset="signals"]');
+      await click('[data-preset="map"]');
+      await click("#ws-tray-button");
+      await click('[data-reopen="math"]');
       const start = await pointOf("#ws-title-math");
       const edge = await evaluate(
         cdp,
@@ -739,7 +854,13 @@ async function main() {
       await click("#ws-tray-button");
       await click(".ws-pop-reset");
       await cdp.send("Emulation.setDeviceMetricsOverride", { width: 1100, height: 768, deviceScaleFactor: 1, mobile: false });
-      if ((await evaluate(cdp, "document.documentElement.lang")) !== "en") await click(".top-tools button[lang]");
+      // The language is chosen only in Settings; switch there when an earlier interaction has not already.
+      if ((await evaluate(cdp, "document.documentElement.lang")) !== "en") {
+        await load(cdp, urlOf("settings"), idle);
+        await click(".settings button[lang='en']");
+        await waitIn(`document.documentElement.lang === "en"`);
+        await load(cdp, urlOf("research"), idle);
+      }
       const compact = await evaluate(
         cdp,
         `(() => {
@@ -754,6 +875,37 @@ async function main() {
     },
     { name: "desktop-900", width: 1440, height: 900, mobile: false },
   );
+
+  await interaction("home-incident-period", async (idle, reasons) => {
+    await load(cdp, urlOf("home"), idle);
+    if (!(await waitIn(`!!document.querySelector(".hm-period select")`, 15_000))) {
+      reasons.push("home summary has no period selector");
+      return;
+    }
+    const headline = await evaluate(cdp, `document.querySelector(".hm-head h1")?.textContent`);
+    const keys = await evaluate(cdp, `JSON.stringify([...document.querySelectorAll(".hm-incidents .feed-row")].map(b => b.dataset.key))`);
+    for (const days of [7, 28, 1]) {
+      await evaluate(
+        cdp,
+        `(() => { const s = document.querySelector(".hm-period select"); s.value = "${days}"; s.dispatchEvent(new Event("change", { bubbles: true })); })()`,
+      );
+      if (!(await waitIn(`document.querySelector(".hm-period select")?.value === "${days}"`)))
+        reasons.push(`period ${days} did not select`);
+      const stable = await evaluate(
+        cdp,
+        `document.querySelector(".hm-head h1")?.textContent === ${JSON.stringify(headline)} && JSON.stringify([...document.querySelectorAll(".hm-incidents .feed-row")].map(b => b.dataset.key)) === ${JSON.stringify(keys)}`,
+      );
+      if (!stable) reasons.push(`changing new period to ${days} hid or changed open incidents`);
+    }
+    if (
+      !(await evaluate(
+        cdp,
+        `document.querySelector(".hm-head h1")?.textContent.includes(document.documentElement.lang === "fi" ? "Avoimet tapahtumat" : "Open incidents")`,
+      ))
+    )
+      reasons.push("home headline does not name open incidents");
+    await idle();
+  });
 
   await interaction("research-signal-isolates", async (idle, reasons) => {
     await load(cdp, urlOf("research"), idle);
@@ -770,6 +922,54 @@ async function main() {
       );
       reasons.push(`no isolates 15 s after opening a signal (${seen})`);
     }
+    if (
+      !(await evaluate(
+        cdp,
+        `document.querySelector(".feed-row")?.textContent.includes(document.documentElement.lang === "fi" ? "Yksi tapahtuma" : "One incident")`,
+      ))
+    )
+      reasons.push("incident summary does not distinguish the incident from its alerts");
+    const explain = ".math .alert-explanation > button";
+    const valid = await evaluate(
+      cdp,
+      `(() => { const b = document.querySelector(${JSON.stringify(explain)}); return b?.tagName === "BUTTON" && b.type === "button" && !!b.textContent.trim() && !!b.getAttribute("aria-controls"); })()`,
+    );
+    if (!valid) {
+      reasons.push("explain control is not a named native button linked to its panel");
+      return;
+    }
+    await evaluate(cdp, `document.querySelector(${JSON.stringify(explain)}).click()`);
+    if (!(await waitIn(`!!document.querySelector(".math .alert-explanation [aria-live] p:not(.field-hint)")`, 15_000)))
+      reasons.push("clicking explain did not load its template explanation");
+    await evaluate(cdp, `document.querySelector(${JSON.stringify(explain)}).focus()`);
+    // A keyDown needs its text, as a physical key gives, or Chrome raises no keypress and no click on the button.
+    await cdp.send("Input.dispatchKeyEvent", {
+      type: "keyDown",
+      key: "Enter",
+      code: "Enter",
+      windowsVirtualKeyCode: 13,
+      text: "\r",
+      unmodifiedText: "\r",
+    });
+    await cdp.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
+    if (!(await waitIn(`document.querySelector(${JSON.stringify(explain)})?.getAttribute("aria-expanded") === "false"`)))
+      reasons.push("Enter did not close the explanation");
+    await cdp.send("Input.dispatchKeyEvent", {
+      type: "keyDown",
+      key: " ",
+      code: "Space",
+      windowsVirtualKeyCode: 32,
+      text: " ",
+      unmodifiedText: " ",
+    });
+    await cdp.send("Input.dispatchKeyEvent", { type: "keyUp", key: " ", code: "Space", windowsVirtualKeyCode: 32 });
+    if (
+      !(await waitIn(
+        `document.querySelector(${JSON.stringify(explain)})?.getAttribute("aria-expanded") === "true" && !!document.querySelector(".math .alert-explanation [aria-live] p:not(.field-hint)")`,
+        15_000,
+      ))
+    )
+      reasons.push("Space did not reopen the template explanation");
     await idle();
   });
 

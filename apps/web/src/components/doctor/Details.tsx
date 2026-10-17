@@ -1,9 +1,13 @@
-import type { AeiClient, CoverageResponse } from "@aei/contract";
+import type { AeiClient, CoverageResponse, NationalResponse } from "@aei/contract";
 import { shortOrganism } from "@aei/domain";
+import type { Syndrome } from "@aei/guideline";
 import { type Locale, t } from "@aei/i18n";
 import { AlertExplanation } from "../AlertExplanation.tsx";
 import { AlertTri } from "../Icons.tsx";
 import { certaintyOf, type DoctorFilters, halfWidth, num, pct } from "./filters.ts";
+import { GuideDetails } from "./Guide.tsx";
+import { NationalLines } from "./National.tsx";
+import { priorText } from "./Patient.tsx";
 import { flagsOf, type Item, reasonOf, STANDING } from "./reason.ts";
 import { signalDate, type UnitSignal } from "./signals.ts";
 
@@ -14,17 +18,20 @@ interface Props {
   data: CoverageResponse;
   item: Item;
   signals: UnitSignal[];
+  syndrome?: Syndrome | null;
+  /** Finres national reference (D-048), fetched once per page; null when the server has none. */
+  national?: NationalResponse | null;
 }
 
 /** Details on demand for the selected line: the reason, the flags, all-organism share and the last 28 days. */
-export function Details({ client, locale, filters, data, item, signals }: Props) {
+export function Details({ client, locale, filters, data, item, signals, syndrome, national = null }: Props) {
   const level = certaintyOf(data.coverage.level);
   const st = STANDING[item.standing];
   const row = item.row;
   const w = halfWidth(item.interval);
   const flags = row ? flagsOf(row) : null;
   const list = (orgs: { organism: string; share: number }[]) =>
-    orgs.map((o) => `${shortOrganism(o.organism as never)} ${pct(o.share)} %`).join(", ");
+    orgs.map((o) => `${shortOrganism(o.organism as never)} ${pct(o.share)}\u00a0%`).join(", ");
   const mine = row ? signals.filter((s) => "antibiotic" in s.alert && s.alert.antibiotic === row.antibiotic) : [];
   const gain = Math.round((item.pair?.gain ?? 0) * 100);
   return (
@@ -38,15 +45,12 @@ export function Details({ client, locale, filters, data, item, signals }: Props)
           {t(locale, st.long)}
         </span>
       </h3>
-      <p className="dt-why">
-        {row
-          ? reasonOf(locale, row, data, filters)
-          : `${t(locale, gain === 1 ? "drGainOne" : "drGain", { gain })} · ${t(locale, "drAccessCount", { n: item.pair?.access ?? 0 })}`}
-      </p>
+      <p className="dt-why">{row ? reasonOf(locale, row, data, filters) : t(locale, gain === 1 ? "drGainOne" : "drGain", { gain })}</p>
+      {item.prior ? <p className="dt-prior">{priorText(locale, item.prior)}</p> : null}
       <p className="dt-fig num">
         {item.share !== null ? (
           <>
-            <b>{pct(item.share)} %</b>
+            <b>{pct(item.share)}&nbsp;%</b>
             {item.interval ? ` (${pct(item.interval[0])}–${pct(item.interval[1])})` : ""}
             {" · "}
           </>
@@ -64,7 +68,7 @@ export function Details({ client, locale, filters, data, item, signals }: Props)
             {t(locale, "drAllOrg")}{" "}
             {row.allOrganisms.share === null
               ? "–"
-              : `${pct(row.allOrganisms.share)} %${row.allOrganisms.interval ? ` (${pct(row.allOrganisms.interval[0])}–${pct(row.allOrganisms.interval[1])})` : ""}`}{" "}
+              : `${pct(row.allOrganisms.share)}\u00a0%${row.allOrganisms.interval ? ` (${pct(row.allOrganisms.interval[0])}–${pct(row.allOrganisms.interval[1])})` : ""}`}{" "}
             · n {num(locale, row.coverage.counts.known)}
           </li>
         ) : null}
@@ -90,6 +94,17 @@ export function Details({ client, locale, filters, data, item, signals }: Props)
           </li>
         ))}
       </ul>
+      {row ? <GuideDetails locale={locale} syndrome={syndrome} code={row.antibiotic} /> : null}
+      {row ? (
+        <NationalLines
+          locale={locale}
+          national={national}
+          data={data}
+          antibiotic={row.antibiotic}
+          specimen={filters.site}
+          share={row.share}
+        />
+      ) : null}
       {mine.map((s) => (
         <AlertExplanation key={s.alert.id} client={client} id={s.alert.id} locale={locale} />
       ))}

@@ -2,7 +2,7 @@
 
 The doctor's empirical coverage list (D-023, provisional).
 
-    coverage(records, { asOf, ward, specimen, sex?, ageGroup?, onset?, windowDays = 365, minTested = 30 })
+    coverage(records, { asOf, ward, specimen, sex?, ageGroup?, onset = "any", windowDays = 365, minTested = 30 })
     wilson(k, n)   // the 95 % Wilson interval it uses, cross-checked by scripts/crosscheck-stats
 
 For each antibiotic that suits the specimen: the share of first isolates
@@ -18,7 +18,7 @@ ceftazidime (tested only on *Pseudomonas*) can be labelled.
     suggest(result, "mild" | "severe")     // ordered for an empirical choice (D-026)
 
 `suggest` puts first the antibiotics whose whole 95 % interval clears 80 %
-(mild) or 90 % (severe), WHO AWaRe Access before Watch, then those whose
+(mild) or 90 % (severe), by coverage (no WHO AWaRe tier, D-056), then those whose
 estimate clears but interval does not, then the rest; "not assessable"
 when no level has 30 results or over 20 % of the pool is untested.
 
@@ -44,7 +44,30 @@ Why a year and not four weeks: experiments/0004. Why sex is a filter:
 experiments/0005 (urinary *E. coli* ciprofloxacin, men OR 1.9). Informs;
 does not prescribe.
 
-Relies on: D-004, D-019, D-023, D-026, D-027, D-033, D-047. Tests: `src/coverage.test.ts`.
+## Onset (D-049)
+
+    coverage(records, { ..., onset: "hospital" | "community" | "any" })
+    onsetOf(record)                    // "hospital" from day 3 of the stay, else "community"
+    barFor(result.query, severity)     // the bar the list is judged against
+
+An isolate is hospital-acquired when its culture was sampled at least two
+days after admission (`HOSPITAL_ONSET_DAYS`, day 3 of the stay);
+community otherwise, including cultures without an admission date (about
+60 % of isolates, QUESTIONS H5). The filter acts on the pool before the level
+is chosen. Patient filters are dropped one at a time to keep the unit's own
+data, in `DROP_ORDER`: age group, then onset, then sex (D-053), the first
+that leaves the unit `minTested` isolates; when none does, all stay on and
+the level falls back to the ward type, then the hospital (D-033). `ageGroupApplied`, `onsetApplied`
+and `sexApplied` say what was kept; `query.onset` what was asked.
+
+Hospital-acquired infections are judged against 90 % whatever the
+severity (B5): `suggest` and `suggestCombinations` use
+`barFor(result.query, severity)`, which follows the onset asked for, also
+when the filter was dropped. Only the bar changes: a mild query is still
+judged within the spectrum and without injection-only drugs. The API
+returns the bar as `bar`.
+
+Relies on: D-004, D-019, D-023, D-026, D-027, D-033, D-049, D-053. Tests: `src/coverage.test.ts`.
 
 ## Combinations (D-028)
 

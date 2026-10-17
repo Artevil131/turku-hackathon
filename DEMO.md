@@ -42,9 +42,11 @@ page: "Possible cluster of *E. coli* on this unit".
 
 - Mild: mecillinam and nitrofurantoin first, both WHO Access. Mecillinam
   covers 95 % of the bacteria it is meant for, but only 74 % of
-  everything that grows here; nitrofurantoin 86 % and 82 %. Say the
-  second number: our backtest found the first one holds (0010) and the
-  second is what the patient gets.
+  everything that grows here; nitrofurantoin 86 % and 82 %. Both
+  figures are retrospective susceptibility proportions among included
+  isolates: the first within the drug's intended spectrum, the second across
+  all organisms grown. Neither is a probability that treatment works. Our
+  backtest found the first one holds the next month (0010).
 - Switch How severe to Severe: piperacillin-tazobactam, 95 % (93–97 %),
   judged on everything that grows.
 
@@ -62,7 +64,7 @@ THL data, not the synthetic hospital; `pnpm demo` fetches it if missing.
 
 | Claim | Evidence |
 |---|---|
-| Clusters of 4 or more patients with a rare resistant strain are caught in 95 % of trials, median 5 days | 0007 |
+| For four-patient injections of a rare, identical resistance profile into this synthetic dataset, the shipped detector finds 89 % (95 % interval 84 to 93), median delay 6 days, about 4.5 signal episodes a year, about 1.0 of them cluster episodes | overnight-2026-10-17 benchmark (earlier, smaller experiment 0007: 95 %, 5 days) |
 | Clusters of a common strain are not caught: 1 in 180 for the commonest resistant *E. coli*; fully susceptible strains never | 0011 |
 | A 3-day gap in a unit's sampling is caught in 93 % of trials | 0009, D-031 |
 | The coverage list's claims hold the next month (mild 96.6 % within spectrum, severe 95.4 %), but mild picks cover 75 % of all organisms | 0010 |

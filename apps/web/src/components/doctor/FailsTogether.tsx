@@ -3,7 +3,7 @@ import { antibioticName, type Locale, type MessageKey, t } from "@aei/i18n";
 import "./FailsTogether.css";
 import { num, pct } from "./filters.ts";
 
-// "Fails together" (D-048): when the selected antibiotic failed on an isolate,
+// "Fails together" (D-054): when the selected antibiotic failed on an isolate,
 // which other drugs failed on the same isolate, from the hospital's own data.
 // The shape matches FailsTogetherResponse in @aei/coresistance/route; once the
 // route is wired, take the type from @aei/contract instead of these.

@@ -2,7 +2,7 @@ import type { Severity } from "@aei/contract";
 import type { Sex, Specimen, WardCode } from "@aei/domain";
 import { type Locale, type MessageKey, specimenName, t, wardName } from "@aei/i18n";
 import { type ReactNode, useState } from "react";
-import { AGE_GROUPS, AGE_KEYS, type AgeGroup, type DoctorFilters, type Period, SITES, sexWord, unitGroups } from "./filters.ts";
+import { AGE_GROUPS, AGE_KEYS, type AgeGroup, barOf, type DoctorFilters, type Period, SITES, sexWord, unitGroups } from "./filters.ts";
 import { useMedia } from "./useMedia.ts";
 import "./RecordStrip.css";
 
@@ -10,6 +10,11 @@ interface Props {
   locale: Locale;
   filters: DoctorFilters;
   onChange: (patch: Partial<DoctorFilters>) => void;
+  /** The optional patient id (D-050): typed or scanned, never stored in the URL or localStorage. */
+  patientId?: string;
+  onPatientId?: (id: string) => void;
+  /** Looks the id up now (Enter or leaving the field); typing alone looks it up after a pause. */
+  onPatientCommit?: () => void;
 }
 
 function Group({ label, tag, inline, children }: { label: string; tag?: string | false; inline?: boolean; children: ReactNode }) {
@@ -49,7 +54,7 @@ function Choices<T extends string | number>(props: {
 }
 
 /** The patient record as a row of one-click filters, each with its default already chosen. The doctor types nothing. */
-export function RecordStrip({ locale, filters, onChange }: Props) {
+export function RecordStrip({ locale, filters, onChange, patientId = "", onPatientId, onPatientCommit }: Props) {
   const tr = (key: MessageKey) => t(locale, key);
   const wide = useMedia("(min-width: 960px)");
   const [more, setMore] = useState(false);
@@ -113,8 +118,8 @@ export function RecordStrip({ locale, filters, onChange }: Props) {
     <Group label={tr("drSeverity")} inline>
       <Choices<Severity>
         options={[
-          ["mild", tr("drSevMild")],
-          ["severe", tr("drSevSevere")],
+          ["mild", t(locale, "drSevMild", { bar: barOf(null, { sev: "mild", onset: filters.onset }) })],
+          ["severe", t(locale, "drSevSevere", { bar: barOf(null, { sev: "severe", onset: filters.onset }) })],
         ]}
         value={filters.sev}
         onPick={(v) => onChange({ sev: v })}
@@ -154,7 +159,7 @@ export function RecordStrip({ locale, filters, onChange }: Props) {
       <button
         type="button"
         className="rs-choice rs-toggle"
-        title={tr("drOnset")}
+        title={t(locale, "drOnsetTitle", { bar: barOf(null, { sev: "severe", onset: true }) })}
         aria-pressed={filters.onset}
         onClick={() => change({ onset: !filters.onset })}
       >
@@ -163,21 +168,26 @@ export function RecordStrip({ locale, filters, onChange }: Props) {
     </Group>
   );
 
-  const severeBlood = (
-    <button
-      type="button"
-      className="rs-choice rs-quick"
-      aria-pressed={filters.site === "blood" && filters.sev === "severe"}
-      onClick={() => {
-        onChange({ site: "blood", sev: "severe" });
-        setMore(false);
-      }}
-    >
-      {tr("drSevereBlood")}
-    </button>
-  );
+  const patient = onPatientId ? (
+    <label className="rs-group rs-patient" title={tr("drPatientHint")}>
+      <span className="rs-label">{tr("drPatientId")}</span>
+      <input
+        type="text"
+        className="rs-input"
+        name="aei-patient"
+        value={patientId}
+        placeholder={tr("drPatientOptional")}
+        autoComplete="off"
+        spellCheck={false}
+        onChange={(e) => onPatientId(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") onPatientCommit?.();
+        }}
+        onBlur={() => onPatientCommit?.()}
+      />
+    </label>
+  ) : null;
 
-  // Keep the severe blood shortcut visible even when phone filters are collapsed.
   if (wide) {
     return (
       <form className="rs" data-wide="" aria-label={tr("drRecord")} onSubmit={(e) => e.preventDefault()}>
@@ -189,8 +199,8 @@ export function RecordStrip({ locale, filters, onChange }: Props) {
           {age}
           {onset}
           {period}
+          {patient}
         </div>
-        {severeBlood}
       </form>
     );
   }
@@ -202,7 +212,6 @@ export function RecordStrip({ locale, filters, onChange }: Props) {
         </span>
         <span aria-hidden="true">{more ? "▴" : "▾"}</span>
       </button>
-      {severeBlood}
       {more ? (
         <div className="rs-body rs-more" id="rs-more">
           {unit}
@@ -212,6 +221,7 @@ export function RecordStrip({ locale, filters, onChange }: Props) {
           {age}
           {period}
           {onset}
+          {patient}
           <button
             type="button"
             className="rs-done"

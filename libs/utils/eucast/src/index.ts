@@ -1,4 +1,4 @@
-import { ANTIBIOTICS, type AntibioticCode, type IsolateRecord, type Organism, type Specimen, type SR } from "@aei/domain";
+import { ANTIBIOTICS, type AntibioticCode, type IsolateRecord, type Organism, type Phenotype, type Specimen, type SR } from "@aei/domain";
 
 // Microbiology facts for the dataset's 9 organisms and 13 antibiotics:
 // which pairs are resistant by nature, which have no clinical breakpoint,
@@ -118,4 +118,48 @@ export function effectiveResult(record: Pick<IsolateRecord, "organism" | "result
   if (inferred) return { result: inferred, basis: "inferred" };
   if (hasNoBreakpoint(record.organism, antibiotic)) return { result: null, basis: "no-breakpoint" };
   return { result: null, basis: "untested" };
+}
+
+/**
+ * The isolate a resistant phenotype implies, as the inference rules read it:
+ * MRSA is a Staphylococcus aureus with cefoxitin R. ESBL, VRE and CPE have no
+ * rule here that infers another result, so they imply nothing.
+ */
+const PHENOTYPE_MARKERS: Partial<Record<Phenotype, Pick<IsolateRecord, "organism" | "results">>> = {
+  mrsa: { organism: "Staphylococcus aureus", results: { FOX: "R" } },
+};
+
+/**
+ * Antibiotics `effectiveResult` infers resistant (basis "inferred") from a
+ * phenotype, in the dataset's order: for MRSA the beta-lactams the cefoxitin
+ * screen decides; empty for phenotypes the rules infer nothing from (D-050).
+ */
+export function inferredResistantFrom(phenotype: Phenotype): AntibioticCode[] {
+  const marker = PHENOTYPE_MARKERS[phenotype];
+  if (!marker) return [];
+  return ANTIBIOTICS.map((a) => a.code).filter((code) => {
+    const e = effectiveResult(marker, code);
+    return e.basis === "inferred" && e.result === "R";
+  });
+}
+
+/**
+ * Antibiotics a phenotype defeats, for annotating the doctor's list (D-050,
+ * D-052): what `effectiveResult` infers, plus EUCAST's expected resistant
+ * phenotypes the rules do not model. ESBL defeats aminopenicillins and the
+ * cephalosporins (mecillinam keeps activity against many ESBL E. coli, which
+ * is why the Varha guide names pivmecillinam for ESBL cystitis); VRE defeats
+ * vancomycin; CPE defeats the beta-lactams and the carbapenem.
+ */
+export const PHENOTYPE_DEFEATS: Record<Phenotype, readonly AntibioticCode[]> = {
+  esbl: ["AMP", "CXM", "CRO", "CAZ"],
+  mrsa: [],
+  vre: ["VAN"],
+  cpe: ["AMP", "TZP", "CXM", "CRO", "CAZ", "MEM"],
+};
+
+/** `inferredResistantFrom` and `PHENOTYPE_DEFEATS` together, in the dataset's antibiotic order. */
+export function defeatedBy(phenotype: Phenotype): AntibioticCode[] {
+  const set = new Set<AntibioticCode>([...inferredResistantFrom(phenotype), ...PHENOTYPE_DEFEATS[phenotype]]);
+  return ANTIBIOTICS.map((a) => a.code).filter((code) => set.has(code));
 }

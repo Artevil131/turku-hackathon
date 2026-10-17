@@ -35,8 +35,8 @@ describe("weeklySeries", () => {
       "2025-05-19",
     );
     expect(s.weeks).toEqual(["2025-05-12", "2025-05-19"]);
-    expect(s.units.URO.phenotypes.esbl).toEqual([2, 0]);
-    expect(s.units.URO.cultures).toEqual([2, 0]);
-    expect(s.units.ICU.cultures).toEqual([1, 0]);
+    expect(s.units.URO?.phenotypes.esbl).toEqual([2, 0]);
+    expect(s.units.URO?.cultures).toEqual([2, 0]);
+    expect(s.units.ICU?.cultures).toEqual([1, 0]);
   });
 });

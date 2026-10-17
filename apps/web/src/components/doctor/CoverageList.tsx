@@ -1,8 +1,11 @@
-import type { CoverageResponse } from "@aei/contract";
+import type { CoverageResponse, PatientFindingsResponse } from "@aei/contract";
+import type { Syndrome } from "@aei/guideline";
 import { antibioticName, type Locale, specimenName, t, wardName } from "@aei/i18n";
 import { cloneElement, isValidElement, type ReactNode, useMemo, useRef } from "react";
 import "./CoverageList.css";
-import { BAR, type DoctorFilters, dmy, droppedFilters, num, pct } from "./filters.ts";
+import { BAR, barOf, type DoctorFilters, dmy, droppedFilters, num, pct } from "./filters.ts";
+import { GuideSummary, guideCodes } from "./Guide.tsx";
+import { priorText, withPrior } from "./Patient.tsx";
 import { InfoIcon, Popover } from "./Popover.tsx";
 import { PrintSheet } from "./PrintSheet.tsx";
 import { type Item, STANDING } from "./reason.ts";
@@ -21,6 +24,10 @@ interface Props {
   onSelect: (id: string | null) => void;
   onRetry: () => void;
   source?: ReactNode;
+  /** The guide's syndrome (D-047): marks its first choices and adds its line under the header; never reorders. */
+  syndrome?: Syndrome | null;
+  /** The patient's findings (D-050): affected rows are annotated and placed below the unaffected of their standing. */
+  patient?: PatientFindingsResponse | null;
 }
 
 const SKELETON = [0, 1, 2, 3, 4, 5];
@@ -28,11 +35,14 @@ const SKELETON = [0, 1, 2, 3, 4, 5];
 /** Position on the 50-100 % axis, as a percentage of the bar area; values below 50 sit at the left edge. */
 const at = (share: number): number => Math.max(0, Math.min(100, (share - 0.5) * 200));
 
-export function itemsOf(data: CoverageResponse, locale: Locale): { singles: Item[]; pairs: Item[] } {
+export function itemsOf(
+  data: CoverageResponse,
+  locale: Locale,
+  patient?: PatientFindingsResponse | null,
+): { singles: Item[]; pairs: Item[] } {
   const singles = data.suggestions.map<Item>((row) => ({
     id: row.antibiotic,
     name: antibioticName(locale, row.antibiotic),
-    aware: row.aware,
     standing: row.standing,
     share: row.share,
     interval: row.interval,
@@ -43,7 +53,6 @@ export function itemsOf(data: CoverageResponse, locale: Locale): { singles: Item
   const pairs = data.combinationSuggestions.map<Item>((p) => ({
     id: p.antibiotics.join("+"),
     name: p.antibiotics.map((a) => antibioticName(locale, a)).join(" + "),
-    aware: null,
     standing: p.standing,
     share: p.coverage.share,
     interval: p.coverage.interval,
@@ -51,22 +60,36 @@ export function itemsOf(data: CoverageResponse, locale: Locale): { singles: Item
     row: null,
     pair: p,
   }));
-  return { singles, pairs };
+  return withPrior(singles, pairs, patient);
 }
 
 /** The forest plot: one row per antibiotic, its 95 % interval against the bar line, one glance per row. */
-export function CoverageList({ locale, filters, asOf, status, data, signals, selected, onSelect, onRetry, source }: Props) {
+export function CoverageList({
+  locale,
+  filters,
+  asOf,
+  status,
+  data,
+  signals,
+  selected,
+  onSelect,
+  onRetry,
+  source,
+  syndrome,
+  patient,
+}: Props) {
   const headRef = useRef<HTMLElement>(null);
-  const bar = BAR[filters.sev];
+  const bar = barOf(data, filters);
   const unit = wardName(locale, filters.unit);
   const site = specimenName(locale, filters.site);
   const cov = data?.coverage;
   const ready = status === "ready" && data && cov;
   const stale = status === "loading" && data;
-  const { singles, pairs } = useMemo(() => (data ? itemsOf(data, locale) : { singles: [], pairs: [] }), [data, locale]);
+  const { singles, pairs } = useMemo(() => (data ? itemsOf(data, locale, patient) : { singles: [], pairs: [] }), [data, locale, patient]);
   const firstBelow = singles.findIndex((s) => s.standing !== "clears");
   const all = [...singles, ...pairs];
   const date = data?.asOf ?? asOf;
+  const guided = useMemo(() => guideCodes(syndrome), [syndrome]);
 
   const bestPair = filters.sev === "severe" && !singles.some((s) => s.standing === "clears") ? pairs[0] : null;
   const openPair = () => {
@@ -77,6 +100,14 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
       row?.scrollIntoView({ block: "nearest" });
     });
   };
+
+  const annual = filters.period === 365;
+  const meta = [
+    t(locale, "drPeriodDays", { days: filters.period }),
+    cov && cov.level !== "unit" ? t(locale, cov.level === "ward type" ? "drLevelWardTypeShort" : "drLevelHospitalShort") : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   const renderItem = (item: Item) => {
     const st = STANDING[item.standing];
@@ -97,6 +128,7 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
         >
           <span className="cl-name">
             <b title={item.name}>{item.name}</b>
+            {guided.has(item.id) ? <span className="cl-guide">{t(locale, "drGuideMark")}</span> : null}
           </span>
           <span className="cl-plot" aria-hidden="true">
             <i className="cl-axis" />
@@ -111,17 +143,18 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
           </span>
           <span className="cl-num num">
             <span>
-              {t(locale, item.row?.basis === "spectrum" ? "drTargetMicrobes" : "drAllGrowing")}{" "}
-              <b>{assessable && item.share !== null ? `${pct(item.share)} %` : "–"}</b>
-              {item.standing === "borderline" && range ? ` (${range} %)` : ""}
+              {t(locale, item.row?.basis === "spectrum" ? "drWithinSpectrum" : "drAllOrgShort")}{" "}
+              <b>{assessable && item.share !== null ? `${pct(item.share)}\u00a0%` : "–"}</b>
+              {item.standing === "borderline" && range ? ` (${range}\u00a0%)` : ""}
               <span className="cl-n"> · n {num(locale, item.n)}</span>
             </span>
             {item.row?.basis === "spectrum" ? (
               <span className="cl-secondary">
-                {t(locale, "drAllGrowing")} {item.row.allOrganisms.share === null ? "–" : `${pct(item.row.allOrganisms.share)} %`}
+                {t(locale, "drAllOrgShort")} {item.row.allOrganisms.share === null ? "–" : `${pct(item.row.allOrganisms.share)}\u00a0%`}
                 <span className="cl-n"> · n {num(locale, item.row.coverage.counts.known)}</span>
               </span>
             ) : null}
+            <span className="cl-secondary cl-meta">{meta}</span>
           </span>
           <span className="cl-res" data-standing={item.standing} title={t(locale, st.long)}>
             <span className="cl-glyph" aria-hidden="true">
@@ -132,7 +165,12 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
           <span className="cl-details">
             {t(locale, "drDetails")} <span aria-hidden="true">{isSel ? "−" : "+"}</span>
           </span>
-          {item.standing === "borderline" ? <span className="cl-why">{t(locale, "drBorderlineWhy", { bar })}</span> : null}
+          {item.standing === "borderline" ? (
+            <span className="cl-why">
+              {t(locale, item.interval ? "drBorderlineWhyLow" : "drBorderlineWhy", { bar, lo: item.interval ? pct(item.interval[0]) : "" })}
+            </span>
+          ) : null}
+          {item.prior ? <span className="cl-prior">{priorText(locale, item.prior)}</span> : null}
         </button>
       </li>
     );
@@ -169,14 +207,17 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
           content={
             <>
               <p>{t(locale, "drForestInfo", { period: t(locale, filters.period === 365 ? "drPeriodYear" : "drPeriodMonth") })}</p>
-              {ready ? droppedFilters(filters, cov).map((d) => <p key={d.long}>{t(locale, d.long)}</p>) : null}
-              <p>{t(locale, "drFoot", { mild: BAR.mild, severe: BAR.severe })}</p>
+              {ready ? droppedFilters(filters, cov).map((d) => <p key={d.long}>{t(locale, d.long, { bar })}</p>) : null}
+              <p>
+                {t(locale, "drFoot", { mild: BAR.mild, severe: BAR.severe })} {t(locale, "drFootOnset", { bar: BAR.severe })}
+              </p>
             </>
           }
         >
           <InfoIcon />
         </Popover>
       </header>
+      {data && cov ? <GuideSummary locale={locale} syndrome={syndrome} singles={singles} bar={bar} /> : null}
 
       <div className="cl-disclosure">
         <p>{t(locale, "drDemo")}</p>
@@ -196,7 +237,7 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
           {bestPair.standing !== "clears" ? (
             <p>
               {t(locale, STANDING[bestPair.standing].long)}
-              {bestPair.interval ? ` · ${t(locale, "drInterval")}: ${pct(bestPair.interval[0])}–${pct(bestPair.interval[1])} %` : ""}
+              {bestPair.interval ? ` · ${t(locale, "drInterval")}: ${pct(bestPair.interval[0])}–${pct(bestPair.interval[1])}\u00a0%` : ""}
             </p>
           ) : null}
         </div>
@@ -242,14 +283,26 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
             <span className="cl-r">{t(locale, "drCovers")}</span>
             <span>{t(locale, "drStandingCol")}</span>
           </div>
+          {annual ? null : <p className="cl-recent">{t(locale, "drRecentContext")}</p>}
           <ul className="cl-rows" aria-label={t(locale, "drCoverage")}>
             {renderGroup(singles, firstBelow, t(locale, "drBelowDivider", { bar }))}
             {pairs.length > 0 ? renderGroup(pairs, 0, t(locale, "drTwoTogether")) : null}
           </ul>
+          <p className="cl-note">{t(locale, "drListNote")}</p>
         </div>
       ) : null}
       {data && cov ? (
-        <PrintSheet locale={locale} filters={filters} data={data} asOf={asOf} signals={signals} singles={singles} pairs={pairs} />
+        <PrintSheet
+          locale={locale}
+          filters={filters}
+          data={data}
+          asOf={asOf}
+          signals={signals}
+          singles={singles}
+          pairs={pairs}
+          syndrome={syndrome ?? null}
+          patient={patient ?? null}
+        />
       ) : null}
     </section>
   );

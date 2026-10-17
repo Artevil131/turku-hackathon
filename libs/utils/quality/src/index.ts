@@ -10,6 +10,7 @@ import {
   type SR,
   type Susceptibility,
   WARDS,
+  type Ward,
 } from "@aei/domain";
 import { hasNoBreakpoint, inferredResult, isIntrinsic } from "@aei/eucast";
 
@@ -96,6 +97,8 @@ const PHENOTYPE_MARKER: Partial<Record<Phenotype, AntibioticCode>> = { mrsa: "FO
 export interface CheckOptions {
   /** Samples dated after this are errors ("future-sample"). */
   asOf?: IsoDate;
+  /** Each unit's in/outpatient type for the "ward-type" check (default: the dataset's units; a server passes its ward registry, D-051). */
+  wards?: readonly Pick<Ward, "code" | "type">[];
 }
 
 /** Every finding in `rows`, in table order. */
@@ -118,7 +121,7 @@ export function checkRows(rows: Rows, options: CheckOptions = {}): Finding[] {
   const patients = new Map(rows.patients.map((p) => [p.patientId, p]));
   const cultures = new Map(rows.cultures.map((c) => [c.cultureId, c]));
   const isolates = new Map(rows.isolates.map((i) => [i.isolateId, i]));
-  const wardTypes = new Map(WARDS.map((w) => [w.code, w.type]));
+  const wardTypes = new Map((options.wards ?? WARDS).map((w) => [w.code, w.type]));
 
   const isolatesPerCulture = new Map<string, number>();
   for (const i of rows.isolates) isolatesPerCulture.set(i.cultureId, (isolatesPerCulture.get(i.cultureId) ?? 0) + 1);

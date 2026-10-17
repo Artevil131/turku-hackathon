@@ -1,6 +1,9 @@
 import type { Alert } from "@aei/contract";
 import { ANTIBIOTICS, type IsolateRecord, type Phenotype, type WardCode } from "@aei/domain";
 import type { Locale } from "@aei/i18n";
+
+export { openIncidents } from "@aei/i18n";
+
 import { kindOf, type SignalKind } from "../board.ts";
 
 // Pure helpers of the signal feed: grouping alerts into incidents, filtering,

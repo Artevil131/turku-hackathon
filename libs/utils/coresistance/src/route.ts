@@ -10,7 +10,7 @@ import {
 } from "@aei/domain";
 import { type FailsTogetherQuery, type FailsTogetherResult, type Family, failsTogether, families } from "./index.ts";
 
-// The contract of a future route, GET /api/fails-together (D-048), kept in
+// The contract of a future route, GET /api/fails-together (D-054), kept in
 // the gear until it is wired into apps/api and @aei/contract. Pure: the
 // server passes its released records and clock date.
 

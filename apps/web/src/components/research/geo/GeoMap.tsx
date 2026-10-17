@@ -1,5 +1,5 @@
 import type { CountiesResponse, RegionalResponse, RegionalSeries, RegionalSignal, WeeklyResponse } from "@aei/contract";
-import { formatMonth, type Locale, t } from "@aei/i18n";
+import { countyName, formatMonth, type Locale, t } from "@aei/i18n";
 import { addDaysIso } from "@aei/viz";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AsOf } from "../../AsOf.tsx";
@@ -7,6 +7,7 @@ import { HOSPITALS, LINKS } from "../../intro/surface.ts";
 import type { PanelProps } from "../board.ts";
 import { centroidOf, pathOf } from "../map/geo.ts";
 import "./geo.css";
+import { allSites, currentSite, homeSite, isMulti } from "../../../sites.ts";
 import { CountyDetail } from "./CountyDetail.tsx";
 import { CountyForecasts } from "./CountyForecasts.tsx";
 import { type Layout, MAP_LAYOUT, mapPoint } from "./layout.ts";
@@ -19,7 +20,8 @@ import { useLoad } from "./useLoad.ts";
 
 const DEFAULT_GROUP = "MRSA carriage";
 const NATIONAL = "Finland (all counties)";
-const TYKS_COUNTY = "Varsinais-Suomen hyvinvointialue";
+/** The selected hospital's county (D-051); the home site's, Varsinais-Suomi, with one hospital or all. */
+const siteCounty = () => (allSites().find((s) => s.id === currentSite()) ?? homeSite()).county;
 
 /** The API's series name stays the key; the label is translated. */
 const SERIES_KEY = {
@@ -38,7 +40,6 @@ const SERIES_KEY = {
 const seriesLabel = (locale: Locale, group: string) =>
   group in SERIES_KEY ? t(locale, SERIES_KEY[group as keyof typeof SERIES_KEY]) : group;
 
-const shortName = (region: string) => region.replace(/ hyvinvointialue$/, "");
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 const fmt = (locale: Locale, v: number, digits = 1) =>
   new Intl.NumberFormat(locale === "fi" ? "fi-FI" : "en-GB", { maximumFractionDigits: digits }).format(v);
@@ -124,6 +125,7 @@ function Spark({
 }
 
 export function GeoMap({ client, locale, asOf, reducedMotion }: PanelProps) {
+  const TYKS_COUNTY = siteCounty();
   const [group, setGroup] = useState(DEFAULT_GROUP);
   // The map shows first; the county detail replaces it in the tile once a county is picked.
   const [chosen, setChosen] = useState<string | null>(null);
@@ -168,7 +170,7 @@ export function GeoMap({ client, locale, asOf, reducedMotion }: PanelProps) {
   const monthLong = (m: string) => formatMonth(locale, `${m}-01`, true);
   const series = useMemo(() => (data?.series ?? []).filter((s) => s.group === group), [data, group]);
   const forecasts = data?.forecasts ?? [];
-  const home = "Varsinais-Suomen hyvinvointialue";
+  const home = TYKS_COUNTY;
   const byRegion = useMemo(() => new Map(series.map((s) => [s.region, s])), [series]);
   const edges = useMemo(() => stepEdges(series.filter((s) => s.region !== NATIONAL)), [series]);
   const signalsAll = useMemo(
@@ -371,10 +373,11 @@ export function GeoMap({ client, locale, asOf, reducedMotion }: PanelProps) {
                     d={c.d}
                     className={`geo-county geo-fill-${fillOf(c.name)}`}
                     data-selected={chosen === c.name}
+                    data-site={isMulti() && c.name === TYKS_COUNTY}
                     vectorEffect="non-scaling-stroke"
                     role="button"
                     tabIndex={0}
-                    aria-label={shortName(c.name)}
+                    aria-label={countyName(locale, c.name)}
                     aria-pressed={chosen === c.name}
                     onClick={() => setChosen((cur) => (cur === c.name ? null : c.name))}
                     onKeyDown={(e) => {
@@ -387,12 +390,12 @@ export function GeoMap({ client, locale, asOf, reducedMotion }: PanelProps) {
                     <title>
                       {data && month
                         ? t(locale, "mapCountyLabel", {
-                            region: shortName(c.name),
+                            region: countyName(locale, c.name),
                             cases: casesAt(c.name) ?? 0,
                             month: monthLong(month),
                             rate: rateText(c.name),
                           })
-                        : shortName(c.name)}
+                        : countyName(locale, c.name)}
                     </title>
                   </path>
                 ))}
@@ -465,7 +468,7 @@ export function GeoMap({ client, locale, asOf, reducedMotion }: PanelProps) {
                         className={s.strong ? "geo-glyph geo-glyph-strong" : "geo-glyph geo-glyph-weak"}
                       >
                         <title>
-                          {shortName(c.name)}:{" "}
+                          {countyName(locale, c.name)}:{" "}
                           {t(locale, "mapSignalDetail", { cases: s.cases, expected: fmt(locale, s.expected), p: fmtP(locale, s.p) })}
                         </title>
                       </circle>
@@ -511,7 +514,7 @@ export function GeoMap({ client, locale, asOf, reducedMotion }: PanelProps) {
                         <span className="geo-row-glyphs" aria-hidden="true">
                           {signalOf.has(c.name) ? <Glyph strong={(signalOf.get(c.name) as RegionalSignal).strong} size={14} /> : null}
                         </span>
-                        <span className="geo-row-name">{shortName(c.name)}</span>
+                        <span className="geo-row-name">{countyName(locale, c.name)}</span>
                         <span className="geo-row-figs">
                           {c.rate === null ? "–" : fmt(locale, c.rate)} · n {c.cases ?? 0}
                         </span>

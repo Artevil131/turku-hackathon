@@ -5,7 +5,7 @@ import type { Spans } from "./spans.ts";
 // The units an incident spans as compact chips: "URO → ED 34 % · MED-A 12 %".
 // Words and arrows carry the meaning; colour only separates the origin.
 
-const pct = (share: number) => `${Math.round(share * 100)} %`;
+const pct = (share: number) => `${Math.round(share * 100)}\u00a0%`;
 
 export function SpanLine({ locale, spans, ward }: { locale: Locale; spans: Spans | null; ward: string | null }) {
   const origin = ward ? (

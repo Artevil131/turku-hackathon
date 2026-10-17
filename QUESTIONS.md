@@ -121,6 +121,22 @@ year (0004: +0.0058 Brier for the unit's raw 28 days).
 | F4 | How "continuously updated" is demonstrated. | Day-by-day replay with a date control; confirm with the judges (CONTEXT.md question 10). |
 | F5 | Where the researcher's signals are delivered: in the tool, or pushed? | In the tool for the demo; say in the pitch that a push to infection control is the deployment step. |
 
+## H. The doctor's screen: guideline, national reference, patient record
+
+Added 2026-10-17 by Claude Code, operated by Aapo, from research/guidelines.md.
+B5 (bar per syndrome), B6 (prior resistant finding) and A2 (onset cutoff)
+stay where they are; H depends on them. **Accepted by Aapo 2026-10-17 as D-047 to D-050** (B5 and B6 with them; A2 kept pending the organiser).
+
+| # | Question | Proposal |
+|---|---|---|
+| H1 | Which guideline is encoded for the demo site, and how? | Varha's Mikrobilääkesuositus (13.4.2026) as a per-site JSON table in `libs/utils/guideline`: syndrome → specimen, severity, first choices (drug code, route), β-lactam-allergy alternative, carrier rules (phenotype → replacement drug or "add"), guide section and page, guide date. Only drugs in the dataset's thirteen are matched to rows; others (ertapenem, cloxacillin) are shown as text. The site chooses its table in config; nothing is fetched. |
+| H2 | How the guide's choice meets the data on screen. | A "guide's first choice" marker on the row, and one line: "The guide's first choice, cefuroxime, covers 86 % here (bar 90 %)". The list order does not change (D-026, D-027); the guide never adds a drug to the list. |
+| H3 | The national reference: source and presentation. | Finres public cube (THL, CC BY 4.0), fetched by `scripts/fetch_finres.py` into `data/external/thl/finres.json` like the TTR data (D-025, D-037): latest complete year, genus × antibiotic × specimen, %R with interval and tests. Shown in a row's details as "Finland 2025, genus: 7 % resistant (89 634 tests)"; the headline share stays the hospital's own. Not used as a prior until B2 is decided. |
+| H4 | Mapping the dataset's species and specimens to Finres cells. | Species → genus (E. coli → Escherichia, both Klebsiella → Klebsiella, E. faecalis → Enterococcus, S. aureus → Staphylococcus); urine → virtsa, blood → veri, wound → "märkä- ja muut löydökset"; cefoxitin screen → the MRSA flag; no cell → no national line. The genus mix is said on screen. |
+| H5 | Onset filter in the coverage query. | `onset: "hospital" \| "community" \| "any"` on `/api/coverage` and `@aei/coverage`: hospital-acquired when `sample_date − admission_date ≥ 2` days (A2's day-3 rule; confirm with the organiser), community when the culture has no admission date or the stay is shorter. Fallback levels as D-033. The strip's disabled toggle becomes live. |
+| H6 | Patient's prior resistant finding on the doctor's screen. | A patient id is optional input (the only typing on the screen; a scan in the pilot). `GET /api/patient/:id/findings` returns ESBL, MRSA, VRE, CPE findings within 365 days (the Varha guide's "edeltävän vuoden" rule) from the released records. The screen shows the finding, the guide's carrier rule for the syndrome (H1), and marks affected rows per B6. No patient id, no change. |
+| H7 | Syndrome chooser. | A row of syndrome chips above the record strip (cystitis, pyelonephritis, urinary sepsis, sepsis of unknown focus, wound infection) that sets specimen, severity and the guide row (H1); the strip stays editable underneath. Which syndromes and their mapping come from H1's table. UI work once H1 is decided. |
+
 ## G. Asked of the judges or organiser, not the team
 
 CONTEXT.md questions 2, 4 to 14, plus: is the day-3 onset rule the same as GLASS's 48 hours (A2); is the planted-events list complete (E3); may replay stand for live updating (F4).
