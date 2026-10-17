@@ -1,4 +1,4 @@
-# datasets and large outputs stay out of git (PROTOCOL.md)
+# datasets and large outputs stay out of git (docs/PROTOCOL.md)
 data/
 
 # challenge materials from the organisers (PDFs), kept local only

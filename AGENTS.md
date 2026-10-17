@@ -1,12 +1,12 @@
 # Agents in this repository
 
-Read README.md and PROTOCOL.md before changing anything. They bind agents
+Read README.md and docs/PROTOCOL.md before changing anything. They bind agents
 the same way they bind people.
 
 ## Do not assume technical, mathematical or statistical choices
 
 Ask the team before deciding anything technical, mathematical or
-statistical that is not already recorded in DECISIONS.md. This covers, for
+statistical that is not already recorded in docs/DECISIONS.md. This covers, for
 example:
 
 - languages, frameworks, libraries, databases, hosting and APIs
@@ -17,7 +17,7 @@ example:
 - architecture and interfaces between modules
 
 State the options you see and what each costs, then wait for an answer.
-Once the team decides, add the decision to DECISIONS.md in the same change
+Once the team decides, add the decision to docs/DECISIONS.md in the same change
 that first depends on it. Do not fill a gap with a "reasonable default"
 and move on; an unstated assumption in a gear spreads to every app that
 uses it.
@@ -33,7 +33,7 @@ interface work can be done straight away, without asking.
   whether something is reusable, treat it as reusable.
 - Apps only combine utils and present them.
 - Deployment goes in `deploy/`, scripts in `scripts/`, benchmarks in
-  `benchmarks/`, experiments in `experiments/` following PROTOCOL.md.
+  `benchmarks/`, experiments in `experiments/` following docs/PROTOCOL.md.
 - Respect the dependency direction in README.md.
 
 ## Records

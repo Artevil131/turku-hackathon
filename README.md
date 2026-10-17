@@ -4,8 +4,9 @@ Our challenge is the Antibiotic Efficacy Indicator (AEI) by Tyks
 Laboratories: a continuously updated, ward-level view of antibiotic
 resistance, for doctors choosing empirical treatment and for researchers
 watching for spread. The problem, the data and the open questions are in
-CONTEXT.md; who we build for and what they need is in AUDIENCE.md.
-Where we are taking it, a full research tool, is in VISION.md.
+docs/CONTEXT.md; who we build for and what they need is in docs/AUDIENCE.md.
+Where we are taking it, a full research tool, is in docs/VISION.md. All the
+project notes live in `docs/`.
 
 ## What we built: alerts we measured
 
@@ -65,23 +66,26 @@ experiment, it belongs in `libs/utils`, from the start.
                     open data); describes the field, decides nothing
     experiments/    one directory per experiment, NNNN-slug/README.md,
                     started from experiments/TEMPLATE.md
-    data/           datasets, git-ignored (PROTOCOL.md)
+    data/           datasets, git-ignored (docs/PROTOCOL.md)
     prompts/        briefs for unattended agent sessions, dated; their reports go to benchmarks/
-    CONTEXT.md      the challenge: problem, data, open questions
-    AUDIENCE.md     the audiences, what each needs from the data, and who on
+    docs/           the project notes (all the .md files below except PRODUCT.md):
+      CONTEXT.md    the challenge: problem, data, open questions
+      AUDIENCE.md   the audiences, what each needs from the data, and who on
                     the team does what
-    PRODUCT.md      product context for design work
-    VISION.md       where we are going: a full research tool (projects,
+      VISION.md     where we are going: a full research tool (projects,
                     notes, tools, export)
-    RESEARCH-TOOL-DESIGN.md  the first slice of the vision, designed:
+      RESEARCH-TOOL-DESIGN.md  the first slice of the vision, designed:
                     projects gear, routes, export gear, tools, work order
-    OBJECTIVES.md   what we prove with the data, how it is measured, system design
-    ENGINE.md       the mathematical engine, draft: every formula and output
-    QUESTIONS.md    open machinery decisions with proposals, to be answered
-    PROTOCOL.md     how an experiment is planned, run and recorded in git,
+      OBJECTIVES.md what we prove with the data, how it is measured, system design
+      ENGINE.md     the mathematical engine, draft: every formula and output
+      QUESTIONS.md  open machinery decisions with proposals, to be answered
+      PROTOCOL.md   how an experiment is planned, run and recorded in git,
                     and the rules for claims
-    DECISIONS.md    every technical, mathematical or statistical choice the
+      DECISIONS.md  every technical, mathematical or statistical choice the
                     team has made, with who made it and why
+      DEMO.md, JUDGE-FEEDBACK.md, MATH-REVIEW.md, RESEARCH-PLAN.md,
+      RESEARCHER-WORKFLOWS.md, REVIEW.md
+    PRODUCT.md      product context for design work (stays here: the design tooling reads it)
     AGENTS.md       rules for AI agents working here
     pyproject.toml  the Python analysis environment, managed by uv (D-024)
 
@@ -107,7 +111,7 @@ Dependencies point one way:
 TypeScript on the web (React + Vite) in a pnpm workspace; Rust is planned
 for some gears later. Data analysis (experiments, scripts, cross-checks)
 is in Python with uv (D-024); anything the app runs stays in TypeScript.
-The full list of choices, with who made them, is in DECISIONS.md. The data
+The full list of choices, with who made them, is in docs/DECISIONS.md. The data
 store is not chosen yet.
 
 ## Running
@@ -117,7 +121,7 @@ Needs Node 22 or newer and pnpm. Unzip the organiser's dataset into
 
     pnpm install
     pnpm dev          # API on :8787 and the website on :5173
-    pnpm demo         # the demo: data up to 1 June 2025, then a live HL7 lab feed (DEMO.md)
+    pnpm demo         # the demo: data up to 1 June 2025, then a live HL7 lab feed (docs/DEMO.md)
     AEI_SITES=deploy/container/config/sites.example.json pnpm dev:api   # a second hospital on the same server (deploy/integration.md)
     pnpm test         # unit tests (Vitest)
     pnpm typecheck

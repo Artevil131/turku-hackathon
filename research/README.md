@@ -1,7 +1,7 @@
 # research
 
 Background reading notes with sources. They describe the field and decide
-nothing; choices go to DECISIONS.md.
+nothing; choices go to docs/DECISIONS.md.
 
 | Note | What it covers |
 |---|---|

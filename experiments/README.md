@@ -1,6 +1,6 @@
 # experiments
 
-The lab notebook (PROTOCOL.md). One directory per experiment,
+The lab notebook (docs/PROTOCOL.md). One directory per experiment,
 `NNNN-slug/README.md`, started from `TEMPLATE.md`. The README in each
 directory is the record; this table is only a way in, so when it and a
 record disagree, the record wins. Add a row when an experiment closes.
