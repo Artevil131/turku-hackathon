@@ -7,7 +7,7 @@ const clean: QualityResponse = { checked: { patients: 10, cultures: 20, isolates
 describe("data quality disclosure", () => {
   it("links directly from doctor source to the data checks, without inventing a check count", () => {
     const html = renderToStaticMarkup(<QualityResult data={clean} locale="fi" />);
-    expect(html).toContain('href="#settings?section=data"');
+    expect(html).toContain('href="#data?section=quality"');
     expect(html).toContain("Aineiston tarkistukset: 0 huomiota");
   });
   it("distinguishes a completed clean check from loading and clinical validation", () => {

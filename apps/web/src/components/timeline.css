@@ -647,3 +647,13 @@
   min-height: 0;
   min-width: 0;
 }
+
+.ws-body > .timeline-window {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+}
+
+.timeline-window .hs {
+  width: 100%;
+}

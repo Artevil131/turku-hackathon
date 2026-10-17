@@ -265,6 +265,7 @@ export function Sidebar({
             <button
               type="button"
               className="sb-item"
+              data-page-data
               aria-current={page === "data" ? "page" : undefined}
               onClick={() => onPage("data")}
               title={t(locale, "shellData")}

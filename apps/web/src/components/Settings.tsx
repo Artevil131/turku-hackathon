@@ -1,28 +1,20 @@
-import type { AeiClient } from "@aei/contract";
 import { type Locale, siteName, t } from "@aei/i18n";
-import { useEffect, useRef } from "react";
 import { useSites } from "../sites.ts";
-import { DataQuality } from "./DataQuality.tsx";
 import { InfoButton } from "./Info.tsx";
+import { AUDIENCE_KEYS, AUDIENCES, type Audience } from "./start/audience.ts";
 
-// Settings: things a user sets once. Kept off the working pages.
+// Settings: things a user sets once: the language, the hospital, the Start-as preset (which also sets the
+// density). The data checks moved to Data.
 
 interface Props {
-  client: AeiClient;
   locale: Locale;
   onLocale: (l: Locale) => void;
-  onResetRole: () => void;
+  audience: Audience;
+  onAudience: (a: Audience) => void;
 }
 
-export function Settings({ client, locale, onLocale, onResetRole }: Props) {
+export function Settings({ locale, onLocale, audience, onAudience }: Props) {
   const { sites, site, multi, setSite } = useSites();
-  const dataRef = useRef<HTMLElement>(null);
-  useEffect(() => {
-    if (new URLSearchParams(location.hash.split("?")[1]).get("section") === "data") {
-      dataRef.current?.scrollIntoView({ block: "start" });
-      dataRef.current?.focus({ preventScroll: true });
-    }
-  }, []);
   return (
     <section className="settings glass" aria-labelledby="settings-title">
       <h1 id="settings-title" className="result-title">
@@ -52,6 +44,27 @@ export function Settings({ client, locale, onLocale, onResetRole }: Props) {
         </div>
       </fieldset>
 
+      <fieldset className="field setting" data-audience>
+        <legend className="field-label">
+          {t(locale, "settingsAudience")}
+          <InfoButton locale={locale}>{t(locale, "settingsAudienceHint")}</InfoButton>
+        </legend>
+        <div className="choice-row">
+          {AUDIENCES.map((value) => (
+            <button
+              key={value}
+              type="button"
+              className="choice"
+              aria-pressed={audience === value}
+              data-audience-choice={value}
+              onClick={() => onAudience(value)}
+            >
+              {t(locale, AUDIENCE_KEYS[value])}
+            </button>
+          ))}
+        </div>
+      </fieldset>
+
       {multi ? (
         <fieldset className="field setting">
           <legend className="field-label">
@@ -69,23 +82,11 @@ export function Settings({ client, locale, onLocale, onResetRole }: Props) {
       ) : null}
 
       <div className="field setting">
-        <span className="field-label">
-          {t(locale, "roleSetting")}
-          <InfoButton locale={locale}>{t(locale, "roleSettingHint")}</InfoButton>
-        </span>
-        <button type="button" className="btn" onClick={onResetRole}>
-          {t(locale, "forgetRole")}
-        </button>
+        <span className="field-label">{t(locale, "shellData")}</span>
+        <a className="btn" href="#data?section=quality">
+          {t(locale, "dataQuality")}
+        </a>
       </div>
-
-      <section className="field setting" id="settings-data" ref={dataRef} tabIndex={-1} aria-labelledby="settings-data-title">
-        <h2 className="field-label" id="settings-data-title">
-          {t(locale, "aboutData")}
-        </h2>
-        <p>{t(locale, "aboutDataText")}</p>
-        <h3 className="field-label">{t(locale, "qualityTitle")}</h3>
-        <DataQuality client={client} locale={locale} expanded />
-      </section>
 
       <div className="field setting">
         <a className="btn" href="#intro">

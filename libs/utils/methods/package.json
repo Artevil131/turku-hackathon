@@ -12,6 +12,8 @@
   "dependencies": {
     "@aei/alerts": "workspace:*",
     "@aei/coverage": "workspace:*",
-    "@aei/detect": "workspace:*"
+    "@aei/detect": "workspace:*",
+    "@aei/domain": "workspace:*",
+    "@aei/i18n": "workspace:*"
   }
 }

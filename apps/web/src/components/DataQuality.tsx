@@ -25,7 +25,7 @@ export function QualityResult({ locale, data, expanded = false }: { locale: Loca
   const fmt = (value: number) => new Intl.NumberFormat(locale).format(value);
   if (!expanded)
     return (
-      <a className="link" href="#settings?section=data">
+      <a className="link" href="#data?section=quality">
         {t(locale, "qualityLink", { n: fmt(n) })}
       </a>
     );

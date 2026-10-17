@@ -1,0 +1,140 @@
+/* Data: one page for every source, check and method, in four tabs. */
+
+.data-page {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 20px 4px 48px;
+  min-width: 0;
+}
+
+.data-head h1 {
+  margin: 0 0 6px;
+  font-size: var(--t-l);
+  font-weight: 600;
+}
+
+.data-head p {
+  max-width: 72ch;
+  margin: 0;
+  color: var(--ink-2);
+  line-height: 1.55;
+}
+
+.data-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--line);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.data-tabs button {
+  flex: none;
+  height: 40px;
+  padding: 0 14px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  background: none;
+  color: var(--ink-2);
+  font: inherit;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.data-tabs button:hover {
+  color: var(--ink);
+}
+
+.data-tabs button[aria-selected="true"] {
+  color: var(--live);
+  border-bottom-color: var(--live);
+}
+
+.data-tabs button:focus-visible {
+  outline: 2px solid var(--live);
+  outline-offset: -2px;
+}
+
+.data-panel {
+  min-width: 0;
+}
+
+.data-panel h2 {
+  margin: 0 0 8px;
+  font-size: var(--t-m);
+  font-weight: 600;
+}
+
+.data-panel h3 {
+  margin: 20px 0 8px;
+  font-size: var(--t-s);
+  font-weight: 600;
+}
+
+.data-note {
+  max-width: 72ch;
+  margin: 0 0 16px;
+  color: var(--ink-2);
+  line-height: 1.55;
+}
+
+.data-quality,
+.data-own {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--glass-1);
+}
+
+.data-own-empty {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  padding: 24px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-panel);
+  color: var(--ink-3);
+}
+
+.data-own-empty p {
+  margin: 0;
+  color: var(--ink-2);
+}
+
+.data-own-empty button {
+  min-height: var(--control-h);
+  padding: 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control);
+  background: var(--glass-1);
+  color: var(--ink-3);
+  font: inherit;
+  cursor: not-allowed;
+}
+
+.data-own-empty small {
+  font-size: var(--t-xs);
+}
+
+/* Connect and Method were pages; inside Data they drop their outer margins. */
+.data-panel .connect,
+.data-panel .method {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+@media (max-width: 760px) {
+  .data-page {
+    padding: 12px 0 32px;
+  }
+  .data-quality,
+  .data-own {
+    padding: 14px;
+  }
+}

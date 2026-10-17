@@ -108,9 +108,6 @@ importers:
 
   apps/web:
     dependencies:
-      '@aei/methods':
-        specifier: workspace:*
-        version: link:../../libs/utils/methods
       '@aei/ask':
         specifier: workspace:*
         version: link:../../libs/utils/ask
@@ -135,6 +132,9 @@ importers:
       '@aei/ingest':
         specifier: workspace:*
         version: link:../../libs/utils/ingest
+      '@aei/methods':
+        specifier: workspace:*
+        version: link:../../libs/utils/methods
       '@aei/projects':
         specifier: workspace:*
         version: link:../../libs/utils/projects
@@ -288,15 +288,15 @@ importers:
 
   libs/utils/export:
     dependencies:
-      '@aei/methods':
-        specifier: workspace:*
-        version: link:../methods
       '@aei/contract':
         specifier: workspace:*
         version: link:../contract
       '@aei/domain':
         specifier: workspace:*
         version: link:../domain
+      '@aei/methods':
+        specifier: workspace:*
+        version: link:../methods
       '@aei/projects':
         specifier: workspace:*
         version: link:../projects
@@ -339,6 +339,12 @@ importers:
       '@aei/detect':
         specifier: workspace:*
         version: link:../detect
+      '@aei/domain':
+        specifier: workspace:*
+        version: link:../domain
+      '@aei/i18n':
+        specifier: workspace:*
+        version: link:../i18n
 
   libs/utils/projects:
     dependencies:

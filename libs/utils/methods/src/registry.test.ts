@@ -57,6 +57,16 @@ it("fills named values, defaults and both locales without interpreting replaceme
   expect(fillSentence(entry, { observed: 0, expected: "$&" })).toBe("0/$&");
 });
 
+it("writes every filled sentence in words, never as JSON, in both locales", () => {
+  for (const method of registry)
+    for (const locale of ["en", "fi"] as const) {
+      const sentence = fillSentence(method, {}, locale);
+      expect(sentence, `${method.id} ${locale}`).not.toMatch(/[[\]"{}]/);
+    }
+  expect(fillSentence(methods.phenotypeExcess, {}, "en")).toContain("ESBL, MRSA, VRE and CPE");
+  expect(fillSentence(methods.phenotypeExcess, {}, "fi")).toContain("ESBL, MRSA, VRE ja CPE");
+});
+
 it("has complete localized text, parameter provenance and no unresolved default placeholders", () => {
   for (const method of registry) {
     expect(method.gear.module).toMatch(/^@aei\//);

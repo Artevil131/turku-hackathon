@@ -36,8 +36,7 @@ import { hashPage, hashParams, sharedQuery, writeSharedParam } from "./url.ts";
 
 // Pages a first visit rarely opens load on demand, so home and the doctor's list paint sooner.
 const ResearchBoard = lazy(() => import("./components/research/ResearchBoard.tsx").then((m) => ({ default: m.ResearchBoard })));
-const ConnectPage = lazy(() => import("./components/connect/ConnectPage.tsx").then((m) => ({ default: m.ConnectPage })));
-const MethodPage = lazy(() => import("./components/method/MethodPage.tsx").then((m) => ({ default: m.MethodPage })));
+const DataPage = lazy(() => import("./components/data-page/DataPage.tsx").then((m) => ({ default: m.DataPage })));
 const Settings = lazy(() => import("./components/Settings.tsx").then((m) => ({ default: m.Settings })));
 const PitchIntro = lazy(() => import("./components/intro/PitchIntro.tsx").then((m) => ({ default: m.PitchIntro })));
 
@@ -47,8 +46,8 @@ const NO_FLOWS: readonly Flow[] = [];
 // [data-theme="dark"]; switch this (or add a toggle) to bring them back.
 const THEME: "light" | "dark" = "light";
 
-type Page = "home" | "project" | "data" | "method" | "settings" | "intro";
-const PAGES: readonly Page[] = ["home", "project", "data", "method", "settings", "intro"];
+type Page = "home" | "project" | "data" | "settings" | "intro";
+const PAGES: readonly Page[] = ["home", "project", "data", "settings", "intro"];
 
 function stored<T extends string>(key: string, fallback: T, valid: (v: string) => boolean): T {
   try {
@@ -71,7 +70,7 @@ function store(key: string, value: string | null) {
 /**
  * The page is in the URL hash so it can be bookmarked. Old routes still work: #research and #workspace
  * open the project view with the same params, #doctor opens Treat a patient with its filters (D-065),
- * #connect opens Data.
+ * #connect and #method open their sections of Data, as does #settings?section=data (the data checks).
  */
 function pageFromHash(): Page {
   const value = hashPage();
@@ -89,8 +88,18 @@ function pageFromHash(): Page {
     history.replaceState(null, "", `#${PROJECT_PAGE}${query ? `?${query}` : ""}`);
     return "project";
   }
-  if (value === "connect") {
-    history.replaceState(null, "", `#data${sharedQuery()}`);
+  const section =
+    value === "connect"
+      ? "feeds"
+      : value === "method"
+        ? "methods"
+        : value === "settings" && hashParams().get("section") === "data"
+          ? "quality"
+          : null;
+  if (section) {
+    const params = new URLSearchParams(sharedQuery());
+    if (section !== "feeds") params.set("section", section);
+    history.replaceState(null, "", `#data${params.size ? `?${params}` : ""}`);
     return "data";
   }
   if (value === "start") return "home";
@@ -308,9 +317,7 @@ export function App() {
         ? t(locale, "shellData")
         : page === "settings"
           ? t(locale, "settings")
-          : page === "method"
-            ? t(locale, "methodTitle")
-            : t(locale, "shellHome");
+          : t(locale, "shellHome");
   useEffect(() => {
     document.title = page === "home" ? t(locale, "appName") : `${title} · ${t(locale, "appName")}`;
   }, [page, title, locale]);
@@ -343,7 +350,7 @@ export function App() {
             <div className="app" data-rail={collapsed && !phone ? "" : undefined}>
               <Sidebar
                 locale={locale}
-                page={page === "method" ? "data" : page}
+                page={page}
                 tabs={tabs}
                 activeKey={activeKey}
                 collapsed={collapsed}
@@ -452,10 +459,19 @@ export function App() {
                           }}
                         />
                       ) : null}
-                      {page === "method" ? <MethodPage client={client} locale={locale} asOf={live.clock?.asOf ?? null} /> : null}
-                      {page === "data" ? <ConnectPage client={live.client} locale={locale} /> : null}
+                      {page === "data" ? (
+                        <DataPage client={client} liveClient={live.client} locale={locale} asOf={live.clock?.asOf ?? null} />
+                      ) : null}
                       {page === "settings" ? (
-                        <Settings client={client} locale={locale} onLocale={setLocale} onResetRole={() => setAudience("control")} />
+                        <Settings
+                          locale={locale}
+                          onLocale={setLocale}
+                          audience={audience}
+                          onAudience={(next) => {
+                            store("aei.research.layout.v2", null);
+                            setAudience(next);
+                          }}
+                        />
                       ) : null}
                     </Suspense>
                   </Fragment>

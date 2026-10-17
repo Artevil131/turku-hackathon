@@ -83,7 +83,7 @@ export const shellEn = {
 export const shellFi: Record<keyof typeof shellEn, string> = {
   shellNav: "Sovellus",
   shellHome: "Etusivu",
-  shellOpen: "Avoinna",
+  shellOpen: "Avoimet",
   shellNoOpen: "Mitään ei ole auki. Aloita etusivulta.",
   shellNewProject: "Uusi projekti",
   shellCloseTab: "Sulje {name}",

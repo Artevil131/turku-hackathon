@@ -64,7 +64,9 @@ function Source({ locale, title, status, children }: { locale: Locale; title: st
   );
 }
 
-export function ConnectPage({ client, locale }: { client: AeiClient; locale: Locale }) {
+/** `embedded`: a section of the Data page, which carries the page's one h1. */
+export function ConnectPage({ client, locale, embedded = false }: { client: AeiClient; locale: Locale; embedded?: boolean }) {
+  const Title = embedded ? "h2" : "h1";
   const meta = useProbe<Meta>(() => client.meta());
   const quality = useProbe<QualityResponse>(() => client.quality());
   const regional = useProbe<RegionalResponse>(() => client.regional({}));
@@ -383,9 +385,9 @@ export function ConnectPage({ client, locale }: { client: AeiClient; locale: Loc
   return (
     <section className="connect" aria-labelledby="connect-title">
       <header className="cx-head">
-        <h1 id="connect-title" className="result-title">
+        <Title id="connect-title" className="result-title">
           {t(locale, "connectTitle")}
-        </h1>
+        </Title>
         <p className="cx-lead">{t(locale, "connectLead")}</p>
         <p className="cx-note">{t(locale, "connectDemoNote")}</p>
       </header>

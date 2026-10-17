@@ -164,7 +164,20 @@ function weeksFor(w: WeeklyResponse, a: CountAlert) {
     .slice(-30);
 }
 
-export function MethodPage({ client, locale, asOf }: { client: AeiClient; locale: Locale; asOf: string | null }) {
+/** `embedded`: the Methods section of the Data page, which carries the page's one h1 and its own main. */
+export function MethodPage({
+  client,
+  locale,
+  asOf,
+  embedded = false,
+}: {
+  client: AeiClient;
+  locale: Locale;
+  asOf: string | null;
+  embedded?: boolean;
+}) {
+  const Root = embedded ? "div" : "main";
+  const Title = embedded ? "h2" : "h1";
   const { data: cov, unit } = useCoverage(client, asOf);
   const { alert, weekly } = useAlert(client, asOf);
   const date = (d: string) => formatDate(locale, d);
@@ -240,9 +253,9 @@ export function MethodPage({ client, locale, asOf }: { client: AeiClient; locale
   );
 
   return (
-    <main className="method" id="main">
+    <Root className="method" id={embedded ? undefined : "main"}>
       <header className="mt-top">
-        <h1>{t(locale, "methodTitle")}</h1>
+        <Title>{t(locale, "methodTitle")}</Title>
         <p>
           {t(locale, "methodLead")}
           {asOf ? <span className="mt-asof"> · {date(asOf)}</span> : null}
@@ -311,7 +324,7 @@ export function MethodPage({ client, locale, asOf }: { client: AeiClient; locale
         }
       />
       <RegisteredMethods locale={locale} ids={["isolates", "patients", "alerts"]} />
-    </main>
+    </Root>
   );
 }
 

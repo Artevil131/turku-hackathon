@@ -1,6 +1,8 @@
 import { NEW_IN_UNIT_DAYS, NEW_IN_UNIT_PHENOTYPES, SAMPLING_DROP_SUPPRESSION_DAYS } from "@aei/alerts";
 import { COMBINATION_LIMIT, COVERAGE_DEFAULTS, MAX_UNTESTED, MIN_PARTNER_GAIN, RECENT_DAYS, THRESHOLDS, WILSON_Z } from "@aei/coverage";
 import { EPISODE_DAYS, LIVE_PHENOTYPES, LIVE_SETTINGS, MIN_BASELINE_ISOLATES, PROFILE_SMOOTHING, SURVEILLANCE_PAIRS } from "@aei/detect";
+import type { AntibioticCode, Phenotype, Specimen } from "@aei/domain";
+import { antibioticName, phenotypeName, specimenName } from "@aei/i18n";
 
 export type Locale = "en" | "fi";
 export type Localized = Record<Locale, string>;
@@ -330,11 +332,39 @@ export const methods = Object.fromEntries(registry.map((method) => [method.id, m
 export function defaultsFor(id: MethodId): Record<string, ParameterValue> {
   return Object.fromEntries(methods[id].parameters.map((p) => [p.name, p.default]));
 }
+const PHENOTYPES = new Set(["esbl", "mrsa", "vre", "cpe"]);
+/** "A, B and C" / "A, B ja C" (British English: no serial comma). */
+function list(locale: Locale, items: string[]): string {
+  return new Intl.ListFormat(locale === "fi" ? "fi" : "en-GB", { type: "conjunction" }).format(items);
+}
+/** A parameter value as words in the sentence's language: lists joined, phenotypes and antibiotics by name. */
+export function formatValue(value: unknown, locale: Locale = "en"): string {
+  if (Array.isArray(value))
+    return list(
+      locale,
+      value.map((item) => formatValue(item, locale)),
+    );
+  if (value && typeof value === "object") {
+    const v = value as Record<string, unknown>;
+    if (typeof v.organism === "string" && typeof v.antibiotic === "string") {
+      const drug = antibioticName(locale, v.antibiotic as AntibioticCode);
+      const specimen = typeof v.specimen === "string" ? ` (${specimenName(locale, v.specimen as Specimen)})` : "";
+      return `${v.organism} – ${drug}${specimen}`;
+    }
+    return list(
+      locale,
+      Object.entries(v).map(([key, item]) => `${key} ${formatValue(item, locale)}`),
+    );
+  }
+  if (typeof value === "string" && PHENOTYPES.has(value)) return phenotypeName(value as Phenotype);
+  if (typeof value === "boolean") return locale === "fi" ? (value ? "kyllä" : "ei") : value ? "yes" : "no";
+  return String(value);
+}
 export function fillSentence(entry: MethodEntry, values: Record<string, unknown> = {}, locale: Locale = "en"): string {
   const parameters = { ...Object.fromEntries(entry.parameters.map((p) => [p.name, p.default])), ...values };
   return entry.sentence[locale].replace(/\{(\w+)\}/g, (placeholder, key: string) => {
     const value = parameters[key];
-    return value === undefined ? placeholder : typeof value === "object" ? JSON.stringify(value) : String(value);
+    return value === undefined ? placeholder : formatValue(value, locale);
   });
 }
 export function registryJson(): string {

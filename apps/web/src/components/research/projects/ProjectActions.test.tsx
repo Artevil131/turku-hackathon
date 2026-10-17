@@ -46,18 +46,31 @@ describe("project actions in the sidebar", () => {
   });
   it("enables Reproduce and Share only for a saved project", () => {
     const props = { client: {} as AeiClient, locale: "en" as const, clock: "2025-06-12", board, onReproduce: vi.fn() };
-    expect(renderToStaticMarkup(<ProjectActions {...props} selection={selection} />)).toMatch(/<button type="button" class="sb-item" data-open-reproduce="true" title="Reproduce">/);
+    expect(renderToStaticMarkup(<ProjectActions {...props} selection={selection} />)).toMatch(
+      /<button type="button" class="sb-item" data-open-reproduce="true" title="Reproduce">/,
+    );
     const none = renderToStaticMarkup(<ProjectActions {...props} selection={{ ...selection, id: null, response: null }} />);
     expect(none).toMatch(/data-open-reproduce="true" disabled=""/);
     expect(none).toMatch(/data-share="true" disabled=""/);
   });
   it("provides Finnish copy and leaves export disabled until the clock is known", () => {
-    const html = renderToStaticMarkup(<ProjectActions client={{} as AeiClient} locale="fi" clock={null} board={board} selection={selection} />);
+    const html = renderToStaticMarkup(
+      <ProjectActions client={{} as AeiClient} locale="fi" clock={null} board={board} selection={selection} />,
+    );
     expect(html).toMatch(/id="pm-export"[^>]*disabled=""/);
     expect(html).toContain(">Vie</span>");
   });
   it("marks a frozen project in its sidebar entry, with changed data", () => {
-    const tab = { key: "p:study", project: "study", quick: null, name: "Study", frozen: true, asOf: "2025-05-12", drift: true, hash: "#project?project=study" };
+    const tab = {
+      key: "p:study",
+      project: "study",
+      quick: null,
+      name: "Study",
+      frozen: true,
+      asOf: "2025-05-12",
+      drift: true,
+      hash: "#project?project=study",
+    };
     for (const [locale, frozen, drift] of [
       ["en", "Frozen at 2025-05-12", "data changed since freezing"],
       ["fi", "Jäädytetty 2025-05-12", "aineisto muuttunut jäädyttämisen jälkeen"],

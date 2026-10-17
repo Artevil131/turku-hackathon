@@ -43,7 +43,7 @@ const apiPort = Number(opt("api-port", "8798"));
 const webPort = Number(opt("web-port", "5176"));
 const outDir = resolve(opt("out", join(WEB, "smoke-out")));
 const interactionGroup = opt("interactions", "all");
-const ROUTES = opt("routes", "start,project,research,workspace,data,method,settings,intro").split(",");
+const ROUTES = opt("routes", "start,project,research,workspace,data,connect,method,settings,intro").split(",");
 const INTERACTIONS = interactionGroup === "all" || interactionGroup === "doctor" ? [] : interactionGroup.split(",").filter(Boolean);
 // --desktop 1366x768 runs the desktop checks and interactions at a laptop-sized window instead of 1440x1000.
 const desktopSize = /^(\d+)x(\d+)$/.exec(opt("desktop", "1440x1000")) ?? ["", "1440", "1000"];
@@ -55,7 +55,7 @@ const external = process.env.SMOKE_URL?.replace(/\/$/, "");
 // A route name is its hash; home is the empty hash.
 const hashOf = (route) => (route === "home" ? "" : `#${route}`);
 // Where an old route lands now: the project view replaced the workspace, Data replaced Connect.
-const LANDS = { start: "#start", research: "#project", workspace: "#project", doctor: "#project", connect: "#data" };
+const LANDS = { start: "#start", research: "#project", workspace: "#project", doctor: "#project", connect: "#data", method: "#data" };
 const landingOf = (route) => LANDS[route] ?? hashOf(route);
 const urlOf = (route) => `${base}/${hashOf(route)}`;
 const base = external ?? `http://localhost:${webPort}`;
@@ -450,11 +450,11 @@ async function main() {
         // Blood and severe, set through the URL the way a shared link would (the filters follow the hash).
         await evaluate(
           cdp,
-          `(() => { const q = new URLSearchParams(location.hash.split('?')[1] ?? ''); q.set('site', 'blood'); q.set('sev', 'severe'); location.hash = 'doctor?' + q; return true; })()`,
+          `(() => { const q = new URLSearchParams(location.hash.split('?')[1] ?? ''); q.set('cov.site', 'blood'); q.set('cov.sev', 'severe'); location.hash = 'project?' + q; return true; })()`,
         );
         if (
           !(await waitIn(
-            `location.hash.includes('site=blood') && location.hash.includes('sev=severe') && !!document.querySelector('.cl[aria-busy=false] .cl-row')`,
+            `location.hash.includes('cov.site=blood') && location.hash.includes('cov.sev=severe') && !!document.querySelector('.cl[aria-busy=false] .cl-row')`,
           ))
         )
           reasons.push("blood + severe did not load coverage");
@@ -493,7 +493,7 @@ async function main() {
             !(await waitIn(`!!document.querySelector('.cl-row[aria-expanded=true]') && !!document.querySelector('#dr-details .dt-name')`))
           )
             reasons.push("real tap did not open antibiotic details");
-          if (!(await evaluate(cdp, `location.hash.startsWith('#doctor') && !document.querySelector('.cmd[data-expanded]')`)))
+          if (!(await evaluate(cdp, `location.hash.startsWith('#project') && !document.querySelector('.cmd[data-expanded]')`)))
             reasons.push("details tap opened navigation or search");
           await screenshot(cdp, join(outDir, `doctor-details-${vp.name}.png`));
         }
@@ -501,59 +501,66 @@ async function main() {
           cdp,
           `document.querySelector('.dp-close')?.click(); document.querySelector('.cl-disclosure .data-quality a')?.click()`,
         );
-        if (!(await waitIn(`location.hash === '#settings?section=data' && !!document.querySelector('#settings-data .quality-results')`)))
+        if (!(await waitIn(`location.hash === '#data?section=quality' && !!document.querySelector('#data-quality .quality-results')`)))
           reasons.push("source line did not lead to loaded quality checks");
       },
       vp,
     );
   }
 
-  const tabRoutes = ["workspace", "method", "connect", "home"];
+  // The sidebar is the navigation: Home, an open view, Data and Settings, each marked current when shown.
   await interaction("tabs", async (idle, reasons) => {
-    await load(cdp, urlOf("home"), idle);
-    for (const route of tabRoutes) {
-      const label = { home: 0, workspace: 1, method: 2, connect: 3 }[route];
-      // Projects, the current workspace, Method and Connect.
-      const clicked = await evaluate(
-        cdp,
-        `(() => { const b = document.querySelectorAll("nav.sections button.section-tab")[${label}]; if (!b) return false; b.click(); return true; })()`,
-      );
-      if (!clicked) {
-        reasons.push(`no tab for ${route}`);
-        continue;
-      }
+    await load(cdp, urlOf("research"), idle);
+    const steps = [
+      [".sb-home", "", ".sb-home"],
+      ['.sb-tab[data-tab="view"] .sb-item', "#project", '.sb-tab[data-tab="view"] .sb-item'],
+      ["[data-page-data]", "#data", "[data-page-data]"],
+      ["[data-settings]", "#settings", "[data-settings]"],
+      [".sb-home", "", ".sb-home"],
+    ];
+    for (const [selector, hash, current] of steps) {
+      const target = current ?? `.sb-item[aria-current="page"]`;
+      await evaluate(cdp, `[...document.querySelectorAll(${JSON.stringify(selector)})].at(-1)?.click()`);
       const ok = await waitIn(
-        `location.hash.split("?")[0] === ${JSON.stringify(hashOf(route))} && document.querySelectorAll("nav.sections button.section-tab")[${label}]?.getAttribute("aria-current") === "page" && !!document.querySelector("main h1")?.textContent.trim()`,
+        `location.hash.split("?")[0] === ${JSON.stringify(hash)} && document.querySelector(${JSON.stringify(target)})?.getAttribute("aria-current") === "page" && !!document.querySelector("main h1")?.textContent.trim()`,
         15_000,
       );
       if (!ok) {
-        const seen = await evaluate(
-          cdp,
-          `location.hash + " | h1: " + (document.querySelector("main h1")?.textContent ?? "none") + " | main: " + (document.querySelector("main")?.innerText ?? "").slice(0, 120).replace(/\\s+/g, " ")`,
-        );
-        reasons.push(`tab ${route}: no heading 15 s after the click (${seen})`);
+        const seen = await evaluate(cdp, `location.hash + " | h1: " + (document.querySelector("main h1")?.textContent ?? "none")`);
+        reasons.push(`sidebar ${selector}: not current with a heading 15 s after the click (${seen})`);
       }
       await idle();
     }
+    // The rail keeps every destination; its state is remembered.
+    await evaluate(cdp, `document.querySelector(".sb-collapse").click()`);
+    if (
+      !(await waitIn(
+        `!!document.querySelector('.sidebar[data-rail]') && document.querySelector('.sidebar').getBoundingClientRect().width < 80`,
+      ))
+    )
+      reasons.push("the sidebar did not collapse to a rail");
+    await screenshot(cdp, join(outDir, "sidebar-rail.png"));
+    await evaluate(cdp, `document.querySelector(".sb-collapse").click()`);
+    if (!(await waitIn(`!document.querySelector('.sidebar[data-rail]')`))) reasons.push("the rail did not expand again");
   });
 
   // The replay clock is shared by a running app; the run puts it back at the end (see "seek" below).
   await interaction("step-one-day", async (idle, reasons) => {
-    await load(cdp, urlOf("workspace"), idle);
-    const readout = `document.querySelector(".timeline .tl-readout")?.textContent ?? ""`;
+    await load(cdp, urlOf("project"), idle);
+    const readout = `document.querySelector(".viewbar .clock-readout")?.textContent ?? ""`;
     const before = await evaluate(cdp, readout);
-    if (!before || before === "–") reasons.push("no as-of date in the timeline readout");
+    if (!before || before === "–") reasons.push("no as-of date in the replay clock");
     const clicked = await evaluate(
       cdp,
       `(() => {
-      const b = document.querySelector('.timeline .tl-steps button[data-stop="2"]');
+      const b = document.querySelector('.viewbar .clock [data-step="1"]');
       if (!b || b.disabled) return false; b.click(); return true; })()`,
     );
     if (!clicked) {
-      reasons.push("no enabled step-one-day button in the timeline");
+      reasons.push("no enabled step-one-day button in the replay clock");
       return;
     }
-    const changed = await waitIn(`(${readout}) !== ${JSON.stringify(before)} && !document.querySelector(".timeline[aria-busy]")`, 15_000);
+    const changed = await waitIn(`(${readout}) !== ${JSON.stringify(before)} && !document.querySelector(".clock[aria-busy]")`, 15_000);
     if (!changed) reasons.push(`as-of date still "${before}" 15 s after stepping one day`);
     await idle();
   });
@@ -561,9 +568,9 @@ async function main() {
   await interaction("language", async (idle, reasons) => {
     // The language is chosen only in Settings; the header has no switch.
     await load(cdp, urlOf("settings"), idle);
-    if (await evaluate(cdp, `!!document.querySelector(".top-tools button[lang]")`)) reasons.push("a language button in the header");
+    if (await evaluate(cdp, `!!document.querySelector(".sidebar button[lang]")`)) reasons.push("a language button in the sidebar");
     const before = await evaluate(cdp, `document.documentElement.lang`);
-    const nav = await evaluate(cdp, `document.querySelector("nav.sections")?.textContent ?? ""`);
+    const nav = await evaluate(cdp, `document.querySelector("nav.sidebar")?.textContent ?? ""`);
     const clicked = await evaluate(
       cdp,
       `(() => {
@@ -577,8 +584,8 @@ async function main() {
     if (clicked === before) reasons.push(`the language button offers "${clicked}", the page is already in it`);
     const changed = await waitIn(`document.documentElement.lang === ${JSON.stringify(clicked)}`);
     if (!changed) reasons.push(`html lang still "${before}" after choosing "${clicked}"`);
-    if (!(await waitIn(`(document.querySelector("nav.sections")?.textContent ?? "") !== ${JSON.stringify(nav)}`)))
-      reasons.push(`tab labels unchanged after choosing "${clicked}"`);
+    if (!(await waitIn(`(document.querySelector("nav.sidebar")?.textContent ?? "") !== ${JSON.stringify(nav)}`)))
+      reasons.push(`sidebar labels unchanged after choosing "${clicked}"`);
     await idle();
   });
 
@@ -701,7 +708,7 @@ async function main() {
       // What the fitted default shows depends on the board's measured height, so each
       // expectation is read from the page: a window alone in its column takes the column with it.
       let collapsed = 0;
-      for (const id of ["math", "map"]) {
+      for (const id of ["math", "map", "timeline"]) {
         const before = await evaluate(cdp, columns);
         const alone = await evaluate(
           cdp,
@@ -716,7 +723,7 @@ async function main() {
         if (alone) collapsed++;
         if (await evaluate(cdp, empty)) reasons.push(`an empty column remains after closing ${id}`);
       }
-      if (!collapsed) reasons.push("neither Alert math nor Map was alone in its column: column removal went untested");
+      if (!collapsed) reasons.push("no closed window was alone in its column: column removal went untested");
       const fill = await evaluate(
         cdp,
         `(() => { const a = document.querySelector('.ws-area').getBoundingClientRect(); const c = [...document.querySelectorAll('.ws-column')];
@@ -775,7 +782,7 @@ async function main() {
       // Reopen into the previous stack, maximize, then restore exactly.
       await click("#ws-win-math .ws-close");
       await click("#ws-tray-button");
-      const listed = `(() => { const l = [...document.querySelectorAll('.ws-pop-list')]; return !!l[0]?.querySelector('[data-reopen="math"]') && !l[0].querySelector('input') && !!l[1]?.querySelector('input'); })()`;
+      const listed = `(() => { const items = [...document.querySelectorAll('.sb-pop [data-reopen], .sb-pop [data-toggle]')]; const math = items.findIndex(e => e.dataset.reopen === 'math'); const firstOpen = items.findIndex(e => e.dataset.toggle); return math >= 0 && firstOpen > math && items[firstOpen].getAttribute('role') === 'menuitemcheckbox'; })()`;
       if (!(await evaluate(cdp, listed))) reasons.push("the tray does not list closed windows first, with an open button");
       await click('[data-reopen="math"]');
       if (!(await waitIn(`${order} === ${JSON.stringify(initial)}`))) reasons.push("reopen changed the stack order");
@@ -914,7 +921,7 @@ async function main() {
         if ((await evaluate(cdp, order)) === initial) reasons.push(`preset ${p} made no visible change`);
       }
       await click("#ws-tray-button");
-      await click(".ws-pop-reset");
+      await click("[data-reset]");
       if ((await evaluate(cdp, order)) !== initial) reasons.push("reset did not visibly restore the default stack order");
       await cdp.send("Page.navigate", { url: "about:blank" });
       await load(cdp, urlOf("research"), idle);
@@ -969,7 +976,7 @@ async function main() {
       if (!maxFits) reasons.push("maximize in an overflowing board did not fit the viewport");
       await click("#ws-win-math .ws-maximize");
       await click("#ws-tray-button");
-      await click(".ws-pop-reset");
+      await click("[data-reset]");
       // Edge drop from a two-column preset creates a third column, never a free-floating window.
       await click("#ws-tray-button");
       await click('[data-preset="map"]');
@@ -987,7 +994,7 @@ async function main() {
       if (!(await waitIn(`document.querySelectorAll('.ws-column').length === 3`)))
         reasons.push("edge drop did not create a third docked column");
       await click("#ws-tray-button");
-      await click(".ws-pop-reset");
+      await click("[data-reset]");
       await cdp.send("Emulation.setDeviceMetricsOverride", { width: 1100, height: 768, deviceScaleFactor: 1, mobile: false });
       // The language is chosen only in Settings; switch there when an earlier interaction has not already.
       if ((await evaluate(cdp, "document.documentElement.lang")) !== "en") {
@@ -1553,7 +1560,7 @@ async function main() {
       reasons.push("home summary has no period selector");
       return;
     }
-    const headline = await evaluate(cdp, `document.querySelector(".hm-head h1")?.textContent`);
+    const headline = await evaluate(cdp, `document.querySelector(".hm-head :is(h1, h2)")?.textContent`);
     const keys = await evaluate(cdp, `JSON.stringify([...document.querySelectorAll(".hm-incidents .feed-row")].map(b => b.dataset.key))`);
     for (const days of [7, 28, 1]) {
       await evaluate(
@@ -1564,14 +1571,14 @@ async function main() {
         reasons.push(`period ${days} did not select`);
       const stable = await evaluate(
         cdp,
-        `document.querySelector(".hm-head h1")?.textContent === ${JSON.stringify(headline)} && JSON.stringify([...document.querySelectorAll(".hm-incidents .feed-row")].map(b => b.dataset.key)) === ${JSON.stringify(keys)}`,
+        `document.querySelector(".hm-head :is(h1, h2)")?.textContent === ${JSON.stringify(headline)} && JSON.stringify([...document.querySelectorAll(".hm-incidents .feed-row")].map(b => b.dataset.key)) === ${JSON.stringify(keys)}`,
       );
       if (!stable) reasons.push(`changing new period to ${days} hid or changed open incidents`);
     }
     if (
       !(await evaluate(
         cdp,
-        `document.querySelector(".hm-head h1")?.textContent.includes(document.documentElement.lang === "fi" ? "Avoimet tapahtumat" : "Open incidents")`,
+        `document.querySelector(".hm-head :is(h1, h2)")?.textContent.includes(document.documentElement.lang === "fi" ? "Avoimet tapahtumat" : "Open incidents")`,
       ))
     )
       reasons.push("home headline does not name open incidents");
