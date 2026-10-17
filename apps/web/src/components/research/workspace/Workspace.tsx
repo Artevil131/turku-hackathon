@@ -83,6 +83,7 @@ const TITLE_KEY = {
   reproduce: "boardReproduce",
   notebook: "notebookWindow",
   coverage: "boardCoverage",
+  timeline: "boardTimeline",
 } as const;
 
 /** A request to add a chart window: a new `key` adds `spec`. */
@@ -92,7 +93,7 @@ export interface ChartRequest {
 }
 
 /** The stacked order under 1100 px: the list first, the map last (as before). */
-const STACK_ORDER: readonly WinId[] = ["signals", "notebook", "math", "assistant", "map", "graph", "grid", "reproduce", "coverage"];
+const STACK_ORDER: readonly WinId[] = ["signals", "notebook", "math", "assistant", "map", "graph", "grid", "reproduce", "coverage", "timeline"];
 
 const RAIL_KEY = "aei.research.rail";
 /** Whether the tool rail is shown: open unless the researcher closed it (kept beside the layout). */

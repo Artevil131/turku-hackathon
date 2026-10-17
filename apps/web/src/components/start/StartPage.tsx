@@ -13,7 +13,7 @@ import { groupIncidents, openIncidents } from "../research/feed/model.ts";
 import { DeleteProjectDialog } from "../research/projects/ProjectDialogs.tsx";
 import { parseLayout } from "../research/workspace/layout.ts";
 import { QUICK_STARTS, TEMPLATE_KEYS, type Template } from "../research/workspace/templates.ts";
-import { AUDIENCE_KEYS, AUDIENCES, type Audience } from "./audience.ts";
+import type { Audience } from "./audience.ts";
 import { NewProjectDialog } from "./NewProjectDialog.tsx";
 import { ShareDialog } from "./ShareDialog.tsx";
 import "../home/home.css";
@@ -68,7 +68,6 @@ export function StartPage({
   findings = [],
   connection = "open",
   audience,
-  onAudience,
 }: {
   client: AeiClient;
   locale: Locale;
@@ -77,7 +76,6 @@ export function StartPage({
   findings?: Finding[];
   connection?: Connection;
   audience: Audience;
-  onAudience: (value: Audience) => void;
 }) {
   const [projects, setProjects] = useState<Project[] | null>(null);
   const [failed, setFailed] = useState(false);
@@ -151,15 +149,6 @@ export function StartPage({
               </button>
             </div>
           </div>
-          <fieldset className="start-audience">
-            <legend>{t(locale, "startAs")}</legend>
-            {AUDIENCES.map((item) => (
-              <label key={item}>
-                <input type="radio" name="audience" value={item} checked={audience === item} onChange={() => onAudience(item)} />
-                <span>{t(locale, AUDIENCE_KEYS[item])}</span>
-              </label>
-            ))}
-          </fieldset>
         </header>
         <section id="start-recent" tabIndex={-1}>
           <h2>{t(locale, "startRecent")}</h2>

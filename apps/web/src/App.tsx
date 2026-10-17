@@ -7,7 +7,6 @@ import { useMedia } from "./components/doctor/useMedia.ts";
 import { projectHash } from "./components/research/projects/useProject.ts";
 import { SiteLine } from "./components/SitePicker.tsx";
 import { PHONE } from "./components/shell/Menu.tsx";
-import { Timeline } from "./components/Timeline.tsx";
 import { Sidebar, tabName } from "./components/shell/Sidebar.tsx";
 import { type Audience, storedAudience } from "./components/start/audience.ts";
 import { StartPage } from "./components/start/StartPage.tsx";
@@ -121,7 +120,7 @@ function usePrefersReducedMotion(): boolean {
 export function App() {
   const [locale, setLocale] = useState<Locale>(() => stored("aei.locale", "fi", (v) => v === "fi" || v === "en"));
   const [page, setPage] = useState<Page>(pageFromHash);
-  const [audience, setAudience] = useState<Audience>(storedAudience);
+  const [audience] = useState<Audience>(storedAudience);
   const [tabs, setTabs] = useState<DocTab[]>(() => {
     const open = loadTabs();
     return page === "project" ? upsertTab(open, location.hash) : open;
@@ -396,18 +395,6 @@ export function App() {
                     <span className="phonebar-title">{title}</span>
                   </header>
                 ) : null}
-                <Timeline
-                  key={siteKey}
-                  client={client}
-                  liveAlerts={liveAlerts}
-                  locale={locale}
-                  clock={live.clock}
-                  connection={live.connection}
-                  lastArrivals={live.lastArrivals}
-                  command={live.command}
-                  reducedMotion={reducedMotion}
-                  collapsible
-                />
                 <main id="main-content" className="page" tabIndex={-1} data-page={page}>
                   {page === "project" && !phone ? (
                     <div className="viewbar">
@@ -443,10 +430,6 @@ export function App() {
                         findings={findings}
                         connection={live.connection}
                         audience={audience}
-                        onAudience={(next) => {
-                          store("aei.research.layout.v2", null);
-                          setAudience(next);
-                        }}
                       />
                     ) : null}
                     <Suspense fallback={<div className="section" aria-busy="true" />}>
@@ -459,23 +442,19 @@ export function App() {
                           findings={findings}
                           acknowledge={live.acknowledge}
                           reducedMotion={reducedMotion}
-                          command={live.command}
+                          replay={{
+                            clock: live.clock,
+                            connection: live.connection,
+                            lastArrivals: live.lastArrivals,
+                            command: live.command,
+                            liveAlerts,
+                          }}
                         />
                       ) : null}
                       {page === "data" ? (
                         <DataPage client={client} liveClient={live.client} locale={locale} asOf={live.clock?.asOf ?? null} />
                       ) : null}
-                      {page === "settings" ? (
-                        <Settings
-                          locale={locale}
-                          onLocale={setLocale}
-                          audience={audience}
-                          onAudience={(next) => {
-                            store("aei.research.layout.v2", null);
-                            setAudience(next);
-                          }}
-                        />
-                      ) : null}
+                      {page === "settings" ? <Settings locale={locale} onLocale={setLocale} /> : null}
                     </Suspense>
                   </Fragment>
                 </main>

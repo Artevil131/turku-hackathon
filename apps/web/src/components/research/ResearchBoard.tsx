@@ -1,7 +1,11 @@
+import type { ClockCommand, ClockState } from "@aei/contract";
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { LiveAlerts } from "../../alertsSince.ts";
+import type { Connection } from "../../live.ts";
 import { currentSite, homeSite } from "../../sites.ts";
 import { InSlot, useShell } from "../../shell/context.ts";
 import { hashParams, subscribeHash, writeHashParams } from "../../url.ts";
+import { Timeline } from "../Timeline.tsx";
 import { CoverageWindow } from "../doctor/CoverageWindow.tsx";
 import { Assistant } from "./assistant/Assistant.tsx";
 import { type BoardState, boardFromUrl, boardToParams, type FeedProps } from "./board.ts";
@@ -36,13 +40,22 @@ import "./ResearchBoard.css";
 // state that lives in the URL. The card's own window and the assistant stay
 // in the tray as pop-outs. Under 1100 px the windows stack.
 
-type Props = Omit<FeedProps, "state" | "onChange">;
+/** The replay the timeline window shows and seeks: the one global clock. */
+export interface Replay {
+  clock: ClockState | null;
+  connection: Connection;
+  lastArrivals: { to: string; count: number } | null;
+  command: (c: ClockCommand) => void;
+  liveAlerts: LiveAlerts;
+}
+type Props = Omit<FeedProps, "state" | "onChange"> & { replay: Replay };
 
 /** The windows that answer a selected signal next: where its unit's patients go, and the region around it. */
 const ANSWERS: readonly WinId[] = ["graph", "map"];
 
 export function ResearchBoard(props: Props) {
-  const { locale, client, asOf, findings, acknowledge, command } = props;
+  const { locale, client, asOf, findings, acknowledge } = props;
+  const command = props.replay.command;
   const [state, setState] = useState<BoardState>(boardFromUrl);
   // Choosing the signal that is already chosen ("Open calculation and explanation" on its row) changes no
   // state, so the card is revealed by hand: opened, raised and flashed.
@@ -262,6 +275,19 @@ export function ResearchBoard(props: Props) {
         signal={notebookSignal}
         railCells={cells}
         onReproduce={reproduceIn}
+      />
+    ),
+    timeline: (
+      <Timeline
+        variant="window"
+        client={client}
+        locale={locale}
+        clock={props.replay.clock}
+        connection={props.replay.connection}
+        lastArrivals={props.replay.lastArrivals}
+        command={props.replay.command}
+        liveAlerts={props.replay.liveAlerts}
+        reducedMotion={props.reducedMotion}
       />
     ),
     assistant: (

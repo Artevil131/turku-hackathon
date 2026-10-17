@@ -1,7 +1,6 @@
 import { type Locale, siteName, t } from "@aei/i18n";
 import { useSites } from "../sites.ts";
 import { InfoButton } from "./Info.tsx";
-import { AUDIENCE_KEYS, AUDIENCES, type Audience } from "./start/audience.ts";
 
 // Settings: things a user sets once: the language, the hospital, the Start-as preset (which also sets the
 // density). The data checks moved to Data.
@@ -9,11 +8,9 @@ import { AUDIENCE_KEYS, AUDIENCES, type Audience } from "./start/audience.ts";
 interface Props {
   locale: Locale;
   onLocale: (l: Locale) => void;
-  audience: Audience;
-  onAudience: (a: Audience) => void;
 }
 
-export function Settings({ locale, onLocale, audience, onAudience }: Props) {
+export function Settings({ locale, onLocale }: Props) {
   const { sites, site, multi, setSite } = useSites();
   return (
     <section className="settings glass" aria-labelledby="settings-title">
@@ -39,27 +36,6 @@ export function Settings({ locale, onLocale, audience, onAudience }: Props) {
               lang={value}
             >
               {label}
-            </button>
-          ))}
-        </div>
-      </fieldset>
-
-      <fieldset className="field setting" data-audience>
-        <legend className="field-label">
-          {t(locale, "settingsAudience")}
-          <InfoButton locale={locale}>{t(locale, "settingsAudienceHint")}</InfoButton>
-        </legend>
-        <div className="choice-row">
-          {AUDIENCES.map((value) => (
-            <button
-              key={value}
-              type="button"
-              className="choice"
-              aria-pressed={audience === value}
-              data-audience-choice={value}
-              onClick={() => onAudience(value)}
-            >
-              {t(locale, AUDIENCE_KEYS[value])}
             </button>
           ))}
         </div>

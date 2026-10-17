@@ -10,7 +10,7 @@ export const MAX_ROWS = 160;
 
 import { type ChartSpec, parseSpec } from "../charts/spec.ts";
 
-export const WIN_IDS = ["signals", "map", "graph", "math", "assistant", "grid", "reproduce", "notebook", "coverage"] as const;
+export const WIN_IDS = ["signals", "map", "graph", "math", "assistant", "grid", "reproduce", "notebook", "coverage", "timeline"] as const;
 export type WinId = (typeof WIN_IDS)[number];
 
 export interface Rect {
@@ -50,6 +50,7 @@ export const MIN_SIZE: Record<WinId, { w: number; h: number }> = {
   reproduce: { w: 5, h: 14 },
   notebook: { w: 3, h: 10 },
   coverage: { w: 4, h: 12 },
+  timeline: { w: 4, h: 9 },
 };
 
 export const CHART_MIN_SIZE = { w: 4, h: 10 };
@@ -84,8 +85,10 @@ export function defaultLayout(): Layout {
     reproduce: { x: 4, y: 0, w: 5, h: 14, open: false },
     // The doctor's patient coverage: an ordinary window, closed until opened from the Windows menu or a template.
     coverage: { x: 0, y: 0, w: 6, h: 30, open: false },
+    // The replay timeline: a window of the project, opened by the templates and from the Windows menu.
+    timeline: { x: 0, y: 0, w: 12, h: 11, open: false },
   };
-  return { wins, charts: {}, order: ["signals", "map", "graph", "math", "assistant", "grid", "reproduce", "notebook", "coverage"] };
+  return { wins, charts: {}, order: ["signals", "map", "graph", "math", "assistant", "grid", "reproduce", "notebook", "coverage", "timeline"] };
 }
 
 export type Preset = "default" | "map" | "signals" | "units" | "analysis";

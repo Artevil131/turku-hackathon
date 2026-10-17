@@ -12,16 +12,17 @@ export const TEMPLATE_KEYS = {
 /** "Treat a patient" is a quick start: it opens a view straight away and saves no project (D-065). */
 export const QUICK_STARTS: readonly Template[] = ["patient"];
 
-/** Which windows each template opens, as grid rectangles (12 columns, 24 px rows). The timeline band is always on the page. */
+/** Which windows each template opens, as grid rectangles (12 columns, 24 px rows). The replay timeline is a window like the others. */
 const OPEN: Record<Template, Partial<Record<WinId, Partial<WinState>>>> = {
   blank: {},
   outbreak: {
     signals: { x: 0, y: 0, w: 4, h: 40 },
     math: { x: 4, y: 0, w: 4, h: 40 },
-    graph: { x: 8, y: 0, w: 4, h: 40 },
+    timeline: { x: 8, y: 0, w: 4, h: 14 },
+    graph: { x: 8, y: 14, w: 4, h: 26 },
   },
   antibiogram: { grid: { x: 0, y: 0, w: 6, h: 30 }, coverage: { x: 6, y: 0, w: 6, h: 30 } },
-  regional: { map: { x: 0, y: 0, w: 12, h: 36 } },
+  regional: { timeline: { x: 0, y: 0, w: 12, h: 11 }, map: { x: 0, y: 11, w: 12, h: 30 } },
   patient: { coverage: { x: 0, y: 0, w: 12, h: 36 } },
 };
 

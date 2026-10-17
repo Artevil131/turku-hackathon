@@ -12,9 +12,9 @@ describe("project template layouts", () => {
     expect(Object.keys(layout.wins).sort()).toEqual([...WIN_IDS].sort());
   });
   it("opens the outbreak evidence together and keeps blank genuinely blank", () => {
-    expect(openIds("outbreak")).toEqual(["signals", "graph", "math"]);
+    expect(openIds("outbreak")).toEqual(["signals", "graph", "math", "timeline"]);
     expect(openIds("blank")).toEqual([]);
-    expect(openIds("regional")).toEqual(["map"]);
+    expect(openIds("regional")).toEqual(["map", "timeline"]);
   });
   it("opens coverage for the patient and antibiogram templates", () => {
     expect(openIds("patient")).toEqual(["coverage"]);

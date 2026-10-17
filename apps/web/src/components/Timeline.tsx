@@ -35,6 +35,8 @@ interface TimelineProps {
   liveAlerts: LiveAlerts;
   /** The chart can be folded to one line of controls; the choice is remembered (folded by default). */
   collapsible?: boolean;
+  /** Inside a project window: always expanded, never the phone strip (the window is the room it has). */
+  variant?: "window";
 }
 
 const COLLAPSE_KEY = "aei.timeline.collapsed";
@@ -128,6 +130,7 @@ export function Timeline({
   client,
   liveAlerts,
   collapsible = false,
+  variant,
 }: TimelineProps) {
   const phone = useMediaQuery("(max-width: 760px)");
   const rootRef = useRef<HTMLDivElement>(null);
@@ -512,7 +515,7 @@ export function Timeline({
     />
   );
 
-  if (phone) {
+  if (phone && !variant) {
     return (
       <div className="timeline timeline-phone" ref={rootRef} aria-busy={seekingTo ? true : undefined}>
         <div className="tl-strip">
