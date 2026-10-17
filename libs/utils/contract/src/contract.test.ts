@@ -112,6 +112,22 @@ describe("regionalUpTo", () => {
     expect(regionalUpTo(old as RegionalData, "2026-01-01").forecasts).toEqual([]);
   });
 
+  it("returns the rolling-origin forecast at a 2025 replay clock, not later origins", () => {
+    const historical = {
+      phenotype: "CPE" as const,
+      region: "Varsinais-Suomen hyvinvointialue",
+      month: "2025-09",
+      mean: 2.5,
+      low: 0,
+      high: 6,
+      level: 0.9,
+    };
+    const rolling = { ...data, forecasts: [...data.forecasts, historical] };
+    const shown = regionalUpTo(rolling, "2025-09-20", { region: historical.region });
+    expect(shown.months.at(-1)).toBe("2025-08");
+    expect(shown.forecasts).toEqual([historical]);
+  });
+
   it("filters series, signals and forecasts but keeps the lists whole", () => {
     const r = regionalUpTo(data, "2026-01-01", { group: "MRSA carriage" });
     expect(r.series.map((s) => s.group)).toEqual(["MRSA carriage"]);

@@ -57,7 +57,7 @@ def test_view_marks_signals_that_survive_bonferroni():
 
 def test_steady_forecast_uses_the_selected_24_month_level_and_90_percent_interval():
     thl = series([500] * 12 + [10] * 24 + [10000]).assign(region_sid=1, incidence_per_100k=1.0)
-    forecast = next(f for f in monthly_forecasts(thl, fetched="2024-01-16") if f["phenotype"] == "MRSA")
+    forecast = next(f for f in monthly_forecasts(thl, fetched="2024-01-16") if f["phenotype"] == "MRSA" and f["month"] == "2024-01")
     assert forecast == {
         "phenotype": "MRSA", "region": "Varsinais-Suomi", "month": "2024-01",
         "mean": 10.0, "low": int(stats.poisson.ppf(0.05, 10)),
@@ -86,7 +86,7 @@ def test_forecast_fills_missing_months_and_requires_24_calendar_months():
     thl = series([10] * 24)
     missing = thl[thl["month"] != "2021-06"]
     forecast = next(f for f in monthly_forecasts(missing, fetched="2023-01-16") if f["phenotype"] == "MRSA")
-    assert forecast["mean"] == pytest.approx(230 / 24)
+    assert forecast["mean"] == pytest.approx(230 / 24, abs=0.0005)
     assert monthly_forecasts(thl.iloc[:23], fetched="2023-01-16") == []
     assert monthly_forecasts(thl.iloc[:0], fetched="2023-01-16") == []
 
@@ -94,9 +94,10 @@ def test_forecast_fills_missing_months_and_requires_24_calendar_months():
 def test_view_writes_forecasts_from_only_the_history_it_shows():
     thl = series([10] * 36 + [10000]).assign(incidence_per_100k=1.0)
     view = regional_view(thl, fetched="2024-01-16")
-    assert len(view["forecasts"]) == 6
+    assert len(view["forecasts"]) == 13 * 6
     assert len(view["series"]) == 2
-    assert all(f["month"] == "2024-01" and f["mean"] == 10 for f in view["forecasts"] if f["phenotype"] == "MRSA")
+    assert {f["month"] for f in view["forecasts"]} == set(pd.period_range("2023-01", "2024-01", freq="M").astype(str))
+    assert all(f["mean"] == 10 for f in view["forecasts"] if f["phenotype"] == "MRSA")
     assert "0020" in view["settings"]["forecastMethod"]
     assert "D-045" in view["settings"]["forecastMethod"]
 
@@ -131,3 +132,44 @@ def test_forecasts_sum_report_groups_before_fitting_and_omit_vre():
         assert (f["low"], f["high"]) == tuple(stats.poisson.ppf([0.05, 0.95], 20))
     assert "phenotype total" in view["settings"]["forecastMethod"]
     assert "VRE omitted" in view["settings"]["forecastMethod"]
+
+
+def test_rolling_origin_forecasts_do_not_read_the_target_or_later_months():
+    thl = pd.concat([series([2, 18] * 30).assign(region="A"), series([8, 12] * 30).assign(region="B")])
+    before = monthly_forecasts(thl, fetched="2026-01-17")
+    target = "2025-03"
+    poisoned = thl.copy()
+    poisoned.loc[poisoned["month"] >= target, "cases"] = 100000
+    after = monthly_forecasts(poisoned, fetched="2026-01-17")
+    assert [f for f in before if f["month"] == target] == [f for f in after if f["month"] == target]
+    assert [f for f in before if f["month"] == "2025-04"] != [f for f in after if f["month"] == "2025-04"]
+    assert len(before) == (60 - 24 + 1) * 3 * 2
+    assert all(f["mean"] == round(f["mean"], 3) for f in before)
+
+
+def test_offline_rebuild_preserves_fetch_date_and_does_not_fetch_or_rewrite_csv(tmp_path, monkeypatch):
+    csv = tmp_path / "ttr_monthly.csv"
+    series([10] * 36 + [10000]).assign(incidence_per_100k=1.0).to_csv(csv, index=False)
+    original = csv.read_bytes()
+    (tmp_path / "regional.json").write_text(json.dumps({"fetched": "2024-01-16"}))
+    script = Path(__file__).resolve().parents[4] / "scripts" / "fetch_thl_ttr.py"
+    main = runpy.run_path(str(script))["main"]
+    def no_network():
+        pytest.fail("offline rebuild attempted a network fetch")
+    monkeypatch.setitem(main.__globals__, "fetch_ttr_monthly", no_network)
+    monkeypatch.setattr(sys, "argv", [str(script), "--out", str(tmp_path), "--from-csv"])
+    main()
+    view = json.loads((tmp_path / "regional.json").read_text())
+    assert view["fetched"] == "2024-01-16"
+    assert view["months"][-1] == "2023-12"
+    assert len(view["forecasts"]) == 13 * 6
+    assert csv.read_bytes() == original
+
+
+def test_offline_rebuild_requires_an_original_fetch_date_when_metadata_is_missing(tmp_path, monkeypatch):
+    script = Path(__file__).resolve().parents[4] / "scripts" / "fetch_thl_ttr.py"
+    main = runpy.run_path(str(script))["main"]
+    monkeypatch.setattr(sys, "argv", [str(script), "--out", str(tmp_path), "--from-csv"])
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 2
