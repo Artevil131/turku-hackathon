@@ -104,31 +104,36 @@ export function DoctorAnswer({
                     ],
               )}
           </p>
-          {/* The two figures the brief asks for, side by side: the year the ranking rests on, the unit's last four
-              weeks as context (D-023; no flag between them, D-044). */}
-          <dl className="dr-answer-figs">
-            <div>
-              <dd>{pct(first.share ?? 0)}&nbsp;%</dd>
-              <dt>
-                {t(locale, "drAnswerFigYear")} · n {num(locale, first.n)}
-              </dt>
+          <p className="dr-answer-line">{t(locale, "drAnswerCovers", { share: pct(first.share ?? 0), n: num(locale, first.n) })}</p>
+          {/* The brief's comparison on one basis, all organisms: the year the ranking rests on and this unit's last
+              four weeks, labelled as a pair (D-023; no flag between them, D-044). */}
+          {first.row ? (
+            <div className="dr-answer-compare" role="group" aria-label={t(locale, "drAnswerAllOrg")}>
+              <span className="dr-answer-compare-title">{t(locale, "drAnswerAllOrg")}</span>
+              <div>
+                <b>{first.row.allOrganisms.share === null ? "–" : `${pct(first.row.allOrganisms.share)}\u00a0%`}</b>
+                <small>
+                  {t(locale, "drAnswerFigYear")} · n {num(locale, first.row.coverage.counts.known)}
+                </small>
+              </div>
+              <div>
+                <b>
+                  {first.recent && first.recent.known >= 30
+                    ? `${pct(first.recent.covered / first.recent.known)}\u00a0%`
+                    : first.recent && first.recent.known > 0
+                      ? `${num(locale, first.recent.covered)} / ${num(locale, first.recent.known)}`
+                      : "—"}
+                </b>
+                <small>
+                  {t(locale, "drAnswerFigRecent")}
+                  {first.recent && first.recent.known >= 30
+                    ? ` · ${num(locale, first.recent.covered)} / ${num(locale, first.recent.known)}`
+                    : ""}
+                </small>
+              </div>
+              <span className="dr-answer-compare-why">{t(locale, "drAnswerRankNote")}</span>
             </div>
-            <div className="dr-answer-fig-recent">
-              <dd>
-                {first.recent && first.recent.known >= 30
-                  ? `${pct(first.recent.covered / first.recent.known)}\u00a0%`
-                  : first.recent
-                    ? `${num(locale, first.recent.covered)} / ${num(locale, first.recent.known)}`
-                    : "—"}
-              </dd>
-              <dt>
-                {t(locale, "drAnswerFigRecent")}
-                {first.recent && first.recent.known >= 30
-                  ? ` · ${num(locale, first.recent.covered)} / ${num(locale, first.recent.known)}`
-                  : ""}
-              </dt>
-            </div>
-          </dl>
+          ) : null}
           {/* The rest of the list as pills; the table below has the bars and the details. */}
           {clears.length > 1 ? <Pills items={clears.slice(1)} lead={t(locale, "drAnswerAlsoShort")} /> : null}
           {below.length ? <Pills items={below} lead={t(locale, "drAnswerBelowShort")} muted /> : null}

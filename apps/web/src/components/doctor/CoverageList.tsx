@@ -142,47 +142,54 @@ export function CoverageList({
             {/* The brief's comparison, the loudest thing in the row: the year the ranking rests on, the unit's last
                 four weeks beside it in the same shape (D-023; no flag between them, D-044). */}
             <span className="cl-figs">
+              {/* The judged figure first: the year on the row's own basis (likely bacteria for a mild case). */}
               <span className="cl-fig">
                 <b>{assessable && item.share !== null ? `${pct(item.share)}\u00a0%` : "–"}</b>
                 <small>
-                  {t(locale, "drFigYear")}
+                  {t(locale, item.row?.basis === "spectrum" ? "drWithinSpectrum" : "drAllOrgShort")} · {t(locale, "drFigYear")}
                   {item.standing === "borderline" && range ? ` · ${range}\u00a0%` : ""} · n {num(locale, item.n)}
                 </small>
               </span>
-              <span className="cl-fig cl-fig-recent">
-                {item.recent && item.recent.known >= 30 ? (
-                  <>
-                    <b>{pct(item.recent.covered / item.recent.known)}&nbsp;%</b>
+              {/* Then the brief's pair on one basis, all organisms: the year and this unit's last four weeks. */}
+              <span className="cl-pair">
+                {item.row?.basis === "spectrum" ? (
+                  <span className="cl-fig cl-fig-quiet">
+                    <b>{item.row.allOrganisms.share === null ? "–" : `${pct(item.row.allOrganisms.share)}\u00a0%`}</b>
                     <small>
-                      {t(locale, "drFigRecent")} · {num(locale, item.recent.covered)} / {num(locale, item.recent.known)}
+                      {t(locale, "drAllOrgShort")} · {t(locale, "drFigYear")} · n {num(locale, item.row.coverage.counts.known)}
                     </small>
-                  </>
-                ) : item.recent && item.recent.known > 0 ? (
-                  <>
-                    <b>
-                      {num(locale, item.recent.covered)} / {num(locale, item.recent.known)}
-                    </b>
-                    <small>{t(locale, "drFigRecent")}</small>
-                  </>
-                ) : (
-                  <>
-                    <b>—</b>
-                    <small>{t(locale, "drFigRecent")}</small>
-                  </>
-                )}
+                  </span>
+                ) : null}
+                <span className="cl-fig cl-fig-quiet">
+                  {item.recent && item.recent.known >= 30 ? (
+                    <>
+                      <b>{pct(item.recent.covered / item.recent.known)}&nbsp;%</b>
+                      <small>
+                        {t(locale, "drAllOrgShort")} · {t(locale, "drFigRecent")} · {num(locale, item.recent.covered)} /{" "}
+                        {num(locale, item.recent.known)}
+                      </small>
+                    </>
+                  ) : item.recent && item.recent.known > 0 ? (
+                    <>
+                      <b>
+                        {num(locale, item.recent.covered)} / {num(locale, item.recent.known)}
+                      </b>
+                      <small>
+                        {t(locale, "drAllOrgShort")} · {t(locale, "drFigRecent")}
+                      </small>
+                    </>
+                  ) : (
+                    <>
+                      <b>—</b>
+                      <small>
+                        {t(locale, "drAllOrgShort")} · {t(locale, "drFigRecent")}
+                      </small>
+                    </>
+                  )}
+                </span>
               </span>
             </span>
-            <span className="cl-secondary cl-basis">
-              {[
-                t(locale, item.row?.basis === "spectrum" ? "drWithinSpectrum" : "drAllOrgShort"),
-                item.row?.basis === "spectrum"
-                  ? `${t(locale, "drAllOrgShort")} ${item.row.allOrganisms.share === null ? "–" : `${pct(item.row.allOrganisms.share)}\u00a0%`} · n ${num(locale, item.row.coverage.counts.known)}`
-                  : null,
-                meta,
-              ]
-                .filter(Boolean)
-                .join(" · ")}
-            </span>
+            {meta ? <span className="cl-secondary cl-basis">{meta}</span> : null}
           </span>
           <span className="cl-res" data-standing={item.standing} title={t(locale, st.long)}>
             <span className="cl-glyph" aria-hidden="true">

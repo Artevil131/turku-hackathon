@@ -254,8 +254,15 @@
   font-size: var(--d-xs);
   white-space: nowrap;
 }
-.cl-fig-recent b {
+.cl-pair {
+  display: flex;
+  gap: 2px 14px;
+  padding-left: 14px;
+  border-left: 1px solid var(--d-line);
+}
+.cl-fig-quiet b {
   color: var(--d-ink-2);
+  font-weight: 500;
 }
 .cl-basis {
   margin-top: 3px;
@@ -661,31 +668,48 @@
 .dr-answer-low {
   color: var(--ink-3);
 }
-/* The two figures: the year loud, the four weeks beside it in the same shape, quieter. */
-.dr-answer-figs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 28px;
-  margin: 4px 0 0;
-}
-.dr-answer-figs > div {
+/* The comparison strip: one basis named once, the year and the four weeks as two cells under it. */
+.dr-answer-compare {
   display: grid;
-  gap: 2px;
+  grid-template-columns: auto auto;
+  justify-content: start;
+  gap: 2px 28px;
+  width: fit-content;
+  margin: 6px 0 0;
+  padding: 10px 14px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--glass-1);
 }
-.dr-answer-figs dd {
-  margin: 0;
-  color: var(--ink);
-  font-size: 30px;
+.dr-answer-compare-title {
+  grid-column: 1 / -1;
+  color: var(--ink-2);
+  font-size: var(--t-xs);
   font-weight: 600;
-  line-height: 1.1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.dr-answer-compare > div {
+  display: grid;
+  gap: 1px;
+}
+.dr-answer-compare b {
+  color: var(--ink);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.15;
   font-variant-numeric: tabular-nums;
 }
-.dr-answer-figs dt {
+.dr-answer-compare small {
   color: var(--ink-3);
-  font-size: var(--t-s);
+  font-size: var(--t-xs);
+  white-space: nowrap;
 }
-.dr-answer-fig-recent dd {
-  color: var(--ink-2);
+.dr-answer-compare-why {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+  color: var(--ink-3);
+  font-size: var(--t-xs);
 }
 /* The rest of the list as pills: a name and its share each, scanned in one look. */
 .dr-answer-pills {
