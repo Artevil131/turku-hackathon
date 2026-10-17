@@ -668,7 +668,7 @@
   overflow: auto;
 }
 .ws[data-docked="true"] .ws-area:not([data-maximized="true"]) .ws-win[data-win="map"] .ws-body {
-  height: 480px;
+  height: 520px;
   overflow: hidden;
 }
 /* Row splitters have nothing to divide once windows take their own height. */

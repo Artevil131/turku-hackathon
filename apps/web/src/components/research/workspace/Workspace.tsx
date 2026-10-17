@@ -11,7 +11,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { flushSync } from "react-dom";
 import {
   closeWindow,
   defaultLayout,
@@ -73,15 +72,6 @@ function useWide() {
   return wide;
 }
 const reducedMotion = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
-/** Reorders and reveals animate as one View Transition where the browser has one; otherwise they apply at once. */
-function viewChange(update: () => void) {
-  if (typeof document.startViewTransition !== "function" || reducedMotion()) {
-    update();
-    return;
-  }
-  // flushSync keeps the state update inside the transition's snapshot.
-  document.startViewTransition(() => flushSync(update));
-}
 type Move = { kind: "move"; id: WinId; x: number; y: number; active: boolean; slot: Slot | null; top: number };
 type Resize = {
   kind: "column" | "stack";
@@ -130,8 +120,9 @@ export function Workspace({
     setLayout(next);
     saveLayout(next);
   };
-  /** Layout changes that reorder or reveal windows: animated as one view transition. */
-  const reflow = (next: Layout) => viewChange(() => commit(next));
+  /** Layout changes that reorder or reveal windows. No View Transition: the page is not interactive
+   *  while one runs, which blocked the next click (the smoke test caught it); the CSS tokens carry the motion. */
+  const reflow = (next: Layout) => commit(next);
   const keep = useRef(initiallyOpen ?? []);
   useLayoutEffect(() => {
     if (fitted) return;

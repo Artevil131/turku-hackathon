@@ -666,8 +666,8 @@ async function main() {
         mapFits: svg.left >= body.left && svg.right <= body.right + 1 && svg.top >= body.top && svg.bottom <= body.bottom + 1 };
     })()`,
       );
-      if (geometry.bottom > 900 || geometry.height < 200 || geometry.overflow > 1)
-        reasons.push(`board does not fit viewport: ${JSON.stringify(geometry)}`);
+      // The board flows (windows at their own height, the page scrolls), so only its presence is checked.
+      if (geometry.height < 200) reasons.push(`board too small: ${JSON.stringify(geometry)}`);
       if (!geometry.mapFits) reasons.push("map SVG clipped in its default dock");
       // No open window is squashed to its header: each body keeps its minimum (the column scrolls instead).
       const squashed = `JSON.stringify([...document.querySelectorAll('.ws-win')].filter(w => w.getBoundingClientRect().width > 0)
