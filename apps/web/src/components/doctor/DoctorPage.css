@@ -298,3 +298,39 @@
     border: 0;
   }
 }
+
+/* The guide's words for a first-choice row (D-047), and the national line (D-048). */
+.dt-guide,
+.dt-national {
+  border-top: 1px solid var(--d-line);
+  padding-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--d-ink-2);
+}
+
+.dt-guide h4 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--d-s);
+  font-weight: 600;
+}
+
+.dt-guide p,
+.dt-national p {
+  margin: 0;
+}
+
+.dt-national small {
+  color: var(--d-ink-3);
+  font-size: var(--d-xs);
+}
+
+.dt-prior {
+  margin: 0;
+  color: var(--d-alert);
+  font-weight: 600;
+}

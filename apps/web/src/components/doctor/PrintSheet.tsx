@@ -1,7 +1,9 @@
 import type { CoverageResponse } from "@aei/contract";
 import { shortOrganism } from "@aei/domain";
+import type { Syndrome } from "@aei/guideline";
 import { type Locale, specimenName, t, wardName } from "@aei/i18n";
 import { BAR, barOf, certaintyOf, type DoctorFilters, dmy, num, pct, sexWord } from "./filters.ts";
+import { guideCodes, guideLines } from "./Guide.tsx";
 import { flagsOf, type Item, levelKey, reasonOf, STANDING } from "./reason.ts";
 import { signalDate, type UnitSignal } from "./signals.ts";
 
@@ -13,10 +15,13 @@ interface Props {
   signals: UnitSignal[];
   singles: Item[];
   pairs: Item[];
+  syndrome: Syndrome | null;
 }
 
 /** The A4 print of the list: sentences and flags written out, since the plot and the details pane do not print. Hidden on screen. */
-export function PrintSheet({ locale, filters, data, asOf, signals, singles, pairs }: Props) {
+export function PrintSheet({ locale, filters, data, asOf, signals, singles, pairs, syndrome }: Props) {
+  const guided = guideCodes(syndrome);
+  const guide = syndrome ? guideLines(locale, syndrome, singles, barOf(data, filters)) : null;
   const cov = data.coverage;
   const level = certaintyOf(cov.level);
   const unit = wardName(locale, filters.unit);
@@ -42,6 +47,7 @@ export function PrintSheet({ locale, filters, data, asOf, signals, singles, pair
         <b className="pr-name">
           {item.name}
           {item.aware ? ` (${item.aware})` : ""}
+          {guided.has(item.id) ? ` [${t(locale, "drGuideMark")}]` : ""}
         </b>
         <span className="pr-num">
           {assessable && item.share !== null ? `${pct(item.share)} % ` : ""}
@@ -89,6 +95,11 @@ export function PrintSheet({ locale, filters, data, asOf, signals, singles, pair
       </p>
       {filters.sex !== "any" && !cov.sexApplied ? <p>{t(locale, "drSexDropped")}</p> : null}
       {filters.onset && !cov.onsetApplied ? <p>{t(locale, "drOnsetDropped", { bar: barOf(data, filters) })}</p> : null}
+      {syndrome && guide ? (
+        <p>
+          {syndrome.name[locale]}: {[...guide.lines, ...(guide.also ? [guide.also] : [])].join("; ")}.
+        </p>
+      ) : null}
       {signals.slice(0, 2).map((s) => (
         <p key={s.alert.id}>
           {s.feeder

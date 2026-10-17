@@ -1,8 +1,10 @@
 import type { CoverageResponse } from "@aei/contract";
+import type { Syndrome } from "@aei/guideline";
 import { antibioticName, type Locale, specimenName, t, wardName } from "@aei/i18n";
 import { cloneElement, isValidElement, type ReactNode, useMemo, useRef } from "react";
 import "./CoverageList.css";
 import { BAR, barOf, type DoctorFilters, dmy, num, pct } from "./filters.ts";
+import { GuideSummary, guideCodes } from "./Guide.tsx";
 import { InfoIcon, Popover } from "./Popover.tsx";
 import { PrintSheet } from "./PrintSheet.tsx";
 import { type Item, STANDING } from "./reason.ts";
@@ -21,6 +23,8 @@ interface Props {
   onSelect: (id: string | null) => void;
   onRetry: () => void;
   source?: ReactNode;
+  /** The guide's syndrome (D-047): marks its first choices and adds its line under the header; never reorders. */
+  syndrome?: Syndrome | null;
 }
 
 const SKELETON = [0, 1, 2, 3, 4, 5];
@@ -55,7 +59,7 @@ export function itemsOf(data: CoverageResponse, locale: Locale): { singles: Item
 }
 
 /** The forest plot: one row per antibiotic, its 95 % interval against the bar line, one glance per row. */
-export function CoverageList({ locale, filters, asOf, status, data, signals, selected, onSelect, onRetry, source }: Props) {
+export function CoverageList({ locale, filters, asOf, status, data, signals, selected, onSelect, onRetry, source, syndrome }: Props) {
   const headRef = useRef<HTMLElement>(null);
   const bar = barOf(data, filters);
   const unit = wardName(locale, filters.unit);
@@ -67,6 +71,7 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
   const firstBelow = singles.findIndex((s) => s.standing !== "clears");
   const all = [...singles, ...pairs];
   const date = data?.asOf ?? asOf;
+  const guided = useMemo(() => guideCodes(syndrome), [syndrome]);
 
   const bestPair = filters.sev === "severe" && !singles.some((s) => s.standing === "clears") ? pairs[0] : null;
   const openPair = () => {
@@ -110,6 +115,7 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
                 {item.aware[0]}
               </span>
             ) : null}
+            {guided.has(item.id) ? <span className="cl-guide">{t(locale, "drGuideMark")}</span> : null}
           </span>
           <span className="cl-plot" aria-hidden="true">
             <i className="cl-axis" />
@@ -198,6 +204,7 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
           <InfoIcon />
         </Popover>
       </header>
+      {data && cov ? <GuideSummary locale={locale} syndrome={syndrome} singles={singles} bar={bar} /> : null}
 
       <div className="cl-disclosure">
         <p>{t(locale, "drDemo")}</p>
@@ -272,7 +279,16 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
         </div>
       ) : null}
       {data && cov ? (
-        <PrintSheet locale={locale} filters={filters} data={data} asOf={asOf} signals={signals} singles={singles} pairs={pairs} />
+        <PrintSheet
+          locale={locale}
+          filters={filters}
+          data={data}
+          asOf={asOf}
+          signals={signals}
+          singles={singles}
+          pairs={pairs}
+          syndrome={syndrome ?? null}
+        />
       ) : null}
     </section>
   );

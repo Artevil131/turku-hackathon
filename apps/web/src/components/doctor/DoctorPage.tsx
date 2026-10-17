@@ -11,7 +11,16 @@ import { DataQuality } from "../DataQuality.tsx";
 import { CoverageList, itemsOf, type ListStatus } from "./CoverageList.tsx";
 import { Details } from "./Details.tsx";
 import "./DoctorPage.css";
-import { chooseSyndrome, coverageQuery, type DoctorFilters, filtersFromUrl, filtersToParams, patchFilters, storeUnit } from "./filters.ts";
+import {
+  chooseSyndrome,
+  coverageQuery,
+  type DoctorFilters,
+  filtersFromUrl,
+  filtersToParams,
+  patchFilters,
+  storeUnit,
+  syndromeOf,
+} from "./filters.ts";
 import { RecordStrip } from "./RecordStrip.tsx";
 import { SyndromePicker } from "./SyndromePicker.tsx";
 import { unitSignals } from "./signals.ts";
@@ -84,6 +93,7 @@ export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetry
   }, [client, asOf, key, attempt]);
 
   const onChange = useCallback((patch: Partial<DoctorFilters>) => setFilters((f) => patchFilters(f, patch)), []);
+  const syndrome = useMemo(() => syndromeOf(filters.syn) ?? null, [filters.syn]);
   const onSyndrome = useCallback((s: Syndrome | null) => setFilters((f) => chooseSyndrome(f, s)), []);
   // Figures from a different query are never shown under the new filters; only a clock tick keeps the old list while it refreshes.
   const current = data && data.key === key ? data.response : null;
@@ -128,6 +138,7 @@ export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetry
             selected={item ? item.id : null}
             onSelect={setSelected}
             onRetry={() => setAttempt((a) => a + 1)}
+            syndrome={syndrome}
           />
           <aside className="dp-side" aria-label={t(locale, "drInUnit")}>
             <UnitContext
@@ -155,7 +166,15 @@ export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetry
                   ) : null}
                 </h3>
                 {current && item ? (
-                  <Details client={client} locale={locale} filters={filters} data={current} item={item} signals={signals} />
+                  <Details
+                    client={client}
+                    locale={locale}
+                    filters={filters}
+                    data={current}
+                    item={item}
+                    signals={signals}
+                    syndrome={syndrome}
+                  />
                 ) : (
                   <p className="dt-empty">{t(locale, "drSelectRow")}</p>
                 )}
@@ -190,7 +209,7 @@ export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetry
               {t(locale, "drClose")}
             </button>
           </div>
-          <Details client={client} locale={locale} filters={filters} data={current} item={item} signals={signals} />
+          <Details client={client} locale={locale} filters={filters} data={current} item={item} signals={signals} syndrome={syndrome} />
         </div>
       ) : null}
     </div>

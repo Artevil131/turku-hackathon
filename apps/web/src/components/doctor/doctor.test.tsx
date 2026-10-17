@@ -1,10 +1,12 @@
 import type { CoverageResponse, Severity } from "@aei/contract";
 import type { IsolateRecord } from "@aei/domain";
 import { guide } from "@aei/guideline";
+import type { ComponentProps } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { coverage, suggest, suggestCombinations } from "../../../../../libs/utils/coverage/src/index.ts";
 import { CoverageList, itemsOf } from "./CoverageList.tsx";
+import { Details } from "./Details.tsx";
 import { barOf, chooseSyndrome, coverageQuery, DEFAULTS, filtersFromUrl, filtersToParams, patchFilters, syndromeOf } from "./filters.ts";
 import { RecordStrip } from "./RecordStrip.tsx";
 import { SyndromePicker } from "./SyndromePicker.tsx";
@@ -37,9 +39,10 @@ function response(records: IsolateRecord[], severity: Severity = "mild"): Covera
     combinationSuggestions: suggestCombinations(result, severity),
   };
 }
-function list(data: CoverageResponse, locale: "fi" | "en" = "fi") {
+function list(data: CoverageResponse, locale: "fi" | "en" = "fi", extra: Partial<ComponentProps<typeof CoverageList>> = {}) {
   return renderToStaticMarkup(
     <CoverageList
+      {...extra}
       locale={locale}
       filters={{ ...filters, sev: data.severity }}
       asOf={data.asOf}
@@ -193,5 +196,59 @@ describe("syndrome chooser (D-047)", () => {
     expect(html.match(/class="sp-chip"/g)).toHaveLength(guide().syndromes.length);
     expect(html.indexOf('aria-label="urine"')).toBeLessThan(html.indexOf('aria-label="blood"'));
     expect(html).toMatch(/aria-pressed="true"[^>]*>Pyelonephritis</);
+  });
+});
+
+/** Urine isolates with results for the cystitis drugs and ciprofloxacin. */
+const urine = () =>
+  response(
+    Array.from({ length: 60 }, (_, i) => record(i, { results: { MEC: "S", NIT: i < 55 ? "S" : "R", TMP: i < 40 ? "S" : "R", CIP: "S" } })),
+  );
+const rowOf = (html: string, id: string) => {
+  const at = html.indexOf(`data-row="${id}"`);
+  return at < 0 ? "" : html.slice(at, html.indexOf("</button>", at));
+};
+
+describe("guide beside the data (D-047)", () => {
+  it("marks the guide's first choices, gives each its line, and keeps the order", () => {
+    const data = urine();
+    const html = list(data, "en", { syndrome: syndromeOf("cystitis-woman") });
+    for (const code of ["MEC", "NIT", "TMP"]) expect(rowOf(html, code)).toContain('class="cl-guide"');
+    expect(rowOf(html, "CIP")).not.toContain('class="cl-guide"');
+    expect(html).toContain(
+      "Mikrobilääkesuositus (Varsinais-Suomen hyvinvointialue), 13.4.2026, p. 37: first choice nitrofurantoin covers 92 % here (bar 80 %)",
+    );
+    expect(html).toContain('href="https://hoito-ohjeet.fi/');
+    expect(html).toContain('target="_blank"');
+    const order = [...html.matchAll(/data-row="([^"]+)"/g)].map((m) => m[1]);
+    expect(order).toEqual(itemsOf(data, "en").singles.map((i) => i.id));
+  });
+  it("names the guide's drugs the laboratory does not test", () => {
+    const html = list(urine(), "en", { syndrome: syndromeOf("cystitis-man") });
+    expect(html).toContain("also named: sulfamethoxazole-trimethoprim, fosfomycin (not in this laboratory&#x27;s panel)");
+  });
+  it("shows nothing guide-related without a syndrome", () => {
+    const html = list(urine(), "en");
+    expect(html).not.toContain("cl-guide");
+    expect(html).not.toContain("hoito-ohjeet.fi");
+  });
+  it("adds the guide's dose, route and duration to a marked row's details", () => {
+    const data = urine();
+    const item = itemsOf(data, "en").singles.find((i) => i.id === "NIT");
+    if (!item) throw new Error("fixture must carry nitrofurantoin");
+    const html = renderToStaticMarkup(
+      <Details
+        client={{} as never}
+        locale="en"
+        filters={filters}
+        data={data}
+        item={item}
+        signals={[]}
+        syndrome={syndromeOf("cystitis-woman")}
+      />,
+    );
+    expect(html).toContain("The guide (7.4.1 A, p. 37) names: nitrofurantoin 75 mg × 2 po");
+    expect(html).toContain("route: oral");
+    expect(html).toContain("Duration: 3 days.");
   });
 });
