@@ -1,6 +1,7 @@
 import type { WardCode } from "@aei/domain";
 import { type Locale, t, wardName } from "@aei/i18n";
 import { AsOf } from "../AsOf.tsx";
+import { DEFAULT_UNIT } from "../doctor/filters.ts";
 import type { Role } from "../Home.tsx";
 import { ArrowRight, Doctor, Microscope } from "../Icons.tsx";
 
@@ -24,7 +25,9 @@ export function Roles({ locale, lastRole, unit, asOf, signals, onRole }: Props) 
       lastLabel={t(locale, "homeLast")}
       icon={<Doctor />}
       title={t(locale, "homeDoctor")}
-      detail={unit ? t(locale, "homeDoctorUnit", { unit: wardName(locale, unit) }) : t(locale, "homeDoctorNoUnit")}
+      detail={
+        t(locale, "homeDoctorUnit", { unit: wardName(locale, unit ?? DEFAULT_UNIT) }) + (unit ? ` · ${t(locale, "homeUnitStored")}` : "")
+      }
       action={t(locale, "homeDoctorOpen")}
       onRole={onRole}
     />

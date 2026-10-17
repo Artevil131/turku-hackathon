@@ -17,6 +17,7 @@ function Group({ label, tag, inline, children }: { label: string; tag?: string |
     <div className="rs-group" data-inline={inline ? "" : undefined} role="group" aria-label={label}>
       <span className="rs-label">{label}</span>
       {children}
+      {tag ? <i className="rs-break" aria-hidden="true" /> : null}
       {tag ? <span className="rs-tag">{tag}</span> : null}
     </div>
   );
@@ -134,7 +135,14 @@ export function RecordStrip({ locale, filters, onChange }: Props) {
   const age = (
     <Group label={tr("drAge")} tag={filters.age !== "any" && notApplied}>
       <Choices<AgeGroup>
-        options={AGE_GROUPS.map((a) => [a, wide && a === "any" ? tr("drAgeLabel") : tr(AGE_KEYS[a]), tr("drAge")] as const)}
+        options={AGE_GROUPS.map(
+          (a) =>
+            [
+              a,
+              wide && a === "any" ? tr("drAgeLabel") : tr(AGE_KEYS[a]),
+              a === "any" ? `${tr("drAge")}: ${tr(AGE_KEYS.any)}` : undefined,
+            ] as const,
+        )}
         value={filters.age}
         onPick={(v) => onChange({ age: v })}
       />
@@ -149,7 +157,7 @@ export function RecordStrip({ locale, filters, onChange }: Props) {
         aria-pressed={filters.onset}
         onClick={() => change({ onset: !filters.onset })}
       >
-        {tr("drOnsetShort")}
+        {wide ? tr("drOnsetShort") : tr("drOnsetPhone")}
       </button>
     </Group>
   );
@@ -187,6 +195,16 @@ export function RecordStrip({ locale, filters, onChange }: Props) {
           {age}
           {period}
           {onset}
+          <button
+            type="button"
+            className="rs-done"
+            onClick={() => {
+              setMore(false);
+              document.getElementById("dr-list")?.focus();
+            }}
+          >
+            {tr("drShowList")}
+          </button>
         </div>
       ) : null}
     </form>

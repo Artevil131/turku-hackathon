@@ -112,7 +112,11 @@
 
 .rs[data-wide] .rs-body {
   flex-wrap: nowrap;
-  gap: 8px;
+  gap: 6px;
+}
+
+.rs[data-wide] .rs-choice {
+  padding: 0 8px;
 }
 
 .rs[data-wide] .rs-label {
@@ -167,6 +171,37 @@
 .rs:not([data-wide]) .rs-choices {
   flex: 1;
   min-width: 0;
+}
+
+.rs-break {
+  display: none;
+}
+
+.rs:not([data-wide]) .rs-break {
+  display: block;
+  flex: 1 1 100%;
+  height: 0;
+}
+
+.rs:not([data-wide]) .rs-tag {
+  flex: 0 0 auto;
+  margin-left: calc(5.4rem + 6px);
+}
+
+.rs-done {
+  height: 40px;
+  border: 1px solid var(--line-strong, #aebecb);
+  border-radius: 6px;
+  background: var(--glass-3, #fff);
+  color: var(--ink, #07081c);
+  font-size: var(--t-s, 13px);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.rs-done:focus-visible {
+  outline: 2px solid var(--brand-accent, #635bf1);
+  outline-offset: 2px;
 }
 
 .rs:not([data-wide]) .rs-choice {

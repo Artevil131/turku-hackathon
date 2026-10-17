@@ -5,6 +5,7 @@ import { t } from "@aei/i18n";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { previousUnits, useFlows } from "../../relations.ts";
 import { hashPage, hashParams, writeHashParams } from "../../url.ts";
+import { AsOf } from "../AsOf.tsx";
 import { CoverageList, itemsOf, type ListStatus } from "./CoverageList.tsx";
 import { Details } from "./Details.tsx";
 import "./DoctorPage.css";
@@ -97,6 +98,7 @@ export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetry
     const { singles, pairs } = itemsOf(current, locale);
     return [...singles, ...pairs];
   }, [current, locale]);
+  const detailsDate = current?.asOf ?? null;
   const item = items.find((i) => i.id === selected) ?? null;
   const closeSheet = () => {
     const id = selected;
@@ -145,6 +147,12 @@ export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetry
               <section className="dt-panel dp-panel" aria-labelledby="dt-title" aria-live="polite">
                 <h3 id="dt-title" className="dt-title">
                   {t(locale, "drDetails")}
+                  {detailsDate ? (
+                    <>
+                      {" "}
+                      <AsOf locale={locale} date={detailsDate} />
+                    </>
+                  ) : null}
                 </h3>
                 {current && item ? (
                   <Details client={client} locale={locale} filters={filters} data={current} item={item} signals={signals} />
@@ -168,7 +176,15 @@ export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetry
           }}
         >
           <div className="dp-sheet-head">
-            <h2>{t(locale, "drDetails")}</h2>
+            <h2>
+              {t(locale, "drDetails")}
+              {detailsDate ? (
+                <>
+                  {" "}
+                  <AsOf locale={locale} date={detailsDate} />
+                </>
+              ) : null}
+            </h2>
             <button type="button" className="dp-close" onClick={closeSheet}>
               {t(locale, "drClose")}
             </button>

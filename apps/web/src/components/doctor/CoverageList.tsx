@@ -3,7 +3,7 @@ import { shortOrganism } from "@aei/domain";
 import { antibioticName, type Locale, specimenName, t, wardName } from "@aei/i18n";
 import { type KeyboardEvent, type ReactNode, useMemo, useRef } from "react";
 import "./CoverageList.css";
-import { BAR, certaintyOf, type DoctorFilters, dmy, num, pct } from "./filters.ts";
+import { BAR, type DoctorFilters, dmy, num, pct } from "./filters.ts";
 import { InfoIcon, Popover } from "./Popover.tsx";
 import { PrintSheet } from "./PrintSheet.tsx";
 import { flagsOf, type Item, reasonOf, STANDING } from "./reason.ts";
@@ -63,7 +63,6 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
   const unit = wardName(locale, filters.unit);
   const site = specimenName(locale, filters.site);
   const cov = data?.coverage;
-  const level = cov ? certaintyOf(cov.level) : null;
   const ready = status === "ready" && data && cov;
   const stale = status === "loading" && data;
   const { singles, pairs } = useMemo(() => (data ? itemsOf(data, locale) : { singles: [], pairs: [] }), [data, locale]);
@@ -161,10 +160,6 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
             {assessable && item.share !== null ? <b>{pct(item.share)} %</b> : null}
             {assessable ? <span className="cl-dot"> · </span> : null}
             <span className="cl-n">n {num(locale, item.n)}</span>
-          </span>
-          <span className="cl-lvl" title={level ? t(locale, level.label) : undefined}>
-            <span aria-hidden="true">{level?.glyph}</span>
-            <span className="dp-sr">{level ? t(locale, level.short) : ""}</span>
           </span>
           <span className="cl-res" data-standing={item.standing} title={t(locale, st.long)}>
             <span className="cl-glyph" aria-hidden="true">
@@ -267,7 +262,6 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
               )}
             </span>
             <span className="cl-r">{t(locale, "drCovers")}</span>
-            <span />
             <span>{t(locale, "drStandingCol")}</span>
           </div>
           {/* biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: a listbox of rows with arrow-key movement */}

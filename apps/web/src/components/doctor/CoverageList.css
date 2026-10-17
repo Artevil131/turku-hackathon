@@ -77,7 +77,7 @@
 .cl-cols,
 .cl-row {
   display: grid;
-  grid-template-columns: minmax(120px, 190px) minmax(110px, 1fr) 100px 24px minmax(78px, 100px);
+  grid-template-columns: minmax(120px, 190px) minmax(110px, 1fr) 100px minmax(78px, 100px);
   align-items: center;
   column-gap: 8px;
 }
@@ -254,12 +254,6 @@
   font-weight: 600;
 }
 
-.cl-lvl {
-  text-align: center;
-  color: var(--d-ink-2);
-  font-size: var(--d-m);
-}
-
 .cl-res {
   display: inline-flex;
   align-items: center;
@@ -343,8 +337,6 @@
     align-items: flex-start;
     gap: 2px;
   }
-  .cl-lvl,
-  .cl-cols > span:nth-child(4),
   .cl-axis-head > span {
     display: none;
   }
