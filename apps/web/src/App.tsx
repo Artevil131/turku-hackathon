@@ -10,8 +10,9 @@ import { PHONE } from "./components/shell/Menu.tsx";
 import { Sidebar, tabName } from "./components/shell/Sidebar.tsx";
 import { type Audience, storedAudience } from "./components/start/audience.ts";
 import { StartPage } from "./components/start/StartPage.tsx";
-import type { DemoSpec } from "./demo/demos.ts";
+import type { DemoId, DemoSpec } from "./demo/demos.ts";
 import { openDemo } from "./demo/openDemo.ts";
+import { DemoTour } from "./demo/tour/Tour.tsx";
 import { useLive } from "./live.ts";
 import { FlowsContext } from "./relations.ts";
 import { type Shell, ShellContext, type Slots, SlotsContext } from "./shell/context.ts";
@@ -120,7 +121,7 @@ function usePrefersReducedMotion(): boolean {
 }
 
 export function App() {
-  const [locale, setLocale] = useState<Locale>(() => stored("aei.locale", "fi", (v) => v === "fi" || v === "en"));
+  const [locale, setLocale] = useState<Locale>(() => stored("aei.lang", "en", (v) => v === "fi" || v === "en"));
   const [page, setPage] = useState<Page>(pageFromHash);
   const [audience] = useState<Audience>(storedAudience);
   const [tabs, setTabs] = useState<DocTab[]>(() => {
@@ -133,6 +134,8 @@ export function App() {
   );
   const [drawer, setDrawer] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  // The guided tour offered when a demo file opens; leaving the project ends it.
+  const [tour, setTour] = useState<{ demo: DemoId; key: number } | null>(null);
   const [slots, setSlots] = useState<Slots>({ actions: null, windows: null });
   const setActionsSlot = useCallback((el: HTMLElement | null) => setSlots((s) => (s.actions === el ? s : { ...s, actions: el })), []);
   const setWindowsSlot = useCallback((el: HTMLElement | null) => setSlots((s) => (s.windows === el ? s : { ...s, windows: el })), []);
@@ -180,7 +183,7 @@ export function App() {
   }, []);
   useEffect(() => {
     document.documentElement.lang = locale;
-    store("aei.locale", locale);
+    store("aei.lang", locale);
   }, [locale]);
   useEffect(() => {
     store("aei.audience", audience);
@@ -339,7 +342,10 @@ export function App() {
 
   const openDemoFile = (demo: DemoSpec) => {
     openDemo(client, locale, demo)
-      .then(shell.openProject)
+      .then((project) => {
+        shell.openProject(project);
+        setTour({ demo: demo.id, key: Date.now() });
+      })
       .catch(() => setNotice(t(locale, "demoOpenError")));
   };
   return (
@@ -372,6 +378,7 @@ export function App() {
                     .catch(() => setNotice(t(locale, "pmError")));
                 }}
                 onPage={navigate}
+                onLocale={setLocale}
                 setActionsSlot={setActionsSlot}
                 setWindowsSlot={setWindowsSlot}
               />
@@ -430,7 +437,13 @@ export function App() {
                   <SiteLine locale={locale} />
                   <Fragment key={siteKey}>
                     {page === "home" ? (
-                      <StartPage client={client} locale={locale} clock={live.clock?.asOf ?? null} audience={audience} onDemo={openDemoFile} />
+                      <StartPage
+                        client={client}
+                        locale={locale}
+                        clock={live.clock?.asOf ?? null}
+                        audience={audience}
+                        onDemo={openDemoFile}
+                      />
                     ) : null}
                     <Suspense fallback={<div className="section" aria-busy="true" />}>
                       {page === "project" ? (
@@ -470,6 +483,9 @@ export function App() {
                   ×
                 </button>
               </p>
+            ) : null}
+            {tour && page === "project" ? (
+              <DemoTour key={tour.key} locale={locale} demo={tour.demo} reducedMotion={reducedMotion} onClose={() => setTour(null)} />
             ) : null}
             {live.connection === "offline" ? (
               <p className="banner" role="status">

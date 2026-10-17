@@ -28,6 +28,12 @@ const Svg = ({ d }: { d: string }) => (
 const HOME = "M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H5a1 1 0 0 1-1-1z";
 const DATA = "M12 4c4.4 0 8 1.3 8 3s-3.6 3-8 3-8-1.3-8-3 3.6-3 8-3ZM4 7v5c0 1.7 3.6 3 8 3s8-1.3 8-3V7M4 12v5c0 1.7 3.6 3 8 3s8-1.3 8-3v-5";
 const SEARCH = "M10.5 17a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13ZM15.5 15.5 20 20";
+const GLOBE = "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18ZM3 12h18M12 3c-2.8 2.6-2.8 15.4 0 18M12 3c2.8 2.6 2.8 15.4 0 18";
+/** The two languages, each named in itself. */
+const LANGS: readonly [Locale, string, string][] = [
+  ["fi", "FI", "Suomi"],
+  ["en", "EN", "English"],
+];
 const DOC = "M7 3.5h7l4 4V20a.5.5 0 0 1-.5.5h-10.5A.5.5 0 0 1 6.5 20V4a.5.5 0 0 1 .5-.5ZM14 3.5V8h4";
 const VIEW = "M3.5 12S6.5 6 12 6s8.5 6 8.5 6-3 6-8.5 6-8.5-6-8.5-6ZM12 14.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z";
 const FROZEN = "M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5";
@@ -65,6 +71,7 @@ export function Sidebar({
   onNew,
   onDemo,
   onPage,
+  onLocale,
   setActionsSlot,
   setWindowsSlot,
 }: {
@@ -83,6 +90,7 @@ export function Sidebar({
   /** Opens a demo file (creating its project the first time). */
   onDemo: (demo: DemoSpec) => void;
   onPage: (page: "data" | "settings") => void;
+  onLocale: (locale: Locale) => void;
   setActionsSlot: (el: HTMLElement | null) => void;
   setWindowsSlot: (el: HTMLElement | null) => void;
 }) {
@@ -343,6 +351,43 @@ export function Sidebar({
             </span>
             <span className="sb-label">{t(locale, "settings")}</span>
           </button>
+          {rail ? (
+            <button
+              type="button"
+              className="sb-item"
+              data-language
+              lang={locale === "fi" ? "en" : "fi"}
+              onClick={() => onLocale(locale === "fi" ? "en" : "fi")}
+              title={`${t(locale, "language")}: ${locale === "fi" ? "English" : "Suomi"}`}
+            >
+              <span className="sb-icon sb-lang-code">{locale.toUpperCase()}</span>
+              <span className="sb-label">{t(locale, "language")}</span>
+            </button>
+          ) : (
+            <div className="sb-item sb-lang" role="group" aria-label={t(locale, "language")} data-language>
+              <span className="sb-icon">
+                <Svg d={GLOBE} />
+              </span>
+              <span className="sb-label" aria-hidden="true">
+                {t(locale, "language")}
+              </span>
+              <span className="sb-lang-seg">
+                {LANGS.map(([value, code, name]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    lang={value}
+                    aria-pressed={locale === value}
+                    title={name}
+                    onClick={() => onLocale(value)}
+                  >
+                    <span aria-hidden="true">{code}</span>
+                    <span className="visually-hidden">{name}</span>
+                  </button>
+                ))}
+              </span>
+            </div>
+          )}
         </div>
       </nav>
     </>

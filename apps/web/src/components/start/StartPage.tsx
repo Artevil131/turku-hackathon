@@ -10,6 +10,7 @@ import { QUICK_STARTS, TEMPLATE_KEYS, type Template } from "../research/workspac
 import type { Audience } from "./audience.ts";
 import { NewProjectDialog } from "./NewProjectDialog.tsx";
 import { ShareDialog } from "./ShareDialog.tsx";
+import { TemplateArt } from "./TemplateArt.tsx";
 import "../home/home.css";
 import "../research/SignalFeed.css";
 import "./start.css";
@@ -190,13 +191,22 @@ export function StartPage({
           ) : projects === null ? (
             <div aria-busy="true" className="start-loading" />
           ) : projects.length === 0 ? (
-            <div className="start-empty">
-              <h3>{t(locale, "startEmpty")}</h3>
-              <p>{t(locale, "startEmptyNote")}</p>
-              <button type="button" className="start-primary" disabled={!!launching} onClick={() => void launch(templates[0] ?? "blank")}>
-                {t(locale, TEMPLATE_KEYS[templates[0] ?? "blank"][0])}
-              </button>
-            </div>
+            // Nothing yet: the demo for this audience, which opens with its guided tour.
+            (() => {
+              const demo = DEMOS.find((d) => d.id === audience) ?? DEMOS[0];
+              return demo ? (
+                <div className="start-empty">
+                  <TemplateArt demo={demo.id} />
+                  <div>
+                    <h3>{t(locale, "demoSuggest")}</h3>
+                    <p>{t(locale, "demoSuggestNote", { title: t(locale, demo.titleKey) })}</p>
+                    <button type="button" className="start-primary" data-demo={demo.id} onClick={() => onDemo(demo)}>
+                      {t(locale, "demoSuggestOpen", { role: t(locale, demo.roleKey) })}
+                    </button>
+                  </div>
+                </div>
+              ) : null;
+            })()
           ) : (
             <ScrollRow locale={locale}>
               {projects.map((project) => (
@@ -273,6 +283,7 @@ export function StartPage({
           <div className="start-demo-grid">
             {DEMOS.map((demo) => (
               <button type="button" className="start-demo" key={demo.id} data-demo={demo.id} onClick={() => onDemo(demo)}>
+                <TemplateArt demo={demo.id} />
                 <span className="start-demo-role">{t(locale, demo.roleKey)}</span>
                 <strong>{t(locale, demo.titleKey)}</strong>
                 <span className="start-demo-blurb">{t(locale, demo.blurbKey)}</span>
@@ -292,6 +303,7 @@ export function StartPage({
                   data-busy={launching === template || undefined}
                 >
                   <button type="button" data-template={template} disabled={!!launching} onClick={() => void launch(template)}>
+                    <TemplateArt template={template} />
                     <strong>{t(locale, launching === template ? "startLaunching" : TEMPLATE_KEYS[template][0])}</strong>
                     <span>{t(locale, TEMPLATE_KEYS[template][1])}</span>
                     {quick ? <small>{t(locale, "startQuickNote")}</small> : null}

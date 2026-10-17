@@ -120,7 +120,7 @@ await send("Emulation.setDeviceMetricsOverride", { width: 1440, height: 900, dev
 await send("Page.navigate", { url: base });
 await sleep(1500);
 await js(
-  `localStorage.setItem("aei.locale", ${JSON.stringify(JSON.stringify(lang))}); localStorage.setItem("aei.ward", '"URO"'); localStorage.setItem("aei.route", '"alerts"');`,
+  `localStorage.setItem("aei.lang", ${JSON.stringify(lang)}); localStorage.setItem("aei.ward", '"URO"'); localStorage.setItem("aei.route", '"alerts"');`,
 );
 await send("Page.navigate", { url: `${base}/#alerts` });
 await send("Page.reload"); // a hash change alone keeps the app running with its old settings

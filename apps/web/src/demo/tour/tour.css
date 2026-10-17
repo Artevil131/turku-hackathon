@@ -1,0 +1,168 @@
+/* The guided demo tour: the offer, the drawn cursor, the spotlight ring and the caption card. Above every menu
+   and dialog (they top out at 300); the layer itself lets pointer events through so the page stays live. */
+
+.tour {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  pointer-events: none;
+}
+
+.tour-spot {
+  position: fixed;
+  left: 0;
+  top: 0;
+  border: 2px solid var(--live);
+  border-radius: calc(var(--radius-panel) + 4px);
+  box-shadow:
+    0 0 0 4px var(--live-glow),
+    0 0 0 100vmax rgb(7 8 28 / 0.14);
+  transition:
+    transform 420ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    width 420ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    height 420ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.tour-cursor {
+  position: fixed;
+  left: -4px;
+  top: -3px;
+  transition-property: transform, opacity;
+  opacity: 0;
+  transition-timing-function: cubic-bezier(0.3, 0.1, 0.2, 1);
+  filter: drop-shadow(0 2px 3px rgb(7 8 28 / 0.25));
+}
+.tour-cursor[data-shown] {
+  opacity: 1;
+}
+.tour-cursor svg {
+  display: block;
+}
+.tour-ripple {
+  position: absolute;
+  left: 4px;
+  top: 3px;
+  width: 34px;
+  height: 34px;
+  margin: -17px 0 0 -17px;
+  border-radius: 50%;
+  border: 2px solid var(--live);
+  animation: tour-ripple 520ms ease-out forwards;
+}
+@keyframes tour-ripple {
+  from {
+    transform: scale(0.3);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+.tour-card,
+.tour-offer {
+  position: fixed;
+  left: 50%;
+  width: min(620px, calc(100vw - 32px));
+  transform: translateX(-50%);
+  pointer-events: auto;
+  background: var(--well-empty);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  box-shadow: 0 12px 40px rgb(7 8 28 / 0.18);
+  padding: 16px 20px 14px;
+  font-family: var(--font-ui);
+}
+.tour-card[data-at="low"],
+.tour-offer {
+  bottom: 24px;
+}
+.tour-card[data-at="high"] {
+  top: 24px;
+}
+.tour-offer {
+  z-index: 400;
+  animation: tour-in 260ms ease-out;
+}
+.tour-offer h2 {
+  margin: 2px 0 6px;
+  font-family: var(--font-display);
+  font-size: var(--t-l);
+  line-height: 1.2;
+}
+.tour-offer p {
+  margin: 0 0 14px;
+  color: var(--ink-2);
+  font-size: var(--t-m);
+  line-height: 1.5;
+}
+@keyframes tour-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+}
+
+.tour-kicker {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.tour-say {
+  margin: 6px 0 12px;
+  font-size: var(--t-m);
+  line-height: 1.55;
+  min-height: 4.65em;
+  text-wrap: pretty;
+}
+.tour-progress {
+  height: 3px;
+  margin: -16px -20px 12px;
+  border-radius: var(--radius-panel) var(--radius-panel) 0 0;
+  background: var(--line);
+  overflow: hidden;
+}
+.tour-progress i {
+  display: block;
+  height: 100%;
+  background: var(--live);
+  transition: width 400ms ease;
+}
+.tour-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.tour-exit {
+  margin-right: auto;
+}
+.tour-keys {
+  color: var(--ink-3);
+  font-size: var(--t-xs);
+}
+.tour[data-paused] .tour-cursor[data-shown] {
+  opacity: 0.55;
+}
+
+@media (max-width: 640px) {
+  .tour-keys {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tour-spot,
+  .tour-cursor,
+  .tour-progress i {
+    transition: none;
+  }
+  .tour-ripple,
+  .tour-offer {
+    animation: none;
+  }
+}

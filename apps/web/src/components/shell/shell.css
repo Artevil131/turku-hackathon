@@ -348,6 +348,48 @@
   border-top: 1px solid var(--line);
 }
 
+/* Language: two codes side by side; on the rail, one button that switches to the other language. */
+.sb-lang:hover {
+  background: none;
+}
+
+.sb-lang-seg {
+  display: inline-flex;
+  flex: none;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+}
+
+.sb-lang-seg button {
+  min-width: 30px;
+  padding: 2px 6px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--ink-3);
+  font: inherit;
+  font-size: var(--t-xs);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.sb-lang-seg button:hover {
+  color: var(--ink);
+}
+
+.sb-lang-seg button[aria-pressed="true"] {
+  background: var(--live-soft);
+  color: var(--live);
+}
+
+.sb-lang-code {
+  width: auto;
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
 .sb-foot .site-picker {
   padding: 0 2px 4px;
 }
