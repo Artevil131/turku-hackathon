@@ -19,8 +19,9 @@ A detector is anything with this surface (`Detector` below is the ready-made cla
     rows = tune_curve(detector)                                        # year-1 curve (noise a year, rates at k = 4) to pick a setting
     check_causal(detector, ["2025-03-31", "2026-06-30"])               # guard: raises if a signal depends on later rows
 
-`score_detector` gives exactly the detection keys of the spec's "Metric keys" in `metrics`, `intervals` and `n`; `extra`
-holds `D5_curve` (one row per level) and `D2_per_seed`, and some detail. Everything is as-of: a signal for day t used
+`score_detector` gives exactly the detection keys of the spec's "Metric keys" in `metrics`, `intervals` and `n` (D4's
+intervals are exact Poisson 95 % intervals of the episode counts, `poisson_interval`); `extra` holds `D5_curve` (one
+row per level) and `D2_per_seed`, and some detail. Everything is as-of: a signal for day t used
 rows dated up to t, checked by `check_causal`. CPU seconds per part are printed.
 
     from aei import harness, score_detection as sd
@@ -37,6 +38,8 @@ from bisect import bisect_left, bisect_right
 from collections import Counter
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
+
+from scipy.stats import chi2
 
 from aei import harness
 from aei.coverage import wilson
@@ -77,6 +80,7 @@ __all__ = [
     "check_causal",
     "confirm",
     "new_in_unit_signals",
+    "poisson_interval",
     "retune_live_set",
     "score_detector",
     "tune_curve",
@@ -768,6 +772,16 @@ def _ci(hit: int, n: int) -> list[float]:
     return list(wilson(hit, n))
 
 
+def poisson_interval(count: int, years: float = 1.0, level: float = 0.95) -> list[float]:
+    """Exact (Garwood) Poisson interval for `count` events, as a rate per year over `years`:
+    `[chi2.ppf((1 - level) / 2, 2 c) / 2, chi2.ppf((1 + level) / 2, 2 c + 2) / 2] / years`, the lower bound 0 for c = 0.
+    D4's counts are tiny (a handful of episodes in two years), so every D4 rate comes with it (harness review, finding 11)."""
+    tail = (1 - level) / 2
+    lo = chi2.ppf(tail, 2 * count) / 2 if count > 0 else 0.0
+    hi = chi2.ppf(1 - tail, 2 * count + 2) / 2
+    return [float(lo) / years, float(hi) / years]
+
+
 def score_detector(
     detector,
     *,
@@ -849,6 +863,7 @@ def score_detector(
         metrics["D4"] = {k: d4[k] for k in ("episodes_per_year", *KINDS, "alerts_per_week")}
         n["D4"] = {"episodes_per_year": d4["count"], **{k: d4[f"{k}_count"] for k in KINDS}, "alerts_per_week": d4["alerts"]}
         extra["D4_score_years"] = score_years()
+        intervals["D4"] = {k: poisson_interval(c, score_years()) for k, c in n["D4"].items() if k != "alerts_per_week"}
     if "D5" in want:
         row = next(r for r in curve if r["level"] == headline["level"])
         metrics["D5"] = {k: v for k, v in headline.items() if k != "note"}

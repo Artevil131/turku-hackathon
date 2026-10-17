@@ -241,11 +241,13 @@ coverage
   C1_diff   same keys, value minus the hospital-365 baseline (intervals: bootstrap of the difference)
   C2, C2_diff                                                    log loss, same keys
   C3a       {slope, intercept}
-  C3b       {mild_obs, mild_exp, mild_ratio, severe_obs, severe_exp, severe_ratio, pass}
+  C3b       {mild_obs, mild_exp, mild_ratio, mild_tail_p, severe_obs, severe_exp, severe_ratio, severe_tail_p, pass}
+            (tail_p: Poisson upper tail P(X >= obs) at the expected count; `pass` is still ratio <= 1.5)
   C4        {mild_spectrum, mild_all, severe, mild_spectrum_counted, mild_all_counted, severe_counted}
   C5        {"<organism>|<antibiotic>": Brier}                   left_out convention
   C6        {E1_CRO, E1_CXM, E2_CXM}                             days, null when not reached
-  C7        {a, b, a_literal, b_literal, pass_a}
+  C7        {a, b, a_literal, b_literal, pass_a, a_expected, b_expected, a_minus_expected}
+            (expected: coverage the method's own Beta-binomial implies under the mid-p rule; intervals.C7.a_minus_expected)
   C8        {C1, C1_diff, C4_mild_spectrum, C4_severe}
 detection
   D1        {E1, E2, E3, E1_corrected, E2_corrected, E4}         days; E4 a date
@@ -253,6 +255,7 @@ detection
   D2_delay  same keys, median days
   D3        {gap2, gap3, gap5, gap7, half7}, D3_delay
   D4        {episodes_per_year, cluster, sentinel, data, trend, divergence, alerts_per_week}
+            (intervals.D4: exact Poisson 95 % for episodes_per_year and each kind, per year; none for alerts_per_week)
   D5        {level, noise, rare, common_esbl, rare_delay, common_esbl_delay}; the curve in the top-level field "D5_curve"
   D6, D7    shares
   I1        {alerts, incidents, alerts_per_incident}
@@ -262,3 +265,16 @@ prediction
              "<phenotype>_mae_skill", "<phenotype>_log_skill" for MRSA ESBL VRE CPE, national_mae_skill, national_log_skill,
              mae_skill_no_last2, log_skill_no_last2}       skill against persistence unless named
 ```
+
+## Changes after the review
+
+Additive only (new keys, new optional arguments; defaults and the values of existing keys unchanged), after
+harness-review.md; every one is *proposed by Claude Code, pending Artem*.
+
+- C3(b), finding 6: `mild_tail_p`, `severe_tail_p` (also in `C3b_bb`), the Poisson upper tail P(X >= observed) at the expected count; `pass` is unchanged (ratio <= 1.5).
+- C7, finding 8: `a_expected`, `b_expected` (coverage the method's own predictive implies under the mid-p rule, about 0.907 for the baselines) and `a_minus_expected` with a bootstrap interval over target months in `intervals`; `a` and `pass_a` unchanged.
+- Leaderboard, findings 9 and 12: the C6 columns have no better direction (shown, never bold); D5.level and D5.noise columns beside the D5 headline; a line says D5 is a property of the detector's threshold sweep.
+- D4, finding 11: `intervals["D4"]` holds the exact Poisson 95 % interval of `episodes_per_year` and each kind (rates per year, from the episode count over SCORE); `aei.score_detection.poisson_interval` computes it.
+- Re-tuned reference row, finding 13: the notes of `baselines/detection.py` state the caveat (cluster alphas chosen on 165 to 320-day baselines with a per-detector 80 % bar, one grid step looser than shipped, D4 cluster 4.5 a year against 1.0); the procedure is unchanged.
+- Tests, finding 17: reference files are read with `git show HEAD:<path>`; 0010's rows come from `backtest.ts` run with a temporary working directory (data linked, own empty `out/`); the CPU-time assertion runs only with `AEI_PERF` set.
+- Baseline JSONs regenerated and 0012's `run.py` rerun so the new keys are present; no existing value changed (checked key by key), only runtime fields.

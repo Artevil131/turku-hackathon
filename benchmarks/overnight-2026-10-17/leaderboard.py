@@ -69,10 +69,12 @@ COLUMNS: dict[str, list[Col]] = {
         Col("C8.C4_mild_spectrum", "C8 C4 mild, spectrum", "higher"),
         Col("C3b.pass", "C3(b) pass", "none", kind="flag"),
         Col("C7.a", "C7(a) share inside 90 % (target 0.90)", "target:0.9"),
-        Col("C6.E1_CRO", "C6 E1 CRO (days)", "lower"),
-        Col("C6.E2_CXM", "C6 E2 CXM (days)", "lower"),
+        Col("C6.E1_CRO", "C6 E1 CRO (days)", "none"),
+        Col("C6.E2_CXM", "C6 E2 CXM (days)", "none"),
     ],
     "detection": [
+        Col("D5.level", "D5 level", "none"),
+        Col("D5.noise", "D5 noise at headline (episodes/yr)", "none"),
         Col("D5.rare", "D5 rare", "higher"),
         Col("D5_heldout.rare", "D5 rare (held out)", "higher", optional=True),
         Col("D5.common_esbl", "D5 common ESBL", "higher"),
@@ -111,10 +113,11 @@ FAMILIES = ("coverage", "detection", "prediction", "interpretation")
 
 # One line above a family's table.
 FAMILY_NOTES: dict[str, list[str]] = {
-    "coverage": ["C6 is read only together with C7 and C8 (METRICS.md): a narrow interval reaches C6 fastest. C7(a) passes inside 0.85 to 0.95 (proposed)."],
+    "coverage": ["C6 is read only together with C7 and C8 (METRICS.md): a narrow interval reaches C6 fastest, so it has no better direction and is never marked. C7(a) passes inside 0.85 to 0.95 (proposed)."],
     "detection": [
         "The leaderboard is screening, not selection: a method is named best only after re-scoring on held-out injection seeds (2027 onward). "
-        "D5 measures detection of events shaped like aei.inject's injections."
+        "D5 measures detection of events shaped like aei.inject's injections.",
+        "D5 is a property of the detector's threshold sweep; rows whose sweeps overlap can show the same headline (live set shipped and re-tuned).",
     ],
     "prediction": ["P2 skill is against persistence (MAE: 1 - MAE / MAE of persistence; log: difference in mean log score). P1 describes one planted event; an undefined AUC means no other unit exceeded its baseline."],
     "interpretation": [],

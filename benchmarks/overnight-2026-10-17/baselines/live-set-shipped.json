@@ -311,6 +311,32 @@
       0.00687765,
       0.0208573
     ],
+    "D4": {
+      "episodes_per_year": [
+        2.06759,
+        8.58353
+      ],
+      "sentinel": [
+        0.310825,
+        4.40474
+      ],
+      "cluster": [
+        0.121688,
+        3.62973
+      ],
+      "trend": [
+        0.0,
+        1.85332
+      ],
+      "divergence": [
+        0.0,
+        1.85332
+      ],
+      "data": [
+        0.547556,
+        5.14545
+      ]
+    },
     "D5": {
       "rare": [
         0.874011,
@@ -555,8 +581,8 @@
       "common_esbl": 200
     }
   },
-  "runtime_s": 145.4,
-  "cpu_s": 140.5,
+  "runtime_s": 115.0,
+  "cpu_s": 114.5,
   "seeds": [
     2026
   ],
@@ -945,7 +971,7 @@
     "includes": "CPE finds (D-014)"
   },
   "cpu_by_part": {
-    "trials": 67.1,
+    "trials": 55.5,
     "D5 curve": 0.0,
     "D1 to D7, I1": 0.0
   },
@@ -1349,7 +1375,7 @@
   ],
   "heldout_trials_per_seed": 50,
   "cpu_by_part_heldout": {
-    "trials": 73.0,
+    "trials": 58.7,
     "D5 curve": 0.0,
     "D1 to D7, I1": 0.0
   },

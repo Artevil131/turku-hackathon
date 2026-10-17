@@ -11,7 +11,9 @@ Run from the repository root:  uv run pytest libs/utils/py/tests/test_score_dete
 from __future__ import annotations
 
 import dataclasses
+import subprocess
 from collections import Counter
+from functools import lru_cache
 from pathlib import Path
 
 import pytest
@@ -26,7 +28,14 @@ from aei.inject import Focus, TrialHits, base_of, common_hits, gap_hits, rare_hi
 from aei.jscompat import js_round, mulberry32, table
 
 ROOT = Path(__file__).resolve().parents[4]
-EXPERIMENTS = ROOT / "experiments"
+
+
+@lru_cache(maxsize=None)
+def committed(rel_path: str) -> str | None:
+    """A reference file as committed (`git show HEAD:<path>`), not as the working tree has it: another session or
+    `verify_experiments.py` may be rewriting the working copy (harness review, finding 17). None when it is not in HEAD."""
+    run = subprocess.run(["git", "-C", str(ROOT), "show", f"HEAD:{rel_path}"], capture_output=True, text=True, encoding="utf-8")
+    return run.stdout if run.returncode == 0 else None
 
 
 # ---------- fixtures ----------
@@ -50,8 +59,8 @@ def full_signals(dataset, live):
     return live.run(records, cultures)
 
 
-def table_lines(path: Path) -> list[str]:
-    return [line for line in path.read_text().splitlines() if line.startswith("|")]
+def table_lines(text: str) -> list[str]:
+    return [line for line in text.splitlines() if line.startswith("|")]
 
 
 def median(xs: list[int]) -> int | None:
@@ -84,9 +93,9 @@ def trials_0007(dataset, base, live):
 
 def test_0007_reproduced_row_by_row(trials_0007, live):
     """Every row of 0007's results.md: detected with its Wilson interval, median delay, delay range, large, medium, small."""
-    path = EXPERIMENTS / "0007-injected-events" / "out" / "results.md"
-    if not path.exists():
-        pytest.skip("0007 results not found")
+    text = committed("experiments/0007-injected-events/out/results.md")
+    if text is None:
+        pytest.skip("0007 results not committed")
     # 0007 counted only the live profile and phenotype excess for clusters and the 7-day sampling drop for gaps, at the
     # shipped alphas; the live set now also has new-in-unit and the empty-run rule, which are read separately.
     cluster = lambda s: s.detector in ("profile-excess", "phenotype-excess") and live.passes(s, 1.0)  # noqa: E731
@@ -104,7 +113,7 @@ def test_0007_reproduced_row_by_row(trials_0007, live):
             by_size.append(f"{sum(1 for t in sub if t.detected(accept))}/{len(sub)}")
         med = median(delays)
         rows.append([label, f"{k}/{len(ts)} ({js_round(100 * lo)}–{js_round(100 * hi)} %)", "–" if med is None else med, f"{min(delays)}–{max(delays)}" if delays else "–", *by_size])
-    expected = table_lines(path)
+    expected = table_lines(text)
     mine = table(["setting", "detected", "median delay", "delay range", "large units", "medium units", "small units"], rows).splitlines()
     assert len(mine) == len(expected) == 13
     assert mine == expected
@@ -134,9 +143,9 @@ def trials_0011(dataset, base, live):
 
 
 def test_0011_reproduced_table_by_table(trials_0011, live):
-    path = EXPERIMENTS / "0011-common-profile-injections" / "out" / "results.md"
-    if not path.exists():
-        pytest.skip("0011 results not found")
+    text = committed("experiments/0011-common-profile-injections/out/results.md")
+    if text is None:
+        pytest.skip("0011 results not committed")
     accept = lambda s: s.detector in ("profile-excess", "phenotype-excess") and live.passes(s, 1.0)  # noqa: E731
 
     def rate(ts: list[TrialHits], strict: bool = False) -> str:
@@ -157,7 +166,7 @@ def test_0011_reproduced_table_by_table(trials_0011, live):
     for name, arm in ARMS:
         sub = [r for r in trials_0011 if r[1] == arm and r[2] >= 4]
         pooled.append([name, rate([r[3] for r in sub]), rate([r[3] for r in sub if r[3].stratum == "large"]), rate([r[3] for r in sub if r[3].stratum == "other"])])
-    expected = table_lines(path)
+    expected = table_lines(text)
     mine = (
         table(["arm", "k", "detected", "per seed", "large units", "other units", "strict", "median delay"], rows).splitlines()
         + table(["arm", "all units", "large units", "other units"], pooled).splitlines()
@@ -493,6 +502,21 @@ def test_episode_counts_use_the_fixed_key_zones_and_kinds():
     assert out["alerts_per_week"] == pytest.approx(out["alerts"] / (727 / 7))
 
 
+def test_poisson_interval_is_the_exact_garwood_interval():
+    from scipy import stats
+
+    assert sd.poisson_interval(0) == pytest.approx([0.0, 3.688879454], abs=1e-9)
+    assert sd.poisson_interval(1) == pytest.approx([0.025317808, 5.571643391], abs=1e-9)
+    lo, hi = sd.poisson_interval(9)
+    assert (round(lo, 3), round(hi, 3)) == (4.115, 17.085)  # the tabulated 95 % interval for 9 events
+    # defining property: the bounds put 2.5 % in each tail
+    assert stats.poisson.sf(8, lo) == pytest.approx(0.025, abs=1e-9) and stats.poisson.cdf(9, hi) == pytest.approx(0.025, abs=1e-9)
+    # a rate per year over 727 days; a wider level is wider
+    years = 727 / 365.25
+    assert sd.poisson_interval(9, years) == pytest.approx([lo / years, hi / years])
+    assert sd.poisson_interval(5, 1.0, 0.99)[1] > sd.poisson_interval(5)[1] > sd.poisson_interval(5, 1.0, 0.90)[1]
+
+
 def test_two_unit_signal_in_a_zone_is_excluded():
     s = Signal("profile-excess", "k", "2025-07-01", "ED+URO", 3, organism="Escherichia coli", p=0.0)
     assert sd.zone_of(s, "cluster") == "E1"
@@ -527,6 +551,12 @@ def test_score_detector_gives_the_spec_keys(dataset, live, full_signals):
     assert 0 <= m["D6"] <= 1 and 0 <= m["D7"] <= 1
     assert set(iv["D2"]) == set(m["D2"]) and set(iv["D3"]) == set(m["D3"])
     assert n["D2"]["rare_k4"] == 6 and n["D3"]["gap3"] == 6
+    # D4 comes with the exact Poisson interval of its counts (episodes per year in total and by kind; not the alerts)
+    years = sd.score_years()
+    assert set(iv["D4"]) == {"episodes_per_year", "sentinel", "cluster", "trend", "divergence", "data"}
+    for k, (lo, hi) in iv["D4"].items():
+        assert [lo, hi] == sd.poisson_interval(n["D4"][k], years)
+        assert lo <= m["D4"][k] <= hi and m["D4"][k] == pytest.approx(n["D4"][k] / years)
     assert set(ex) >= {"D5_curve", "D2_per_seed", "D3_control", "operating_level", "cpu_by_part"}
     assert [r["level"] for r in ex["D5_curve"]] == list(live.levels) and ex["operating_level"] == 1.0
     assert all(len(v) == 1 for v in ex["D2_per_seed"].values())

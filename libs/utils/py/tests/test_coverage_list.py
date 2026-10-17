@@ -3,7 +3,9 @@
 Two checks against the TypeScript, both on the full dataset and skipped without it or without Node:
 
 - experiments/0010's month loop, run in Python exactly as `backtest.ts` runs it, gives every row and combination of
-  the `out/rows.json` that `backtest.ts` writes (regenerated here), field by field, floats within 1e-12;
+  the `rows.json` that `backtest.ts` writes, field by field, floats within 1e-12. The script runs in a temporary
+  working directory (its data and output paths are relative to it, its imports to its own file), so it never writes the
+  git-ignored `out/rows.json` in the repository that other sessions read;
 - 405 queries over sex filters, windows and minimum sizes (`coverage`, `suggest`, `suggestCombinations`), run through
   Node from a short script, give the same figures.
 
@@ -22,7 +24,6 @@ import pytest
 from aei import coverage_list as cl
 
 ROOT = Path(__file__).resolve().parents[4]
-ROWS = ROOT / "experiments" / "0010-coverage-as-shipped" / "out" / "rows.json"
 BACKTEST = ROOT / "experiments" / "0010-coverage-as-shipped" / "backtest.ts"
 DATA = ROOT / "data" / "synthetic_microbiology_dataset"
 NEEDS_NODE = pytest.mark.skipif(shutil.which("node") is None, reason="node not found")
@@ -47,11 +48,18 @@ def month_loop(dataset):
 
 
 @pytest.fixture(scope="session")
-def ts_rows(dataset):
+def ts_rows(dataset, tmp_path_factory):
+    """What `backtest.ts` writes, from a run whose working directory is a temporary one: `data` links to the repository's,
+    `experiments/0010-coverage-as-shipped/out/` is empty and ours (harness review, finding 17)."""
     if shutil.which("node") is None:
         pytest.skip("node not found")
-    subprocess.run(["node", str(BACKTEST)], cwd=ROOT, check=True, capture_output=True, timeout=600)
-    return json.loads(ROWS.read_text())
+    work = tmp_path_factory.mktemp("backtest-0010")
+    (work / "data").symlink_to(ROOT / "data")
+    out = work / "experiments" / "0010-coverage-as-shipped" / "out"
+    out.mkdir(parents=True)
+    run = subprocess.run(["node", str(BACKTEST)], cwd=work, capture_output=True, text=True, timeout=600)
+    assert run.returncode == 0, run.stderr
+    return json.loads((out / "rows.json").read_text())
 
 
 @NEEDS_NODE

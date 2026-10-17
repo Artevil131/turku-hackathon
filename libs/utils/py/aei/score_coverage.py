@@ -92,6 +92,7 @@ MIN_BLOCK = 20  # C7: target isolates with a result in a block
 MIN_TARGET = 10  # C3(b): target isolates with a result in a query-month
 PASS_RATIO = 1.5  # C3(b)
 PASS_BAND = (0.85, 0.95)  # C7(a), proposed in METRICS.md
+PIT_BAND = (0.05, 0.95)  # C7: the 90 % predictive band of the mid-p PIT (Choices 1)
 MIN_TESTED = 30
 #: C7(b), C8: the planted outbreaks' unit-months (METRICS.md).
 OUTBREAKS: dict[str, tuple[str, ...]] = {"URO": ("2025-06", "2025-07", "2025-08"), "ICU": ("2026-02", "2026-03", "2026-04")}
@@ -1080,12 +1081,23 @@ def _betas(rows: pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
     return np.where(use, ma, a), np.where(use, mb, b)
 
 
+def poisson_upper_tail(obs: int, mean: float) -> float:
+    """P(X >= obs) for X ~ Poisson(mean): how often chance alone gives this many or more (1 for obs 0)."""
+    if obs <= 0:
+        return 1.0
+    if mean <= 0:
+        return 0.0
+    return float(stats.poisson.sf(obs - 1, mean))
+
+
 def c3b(ranked: pd.DataFrame) -> tuple[dict, dict]:
     """C3(b): among query-months whose top pick clears and that have at least 10 target isolates with a result on its
     basis, those whose realised share fell below the threshold, against the number expected from the binomial at the
     predicted share (0010; Choices 2). Returns the metrics and, beside them, the Beta-binomial variant (the method's
     Beta, else one moment-matched to its interval). `pass`: both ratios at most 1.5 (None if a severity has no
-    query-month to judge)."""
+    query-month to judge); it stays METRICS.md's reading. `mild_tail_p`, `severe_tail_p`: the Poisson upper tail
+    P(X >= observed) at the expected count (harness review, finding 6), so a reader sees when a ratio over 1.5 is one
+    unlucky query-month (expected 0.3, observed 1: tail 0.26) rather than miscalibration; None with no query-month."""
     out: dict = {}
     bb: dict = {}
     judged = {"binomial": [], "betabinomial": []}
@@ -1097,8 +1109,23 @@ def c3b(ranked: pd.DataFrame) -> tuple[dict, dict]:
         exp = _expected_below(n, t["share"].to_numpy(), thr)
         a, b = _betas(t)
         exp_bb = _expected_below(n, t["share"].to_numpy(), thr, a, b) if len(t) else 0.0
-        out.update({f"{severity}_obs": obs, f"{severity}_exp": exp, f"{severity}_ratio": obs / exp if exp > 0 else None, f"{severity}_queries": len(t)})
-        bb.update({f"{severity}_obs": obs, f"{severity}_exp": exp_bb, f"{severity}_ratio": obs / exp_bb if exp_bb > 0 else None})
+        out.update(
+            {
+                f"{severity}_obs": obs,
+                f"{severity}_exp": exp,
+                f"{severity}_ratio": obs / exp if exp > 0 else None,
+                f"{severity}_tail_p": poisson_upper_tail(obs, exp) if len(t) else None,
+                f"{severity}_queries": len(t),
+            }
+        )
+        bb.update(
+            {
+                f"{severity}_obs": obs,
+                f"{severity}_exp": exp_bb,
+                f"{severity}_ratio": obs / exp_bb if exp_bb > 0 else None,
+                f"{severity}_tail_p": poisson_upper_tail(obs, exp_bb) if len(t) else None,
+            }
+        )
         judged["binomial"].append(len(t) > 0 and obs <= PASS_RATIO * exp + 1e-12)
         judged["betabinomial"].append(len(t) > 0 and obs <= PASS_RATIO * exp_bb + 1e-12)
         out[f"_n_{severity}"] = len(t)
@@ -1127,6 +1154,28 @@ def mid_pit(k: np.ndarray, n: np.ndarray, a: np.ndarray, b: np.ndarray) -> np.nd
     return stats.betabinom.cdf(k - 1, n, a, b) + stats.betabinom.pmf(k, n, a, b) / 2
 
 
+def _in_band(u: np.ndarray) -> np.ndarray:
+    return (u >= PIT_BAND[0]) & (u <= PIT_BAND[1])
+
+
+def inside_probability(n: np.ndarray, a: np.ndarray, b: np.ndarray) -> np.ndarray:
+    """Per block, the probability that the realised count lands inside C7's band (mid-p PIT between 0.05 and 0.95) when
+    it is drawn from the method's own Beta-binomial(n, a, b): the sum of f(k) over the counts k whose mid-p lies in the
+    band. About 0.90 for a smooth count, up to 0.93 where p is near 1 and the count distribution is lumpy (harness review,
+    finding 8), so the mean over blocks is the coverage a perfectly calibrated method would show here. The mid-p
+    u = F(k - 1) + f(k) / 2 is built from one pmf and a running sum within each block (the same values as `mid_pit`, which
+    would call the slower cdf for every count)."""
+    n = np.asarray(n, dtype=np.int64)
+    size = n + 1
+    start = np.cumsum(size) - size
+    block = np.repeat(np.arange(len(n)), size)
+    k = np.arange(int(size.sum())) - start[block]
+    f = stats.betabinom.pmf(k, n[block], np.asarray(a, dtype=float)[block], np.asarray(b, dtype=float)[block])
+    running = np.cumsum(f)
+    u = running - np.concatenate([[0.0], running])[start][block] - f / 2
+    return np.bincount(block, weights=f * _in_band(u), minlength=len(n))
+
+
 def _queries(mt: MonthTargets) -> list[tuple[int, str, str, str]]:
     """The query-months: (month index, month label, unit, specimen) with at least one target isolate (0010)."""
     return [
@@ -1144,7 +1193,10 @@ def c7(mp: MonthP, boots: int = BOOTSTRAPS) -> tuple[dict, dict, dict]:
     count lies inside the method's 90 % predictive interval for the count at the block's n, from the mid-p PIT u with
     0.05 <= u <= 0.95 (Choices 1; the Beta-binomial of the method's Beta, else of a Beta moment-matched to its 90 %
     interval). `a_literal`, `b_literal`: the 90 % interval for p contains the realised share. `pass_a`: `a` within 0.85 to
-    0.95 (proposed). Empty if the estimator gave no 90 % interval or Beta."""
+    0.95 (proposed). `a_expected`, `b_expected`: the coverage the method's own predictive implies under the same rule
+    (the mean of `inside_probability` over the blocks; about 0.907 for discrete outcomes, not 0.90); `a_minus_expected`:
+    `a` minus `a_expected` with a bootstrap interval over target months (harness review, finding 8). Empty if the
+    estimator gave no 90 % interval or Beta."""
     mt = month_targets()
     nm = len(mt.months)
     blocks = []  # (month index, month label, unit, cell, c)
@@ -1165,7 +1217,7 @@ def c7(mp: MonthP, boots: int = BOOTSTRAPS) -> tuple[dict, dict, dict]:
     a, b = np.where(use, ma, a), np.where(use, mb, b)
     k, n = mt.covered[m, cid], mt.known_all[m, cid]
     u = mid_pit(k, n, a, b)
-    inside = (u >= 0.05) & (u <= 0.95)
+    inside = _in_band(u)
     literal = (k / n >= lo) & (k / n <= hi)
     in_outbreak = _outbreak_unit_month(df)
     metrics, intervals, ns = {}, {}, {}
@@ -1180,6 +1232,14 @@ def c7(mp: MonthP, boots: int = BOOTSTRAPS) -> tuple[dict, dict, dict]:
                 den = np.bincount(m[mask], minlength=nm).astype(float)
                 intervals[key] = _ci(_boot_ratio(num, den, idx))
     metrics["pass_a"] = bool(PASS_BAND[0] <= metrics["a"] <= PASS_BAND[1])
+    p_inside = inside_probability(n, a, b)
+    metrics["a_expected"] = float(p_inside.mean())
+    metrics["b_expected"] = float(p_inside[in_outbreak].mean()) if in_outbreak.any() else None
+    metrics["a_minus_expected"] = metrics["a"] - metrics["a_expected"]
+    num = np.bincount(m, weights=inside.astype(float) - p_inside, minlength=nm)
+    den = np.bincount(m, minlength=nm).astype(float)
+    intervals["a_minus_expected"] = _ci(_boot_ratio(num, den, idx))
+    ns["a_expected"], ns["b_expected"], ns["a_minus_expected"] = ns["a"], ns["b"], ns["a"]
     return metrics, intervals, ns
 
 

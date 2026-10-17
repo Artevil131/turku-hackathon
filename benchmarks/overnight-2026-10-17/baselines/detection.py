@@ -45,7 +45,16 @@ RETUNED_NOTES = (
     "(alpha 0.001, 28-day bins, D-022 exclusion; its 24-month window cannot be tuned on year 1) and new-in-unit (180 days, "
     "chosen on E2) keep their shipped settings, which were chosen on E4 and E2 inside the scoring period (field "
     "`partly_tuned_on_test`). `tuned_on_test` is false for the cluster and data parts and the row is the reference that new "
-    "methods are compared against. Read as the shipped row's notes, with level = 1 meaning the re-tuned alphas."
+    "methods are compared against. Read as the shipped row's notes, with level = 1 meaning the re-tuned alphas. "
+    "Caveat (harness review, finding 13): the two cluster detectors use 365-day baselines, and at the injected events' dates in "
+    "year 1 the baseline holds only 165 to 320 days, so the same excess has a larger p-value there. The cluster alphas were "
+    "therefore chosen on those shorter baselines, with a per-detector 80 % bar that is stricter than 0002's one event per "
+    "detector; the shipped alphas miss that bar here (profile 1e-4: 29 of 40, phenotype 1e-3: 20 of 40), and where no alpha "
+    "reaches it the fallback takes the one detecting most (phenotype: 31 of 40 at 1e-2). The procedure lands one grid step "
+    "looser than shipped on both (profile 1e-3 against 1e-4, phenotype 1e-2 against 1e-3), so on the scoring period this "
+    "row's operating point is a noisier one: D4 cluster episodes 4.5 a year against 1.0 for the shipped row, D2 rare k=4 "
+    "0.98 against 0.89. No procedure makes year 1 longer (METRICS.md's split table: anything needing a full year of baseline "
+    "cannot be tuned on it); compare new methods with this row on D5, which is matched on noise, with D4 beside it."
 )
 
 

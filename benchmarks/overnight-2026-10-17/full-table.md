@@ -6,10 +6,10 @@ Every flattened metric key (dotted path into `metrics`) for every row, by family
 
 | key | [baseline-coverage-hospital-365](baselines/coverage-hospital-365.json) | [baseline-coverage-shipped](baselines/coverage-shipped.json) | [0012-discounted-beta-binomial](../../experiments/0012-discounted-beta-binomial/) | [0013-dirichlet-organism-mix](../../experiments/0013-dirichlet-organism-mix/) |
 |---|---|---|---|---|
-| mark | baseline | baseline, tuned on test |  | proposed |
+| mark | baseline | baseline, tuned on test |  |  |
 | method | Hospital, same specimen, last 365 days, first isolates per 365-day window (0004's estimator 3, the annual report); intervals are Jeffreys Beta(k + 0.5, n - k + 0.5) on the hospital cell (a harness choice) | The coverage list as shipped (D-023, D-033): unit if its pool has 30 first isolates, else ward type, else hospital; 365 days; Wilson intervals (95 % for C4, z = 1.644854 for 90 %); no estimate with fewer than 30 results (scored with the baseline's p on C1 to C3(a), C5 and C8) | Discounted Beta-binomial (ENGINE.md 2.2), delta 0.95 per week, M 10, per unit x specimen x onset x antibiotic, parent: hospital, same specimen and onset, 52 weeks before, own unit left out, Jeffreys; isolate-level p by the isolate's onset, cell-level Beta by mixing the onset strata by effective own count; untested results do not enter the filter. Chosen on the TUNE windows 2023-12-25 to 2024-09-29 only | Two-layer coverage: Dirichlet organism mix (M_pi 100) times per-organism Beta (M 30), one Dirichlet per drug over the organisms with an outcome, unit year shrunk to the hospital year with the unit left out, closed-form variance (ENGINE.md 2.4) and a matched Beta; setting chosen on TUNE windows only |
-| runtime_s | 5.3 | 11.7 | 32.8 | 34.1 |
-| cpu_s | 5.2 | 11.5 | 32.5 | 33 |
+| runtime_s | 4.7 | 9.5 | 34.4 | 45.5 |
+| cpu_s | 4.7 | 9.4 | 34 | 45.2 |
 | C1.all | 0.141 (0.140–0.143) | 0.142 (0.140–0.143) | 0.142 (0.140–0.143) | 0.142 (0.140–0.143) |
 | C1.all_counted | 0.145 (0.144–0.147) | 0.146 (0.144–0.147) | 0.154 (0.152–0.156) | 0.145 (0.144–0.147) |
 | C1.small | 0.161 (0.158–0.164) | 0.161 (0.158–0.165) | 0.161 (0.158–0.165) | 0.161 (0.158–0.164) |
@@ -31,17 +31,21 @@ Every flattened metric key (dotted path into `metrics`) for every row, by family
 | C3b.mild_exp | 0.128 | 0.309 | 0.231 | 0.217 |
 | C3b.mild_obs | 0 | 0 | 0 | 0 |
 | C3b.mild_ratio | 0 | 0 | 0 | 0 |
+| C3b.mild_tail_p | 1 | 1 | 1 | 1 |
 | C3b.pass | yes | yes | no | yes |
 | C3b.severe_exp | 26.2 | 19.6 | 7.28 | 27.8 |
 | C3b.severe_obs | 29 | 23 | 14 | 29 |
 | C3b.severe_ratio | 1.11 | 1.17 | 1.92 | 1.04 |
+| C3b.severe_tail_p | 0.314 | 0.249 | 0.0173 | 0.437 |
 | C3b_bb.mild_exp | 0.133 | 0.469 | 0.778 | 0.287 |
 | C3b_bb.mild_obs | 0 | 0 | 0 | 0 |
 | C3b_bb.mild_ratio | 0 | 0 | 0 | 0 |
+| C3b_bb.mild_tail_p | 1 | 1 | 1 | 1 |
 | C3b_bb.pass | yes | yes | yes | yes |
 | C3b_bb.severe_exp | 26.7 | 21.3 | 9.57 | 29.1 |
 | C3b_bb.severe_obs | 29 | 23 | 14 | 29 |
 | C3b_bb.severe_ratio | 1.08 | 1.08 | 1.46 | 0.998 |
+| C3b_bb.severe_tail_p | 0.357 | 0.387 | 0.106 | 0.529 |
 | C4.mild_all | 0.754 (0.747–0.761) | 0.754 (0.747–0.761) | 0.754 (0.747–0.760) | 0.754 (0.747–0.761) |
 | C4.mild_all_counted | 0.754 (0.747–0.761) | 0.754 (0.747–0.761) | 0.754 (0.747–0.760) | 0.754 (0.747–0.761) |
 | C4.mild_spectrum | 0.966 (0.963–0.970) | 0.966 (0.962–0.969) | 0.966 (0.963–0.970) | 0.966 (0.963–0.970) |
@@ -145,8 +149,11 @@ Every flattened metric key (dotted path into `metrics`) for every row, by family
 | C6.E1_CXM | n/a | n/a | n/a | 117 |
 | C6.E2_CXM | n/a | n/a | n/a | n/a |
 | C7.a | 0.899 (0.875–0.923) | 0.902 (0.877–0.925) | 0.929 (0.908–0.948) | 0.905 (0.884–0.926) |
+| C7.a_expected | 0.907 | 0.907 | 0.908 | 0.907 |
 | C7.a_literal | 0.147 (0.130–0.165) | 0.343 (0.319–0.370) | 0.612 (0.574–0.647) | 0.314 (0.291–0.339) |
+| C7.a_minus_expected | -0.0085 (-0.0322 to 0.0161) | -0.00494 (-0.0296 to 0.0183) | 0.0216 (-0.000568 to 0.0409) | -0.00167 (-0.0235 to 0.0195) |
 | C7.b | 0.556 | 0.741 | 0.815 | 0.741 |
+| C7.b_expected | 0.901 | 0.905 | 0.901 | 0.906 |
 | C7.b_literal | 0.0741 | 0.333 | 0.630 | 0.296 |
 | C7.pass_a | yes | yes | yes | yes |
 | C7_lower_bound.cells | 4285 | 4285 | 4285 | 4285 |
@@ -166,8 +173,8 @@ Every flattened metric key (dotted path into `metrics`) for every row, by family
 |---|---|---|
 | mark | baseline | baseline, tuned on test |
 | method | The live detector set with cluster and data alphas re-tuned on year 1 (Choices 5), trend and new-in-unit as shipped | The live detector set as shipped (D-020, D-021, D-022, D-031, D-034), scored on D1 to D7 and I1 over 2024-10-01 to 2026-09-27 |
-| runtime_s | 134 | 145 |
-| cpu_s | 131 | 140 |
+| runtime_s | 93.3 | 115 |
+| cpu_s | 93.2 | 114 |
 | D1.E1 | 0 | 0 |
 | D1.E1_corrected | 5 | 5 |
 | D1.E2 | 0 | 0 |
@@ -295,12 +302,12 @@ Every flattened metric key (dotted path into `metrics`) for every row, by family
 | D3_heldout_delay.gap7 | 1 | 1 |
 | D3_heldout_delay.half7 | 5 | 6 |
 | D4.alerts_per_week | 0.183 | 0.0867 |
-| D4.cluster | 4.52 | 1.00 |
-| D4.data | 3.52 | 2.01 |
-| D4.divergence | 0 | 0 |
-| D4.episodes_per_year | 9.55 | 4.52 |
-| D4.sentinel | 1.51 | 1.51 |
-| D4.trend | 0 | 0 |
+| D4.cluster | 4.52 (2.07–8.58) | 1.00 (0.122–3.63) |
+| D4.data | 3.52 (1.41–7.25) | 2.01 (0.548–5.15) |
+| D4.divergence | 0 (0–1.85) | 0 (0–1.85) |
+| D4.episodes_per_year | 9.55 (5.75–14.9) | 4.52 (2.07–8.58) |
+| D4.sentinel | 1.51 (0.311–4.40) | 1.51 (0.311–4.40) |
+| D4.trend | 0 (0–1.85) | 0 (0–1.85) |
 | D5.common_esbl | 0.750 (0.686–0.805) | 0.750 (0.686–0.805) |
 | D5.common_esbl_delay | 6 | 6 |
 | D5.level | 0.300 | 3 |
@@ -323,7 +330,7 @@ Every flattened metric key (dotted path into `metrics`) for every row, by family
 
 | key | [baseline-county-persistence](baselines/county-persistence.json) | [baseline-county-seasonal-naive](baselines/county-seasonal-naive.json) | [baseline-exposure-e1](baselines/exposure-e1.json) | [0019-exposure-ranking](../../experiments/0019-exposure-ranking/) | [0020-county-forecasts](../../experiments/0020-county-forecasts/) |
 |---|---|---|---|---|---|
-| mark | baseline | baseline | baseline | proposed |  |
+| mark | baseline | baseline | baseline |  |  |
 | method | County forecast baseline: Poisson at last month's count (floor 0.5), one month ahead, 4 phenotypes x 23 counties + national, targets 2024-10 to 2026-09 | County forecast baseline: Poisson at the same month last year's count (floor 0.5), one month ahead, 4 phenotypes x 23 counties + national, targets 2024-10 to 2026-09 | Exposure ranking after E1 (ESBL E. coli in URO, onset 2025-05-30): time-ordered patient-flow graph over the 365 days before onset, exposure of the other eight units from URO as share and raw, AUC against units whose ESBL E. coli patients in the 8 weeks from onset exceed their 26-week baseline, 1,000 label-permutation rewirings | Exposure ranking on the time-ordered patient-flow graph (P1) over real ESBL E. coli and MRSA source episodes of the scoring period, pooled by within-event Mann-Whitney pairs against 1,000 label-permutation rewirings; E1 and E2 as descriptions; flow-partner (B1, positive) and uniform-partner (B2, negative) injected two-unit clusters as controls | County one-month-ahead forecast: rolling Poisson GLM with annual harmonics per series, negative binomial predictive, cell chosen on targets 2024-01 to 2024-09 (W24 K0 trend=off rho=0 quasi_pooled floor=0.1); 4 phenotypes x 23 counties + national, targets 2024-10 to 2026-09 |
 | runtime_s | 0.3 | 0.1 | 0.3 | 87.5 | 2.4 |
 | cpu_s | 0.3 | 0.1 | 0.3 | 86.8 | 2.3 |

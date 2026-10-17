@@ -20,7 +20,10 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import re
+import subprocess
+from functools import lru_cache
 from pathlib import Path
 
 import numpy as np
@@ -38,7 +41,18 @@ from aei.eucast import effective_result, suits_specimen
 from aei.jscompat import mulberry32, to_fixed
 
 ROOT = Path(__file__).resolve().parents[4]
-RESULTS_0004 = ROOT / "experiments" / "0004-coverage-estimators" / "out" / "results.md"
+RESULTS_0004 = "experiments/0004-coverage-estimators/out/results.md"
+
+
+@lru_cache(maxsize=None)
+def committed(rel_path: str) -> str:
+    """A reference file as committed (`git show HEAD:<path>`), not as the working tree has it: `verify_experiments.py`
+    rewrites results files in place while it checks them, and a test that read one then saw it half written (harness
+    review, finding 17). Skips the test when the file is not in HEAD."""
+    run = subprocess.run(["git", "-C", str(ROOT), "show", f"HEAD:{rel_path}"], capture_output=True, text=True, encoding="utf-8")
+    if run.returncode != 0:
+        pytest.skip(f"{rel_path} is not committed at HEAD")
+    return run.stdout
 
 
 @pytest.fixture(scope="session")
@@ -77,7 +91,7 @@ def test_hospital_365_reproduces_0004_headline(scored):
 
 
 def test_the_eight_estimators_of_0004_reproduce_every_row_of_its_results(dataset):
-    text = RESULTS_0004.read_text()
+    text = committed(RESULTS_0004)
     titles = {"All cells": "all", "Cells with under 30 first isolates in the unit's last 28 days": "small", "All units except Urology": "no URO"}
     tables = {name: sc.c1_c2_table(est) for name, est in sc.estimators_0004()}
     pattern = re.compile(r"### (.+?) · (Brier score|log loss) \(n = (\d+)\)\n\n\| estimator.*?\n\|---.*?\n((?:\|.*\n)+)")
@@ -179,10 +193,10 @@ def test_metric_keys_are_the_specs(scored):
         for k in ("C1", "C1_diff", "C2", "C2_diff"):
             assert set(metrics[k]) == ones and set(intervals[k]) == ones, (name, k)
         assert set(metrics["C3a"]) == {"slope", "intercept"} and set(intervals["C3a"]) == {"slope", "intercept"}
-        assert set(metrics["C3b"]) == {"mild_obs", "mild_exp", "mild_ratio", "severe_obs", "severe_exp", "severe_ratio", "pass"}
+        assert set(metrics["C3b"]) == {"mild_obs", "mild_exp", "mild_ratio", "mild_tail_p", "severe_obs", "severe_exp", "severe_ratio", "severe_tail_p", "pass"}
         assert set(metrics["C4"]) == {"mild_spectrum", "mild_all", "severe", "mild_spectrum_counted", "mild_all_counted", "severe_counted"}
         assert set(metrics["C6"]) == {"E1_CRO", "E1_CXM", "E2_CXM"}
-        assert set(metrics["C7"]) == {"a", "b", "a_literal", "b_literal", "pass_a"}
+        assert set(metrics["C7"]) == {"a", "b", "a_literal", "b_literal", "pass_a", "a_expected", "b_expected", "a_minus_expected"}
         assert set(metrics["C8"]) == {"C1", "C1_diff", "C4_mild_spectrum", "C4_severe"}
         assert all(re.fullmatch(r"[A-Z][a-z]+ [a-z]+\|[A-Z]{3}", k) for k in metrics["C5"]) and len(metrics["C5"]) > 50
         assert set(metrics) == {"C1", "C1_diff", "C2", "C2_diff", "C3a", "C3b", "C4", "C5", "C6", "C7", "C8", "C3b_bb", "C7_lower_bound"}
@@ -219,6 +233,7 @@ def test_differences_are_values_minus_baseline(scored):
         assert shipped["C2_diff"][k] == pytest.approx(shipped["C2"][k] - base["C2"][k], abs=1e-12)
 
 
+@pytest.mark.skipif(not os.getenv("AEI_PERF"), reason="CPU time depends on the load of the machine; set AEI_PERF=1 to assert it")
 def test_cheap_estimators_score_in_a_few_seconds_of_cpu(scored):
     for name in ("hospital_365", "shipped"):
         assert sum(scored[name][3].values()) < 180, name  # the brief: well under 3 minutes
@@ -231,6 +246,72 @@ def test_shipped_c7_reads_the_interval_as_a_predictive_interval(scored):
     assert 0.85 <= c7["a"] <= 0.95 and c7["pass_a"] is True  # about nine in ten counts fall inside the 90 % predictive interval
     assert c7["a_literal"] < 0.5  # the interval for p alone rarely contains a realised share over 20 or more isolates
     assert n["C7"]["a"] > 1500 and 0 < n["C7"]["b"] < 100
+
+
+def test_shipped_and_hospital_c7_expectation_is_the_methods_own_predictive_coverage(scored):
+    """Harness review, finding 8: the band's nominal coverage over these blocks is about 0.907, not 0.90, because the count
+    is discrete; `a_minus_expected` is the observed share minus it, with a bootstrap interval over target months."""
+    for name in ("hospital_365", "shipped"):
+        metrics, intervals, n, _ = scored[name]
+        c7 = metrics["C7"]
+        assert 0.90 < c7["a_expected"] < 0.915 and 0.85 < c7["b_expected"] < 0.95, name
+        assert c7["a_minus_expected"] == pytest.approx(c7["a"] - c7["a_expected"], abs=1e-12)
+        lo, hi = intervals["C7"]["a_minus_expected"]
+        assert lo <= c7["a_minus_expected"] <= hi and lo < 0 < hi, name  # both baselines are honest (the review)
+        assert n["C7"]["a_expected"] == n["C7"]["a_minus_expected"] == n["C7"]["a"] and n["C7"]["b_expected"] == n["C7"]["b"]
+        assert 0.85 <= c7["a"] <= 0.95 and c7["pass_a"] is True  # the band and its verdict are unchanged
+
+
+def test_inside_probability_sums_the_counts_whose_mid_p_is_in_the_band():
+    def brute(n: int, a: float, b: float) -> float:
+        f = stats.betabinom.pmf(np.arange(n + 1), n, a, b)
+        u = np.cumsum(f) - f / 2  # F(k - 1) + f(k) / 2
+        return float(f[(u >= 0.05) & (u <= 0.95)].sum())
+
+    cases = [(20, 3.0, 2.0), (7, 0.8, 0.3), (40, 8.0, 8.0), (25, 6.0, 1.5), (60, 40.0, 1.1)]
+    got = sc.inside_probability(np.array([c[0] for c in cases]), np.array([c[1] for c in cases]), np.array([c[2] for c in cases]))
+    assert got == pytest.approx([brute(*c) for c in cases], abs=1e-9)
+    assert (got > 0.8).all() and (got < 1.0).all()
+    # it is what a correct method shows: draws from the Beta-binomial itself fall inside the band that often
+    rng = np.random.default_rng(11)
+    for n, a, b in ((30, 5.0, 1.0), (50, 12.0, 3.0)):
+        k = stats.betabinom.rvs(n, a, b, size=60000, random_state=rng)
+        u = sc.mid_pit(k, np.full(k.shape, n), np.full(k.shape, a), np.full(k.shape, b))
+        share = float(((u >= 0.05) & (u <= 0.95)).mean())
+        assert share == pytest.approx(float(sc.inside_probability(np.array([n]), np.array([a]), np.array([b]))[0]), abs=0.01)
+
+
+def _ranked(rows: list[tuple]) -> pd.DataFrame:
+    """A minimal `rank_queries` frame: (severity, share, known, covered) of top picks that clear."""
+    cols = ["severity", "share", "known", "covered"]
+    df = pd.DataFrame(rows, columns=cols)
+    return df.assign(rank=0, standing="clears", pa=math.nan, pb=math.nan, lower=df["share"] - 0.05, upper=np.minimum(df["share"] + 0.04, 1.0))
+
+
+def test_c3b_reports_the_poisson_tail_beside_a_pass_that_is_unchanged():
+    """Harness review, finding 6: 26 sure mild picks (expected 0.30 below 80 %) and one unlucky month fail the ratio rule
+    (1 > 1.5 x 0.30) although chance gives one or more 26 % of the time; `pass` stays the ratio's verdict."""
+    mild = [("mild", 0.95, 10, 10)] * 25 + [("mild", 0.95, 10, 7)]
+    severe = [("severe", 0.97, 10, 10)] * 40
+    c3, bb = sc.c3b(_ranked(mild + severe))
+    exp = float(26 * stats.binom.cdf(7, 10, 0.95))
+    assert c3["mild_obs"] == 1 and c3["mild_exp"] == pytest.approx(exp) and 0.29 < exp < 0.31
+    assert c3["mild_ratio"] > sc.PASS_RATIO and c3["pass"] is False  # the spec's rule, untouched
+    assert c3["mild_tail_p"] == pytest.approx(1 - math.exp(-exp)) and 0.25 < c3["mild_tail_p"] < 0.27
+    assert c3["severe_obs"] == 0 and c3["severe_tail_p"] == 1.0
+    assert bb["mild_tail_p"] == pytest.approx(1 - math.exp(-bb["mild_exp"]))
+    # no query-month to judge in a severity: no tail, no verdict
+    c3, _ = sc.c3b(_ranked(mild))
+    assert c3["severe_tail_p"] is None and c3["pass"] is None
+    assert sc.poisson_upper_tail(0, 3.0) == 1.0 and sc.poisson_upper_tail(23, 19.5907706) == pytest.approx(float(stats.poisson.sf(22, 19.5907706)))
+
+
+def test_shipped_c3b_tails(scored):
+    for name in ("hospital_365", "shipped"):
+        c3 = scored[name][0]["C3b"]
+        for sev in ("mild", "severe"):
+            assert c3[f"{sev}_tail_p"] == pytest.approx(float(stats.poisson.sf(c3[f"{sev}_obs"] - 1, c3[f"{sev}_exp"])) if c3[f"{sev}_obs"] else 1.0)
+    assert to_fixed(scored["shipped"][0]["C3b"]["severe_tail_p"], 2) == "0.25"  # 23 of 269 against 19.6 expected
 
 
 # --- targets, conventions, first isolates ---------------------------------------------------------------------------------------

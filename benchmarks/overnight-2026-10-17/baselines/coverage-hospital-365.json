@@ -146,18 +146,22 @@
       "mild_obs": 0,
       "mild_exp": 0.12773,
       "mild_ratio": 0.0,
+      "mild_tail_p": 1.0,
       "severe_obs": 29,
       "severe_exp": 26.1602,
       "severe_ratio": 1.10856,
+      "severe_tail_p": 0.314497,
       "pass": true
     },
     "C3b_bb": {
       "mild_obs": 0,
       "mild_exp": 0.132577,
       "mild_ratio": 0.0,
+      "mild_tail_p": 1.0,
       "severe_obs": 29,
       "severe_exp": 26.7449,
       "severe_ratio": 1.08432,
+      "severe_tail_p": 0.35652,
       "pass": true
     },
     "C7_lower_bound": {
@@ -173,7 +177,10 @@
       "b": 0.555556,
       "a_literal": 0.147015,
       "b_literal": 0.0740741,
-      "pass_a": true
+      "pass_a": true,
+      "a_expected": 0.907145,
+      "b_expected": 0.900668,
+      "a_minus_expected": -0.00849927
     },
     "C6": {
       "E1_CRO": null,
@@ -316,6 +323,10 @@
       "a_literal": [
         0.129825,
         0.164923
+      ],
+      "a_minus_expected": [
+        -0.0322452,
+        0.0160974
       ]
     }
   },
@@ -452,21 +463,24 @@
       "a": 1993,
       "b": 27,
       "a_literal": 1993,
-      "b_literal": 27
+      "b_literal": 27,
+      "a_expected": 1993,
+      "b_expected": 27,
+      "a_minus_expected": 1993
     }
   },
-  "runtime_s": 5.3,
-  "cpu_s": 5.2,
+  "runtime_s": 4.7,
+  "cpu_s": 4.7,
   "seeds": [
     2026
   ],
   "data": "synthetic_microbiology_dataset, seed 2026, as received 2026-10-09",
   "notes": "METRICS.md C baseline. C4 and C3(b) rank this estimator's shares by the shipped list's rules (aei.coverage_list.suggest_rows) with the untested gate taken from the shipped level pool; the hospital figure is the same for every unit.",
   "cpu_by_part_s": {
-    "data and targets": 4.1,
+    "data and targets": 3.6,
     "C1 C2 (26 windows, two conventions)": 0.1,
     "C3a C5 C8-C1": 0.2,
-    "month predictions, C3b C4 C7 C8-C4": 0.3,
+    "month predictions, C3b C4 C7 C8-C4": 0.2,
     "C6 (daily estimates over two events)": 0.6
   }
 }

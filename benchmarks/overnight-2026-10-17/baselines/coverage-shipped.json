@@ -146,18 +146,22 @@
       "mild_obs": 0,
       "mild_exp": 0.308729,
       "mild_ratio": 0.0,
+      "mild_tail_p": 1.0,
       "severe_obs": 23,
       "severe_exp": 19.5908,
       "severe_ratio": 1.17402,
+      "severe_tail_p": 0.248596,
       "pass": true
     },
     "C3b_bb": {
       "mild_obs": 0,
       "mild_exp": 0.468755,
       "mild_ratio": 0.0,
+      "mild_tail_p": 1.0,
       "severe_obs": 23,
       "severe_exp": 21.3332,
       "severe_ratio": 1.07813,
+      "severe_tail_p": 0.387315,
       "pass": true
     },
     "C7_lower_bound": {
@@ -173,7 +177,10 @@
       "b": 0.740741,
       "a_literal": 0.343201,
       "b_literal": 0.333333,
-      "pass_a": true
+      "pass_a": true,
+      "a_expected": 0.906594,
+      "b_expected": 0.905022,
+      "a_minus_expected": -0.00493787
     },
     "C6": {
       "E1_CRO": 47,
@@ -316,6 +323,10 @@
       "a_literal": [
         0.319323,
         0.370276
+      ],
+      "a_minus_expected": [
+        -0.029588,
+        0.0182908
       ]
     }
   },
@@ -452,11 +463,14 @@
       "a": 1993,
       "b": 27,
       "a_literal": 1993,
-      "b_literal": 27
+      "b_literal": 27,
+      "a_expected": 1993,
+      "b_expected": 27,
+      "a_minus_expected": 1993
     }
   },
-  "runtime_s": 11.7,
-  "cpu_s": 11.5,
+  "runtime_s": 9.5,
+  "cpu_s": 9.4,
   "seeds": [
     2026
   ],
@@ -464,9 +478,9 @@
   "notes": "Reproduces 0010 (C4 mild 96.6 % within spectrum, 75.4 % all organisms, severe 95.4 %; C3(b) 0 of 175 and 23 of 269; 959 of 4,285 below the Wilson lower bound, in C7_lower_bound).",
   "cpu_by_part_s": {
     "data and targets": 0.0,
-    "C1 C2 (26 windows, two conventions)": 4.5,
+    "C1 C2 (26 windows, two conventions)": 3.7,
     "C3a C5 C8-C1": 0.6,
-    "month predictions, C3b C4 C7 C8-C4": 4.4,
-    "C6 (daily estimates over two events)": 2.1
+    "month predictions, C3b C4 C7 C8-C4": 3.5,
+    "C6 (daily estimates over two events)": 1.7
   }
 }
