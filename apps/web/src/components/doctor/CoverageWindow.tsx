@@ -150,15 +150,17 @@ export function CoverageWindow({
     };
   }, [client]);
 
-  const firstWrite = useRef(true);
+  const writtenCase = useRef<string | null>(null);
   const fromLink = useRef(false);
   const focusRef = useRef(focus);
   focusRef.current = focus;
   useEffect(() => {
     storeUnit(filters.unit);
-    // The first write keeps what the link asked for; a changed case or another row clears it.
-    const keep = firstWrite.current || fromLink.current;
-    firstWrite.current = false;
+    // The link's drug and organism stay while the case is the one the link asked for (so also through React's
+    // development re-run of this effect); a changed case or another row clears them.
+    const caseKey = JSON.stringify(filtersToParams(filters));
+    const keep = writtenCase.current === null || writtenCase.current === caseKey || fromLink.current;
+    writtenCase.current = caseKey;
     fromLink.current = false;
     if (!keep) setFocus({ ab: null, org: null });
     const own = filtersToParams(filters);
@@ -265,9 +267,14 @@ export function CoverageWindow({
   useEffect(() => {
     if (scrolled.current || !focus.ab || !item) return;
     scrolled.current = true;
-    requestAnimationFrame(() =>
-      surfaceRef.current?.querySelector<HTMLElement>(`[data-row="${CSS.escape(item.id)}"]`)?.scrollIntoView({ block: "nearest" }),
-    );
+    // Only the page moves, and only as far as it must: the row's bottom comes just inside the viewport, so the
+    // headline above stays in view when it can (scrollIntoView would also scroll the window's own body).
+    requestAnimationFrame(() => {
+      const row = surfaceRef.current?.querySelector<HTMLElement>(`[data-row="${CSS.escape(item.id)}"]`);
+      if (!row) return;
+      const below = row.getBoundingClientRect().bottom + 24 - innerHeight;
+      if (below > 0) scrollBy({ top: below });
+    });
   }, [focus.ab, item]);
   const pickRow = (id: string | null) => {
     fromLink.current = false;
@@ -280,10 +287,11 @@ export function CoverageWindow({
     setSelected(null);
     if (id) requestAnimationFrame(() => surfaceRef.current?.querySelector<HTMLElement>(`[data-row="${CSS.escape(id)}"]`)?.focus());
   };
-  // The sheet takes focus when it opens; Esc closes it and focus returns to the row.
+  // The sheet takes focus when the user opens it; Esc closes it and focus returns to the row. A row a link
+  // selected does not pull focus (and the page with it): the headline stays where the reader is.
   useEffect(() => {
-    if (!wide && item) sheetRef.current?.focus();
-  }, [wide, item]);
+    if (!wide && item && !focus.ab) sheetRef.current?.focus();
+  }, [wide, item, focus.ab]);
 
   return (
     <div className={embedded ? "coverage-surface coverage-window" : "coverage-surface"} ref={surfaceRef}>
