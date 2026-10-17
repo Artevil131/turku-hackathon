@@ -12,10 +12,10 @@ import {
   type DetectorResult,
   type EventSpec,
   poissonInterval,
-  pythonCall,
   type RateResult,
   type SharesResult,
 } from "./model.ts";
+import { pythonScript } from "./python.ts";
 import { ChartIcon, CopyIcon, DownloadIcon } from "./ToolIcons.tsx";
 
 // One result cell: a title in words, the numbers, one method line, Copy as Python, Export CSV, remove.
@@ -257,12 +257,15 @@ function Detector({ r, locale }: { r: DetectorResult; locale: Locale }) {
 export function ResultCell({
   cell,
   locale,
+  asOf,
   onRemove,
   onChart,
   fresh = false,
 }: {
   cell: Cell;
   locale: Locale;
+  /** The clock's date, named in the copied script so the numbers can be reproduced. */
+  asOf?: string | null;
   onRemove?: (id: number) => void;
   /** Adds this result as a chart window; not offered for a detector run (it is a table). */
   onChart?: (result: Cell["result"]) => void;
@@ -280,7 +283,9 @@ export function ResultCell({
   const title = t(locale, (r.kind === "rate" && !event ? "toolsTitle_rateAll" : `toolsTitle_${r.kind}`) as "toolsTitle_rate", { event });
   const copy = async () => {
     try {
-      await navigator.clipboard.writeText(pythonCall(r));
+      await navigator.clipboard.writeText(
+        pythonScript(r, { asOf: asOf ?? null, origin: typeof location === "undefined" ? "http://localhost:8790" : location.origin }),
+      );
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
     } catch {

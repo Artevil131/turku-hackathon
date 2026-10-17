@@ -48,7 +48,11 @@ export function ChartForm({
           <option value="slice">{t(locale, "chartSourceSlice")}</option>
           {usable.map((c) => (
             <option key={c.id} value={String(c.id)}>
-              {t(locale, "chartSourceCell", { n: c.id, tool: t(locale, `toolsName_${c.result.kind}` as "toolsName_rate") })}
+              {t(locale, "chartSourceCell", {
+                n: c.id,
+                tool: t(locale, `toolsName_${c.result.kind}` as "toolsName_rate"),
+                slice: `${c.result.slice.unit || t(locale, "toolsUnitAll")} · ${c.result.slice.from} – ${c.result.slice.to}`,
+              })}
             </option>
           ))}
         </select>

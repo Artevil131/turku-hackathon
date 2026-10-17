@@ -101,7 +101,7 @@ describe("a chart window", () => {
   });
   it("exports the numbers as a table the CSV exporter takes", () => {
     const t = chartTable(computeChart(icu, base, frame));
-    expect(t.columns.map((c) => c.key)).toEqual(["from", "to", "k", "n", "share", "lo", "hi"]);
+    expect(t.columns.map((c) => c.key)).toEqual(["from", "to", "k", "n", "share", "lo", "hi", "slice"]);
     expect(t.rows).toHaveLength(2);
     expect(t.rows[0]).toMatchObject({ from: "2026-09-01", k: 4, n: 14 });
   });

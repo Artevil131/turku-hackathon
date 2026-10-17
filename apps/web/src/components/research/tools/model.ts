@@ -317,45 +317,20 @@ export const TOOL_IDS: readonly ToolId[] = ["rate", "compare", "shares", "beta",
 const q = (v: string) => JSON.stringify(v);
 const num = (v: number) => (Number.isInteger(v) ? String(v) : String(Number(v.toPrecision(10))));
 
-/** The call a researcher pastes into a notebook (aei, D-061): same arguments as the gear call. */
-export function pythonCall(r: CellResult): string {
-  switch (r.kind) {
-    case "rate":
-      return `aei.coverage.wilson(k=${r.share?.k ?? r.count}, n=${r.share?.n ?? r.count})  # share; the count's Poisson interval: k=${r.count}`;
-    case "compare": {
-      const lines = [
-        `aei.compare.proportion_difference(k1=${r.a.k}, n1=${r.a.n}, k2=${r.b.k}, n2=${r.b.n})  # diff = B - A; the cell shows A - B`,
-      ];
-      lines.push(`aei.compare.rate_ratio(k1=${r.a.k}, t1=${num(r.a.weeks)}, k2=${r.b.k}, t2=${num(r.b.weeks)})`);
-      if (r.trend) lines.push(`aei.compare.trend_across(bins=[...])  # ${r.trend.periods} weekly {events, n} bins, A then B`);
-      return lines.join("\n");
-    }
-    case "shares":
-      return `aei.compare.shares_by_period(records, from_=${q(r.slice.from)}, to=${q(r.slice.to)}, period_days=${r.periodDays}, event=${q(eventKey(r.event))})`;
-    case "beta": {
-      const plain = `aei.compare.beta_posterior(k=${r.k}, n=${r.n})`;
-      if (!r.discounted) return plain;
-      const d = r.discounted;
-      return `${plain}\naei.compare.discounted_beta(weeks, delta=${num(d.delta)}, m=${num(d.m)}, parent_share=${num(d.parentShare)})  # weeks: ${d.weeks} weekly {k, n}`;
-    }
-    case "detector": {
-      const live = r.detector === "profile" ? LIVE_SETTINGS.profileExcess : LIVE_SETTINGS.phenotypeExcess;
-      const opts = `window_days=${live.windowDays}, baseline_days=${live.baselineDays}, alpha=${live.alpha}, min_observed=${live.minObserved}`;
-      return r.detector === "profile"
-        ? `aei.detect.profile_excess(records, ${opts}, same_specimen=True)`
-        : `aei.detect.phenotype_excess(records, phenotypes=[${r.phenotypes.map(q).join(", ")}], ${opts})`;
-    }
-  }
-}
-
 type Row = ExportTable["rows"][number];
-const table = (name: string, title: string, keys: string[], rows: Row[]): ExportTable => ({
+const table = (name: string, title: string, keys: string[], rows: Row[], slice?: Slice): ExportTable => ({
   name,
   title,
-  columns: keys.map((key) => ({ key, label: key })),
-  rows,
+  columns: [...keys, ...(slice ? ["slice"] : [])].map((key) => ({ key, label: key })),
+  rows: slice ? rows.map((r) => ({ ...r, slice: sliceText(slice) })) : rows,
 });
-const finite = (v: number | undefined) => (v === undefined || !Number.isFinite(v) ? null : v);
+const finite = (v: number | undefined) => (v === undefined || !Number.isFinite(v) ? null : Number(v.toPrecision(6)));
+
+/** The slice as one text, so every exported row says what data it came from. */
+export function sliceText(s: Slice): string {
+  const bits = [s.unit || "all units", s.organism, s.specimen, s.phenotype].filter(Boolean);
+  return `${bits.join(" · ")} · ${s.from} – ${s.to} · ${s.firstOnly ? "first isolates" : "all isolates"}`;
+}
 
 /** The cell's numbers as one table, for the friend's CSV exporter (`toCsv`). */
 export function cellTable(r: CellResult): ExportTable {
@@ -367,11 +342,14 @@ export function cellTable(r: CellResult): ExportTable {
         ["measure", "value", "lo", "hi"],
         [
           { measure: "count", value: r.count, lo: finite(poissonInterval(r.count).lo), hi: finite(poissonInterval(r.count).hi) },
-          { measure: "per_week", value: finite(r.perWeek), lo: finite(r.perWeekInterval.lo), hi: finite(r.perWeekInterval.hi) },
+          { measure: "isolates_per_week", value: finite(r.perWeek), lo: finite(r.perWeekInterval.lo), hi: finite(r.perWeekInterval.hi) },
           { measure: "cultures", value: r.cultures, lo: null, hi: null },
-          { measure: "per_100_cultures", value: finite(r.per100Cultures), lo: null, hi: null },
-          ...(r.share ? [{ measure: "share", value: r.share.share, lo: r.share.interval.lo, hi: r.share.interval.hi }] : []),
+          { measure: "isolates_per_100_cultures", value: finite(r.per100Cultures), lo: null, hi: null },
+          ...(r.share
+            ? [{ measure: "share", value: finite(r.share.share), lo: finite(r.share.interval.lo), hi: finite(r.share.interval.hi) }]
+            : []),
         ],
+        r.slice,
       );
     case "compare":
       return table(
@@ -397,8 +375,11 @@ export function cellTable(r: CellResult): ExportTable {
             hi: finite(r.ratio?.interval.hi),
             p: finite(r.ratio?.p),
           },
-          ...(r.trend ? [{ measure: "trend_across", frame_a: null, frame_b: null, estimate: null, lo: null, hi: null, p: r.trend.p }] : []),
+          ...(r.trend
+            ? [{ measure: "trend_across", frame_a: null, frame_b: null, estimate: null, lo: null, hi: null, p: finite(r.trend.p) }]
+            : []),
         ],
+        r.slice,
       );
     case "shares":
       return table(
@@ -414,6 +395,7 @@ export function cellTable(r: CellResult): ExportTable {
           lo: s.interval === null ? "" : finite(s.interval.lo),
           hi: s.interval === null ? "" : finite(s.interval.hi),
         })),
+        r.slice,
       );
     case "beta": {
       const row = (name: string, b: Beta, effectiveN: number | null): Row => ({
@@ -433,6 +415,7 @@ export function cellTable(r: CellResult): ExportTable {
           row("flat prior", r.posterior, null),
           ...(r.discounted ? [row("D-041 discounted", r.discounted.posterior, r.discounted.posterior.effectiveN)] : []),
         ],
+        r.slice,
       );
     }
     case "detector":
@@ -451,6 +434,7 @@ export function cellTable(r: CellResult): ExportTable {
           expected: e.expected,
           p: e.p,
         })),
+        r.slice,
       );
   }
 }

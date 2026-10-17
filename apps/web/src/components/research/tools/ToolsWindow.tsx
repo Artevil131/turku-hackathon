@@ -598,6 +598,7 @@ export function ToolInspector(props: InspectorProps) {
             key={c.id}
             cell={c}
             locale={locale}
+            asOf={asOf}
             fresh={i === 0}
             onChart={addChart}
             onRemove={(id) => setCells((all) => all.filter((x) => x.id !== id))}

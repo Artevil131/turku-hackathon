@@ -5,7 +5,7 @@
 .ws-dock {
   flex: 0 0 auto;
   position: sticky;
-  top: 0;
+  top: 8px;
   z-index: 210;
   align-self: flex-start;
 }
@@ -115,7 +115,9 @@
   top: 0;
   left: calc(36px + 6px);
   width: 380px;
-  max-height: calc(100vh - 140px);
+  /* Never taller than the page's scroll box (the research page is a size container, below): the dock sticks to its
+     top while the page scrolls, and the inspector's body scrolls inside. */
+  max-height: calc(100cqh - 16px);
   display: flex;
   flex-direction: column;
   border: 1px solid var(--line);
@@ -311,4 +313,13 @@
 .tl-next-btn:disabled {
   opacity: 0.5;
   cursor: default;
+}
+
+/* The research page's scroll box measures the inspector (cqh above). */
+.page:has(.ws-dock) {
+  container-type: size;
+}
+/* Room for the sticky dock to travel: an inspector taller than the board must still come fully into view. */
+.ws[data-float="true"]:has(.ws-inspector:not([hidden])) {
+  min-height: calc(100cqh - 16px);
 }
