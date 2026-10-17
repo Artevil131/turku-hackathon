@@ -9,23 +9,25 @@ Arrows give the better direction: ↓ lower, ↑ higher. **Bold** is the best va
 
 ### Coverage
 
-C6 is read only together with C7 and C8 (METRICS.md): a narrow interval reaches C6 fastest. C7(a) passes inside 0.85 to 0.95 (proposed).
+C6 is read only together with C7 and C8 (METRICS.md): a narrow interval reaches C6 fastest, so it has no better direction and is never marked. C7(a) passes inside 0.85 to 0.95 (proposed).
 
-| Row | Mark | C1 all (Brier) ↓ | C1 diff, all ↓ | C1 small cells ↓ | C4 mild, spectrum ↑ | C4 mild, all organisms ↑ | C4 severe ↑ | C8 C1 ↓ | C8 C4 mild, spectrum ↑ | C3(b) pass | C7(a) share inside 90 % (target 0.90) | C6 E1 CRO (days) ↓ | C6 E2 CXM (days) ↓ | runtime_s | cpu_s | Method |
+| Row | Mark | C1 all (Brier) ↓ | C1 diff, all ↓ | C1 small cells ↓ | C4 mild, spectrum ↑ | C4 mild, all organisms ↑ | C4 severe ↑ | C8 C1 ↓ | C8 C4 mild, spectrum ↑ | C3(b) pass | C7(a) share inside 90 % (target 0.90) | C6 E1 CRO (days) | C6 E2 CXM (days) | runtime_s | cpu_s | Method |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| [baseline-coverage-hospital-365](baselines/coverage-hospital-365.json) | baseline | 0.141 (0.140–0.143) | 0 (0–0) | 0.161 (0.158–0.164) | 0.966 (0.963–0.970) | 0.754 (0.747–0.761) | 0.953 (0.950–0.956) | 0.167 (0.154–0.193) | 0.964 (0.909–0.983) | yes | 0.899 (0.875–0.923) | n/a | n/a | 5.3 | 5.2 | Hospital, same specimen, last 365 days, first isolates per 365-day window (0004's estimator 3, the annual report); intervals are Jeffreys Beta(k + 0.5, n - k + 0.5) on the hospital cell (a harness choice) |
-| [baseline-coverage-shipped](baselines/coverage-shipped.json) | baseline, tuned on test | 0.142 (0.140–0.143) | 0.000299 (0.000138–0.000464) | 0.161 (0.158–0.165) | 0.966 (0.962–0.969) | 0.754 (0.747–0.761) | 0.954 (0.951–0.957) | 0.166 (0.153–0.193) | 0.964 (0.909–0.983) | yes | 0.902 (0.877–0.925) | 47 | n/a | 11.7 | 11.5 | The coverage list as shipped (D-023, D-033): unit if its pool has 30 first isolates, else ward type, else hospital; 365 days; Wilson intervals (95 % for C4, z = 1.644854 for 90 %); no estimate with fewer than 30 results (scored with the baseline's p on C1 to C3(a), C5 and C8) |
-| [0012-discounted-beta-binomial](../../experiments/0012-discounted-beta-binomial/) |  | 0.142 (0.140–0.143) | 0.000182 (-6.62e-06 to 0.000357) | 0.161 (0.158–0.165) | 0.966 (0.963–0.970) | 0.754 (0.747–0.760) | **0.955** (0.951–0.958) | 0.167 (0.154–0.194) | 0.958 (0.800–0.979) | no | 0.929 (0.908–0.948) | **48** | n/a | 32.8 | 32.5 | Discounted Beta-binomial (ENGINE.md 2.2), delta 0.95 per week, M 10, per unit x specimen x onset x antibiotic, parent: hospital, same specimen and onset, 52 weeks before, own unit left out, Jeffreys; isolate-level p by the isolate's onset, cell-level Beta by mixing the onset strata by effective own count; untested results do not enter the filter. Chosen on the TUNE windows 2023-12-25 to 2024-09-29 only |
-| [0013-dirichlet-organism-mix](../../experiments/0013-dirichlet-organism-mix/) | proposed | **0.142** (0.140–0.143) | **9.97e-05** (-8.00e-06 to 0.00021) | **0.161** (0.158–0.164) | **0.966** (0.963–0.970) | **0.754** (0.747–0.761) | 0.954 (0.950–0.956) | **0.165** (0.153–0.192) | **0.964** (0.909–0.983) | yes | **0.905** (0.884–0.926) | **48** | n/a | 34.1 | 33 | Two-layer coverage: Dirichlet organism mix (M_pi 100) times per-organism Beta (M 30), one Dirichlet per drug over the organisms with an outcome, unit year shrunk to the hospital year with the unit left out, closed-form variance (ENGINE.md 2.4) and a matched Beta; setting chosen on TUNE windows only |
+| [baseline-coverage-hospital-365](baselines/coverage-hospital-365.json) | baseline | 0.141 (0.140–0.143) | 0 (0–0) | 0.161 (0.158–0.164) | 0.966 (0.963–0.970) | 0.754 (0.747–0.761) | 0.953 (0.950–0.956) | 0.167 (0.154–0.193) | 0.964 (0.909–0.983) | yes | 0.899 (0.875–0.923) | n/a | n/a | 4.7 | 4.7 | Hospital, same specimen, last 365 days, first isolates per 365-day window (0004's estimator 3, the annual report); intervals are Jeffreys Beta(k + 0.5, n - k + 0.5) on the hospital cell (a harness choice) |
+| [baseline-coverage-shipped](baselines/coverage-shipped.json) | baseline, tuned on test | 0.142 (0.140–0.143) | 0.000299 (0.000138–0.000464) | 0.161 (0.158–0.165) | 0.966 (0.962–0.969) | 0.754 (0.747–0.761) | 0.954 (0.951–0.957) | 0.166 (0.153–0.193) | 0.964 (0.909–0.983) | yes | 0.902 (0.877–0.925) | 47 | n/a | 9.5 | 9.4 | The coverage list as shipped (D-023, D-033): unit if its pool has 30 first isolates, else ward type, else hospital; 365 days; Wilson intervals (95 % for C4, z = 1.644854 for 90 %); no estimate with fewer than 30 results (scored with the baseline's p on C1 to C3(a), C5 and C8) |
+| [0012-discounted-beta-binomial](../../experiments/0012-discounted-beta-binomial/) |  | 0.142 (0.140–0.143) | 0.000182 (-6.62e-06 to 0.000357) | 0.161 (0.158–0.165) | 0.966 (0.963–0.970) | 0.754 (0.747–0.760) | **0.955** (0.951–0.958) | 0.167 (0.154–0.194) | 0.958 (0.800–0.979) | no | 0.929 (0.908–0.948) | 48 | n/a | 34.4 | 34 | Discounted Beta-binomial (ENGINE.md 2.2), delta 0.95 per week, M 10, per unit x specimen x onset x antibiotic, parent: hospital, same specimen and onset, 52 weeks before, own unit left out, Jeffreys; isolate-level p by the isolate's onset, cell-level Beta by mixing the onset strata by effective own count; untested results do not enter the filter. Chosen on the TUNE windows 2023-12-25 to 2024-09-29 only |
+| [0013-dirichlet-organism-mix](../../experiments/0013-dirichlet-organism-mix/) |  | **0.142** (0.140–0.143) | **9.97e-05** (-8.00e-06 to 0.00021) | **0.161** (0.158–0.164) | **0.966** (0.963–0.970) | **0.754** (0.747–0.761) | 0.954 (0.950–0.956) | **0.165** (0.153–0.192) | **0.964** (0.909–0.983) | yes | **0.905** (0.884–0.926) | 48 | n/a | 45.5 | 45.2 | Two-layer coverage: Dirichlet organism mix (M_pi 100) times per-organism Beta (M 30), one Dirichlet per drug over the organisms with an outcome, unit year shrunk to the hospital year with the unit left out, closed-form variance (ENGINE.md 2.4) and a matched Beta; setting chosen on TUNE windows only |
 
 ### Detection
 
 The leaderboard is screening, not selection: a method is named best only after re-scoring on held-out injection seeds (2027 onward). D5 measures detection of events shaped like aei.inject's injections.
 
-| Row | Mark | D5 rare ↑ | D5 rare (held out) ↑ | D5 common ESBL ↑ | D5 common ESBL (held out) ↑ | D5 rare delay (days) ↓ | D2 rare k=3 ↑ | D2 rare k=4 ↑ | D2 common ESBL k=4 ↑ | D2 two-unit k=4 ↑ | D4 cluster episodes/yr ↓ | D4 episodes/yr ↓ | D3 3-day gap ↑ | D6 attribution ↑ | D7 named right ↑ | I1 alerts per incident ↓ | D1 days E1 / E2 / E3 / E4 (demonstration only) | runtime_s | cpu_s | Method |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| [baseline-live-set-retuned-year1](baselines/live-set-retuned-year1.json) | baseline | 0.920 (0.874–0.950) | 0.940 (0.898–0.965) | 0.750 (0.686–0.805) | 0.695 (0.628–0.755) | 6 | 0.860 (0.805–0.901) | 0.980 (0.950–0.992) | 0.880 (0.828–0.918) | 0.565 (0.496–0.632) | 4.52 | 9.55 | 0.950 (0.910–0.973) | 0.0260 (0.0178–0.0378) | 0.987 (0.981–0.991) | 1.12 | 0 / 0 / 0 / 2026-02-15 | 134 | 131 | The live detector set with cluster and data alphas re-tuned on year 1 (Choices 5), trend and new-in-unit as shipped |
-| [baseline-live-set-shipped](baselines/live-set-shipped.json) | baseline, tuned on test | 0.920 (0.874–0.950) | 0.940 (0.898–0.965) | 0.750 (0.686–0.805) | 0.695 (0.628–0.755) | 6 | 0.615 (0.546–0.680) | 0.890 (0.839–0.926) | 0.610 (0.541–0.675) | 0.240 (0.186–0.304) | 1.00 | 4.52 | 0.945 (0.904–0.969) | 0.0120 (0.00688–0.0209) | 0.974 (0.966–0.980) | 1.20 | 0 / 0 / 0 / 2026-05-10 | 145 | 140 | The live detector set as shipped (D-020, D-021, D-022, D-031, D-034), scored on D1 to D7 and I1 over 2024-10-01 to 2026-09-27 |
+D5 is a property of the detector's threshold sweep; rows whose sweeps overlap can show the same headline (live set shipped and re-tuned).
+
+| Row | Mark | D5 level | D5 noise at headline (episodes/yr) | D5 rare ↑ | D5 rare (held out) ↑ | D5 common ESBL ↑ | D5 common ESBL (held out) ↑ | D5 rare delay (days) ↓ | D2 rare k=3 ↑ | D2 rare k=4 ↑ | D2 common ESBL k=4 ↑ | D2 two-unit k=4 ↑ | D4 cluster episodes/yr ↓ | D4 episodes/yr ↓ | D3 3-day gap ↑ | D6 attribution ↑ | D7 named right ↑ | I1 alerts per incident ↓ | D1 days E1 / E2 / E3 / E4 (demonstration only) | runtime_s | cpu_s | Method |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| [baseline-live-set-retuned-year1](baselines/live-set-retuned-year1.json) | baseline | 0.300 | 3.01 | 0.920 (0.874–0.950) | 0.940 (0.898–0.965) | 0.750 (0.686–0.805) | 0.695 (0.628–0.755) | 6 | 0.860 (0.805–0.901) | 0.980 (0.950–0.992) | 0.880 (0.828–0.918) | 0.565 (0.496–0.632) | 4.52 (2.07–8.58) | 9.55 (5.75–14.9) | 0.950 (0.910–0.973) | 0.0260 (0.0178–0.0378) | 0.987 (0.981–0.991) | 1.12 | 0 / 0 / 0 / 2026-02-15 | 93.3 | 93.2 | The live detector set with cluster and data alphas re-tuned on year 1 (Choices 5), trend and new-in-unit as shipped |
+| [baseline-live-set-shipped](baselines/live-set-shipped.json) | baseline, tuned on test | 3 | 3.01 | 0.920 (0.874–0.950) | 0.940 (0.898–0.965) | 0.750 (0.686–0.805) | 0.695 (0.628–0.755) | 6 | 0.615 (0.546–0.680) | 0.890 (0.839–0.926) | 0.610 (0.541–0.675) | 0.240 (0.186–0.304) | 1.00 (0.122–3.63) | 4.52 (2.07–8.58) | 0.945 (0.904–0.969) | 0.0120 (0.00688–0.0209) | 0.974 (0.966–0.980) | 1.20 | 0 / 0 / 0 / 2026-05-10 | 115 | 114 | The live detector set as shipped (D-020, D-021, D-022, D-031, D-034), scored on D1 to D7 and I1 over 2024-10-01 to 2026-09-27 |
 
 ### Prediction
 
@@ -36,7 +38,7 @@ P2 skill is against persistence (MAE: 1 - MAE / MAE of persistence; log: differe
 | [baseline-county-persistence](baselines/county-persistence.json) | baseline | 0 (0–0) | 0 (0–0) | 0 (0–0) | 0 (0–0) | 0 (0–0) | 0 (0–0) | – | 0.3 | 0.3 | County forecast baseline: Poisson at last month's count (floor 0.5), one month ahead, 4 phenotypes x 23 counties + national, targets 2024-10 to 2026-09 |
 | [baseline-county-seasonal-naive](baselines/county-seasonal-naive.json) | baseline | -0.0949 (-0.183 to -0.0138) | -0.391 (-0.551 to -0.233) | -0.237 (-0.469 to -0.000153) | -1.21 (-1.86 to -0.602) | -0.0773 (-0.226 to 0.0383) | -0.0374 (-0.0900 to 0.0155) | – | 0.1 | 0.1 | County forecast baseline: Poisson at the same month last year's count (floor 0.5), one month ahead, 4 phenotypes x 23 counties + national, targets 2024-10 to 2026-09 |
 | [baseline-exposure-e1](baselines/exposure-e1.json) | baseline | – | – | – | – | – | – | n/a | 0.3 | 0.3 | Exposure ranking after E1 (ESBL E. coli in URO, onset 2025-05-30): time-ordered patient-flow graph over the 365 days before onset, exposure of the other eight units from URO as share and raw, AUC against units whose ESBL E. coli patients in the 8 weeks from onset exceed their 26-week baseline, 1,000 label-permutation rewirings |
-| [0019-exposure-ranking](../../experiments/0019-exposure-ranking/) | proposed | – | – | – | – | – | – | **0.627** (0.516–0.719) | 87.5 | 86.8 | Exposure ranking on the time-ordered patient-flow graph (P1) over real ESBL E. coli and MRSA source episodes of the scoring period, pooled by within-event Mann-Whitney pairs against 1,000 label-permutation rewirings; E1 and E2 as descriptions; flow-partner (B1, positive) and uniform-partner (B2, negative) injected two-unit clusters as controls |
+| [0019-exposure-ranking](../../experiments/0019-exposure-ranking/) |  | – | – | – | – | – | – | **0.627** (0.516–0.719) | 87.5 | 86.8 | Exposure ranking on the time-ordered patient-flow graph (P1) over real ESBL E. coli and MRSA source episodes of the scoring period, pooled by within-event Mann-Whitney pairs against 1,000 label-permutation rewirings; E1 and E2 as descriptions; flow-partner (B1, positive) and uniform-partner (B2, negative) injected two-unit clusters as controls |
 | [0020-county-forecasts](../../experiments/0020-county-forecasts/) |  | **0.144** (0.0628–0.213) | **0.402** (0.309–0.482) | **0.620** (0.453–0.804) | **0.519** (0.280–0.742) | **0.250** (0.165–0.332) | **0.219** (0.160–0.276) | – | 2.4 | 2.3 | County one-month-ahead forecast: rolling Poisson GLM with annual harmonics per series, negative binomial predictive, cell chosen on targets 2024-01 to 2024-09 (W24 K0 trend=off rho=0 quasi_pooled floor=0.1); 4 phenotypes x 23 counties + national, targets 2024-10 to 2026-09 |
 
 ### Interpretation
@@ -46,4 +48,155 @@ No rows yet.
 
 ## Morning report
 
-(written at the end of the run)
+Interim, refreshed by the orchestrator (Claude Code, Opus 5.5, operated by
+Artem) at 08:35. Every experiment here is exploratory (PROTOCOL.md): it
+describes, it proposes, it decides nothing. Numbers are tagged measured (in
+the data), computed (by a run here), derived or assumed; each names the
+record it comes from. The run lost about six hours to a session usage limit:
+three agents stopped at about 02:15 and nothing ran until 08:31 (log.md).
+Artem extended the run to 12:00.
+
+### 0. State of the method list (Artem's addendum, 01:15)
+
+| Method (brief no.) | Record | State |
+|---|---|---|
+| Discounted Beta-binomial (1) | [0012](../../experiments/0012-discounted-beta-binomial/) | closed |
+| Dirichlet organism mix × Beta, WISCA (3) | [0013](../../experiments/0013-dirichlet-organism-mix/) | closed |
+| Pooling levels (6) | 0014 | not started |
+| Gamma-Poisson, guard band, BH (8) | [0015](../../experiments/0015-gamma-poisson-guard-band/) | plan committed, running |
+| CUSUM (9) | 0016 | planning |
+| Farrington-Noufaily (11) | 0017 | not started |
+| BOCPD (13) | [0018](../../experiments/0018-bocpd/) | plan committed, running |
+| Exposure ranking (22) | [0019](../../experiments/0019-exposure-ranking/) | closed |
+| County forecasts: persistence, seasonal naive, Poisson GLM (24) | [0020](../../experiments/0020-county-forecasts/) | closed, Fable review pending |
+| Naming step (27) | 0021 | not started (needs 0015) |
+| Ensemble of the two best detectors (21) | 0022 | not started (needs the detectors) |
+
+The harness, its specification and choices (harness-spec.md) and a Fable
+review of it (harness-review.md: sound, reproductions of 0004, 0007, 0010
+and 0011 exact, 18 findings, none invalidates a row) were built first.
+
+### 1. The comparison table
+
+Above, between the markers, regenerated by `leaderboard.py` from every
+`out/metrics.json`; the full flattened table is full-table.md. It is
+screening, not selection: a method is named best in its family only after a
+re-score on the held-out injection seeds 2027 to 2030 (none yet).
+
+### 2. Detection
+
+Only the baseline rows exist so far (computed, harness, seed 2026, 200
+trials per cell). The live set as shipped (`tuned-on-test`): D5 headline
+rare 0.92, common ESBL *E. coli* 0.75, at threshold level m = 3 with 3.0
+cluster and sentinel episodes a year, median delay 6 days; held out (seeds
+2027 to 2030) 0.94 and 0.695. D2 at k = 2, 3, 4, 6: rare 0.165, 0.615,
+0.89, 1.0; common ESBL 0.045, 0.345, 0.61, 0.945; two-unit 0.135, 0.21,
+0.24, 0.805; common resistant and wild type at most 3.5 % at every k.
+Two-unit clusters are the live set's weak family: 4 patients split across
+two linked units are caught in 24 % of trials (held out 28.5 %) against
+89 % in one unit. The year-1 re-tune (Choices 5) chose looser alphas and
+doubles the noise (D4 9.55 episodes a year against 4.52) for D2 rare k = 4
+of 0.98; its D5 headline equals the shipped one because the two threshold
+sweeps overlap (harness-review.md finding 12). D5 measures detection of
+events shaped like `aei.inject`'s injections: identical copies of one
+isolate, within 14 days, in one unit or two.
+
+The four planted events, demonstration only (D1 cannot rank methods): the
+shipped live set signals E1 on its first day (5 days from the corrected
+onset 2025-05-30), E2 on the first ICU MRSA (sentinel), E3 on the first
+empty day (empty run), E4 first on 2026-05-10 (computed, harness).
+
+The new detectors (0015, 0016, 0018) are running; this section is filled
+when they close.
+
+### 3. Coverage
+
+No estimator meets the replacement rule (METRICS.md "Decision rules": C1
+within 0.002, C4 not worse in either untested convention, C8 better,
+C3(b) and C7(a) passing).
+
+| Row | C1 all (Δ vs hospital-365) | C8 C1 | C3(b) | C7(a) | C6 E1 ceftriaxone | Verdict |
+|---|---|---|---|---|---|---|
+| hospital-365 (baseline) | 0.1414 | 0.1669 | severe 29 / 26.2 | 0.899 | not reached | reference |
+| shipped D-023/D-033 (`tuned-on-test`) | +0.0003 (+0.0001 to +0.0005) | 0.1656 | 23 / 19.6, passes | 0.902 | 47 d | the row to replace |
+| 0012 discounted Beta-binomial δ 0.95, M 10 | +0.0002 (−0.0000 to +0.0004) | worse than shipped by 0.0011 (0.0002 to 0.0021) | severe 14 / 7.3, fails (ratio 1.92, tail p 0.017) | 0.929 | 48 d | not met (C8, C3(b)) |
+| 0013 organism mix × Beta, M_π 100, M 30 | +0.0001 (−0.0000 to +0.0002) | 0.1653 | 29 / 27.8, passes | 0.905 | 48 d | not met (C4, a hair below shipped, inside its interval) |
+
+All computed (harness; 0012, 0013). C6, days from the first outbreak
+isolate until the 90 % interval excludes the pre-onset value: E1
+ceftriaxone in Urology urine 47 to 48 days for every estimator that
+reaches it; cefuroxime only 0013 (117 days); E2 (ICU wound cefuroxime,
+about 3 isolates a week) is never reached by any estimator within 120
+days. The hospital year never reacts. In 0012 even δ = 0.90 needed 44 to
+48 days; its no-onset-split ablation reached E1 in 25 to 34 days with a
+narrower interval, which C6 rewards and C7 and C8 must then judge.
+
+### 4. Prediction
+
+County forecasts (0020, computed, targets 2024-10 to 2026-09, THL fetch of
+2026-10-17): the cell chosen on 2024-01 to 2024-09 is a 24-month rolling
+mean with a pooled negative-binomial width; no harmonic or trend term was
+chosen anywhere, so "Poisson GLM" here is in effect a rolling mean (the
+leaderboard's method line still says "with annual harmonics"). Skill
+against persistence, pooled over 92 county series: log score +0.402
+(+0.309 to +0.482), MAE +0.144 (+0.063 to +0.213); without the last two
+months +0.408 and +0.150. Log skill by phenotype: MRSA +0.62, ESBL +0.52,
+VRE +0.25, CPE +0.22, all intervals above zero; MAE skill intervals include
+zero for ESBL and VRE; national totals worse than persistence on MAE
+(−0.126, −0.489 to +0.134). By OBJECTIVES.md's rule the pooled forecast
+beats the baseline; whether to ship it is Artem's call.
+
+Exposure (0019, computed): after E1 and after E2 no unit other than the
+source exceeds its own 26-week baseline, so their AUC is undefined. Over
+24 real ESBL and MRSA episodes (7 with a positive unit), pooled AUC 0.627
+(share) and 0.657 (raw), permutation p 0.22 and 0.14: exposure did not
+rank the right units better than rewired graphs with the same volumes. The
+flow-partner injection control reaches only 0.51 to 0.58, because flows on
+this data are mostly unit volume, which the null keeps.
+
+Lead-lag (brief's method 25) is not on tonight's list.
+
+### 5. Other things learned (patterns that are not the four events)
+
+- Background counts are close to Poisson: weekly cultures per unit
+  variance/mean 0.84 to 1.15 in the wards and ED; phenotype weekly counts
+  0.9 to 1.2 except URO ESBL 2.54 and ICU MRSA 2.57, the planted events
+  (measured, orchestrator). Over-dispersion models have little to gain
+  outside the events.
+- The health centres sample seasonally: PHC-N and PHC-S monthly cultures
+  peak in June and July (270 to 302) and dip in January and February (184
+  to 213); ED and the wards are flat (measured). PHC-N's weekly
+  variance/mean 1.45 falls to 0.80 after a 9-week rolling mean is removed
+  (computed). A 365-day baseline averages over the season.
+- 10.7 % of positive cultures grow two organisms, none three (measured);
+  counting them as one episode (WISCA) lowers realised coverage of the top
+  severe pick by 0.5 points (computed, 0013).
+- The organism mix within a specimen is the same in every unit (chi-square
+  p 0.36 to 0.90, measured, 0013); 16 organism × drug pairs are 96 to 100 %
+  untested, so testing is by organism panel (measured, 0013).
+- ENGINE.md 2.4's closed-form coverage variance is correct (maximum
+  relative error 0.64 % against Monte Carlo, computed, 0013); the prior
+  strengths of QUESTIONS B1 and B4 move C1 by at most 0.00023 (computed,
+  0013).
+
+### 6. Methods that did well, and their pictures
+
+The county forecast (0020) is the one row so far that beats its baseline.
+Proposed picture (0020's record, "Proposed visualisation"): on the
+researcher's flat county map, each county shows next month's expected
+incidence per 100,000 as its fill, with the 80 % predictive interval
+written under the count ("12 (7–18)") and a one-line comparison with last
+month; sketch `experiments/0020-county-forecasts/out/skill_by_phenotype.svg`
+(skill by phenotype with intervals).
+
+### 7. What failed, what next, and QUESTIONS.md items
+
+- Failed or stalled: the session usage limit (02:15 to 08:31) stopped
+  0015, 0013's run and the harness fixes; all resumed. E1's exposure AUC is
+  undefined by METRICS.md's outcome definition.
+- QUESTIONS B1, B4 (prior strengths): sharpened, they matter little on this
+  data (0013). B3 (δ): no δ reacts to E1 faster than 44 days without onset
+  splitting (0012). D1, D2 (edges and null): exposure over real episodes is
+  not above the label-permutation null (0019). D6 (county forecast): the
+  rolling mean beats persistence (0020).
+- Next: filled at the end of the run.
