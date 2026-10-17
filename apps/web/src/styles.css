@@ -1329,6 +1329,14 @@ fieldset.setting {
   border-radius: 50%;
   background: none;
   color: var(--ink-3);
+  position: relative;
+}
+
+/* A 44 px hit area around the small visual button. */
+.info-btn::after {
+  content: "";
+  position: absolute;
+  inset: -10px;
 }
 
 .info-btn:hover,
@@ -1343,6 +1351,7 @@ fieldset.setting {
   left: 0;
   width: max-content;
   max-width: min(320px, calc(100vw - 24px));
+  overflow-wrap: anywhere;
   padding: 8px 12px;
   border: 1px solid var(--line);
   border-radius: var(--radius-control);
