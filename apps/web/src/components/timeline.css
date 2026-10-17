@@ -878,3 +878,21 @@
   min-width: 0;
   overflow: hidden;
 }
+
+/* The left column never spills onto the lanes: the control row wraps, the step and speed groups
+   take their own rows under the transport, and the column clips what still does not fit. */
+.tl-left {
+  width: 252px;
+  overflow: hidden;
+}
+.tl-ctl {
+  flex-wrap: wrap;
+  row-gap: 4px;
+}
+.tl-ctl .tl-ctl-group {
+  flex: 0 0 100%;
+  justify-content: flex-start;
+}
+.tl-ctl .tl-ctl-label {
+  min-width: 42px;
+}
