@@ -1,9 +1,12 @@
 export type { ExportBundle, ExportColumn, ExportFigure, ExportFile, ExportNumber, ExportTable } from "./bundle.ts";
+export { pythonAnalysis, pythonNotebook, rAnalysis, rNotebook } from "./notebooks.ts";
+export { packageFiles, toResearchPackage } from "./package.ts";
 export { alertTable, isolateTable } from "./tables.ts";
 export { toCsv, toCsvFiles, toJson, toLatex, toMarkdown, toPython } from "./text.ts";
 export { figurePngFile, figureSvgFile, toDocx } from "./word.ts";
 
-export const exportFormats: { id: "csv" | "json" | "md" | "tex" | "docx" | "py"; label: string }[] = [
+export const exportFormats: { id: "zip" | "csv" | "json" | "md" | "tex" | "docx" | "py"; label: string }[] = [
+  { id: "zip", label: "Research package (.zip)" },
   { id: "csv", label: "CSV" },
   { id: "json", label: "JSON" },
   { id: "md", label: "Markdown" },

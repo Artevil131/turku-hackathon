@@ -3,6 +3,7 @@ import type { Project } from "@aei/projects";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import type { BoardState } from "../board.ts";
+import { ExportFormatButtons } from "./ExportMenu.tsx";
 import { ProjectControls } from "./ProjectControls.tsx";
 
 const board: BoardState = { panel: "geo", weeks: 12, unit: null, kinds: [], phenotype: null, incident: null, focus: null };
@@ -19,6 +20,18 @@ const project: Project = {
 const selection = { id: "study", response: { project, drift: true }, failed: false, refresh: vi.fn(), remember: vi.fn() };
 
 describe("project toolbar", () => {
+  it("offers the recommended research package first in both locales and disables formats while building", () => {
+    for (const [locale, label] of [
+      ["en", "Research package (.zip) — recommended"],
+      ["fi", "Tutkimuspaketti (.zip) — suositeltu"],
+    ] as const) {
+      const html = renderToStaticMarkup(<ExportFormatButtons locale={locale} busy={true} onSelect={vi.fn()} />);
+      expect(html).toContain('aria-busy="true"');
+      expect(html).toContain(`role="menuitem" disabled="">${label}</button>`);
+      expect(html.indexOf(label)).toBeLessThan(html.indexOf(">CSV</button>"));
+      expect(html.match(/disabled=""/g)).toHaveLength(9);
+    }
+  });
   it("announces the frozen date and changed data, with labelled dialog and menu buttons", () => {
     const html = renderToStaticMarkup(
       <ProjectControls client={{} as AeiClient} locale="en" clock="2025-06-12" board={board} selection={selection} />,

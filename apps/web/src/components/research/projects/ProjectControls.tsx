@@ -1,16 +1,14 @@
 import type { AeiClient } from "@aei/contract";
-import { exportFormats, figurePngFile, figureSvgFile, toCsvFiles, toDocx, toJson, toLatex, toMarkdown, toPython } from "@aei/export";
+import { figurePngFile, figureSvgFile, toCsvFiles, toDocx, toJson, toLatex, toMarkdown, toPython, toResearchPackage } from "@aei/export";
 import { type Locale, t } from "@aei/i18n";
 import { useRef, useState } from "react";
 import { downloadFile } from "../../../downloadFile.ts";
 import type { BoardState } from "../board.ts";
 import { workspaceBundle } from "./bundle.ts";
-import { ExportMenu } from "./ExportMenu.tsx";
+import { type ExportFormat, ExportFormatButtons, ExportMenu } from "./ExportMenu.tsx";
 import { ProjectsPanel } from "./ProjectsPanel.tsx";
 import type { useProject } from "./useProject.ts";
 import "./projects.css";
-
-type Format = (typeof exportFormats)[number]["id"] | "svg" | "png";
 
 export function ProjectControls({
   client,
@@ -31,7 +29,7 @@ export function ProjectControls({
   const root = useRef<HTMLDivElement>(null);
   const exportTrigger = useRef<HTMLButtonElement>(null);
   const project = selection.response?.project;
-  async function run(format: Format) {
+  async function run(format: ExportFormat) {
     const workspace = root.current?.closest<HTMLElement>(".ws");
     if (!clock || !workspace || busy) return;
     setBusy(true);
@@ -43,7 +41,7 @@ export function ProjectControls({
         clock,
         project,
         root: workspace,
-        png: format === "png" || format === "docx",
+        png: format === "zip" || format === "png" || format === "docx",
         locale,
       });
       if ((format === "svg" || format === "png") && !bundle.figures.length) {
@@ -58,15 +56,17 @@ export function ProjectControls({
             : format === "png"
               ? bundle.figures.map(figurePngFile)
               : [
-                  format === "docx"
-                    ? await toDocx(bundle)
-                    : format === "json"
-                      ? toJson(bundle)
-                      : format === "md"
-                        ? toMarkdown(bundle)
-                        : format === "tex"
-                          ? toLatex(bundle)
-                          : toPython(bundle),
+                  format === "zip"
+                    ? await toResearchPackage(bundle)
+                    : format === "docx"
+                      ? await toDocx(bundle)
+                      : format === "json"
+                        ? toJson(bundle)
+                        : format === "md"
+                          ? toMarkdown(bundle)
+                          : format === "tex"
+                            ? toLatex(bundle)
+                            : toPython(bundle),
                 ];
       for (const file of files) downloadFile(file);
       setStatus("exportDone");
@@ -119,19 +119,7 @@ export function ProjectControls({
         ) : null}
         {panel === "export" ? (
           <ExportMenu title={t(locale, "exportTitle")} anchor={exportTrigger.current} onClose={() => setPanel(null)}>
-            <div className="project-export-options" aria-busy={busy}>
-              {exportFormats.map((format) => (
-                <button type="button" role="menuitem" key={format.id} disabled={busy} onClick={() => void run(format.id)}>
-                  {t(locale, `exportFormat${format.id}`)}
-                </button>
-              ))}
-              <button type="button" role="menuitem" disabled={busy} onClick={() => void run("svg")}>
-                {t(locale, "exportSvg")}
-              </button>
-              <button type="button" role="menuitem" disabled={busy} onClick={() => void run("png")}>
-                {t(locale, "exportPng")}
-              </button>
-            </div>
+            <ExportFormatButtons locale={locale} busy={busy} onSelect={(format) => void run(format)} />
             {busy ? <p role="status">{t(locale, "exportBuilding")}</p> : null}
             {status ? (
               <p className={status === "exportError" ? "project-error" : undefined} role={status === "exportError" ? "alert" : "status"}>
