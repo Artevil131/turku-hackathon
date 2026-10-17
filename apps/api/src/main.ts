@@ -95,6 +95,10 @@ void ai.settled().then((status) => {
 const explanations = new Map<string, ExplainResponse>();
 // coverage() takes about 0.25 s (pairs over three levels), so cache by query and replay date.
 const coverages = new Map<string, CoverageResult>();
+// Served as built JSON text, by replay date and query. Cleared on ingest with the caches above.
+const alertsCache = new Map<string, string>();
+const regionalCache = new Map<string, string>();
+let countiesBody: string | undefined;
 // "Fails together" (D-048), cached by query and replay date like coverage.
 const failsTogethers = new Map<string, FailsTogetherResponse>();
 const config = {
@@ -351,6 +355,12 @@ function send(res: ServerResponse, status: number, body: unknown) {
   res.end(JSON.stringify(body));
 }
 
+// A body built once and kept in a cache. no-store: the replay clock moves, so no browser or proxy may keep it.
+function sendCached(res: ServerResponse, body: string) {
+  res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
+  res.end(body);
+}
+
 async function readText(req: IncomingMessage): Promise<string> {
   let body = "";
   for await (const chunk of req) body += chunk;
@@ -393,6 +403,9 @@ function ingestPayload(body: string, contentType: string, from: ConnectedSite = 
   dataset = mergeResults(asResult(dataset), result);
   state = derive(dataset);
   coverages.clear();
+  alertsCache.clear();
+  regionalCache.clear();
+  countiesBody = undefined;
   failsTogethers.clear();
   qualityCache.clear();
   litePackages.clear();
@@ -699,9 +712,17 @@ export const server = createServer(async (req, res) => {
     if (url.pathname === ROUTES.regional) {
       if (!existsSync(config.regionalFile))
         return send(res, 404, { error: "No regional data; run `uv run python scripts/fetch_thl_ttr.py`" });
-      const data = JSON.parse(readFileSync(config.regionalFile, "utf8")) as RegionalData;
       const query: RegionalQuery = { group: url.searchParams.get("group") ?? "", region: url.searchParams.get("region") ?? "" };
-      return send(res, 200, regionalUpTo(data, clock.state().asOf, query));
+      const asOf = clock.state().asOf;
+      const key = JSON.stringify([asOf, query.group, query.region]);
+      let body = regionalCache.get(key);
+      if (body === undefined) {
+        if (regionalCache.size > 200) regionalCache.clear();
+        const data = JSON.parse(readFileSync(config.regionalFile, "utf8")) as RegionalData;
+        body = JSON.stringify(regionalUpTo(data, asOf, query));
+        regionalCache.set(key, body);
+      }
+      return sendCached(res, body);
     }
     if (url.pathname === ROUTES.national) {
       if (!existsSync(config.nationalFile))
@@ -731,7 +752,8 @@ export const server = createServer(async (req, res) => {
     if (url.pathname === ROUTES.counties) {
       if (!existsSync(config.countiesFile))
         return send(res, 404, { error: "No county geometry; run `uv run python scripts/fetch_county_geometry.py`" });
-      return send(res, 200, JSON.parse(readFileSync(config.countiesFile, "utf8")));
+      countiesBody ??= JSON.stringify(JSON.parse(readFileSync(config.countiesFile, "utf8")));
+      return sendCached(res, countiesBody);
     }
     if (url.pathname === ROUTES.meta) {
       // Waits for the first probe only, so the first answer after a start is already honest.
@@ -770,8 +792,15 @@ export const server = createServer(async (req, res) => {
       const from = url.searchParams.get("from") ?? "";
       const { site, error } = siteParam(url);
       if (error) return send(res, 400, { error });
-      const alerts = state.alerts.upTo(asOf).filter((a) => a.date >= from && (!site || alertSite(a, registry.siteOfWard) === site));
-      return send(res, 200, { asOf, alerts: sortAlerts(alerts) });
+      const key = `${asOf}|${from}|${site ?? ""}`;
+      let body = alertsCache.get(key);
+      if (body === undefined) {
+        if (alertsCache.size > 50) alertsCache.clear();
+        const alerts = state.alerts.upTo(asOf).filter((a) => a.date >= from && (!site || alertSite(a, registry.siteOfWard) === site));
+        body = JSON.stringify({ asOf, alerts: sortAlerts(alerts) });
+        alertsCache.set(key, body);
+      }
+      return sendCached(res, body);
     }
     if (url.pathname === ROUTES.live) {
       res.writeHead(200, { "content-type": "text/event-stream", "cache-control": "no-cache", connection: "keep-alive" });
