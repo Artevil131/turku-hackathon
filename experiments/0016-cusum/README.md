@@ -1,5 +1,5 @@
 ---
-status: proposed    # proposed, then accepted, rejected or superseded
+status: accepted    # proposed, then accepted, rejected or superseded
 by: Claude Code, operated by Artem (overnight run)
 data: [synthetic_microbiology_dataset, seed 2026, as received 2026-10-09]
 parent: 0011
@@ -248,4 +248,188 @@ The sketch `out/figure.png` draws it from the chosen setting.
 
 ## Result
 
+`uv run python experiments/0016-cusum/run.py` ran in 77 s wall and 71 s of CPU
+(measured; budget 10 minutes, estimate about 6 minutes, assumed in the plan).
+No cut was made. A trial cost about 3 ms, not 20 ms (computed: about 20,000
+trials, 15,140 planned plus 5,000 for the delay-0 table, in about 60 s of the
+71), because the statistic is a cumulative sum and a running minimum on
+arrays of the real data and a trial only adds its rows. Seed 2026 only, 200
+trials per cell for the union, 100 for the parts and the ablation; seeds 2027
+to 2030 not used. Everything below is measured or computed by that run;
+`out/results.md` has every table, `out/metrics.json` the union.
+
+**Settings chosen on year 1 (measured, 40 + 40 injected clusters, 2024-04-01
+to 2024-08-15, noise 2024-04-01 to 2024-09-30).** Poisson: theta 8, weekly,
+no guard band (rare 14/40, common ESBL 15/40 at L = 100 years, 2 episodes in
+the half year); Bernoulli: theta 8, guard band 4 weeks (19/40 and 21/40 at
+L = 100, 2 episodes). The C5 proposal theta = 2.5 ranked 6th, 10th, 11th and
+12th of 12 for the Poisson part (rare 4/40 at best) and 2nd (guard band 4
+weeks, 13/40) and 6th of 6 (4/40) for the Bernoulli part. At every
+resolution and guard band theta = 8 beats theta = 2.5 on the rare count
+(Poisson 9 against 4, 14 against 0, 14 against 0, 8 against 0; Bernoulli 9
+against 4, 19 against 13).
+
+**Calibration on year 1 (computed).** Active series 199 + 198 = 397
+(not 477), so Siegmund's equal run length is L_S = 79.4 years; the simulation
+(200 panels, 480 panel-years) gives L_sim = 72.1 years, L_sim / L_S = 0.91,
+the operating level. For the common limit h_S = 7.25, h_sim = 7.11.
+
+| L (years) | Siegmund m / L | simulated, a year | real year 1 (count) | real scoring period (count) |
+|---|---|---|---|---|
+| 10 | 39.7 | 42.8 | 47.9 (24) | 50.2 (100) |
+| 30 | 13.2 | 11.2 | 18.0 (9) | 7.0 (14) |
+| 72.1 (L_sim) | 5.5 | 5.0 | 10.0 (interpolated) | 3.5 (7) |
+| 100 | 4.0 | 3.7 | 8.0 (4) | 2.0 (4) |
+
+Siegmund's approximation is within 20 % of the simulation from L = 10 to
+3,000 years and too high below (397 against 156 a year at L = 1, 132 against
+96 at L = 3: the 28-day merge caps the episode count). Real year-1 episodes
+are 1.1 to 2.2 times the simulated at L = 10 to 100; real scoring-period
+episodes (zones excluded) are 1.0 to 1.2 times at L of 1 to 10 and 0.5 to 0.9
+at L of 30 to 300, on 2 to 100 episodes, so no consistent overdispersion
+shows.
+
+**D5 at about 5 episodes a year (k = 4; Wilson 95 %).**
+
+| row | level | noise a year (episodes) | rare | delay | common ESBL | delay |
+|---|---|---|---|---|---|---|
+| union (0016) | L = 72.1 years | 3.52 (7) | 0.665 [0.597, 0.727] | 7 | 0.485 [0.417, 0.554] | 6 |
+| live re-tuned year 1 (reference) | 0.3 x alphas | 3.01 (6) | 0.920 [0.874, 0.950] | 6 | 0.750 [0.686, 0.805] | 6 |
+| live shipped (tuned on test) | 3 x alphas | 3.01 (6) | 0.920 [0.874, 0.950] | 6 | 0.750 [0.686, 0.805] | 6 |
+
+Along the curve the union reaches rare 0.765 and common ESBL 0.690 at 7.0
+episodes a year (L = 30), 0.890 and 0.800 at 50 (L = 10); the reference
+reaches 0.980 and 0.880 at 6.0. The intervals at the headline do not overlap.
+
+**D2 at k = 3 and 4, with median delay in days (union / re-tuned / shipped).**
+
+| family | k = 3 | k = 4 |
+|---|---|---|
+| rare | 0.345 (8 d) / 0.860 (7) / 0.615 (7) | 0.665 (7) / 0.980 (5) / 0.890 (6) |
+| common resistant | 0.025 (8) / 0.020 (8) / 0.005 (23) | 0.040 (5) / 0.010 (6) / 0.005 (25) |
+| wild type | 0.025 (0) / 0.005 (0) / 0.000 (-) | 0.025 (0) / 0.000 (-) / 0.000 (-) |
+| common ESBL | 0.230 (7) / 0.700 (6) / 0.345 (8) | 0.485 (6) / 0.880 (6) / 0.610 (7) |
+| two unit | 0.130 (8) / 0.475 (4) / 0.210 (3) | 0.190 (7) / 0.565 (7) / 0.240 (3) |
+
+Intervals for every cell are in `out/results.md` (union k = 4: rare [0.597,
+0.727], common resistant [0.020, 0.077], wild type [0.011, 0.057], common ESBL
+[0.417, 0.554], two unit [0.142, 0.250]). Controls (k = 0): 0.005 to 0.035
+for the union, 0.000 to 0.075 for the references.
+
+**D4 by kind, D6, D7, I1, D1 (union / re-tuned / shipped).** D4 episodes a
+year over 2024-10-01 to 2026-09-27: all 3.52 [1.41, 7.25] / 9.55 / 4.52,
+cluster 3.52 / 4.52 / 1.00, sentinel 0 / 1.51 / 1.51, data 0 / 3.52 / 2.01 (the
+union raises no data or sentinel signals), 0.067 alerts a week. D6 0.071
+[0.057, 0.089] / 0.026 / 0.012 (the lingering runs raise cluster signals in
+gap weeks more often). D7 0.999 / 0.987 / 0.974. I1 16 alerts in 9
+incidents (1.78 a incident) / 29 in 26 / 18 in 15. D1 (demonstration): E1 4
+days (corrected onset 9), E2 4 days, E3 and E4 not found (data and trend
+kinds, not this method's).
+
+**Parts and the ablation (100 trials per cell, D5 headline).** Poisson part
+alone: 2.51 a year, rare 0.460 [0.366, 0.557], common ESBL 0.180 [0.117,
+0.267]. Bernoulli part alone: 4.52 a year, rare 0.660 [0.563, 0.745], common
+ESBL 0.570 [0.472, 0.663]. Union with one common limit (h = 7, p = exp(-S)):
+4.52 a year, rare 0.670 [0.573, 0.754], common ESBL 0.580 [0.482, 0.672]; its
+operating limit h_sim = 7.11 gives 3.01 a year. Where the union's detections
+come from at k = 4 (200 trials): rare 133 detected, 10 by the Poisson part
+only, 70 by the Bernoulli part only, 53 by both; common ESBL 97, 6, 66, 25. A
+detection at delay 0, which a run begun before the start would give, is 2 of
+133 (rare) and 4 of 97 (common ESBL); at most 7 of 200 in any cell.
+
+**Checks (all passed).** `check_causal` on 2025-03-31, 2025-12-31 and
+2026-06-30 on the detector built from the rows it is given: no differences.
+The trial fast path against that from-scratch computation: 96 trials, 1,638
+signals, no differences (p equal). Focused against full signals on the real
+data: 3 cases, 160 signals, no mismatch. The vectorised statistic against
+loops from the definition on three Poisson and two Bernoulli series: largest
+difference in S 9e-14. The slow fallback was used 0 times in 20,263 runs.
+
+**Deviations from plan.**
+
+- Floors where "never zero" does not hold: the weekly baseline rate is at
+  least 0.001 events, the proportion is clipped to [0.001, 0.999], the
+  arrival rate in the run length is at least 0.001 a week.
+- Hospital totals for the shrinkage prior are read from the real data's
+  cumulative arrays, only up to the last row's date; injected rows are added
+  to them (exact); removed rows of a gap trial are taken out without
+  re-flagging a patient's later isolate as a first one (the check against
+  the from-scratch computation, which includes gap trials, found no
+  difference).
+- m is the active series (199 + 198 = 397), not the plan's upper bound 477, so
+  L_S is 79.4 years, not 95; the simulation uses the same 397 series.
+- The sweep levels include L_S, L_sim and the run length at which real year-1
+  noise reaches 5 a year (512 years), as extra rows of the D5 curve.
+- The picture shows 30 weeks ending at the as-of date 2025-06-15 (the plan
+  also said 2025-03 to 2025-09, which cannot both hold), for the Poisson
+  part's URO ESBL series at the chosen setting (weekly, theta 8, no guard
+  band, so no hatched strip); the union's first E1 alarm (2025-06-08, 4 days
+  after 0002's start) came from the Bernoulli part, the card's own alarm is
+  dated the as-of day.
+- No run length was cut; trial counts, grid and panels are as planned.
+
 ## Interpretation
+
+Against METRICS.md "Decision rules" the CUSUM does not reach the live set on
+the headline: at about 3 to 3.5 episodes a year the rare family is 0.665
+against 0.920 and the common ESBL family 0.485 against 0.750, intervals
+apart. In the rare, common ESBL and two-unit families every D2 cell from
+k = 3 up is below the reference, and below the shipped row too (the two-unit
+k = 4 gap, 0.190 against 0.240, is inside the intervals). In the two families
+no count test can see it is no better: common resistant and wild type at k = 4
+are 0.040 and 0.025 (live 0.01 and 0.00; the upper bound for common resistant
+is 0.077). Delays are within 3 days of the reference (7 and 6 against 5 and
+6). Its D4 noise is lower (3.52 a year all kinds against 9.55 and 4.52) only
+because it raises no data or sentinel signals, which is a coverage gap, not a
+gain. This is screening, not selection: one seed, held-out seeds unused, not
+a winner in its family.
+
+Hypotheses (exploratory, as written in the plan). (1) Held for theta and failed
+in detail: both parts chose theta = 8, not 2.5, but "theta = 8 cannot see
+k = 3" is wrong, 0.345 of rare clusters of 3 were caught (the limit is per
+series and lower in quiet ones, and the Bernoulli part was in 65 of the 69
+detections). (2) Half held: the
+common ESBL rate is below 0.75 as predicted; the rare rate, expected 0.75 to
+0.95, is 0.665 [0.597, 0.727] and below the range. (3) Held: common resistant
+0.040 and wild type 0.025 at k = 4 (point values; the interval for common
+resistant reaches 0.077), delay within 3 days. Whether equal run lengths pay:
+no difference at this size, the common-limit ablation reaches 0.670 and
+0.580 at 4.52 a year, the union about 0.7 and 0.55 at that noise by
+interpolating its curve (derived, between L = 30 and L = 72; the ablation
+has 100 trials per cell). Bernoulli against Poisson: at equal noise the
+Bernoulli part is far ahead (0.570 against 0.180 for common ESBL at 4.5 and
+2.5 a year); the plan made no prediction for the parts.
+
+The calibration is the part that worked. Siegmund's formula with equal run
+lengths put the 5-a-year level at 79 years and the simulation at 72 (0.91),
+and the real scoring period then gave 3.5 episodes a year at the simulated
+level, under the target: the approximation is usable from L = 10 years up,
+and the 28-day episode merge, not the formula, caps the count at short run
+lengths. Real year-1 noise was above the simulation (up to 2.2 times) and the
+scoring period below it from L = 30 up (0.5 to 0.9), on 2 to 14 episodes
+there, so no overdispersion is established; year 1's shorter baselines and
+over-counted first isolates are the likelier reason for its excess.
+
+Strongest alternative explanation of the gap to the live set: information, not
+the CUSUM. The live profile-excess test sees the exact 13-drug profile, whose
+expected count for a rare clone is near zero; the CUSUMs here see a
+phenotype, an organism with a specimen, or one drug as R or not. The Bernoulli
+part, closest to profile information, carries 123 of the 133 rare k = 4
+detections, and the plan named profile series as the extension and did not
+run it. Second, the setting choice rests on 2 to 4 year-1 episodes and 40 + 40
+trials, with ties (theta 8 daily with a guard band scored 14/40 and 14/40
+as well), so the choice among the theta = 8 settings is within noise. Third,
+the D5 headline sits at different grid points and noise (3.52 against
+3.01), which cannot explain 0.665 against 0.920.
+
+Next. (1) The experiment the plan names: a drip family, one case a week for 8
+weeks in a unit, injected like the others and scored on the same
+curve, since this run scored only bursts. (2) A CUSUM on profile series (unit
+x organism x specimen x profile) or on the per-isolate likelihood of the exact
+profile against the unit's history, to test the information explanation. (3)
+Combine with the live tests (method 21): the CUSUM's lower noise and the
+live tests' sensitivity may stack, and the two-unit family (0.19 against
+0.565 at k = 4) argues for the live set's side. (4) QUESTIONS C5: this table
+says theta of 8, not 2.5, for bursts of 4, and a per-series run length of
+about 70 years (h near 7 for one common limit), to be re-checked on a drip
+family before it answers C5; nothing here changes the live tool.
