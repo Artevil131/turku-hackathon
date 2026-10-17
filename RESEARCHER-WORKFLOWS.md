@@ -253,3 +253,18 @@ still needs:
 - **Licence and data**: the organisers' dataset is not redistributable,
   so exports of it are for local use only. `datapackage.json` and the
   README should say so.
+
+## Later, maybe (Aapo, 2026-10-17)
+
+Considered and kept for later; none is decided:
+
+- A self-contained interactive HTML report, openable without our server.
+- Recurring reports for continuous projects (e.g. a weekly infection-control
+  summary as Word or PDF), needing scheduling on the server.
+- Excel .xlsx: one sheet per table and a dictionary sheet.
+- DuckDB or Parquet: one typed file for R, Python and SQL tools.
+- Copy to clipboard: tables as TSV, figures as images, numbers with their
+  method line.
+- Privacy levels on export: re-keyed pseudonyms, age bands, date shifting,
+  small-cell suppression, an audit log. To be decided by the team before any
+  real hospital data is exported.
