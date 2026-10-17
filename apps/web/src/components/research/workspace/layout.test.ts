@@ -27,14 +27,14 @@ import {
 
 const ids = (l: Layout) => l.columns.map((c) => c.windows.map((w) => w.id));
 const valid = (l: Layout) => {
-  expect(l.columns.length).toBeGreaterThanOrEqual(2);
   expect(l.columns.length).toBeLessThanOrEqual(3);
-  expect(l.columns.reduce((s, c) => s + c.width, 0)).toBeCloseTo(1);
+  if (l.columns.length) expect(l.columns.reduce((s, c) => s + c.width, 0)).toBeCloseTo(1);
   const all = [...l.columns.flatMap((c) => c.windows.map((w) => w.id)), ...Object.keys(l.closed)];
   expect(all.sort()).toEqual([...WIN_IDS].sort());
   for (const c of l.columns) {
     expect(c.width).toBeGreaterThanOrEqual(0.18);
-    if (c.windows.length) expect(c.windows.reduce((s, w) => s + w.size, 0)).toBeCloseTo(1);
+    expect(c.windows.length).toBeGreaterThan(0);
+    expect(c.windows.reduce((s, w) => s + w.size, 0)).toBeCloseTo(1);
     for (const w of c.windows) expect(w.size).toBeGreaterThanOrEqual(0.15999);
   }
 };
@@ -82,11 +82,11 @@ describe("docked layout", () => {
     expect(ids(moveWindow(base, "map", { column: 2, index: 2 }))[2]).toEqual(["graph", "map"]);
     valid(next);
   });
-  it("retains at least two columns and clamps insertion indices", () => {
+  it("clamps insertion indices and drops the column the move emptied", () => {
     let l = presetLayout("map");
     l = moveWindow(l, "map", { column: -10, index: 50 });
-    expect(l.columns).toHaveLength(2);
-    expect(ids(l)).toEqual([["signals", "map"], []]);
+    expect(ids(l)).toEqual([["signals", "map"]]);
+    expect(l.columns[0]?.width).toBe(1);
     valid(l);
   });
   it("creates a new edge column only below the three-column limit", () => {
@@ -96,10 +96,42 @@ describe("docked layout", () => {
     expect(moveWindow(next, "graph", { column: 0, index: 0, newColumn: true })).toBe(next);
     valid(next);
   });
-  it("removes an emptied third source on move, not on close", () => {
-    const base = defaultLayout();
-    expect(moveWindow(base, "signals", { column: 2, index: 0 }).columns).toHaveLength(2);
-    expect(closeWindow(base, "signals").columns).toHaveLength(3);
+  it("closing a column's only window removes the column; the others share its width in proportion", () => {
+    const base = defaultLayout(600); // Signals | Alert math | Map, one window each
+    const next = closeWindow(base, "math");
+    expect(ids(next)).toEqual([["signals"], ["map"]]);
+    const [a, b, c] = base.columns.map((col) => col.width) as [number, number, number];
+    expect(next.columns[0]?.width).toBeCloseTo(a / (a + c));
+    expect(next.columns[1]?.width).toBeCloseTo(c / (a + c));
+    expect(next.closed.math).toMatchObject({ column: "detail", columnIndex: 1, index: 0, width: b });
+    valid(next);
+  });
+  it("moving a column's last window out removes the column", () => {
+    const base = defaultLayout(600);
+    const next = moveWindow(base, "math", { column: 2, index: 1 });
+    expect(ids(next)).toEqual([["signals"], ["map", "math"]]);
+    expect(next.columns.map((c) => c.id)).toEqual(["signals", "map"]);
+    // Assistant's home was the removed column: reopening recreates it between the same neighbours.
+    expect(ids(reopenWindow(next, "assistant"))).toEqual([["signals"], ["assistant"], ["map", "math"]]);
+    valid(next);
+    // With three columns, a lone window can still move to a new edge column (the count stays three).
+    const edge = moveWindow(base, "signals", { column: 3, index: 0, newColumn: true });
+    expect(ids(edge)).toEqual([["math"], ["map"], ["signals"]]);
+    valid(edge);
+  });
+  it("reopens into a new column at its remembered position when its column is gone", () => {
+    const base = defaultLayout(600);
+    const closed = closeWindow(base, "math");
+    const next = reopenWindow(closed, "math");
+    expect(ids(next)).toEqual(ids(base));
+    expect(next.columns.map((c) => c.id)).toEqual(base.columns.map((c) => c.id));
+    for (const [i, c] of next.columns.entries()) expect(c.width).toBeCloseTo(base.columns[i]?.width as number);
+    // Closing the left column too keeps the middle home pointing between Signals' old place and Map.
+    const both = closeWindow(closed, "signals");
+    expect(ids(both)).toEqual([["map"]]);
+    expect(ids(reopenWindow(both, "math"))).toEqual([["math"], ["map"]]);
+    expect(ids(reopenWindow(reopenWindow(both, "math"), "signals"))).toEqual(ids(base));
+    valid(next);
   });
   it("closes immediately and reopens in the previous column and position", () => {
     const base = defaultLayout();
@@ -119,12 +151,13 @@ describe("docked layout", () => {
     l = moveWindow(l, "assistant", { column: 0, index: 0 });
     expect(l.columns).toHaveLength(2);
     l = reopenWindow(l, "math");
-    expect(locate(l, "math")?.column).toBe(1);
+    expect(ids(l)).toEqual([["assistant", "signals"], ["math"], ["map", "graph"]]);
     valid(l);
   });
   it("can close every window and reopen every window", () => {
     const closed = WIN_IDS.reduce(closeWindow, defaultLayout());
-    expect(ids(closed).flat()).toEqual([]);
+    expect(closed.columns).toEqual([]);
+    valid(closed);
     valid(WIN_IDS.reduce(reopenWindow, closed));
   });
   it("maximizes without changing sizes/order; restore and close leave no hidden board", () => {
@@ -231,6 +264,20 @@ describe("persistence and migration", () => {
     const l = presetLayout(p, 600);
     valid(l);
     for (const c of l.columns) if (c.windows.length > 1) expect(stackNeed(c.windows.map((w) => w.id))).toBeLessThanOrEqual(600);
+  });
+  it("fixes a stored layout with an empty column on load", () => {
+    const stored = closeWindow(defaultLayout(600), "math");
+    const raw = serializeLayout({
+      ...stored,
+      columns: [stored.columns[0], { id: "detail", width: 0.33, windows: [] }, stored.columns[1]] as Layout["columns"],
+    });
+    const loaded = migrateLayout(raw, 600);
+    expect(ids(loaded)).toEqual([["signals"], ["map"]]);
+    expect(loaded.columns[0]?.width).toBeCloseTo(0.27 / 0.67, 2);
+    valid(loaded);
+    // An all-closed board stores no columns and still loads.
+    const none = WIN_IDS.reduce(closeWindow, defaultLayout());
+    expect(parseLayout(serializeLayout(none))).toEqual(none);
   });
   it("round-trips closed homes, stacks, sizes and maximize", () => {
     const l = maximizeWindow(closeWindow(defaultLayout(), "math"), "map");

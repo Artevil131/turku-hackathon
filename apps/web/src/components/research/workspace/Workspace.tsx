@@ -425,7 +425,6 @@ export function Workspace({
                         {renderWindow(w.id, w.size)}
                       </Fragment>
                     ))}
-                    {!col.windows.length ? <p className="ws-empty">{t(locale, "wsEmptyColumn")}</p> : null}
                     {drop && !drop.slot.newColumn && drop.slot.column === ci ? (
                       <div className="ws-insert" style={{ top: drop.top }} />
                     ) : null}
@@ -433,6 +432,7 @@ export function Workspace({
                 </Fragment>
               ))
             : STACK_ORDER.filter((id) => locate(shown, id)).map((id) => renderWindow(id))}
+        {wide && fitted && !shown.columns.length ? <p className="ws-empty">{t(locale, "wsEmptyBoard")}</p> : null}
         {drop?.slot.newColumn ? (
           <div
             className="ws-new-column"
