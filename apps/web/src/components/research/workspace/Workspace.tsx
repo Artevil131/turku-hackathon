@@ -595,6 +595,9 @@ export function Workspace({
           </button>
         ))}
       </div>
+      <button type="button" className="ws-find" data-find onClick={() => dispatchEvent(new CustomEvent("aei:command"))} title={`${t(locale, "wsFind")} (/ · Ctrl+K)`}>
+        {t(locale, "wsFind")} <kbd>/</kbd>
+      </button>
     </div>
   );
   // The focus bar: the focused window's title, the other windows as a rail of titles, and the way back.

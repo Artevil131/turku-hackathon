@@ -838,3 +838,33 @@
 .timeline[data-variant="window"] .tl-signals-link {
   margin: 0 0 0 auto;
 }
+
+/* A visible way to the search: one click from the board to any ward, signal or drug. */
+.ws-find {
+  margin-left: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: var(--control-h);
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--glass-3);
+  color: var(--ink-2);
+  font: inherit;
+  font-size: var(--t-s);
+  cursor: pointer;
+}
+.ws-find:hover,
+.ws-find:focus-visible {
+  border-color: var(--live);
+  color: var(--ink);
+}
+.ws-find kbd {
+  padding: 0 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: 5px;
+  font: inherit;
+  font-size: var(--step--1);
+  color: var(--ink-3);
+}
