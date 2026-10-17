@@ -1,0 +1,21 @@
+{
+  "as_of": "2025-06-15",
+  "unit": "URO",
+  "series": "esbl",
+  "y": 5,
+  "mean": 0.622796,
+  "lo95": 0.0,
+  "hi95": 3.0,
+  "p": 0.00068606,
+  "q": 0.0212678,
+  "tested_today": 31,
+  "budget_rank": 1,
+  "passing_this_week": 1,
+  "first_signal": "2025-06-10",
+  "setting": [
+    26,
+    0,
+    1
+  ],
+  "level": 0.005
+}

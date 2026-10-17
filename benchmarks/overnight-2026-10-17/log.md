@@ -51,3 +51,5 @@ Code, Opus 5.5, operated by Artem).
 | 09:17 | 0022 | plan committed | Fable 5.1 | 8 min | primary row rank product; stack and union/intersection as references; calibration frozen at 2024-09-30 |
 | 09:17 | 0017 | plan committed | Sonnet 5.5 | 9 min | trailing window {26,52} × guard {0,4} × down-weighting; unit scope for D2/D5, hospital scope for D4/I1 |
 | 09:17 | 0022 ensemble | implement start | Sonnet 5.5 | | moves the CUSUM into aei.cusum with a reproduction test |
+| 09:20 | 0021 naming step (m27) | plan start | Sonnet 5.5 | | moves 0015's detector into aei.gamma_poisson in phase B |
+| 09:24 | 0015 | result committed | Sonnet 5.5 | 262–336 s CPU | year 1 chose S 26, g 0, L 1, q<0.005; D5 rare 0.205 (0.155–0.266), common ESBL 0.095 at 1.0 episode/yr (level 0.001; 0.005 sits at 5.02/yr, knife-edge); refuted; noise all from 243 organism × specimen series; on the 36 phenotype series alone 0.715 / 0.65 at 3.0/yr, level with live phenotype Poisson; budget never binds; no Fable review |

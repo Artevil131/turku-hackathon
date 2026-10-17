@@ -171,10 +171,10 @@ Every flattened metric key (dotted path into `metrics`) for every row, by family
 
 | key | [baseline-live-set-retuned-year1](baselines/live-set-retuned-year1.json) | [baseline-live-set-shipped](baselines/live-set-shipped.json) | [0015-gamma-poisson-guard-band](../../experiments/0015-gamma-poisson-guard-band/) | [0016-cusum](../../experiments/0016-cusum/) | [0018-bocpd](../../experiments/0018-bocpd/) |
 |---|---|---|---|---|---|
-| mark | baseline | baseline, tuned on test | proposed |  | proposed |
+| mark | baseline | baseline, tuned on test |  |  |  |
 | method | The live detector set with cluster and data alphas re-tuned on year 1 (Choices 5), trend and new-in-unit as shipped | The live detector set as shipped (D-020, D-021, D-022, D-031, D-034), scored on D1 to D7 and I1 over 2024-10-01 to 2026-09-27 | Gamma-Poisson surprise (negative binomial predictive), baseline 26 weeks, guard band 0 weeks, window 1 weeks, k 0.1, minimum count 2, Benjamini-Hochberg q-values over the series tested each day (unit x phenotype and unit x organism x specimen), read at q < 0.005 (the loosest level whose year-1 noise was at most 5 episodes a year); D5 is read at its own headline level as the harness defines it. | Poisson CUSUM (theta 8, weekly, guard 0 wk) and Bernoulli CUSUM (theta 8, guard 4 wk) per unit x series, limits from Siegmund's run length, operating level by simulation on year 1 | Bayesian online change-point detection (Adams and MacKay 2007), counts and %R, H = 1/26, w = 2, p < 0.5 |
-| runtime_s | 93.3 | 115 | 350 | 77 | 341 |
-| cpu_s | 93.2 | 114 | 336 | 71 | 328 |
+| runtime_s | 93.3 | 115 | 328 | 77 | 249 |
+| cpu_s | 93.2 | 114 | 320 | 71 | 246 |
 | D1.E1 | 0 | 0 | 6 | 4 | n/a |
 | D1.E1_corrected | 5 | 5 | 11 | 9 | n/a |
 | D1.E2 | 0 | 0 | 2 | 4 | 4 |
