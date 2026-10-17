@@ -177,9 +177,8 @@ export function AlertMath({
         {/* Concise first: the method opens on request (Artem, 2026-10-17: detail only when the researcher asks). */}
         <details className="sig-how">
           <summary className="sig-how-head">{t(locale, "cardHow")}</summary>
-          <p className="sig-how-text">
-            {howSentence(locale, lead)} <HowFigure locale={locale} alert={lead} />
-          </p>
+          <p className="sig-how-text">{howSentence(locale, lead)}</p>
+          <HowFigure locale={locale} alert={lead} />
           <p className="feed-evidence">{t(locale, "feedLatestEvidence", { evidence: alertEvidence(locale, lead) })}</p>
           <p className="feed-owner">{incidentResponsibility(locale, inc.members)}</p>
         </details>

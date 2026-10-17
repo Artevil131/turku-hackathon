@@ -88,7 +88,7 @@ describe("the signal card", () => {
     expect(s).toContain("(0)");
     expect(s).toContain("(14.3)");
     expect(s).toContain("feed or sampling problem");
-    expect(html).not.toContain("<details");
+    expect(html).not.toContain("sig-isolates");
   });
 
   it("caps the odds under one in a million and speaks Finnish", () => {
