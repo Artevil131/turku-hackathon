@@ -6,7 +6,7 @@ type PeriodShare = ReturnType<typeof sharesByPeriod>[number];
 import { firstIsolates } from "@aei/counting";
 import { wilson } from "@aei/coverage";
 import { episodes, LIVE_SETTINGS, phenotypeExcess, poissonLower, poissonUpper, profileExcess, type Signal } from "@aei/detect";
-import type { AntibioticCode, IsolateRecord, Phenotype } from "@aei/domain";
+import type { AntibioticCode, IsolateRecord, Phenotype, SiteId } from "@aei/domain";
 import type { ExportTable } from "@aei/export";
 import { daysBetween, shift } from "../feed/model.ts";
 
@@ -20,6 +20,8 @@ export interface Frame {
   unit: string;
 }
 export interface Slice extends Frame {
+  /** The hospital whose rows are read (D-051); absent is the hospital the board shows. */
+  site?: SiteId;
   organism: string;
   specimen: string;
   /** "" is no phenotype. */

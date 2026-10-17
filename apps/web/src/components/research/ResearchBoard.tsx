@@ -1,6 +1,6 @@
 import { t } from "@aei/i18n";
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { currentHospitalName, currentSite } from "../../sites.ts";
+import { currentHospitalName, currentSite, homeSite } from "../../sites.ts";
 import { hashParams, subscribeHash, writeHashParams } from "../../url.ts";
 import { Assistant } from "./assistant/Assistant.tsx";
 import { type BoardState, boardFromUrl, boardToParams, type FeedProps } from "./board.ts";
@@ -15,7 +15,7 @@ import { GeoMap } from "./geo/GeoMap.tsx";
 import { UnitGraph } from "./geo/UnitGraph.tsx";
 import { AlertMath } from "./math/AlertMath.tsx";
 import type { SliceSources } from "./notebook/cells/SliceCell.tsx";
-import { appendResult, pageSlot } from "./notebook/model.ts";
+import { appendResult, pageSlot, withSite } from "./notebook/model.ts";
 import { Notebook } from "./notebook/Notebook.tsx";
 import { useNotebookPage } from "./notebook/usePage.ts";
 import { ProjectControls } from "./projects/ProjectControls.tsx";
@@ -172,7 +172,7 @@ export function ResearchBoard(props: Props) {
   const updateNotebook = notebook.update;
   const toNotebook = useCallback(
     (r: CellResult) => {
-      updateNotebook((p) => appendResult(p, r));
+      updateNotebook((p) => appendResult(p, withSite(r, currentSite() ?? homeSite().id)));
       setReveal({ id: "notebook", key: `notebook-${Date.now()}` });
     },
     [updateNotebook],

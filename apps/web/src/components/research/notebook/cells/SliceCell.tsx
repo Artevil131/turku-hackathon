@@ -1,6 +1,7 @@
 import { ORGANISMS, PHENOTYPES, type Phenotype, SPECIMENS } from "@aei/domain";
-import { type Locale, phenotypeName, specimenName, t, wardName } from "@aei/i18n";
+import { type Locale, phenotypeName, siteName, specimenName, t, wardName } from "@aei/i18n";
 import { useState } from "react";
+import { allSites, siteWards } from "../../../../sites.ts";
 import type { Slice } from "../../tools/model.ts";
 import { sliceSentence } from "../../tools/ToolsWindow.tsx";
 
@@ -11,24 +12,31 @@ export interface SliceSources {
   timeline: { from: string; to: string } | null;
   /** The selected signal's window, unit and phenotype, or null. */
   signal: { from: string; to: string; unit?: string; phenotype?: Phenotype | ""; organism?: string } | null;
+  /** The hospital the board shows: a new slice's hospital. */
+  site?: Slice["site"];
+}
+
+/** "Tyks · Urology · E. coli · … · first isolates": the slice sentence with its hospital first. */
+export function notebookSliceSentence(locale: Locale, s: Slice): string {
+  return s.site ? `${siteName(locale, s.site)} · ${sliceSentence(locale, s)}` : sliceSentence(locale, s);
 }
 
 export function SliceCellBody({
   id,
   locale,
   slice,
-  wards,
   sources,
   onChange,
 }: {
   id: string;
   locale: Locale;
   slice: Slice;
-  wards: readonly string[];
   sources: SliceSources;
   onChange: (s: Slice) => void;
 }) {
   const [editing, setEditing] = useState(false);
+  const wards = siteWards(slice.site ?? null).map((w) => w.code as string);
+  const sites = allSites();
   const set = <K extends keyof Slice>(key: K, v: Slice[K]) => onChange({ ...slice, [key]: v });
   const { timeline, signal } = sources;
   const bad = slice.from > slice.to;
@@ -40,7 +48,7 @@ export function SliceCellBody({
   );
   return (
     <div className="nb-slice">
-      <p className="nb-sentence">{sliceSentence(locale, slice)}</p>
+      <p className="nb-sentence">{notebookSliceSentence(locale, slice)}</p>
       <div className="nb-actions">
         <button type="button" className="btn" aria-expanded={editing} aria-controls={`${id}-fields`} onClick={() => setEditing((e) => !e)}>
           {t(locale, editing ? "nbDone" : "nbEdit")}
@@ -82,6 +90,25 @@ export function SliceCellBody({
             {date("to", t(locale, "toolsTo"))}
           </div>
           <div className="tl-fields">
+            <label className="tl-field" htmlFor={`${id}-site`}>
+              <span>{t(locale, "nbHospital")}</span>
+              <select
+                id={`${id}-site`}
+                value={slice.site ?? ""}
+                onChange={(e) => {
+                  const site = e.target.value as NonNullable<Slice["site"]>;
+                  // A unit of the other hospital does not exist in this one: the slice goes back to every unit.
+                  const keep = siteWards(site).some((w) => w.code === slice.unit);
+                  onChange({ ...slice, site, unit: keep ? slice.unit : "" });
+                }}
+              >
+                {sites.map((x) => (
+                  <option key={x.id} value={x.id}>
+                    {siteName(locale, x.id)}
+                  </option>
+                ))}
+              </select>
+            </label>
             <label className="tl-field" htmlFor={`${id}-unit`}>
               <span>{t(locale, "toolsUnit")}</span>
               <select id={`${id}-unit`} value={slice.unit} onChange={(e) => set("unit", e.target.value)}>

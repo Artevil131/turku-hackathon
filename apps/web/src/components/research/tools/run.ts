@@ -35,6 +35,7 @@ async function fetchFrame(client: AeiClient, s: Slice, f: Frame, wide = false): 
     await client.isolates({
       from: f.from,
       to: f.to,
+      ...(s.site ? { site: s.site } : {}),
       ...(f.unit && !wide ? { ward: f.unit } : {}),
       ...(s.organism && !wide ? { organism: s.organism as never } : {}),
       ...(s.specimen && !wide ? { specimen: s.specimen as never } : {}),

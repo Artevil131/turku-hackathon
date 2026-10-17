@@ -30,6 +30,9 @@ describe("hospital selection in the web app (D-051)", () => {
     const client = { alerts: (q: unknown) => Promise.resolve(asked.push(q)) } as unknown as AeiClient;
     await scopeClient(client, "sata").alerts({ from: "2025-06-01" });
     expect(asked).toEqual([{ from: "2025-06-01", site: "sata" }]);
+    // A query that names its own hospital keeps it (a notebook slice of another hospital).
+    await scopeClient(client, "sata").alerts({ from: "2025-06-01", site: "tyks" });
+    expect(asked[1]).toEqual({ from: "2025-06-01", site: "tyks" });
     expect(siteWards().map((w) => w.code)).toEqual(["sata/ICU"]);
     expect(recordsOf([{ ward: "URO" }, { ward: "sata/ICU" }], "sata")).toEqual([{ ward: "sata/ICU" }]);
     expect(

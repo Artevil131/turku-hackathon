@@ -1,19 +1,20 @@
 import type { AeiClient } from "@aei/contract";
 import { toPageZip } from "@aei/export";
-import { formatDate, type Locale, phenotypeName, t } from "@aei/i18n";
-import { type KeyboardEvent, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { formatDate, type Locale, phenotypeName, siteName, t } from "@aei/i18n";
+import { type KeyboardEvent, type ReactNode, useEffect, useRef, useState } from "react";
 import { downloadFile } from "../../../downloadFile.ts";
-import { siteWards } from "../../../sites.ts";
+import { currentSite, homeSite, siteWards } from "../../../sites.ts";
 import { useHashParam } from "../../../url.ts";
 import { chartTitle, specFromResult } from "../charts/model.ts";
-import { type Cell, type CellResult, TOOL_IDS, type ToolId } from "../tools/model.ts";
+import { type Cell, type CellResult, type Slice, TOOL_IDS, type ToolId } from "../tools/model.ts";
 import { eventName } from "../tools/ResultCell.tsx";
-import { pickFrame, sliceSentence } from "../tools/ToolsWindow.tsx";
+import { pickFrame } from "../tools/ToolsWindow.tsx";
 import { AnalysisCellBody } from "./cells/AnalysisCell.tsx";
 import { ChartCellBody } from "./cells/ChartCell.tsx";
 import { CodeCellBody } from "./cells/CodeCell.tsx";
 import { NoteCellBody } from "./cells/NoteCell.tsx";
-import { SliceCellBody, type SliceSources } from "./cells/SliceCell.tsx";
+import { notebookSliceSentence, SliceCellBody, type SliceSources } from "./cells/SliceCell.tsx";
+import { TimelineCellBody } from "./cells/TimelineCell.tsx";
 import {
   codeFor,
   defaultParams,
@@ -33,6 +34,7 @@ import {
   sameSlice,
   sliceAbove,
   sliceNumber,
+  withSite,
 } from "./model.ts";
 import "./notebook.css";
 
@@ -57,7 +59,7 @@ export interface NotebookProps {
   onReproduce: (lang: Lang) => void;
 }
 
-type AddKind = "slice" | "note" | "code" | ToolId | { rail: CellResult };
+type AddKind = "slice" | "note" | "code" | "timeline" | ToolId | { rail: CellResult };
 
 export function resultTitle(locale: Locale, r: CellResult): string {
   const event =
@@ -161,6 +163,7 @@ function Adder({
             {item("slice", t(locale, "nbKindSlice"), "slice")}
             {item("note", t(locale, "nbKindNote"), "note")}
             {item("code", t(locale, "nbKindCode"), "code")}
+            {item("timeline", t(locale, "nbKindTimeline"), "timeline")}
           </div>
           <div className="nb-menu-group">{TOOL_IDS.map((tool) => item(tool, toolName(locale, tool), tool))}</div>
           {railCells.length > 0 && (
@@ -200,8 +203,10 @@ export function Notebook({ client, locale, asOf, page, update, projectId, signal
   const [hashTo] = useHashParam("to");
   const picked = pickFrame(hashFrom, hashTo, null);
   const timeline = picked.origin === "timeline" ? picked.frame : null;
-  const sources: SliceSources = { timeline, signal };
-  const wards = useMemo(() => siteWards().map((w) => w.code as string), []);
+  // A new slice reads the hospital the board shows; "All hospitals" on the board gives the home hospital.
+  const boardSite = currentSite() ?? homeSite().id;
+  const sources: SliceSources = { timeline, signal, site: boardSite };
+  const wardsOf = (s: Slice | null) => siteWards(s?.site ?? null).map((w) => w.code as string);
   const [menuAt, setMenuAt] = useState<number | null>(null);
   const [fresh, setFresh] = useState<string | null>(null);
   const [status, setStatus] = useState("");
@@ -224,11 +229,14 @@ export function Notebook({ client, locale, asOf, page, update, projectId, signal
     let target: NbCell;
     if (kind === "slice") target = put({ id: newId(), kind: "slice", slice: newSlice(sources, above?.slice ?? null, asOf) });
     else if (kind === "note") target = put({ id: newId(), kind: "note", text: "" });
-    else if (kind === "code") {
+    else if (kind === "timeline") {
+      const s = above?.slice ?? (put({ id: newId(), kind: "slice", slice: newSlice(sources, null, asOf) }) as SliceCell).slice;
+      target = put({ id: newId(), kind: "timeline", window: { from: s.from, to: s.to } });
+    } else if (kind === "code") {
       const r = resultAbove(cells, index);
       target = put({ id: newId(), kind: "code", lang: "python", code: r ? codeFor(r, "python") : "", edited: false });
     } else if (typeof kind === "object") {
-      const r = kind.rail;
+      const r = withSite(kind.rail, boardSite);
       if (!above || !sameSlice(above.slice, r.slice)) put({ id: newId(), kind: "slice", slice: r.slice });
       target = put({ id: newId(), kind: "analysis", tool: r.kind, params: paramsOf(r), result: r });
     } else {
@@ -257,9 +265,11 @@ export function Notebook({ client, locale, asOf, page, update, projectId, signal
         title: t(locale, "nbPageTitle"),
         locale,
         sliceHeading: (n) => t(locale, "nbSlice", { n }),
-        sliceSentence: (s) => sliceSentence(locale, s),
+        sliceSentence: (s) => notebookSliceSentence(locale, s),
         toolTitle: (r, tool) => (r ? resultTitle(locale, r) : toolName(locale, tool)),
         notRun: t(locale, "nbNotRun"),
+        timeline: (w, s) =>
+          `${t(locale, "nbKindTimeline")} · ${s?.site ? `${siteName(locale, s.site)} · ` : ""}${formatDate(locale, w.from)} – ${formatDate(locale, w.to, "long")}`,
       });
       downloadFile(await toPageZip(blocks));
     } finally {
@@ -270,13 +280,21 @@ export function Notebook({ client, locale, asOf, page, update, projectId, signal
   const titleOf = (c: NbCell, i: number): { title: string; summary: string } => {
     switch (c.kind) {
       case "slice":
-        return { title: t(locale, "nbSlice", { n: sliceNumber(cells, c.id) }), summary: sliceSentence(locale, c.slice) };
+        return { title: t(locale, "nbSlice", { n: sliceNumber(cells, c.id) }), summary: notebookSliceSentence(locale, c.slice) };
       case "note":
         return { title: t(locale, "nbKindNote"), summary: firstLine(c.text) };
       case "code":
         return { title: `${t(locale, "nbKindCode")} · ${c.lang === "r" ? "R" : "Python"}`, summary: firstLine(c.code) };
       case "chart":
         return { title: t(locale, "nbChart"), summary: chartTitle(locale, c.spec, asOf) };
+      case "timeline": {
+        const s = sliceAbove(cells, i);
+        const reads = s ? ` · ${t(locale, "nbReads", { n: sliceNumber(cells, s.id) })}` : "";
+        return {
+          title: `${t(locale, "nbKindTimeline")}${reads}`,
+          summary: `${formatDate(locale, c.window.from)} – ${formatDate(locale, c.window.to, "long")}`,
+        };
+      }
       case "analysis": {
         const s = sliceAbove(cells, i);
         const reads = s ? ` · ${t(locale, "nbReads", { n: sliceNumber(cells, s.id) })}` : "";
@@ -289,9 +307,7 @@ export function Notebook({ client, locale, asOf, page, update, projectId, signal
     const patch = (p: Partial<NbCell>) => update((pg) => patchCell(pg, c.id, p));
     switch (c.kind) {
       case "slice":
-        return (
-          <SliceCellBody id={c.id} locale={locale} slice={c.slice} wards={wards} sources={sources} onChange={(slice) => patch({ slice })} />
-        );
+        return <SliceCellBody id={c.id} locale={locale} slice={c.slice} sources={sources} onChange={(slice) => patch({ slice })} />;
       case "note":
         return <NoteCellBody id={c.id} locale={locale} text={c.text} autoEdit={fresh === c.id} onChange={(text) => patch({ text })} />;
       case "code": {
@@ -309,6 +325,22 @@ export function Notebook({ client, locale, asOf, page, update, projectId, signal
       }
       case "chart":
         return <ChartCellBody client={client} locale={locale} asOf={asOf} spec={c.spec} />;
+      case "timeline": {
+        const s = sliceAbove(cells, i);
+        return (
+          <TimelineCellBody
+            client={client}
+            locale={locale}
+            asOf={asOf}
+            slice={s?.slice ?? null}
+            sliceN={s ? sliceNumber(cells, s.id) : 0}
+            window={c.window}
+            onRange={(r) => s && update((pg) => patchCell(pg, s.id, { slice: { ...s.slice, from: r.from, to: r.to } }))}
+            onFit={() => s && patch({ window: { from: s.slice.from, to: s.slice.to } })}
+            onAddSlice={() => add("slice", i)}
+          />
+        );
+      }
       case "analysis": {
         const s = sliceAbove(cells, i);
         return (
@@ -319,7 +351,7 @@ export function Notebook({ client, locale, asOf, page, update, projectId, signal
             asOf={asOf}
             slice={s?.slice ?? null}
             sliceN={s ? sliceNumber(cells, s.id) : 0}
-            wards={wards}
+            wards={wardsOf(s?.slice ?? null)}
             onChange={patch}
             onChart={(r) => {
               const spec = specFromResult(r);

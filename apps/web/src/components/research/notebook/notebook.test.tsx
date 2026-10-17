@@ -19,6 +19,7 @@ import {
   parsePage,
   serialisePage,
   sliceAbove,
+  withSite,
 } from "./model.ts";
 import { Notebook } from "./Notebook.tsx";
 
@@ -109,6 +110,20 @@ describe("the rail's To notebook", () => {
   });
 });
 
+describe("hospitals", () => {
+  it("tells two hospitals' slices apart, so a rail result from Tyks does not land under Satasairaala's", () => {
+    const sata: Slice = { ...A, site: "sata" };
+    const page: Page = { v: 1, cells: [slice("s1", sata)] };
+    const p = appendResult(page, withSite(rateA, "tyks"));
+    expect(p.cells.map((c) => c.kind)).toEqual(["slice", "slice", "analysis"]);
+    expect((p.cells[1] as { slice: Slice }).slice.site).toBe("tyks");
+  });
+  it("stamps a rail result with the board's hospital, and keeps one it already names", () => {
+    expect(withSite(rateA, "tyks").slice.site).toBe("tyks");
+    expect(withSite(withSite(rateA, "sata"), "tyks").slice.site).toBe("sata");
+  });
+});
+
 describe("storage", () => {
   it("round-trips a page, the non-finite numbers included", () => {
     const cmp = computeCompare(
@@ -119,7 +134,18 @@ describe("storage", () => {
       { type: "phenotype", code: "esbl" },
     );
     expect(Number.isFinite(cmp.ratio?.ratio ?? 0)).toBe(false);
-    const page: Page = insertAt({ v: 1, cells: [slice("s1", A), note("n", "**bold**")] }, 2, analysis("a", cmp as never));
+    const page: Page = insertAt(
+      {
+        v: 1,
+        cells: [
+          slice("s1", { ...A, site: "tyks" }),
+          note("n", "**bold**"),
+          { id: "t", kind: "timeline", window: { from: A.from, to: A.to } },
+        ],
+      },
+      2,
+      analysis("a", cmp as never),
+    );
     const back = parsePage(serialisePage(page));
     expect(back).toEqual(page);
   });
@@ -152,6 +178,7 @@ describe("export", () => {
       sliceSentence: (s) => `${s.unit} ${s.from}–${s.to}`,
       toolTitle: () => "Rate",
       notRun: "Not run yet.",
+      timeline: (w) => `Timeline ${w.from}–${w.to}`,
     }),
   );
   it("keeps the note as written and the slice sentences", () => {

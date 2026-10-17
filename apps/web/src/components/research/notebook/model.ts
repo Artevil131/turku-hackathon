@@ -70,7 +70,12 @@ export interface ChartCell extends Base {
   kind: "chart";
   spec: ChartSpec;
 }
-export type NbCell = SliceCell | NoteCell | AnalysisCell | CodeCell | ChartCell;
+/** The weekly band of the slice above, for its hospital, over a window of its own; a range dragged on it is that slice's dates. */
+export interface TimelineCell extends Base {
+  kind: "timeline";
+  window: { from: string; to: string };
+}
+export type NbCell = SliceCell | NoteCell | AnalysisCell | CodeCell | ChartCell | TimelineCell;
 export type CellKind = NbCell["kind"];
 export interface Page {
   v: typeof PAGE_VERSION;
@@ -84,7 +89,7 @@ export const newId = () => `c${Date.now().toString(36)}${(seq++).toString(36)}`;
 
 // ---------- slices ----------
 
-const SLICE_KEYS = ["from", "to", "unit", "organism", "specimen", "phenotype", "firstOnly"] as const;
+const SLICE_KEYS = ["site", "from", "to", "unit", "organism", "specimen", "phenotype", "firstOnly"] as const;
 export const sameSlice = (a: Slice, b: Slice) => SLICE_KEYS.every((k) => a[k] === b[k]);
 
 /** The slice cell an analysis at `index` reads: the nearest one above it, else null. */
@@ -109,13 +114,21 @@ export function resultAbove(cells: readonly NbCell[], index: number): CellResult
   return null;
 }
 
-/** A new slice cell's slice: the timeline's range, else the selected signal's window, else the nearest slice above, else 12 weeks to the clock. */
+/**
+ * A new slice cell's slice: the timeline's range, else the selected signal's window, else the nearest slice above,
+ * else 12 weeks to the clock. Its hospital is the slice above's, else the one the board shows (`sources.site`).
+ */
 export function newSlice(
-  sources: { timeline: { from: string; to: string } | null; signal: { from: string; to: string; unit?: string } | null },
+  sources: {
+    timeline: { from: string; to: string } | null;
+    signal: { from: string; to: string; unit?: string } | null;
+    site?: Slice["site"];
+  },
   above: Slice | null,
   asOf: string | null,
 ): Slice {
   const base: Slice = above ?? {
+    ...(sources.site ? { site: sources.site } : {}),
     from: "",
     to: "",
     unit: "",
@@ -218,6 +231,10 @@ export function moveCell(page: Page, id: string, to: number): Page {
   return { ...page, cells };
 }
 
+/** A rail result's slice names no hospital (the rail reads the board's); the notebook's slices do. */
+export const withSite = (r: CellResult, site: NonNullable<Slice["site"]>): CellResult =>
+  r.slice.site ? r : ({ ...r, slice: { ...r.slice, site } } as CellResult);
+
 /**
  * A rail result onto the page: under the last slice cell equal to its slice (before the next slice cell, so it
  * reads that slice), or under a new slice cell at the end when the page has none equal to it.
@@ -243,7 +260,7 @@ function reviver(_k: string, v: unknown) {
 
 export const serialisePage = (page: Page): string => JSON.stringify(page, replacer);
 
-const KINDS: readonly CellKind[] = ["slice", "note", "analysis", "code", "chart"];
+const KINDS: readonly CellKind[] = ["slice", "note", "analysis", "code", "chart", "timeline"];
 const TOOLS: readonly ToolId[] = ["rate", "compare", "shares", "beta", "detector"];
 
 function validCell(c: unknown): c is NbCell {
@@ -259,6 +276,10 @@ function validCell(c: unknown): c is NbCell {
       return TOOLS.includes(x.tool as ToolId) && !!x.params && typeof x.params === "object";
     case "code":
       return (x.lang === "python" || x.lang === "r") && typeof x.code === "string";
+    case "timeline":
+      return (
+        !!x.window && typeof (x.window as { from?: unknown }).from === "string" && typeof (x.window as { to?: unknown }).to === "string"
+      );
     default:
       return !!x.spec && typeof x.spec === "object";
   }
@@ -313,6 +334,8 @@ export interface ExportWords {
   sliceSentence: (s: Slice) => string;
   toolTitle: (r: CellResult | null, tool: ToolId) => string;
   notRun: string;
+  /** "Timeline · Tyks · 18.2.–12.5.2025": the band itself is not exported. */
+  timeline: (window: { from: string; to: string }, slice: Slice | null) => string;
 }
 
 /** The page as Markdown blocks: notes as written, slice sentences, each result's table and formula, code fenced. */
@@ -324,6 +347,8 @@ export function pageBlocks(page: Page, asOf: string, words: ExportWords): Export
     else if (c.kind === "slice") {
       blocks.push({ kind: "heading", text: words.sliceHeading(++slices) }, { kind: "line", text: words.sliceSentence(c.slice) });
     } else if (c.kind === "code") blocks.push({ kind: "code", lang: c.lang, code: c.code });
+    else if (c.kind === "timeline")
+      blocks.push({ kind: "line", text: words.timeline(c.window, sliceAbove(page.cells, page.cells.indexOf(c))?.slice ?? null) });
     else if (c.kind === "analysis") {
       blocks.push({ kind: "heading", text: words.toolTitle(c.result, c.tool) });
       if (!c.result) {
