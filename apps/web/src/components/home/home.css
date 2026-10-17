@@ -12,14 +12,18 @@
   padding: 0 0 16px;
 }
 
-.hm-since {
+.hm .hm-since {
   display: grid;
-  gap: var(--pad);
-  padding: var(--pad);
+  gap: var(--gap);
+  padding: 4px 0 0;
   min-width: 0;
+  /* The three figures are the panels; no card around cards. */
+  background: none;
+  border: 0;
 }
 
 .hm-head {
+  padding: 0 2px;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -50,8 +54,10 @@
 }
 
 .hm-offline {
-  padding-left: 8px;
-  border-left: 3px solid var(--st-watch);
+  padding: 8px 12px;
+  border: 1px solid var(--st-watch);
+  border-radius: var(--radius-control);
+  background: var(--st-watch-bg, #fdf3e2);
   color: var(--ink);
 }
 
@@ -72,13 +78,20 @@
 .hm-stat {
   display: grid;
   gap: 2px;
-  min-height: 88px;
+  min-height: 96px;
   padding: var(--pad);
-  align-content: center;
+  align-content: start;
   border: 1px solid var(--line);
-  border-radius: var(--radius-control);
+  border-radius: var(--brand-radius, 10px);
+  background: var(--glass-3, #fff);
   color: var(--ink);
   text-decoration: none;
+}
+
+.hm-stat:focus-visible,
+.hm-role:focus-visible {
+  outline: 2px solid var(--live);
+  outline-offset: 2px;
 }
 
 .hm-stat:hover {
@@ -101,6 +114,7 @@
   font-size: var(--t-s);
   font-weight: 500;
   color: var(--ink-2);
+  margin-bottom: 2px;
 }
 
 .hm-date {
