@@ -113,6 +113,9 @@ export interface WeekRow {
   ph: Record<Ph, number>;
   cultures: number;
   units: Partial<Record<WardCode, number>>;
+  /** Per unit and phenotype, and the unit's cultures: the raw counts a ratio is made of. */
+  uph: Partial<Record<WardCode, Record<Ph, number>>>;
+  ucult: Partial<Record<WardCode, number>>;
   total: number;
 }
 
@@ -129,21 +132,27 @@ export function weekRows(data: WeeklyResponse | null, asOf: string): WeekRow[] {
     const hidden = partial && data.asOf > asOf;
     const ph = { esbl: 0, mrsa: 0, vre: 0, cpe: 0 };
     const units: Partial<Record<WardCode, number>> = {};
+    const uph: WeekRow["uph"] = {};
+    const ucult: WeekRow["ucult"] = {};
     let cultures = 0;
     for (const u of wards) {
       const uw = data.units[u];
       if (!uw) continue;
       cultures += uw.cultures[i] ?? 0;
+      ucult[u] = uw.cultures[i] ?? 0;
       let sum = 0;
+      const mine = { esbl: 0, mrsa: 0, vre: 0, cpe: 0 };
       for (const p of PHENOTYPE_ORDER) {
         const v = uw.phenotypes[p]?.[i] ?? 0;
         ph[p] += v;
+        mine[p] = v;
         sum += v;
       }
       units[u] = sum;
+      uph[u] = mine;
     }
     const total = ph.esbl + ph.mrsa + ph.vre + ph.cpe;
-    rows.push({ date: w, day, last: partial ? asOf : isoFromDay(day + 6), partial, hidden, ph, cultures, units, total });
+    rows.push({ date: w, day, last: partial ? asOf : isoFromDay(day + 6), partial, hidden, ph, cultures, units, uph, ucult, total });
   });
   return rows;
 }
@@ -209,3 +218,18 @@ export function pillLine(locale: Locale, a: Alert): string {
 
 export const PILL_CHAR = 6.4;
 export const pillWidth = (label: string, glyph: boolean) => Math.ceil(label.length * PILL_CHAR + 8 + (glyph ? 7 : 0));
+
+/** Splits points at gaps (null): every stretch of consecutive points is drawn on its own. */
+export function runs(pts: readonly (Pt | null)[]): Pt[][] {
+  const out: Pt[][] = [];
+  let cur: Pt[] = [];
+  for (const p of pts) {
+    if (p) cur.push(p);
+    else if (cur.length) {
+      out.push(cur);
+      cur = [];
+    }
+  }
+  if (cur.length) out.push(cur);
+  return out;
+}

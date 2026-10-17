@@ -13,10 +13,15 @@ export function hashParams(): URLSearchParams {
 }
 
 /** Replaces the current page's params in the URL without a history entry. */
+/** Params that belong to the whole app (the timeline's layers), kept when a page writes its own. */
+const SHARED_PARAMS = ["tl"] as const;
+
 export function writeHashParams(params: Record<string, string | null | undefined>): void {
   const page = hashPage();
   const search = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) if (value) search.set(key, value);
+  const current = hashParams();
+  for (const key of SHARED_PARAMS) if (!(key in params) && current.get(key)) search.set(key, current.get(key) as string);
   const qs = search.toString();
   const next = `#${page}${qs ? `?${qs}` : ""}`;
   if (location.hash !== next) history.replaceState(history.state, "", next);

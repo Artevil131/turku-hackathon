@@ -317,3 +317,223 @@
 .hs[data-compact] .hs-svg {
   cursor: pointer;
 }
+
+/* Overlaid lines: dash pattern as well as colour tells the phenotypes apart. */
+.hs-line {
+  fill: none;
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+}
+.hs-ln-esbl {
+  stroke: var(--ph-esbl);
+}
+.hs-ln-mrsa {
+  stroke: var(--ph-mrsa);
+  stroke-dasharray: 6 2.5;
+}
+.hs-ln-vre {
+  stroke: var(--ph-vre);
+  stroke-dasharray: 1.5 2.5;
+  stroke-linecap: round;
+}
+.hs-ln-cpe {
+  stroke: var(--ph-cpe);
+  stroke-dasharray: 7 2 1.5 2;
+}
+.hs-speck {
+  fill: var(--ink-2, #1d204e);
+}
+
+/* Legend entries are the line toggles. */
+.hs-leg {
+  cursor: pointer;
+  outline: none;
+}
+.hs-leg-hit {
+  fill: transparent;
+}
+.hs-leg[data-off] {
+  opacity: 0.65;
+}
+.hs-leg-strike {
+  stroke: var(--ink-2, #1d204e);
+  stroke-width: 1;
+}
+.hs-leg:hover .hs-legend {
+  text-decoration: underline;
+}
+.hs-leg:focus-visible .hs-leg-hit {
+  stroke: var(--ink, #07081c);
+  stroke-width: 1.5;
+  rx: 3;
+}
+.hs-legend-tag {
+  font-weight: 600;
+}
+
+/* Layers: a quiet ghost button at the right of the legend row, and a small popover. */
+.ly {
+  position: absolute;
+  top: -3px;
+  right: 8px;
+  z-index: 35;
+}
+.ly-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+  color: var(--ink-3, #5c6080);
+  font: 500 11px var(--brand-font-ui, system-ui, sans-serif);
+  cursor: pointer;
+}
+.ly-btn:hover,
+.ly-btn[aria-expanded="true"] {
+  color: var(--ink, #07081c);
+  background: color-mix(in srgb, var(--ink-3, #5c6080) 12%, transparent);
+}
+.ly-btn:focus-visible,
+.ly-chip input:focus-visible + span,
+.ly-bulk button:focus-visible,
+.ly-reset:focus-visible {
+  outline: 2px solid var(--ink, #07081c);
+  outline-offset: 1px;
+}
+.ly-btn[data-changed]::after {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.ly-panel {
+  position: absolute;
+  top: 24px;
+  right: 0;
+  width: min(300px, calc(100vw - 32px));
+  max-height: min(70vh, 460px);
+  overflow-y: auto;
+  padding: 8px 10px 10px;
+  border: 1px solid var(--line, #e4e6ee);
+  border-radius: 8px;
+  background: var(--glass-1, #fff);
+  box-shadow: var(--pop-shadow, 0 4px 16px rgb(7 8 28 / 0.12));
+  color: var(--ink, #07081c);
+  font: 400 11px / 1.4 var(--brand-font-ui, system-ui, sans-serif);
+}
+.ly-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin: 0 0 6px;
+  padding: 0;
+  border: 0;
+}
+.ly-group legend {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 2px;
+  padding: 0;
+  color: var(--ink-3, #5c6080);
+  font-weight: 600;
+}
+.ly-bulk {
+  display: inline-flex;
+  gap: 8px;
+}
+.ly-bulk button,
+.ly-reset {
+  border: 0;
+  background: none;
+  color: var(--ink-2, #1d204e);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.ly-chip {
+  position: relative;
+  display: inline-flex;
+}
+.ly-chip input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  margin: 0;
+  cursor: pointer;
+}
+.ly-chip span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 22px;
+  padding: 0 7px;
+  border: 1px solid var(--line, #e4e6ee);
+  border-radius: 11px;
+  color: var(--ink-3, #5c6080);
+}
+.ly-chip input:checked + span {
+  border-color: var(--ink-3, #5c6080);
+  color: var(--ink, #07081c);
+}
+.ly-chip[data-type="checkbox"] input:checked + span::before {
+  content: "✓";
+}
+.ly-chip[data-type="radio"] input:checked + span::before {
+  content: "●";
+  font-size: 8px;
+}
+.ly-note {
+  flex-basis: 100%;
+  margin: 2px 0 0;
+  color: var(--ink-3, #5c6080);
+}
+.ly-reset {
+  display: block;
+  margin-top: 2px;
+}
+@media (max-width: 760px), (pointer: coarse) {
+  .ly-btn::after {
+    /* a 44 px target around the small icon */
+    content: "";
+    position: absolute;
+    inset: -12px -8px;
+  }
+  .ly-btn[data-changed]::after {
+    position: static;
+    inset: auto;
+  }
+  .ly-chip span,
+  .ly-bulk button,
+  .ly-reset {
+    min-height: 44px;
+    padding-inline: 12px;
+    border-radius: 22px;
+  }
+  .ly-bulk button,
+  .ly-reset {
+    display: inline-flex;
+    align-items: center;
+    padding-inline: 8px;
+    border-radius: 0;
+  }
+}
+
+/* The week readout sits below the popovers and menus, and flips when there is no room below. */
+.hs-read {
+  z-index: 30;
+}
+.hs-read[data-place="above"] {
+  top: auto;
+  bottom: calc(100% + 8px);
+}
+.hs-read[data-place="inside"] {
+  top: 22px;
+}
+.hs-read-raw {
+  color: var(--ink-3, #5c6080);
+}

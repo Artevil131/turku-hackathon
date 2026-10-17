@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { type LiveAlerts, useAlertsSinceStart } from "../alertsSince.ts";
 import type { Connection } from "../live.ts";
 import { compactDate, dayNumber, isoFromDay } from "./hero/geometry.ts";
+import { useLayers } from "./hero/layers.ts";
 import { useWeekly } from "./hero/useWeekly.ts";
 import { WeeklyBand } from "./hero/WeeklyBand.tsx";
 import { Chevron, Pause, Play, StepDay, StepWeek } from "./Icons.tsx";
@@ -104,6 +105,7 @@ export function Timeline({ locale, clock, connection, lastArrivals, command, red
   const shown = seekingTo ?? clock?.asOf ?? null;
   const alerts = useAlertsSinceStart(client, clock?.start, clock?.asOf, liveAlerts);
   const weekly = useWeekly(client, clock?.start, clock?.asOf);
+  const [layers, setLayers] = useLayers();
 
   // A new clock state (or reset) from the server ends "seeking".
   // biome-ignore lint/correctness/useExhaustiveDependencies: the clock object identity is the trigger
@@ -284,6 +286,8 @@ export function Timeline({ locale, clock, connection, lastArrivals, command, red
         asOf={clock.asOf}
         weekly={weekly}
         alerts={alerts}
+        layers={layers}
+        onLayers={compact ? undefined : setLayers}
         compact={compact}
         disabled={!ready}
         label={t(locale, "tlStream")}

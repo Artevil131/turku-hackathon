@@ -1,11 +1,24 @@
 import type { Alert, WeeklyResponse } from "@aei/contract";
 import { WARDS, type WardCode } from "@aei/domain";
 import { type Locale, phenotypeName, t, wardName } from "@aei/i18n";
-import { type KeyboardEvent, memo, type PointerEvent, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+  type KeyboardEvent,
+  memo,
+  type PointerEvent,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   bandPath,
   compactDate,
   dayNumber,
+  isoFromDay,
   linePath,
   PHENOTYPE_ORDER,
   type Ph,
@@ -15,12 +28,15 @@ import {
   pillLabel,
   pillLine,
   pillWidth,
+  runs,
   SURPRISE_CAP,
   surprise,
   type WeekRow,
   weekIndex,
   weekRows,
 } from "./geometry.ts";
+import { LayersControl } from "./LayersControl.tsx";
+import { type Layers, type LineKey, type ViewRow, viewRows, WARD_CODES, windowRows, windowStart } from "./layers.ts";
 import "./WeeklyBand.css";
 
 // The hero band: the weekly stream (resistant finds stacked by phenotype, cultures on its own
@@ -36,9 +52,15 @@ interface Layout {
   lanes: number;
   pitch: number;
   axis: number;
+  /** Bottom of the unit lanes. */
+  lanesEnd: number;
 }
-const FULL: Layout = { gutter: 46, height: 200, legend: 14, top: 20, base: 62, lanes: 68, pitch: 13, axis: 197 };
-const SMALL: Layout = { gutter: 0, height: 44, legend: 0, top: 3, base: 26, lanes: 0, pitch: 0, axis: 43 };
+/** The full band: nine lanes make 200 px; fewer lanes make it shorter. */
+const fullLayout = (n: number): Layout => {
+  const lanesEnd = 68 + n * 13;
+  return { gutter: 46, height: lanesEnd + 15, legend: 14, top: 20, base: 62, lanes: 68, pitch: 13, axis: lanesEnd + 12, lanesEnd };
+};
+const SMALL: Layout = { gutter: 0, height: 44, legend: 0, top: 3, base: 26, lanes: 0, pitch: 0, axis: 43, lanesEnd: 26 };
 
 const PILL_H = 12;
 const READ_W = 276;
@@ -50,6 +72,10 @@ interface Props {
   asOf: string;
   weekly: WeeklyResponse | null;
   alerts: readonly Alert[];
+  /** What to show; the default is everything. */
+  layers: Layers;
+  /** Wide band only: the Layers button. */
+  onLayers?: (next: Layers) => void;
   compact?: boolean;
   disabled?: boolean;
   label: string;
@@ -73,19 +99,29 @@ interface PillPlace {
 const KIND_RANK: Record<PillKind, number> = { sentinel: 3, cluster: 2, trend: 1, data: 0 };
 
 interface Model {
-  rows: WeekRow[];
-  full: WeekRow[];
+  rows: ViewRow[];
+  full: ViewRow[];
   weekDays: number[];
   xOf: (day: number) => number;
   right: number;
-  layers: string[];
+  /** Stacked bands, bottom to top, or one line per visible phenotype when overlaid. */
+  layers: { ph: Ph; d: string }[];
+  stacked: boolean;
   cultures: string;
   cultureDot: Pt | null;
-  partial: { x0: number; x1: number; stacks: { ph: Ph; y: number; h: number }[]; dot: Pt | null } | null;
+  partial: {
+    x0: number;
+    x1: number;
+    stacks: { ph: Ph; y: number; h: number }[];
+    marks: { ph: Ph; y: number }[];
+    dot: Pt | null;
+  } | null;
   ymax: number;
   yTop: number;
   cmax: number;
-  top: Pt[];
+  top: string;
+  /** Weeks standing alone between gaps. */
+  specks: Pt[];
   lanes: { ward: WardCode; mid: number; path: string }[];
   ticks: { x: number; year: boolean; label: string | null }[];
   pills: PillPlace[];
@@ -95,14 +131,15 @@ interface Model {
 function build(
   L: Layout,
   width: number,
-  start: string,
+  d0: number,
   asOf: string,
-  rows: WeekRow[],
+  rows: ViewRow[],
   alerts: readonly Alert[],
+  wards: readonly WardCode[],
+  layers: Layers,
   locale: Locale,
   compact: boolean,
 ): Model {
-  const d0 = dayNumber(start);
   const dEnd = dayNumber(asOf) + 1;
   const span = Math.max(7, dEnd - d0);
   const right = width - 3;
@@ -111,60 +148,95 @@ function build(
   const full = rows.filter((r) => !r.partial);
   const partialRow = rows.find((r) => r.partial);
   const h = L.base - L.top;
+  const vis = PHENOTYPE_ORDER.filter((p) => layers.lines[p]);
+  const stacked = layers.stacked;
 
-  const ymax = Math.max(1, ...full.map((r) => r.total));
+  // Overlaid lines share one scale, so the top is the highest visible line; stacked, the highest total.
+  const ymax = Math.max(1, ...full.map((r) => (stacked ? (r.v.total ?? 0) : Math.max(0, ...vis.map((p) => r.v.ph[p] ?? 0)))));
   const cmax = Math.max(1, ...full.map((r) => r.cultures));
   const yv = (v: number) => L.base - (v / ymax) * h * 0.96;
   const yc = (v: number) => L.base - (v / cmax) * h * 0.96;
-  const xc = (r: WeekRow) => xOf(r.day + 3.5);
+  const xc = (r: ViewRow) => xOf(r.day + 3.5);
 
-  const cum = (r: WeekRow, k: number) => PHENOTYPE_ORDER.slice(0, k).reduce((s, p) => s + r.ph[p], 0);
-  const bound = (k: number): Pt[] => full.map((r) => [xc(r), yv(cum(r, k))] as const);
-  const layers = full.length > 1 ? PHENOTYPE_ORDER.map((_, k) => bandPath(bound(k + 1), bound(k))) : [];
-  const cultures = full.length > 1 ? linePath(full.map((r) => [xc(r), yc(r.cultures)] as const)) : "";
+  const cum = (r: ViewRow, k: number) => vis.slice(0, k).reduce((s, p) => s + (r.v.ph[p] ?? 0), 0);
+  const bound = (k: number): (Pt | null)[] => full.map((r) => (r.v.total === null ? null : ([xc(r), yv(cum(r, k))] as const)));
+  const specks: Pt[] = [];
+  const bands: Model["layers"] = [];
+  let top = "";
+  if (stacked) {
+    vis.forEach((ph, k) => {
+      const lower = runs(bound(k));
+      const d = runs(bound(k + 1))
+        .map((u, i) => (u.length > 1 ? bandPath(u, lower[i] ?? []) : ""))
+        .join("");
+      bands.push({ ph, d });
+    });
+    if (vis.length)
+      for (const run of runs(bound(vis.length))) {
+        if (run.length > 1) top += linePath(run);
+        else if (run[0]) specks.push(run[0]);
+      }
+  } else {
+    for (const ph of vis) {
+      let d = "";
+      for (const run of runs(full.map((r) => (r.v.ph[ph] === null ? null : ([xc(r), yv(r.v.ph[ph] ?? 0)] as const))))) {
+        if (run.length > 1) d += linePath(run);
+        else if (run[0]) specks.push(run[0]);
+      }
+      bands.push({ ph, d });
+    }
+  }
+  const cultures = layers.lines.cult && full.length > 1 ? linePath(full.map((r) => [xc(r), yc(r.cultures)] as const)) : "";
   const last = full[full.length - 1];
-  const cultureDot: Pt | null = full.length === 1 && last ? [xc(last), yc(last.cultures)] : null;
+  const cultureDot: Pt | null = layers.lines.cult && full.length === 1 && last ? [xc(last), yc(last.cultures)] : null;
 
   let partial: Model["partial"] = null;
   if (partialRow) {
     const x0 = xOf(partialRow.day);
     const x1 = right;
     const stacks: { ph: Ph; y: number; h: number }[] = [];
+    const marks: { ph: Ph; y: number }[] = [];
     let acc = 0;
     if (!partialRow.hidden)
-      for (const p of PHENOTYPE_ORDER) {
-        const v = partialRow.ph[p];
-        if (v > 0) stacks.push({ ph: p, y: yv(acc + v), h: Math.max(0.5, yv(acc) - yv(acc + v)) });
-        acc += v;
+      for (const p of vis) {
+        const v = partialRow.v.ph[p];
+        if (v === null) continue;
+        if (!stacked) marks.push({ ph: p, y: yv(v) });
+        else {
+          if (v > 0) stacks.push({ ph: p, y: yv(acc + v), h: Math.max(0.5, yv(acc) - yv(acc + v)) });
+          acc += v;
+        }
       }
     partial = {
       x0,
       x1: Math.max(x1, x0 + 4),
       stacks,
-      dot: partialRow.hidden ? null : [(x0 + x1) / 2, yc(partialRow.cultures)],
+      marks,
+      dot: partialRow.hidden || !layers.lines.cult ? null : [(x0 + x1) / 2, yc(partialRow.cultures)],
     };
   }
 
-  const top: Pt[] = full.map((r) => [xc(r), yv(r.total)] as const);
-
-  // Unit lanes: a ribbon whose thickness follows the unit's weekly count, one scale for all lanes.
-  const wards = (WARDS.map((w) => w.code) as WardCode[]).filter((c) => full.some((r) => r.units[c] !== undefined));
-  const umax = Math.max(1, ...full.flatMap((r) => wards.map((c) => r.units[c] ?? 0)));
+  // Unit lanes: a ribbon whose thickness follows the unit's weekly value, one scale for all lanes.
+  const umax = Math.max(1, ...full.flatMap((r) => wards.map((c) => r.v.units[c] ?? 0)));
   const half = (v: number) => 0.3 + 4.3 * Math.sqrt(v / umax);
   const laneMid = (i: number) => L.lanes + i * L.pitch + L.pitch / 2;
   const lanes = compact
     ? []
     : wards.map((ward, i) => {
         const mid = laneMid(i);
-        const pts = full.map((r) => [xc(r), r.units[ward] ?? 0] as const);
-        const up = pts.map(([x, v]) => [x, mid - half(v)] as const);
-        const lo = pts.map(([x, v]) => [x, mid + half(v)] as const);
-        return { ward, mid, path: full.length > 1 ? bandPath(up, lo) : "" };
+        let path = "";
+        for (const run of runs(full.map((r) => (r.v.units[ward] == null ? null : ([xc(r), r.v.units[ward] as number] as const))))) {
+          if (run.length < 2) continue;
+          const up = run.map(([x, v]) => [x, mid - half(v)] as const);
+          const lo = run.map(([x, v]) => [x, mid + half(v)] as const);
+          path += bandPath(up, lo);
+        }
+        return { ward, mid, path };
       });
 
   // Axis ticks: Jan 1 (labelled), the other quarters (minor).
   const ticks: Model["ticks"] = [];
-  const s0 = new Date(`${start}T00:00:00Z`);
+  const s0 = new Date(d0 * 86_400_000);
   let y = s0.getUTCFullYear();
   let m = s0.getUTCMonth() + 1;
   for (;;) {
@@ -182,7 +254,8 @@ function build(
     ticks.unshift({ x: L.gutter, year: false, label: `${s0.getUTCMonth() + 1}.${s0.getUTCFullYear()}` });
 
   // Alerts: on the unit's lane (full) or as small markers on the axis (compact); hospital-wide ones on the stream.
-  const shown = alerts.filter((a) => a.date >= start && a.date <= asOf);
+  const from = isoFromDay(d0);
+  const shown = alerts.filter((a) => a.date >= from && a.date <= asOf);
   const pills: PillPlace[] = [];
   const dots: Model["dots"] = [];
   const order = [...shown].sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
@@ -241,7 +314,8 @@ function build(
     weekDays: rows.map((r) => r.day),
     xOf,
     right,
-    layers,
+    layers: bands,
+    stacked,
     cultures,
     cultureDot,
     partial,
@@ -249,6 +323,7 @@ function build(
     yTop: yv(ymax),
     cmax,
     top,
+    specks,
     lanes,
     ticks,
     pills,
@@ -293,13 +368,29 @@ interface StaticProps {
   compact: boolean;
   asOf: string;
   disabled: boolean;
+  layers: Layers;
+  /** Pixels at the right of the legend row kept for the Layers button. */
+  reserve: number;
+  onToggle: (k: LineKey) => void;
   /** A pill was opened: the pointer readout goes away. */
   onOpen: () => void;
 }
 
 /** Everything that does not change with the pointer; re-rendered only when the data, width or date change. */
-const StaticLayer = memo(function StaticLayer({ m, L, id, locale, compact, asOf, disabled, onOpen }: StaticProps) {
-  const lanesEnd = compact ? L.base : L.lanes + m.lanes.length * L.pitch;
+const StaticLayer = memo(function StaticLayer({
+  m,
+  L,
+  id,
+  locale,
+  compact,
+  asOf,
+  disabled,
+  layers,
+  reserve,
+  onToggle,
+  onOpen,
+}: StaticProps) {
+  const lanesEnd = L.lanesEnd;
   const todayLabel = `${t(locale, "tlToday")} · ${compactDate(asOf)}`;
   const todayW = Math.ceil(todayLabel.length * 6.6 + 10);
   const open = (a: Alert) => {
@@ -309,15 +400,23 @@ const StaticLayer = memo(function StaticLayer({ m, L, id, locale, compact, asOf,
   return (
     <g>
       <line className="hs-base" x1={L.gutter} x2={m.right} y1={L.base} y2={L.base} />
-      {m.layers.map((d, k) => (
-        <path key={PHENOTYPE_ORDER[k]} d={d} className="hs-layer" style={{ fill: `url(#${id}-${PHENOTYPE_ORDER[k]})` }} />
+      {m.stacked
+        ? m.layers.map((l) => <path key={l.ph} d={l.d} className="hs-layer" style={{ fill: `url(#${id}-${l.ph})` }} />)
+        : m.layers.map((l) => <path key={l.ph} d={l.d} className={`hs-line hs-ln-${l.ph}`} />)}
+      {m.top ? <path className="hs-top" d={m.top} /> : null}
+      {m.specks.map(([x, y]) => (
+        <circle key={`${x}-${y}`} className="hs-speck" cx={x} cy={y} r={1.6} />
       ))}
-      {m.layers.length ? <path className="hs-top" d={linePath(m.top)} /> : null}
       {m.cultures ? (
         <>
           <path className="hs-cult-halo" d={m.cultures} />
           <path className="hs-cult" d={m.cultures} />
         </>
+      ) : null}
+      {!compact && !m.layers.length && !layers.lines.cult ? (
+        <text className="hs-legend" x={(L.gutter + m.right) / 2} y={L.base - 18} textAnchor="middle">
+          {t(locale, "tlLyEmpty")}
+        </text>
       ) : null}
       {m.cultureDot ? <circle className="hs-cult-dot" cx={m.cultureDot[0]} cy={m.cultureDot[1]} r={2} /> : null}
 
@@ -333,6 +432,9 @@ const StaticLayer = memo(function StaticLayer({ m, L, id, locale, compact, asOf,
               style={{ fill: `url(#${id}-${s.ph})` }}
               className="hs-partial-bar"
             />
+          ))}
+          {m.partial.marks.map((k) => (
+            <line key={k.ph} className={`hs-line hs-ln-${k.ph}`} x1={m.partial?.x0} x2={m.partial?.x1} y1={k.y} y2={k.y} />
           ))}
           <rect
             className="hs-partial"
@@ -365,12 +467,12 @@ const StaticLayer = memo(function StaticLayer({ m, L, id, locale, compact, asOf,
           <line className="hs-grid" x1={L.gutter - 3} x2={m.right} y1={m.yTop} y2={m.yTop} />
           <line className="hs-yaxis" x1={L.gutter - 3} x2={L.gutter} y1={L.base} y2={L.base} />
           <text className="hs-ylab" x={L.gutter - 6} y={m.yTop + 4} textAnchor="end">
-            {m.ymax}
+            {ratioLabel(layers, m.ymax)}
           </text>
           <text className="hs-ylab" x={L.gutter - 6} y={L.base + 4} textAnchor="end">
             0
           </text>
-          <Legend id={id} L={L} locale={locale} right={m.right} />
+          <Legend id={id} L={L} locale={locale} right={m.right - reserve} layers={layers} onToggle={onToggle} />
         </>
       ) : null}
 
@@ -460,61 +562,133 @@ const StaticLayer = memo(function StaticLayer({ m, L, id, locale, compact, asOf,
   );
 });
 
-function Legend({ id, L, locale, right }: { id: string; L: Layout; locale: Locale; right: number }) {
+/** The top of the y axis: a count, or a ratio to one decimal below 10. */
+function fmtVal(v: number | null, layers: Layers): string {
+  if (v === null) return "–";
+  return layers.metric === "count" ? String(v) : v < 10 ? String(Math.round(v * 10) / 10) : String(Math.round(v));
+}
+
+function ratioLabel(layers: Layers, v: number): string {
+  if (layers.metric === "count") return String(v);
+  return v < 10 ? String(Math.round(v * 10) / 10) : String(Math.round(v));
+}
+
+/**
+ * The legend doubles as the line toggles: a press on an entry hides or shows that line, and a
+ * hidden entry is struck through as well as dimmed.
+ */
+function Legend({
+  id,
+  L,
+  locale,
+  right,
+  layers,
+  onToggle,
+}: {
+  id: string;
+  L: Layout;
+  locale: Locale;
+  right: number;
+  layers: Layers;
+  onToggle: (k: LineKey) => void;
+}) {
+  const items = PHENOTYPE_ORDER.map((p) => ({ k: p as LineKey, name: phenotypeName(p), w: 17 + phenotypeName(p).length * 6.6 }));
   let x = L.gutter;
-  for (const p of PHENOTYPE_ORDER) x += 18 + phenotypeName(p).length * 6.6 + 8;
+  const placed = items.map((it) => {
+    const at = x;
+    x += it.w + 8;
+    return { ...it, at };
+  });
   const full = t(locale, "tlCulturesScale");
   const short = t(locale, "tlCulturesShort");
   const room = right - x - 18;
   const text = full.length * 6.2 <= room ? full : short.length * 6.2 <= room ? short : null;
+  const cultW = 17 + (text ? text.length * 6.2 : 0);
+  const tag = layers.metric === "ratio" ? t(locale, "tlYRatio") : null;
+  const tagW = tag ? tag.length * 6.2 + 8 : 0;
   const ratio = t(locale, "tlPillLegend");
-  const used = x + 17 + (text ? text.length * 6.2 : 0);
-  const ratioNote = right - used - 24 >= ratio.length * 6.2 ? ratio : null;
-  x = L.gutter;
+  const ratioNote = right - (x + cultW) - tagW - 24 >= ratio.length * 6.2 ? ratio : null;
+  const toggle = (k: LineKey, name: string, at: number, w: number, swatch: ReactNode, label: string | null) => {
+    const on = layers.lines[k];
+    return (
+      <g
+        key={k}
+        className="hs-leg"
+        data-off={on ? undefined : true}
+        role="checkbox"
+        aria-checked={on}
+        tabIndex={0}
+        aria-label={t(locale, "tlLyToggle", { name })}
+        onClick={() => onToggle(k)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            e.stopPropagation();
+            onToggle(k);
+          }
+        }}
+      >
+        <title>{t(locale, "tlLyToggle", { name })}</title>
+        <rect className="hs-leg-hit" x={at - 3} y={-3} width={w + 6} height={18} />
+        {swatch}
+        {label ? (
+          <text className="hs-legend" x={at + 17} y={11}>
+            {label}
+          </text>
+        ) : null}
+        {on ? null : <path className="hs-leg-strike" d={`M${at} 7.5h${w}`} />}
+      </g>
+    );
+  };
   return (
     <g>
-      {PHENOTYPE_ORDER.map((p) => {
-        const name = phenotypeName(p);
-        const at = x;
-        x += 18 + name.length * 6.6 + 8;
-        return (
-          <g key={p}>
-            <rect className="hs-swatch" x={at} y={3} width={13} height={8} style={{ fill: `url(#${id}-${p})` }} />
-            <text className="hs-legend" x={at + 17} y={11}>
-              {name}
-            </text>
-          </g>
-        );
-      })}
-      <path className="hs-cult" d={`M${x} 7.5h13`} />
-      {text ? (
-        <text className="hs-legend" x={x + 17} y={11}>
-          {text}
+      {placed.map((it) =>
+        toggle(
+          it.k,
+          it.name,
+          it.at,
+          it.w,
+          layers.stacked ? (
+            <rect className="hs-swatch" x={it.at} y={3} width={13} height={8} style={{ fill: `url(#${id}-${it.k})` }} />
+          ) : (
+            <path className={`hs-line hs-ln-${it.k}`} d={`M${it.at} 7.5h13`} />
+          ),
+          it.name,
+        ),
+      )}
+      {toggle("cult", t(locale, "tlLyCultures"), x, cultW, <path className="hs-cult" d={`M${x} 7.5h13`} />, text)}
+      {ratioNote ? (
+        <text className="hs-legend" x={right - 8 - tagW} y={11} textAnchor="end">
+          {ratioNote}
         </text>
       ) : null}
-      {ratioNote ? (
-        <text className="hs-legend" x={right - 8} y={11} textAnchor="end">
-          {ratioNote}
+      {tag ? (
+        <text className="hs-legend hs-legend-tag" x={right - 8} y={11} textAnchor="end">
+          {tag}
         </text>
       ) : null}
     </g>
   );
 }
 
-function summaryText(locale: Locale, rows: WeekRow[], asOf: string): string {
+function summaryText(locale: Locale, rows: WeekRow[], asOf: string, layers: Layers): string {
   const usable = rows.filter((r) => !r.hidden).slice(-4);
   if (!usable.length) return t(locale, "tlSummaryNone");
-  const list = PHENOTYPE_ORDER.map((p) => `${phenotypeName(p)} ${usable.map((r) => r.ph[p]).join(", ")}`).join("; ");
+  const shownPh = PHENOTYPE_ORDER.filter((p) => layers.lines[p]);
+  const list = (shownPh.length ? shownPh : PHENOTYPE_ORDER)
+    .map((p) => `${phenotypeName(p)} ${usable.map((r) => r.ph[p]).join(", ")}`)
+    .join("; ");
   return t(locale, "tlSummary", { date: compactDate(asOf), list, cultures: usable.map((r) => r.cultures).join(", ") });
 }
 
 export function WeeklyBand(p: Props) {
-  const { locale, start, asOf, weekly, alerts, compact = false, disabled = false } = p;
-  const L = compact ? SMALL : FULL;
+  const { locale, start, asOf, weekly, alerts, layers, onLayers, compact = false, disabled = false } = p;
   const id = `hs${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   const wrap = useRef<HTMLDivElement>(null);
+  const readRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(600);
   const [hover, setHover] = useState<{ idx: number; kbd: boolean } | null>(null);
+  const [place, setPlace] = useState<"below" | "above" | "inside">("below");
 
   useEffect(() => {
     const el = wrap.current;
@@ -525,20 +699,36 @@ export function WeeklyBand(p: Props) {
     return () => ro.disconnect();
   }, []);
 
-  const rows = useMemo(() => weekRows(weekly, asOf), [weekly, asOf]);
-  const m = useMemo(
-    () => build(L, width, start, asOf, rows, alerts, locale, compact),
-    [L, width, start, asOf, rows, alerts, locale, compact],
+  const rawRows = useMemo(() => weekRows(weekly, asOf), [weekly, asOf]);
+  const win = useMemo(() => windowRows(rawRows, layers.window), [rawRows, layers.window]);
+  const rows = useMemo(() => viewRows(win, layers), [win, layers]);
+  const wards = useMemo(
+    () => WARD_CODES.filter((c) => layers.units[c] !== false && weekly?.units[c] !== undefined),
+    [weekly, layers.units],
   );
-  const summary = useMemo(() => summaryText(locale, rows, asOf), [locale, rows, asOf]);
+  const L = useMemo(() => (compact ? SMALL : fullLayout(weekly ? wards.length : WARD_CODES.length)), [compact, weekly, wards.length]);
+  const d0 = windowStart(start, win[0], layers.window);
+  const shownAlerts = useMemo(() => alerts.filter((a) => layers.kinds[pillKind(a)]), [alerts, layers.kinds]);
+  const m = useMemo(
+    () => build(L, width, d0, asOf, rows, shownAlerts, wards, layers, locale, compact),
+    [L, width, d0, asOf, rows, shownAlerts, wards, layers, locale, compact],
+  );
+  const summary = useMemo(() => summaryText(locale, win, asOf, layers), [locale, win, asOf, layers]);
+  const control = !compact && onLayers !== undefined;
+  const withLabel = width >= 520;
+  const reserve = control ? (withLabel ? 30 + t(locale, "tlLayers").length * 6.2 : 30) : 0;
+  const onToggle = useCallback(
+    (k: LineKey) => onLayers?.({ ...layers, lines: { ...layers.lines, [k]: !layers.lines[k] } }),
+    [layers, onLayers],
+  );
 
   const idxAt = (clientX: number) => {
     const r = wrap.current?.getBoundingClientRect();
     if (!r || m.weekDays.length === 0) return -1;
     const x = clientX - r.left;
     if (x < L.gutter || x > m.right) return -1;
-    const span = Math.max(7, dayNumber(asOf) + 1 - dayNumber(start));
-    const day = dayNumber(start) + ((x - L.gutter) / Math.max(40, m.right - L.gutter)) * span;
+    const span = Math.max(7, dayNumber(asOf) + 1 - d0);
+    const day = d0 + ((x - L.gutter) / Math.max(40, m.right - L.gutter)) * span;
     return weekIndex(m.weekDays, Math.floor(day));
   };
 
@@ -563,7 +753,7 @@ export function WeeklyBand(p: Props) {
       p.onActivate?.();
       return;
     }
-    if (e.pointerType === "mouse" || disabled || (e.target as Element).closest(".hs-pill")) return;
+    if (e.pointerType === "mouse" || disabled || (e.target as Element).closest(".hs-pill, .hs-leg")) return;
     const idx = idxAt(e.clientX);
     setHover(idx < 0 ? null : { idx, kbd: false });
   };
@@ -592,15 +782,50 @@ export function WeeklyBand(p: Props) {
   };
 
   const row = hover ? m.rows[hover.idx] : undefined;
-  const lanesEnd = compact ? L.base : L.lanes + m.lanes.length * L.pitch;
+  const lanesEnd = L.lanesEnd;
   const cx = row ? m.xOf(row.day + 3.5) : 0;
   const hx0 = row ? m.xOf(row.day) : 0;
   const hx1 = row ? Math.min(m.right, m.xOf(row.day + 7)) : 0;
-  const rowAlerts = row ? alerts.filter((a) => a.date >= row.date && a.date <= row.last) : [];
+  const rowAlerts = row ? shownAlerts.filter((a) => a.date >= row.date && a.date <= row.last) : [];
   const readLeft = Math.min(Math.max(cx - READ_W / 2, 0), Math.max(0, width - READ_W));
+  const readPh = PHENOTYPE_ORDER.filter((ph) => layers.lines[ph]);
   const sliderText = row
-    ? `${t(locale, "tlWeekRange", { from: compactDate(row.date), to: compactDate(row.last) })}: ${PHENOTYPE_ORDER.map((ph) => `${phenotypeName(ph)} ${row.ph[ph]}`).join(", ")}; ${t(locale, "tlCultures")} ${row.cultures}`
+    ? `${t(locale, "tlWeekRange", { from: compactDate(row.date), to: compactDate(row.last) })}: ${readPh.map((ph) => `${phenotypeName(ph)} ${fmtVal(row.v.ph[ph], layers)}`).join(", ")}${layers.metric === "ratio" ? ` ${t(locale, "tlYRatio")}` : ""}; ${t(locale, "tlCultures")} ${row.cultures}`
     : "";
+
+  // The readout closes when the pointer leaves, on Esc, on scroll, on a press elsewhere and when the
+  // choices change; it flips above the band, or inside it, when there is no room below.
+  const hovering = hover !== null;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a new choice or window invalidates the week index
+  useEffect(() => setHover(null), [layers, asOf]);
+  useEffect(() => {
+    if (!hovering) return;
+    const close = () => setHover(null);
+    const onKey = (e: globalThis.KeyboardEvent) => e.key === "Escape" && close();
+    const onPress = (e: globalThis.PointerEvent) => {
+      if (wrap.current && !wrap.current.contains(e.target as Node)) close();
+    };
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("blur", close);
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onPress);
+    return () => {
+      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("blur", close);
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("pointerdown", onPress);
+    };
+  }, [hovering]);
+  const hoverIdx = hover?.idx;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: measured again for each week the readout moves to
+  useLayoutEffect(() => {
+    const r = readRef.current;
+    const w = wrap.current;
+    if (!r || !w) return;
+    const box = w.getBoundingClientRect();
+    const need = r.offsetHeight + 8;
+    setPlace(box.bottom + need <= window.innerHeight - 8 ? "below" : box.top - need >= 8 ? "above" : "inside");
+  }, [hoverIdx]);
 
   return (
     <div
@@ -649,7 +874,19 @@ export function WeeklyBand(p: Props) {
             onFocus={() => setHover((h) => h ?? { idx: lastIdx, kbd: true })}
           />
         ) : null}
-        <StaticLayer m={m} L={L} id={id} locale={locale} compact={compact} asOf={asOf} disabled={disabled} onOpen={clearHover} />
+        <StaticLayer
+          m={m}
+          L={L}
+          id={id}
+          locale={locale}
+          compact={compact}
+          asOf={asOf}
+          disabled={disabled}
+          layers={layers}
+          reserve={reserve}
+          onToggle={onToggle}
+          onOpen={clearHover}
+        />
         {row && !row.hidden ? (
           <g className="hs-cross">
             <rect className="hs-cross-week" x={hx0} y={L.top - 1} width={Math.max(3, hx1 - hx0)} height={lanesEnd - L.top + 1} />
@@ -660,9 +897,12 @@ export function WeeklyBand(p: Props) {
       <span id={`${id}-sum`} className="visually-hidden">
         {summary}
       </span>
+      {control && onLayers ? <LayersControl locale={locale} layers={layers} onChange={onLayers} withLabel={withLabel} /> : null}
       {row && !compact ? (
         <div
           className="hs-read"
+          ref={readRef}
+          data-place={place}
           style={{ left: readLeft, width: READ_W }}
           role={hover?.kbd ? "status" : undefined}
           aria-hidden={hover?.kbd ? undefined : true}
@@ -674,22 +914,25 @@ export function WeeklyBand(p: Props) {
           {row.hidden ? null : (
             <>
               <div className="hs-read-grid hs-read-ph">
-                {PHENOTYPE_ORDER.map((ph) => (
-                  <span key={ph} className="hs-read-item">
+                {readPh.map((ph) => (
+                  <span key={ph} className="hs-read-item" title={layers.metric === "ratio" ? `${row.ph[ph]} / ${row.cultures}` : undefined}>
                     <svg width="12" height="8" aria-hidden="true">
                       <rect className={`hs-swatch ${PH_CLASS[ph]}`} width="12" height="8" style={{ fill: `url(#${id}-${ph})` }} />
                     </svg>
-                    {phenotypeName(ph)} <b className="num">{row.ph[ph]}</b>
+                    {phenotypeName(ph)} <b className="num">{fmtVal(row.v.ph[ph], layers)}</b>
+                    {layers.metric === "ratio" ? <span className="hs-read-raw num">({row.ph[ph]})</span> : null}
                   </span>
                 ))}
-                <span className="hs-read-item hs-read-cult">
-                  {t(locale, "tlCultures")} <b className="num">{row.cultures}</b>
-                </span>
+                {layers.lines.cult ? (
+                  <span className="hs-read-item hs-read-cult">
+                    {t(locale, "tlCultures")} <b className="num">{row.cultures}</b>
+                  </span>
+                ) : null}
               </div>
               <div className="hs-read-grid hs-read-units">
-                {WARDS.filter((w) => row.units[w.code] !== undefined).map((w) => (
+                {WARDS.filter((w) => wards.includes(w.code) && row.v.units[w.code] !== undefined).map((w) => (
                   <span key={w.code} className="hs-read-item" title={wardName(locale, w.code)}>
-                    {w.code} <b className="num">{row.units[w.code]}</b>
+                    {w.code} <b className="num">{fmtVal(row.v.units[w.code] ?? null, layers)}</b>
                   </span>
                 ))}
               </div>
