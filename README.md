@@ -4,7 +4,25 @@ Our challenge is the Antibiotic Efficacy Indicator (AEI) by Tyks
 Laboratories: a continuously updated, ward-level view of antibiotic
 resistance, for doctors choosing empirical treatment and for researchers
 watching for spread. The problem, the data and the open questions are in
-CONTEXT.md; who we build for and what they need is in AUDIENCE.md. This
+CONTEXT.md; who we build for and what they need is in AUDIENCE.md.
+
+## What we built: alerts we measured
+
+We didn't stop at building alerts. We measured them. We planted 200
+synthetic outbreaks for each scenario into the data. Our detector catches
+a cluster of 4 patients carrying a rare resistant clone 89 % of the time
+(95 % interval 84 to 93), with a median delay of 6 days, at about 4.5
+signal episodes a year. We tested 8 alternative methods from the
+surveillance literature: five detectors (CUSUM, improved Farrington,
+Bayesian online change-point detection, Gamma-Poisson with FDR, and an
+ensemble) and three coverage estimators. None beat ours. These rates
+apply to outbreaks shaped like our injections, which are identical copies
+of one isolate. The full results are in
+[benchmarks/overnight-2026-10-17](benchmarks/overnight-2026-10-17/README.md).
+
+## The repository
+
+This
 repository lays the foundation so that whatever we build, a website and an
 iPhone app among it, sits on one structure.
 
