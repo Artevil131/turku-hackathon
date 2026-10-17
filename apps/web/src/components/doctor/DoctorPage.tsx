@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { previousUnits, useFlows } from "../../relations.ts";
 import { hashPage, hashParams, writeHashParams } from "../../url.ts";
 import { AsOf } from "../AsOf.tsx";
+import { DataQuality } from "../DataQuality.tsx";
 import { CoverageList, itemsOf, type ListStatus } from "./CoverageList.tsx";
 import { Details } from "./Details.tsx";
 import "./DoctorPage.css";
@@ -119,6 +120,7 @@ export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetry
         <RecordStrip locale={locale} filters={filters} onChange={onChange} />
         <div className="doctor-body">
           <CoverageList
+            source={<DataQuality client={client} locale={locale} />}
             locale={locale}
             filters={filters}
             asOf={asOf}
@@ -144,7 +146,7 @@ export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetry
               onOpenSignals={onOpenSignals}
             />
             {wide ? (
-              <section className="dt-panel dp-panel" aria-labelledby="dt-title" aria-live="polite">
+              <section id="dr-details" className="dt-panel dp-panel" aria-labelledby="dt-title" aria-live="polite">
                 <h3 id="dt-title" className="dt-title">
                   {t(locale, "drDetails")}
                   {detailsDate ? (
@@ -166,6 +168,7 @@ export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetry
       </div>
       {!wide && current && item ? (
         <div
+          id="dr-details"
           className="dp-sheet"
           role="dialog"
           aria-label={t(locale, "drDetails")}

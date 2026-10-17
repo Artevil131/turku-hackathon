@@ -1,12 +1,11 @@
 import type { CoverageResponse } from "@aei/contract";
-import { shortOrganism } from "@aei/domain";
 import { antibioticName, type Locale, specimenName, t, wardName } from "@aei/i18n";
-import { cloneElement, isValidElement, type KeyboardEvent, type ReactNode, useMemo, useRef } from "react";
+import { cloneElement, isValidElement, type ReactNode, useMemo, useRef } from "react";
 import "./CoverageList.css";
 import { BAR, type DoctorFilters, dmy, num, pct } from "./filters.ts";
 import { InfoIcon, Popover } from "./Popover.tsx";
 import { PrintSheet } from "./PrintSheet.tsx";
-import { flagsOf, type Item, reasonOf, STANDING } from "./reason.ts";
+import { type Item, STANDING } from "./reason.ts";
 import type { UnitSignal } from "./signals.ts";
 
 export type ListStatus = "loading" | "error" | "ready";
@@ -21,10 +20,10 @@ interface Props {
   selected: string | null;
   onSelect: (id: string | null) => void;
   onRetry: () => void;
+  source?: ReactNode;
 }
 
 const SKELETON = [0, 1, 2, 3, 4, 5];
-const TICKS = [50, 60, 70, 80, 90, 100];
 
 /** Position on the 50-100 % axis, as a percentage of the bar area; values below 50 sit at the left edge. */
 const at = (share: number): number => Math.max(0, Math.min(100, (share - 0.5) * 200));
@@ -56,9 +55,8 @@ export function itemsOf(data: CoverageResponse, locale: Locale): { singles: Item
 }
 
 /** The forest plot: one row per antibiotic, its 95 % interval against the bar line, one glance per row. */
-export function CoverageList({ locale, filters, asOf, status, data, signals, selected, onSelect, onRetry }: Props) {
+export function CoverageList({ locale, filters, asOf, status, data, signals, selected, onSelect, onRetry, source }: Props) {
   const headRef = useRef<HTMLElement>(null);
-  const listRef = useRef<HTMLUListElement>(null);
   const bar = BAR[filters.sev];
   const unit = wardName(locale, filters.unit);
   const site = specimenName(locale, filters.site);
@@ -68,50 +66,16 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
   const { singles, pairs } = useMemo(() => (data ? itemsOf(data, locale) : { singles: [], pairs: [] }), [data, locale]);
   const firstBelow = singles.findIndex((s) => s.standing !== "clears");
   const all = [...singles, ...pairs];
-  const focusId = selected && all.some((i) => i.id === selected) ? selected : (all[0]?.id ?? null);
   const date = data?.asOf ?? asOf;
 
-  const ageChosen = filters.age !== "any";
-  const notApplied =
-    ageChosen && filters.onset ? "drNotAppliedBoth" : ageChosen ? "drNotAppliedAge" : filters.onset ? "drNotAppliedDay3" : null;
-
-  const onKeyDown = (e: KeyboardEvent<HTMLUListElement>) => {
-    if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(e.key)) return;
-    const opts = Array.from(listRef.current?.querySelectorAll<HTMLElement>('[role="option"]:not([aria-disabled="true"])') ?? []);
-    const i = opts.indexOf(document.activeElement as HTMLElement);
-    if (i < 0) return;
-    e.preventDefault();
-    const last = opts.length - 1;
-    const next = e.key === "ArrowDown" ? Math.min(last, i + 1) : e.key === "ArrowUp" ? Math.max(0, i - 1) : e.key === "Home" ? 0 : last;
-    opts[next]?.focus();
-  };
-
-  const whyOf = (item: Item): ReactNode => {
-    if (!data) return null;
-    if (item.row) {
-      const flags = flagsOf(item.row);
-      return (
-        <>
-          <p>{reasonOf(locale, item.row, data, filters)}</p>
-          {flags.notCovering.map((o) => (
-            <p key={`n${o.organism}`}>
-              <span aria-hidden="true">⊘</span> {t(locale, "drNotFor", { organism: shortOrganism(o.organism), share: pct(o.share) })}
-            </p>
-          ))}
-          {flags.untested.map((o) => (
-            <p key={`u${o.organism}`}>
-              <span aria-hidden="true">?</span> {t(locale, "drUntestedOn", { organism: shortOrganism(o.organism), share: pct(o.share) })}
-            </p>
-          ))}
-        </>
-      );
-    }
-    const gain = Math.round((item.pair?.gain ?? 0) * 100);
-    return (
-      <p>
-        {t(locale, gain === 1 ? "drGainOne" : "drGain", { gain })} · {t(locale, "drAccessCount", { n: item.pair?.access ?? 0 })}
-      </p>
-    );
+  const bestPair = filters.sev === "severe" && !singles.some((s) => s.standing === "clears") ? pairs[0] : null;
+  const openPair = () => {
+    if (!bestPair) return;
+    onSelect(bestPair.id);
+    requestAnimationFrame(() => {
+      const row = document.querySelector<HTMLElement>(`[data-row="${CSS.escape(bestPair.id)}"]`);
+      row?.scrollIntoView({ block: "nearest" });
+    });
   };
 
   const renderItem = (item: Item) => {
@@ -120,22 +84,16 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
     const isSel = selected === item.id;
     const range = item.interval ? `${pct(item.interval[0])}–${pct(item.interval[1])}` : "";
     return (
-      <li key={item.id} className="cl-li" role="presentation">
-        <div
-          role="option"
-          tabIndex={focusId === item.id ? 0 : -1}
-          aria-selected={isSel}
+      <li key={item.id} className="cl-li">
+        <button
+          type="button"
+          aria-expanded={isSel}
+          aria-controls={isSel ? "dr-details" : undefined}
           data-row={item.id}
           className="cl-row"
           data-standing={item.standing}
           data-selected={isSel ? "" : undefined}
           onClick={() => onSelect(isSel ? null : item.id)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              onSelect(isSel ? null : item.id);
-            }
-          }}
         >
           <span className="cl-name">
             <b title={item.name}>{item.name}</b>
@@ -156,10 +114,19 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
             ) : null}
             {assessable && item.share !== null ? <i className="cl-point" style={{ left: `${at(item.share)}%` }} /> : null}
           </span>
-          <span className="cl-num num" title={range ? `95 %: ${range}` : undefined}>
-            {assessable && item.share !== null ? <b>{pct(item.share)} %</b> : null}
-            {assessable ? <span className="cl-dot"> · </span> : null}
-            <span className="cl-n">n {num(locale, item.n)}</span>
+          <span className="cl-num num">
+            <span>
+              {t(locale, item.row?.basis === "spectrum" ? "drTargetMicrobes" : "drAllGrowing")}{" "}
+              <b>{assessable && item.share !== null ? `${pct(item.share)} %` : "–"}</b>
+              {item.standing === "borderline" && range ? ` (${range} %)` : ""}
+              <span className="cl-n"> · n {num(locale, item.n)}</span>
+            </span>
+            {item.row?.basis === "spectrum" ? (
+              <span className="cl-secondary">
+                {t(locale, "drAllGrowing")} {item.row.allOrganisms.share === null ? "–" : `${pct(item.row.allOrganisms.share)} %`}
+                <span className="cl-n"> · n {num(locale, item.row.coverage.counts.known)}</span>
+              </span>
+            ) : null}
           </span>
           <span className="cl-res" data-standing={item.standing} title={t(locale, st.long)}>
             <span className="cl-glyph" aria-hidden="true">
@@ -167,10 +134,11 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
             </span>
             {t(locale, st.short)}
           </span>
-        </div>
-        <Popover className="info-btn cl-info" label={`${t(locale, "drInfo")}: ${item.name}`} content={whyOf(item)}>
-          <InfoIcon />
-        </Popover>
+          <span className="cl-details">
+            {t(locale, "drDetails")} <span aria-hidden="true">{isSel ? "−" : "+"}</span>
+          </span>
+          {item.standing === "borderline" ? <span className="cl-why">{t(locale, "drBorderlineWhy", { bar })}</span> : null}
+        </button>
       </li>
     );
   };
@@ -206,7 +174,6 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
           content={
             <>
               <p>{t(locale, "drForestInfo", { period: t(locale, filters.period === 365 ? "drPeriodYear" : "drPeriodMonth") })}</p>
-              {notApplied ? <p>{t(locale, notApplied)}</p> : null}
               {ready && filters.sex !== "any" && !cov.sexApplied ? <p>{t(locale, "drSexDropped")}</p> : null}
               <p>{t(locale, "drFoot", { mild: BAR.mild, severe: BAR.severe })}</p>
             </>
@@ -215,6 +182,30 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
           <InfoIcon />
         </Popover>
       </header>
+
+      <div className="cl-disclosure">
+        <p>{t(locale, "drDemo")}</p>
+        <p>{t(locale, "drDecisionSupport")}</p>
+        {source}
+      </div>
+      {bestPair && status === "ready" ? (
+        <div className="cl-pair-summary">
+          <p>{t(locale, "drNoSingle")}</p>
+          <button type="button" onClick={openPair}>
+            {t(locale, "drBestPair", {
+              name: bestPair.name,
+              share: bestPair.share === null ? "–" : pct(bestPair.share),
+              n: num(locale, bestPair.n),
+            })}
+          </button>
+          {bestPair.standing !== "clears" ? (
+            <p>
+              {t(locale, STANDING[bestPair.standing].long)}
+              {bestPair.interval ? ` · ${t(locale, "drInterval")}: ${pct(bestPair.interval[0])}–${pct(bestPair.interval[1])} %` : ""}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
 
       {status === "error" && !data ? (
         <div className="cl-state" role="alert">
@@ -249,23 +240,14 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
           <div className="cl-cols" aria-hidden="true">
             <span>{t(locale, "drAntibioticCol")}</span>
             <span className="cl-axis-head">
-              {TICKS.map((v) =>
-                v === bar ? (
-                  <b key={v} className="cl-tau-label" style={{ left: `${at(v / 100)}%` }}>
-                    {t(locale, "drBarName", { bar })}
-                  </b>
-                ) : (
-                  <span key={v} style={{ left: `${at(v / 100)}%` }}>
-                    {v}
-                  </span>
-                ),
-              )}
+              <b className="cl-tau-label" style={{ left: `${at(bar / 100)}%` }}>
+                {t(locale, "drBarName", { bar })}
+              </b>
             </span>
             <span className="cl-r">{t(locale, "drCovers")}</span>
             <span>{t(locale, "drStandingCol")}</span>
           </div>
-          {/* biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: a listbox of rows with arrow-key movement */}
-          <ul className="cl-rows" role="listbox" aria-label={t(locale, "drCoverage")} ref={listRef} onKeyDown={onKeyDown}>
+          <ul className="cl-rows" aria-label={t(locale, "drCoverage")}>
             {renderGroup(singles, firstBelow, t(locale, "drBelowDivider", { bar }))}
             {pairs.length > 0 ? renderGroup(pairs, 0, t(locale, "drTwoTogether")) : null}
           </ul>
@@ -278,7 +260,7 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
   );
 }
 
-/** The bar's divider is drawn on the first row below it (data-divider), so the listbox holds only options. */
+/** The divider belongs to the first row below the bar rather than adding a fake list item. */
 function ListFragment({ divider, children }: { divider: string | null; children: ReactNode }) {
   if (divider && isValidElement<{ "data-divider"?: string }>(children)) return cloneElement(children, { "data-divider": divider });
   return <>{children}</>;

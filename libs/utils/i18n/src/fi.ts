@@ -10,6 +10,7 @@ import { mapFi } from "./surfaces/map.ts";
 import { mathFi } from "./surfaces/math.ts";
 import { methodFi } from "./surfaces/method.ts";
 import { networkFi } from "./surfaces/network.ts";
+import { qualityFi } from "./surfaces/quality.ts";
 import { timelineFi } from "./surfaces/timeline.ts";
 
 export const fi: Record<keyof typeof en, string> = {
@@ -259,6 +260,7 @@ export const fi: Record<keyof typeof en, string> = {
   uiSelectRow: "Valitse rivi",
   ...boardFi,
   ...doctorFi,
+  ...qualityFi,
   ...mathFi,
   ...methodFi,
   ...feedFi,

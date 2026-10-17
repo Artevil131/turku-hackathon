@@ -1,6 +1,14 @@
 // Copy for the doctor's list (spec-doctor.md with spec-amendments.md). Keys are global: prefix `dr`.
 
 export const doctorEn = {
+  drSevereBlood: "Severe blood infection",
+  drTargetMicrobes: "target organisms",
+  drAllGrowing: "all growth",
+  drBorderlineWhy: "The 95 % interval crosses the {bar} % bar.",
+  drNoSingle: "No single antibiotic clears the bar with certainty.",
+  drBestPair: "First ranked combination: {name}, {share} %, n {n} — details",
+  drDemo: "Synthetic demo data · not for patient care",
+  drDecisionSupport: "Supports the decision; the doctor decides.",
   drSkip: "Skip to the list",
   drTitle: "Coverage",
   drRecord: "Patient record",
@@ -140,6 +148,14 @@ export const doctorEn = {
 } as const;
 
 export const doctorFi: Record<keyof typeof doctorEn, string> = {
+  drSevereBlood: "Vaikea veri-infektio",
+  drTargetMicrobes: "kohdemikrobit",
+  drAllGrowing: "kaikki kasvavat",
+  drBorderlineWhy: "95 %:n väli ulottuu rajan {bar} % molemmille puolille.",
+  drNoSingle: "Yksikään antibiootti ei yksin ylitä rajaa varmuudella.",
+  drBestPair: "Ensimmäiseksi sijoitettu yhdistelmä: {name}, {share} %, n {n} — tiedot",
+  drDemo: "Synteettinen demoaineisto · ei potilashoitoon",
+  drDecisionSupport: "Tukee päätöstä; lääkäri päättää.",
   drSkip: "Siirry listaan",
   drTitle: "Kattavuus",
   drRecord: "Potilastiedot",
