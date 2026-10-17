@@ -11,6 +11,7 @@ import { mapEn } from "./surfaces/map.ts";
 import { mathEn } from "./surfaces/math.ts";
 import { methodEn } from "./surfaces/method.ts";
 import { networkEn } from "./surfaces/network.ts";
+import { projectsEn } from "./surfaces/projects.ts";
 import { qualityEn } from "./surfaces/quality.ts";
 import { sitesEn } from "./surfaces/sites.ts";
 import { timelineEn } from "./surfaces/timeline.ts";
@@ -261,6 +262,7 @@ export const en = {
   uiDetails: "Details",
   uiSelectRow: "Select a row",
   ...boardEn,
+  ...projectsEn,
   ...doctorEn,
   ...qualityEn,
   ...mathEn,
