@@ -1,7 +1,7 @@
 import type { Flow } from "@aei/contract";
 import { formatDate, type Locale, t } from "@aei/i18n";
 import { Fragment, lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
-import * as doctorFilters from "./components/doctor/filters.ts";
+import { doctorParamsToWindow } from "./components/doctor/filters.ts";
 import { SiteLine } from "./components/SitePicker.tsx";
 import { type Audience, storedAudience } from "./components/start/audience.ts";
 import { StartPage } from "./components/start/StartPage.tsx";
@@ -65,10 +65,8 @@ function pageFromHash(): Page {
   const value = hashPage();
   if (value === "doctor") {
     const previous = hashParams();
-    // TODO(coverage integration): use the direct import once the parallel coverage change lands.
-    const convert = (doctorFilters as unknown as { doctorParamsToWindow?: (params: URLSearchParams) => Record<string, string> })
-      .doctorParamsToWindow;
-    const params = convert ? new URLSearchParams(convert(previous)) : previous;
+    // Old doctor links open the coverage window with the same filters (D-065).
+    const params = new URLSearchParams(doctorParamsToWindow(previous));
     if (previous.has(HOSPITAL_PARAM)) params.set(HOSPITAL_PARAM, previous.get(HOSPITAL_PARAM) as string);
     params.delete("project");
     params.set("quick", "patient");
