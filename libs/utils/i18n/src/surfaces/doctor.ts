@@ -1,7 +1,6 @@
 // Copy for the doctor's list (spec-doctor.md with spec-amendments.md). Keys are global: prefix `dr`.
 
 export const doctorEn = {
-  drSevereBlood: "Severe blood infection",
   drTargetMicrobes: "target organisms",
   drWithinSpectrum: "within spectrum",
   drAllOrgShort: "all organisms",
@@ -189,7 +188,6 @@ export const doctorEn = {
 } as const;
 
 export const doctorFi: Record<keyof typeof doctorEn, string> = {
-  drSevereBlood: "Vaikea veri-infektio",
   drTargetMicrobes: "kohdemikrobit",
   drWithinSpectrum: "kattavuusalueella",
   drAllOrgShort: "kaikki bakteerit",

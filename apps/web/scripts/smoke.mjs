@@ -443,17 +443,17 @@ async function main() {
         );
         if (controls.disabled !== 0) reasons.push(`expected no disabled filter controls, saw ${controls.disabled}`);
         if (!controls.age || !controls.onset) reasons.push("age group or onset control not shown as chosen");
-        const shortcut = await evaluate(
+        // Blood and severe, set through the URL the way a shared link would (the filters follow the hash).
+        await evaluate(
           cdp,
-          `(() => { const b = document.querySelector('.rs-quick'); const r = b?.getBoundingClientRect(); if (!b || r.height < 44) return false; b.click(); return true; })()`,
+          `(() => { const q = new URLSearchParams(location.hash.split('?')[1] ?? ''); q.set('site', 'blood'); q.set('sev', 'severe'); location.hash = 'doctor?' + q; return true; })()`,
         );
-        if (!shortcut) reasons.push("severe blood shortcut missing or below 44 px");
         if (
           !(await waitIn(
             `location.hash.includes('site=blood') && location.hash.includes('sev=severe') && !!document.querySelector('.cl[aria-busy=false] .cl-row')`,
           ))
         )
-          reasons.push("severe blood shortcut did not load coverage");
+          reasons.push("blood + severe did not load coverage");
         await idle();
         await screenshot(cdp, join(outDir, `doctor-severe-${vp.name}.png`));
         const pair = await evaluate(
@@ -464,7 +464,11 @@ async function main() {
         if (pair !== null) {
           if (!(await waitIn(`!!document.querySelector('.cl-row[aria-expanded=true]')`)))
             reasons.push("combination summary did not open its details");
-          await evaluate(cdp, `document.querySelector('.dp-close')?.click()`);
+          // Phone closes the drawer; desktop has no drawer, so collapse the open row before the tap below.
+          await evaluate(
+            cdp,
+            `(() => { const c = document.querySelector('.dp-close'); if (c) c.click(); else document.querySelector('.cl-row[aria-expanded=true]')?.click(); return true; })()`,
+          );
         }
         await evaluate(cdp, `document.querySelector('.cl-li:last-child .cl-row')?.scrollIntoView({block:'end'})`);
         const target = await evaluate(
