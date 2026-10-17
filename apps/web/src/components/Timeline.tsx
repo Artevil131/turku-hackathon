@@ -462,6 +462,7 @@ export function Timeline({
         layers={layers}
         onLayers={compact ? undefined : setLayers}
         compact={compact}
+        roomy={variant === "window"}
         disabled={!ready}
         label={t(locale, "tlStream")}
         onActivate={() => setSheet(true)}
@@ -652,15 +653,14 @@ export function Timeline({
           <InfoButton locale={locale}>
             <GlossedLegend locale={locale} />
           </InfoButton>
+          {variant ? (
+            <button type="button" className="tl-signals-link" onClick={openList}>
+              {t(locale, "tlSignalsLink", { n: incidents.length })}
+            </button>
+          ) : null}
         </p>
       </div>
-      {variant ? (
-        <button type="button" className="tl-signals-link" onClick={openList}>
-          {t(locale, "tlSignalsLink", { n: incidents.length })}
-        </button>
-      ) : (
-        eventsStrip()
-      )}
+      {variant ? null : eventsStrip()}
     </div>
   );
 }

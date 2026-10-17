@@ -817,3 +817,24 @@
   text-decoration: underline;
   cursor: pointer;
 }
+
+/* The timeline window gives the band the width and the height: a slim controls column, lanes with room to breathe. */
+.timeline[data-variant="window"] .tl-left {
+  flex: 0 0 196px;
+  width: auto;
+}
+.timeline[data-variant="window"] .tl-band-col {
+  flex: 1 1 420px;
+}
+.timeline[data-variant="window"] .hs-lane-label {
+  font-size: 12px;
+}
+.timeline[data-variant="window"] .tl-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+.timeline[data-variant="window"] .tl-signals-link {
+  margin: 0 0 0 auto;
+}

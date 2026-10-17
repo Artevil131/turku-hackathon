@@ -101,7 +101,7 @@ export function defaultLayout(): Layout {
 }
 
 /** Rows of the timeline window every project starts with, across the top of the board. */
-export const TIMELINE_ROWS = 10;
+export const TIMELINE_ROWS = 11;
 
 /**
  * Opens the timeline across the top of the board and moves every other open window down below it. `bottom` puts it

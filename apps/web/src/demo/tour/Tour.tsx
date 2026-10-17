@@ -252,6 +252,16 @@ export function DemoTour({ locale, demo, reducedMotion, onClose }: DemoTourProps
   if (phase === "offer")
     return (
       <div className="tour-offer" role="dialog" aria-labelledby="tour-offer-title" aria-describedby="tour-offer-body">
+        <button
+          type="button"
+          className="tour-x"
+          data-tour-close
+          aria-label={t(locale, "tourExit")}
+          title={t(locale, "tourExit")}
+          onClick={onClose}
+        >
+          ×
+        </button>
         <p className="tour-kicker">{t(locale, "tourLabel")}</p>
         <h2 id="tour-offer-title">{t(locale, demo === "overview" ? "tourOvOfferTitle" : "tourOfferTitle")}</h2>
         <p id="tour-offer-body">{t(locale, demo === "overview" ? "tourOvOfferBody" : "tourOfferBody")}</p>
@@ -295,6 +305,16 @@ export function DemoTour({ locale, demo, reducedMotion, onClose }: DemoTourProps
         </div>
       ) : null}
       <div ref={card} className="tour-card" data-at={cardLow ? "low" : "high"} role="region" aria-label={t(locale, "tourLabel")}>
+        <button
+          type="button"
+          className="tour-x"
+          data-tour-close
+          aria-label={t(locale, "tourExit")}
+          title={t(locale, "tourExit")}
+          onClick={onClose}
+        >
+          ×
+        </button>
         <div className="tour-progress" aria-hidden="true">
           <i style={{ width: `${((phase === "done" ? total : index + 1) / total) * 100}%` }} />
         </div>

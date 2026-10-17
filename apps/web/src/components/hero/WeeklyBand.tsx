@@ -55,18 +55,31 @@ interface Layout {
   base: number;
   lanes: number;
   pitch: number;
+  /** Height of a signal pill. */
+  pill: number;
   axis: number;
   /** Bottom of the unit lanes. */
   lanesEnd: number;
 }
 /** The full band: nine lanes make 150 px, so the expanded timeline stays about 160 px tall; fewer lanes make it shorter. */
-const fullLayout = (n: number): Layout => {
-  const lanesEnd = 47 + n * 10;
-  return { gutter: 46, height: lanesEnd + 13, legend: 14, top: 17, base: 44, lanes: 47, pitch: 10, axis: lanesEnd + 11, lanesEnd };
+const fullLayout = (n: number, roomy = false): Layout => {
+  // A roomy band (the timeline window, which has the height to spare) draws taller lanes and bigger pills.
+  const pitch = roomy ? 16 : 10;
+  const lanesEnd = 47 + n * pitch;
+  return {
+    gutter: roomy ? 52 : 46,
+    height: lanesEnd + 13,
+    legend: 14,
+    top: 17,
+    base: 44,
+    lanes: 47,
+    pitch,
+    pill: roomy ? 14 : 10,
+    axis: lanesEnd + 11,
+    lanesEnd,
+  };
 };
-const SMALL: Layout = { gutter: 0, height: 44, legend: 0, top: 3, base: 26, lanes: 0, pitch: 0, axis: 43, lanesEnd: 26 };
-
-const PILL_H = 10;
+const SMALL: Layout = { gutter: 0, height: 44, legend: 0, top: 3, base: 26, lanes: 0, pitch: 0, pill: 10, axis: 43, lanesEnd: 26 };
 const READ_W = 276;
 
 interface Props {
@@ -81,6 +94,8 @@ interface Props {
   /** Wide band only: the Layers button. */
   onLayers?: (next: Layers) => void;
   compact?: boolean;
+  /** Taller lanes and bigger pills, for a band that has the room. */
+  roomy?: boolean;
   disabled?: boolean;
   label: string;
   /** Compact strip only: a press on the band. */
@@ -320,7 +335,7 @@ function build(
           members: g.members,
           kind,
           x: g.right - g.w,
-          y: lane < 0 ? 1 : L.lanes + lane * L.pitch + (L.pitch - PILL_H) / 2,
+          y: lane < 0 ? 1 : L.lanes + lane * L.pitch + (L.pitch - L.pill) / 2,
           w: g.w,
           label: g.label,
           s: ss.length ? Math.max(...ss) : null,
@@ -581,19 +596,19 @@ const StaticLayer = memo(function StaticLayer({
           }}
         >
           <title>{`${p.members.map((x) => pillLine(locale, x)).join("\n")}\n${t(locale, "tlOpenIncident")}`}</title>
-          <rect className="hs-pill-hit" x={p.x - 2} y={p.y - 1} width={p.w + 4} height={PILL_H + 2} />
-          <rect className="hs-pill-bg" x={p.x} y={p.y} width={p.w} height={PILL_H} rx={2.5} />
-          {p.kind === "sentinel" ? <path className="hs-pill-glyph" d={`M${p.x + 5} ${p.y + 2}l3.5 6h-7z`} /> : null}
-          <text className="hs-pill-text" x={p.x + (p.kind === "sentinel" ? 12 : 4)} y={p.y + 7.5}>
+          <rect className="hs-pill-hit" x={p.x - 2} y={p.y - 1} width={p.w + 4} height={L.pill + 2} />
+          <rect className="hs-pill-bg" x={p.x} y={p.y} width={p.w} height={L.pill} rx={L.pill > 10 ? 4 : 2.5} />
+          {p.kind === "sentinel" ? <path className="hs-pill-glyph" d={`M${p.x + 5} ${p.y + (L.pill - 6) / 2}l3.5 6h-7z`} /> : null}
+          <text className="hs-pill-text" x={p.x + (p.kind === "sentinel" ? 12 : 4)} y={p.y + L.pill / 2 + 2.7}>
             {p.label}
           </text>
           {p.s !== null ? (
             <>
-              <rect className="hs-pill-track" x={p.x + 1} y={p.y + PILL_H - 1.5} width={p.w - 2} height={1.5} />
+              <rect className="hs-pill-track" x={p.x + 1} y={p.y + L.pill - 1.5} width={p.w - 2} height={1.5} />
               <rect
                 className="hs-pill-bar"
                 x={p.x + 1}
-                y={p.y + PILL_H - 1.5}
+                y={p.y + L.pill - 1.5}
                 width={Math.max(1, ((p.w - 2) * p.s) / SURPRISE_CAP)}
                 height={1.5}
               />
@@ -810,7 +825,7 @@ function summaryText(locale: Locale, rows: WeekRow[], asOf: string, layers: Laye
 }
 
 export function WeeklyBand(p: Props) {
-  const { locale, start, asOf, weekly, alerts, layers, onLayers, compact = false, disabled = false } = p;
+  const { locale, start, asOf, weekly, alerts, layers, onLayers, compact = false, roomy = false, disabled = false } = p;
   const selected = p.selected ?? null;
   const selectedUnit = p.selectedUnit ?? null;
   const focusUnit = p.focusUnit ?? null;
@@ -835,7 +850,10 @@ export function WeeklyBand(p: Props) {
   const win = useMemo(() => windowRows(rawRows, layers.window), [rawRows, layers.window]);
   const rows = useMemo(() => viewRows(win, layers), [win, layers]);
   const wards = useMemo(() => Object.keys(weekly?.units ?? {}).filter((c) => layers.units[c] !== false), [weekly, layers.units]);
-  const L = useMemo(() => (compact ? SMALL : fullLayout(weekly ? wards.length : siteWards().length)), [compact, weekly, wards.length]);
+  const L = useMemo(
+    () => (compact ? SMALL : fullLayout(weekly ? wards.length : siteWards().length, roomy)),
+    [compact, roomy, weekly, wards.length],
+  );
   const d0 = windowStart(start, win[0], layers.window);
   const shownAlerts = useMemo(() => alerts.filter((a) => layers.kinds[pillKind(a)]), [alerts, layers.kinds]);
   const m = useMemo(
