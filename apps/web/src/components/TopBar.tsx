@@ -9,6 +9,7 @@ import { SitePicker } from "./SitePicker.tsx";
 export type Page = "home" | "doctor" | "research" | "method" | "connect" | "settings" | "intro";
 
 interface Props {
+  projectName?: string | null;
   locale: Locale;
   page: Page;
   onPage: (p: Page) => void;
@@ -41,11 +42,10 @@ export function TopBar(props: Props) {
       </button>
 
       <nav className="sections" aria-label={t(locale, "sections")}>
-        {tab("home", t(locale, "home"))}
-        {tab("doctor", t(locale, "roleDoctor"))}
+        {tab("home", t(locale, "startProjects"))}
         {tab(
           "research",
-          t(locale, "roleResearch"),
+          props.projectName ?? t(locale, "startWorkspace"),
           signals > 0 ? (
             <span className="badge num" role="img" aria-label={unseenLabel} title={unseenLabel}>
               {signals}

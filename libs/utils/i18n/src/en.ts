@@ -14,9 +14,11 @@ import { networkEn } from "./surfaces/network.ts";
 import { projectsEn } from "./surfaces/projects.ts";
 import { qualityEn } from "./surfaces/quality.ts";
 import { sitesEn } from "./surfaces/sites.ts";
+import { startEn } from "./surfaces/start.ts";
 import { timelineEn } from "./surfaces/timeline.ts";
 
 export const en = {
+  ...startEn,
   askSubmit: "Ask",
   askLoading: "Understanding…",
   askUnavailable: "The assistant is unavailable, use the filters.",

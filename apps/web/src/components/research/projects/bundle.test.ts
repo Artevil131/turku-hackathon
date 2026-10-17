@@ -112,6 +112,9 @@ describe("workspace export glue", () => {
     vi.stubGlobal("location", location);
     vi.stubGlobal("history", {
       state: null,
+      pushState: (_state: unknown, _unused: string, hash: string) => {
+        location.hash = hash;
+      },
       replaceState: (_state: unknown, _unused: string, hash: string) => {
         location.hash = hash;
       },
@@ -129,6 +132,7 @@ describe("workspace export glue", () => {
       createdAt: "2025-05-12",
       updatedAt: "2025-05-12",
     });
+    expect(location.hash.startsWith("#workspace?")).toBe(true);
     const params = new URLSearchParams(location.hash.split("?")[1]);
     expect(params.get("project")).toBe("study");
     expect(params.get("unit")).toBe("ICU");

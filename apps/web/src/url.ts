@@ -14,7 +14,7 @@ export function hashParams(): URLSearchParams {
 
 /** Replaces the current page's params in the URL without a history entry. */
 /** Params that belong to the whole app (the timeline's layers), kept when a page writes its own. */
-const SHARED_PARAMS = ["tl", "hospital"] as const;
+const SHARED_PARAMS = ["tl", "hospital", "quick"] as const;
 
 /** The selected hospital as a query string ("?hospital=sata"), or "" for the home site; carried to another page. */
 export function sharedQuery(keys: readonly (typeof SHARED_PARAMS)[number][] = ["hospital"]): string {

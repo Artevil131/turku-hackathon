@@ -17,6 +17,7 @@ function remember(id: string | null) {
 export function openProject(project: Project) {
   // Replace the board query, not the shared timeline settings; hospital changes remount the board in App.
   const board = Object.fromEntries(new URLSearchParams(project.scope.board ?? ""));
+  history.pushState(null, "", `#workspace${location.hash.includes("?") ? `?${hashParams()}` : ""}`);
   writeHashParams({ ...board, project: project.id });
   writeSharedParam(HOSPITAL_PARAM, siteParam(project.scope.site ?? null));
   dispatchEvent(new HashChangeEvent("hashchange"));

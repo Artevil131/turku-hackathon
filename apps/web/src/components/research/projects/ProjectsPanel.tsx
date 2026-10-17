@@ -68,6 +68,7 @@ export function ProjectsPanel({
         mode,
         asOf: mode === "frozen" ? asOf : undefined,
         scope: { ...scope, to: mode === "frozen" ? asOf : undefined },
+        layout: update && current ? (await client.project(current.id)).project.layout : undefined,
       };
       const result = update && current ? await client.updateProject(current.id, input) : await client.createProject(input);
       selection.remember(result.project.id);

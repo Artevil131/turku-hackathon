@@ -42,7 +42,7 @@ const apiPort = Number(opt("api-port", "8798"));
 const webPort = Number(opt("web-port", "5176"));
 const outDir = resolve(opt("out", join(WEB, "smoke-out")));
 const interactionGroup = opt("interactions", "all");
-const ROUTES = opt("routes", "home,doctor,research,method,settings,intro").split(",");
+const ROUTES = opt("routes", "start,workspace,research,method,settings,intro").split(",");
 const INTERACTIONS = interactionGroup === "all" || interactionGroup === "doctor" ? [] : interactionGroup.split(",").filter(Boolean);
 // --desktop 1366x768 runs the desktop checks and interactions at a laptop-sized window instead of 1440x1000.
 const desktopSize = /^(\d+)x(\d+)$/.exec(opt("desktop", "1440x1000")) ?? ["", "1440", "1000"];
@@ -506,12 +506,12 @@ async function main() {
     );
   }
 
-  const tabRoutes = ["doctor", "research", "method", "home"];
+  const tabRoutes = ["workspace", "method", "connect", "home"];
   await interaction("tabs", async (idle, reasons) => {
     await load(cdp, urlOf("home"), idle);
     for (const route of tabRoutes) {
-      const label = route === "home" ? 0 : tabRoutes.indexOf(route) + 1;
-      // The tabs are buttons in nav.sections, in the order home, doctor, research, method.
+      const label = { home: 0, workspace: 1, method: 2, connect: 3 }[route];
+      // Projects, the current workspace, Method and Connect.
       const clicked = await evaluate(
         cdp,
         `(() => { const b = document.querySelectorAll("nav.sections button.section-tab")[${label}]; if (!b) return false; b.click(); return true; })()`,
@@ -537,7 +537,7 @@ async function main() {
 
   // The replay clock is shared by a running app; the run puts it back at the end (see "seek" below).
   await interaction("step-one-day", async (idle, reasons) => {
-    await load(cdp, urlOf("home"), idle);
+    await load(cdp, urlOf("workspace"), idle);
     const readout = `document.querySelector(".timeline .tl-readout")?.textContent ?? ""`;
     const before = await evaluate(cdp, readout);
     if (!before || before === "–") reasons.push("no as-of date in the timeline readout");
@@ -935,6 +935,83 @@ async function main() {
     },
     { name: "desktop-900", width: 1440, height: 900, mobile: false },
   );
+
+  await interaction("start", async (idle, reasons) => {
+    await load(cdp, urlOf("settings"), idle);
+    await evaluate(cdp, `localStorage.setItem('aei.locale', 'en'); localStorage.setItem('aei.audience', 'control')`);
+    await cdp.send("Page.navigate", { url: "about:blank" });
+    await load(cdp, urlOf("start"), idle);
+    if (!(await waitIn(`!!document.querySelector('.start-empty') && document.querySelectorAll('[data-template]').length === 5`)))
+      reasons.push("empty start page did not show templates");
+    await click('.start-audience input[value="clinician"] + span');
+    if (
+      !(await waitIn(
+        `document.querySelector('[data-template]')?.dataset.template === 'patient' && document.documentElement.dataset.density === 'comfortable'`,
+      ))
+    )
+      reasons.push("clinician preset did not promote treatment");
+    await click('.start-audience input[value="researcher"] + span');
+    if (
+      !(await waitIn(
+        `document.querySelector('[data-template]')?.dataset.template === 'blank' && document.documentElement.dataset.density === 'compact'`,
+      ))
+    )
+      reasons.push("researcher preset did not promote blank");
+    await click('.start-audience input[value="control"] + span');
+    await click('[data-template="outbreak"]');
+    if (!(await waitIn(`!!document.querySelector('.start-create')`))) throw new Error("new-project dialog missing");
+    await screenshot(cdp, join(outDir, "start-create.png"));
+    await click('.start-create button[type="submit"]');
+    if (
+      !(await waitIn(
+        `location.hash.startsWith('#workspace?') && !!document.querySelector('#ws-win-signals') && !document.querySelector('.project-dialog')`,
+        15_000,
+      ))
+    )
+      throw new Error("created outbreak did not open with signals");
+    const id = await evaluate(cdp, `new URLSearchParams(location.hash.split('?')[1]).get('project')`);
+    try {
+      const browserLayout = await evaluate(cdp, `localStorage.getItem('aei.research.layout.v2')`);
+      await click("#ws-win-graph .ws-close");
+      if (!(await waitIn(`fetch('/api/projects/${encodeURIComponent(id)}').then(r=>r.json()).then(r=>!!r.project.layout.closed.graph)`)))
+        reasons.push("project layout change was not saved");
+      if (await evaluate(cdp, `localStorage.getItem('aei.research.layout.v2') !== ${JSON.stringify(browserLayout)}`))
+        reasons.push("project layout overwrote browser workspace");
+      await click("nav.sections button:first-child");
+      const card = `[data-project-card="${id}"]`;
+      if (!(await waitIn(`!!document.querySelector(${JSON.stringify(card)})`))) throw new Error("recent project card missing");
+      await click(`${card} .start-card-open`);
+      if (!(await waitIn(`!!document.querySelector('#ws-win-signals') && !document.querySelector('#ws-win-graph')`)))
+        reasons.push("reopened project did not restore its saved layout");
+      await click("nav.sections button:first-child");
+      if (!(await waitIn(`!!document.querySelector(${JSON.stringify(card)})`))) throw new Error("recent project card missing on return");
+      await screenshot(cdp, join(outDir, "start-recent-desktop.png"));
+      await cdp.send("Emulation.setDeviceMetricsOverride", { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
+      await screenshot(cdp, join(outDir, "start-recent-phone.png"));
+      await cdp.send("Emulation.setDeviceMetricsOverride", {
+        width: VIEWPORTS[0].width,
+        height: VIEWPORTS[0].height,
+        deviceScaleFactor: 1,
+        mobile: false,
+      });
+      await click(`${card} summary`);
+      await click(`${card} .start-card-menu button:nth-child(2)`);
+      if (
+        !(await waitIn(
+          `document.querySelector('.share-preview')?.textContent.includes('Preview: sharing is not connected yet; nothing is sent.')`,
+        ))
+      )
+        reasons.push("sharing mock note missing");
+      await screenshot(cdp, join(outDir, "start-share.png"));
+      await click(".project-dialog header button");
+      await click(`${card} .start-card-menu button:nth-child(4)`);
+      await click(".project-dialog > button");
+      if (!(await waitIn(`!document.querySelector(${JSON.stringify(card)}) && !document.querySelector('.project-dialog')`)))
+        reasons.push("project was not deleted");
+    } finally {
+      await fetch(`${base}/api/projects/${encodeURIComponent(id)}`, { method: "DELETE" });
+    }
+  });
 
   await interaction("projects", async (idle, reasons) => {
     // Use English labels so this check is independent of earlier language interactions.
