@@ -525,3 +525,12 @@
     transition: none;
   }
 }
+
+/* "n more in the list" points at the Signals window: it flashes once, even when already in view. */
+.ws-win.ws-flash {
+  box-shadow: 0 0 0 3px var(--brand-accent, #635bf1);
+  transition: box-shadow var(--mo-1, 120ms) var(--mo-ease, ease-out);
+}
+.ws-win {
+  transition: box-shadow var(--mo-3, 320ms) var(--mo-ease, ease-out);
+}
