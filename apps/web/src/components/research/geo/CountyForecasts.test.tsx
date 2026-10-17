@@ -116,7 +116,7 @@ describe("visible county detail", () => {
         <GeoMap state={state} onChange={onChange} client={{} as AeiClient} locale={locale} asOf="2026-10-17" reducedMotion />,
       );
       expect(html).toContain('aria-labelledby="geo-county-title"');
-      expect(html).toContain(locale === "en" ? "County · Varsinais-Suomen" : "Alue · Varsinais-Suomen");
+      expect(html).toContain(locale === "en" ? "County · Southwest Finland" : "Alue · Varsinais-Suomi");
       expect(html).toContain(locale === "en" ? "Back to map" : "Takaisin kartalle");
       expect(html).toContain(locale === "en" ? "CPE carriage, E. coli" : "CPE-kantajuus, E. coli");
       expect(html).toContain(locale === "en" ? "August 2026" : "elokuu 2026");
