@@ -32,4 +32,13 @@ PATH="$(dirname "$(command -v "$mm")"):$PATH" uv run jupyter lite build \
   --output-dir "$out"
 # Keep the static root entry, but never shadow the API's live project listings.
 rm -rf "$out/api/contents/projects"
+# The AEI theme (D-062, README.md): copied beside the site and linked after
+# JupyterLab's own stylesheet in each page that loads it.
+cp "$here/theme/aei-theme.css" "$out/aei-theme.css"
+for page in "$out/index.html:aei-theme.css" "$out/lab/index.html:../aei-theme.css"; do
+  file="${page%%:*}"
+  href="${page#*:}"
+  [ -f "$file" ] || { echo "no $file to theme" >&2; exit 1; }
+  perl -0pi -e "s#</head>#<link rel=\"stylesheet\" href=\"$href\">\n</head>#" "$file"
+done
 echo "JupyterLite site in $out ($(du -sh "$out" | cut -f1))"
