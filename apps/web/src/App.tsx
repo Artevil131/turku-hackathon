@@ -14,6 +14,7 @@ import type { DemoId, DemoSpec, TourId } from "./demo/demos.ts";
 import { FillOverlay } from "./demo/FillOverlay.tsx";
 import type { FillPlan } from "./demo/openDemo.ts";
 import { openDemo } from "./demo/openDemo.ts";
+import { Pointer } from "./demo/Pointer.tsx";
 import { DemoTour } from "./demo/tour/Tour.tsx";
 import { useLive } from "./live.ts";
 import { FlowsContext } from "./relations.ts";
@@ -52,6 +53,9 @@ const THEME: "light" | "dark" = "light";
 
 type Page = "home" | "project" | "data" | "settings" | "intro";
 const PAGES: readonly Page[] = ["home", "project", "data", "settings", "intro"];
+/** When a demo file fills itself in on opening. */
+export const FILL_MODES = ["first", "always", "never"] as const;
+export type FillMode = (typeof FILL_MODES)[number];
 
 function stored<T extends string>(key: string, fallback: T, valid: (v: string) => boolean): T {
   try {
@@ -145,6 +149,21 @@ export function App() {
   }, []);
   // A demo filling itself in: the screen is locked until it is done (or skipped); a full play then offers the tour, a skip does not.
   const [filling, setFilling] = useState<{ demo: DemoId; plan: FillPlan; key: number } | null>(null);
+  // When a demo fills itself in: the first time each demo opens (default), every time, or never. Without the
+  // fill a pointer shows where to look instead, and the tour is not offered again.
+  const [fillMode, setFillModeState] = useState<FillMode>(() => stored("yl.demoFill", "first", (v) => FILL_MODES.includes(v as FillMode)));
+  const setFillMode = (mode: FillMode) => {
+    setFillModeState(mode);
+    store("yl.demoFill", mode);
+  };
+  const filledDemos = () =>
+    new Set(
+      stored("yl.demoFilled", "", () => true)
+        .split(",")
+        .filter(Boolean),
+    );
+  const markFilled = (demo: DemoId) => store("yl.demoFilled", [...filledDemos().add(demo)].join(","));
+  const [pointer, setPointer] = useState<number | null>(null);
   const startTour = () => {
     setPage("home");
     history.pushState(null, "", "#home");
@@ -355,15 +374,17 @@ export function App() {
     );
 
   const openDemoFile = (demo: DemoSpec) => {
-    // The full tour opens demo files itself and keeps playing, so those open already filled; any other demo fills itself in first.
-    const fill = tour?.demo !== "overview" && !reducedMotion;
+    // The full tour opens demo files itself and keeps playing, so those open already filled. Otherwise the demo
+    // fills itself in the first time it opens (or every time, or never, per the setting); a later open just points.
+    const wanted = fillMode === "always" || (fillMode === "first" && !filledDemos().has(demo.id));
+    const fill = tour?.demo !== "overview" && !reducedMotion && wanted;
     openDemo(client, locale, demo, { fill })
       .then(({ project, plan }) => {
         shell.openProject(project);
         // A "Take the tour?" left from a previous demo must not sit on the stage while this one plays.
         if (plan) setTour((current) => (current?.demo === "overview" ? current : null));
         if (plan) setFilling({ demo: demo.id, plan, key: Date.now() });
-        else setTour((current) => (current?.demo === "overview" ? current : { demo: demo.id, key: Date.now() }));
+        else if (tour?.demo !== "overview" && !reducedMotion) setPointer(Date.now());
       })
       .catch(() => setNotice(t(locale, "demoOpenError")));
   };
@@ -501,7 +522,7 @@ export function App() {
                       {page === "data" ? (
                         <DataPage client={client} liveClient={live.client} locale={locale} asOf={live.clock?.asOf ?? null} />
                       ) : null}
-                      {page === "settings" ? <Settings locale={locale} onLocale={setLocale} /> : null}
+                      {page === "settings" ? <Settings locale={locale} onLocale={setLocale} fill={fillMode} onFill={setFillMode} /> : null}
                     </Suspense>
                   </Fragment>
                 </main>
@@ -525,11 +546,13 @@ export function App() {
                 plan={filling.plan}
                 onDone={(how?: "done" | "skipped") => {
                   // Played to the end, the guide is offered; skipped, the judge goes straight to the finished project.
+                  markFilled(filling.demo);
                   if (how !== "skipped") setTour({ demo: filling.demo, key: Date.now() });
                   setFilling(null);
                 }}
               />
             ) : null}
+            {pointer !== null && page === "project" ? <Pointer key={pointer} onDone={() => setPointer(null)} /> : null}
             {tour && (page === "project" || tour.demo === "overview") ? (
               <DemoTour
                 key={tour.key}

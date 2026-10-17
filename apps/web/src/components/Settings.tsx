@@ -1,4 +1,5 @@
 import { type Locale, siteName, t } from "@aei/i18n";
+import { FILL_MODES, type FillMode } from "../App.tsx";
 import { useSites } from "../sites.ts";
 import { InfoButton } from "./Info.tsx";
 
@@ -8,9 +9,14 @@ import { InfoButton } from "./Info.tsx";
 interface Props {
   locale: Locale;
   onLocale: (l: Locale) => void;
+  /** When a demo file fills itself in on opening. */
+  fill: FillMode;
+  onFill: (mode: FillMode) => void;
 }
 
-export function Settings({ locale, onLocale }: Props) {
+const FILL_KEY = { first: "settingsFillFirst", always: "settingsFillAlways", never: "settingsFillNever" } as const;
+
+export function Settings({ locale, onLocale, fill, onFill }: Props) {
   const { sites, site, multi, setSite } = useSites();
   return (
     <section className="settings glass" aria-labelledby="settings-title">
@@ -56,6 +62,20 @@ export function Settings({ locale, onLocale }: Props) {
           </div>
         </fieldset>
       ) : null}
+
+      <fieldset className="field setting">
+        <legend className="field-label">
+          {t(locale, "settingsFill")}
+          <InfoButton locale={locale}>{t(locale, "settingsFillHint")}</InfoButton>
+        </legend>
+        <div className="choice-row">
+          {FILL_MODES.map((mode) => (
+            <button key={mode} type="button" className="choice" aria-pressed={fill === mode} onClick={() => onFill(mode)}>
+              {t(locale, FILL_KEY[mode])}
+            </button>
+          ))}
+        </div>
+      </fieldset>
 
       <div className="field setting">
         <span className="field-label">{t(locale, "shellData")}</span>
