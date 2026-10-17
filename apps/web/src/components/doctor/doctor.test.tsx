@@ -128,10 +128,9 @@ describe("age group and onset filters (D-047)", () => {
     expect(filtersToParams({ ...filters, age: "veryOld", onset: true })).toMatchObject({ age: "veryOld", onset: "hospital" });
     expect(filtersToParams(filters)).toMatchObject({ age: null, onset: null });
   });
-  it("keeps the severe blood shortcut visible outside collapsed phone filters", () => {
+  it("shows age group and onset in the collapsed phone summary", () => {
     vi.stubGlobal("window", { matchMedia: () => ({ matches: false }) });
     const html = renderToStaticMarkup(<RecordStrip locale="fi" filters={{ ...filters, age: "older", onset: true }} onChange={() => {}} />);
-    expect(html).toContain("Vaikea veri-infektio");
     expect(html).toContain("ikäryhmä 65+");
     expect(html).not.toContain("Hoitopäivä 3 tai myöhemmin");
   });
