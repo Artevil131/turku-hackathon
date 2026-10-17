@@ -1,7 +1,7 @@
 import { PHENOTYPES, type Phenotype, WARDS } from "@aei/domain";
 import { formatDate, phenotypeName, t, wardName } from "@aei/i18n";
-import { useEffect, useRef, useState } from "react";
-import { useQuestion } from "../../ai.ts";
+import { useEffect, useRef } from "react";
+import { useAiStatus, useQuestion } from "../../ai.ts";
 import { Ask, AskedResults } from "../Ask.tsx";
 import { AsOf } from "../AsOf.tsx";
 import { type FeedProps, KINDS, type SignalKind } from "./board.ts";
@@ -30,22 +30,17 @@ export function SignalFeed(props: Props) {
   const { client, locale, asOf, state, onChange, load, incidents, retry, spansOf, selected } = props;
   const rootRef = useRef<HTMLElement>(null);
 
-  // The Ask field appears only when the API reports an assistant (Meta.ai).
-  const [ai, setAi] = useState(false);
-  useEffect(() => {
-    let stale = false;
-    client
-      .meta()
-      .then((m) => !stale && setAi(m.ai))
-      .catch(() => {});
-    return () => {
-      stale = true;
-    };
-  }, [client]);
+  // The Ask field appears when the API reports the assistant answering (Meta.aiStatus "ready"); while
+  // a configured model is offline one line says so, and the field returns by itself (D-049).
+  const { status: ai, recheck } = useAiStatus(client);
   // The model only returns filters; the unit filter also drives the board, the counts come from records.
   const question = useQuestion(client, ai, asOf, state.unit ? { ward: state.unit } : {}, (f) => {
     if ("ward" in f) onChange({ unit: f.ward ?? null });
   });
+  // A failed question made the server probe the model again; read its answer.
+  useEffect(() => {
+    if (question.error) recheck();
+  }, [question.error, recheck]);
 
   const filters = { unit: state.unit, kinds: state.kinds, phenotype: state.phenotype };
   const shown = applyFilters(incidents, filters);
@@ -88,7 +83,7 @@ export function SignalFeed(props: Props) {
             </>
           ) : null}
         </div>
-        {question.available || question.active || question.error ? (
+        {question.available || question.offline || question.active || question.error ? (
           <div className="feed-ask">
             <Ask locale={locale} question={question} />
             {question.active ? (

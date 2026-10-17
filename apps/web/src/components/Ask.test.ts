@@ -24,6 +24,7 @@ const answer: AskResponse = {
 };
 const question: Question = {
   available: true,
+  offline: false,
   answer,
   parsed: answer,
   active: true,
@@ -66,6 +67,15 @@ describe("assistant presentation", () => {
     expect(pending).toContain("Understanding…");
     expect(pending).toContain("disabled");
     expect(renderToStaticMarkup(createElement(Ask, { locale: "fi", question: { ...question, error: true } }))).toContain("Käytä rajauksia");
+  });
+  it("replaces the field with one calm line while a configured model is offline (D-049)", () => {
+    const offline = { ...question, available: false, offline: true, active: false, answer: null, parsed: null, error: true };
+    const en = renderToStaticMarkup(createElement(Ask, { locale: "en", question: offline }));
+    const fi = renderToStaticMarkup(createElement(Ask, { locale: "fi", question: offline }));
+    expect(en).toContain("Assistant offline right now — the filters work as usual.");
+    expect(en).not.toContain("<input");
+    expect(en).not.toContain("unavailable");
+    expect(fi).toContain("Avustaja ei ole juuri nyt käytössä");
   });
   it("shows measured counts and records, never resistance percentages", () => {
     const records: IsolateRecord[] = Array.from({ length: 60 }, (_, i) => ({

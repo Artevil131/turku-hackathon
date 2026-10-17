@@ -5,7 +5,7 @@ and response types, live event types, and a typed client.
 
 | Route | Method | Returns |
 |---|---|---|
-| `/api/meta` | GET | `Meta`: dataset range, code lists and `ai` (LLM configured) |
+| `/api/meta` | GET | `Meta`: dataset range, code lists, `ai` (a model is configured and answered the last probe) and `aiStatus` (`off`, `offline` or `ready`, D-049) |
 | `/api/clock` | GET | `ClockState` |
 | `/api/clock` | POST `ClockCommand` | `ClockState` (play, pause, step, seek, configure) |
 | `/api/isolates?from&to&ward&specimen&organism&sex&ageMin&ageMax` | GET | `IsolatesResponse`: arrived isolates only |

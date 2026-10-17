@@ -1,14 +1,8 @@
-import type { IsoDate, Sex } from "@aei/domain";
+import { AGE_GROUPS, type AgeGroup, type IsoDate, type Sex } from "@aei/domain";
 import type { Llm } from "./llm.ts";
 
-export const AGE_GROUPS = {
-  child: [0, 17],
-  adult: [18, 64],
-  older: [65, null],
-  veryOld: [80, null],
-} as const;
-
-export type AgeGroup = keyof typeof AGE_GROUPS;
+// The age-group table (D-019) lives in @aei/domain so the coverage list filters by the same groups.
+export { AGE_GROUPS, type AgeGroup };
 
 export const AGE_GROUP_LABELS: Record<AgeGroup, { en: string; fi: string }> = {
   child: { en: "children", fi: "lapset" },

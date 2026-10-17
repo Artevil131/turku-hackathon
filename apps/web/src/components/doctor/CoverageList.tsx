@@ -2,7 +2,7 @@ import type { CoverageResponse } from "@aei/contract";
 import { antibioticName, type Locale, specimenName, t, wardName } from "@aei/i18n";
 import { cloneElement, isValidElement, type ReactNode, useMemo, useRef } from "react";
 import "./CoverageList.css";
-import { BAR, type DoctorFilters, dmy, num, pct } from "./filters.ts";
+import { BAR, type DoctorFilters, dmy, droppedFilters, num, pct } from "./filters.ts";
 import { InfoIcon, Popover } from "./Popover.tsx";
 import { PrintSheet } from "./PrintSheet.tsx";
 import { type Item, STANDING } from "./reason.ts";
@@ -174,7 +174,7 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
           content={
             <>
               <p>{t(locale, "drForestInfo", { period: t(locale, filters.period === 365 ? "drPeriodYear" : "drPeriodMonth") })}</p>
-              {ready && filters.sex !== "any" && !cov.sexApplied ? <p>{t(locale, "drSexDropped")}</p> : null}
+              {ready ? droppedFilters(filters, cov).map((d) => <p key={d.long}>{t(locale, d.long)}</p>) : null}
               <p>{t(locale, "drFoot", { mild: BAR.mild, severe: BAR.severe })}</p>
             </>
           }

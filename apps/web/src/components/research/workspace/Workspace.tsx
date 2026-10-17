@@ -469,7 +469,8 @@ function Tray({
         </svg>
         {t(locale, "wsToolbar")}
         {WIN_IDS.some((id) => layout.closed[id]) ? (
-          <span className="ws-tray-count">{WIN_IDS.filter((id) => layout.closed[id]).length}</span>
+          // "+n": the count is the hidden windows, not the open ones beside the button.
+          <span className="ws-tray-count">+{WIN_IDS.filter((id) => layout.closed[id]).length}</span>
         ) : null}
       </button>
       {shown ? (

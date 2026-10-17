@@ -51,7 +51,6 @@ function Choices<T extends string | number>(props: {
 /** The patient record as a row of one-click filters, each with its default already chosen. The doctor types nothing. */
 export function RecordStrip({ locale, filters, onChange }: Props) {
   const tr = (key: MessageKey) => t(locale, key);
-  const notApplied = tr("drNotApplied");
   const wide = useMedia("(min-width: 960px)");
   const [more, setMore] = useState(false);
   const change = onChange;
@@ -59,6 +58,8 @@ export function RecordStrip({ locale, filters, onChange }: Props) {
     wardName(locale, filters.unit),
     specimenName(locale, filters.site),
     sexWord(locale, filters.sex),
+    filters.age === "any" ? null : t(locale, "drPrintAge", { age: tr(AGE_KEYS[filters.age]) }),
+    filters.onset ? tr("drOnsetPhone") : null,
     tr(filters.sev === "mild" ? "drSevMildShort" : "drSevSevereShort"),
     tr(filters.period === 365 ? "drPeriodYear" : "drPeriodMonth"),
   ]
@@ -133,9 +134,8 @@ export function RecordStrip({ locale, filters, onChange }: Props) {
     </Group>
   );
   const age = (
-    <Group label={tr("drAge")} tag={notApplied}>
+    <Group label={tr("drAge")}>
       <Choices<AgeGroup>
-        disabled
         options={AGE_GROUPS.map(
           (a) =>
             [
@@ -150,13 +150,12 @@ export function RecordStrip({ locale, filters, onChange }: Props) {
     </Group>
   );
   const onset = (
-    <Group label={tr("drOnset")} tag={notApplied}>
+    <Group label={tr("drOnset")}>
       <button
         type="button"
         className="rs-choice rs-toggle"
         title={tr("drOnset")}
-        disabled
-        aria-pressed={false}
+        aria-pressed={filters.onset}
         onClick={() => change({ onset: !filters.onset })}
       >
         {wide ? tr("drOnsetShort") : tr("drOnsetPhone")}

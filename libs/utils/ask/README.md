@@ -99,6 +99,29 @@ application code; the slot check is not a general clinical fact checker.
 
 No network requests happen until a caller explicitly uses the client.
 
+### Live status (D-049)
+
+A configured model is not always reachable: the team's server runs only while
+its job is up. `probeLlm(config, timeoutMs = 4000)` sends `GET /v1/models`
+with the client's headers and resolves `true` only for a JSON model list; an
+error status, a redirect (not followed), an HTML page or a network failure
+resolve `false`. It never throws.
+
+`createAiMonitor({ probe?, intervalMs = 60000, onChange? })` keeps an
+`AiStatus`: `"off"` without a probe (nothing configured), otherwise
+`"offline"` until a probe answers and `"ready"` after. `check()` probes now
+(concurrent calls share one probe), `settled()` resolves after the first probe,
+`report(ok)` marks it ready after a real request succeeded or probes again
+after one failed, and `start()`/`stop()` run `check()` on the interval with a
+timer that does not keep the process alive. The state logic is tested with a
+fake probe and fake timers (`status.test.ts`).
+
+```ts
+const ai = createAiMonitor({ probe: config && (() => probeLlm(config)) });
+ai.start();
+await ai.settled(); // then ai.status(): "off" | "offline" | "ready"
+```
+
 ## Checks
 
 ```sh

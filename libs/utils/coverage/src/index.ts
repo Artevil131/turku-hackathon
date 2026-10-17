@@ -1,9 +1,12 @@
 import { firstIsolates } from "@aei/counting";
 import {
+  type AgeGroup,
   ANTIBIOTICS,
   type AntibioticCode,
   type IsoDate,
   type IsolateRecord,
+  inAgeGroup,
+  isHospitalOnset,
   type Organism,
   type Sex,
   type Specimen,
@@ -24,12 +27,28 @@ import { addDays } from "@aei/replay";
 
 export type Level = "unit" | "ward type" | "hospital";
 
+/** "hospital": sampled on day 3 of the stay or later (`isHospitalOnset`, CONTEXT.md). */
+export type Onset = "hospital";
+
+/** The patient filters a query may ask for. */
+export type PatientFilter = "sex" | "ageGroup" | "onset";
+
+/**
+ * When the unit has too few isolates with every patient filter asked for, filters are dropped one at a
+ * time in this order, before the unit is (D-033, D-047): age group first, then onset, then sex.
+ */
+export const DROP_ORDER: readonly PatientFilter[] = ["ageGroup", "onset", "sex"];
+
 export interface CoverageQuery {
   asOf: IsoDate;
   ward: WardCode;
   specimen: Specimen;
   /** Restrict to one sex (urinary E. coli resistance differs by sex: experiments/0005). Dropped before the unit is. */
   sex?: Sex;
+  /** Restrict to one age group of the fixed table (D-019, `AGE_GROUPS`). Dropped before the unit is (D-047). */
+  ageGroup?: AgeGroup;
+  /** Restrict to hospital-onset isolates: sampled on day 3 of the stay or later. Dropped before the unit is (D-047). */
+  onset?: Onset;
   /** Days in the main window. Default 365. */
   windowDays?: number;
   /** Isolates a level needs before it is used. Default 30 (CONTEXT.md). */
@@ -79,12 +98,16 @@ export interface CombinationCoverage extends Share {
 }
 
 export interface CoverageResult {
-  query: Required<Omit<CoverageQuery, "sex">> & { sex: Sex | null };
+  query: Required<Omit<CoverageQuery, PatientFilter>> & { sex: Sex | null; ageGroup: AgeGroup | null; onset: Onset | null };
   /** The level every figure comes from, and its pool of first isolates. */
   level: Level;
   isolates: number;
   /** False when the sex filter was dropped to keep the unit's own data (or a sex was not asked for). */
   sexApplied: boolean;
+  /** False when the age-group filter was dropped to keep the unit's own data (or none was asked for). */
+  ageGroupApplied: boolean;
+  /** False when the onset filter was dropped to keep the unit's own data (or none was asked for). */
+  onsetApplied: boolean;
   from: IsoDate;
   /** First isolates of the level's pool, per organism, most common first. */
   organisms: { organism: Organism; isolates: number; share: number }[];
@@ -142,16 +165,30 @@ export function coverage(records: readonly IsolateRecord[], q: CoverageQuery): C
     "ward type": (r) => WARD_TYPE.get(r.ward) === WARD_TYPE.get(q.ward),
     hospital: () => true,
   };
-  // The sex filter is dropped before the unit is (D-033).
-  const bySex = q.sex ? all.filter((r) => r.sex === q.sex) : all;
-  const unitWithSex = bySex.filter(inLevel.unit).length;
-  const sexApplied = !!q.sex && (unitWithSex >= minTested || all.filter(inLevel.unit).length < minTested);
-  const base = sexApplied ? bySex : all;
+  // Patient filters are dropped one at a time, in DROP_ORDER, before the unit is (D-033, D-047). When the
+  // unit is short even with none, all are kept and the level widens with them.
+  const { sex, ageGroup, onset } = q;
+  const tests: Record<PatientFilter, ((r: IsolateRecord) => boolean) | null> = {
+    sex: sex ? (r) => r.sex === sex : null,
+    ageGroup: ageGroup ? (r) => inAgeGroup(r.ageYears, ageGroup) : null,
+    onset: onset === "hospital" ? isHospitalOnset : null,
+  };
+  const asked = DROP_ORDER.filter((f) => tests[f]);
+  const passes = (kept: readonly PatientFilter[]) => (r: IsolateRecord) => kept.every((f) => tests[f]?.(r) ?? true);
+  let kept = asked;
+  if (all.filter(inLevel.unit).length >= minTested)
+    for (let dropped = 0; dropped <= asked.length; dropped++) {
+      kept = asked.slice(dropped);
+      if (all.filter((r) => inLevel.unit(r) && passes(kept)(r)).length >= minTested) break;
+    }
+  const applied = passes(kept);
+  const sexApplied = kept.includes("sex");
+  const base = all.filter(applied);
   const level = (["unit", "ward type"] as Level[]).find((l) => base.filter(inLevel[l]).length >= minTested) ?? "hospital";
   const pool = base.filter(inLevel[level]);
   const recentFrom = addDays(q.asOf, -27);
   const recentPool = firstIsolates(
-    records.filter((r) => inWindow(r, recentFrom) && r.ward === q.ward && (!sexApplied || r.sex === q.sex)),
+    records.filter((r) => inWindow(r, recentFrom) && r.ward === q.ward && applied(r)),
     { from: recentFrom, to: q.asOf },
   );
 
@@ -214,10 +251,21 @@ export function coverage(records: readonly IsolateRecord[], q: CoverageQuery): C
   const byOrganism = new Map<Organism, number>();
   for (const r of pool) byOrganism.set(r.organism, (byOrganism.get(r.organism) ?? 0) + 1);
   return {
-    query: { asOf: q.asOf, ward: q.ward, specimen: q.specimen, sex: q.sex ?? null, windowDays, minTested },
+    query: {
+      asOf: q.asOf,
+      ward: q.ward,
+      specimen: q.specimen,
+      sex: q.sex ?? null,
+      ageGroup: q.ageGroup ?? null,
+      onset: q.onset ?? null,
+      windowDays,
+      minTested,
+    },
     level,
     isolates: pool.length,
     sexApplied,
+    ageGroupApplied: kept.includes("ageGroup"),
+    onsetApplied: kept.includes("onset"),
     from,
     organisms: [...byOrganism.entries()]
       .map(([organism, isolates]) => ({ organism, isolates, share: pool.length ? isolates / pool.length : 0 }))

@@ -70,6 +70,22 @@ describe("weekly counts route", () => {
   });
 });
 
+describe("coverage route", () => {
+  it("applies age group and onset, keys the cache by them and rejects unknown values", async () => {
+    const base = await startApi();
+    const get = async (q: string) => (await (await fetch(`${base}/api/coverage?ward=ICU&specimen=urine${q}`)).json()).coverage;
+    // Released first isolates: i0 (age 0) and i1 (age 75); no admission dates, so none is hospital-onset.
+    expect((await get("")).isolates).toBe(2);
+    const child = await get("&ageGroup=child");
+    expect([child.isolates, child.ageGroupApplied, child.query.ageGroup]).toEqual([1, true, "child"]);
+    expect((await get("&ageGroup=older")).isolates).toBe(1);
+    const onset = await get("&onset=hospital");
+    expect([onset.isolates, onset.onsetApplied, onset.query.onset]).toEqual([0, true, "hospital"]);
+    expect((await fetch(`${base}/api/coverage?ward=ICU&specimen=urine&ageGroup=old`)).status).toBe(400);
+    expect((await fetch(`${base}/api/coverage?ward=ICU&specimen=urine&onset=community`)).status).toBe(400);
+  });
+});
+
 describe("county geometry route", () => {
   it("serves the polygons when the file exists and answers 404 without it", async () => {
     const file = join(dir, "counties.geojson");
@@ -86,7 +102,7 @@ describe("county geometry route", () => {
 describe("assistant HTTP routes", () => {
   it("disables Ask, filters inclusive ages/sex, and explains released alerts without AI", async () => {
     const base = await startApi();
-    expect((await (await fetch(`${base}/api/meta`)).json()).ai).toBe(false);
+    expect(await (await fetch(`${base}/api/meta`)).json()).toMatchObject({ ai: false, aiStatus: "off" });
     expect((await fetch(`${base}/api/ask`, { method: "POST", body: JSON.stringify({ text: "older men", lang: "en" }) })).status).toBe(503);
     const zero = await (await fetch(`${base}/api/isolates?sex=F&ageMin=0&ageMax=0`)).json();
     expect(zero.records.map((r: { isolateId: string }) => r.isolateId)).toEqual(["i0"]);
@@ -109,6 +125,11 @@ describe("assistant HTTP routes", () => {
     const requests: { messages: { content: string }[] }[] = [];
     let fail = false;
     upstream = createServer(async (req, res) => {
+      if (req.method === "GET" && req.url === "/v1/models") {
+        if (fail) res.writeHead(530).end("origin unreachable");
+        else res.setHeader("content-type", "application/json").end(JSON.stringify({ object: "list", data: [{ id: "local-test" }] }));
+        return;
+      }
       let raw = "";
       for await (const chunk of req) raw += chunk;
       const body = JSON.parse(raw);
@@ -136,7 +157,7 @@ describe("assistant HTTP routes", () => {
     vi.stubEnv("AEI_LLM_URL", origin(upstream));
     vi.stubEnv("AEI_LLM_MODEL", "local-test");
     const base = await startApi();
-    expect((await (await fetch(`${base}/api/meta`)).json()).ai).toBe(true);
+    expect(await (await fetch(`${base}/api/meta`)).json()).toMatchObject({ ai: true, aiStatus: "ready" });
     const result = await (
       await fetch(`${base}/api/ask`, { method: "POST", body: JSON.stringify({ text: "older men", lang: "en" }) })
     ).json();
@@ -159,10 +180,21 @@ describe("assistant HTTP routes", () => {
     expect((await fetch(`${base}/api/explain?id=cpe:i2&lang=en&wording=poem`)).status).toBe(400);
     fail = true;
     expect((await fetch(`${base}/api/ask`, { method: "POST", body: JSON.stringify({ text: "anything", lang: "fi" }) })).status).toBe(502);
+    // The failed question probed the model again, so meta already says it is offline (D-049).
+    expect(await (await fetch(`${base}/api/meta`)).json()).toMatchObject({ ai: false, aiStatus: "offline" });
     // Cached by language: Finnish is a new request, and a failing model gives the template.
     const fallback = await (await fetch(`${base}/api/explain?id=cpe:i2&lang=fi&wording=model`)).json();
     expect(fallback.source).toBe("template");
     expect(fallback.text).toContain("Teho-osasto");
+  });
+  it("reports a configured model that does not answer as offline, not as available", async () => {
+    // A tunnel with no origin behind it, as Cloudflare answers while the model's job is down.
+    upstream = createServer((_req, res) => void res.writeHead(530).end("origin unreachable")).listen(0);
+    await once(upstream, "listening");
+    vi.stubEnv("AEI_LLM_URL", origin(upstream));
+    vi.stubEnv("AEI_LLM_MODEL", "local-test");
+    const base = await startApi();
+    expect(await (await fetch(`${base}/api/meta`)).json()).toMatchObject({ ai: false, aiStatus: "offline" });
   });
 });
 

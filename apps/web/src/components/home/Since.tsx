@@ -1,4 +1,4 @@
-import { formatDate, formatDateNumeric, type Locale, phenotypeName, t } from "@aei/i18n";
+import { type Locale, phenotypeName, t } from "@aei/i18n";
 import { AsOf } from "../AsOf.tsx";
 import type { Changes } from "./changes.ts";
 
@@ -9,13 +9,13 @@ interface Props {
   state: "connecting" | "offline" | "ready";
 }
 
-/** "Since yesterday": three numbers dated the as-of day, each a link to where it is shown. */
+/** "Since yesterday": three numbers dated the as-of day (once, in the header), each a link to where it is shown. */
 export function Since({ locale, asOf, changes, state }: Props) {
   return (
     <section className="hm-since glass" aria-labelledby="hm-since-title">
       <header className="hm-head">
         <h1 id="hm-since-title">{t(locale, "homeSinceTitle")}</h1>
-        {asOf ? <AsOf locale={locale} date={asOf} /> : null}
+        {(asOf ?? changes?.asOf) ? <AsOf locale={locale} date={(asOf ?? changes?.asOf) as string} /> : null}
       </header>
       {state === "connecting" ? (
         <p className="hm-note" role="status" aria-live="polite">
@@ -33,8 +33,6 @@ export function Since({ locale, asOf, changes, state }: Props) {
 }
 
 function Stats({ locale, changes }: { locale: Locale; changes: Changes }) {
-  const date = formatDateNumeric(changes.asOf);
-  const spoken = formatDate(locale, changes.asOf, "long");
   const finds = changes.finds.reduce((n, f) => n + f.count, 0);
   const signals = changes.alerts.reduce((n, a) => n + a.count, 0);
   const firstFind = changes.finds[0];
@@ -61,10 +59,6 @@ function Stats({ locale, changes }: { locale: Locale; changes: Changes }) {
           <a className="hm-stat" href={s.href} data-zero={s.n === 0} title={s.title}>
             <b className="hm-n">{s.n}</b>
             <span className="hm-label">{s.label}</span>
-            <span className="hm-date">
-              <span className="visually-hidden">{spoken}</span>
-              <span aria-hidden="true">{date}</span>
-            </span>
           </a>
         </li>
       ))}

@@ -2,7 +2,7 @@
 
 The doctor's empirical coverage list (D-023, provisional).
 
-    coverage(records, { asOf, ward, specimen, sex?, windowDays = 365, minTested = 30 })
+    coverage(records, { asOf, ward, specimen, sex?, ageGroup?, onset?, windowDays = 365, minTested = 30 })
     wilson(k, n)   // the 95 % Wilson interval it uses, cross-checked by scripts/crosscheck-stats
 
 For each antibiotic that suits the specimen: the share of first isolates
@@ -30,11 +30,21 @@ women at PHC-N this puts mecillinam and nitrofurantoin first; for ICU
 blood nothing clears 90 % on the year's 38 results, which the screen
 should say rather than hide.
 
+Patient filters (D-033, D-047): `sex`; `ageGroup`, one of D-019's groups
+(`child` 0–17, `adult` 18–64, `older` 65+, `veryOld` 80+, from
+`AGE_GROUPS` in `@aei/domain`); `onset: "hospital"`, sampled on day 3 of
+the stay or later (`isHospitalOnset`). They apply to the first isolates.
+When the unit has fewer than `minTested` isolates with all of them but
+enough without, they are dropped one at a time in `DROP_ORDER` (age group,
+onset, sex) before the unit is; when the unit is short even without them,
+all are kept while the level widens. `sexApplied`, `ageGroupApplied` and
+`onsetApplied` say which survived, `query` echoes what was asked.
+
 Why a year and not four weeks: experiments/0004. Why sex is a filter:
 experiments/0005 (urinary *E. coli* ciprofloxacin, men OR 1.9). Informs;
 does not prescribe.
 
-Relies on: D-004, D-023, D-026, D-027. Tests: `src/coverage.test.ts`.
+Relies on: D-004, D-019, D-023, D-026, D-027, D-033, D-047. Tests: `src/coverage.test.ts`.
 
 ## Combinations (D-028)
 

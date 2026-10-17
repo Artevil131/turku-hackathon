@@ -329,6 +329,7 @@
 }
 
 .cl-details {
+  white-space: nowrap;
   color: var(--d-acc);
   text-decoration: underline;
   text-underline-offset: 3px;

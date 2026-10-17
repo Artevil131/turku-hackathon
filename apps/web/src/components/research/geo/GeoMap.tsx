@@ -304,9 +304,14 @@ export function GeoMap({ client, locale, asOf, reducedMotion }: PanelProps) {
       ) : null}
       {counties.state === "404" || regional.state === "404" ? (
         <p className="geo-state" role="status">
-          {[counties.state === "404" ? t(locale, "geoNoCounties") : null, regional.state === "404" ? t(locale, "geoNoRegional") : null]
-            .filter(Boolean)
-            .join(" · ")}
+          {t(
+            locale,
+            counties.state === "404" && regional.state === "404"
+              ? "geoMissingBoth"
+              : counties.state === "404"
+                ? "geoMissingCounties"
+                : "geoMissingRegional",
+          )}
         </p>
       ) : null}
 
@@ -343,7 +348,13 @@ export function GeoMap({ client, locale, asOf, reducedMotion }: PanelProps) {
       ) : (
         <>
           <div className="geo-stage">
-            <svg viewBox={`0 0 ${L.w} ${L.h}`} preserveAspectRatio="xMidYMid meet" className="geo-svg" role="group" aria-label={t(locale, "geoTitle")}>
+            <svg
+              viewBox={`0 0 ${L.w} ${L.h}`}
+              preserveAspectRatio="xMidYMid meet"
+              className="geo-svg"
+              role="group"
+              aria-label={t(locale, "geoTitle")}
+            >
               <defs>
                 <marker id="geo-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
                   <path d="M1 1 L9 5 L1 9 Z" className="geo-spread-head" />

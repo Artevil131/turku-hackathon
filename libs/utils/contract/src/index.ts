@@ -1,5 +1,6 @@
 import type { Alert } from "@aei/alerts";
-import type { AgeGroup } from "@aei/ask";
+import type { AgeGroup, AiStatus } from "@aei/ask";
+import type { FailsTogetherResponse, FailsTogetherRouteQuery } from "@aei/coresistance/route";
 import type { CombinationSuggestion, CoverageResult, CoverageQuery as GearCoverageQuery, Severity, Suggestion } from "@aei/coverage";
 import type { Antibiotic, IsoDate, IsolateRecord, Organism, Sex, Specimen, Ward, WardCode } from "@aei/domain";
 import type { CheckSummary } from "@aei/quality";
@@ -37,10 +38,15 @@ export const ROUTES = {
   weekly: "/api/weekly",
   /** Plausibility checks over the rows the server holds (D-038). */
   quality: "/api/quality",
+  /** Antibiotics that fail together, from the hospital's own first isolates (D-048). */
+  failsTogether: "/api/fails-together",
 } as const;
 
 export interface Meta {
+  /** The assistant can answer now: a model is configured and its server answered the last probe (D-049). */
   ai: boolean;
+  /** "off": no model configured; "offline": configured but not answering; "ready": as `ai`. Optional for older servers. */
+  aiStatus?: AiStatus;
   datasetStart: IsoDate;
   datasetEnd: IsoDate;
   wards: readonly Ward[];
@@ -70,7 +76,7 @@ export interface IsolateQuery {
   ageMax?: number;
 }
 
-export type { AntibioticCoverage, CombinationSuggestion, Counts, CoverageResult, Level, Severity, Suggestion } from "@aei/coverage";
+export type { AntibioticCoverage, CombinationSuggestion, Counts, CoverageResult, Level, Onset, Severity, Suggestion } from "@aei/coverage";
 /** The bar each severity is judged against (D-026, D-027), so clients label it from the same source. */
 export { THRESHOLDS } from "@aei/coverage";
 
@@ -314,6 +320,7 @@ export interface AeiClient {
   /** The code's template by default; `wording: "model"` asks the AI to reword it (D-029). */
   explain(id: string, lang: "en" | "fi", wording?: ExplainWording): Promise<ExplainResponse>;
   coverage(query: CoverageQuery): Promise<CoverageResponse>;
+  failsTogether(query: FailsTogetherRouteQuery): Promise<FailsTogetherResponse>;
   meta(): Promise<Meta>;
   clock(): Promise<ClockState>;
   command(command: ClockCommand): Promise<ClockState>;
@@ -360,6 +367,7 @@ export function createAeiClient(options: AeiClientOptions): AeiClient {
       }),
     explain: (id, lang, wording) => json<ExplainResponse>(withQuery(ROUTES.explain, { id, lang, wording })),
     coverage: (query) => json<CoverageResponse>(withQuery(ROUTES.coverage, query)),
+    failsTogether: (query) => json<FailsTogetherResponse>(withQuery(ROUTES.failsTogether, query)),
     meta: () => json<Meta>(ROUTES.meta),
     clock: () => json<ClockState>(ROUTES.clock),
     command: (command) =>
@@ -385,3 +393,6 @@ export function createAeiClient(options: AeiClientOptions): AeiClient {
     },
   };
 }
+
+export type { Family, Link as FailsTogetherLink } from "@aei/coresistance";
+export type { FailsTogetherResponse, FailsTogetherRouteQuery as FailsTogetherQuery } from "@aei/coresistance/route";
