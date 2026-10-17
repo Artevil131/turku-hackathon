@@ -1040,7 +1040,7 @@ async function main() {
     await click('.start-create button[type="submit"]');
     if (
       !(await waitIn(
-        `location.hash.startsWith('#workspace?') && !!document.querySelector('#ws-win-signals') && !document.querySelector('.project-dialog')`,
+        `location.hash.startsWith('#workspace?') && !!document.querySelector('#ws-win-signals') && !!document.querySelector('#ws-win-graph') && !document.querySelector('.project-dialog')`,
         15_000,
       ))
     )
