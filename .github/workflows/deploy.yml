@@ -1,0 +1,41 @@
+# Deploys every push to main to https://yourlab.aapolipponen.com. The job only opens an SSH connection to the OCI
+# host with a key whose authorized_keys entry forces `aei-deploy` (deploy/autodeploy), so the key can run that one
+# deploy and nothing else. Setup and secrets: deploy/autodeploy/README.md. It does not wait for `check`.
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# One deploy at a time; a newer push waits for the running one instead of cancelling it mid-build.
+concurrency:
+  group: deploy-yourlab
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Deploy on the OCI host
+        env:
+          KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/deploy_key && chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes -o BatchMode=yes "opc@$HOST" deploy
+      - name: Check the public site
+        run: |
+          for i in $(seq 1 12); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' https://yourlab.aapolipponen.com/api/clock || true)
+            [ "$code" = 200 ] && { echo "yourlab answers 200"; exit 0; }
+            sleep 5
+          done
+          echo "yourlab answered $code"; exit 1
