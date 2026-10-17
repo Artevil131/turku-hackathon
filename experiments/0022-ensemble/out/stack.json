@@ -1,0 +1,26 @@
+{
+ "features": [
+  "-log10 s_A",
+  "-log10 s_B",
+  "both fired"
+ ],
+ "intercept": -1.78954,
+ "weights": [
+  3.68667,
+  1.56384,
+  -0.63921
+ ],
+ "scale": [
+  1.81199,
+  2.05579,
+  0.402776
+ ],
+ "l2": 1.0,
+ "training_rows": {
+  "pos": 21394,
+  "fired_pos": 18983,
+  "neg": 21411,
+  "fired_neg": 3687
+ },
+ "stream": "tune_curve's draws extended to 200 per family, seed 2026, starts 2024-04-01 to 2024-08-15"
+}

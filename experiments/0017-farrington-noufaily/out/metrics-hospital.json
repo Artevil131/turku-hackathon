@@ -1,0 +1,128 @@
+{
+  "experiment": "0017-farrington-noufaily",
+  "method": "Farrington hospital, trailing 26 wk, guard 4 wk, plain (hospital-wide series; D4 and I1 only, exploratory)",
+  "family": "detection",
+  "tuned_on_test": false,
+  "tuned_on": "2023-10-02..2024-09-30",
+  "metrics": {
+    "D1": {
+      "E1": null,
+      "E1_corrected": null,
+      "E2": null,
+      "E2_corrected": null,
+      "E3": null,
+      "E4": null
+    },
+    "D4": {
+      "episodes_per_year": 1.00481,
+      "sentinel": 0.0,
+      "cluster": 1.00481,
+      "trend": 0.0,
+      "divergence": 0.0,
+      "data": 0.0,
+      "alerts_per_week": 0.0192572
+    },
+    "I1": {
+      "alerts": 2,
+      "incidents": 2,
+      "alerts_per_incident": 1.0
+    }
+  },
+  "intervals": {
+    "D4": {
+      "episodes_per_year": [
+        0.121688,
+        3.62973
+      ],
+      "sentinel": [
+        0.0,
+        1.85332
+      ],
+      "cluster": [
+        0.121688,
+        3.62973
+      ],
+      "trend": [
+        0.0,
+        1.85332
+      ],
+      "divergence": [
+        0.0,
+        1.85332
+      ],
+      "data": [
+        0.0,
+        1.85332
+      ]
+    }
+  },
+  "n": {
+    "D4": {
+      "episodes_per_year": 2,
+      "sentinel": 0,
+      "cluster": 2,
+      "trend": 0,
+      "divergence": 0,
+      "data": 0,
+      "alerts_per_week": 2
+    },
+    "I1": {
+      "alerts": 2,
+      "incidents": 2
+    }
+  },
+  "runtime_s": 50.9,
+  "cpu_s": 50.4,
+  "seeds": [
+    2026
+  ],
+  "data": "synthetic_microbiology_dataset, seed 2026, as received 2026-10-09",
+  "notes": "Hospital-wide series: D2 and D5 are zero by construction (ward None never matches an injected unit), D1 cannot match E1 or E2; D4 is the figure.",
+  "hospital_curve": [
+    {
+      "level": 0.03,
+      "episodes_per_year": 13.565,
+      "count": 27
+    },
+    {
+      "level": 0.01,
+      "episodes_per_year": 5.52648,
+      "count": 11
+    },
+    {
+      "level": 0.003,
+      "episodes_per_year": 2.51204,
+      "count": 5
+    },
+    {
+      "level": 0.001,
+      "episodes_per_year": 1.00481,
+      "count": 2
+    },
+    {
+      "level": 0.0003,
+      "episodes_per_year": 1.00481,
+      "count": 2
+    },
+    {
+      "level": 0.0001,
+      "episodes_per_year": 1.00481,
+      "count": 2
+    },
+    {
+      "level": 3e-05,
+      "episodes_per_year": 0.0,
+      "count": 0
+    },
+    {
+      "level": 1e-05,
+      "episodes_per_year": 0.0,
+      "count": 0
+    },
+    {
+      "level": 1e-06,
+      "episodes_per_year": 0.0,
+      "count": 0
+    }
+  ]
+}

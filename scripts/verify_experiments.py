@@ -4,7 +4,8 @@ READMEs and the pitch cannot drift from the code.
     uv run python scripts/verify_experiments.py                 # every experiment (under a minute)
     uv run python scripts/verify_experiments.py --only 0002,0009
 
-Run-time lines ("Run time 10 s", "Sweep time: 15.0 s") and git-ignored intermediate files are ignored. The committed files are put back afterwards, so
+Experiments from 0012 on are found by their `run.py`. Run-time lines ("Run time 10 s", "Sweep time: 15.0 s", the
+`runtime_s` and `cpu_s` fields of metrics.json) and git-ignored intermediate files are ignored. The committed files are put back afterwards, so
 the working tree is left as it was. 0008 reads THL data that THL revises, so it runs only with --with-external; 0003
 (the language-model bake-off) is local-only and not rerun. Exits 1 if any output differs.
 """
@@ -29,9 +30,20 @@ EXPERIMENTS = {
     "0007": "experiments/0007-injected-events/inject.py",
     "0009": "experiments/0009-empty-day-runs/analysis.py",
     "0010": ["experiments/0010-coverage-as-shipped/backtest.ts", "experiments/0010-coverage-as-shipped/analysis.py"],
+    "0011": "experiments/0011-common-profile-injections/run.py",
 }
 EXTERNAL = {"0008": "experiments/0008-regional-signals/analysis.py"}
-RUN_TIME = re.compile(r"(Run time [0-9.]+ s|Sweep time: [0-9.]+ s)")
+RUN_TIME = re.compile(r"(Run time [0-9.]+ s|Sweep time: [0-9.]+ s|\"runtime_s\": [0-9.]+|\"cpu_s\": [0-9.]+)")
+
+
+def discovered() -> dict[str, str]:
+    """Experiments from 0012 on that are not listed above: `experiments/NNNN-slug/run.py` is their command."""
+    found = {}
+    for run in sorted(ROOT.glob("experiments/[0-9][0-9][0-9][0-9]-*/run.py")):
+        number = run.parent.name[:4]
+        if number >= "0012" and number not in EXPERIMENTS and number not in EXTERNAL:
+            found[number] = str(run.relative_to(ROOT))
+    return found
 
 
 def normalise(text: str) -> list[str]:
@@ -60,8 +72,13 @@ def verify(number: str, scripts: str | list[str]) -> bool:
     ignored = set(subprocess.run(["git", "check-ignore", *map(str, after)], cwd=ROOT, capture_output=True, text=True).stdout.split())
     diffs = []
     for p in sorted((set(before) | set(after)) - {q for q in after if str(q) in ignored}):
-        a = normalise(before.get(p, b"").decode("utf-8"))
-        b = normalise(after.get(p, b"").decode("utf-8"))
+        try:
+            a = normalise(before.get(p, b"").decode("utf-8"))
+            b = normalise(after.get(p, b"").decode("utf-8"))
+        except UnicodeDecodeError:  # figures and other binary files: compared byte for byte
+            if before.get(p) != after.get(p):
+                diffs.append(f"{p.name}: binary file differs")
+            continue
         if a != b:
             diffs.append("\n".join(difflib.unified_diff(a, b, f"committed {p.name}", f"rerun {p.name}", lineterm="", n=1)))
     print(f"{number}: {'reproduces' if not diffs else 'DIFFERS'} ({len(before)} files, {took:.0f} s)")
@@ -75,10 +92,10 @@ def main() -> None:
     p.add_argument("--only", help="comma-separated experiment numbers")
     p.add_argument("--with-external", action="store_true", help="also 0008, which needs data/external/thl")
     a = p.parse_args()
-    todo = dict(EXPERIMENTS, **(EXTERNAL if a.with_external else {}))
+    todo = dict(EXPERIMENTS, **discovered(), **(EXTERNAL if a.with_external else {}))
     if a.only:
         wanted = a.only.split(",")
-        todo = {n: s for n, s in {**EXPERIMENTS, **EXTERNAL}.items() if n in wanted}
+        todo = {n: s for n, s in {**EXPERIMENTS, **discovered(), **EXTERNAL}.items() if n in wanted}
     results = [verify(n, s) for n, s in sorted(todo.items())]
     sys.exit(0 if all(results) else 1)
 

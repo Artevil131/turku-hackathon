@@ -1,0 +1,154 @@
+{
+  "experiment": "baseline-exposure-e1",
+  "method": "Exposure ranking after E1 (ESBL E. coli in URO, onset 2025-05-30): time-ordered patient-flow graph over the 365 days before onset, exposure of the other eight units from URO as share and raw, AUC against units whose ESBL E. coli patients in the 8 weeks from onset exceed their 26-week baseline, 1,000 label-permutation rewirings",
+  "family": "prediction",
+  "tuned_on_test": false,
+  "tuned_on": "none (no fitted parameters)",
+  "metrics": {
+    "P1": {
+      "auc_share_a05": null,
+      "auc_raw_a05": null,
+      "auc_share_a001": null,
+      "auc_raw_a001": null,
+      "null_p_share_a05": null,
+      "null_p_raw_a05": null,
+      "positives_a05": 0,
+      "positives_a001": 0
+    }
+  },
+  "intervals": {},
+  "n": {
+    "P1": {
+      "units_ranked": 8,
+      "culture_rows_in_window": 15767,
+      "patients_in_window": 6364,
+      "null_replicates": 1000
+    }
+  },
+  "runtime_s": 0.3,
+  "cpu_s": 0.3,
+  "seeds": [
+    2026
+  ],
+  "data": "synthetic_microbiology_dataset, seed 2026, as received 2026-10-09",
+  "notes": "One planted event gives a description, not a claim (METRICS.md P1). No unit other than URO exceeded its baseline at either alpha, so there is no positive to rank: the AUCs and null p-values are undefined (null), not zero. The supplementary rank correlation (detail.excess_corr) uses the continuous outcome (observed + 0.5) / expected over the eight units and is not a spec key.",
+  "detail": {
+    "event": "URO 2025-05-30",
+    "excess_corr": {
+      "share": 0.619048,
+      "raw": 0.047619,
+      "p_share": 0.0519481,
+      "p_raw": 0.56044
+    },
+    "units": [
+      {
+        "unit": "ED",
+        "share": 0.1003,
+        "raw": 15.8167,
+        "baseline_patients": 15,
+        "patients": 1,
+        "expected": 4.7692,
+        "p_a05": 0.9915,
+        "positive_a05": false,
+        "p_a001": 0.9915,
+        "positive_a001": false
+      },
+      {
+        "unit": "MED-A",
+        "share": 0.0686,
+        "raw": 4.95,
+        "baseline_patients": 12,
+        "patients": 1,
+        "expected": 3.8462,
+        "p_a05": 0.9786,
+        "positive_a05": false,
+        "p_a001": 0.9786,
+        "positive_a001": false
+      },
+      {
+        "unit": "MED-B",
+        "share": 0.0906,
+        "raw": 5.2167,
+        "baseline_patients": 6,
+        "patients": 2,
+        "expected": 2.0,
+        "p_a05": 0.594,
+        "positive_a05": false,
+        "p_a001": 0.594,
+        "positive_a001": false
+      },
+      {
+        "unit": "SURG",
+        "share": 0.1053,
+        "raw": 6.9333,
+        "baseline_patients": 3,
+        "patients": 0,
+        "expected": 1.0769,
+        "p_a05": 1.0,
+        "positive_a05": false,
+        "p_a001": 1.0,
+        "positive_a001": false
+      },
+      {
+        "unit": "URO",
+        "share": null,
+        "raw": null,
+        "baseline_patients": 5,
+        "patients": 29,
+        "expected": 1.6923,
+        "p_a05": 0.0,
+        "positive_a05": true,
+        "p_a001": 0.0,
+        "positive_a001": true
+      },
+      {
+        "unit": "ICU",
+        "share": 0.0843,
+        "raw": 2.9833,
+        "baseline_patients": 2,
+        "patients": 0,
+        "expected": 0.7692,
+        "p_a05": 1.0,
+        "positive_a05": false,
+        "p_a001": 1.0,
+        "positive_a001": false
+      },
+      {
+        "unit": "GER",
+        "share": 0.0808,
+        "raw": 5.8667,
+        "baseline_patients": 8,
+        "patients": 0,
+        "expected": 2.6154,
+        "p_a05": 1.0,
+        "positive_a05": false,
+        "p_a001": 1.0,
+        "positive_a001": false
+      },
+      {
+        "unit": "PHC-N",
+        "share": 0.1331,
+        "raw": 11.6595,
+        "baseline_patients": 9,
+        "patients": 2,
+        "expected": 2.9231,
+        "p_a05": 0.7891,
+        "positive_a05": false,
+        "p_a001": 0.7891,
+        "positive_a001": false
+      },
+      {
+        "unit": "PHC-S",
+        "share": 0.14,
+        "raw": 13.8667,
+        "baseline_patients": 11,
+        "patients": 6,
+        "expected": 3.5385,
+        "p_a05": 0.1475,
+        "positive_a05": false,
+        "p_a001": 0.1475,
+        "positive_a001": false
+      }
+    ]
+  }
+}

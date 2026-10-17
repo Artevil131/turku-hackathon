@@ -56,6 +56,22 @@ the experiments use and the live tool does not; and
   the TypeScript experiments wrote, and their `mulberry32` generator, so
   ported experiments print the same tables and draw the same numbers.
 
+The overnight scoring harness of benchmarks/METRICS.md (2026-10-17; specification and its choices in
+benchmarks/overnight-2026-10-17/harness-spec.md), Python only:
+
+- `aei.harness`: the split (`TUNE`, `SCORE`), screening and held-out injection seeds, cached `data()`,
+  `Clock`, and `write_metrics` for every experiment's `out/metrics.json`.
+- `aei.coverage_list`: a mirror of `@aei/coverage` `coverage`, `suggest`, `suggestCombinations` (checked against
+  0010's TypeScript rows), with `suggest_rows` to rank another estimator's shares by the shipped rules.
+- `aei.score_coverage`: coverage targets, the estimator protocol and C1 to C8 (`score_estimator`), baselines
+  `hospital_365` and `shipped`.
+- `aei.score_detection`: the detector protocol, the live set as a detector (`LiveSet`, with new-in-unit),
+  D1 to D7 and I1 (`score_detector`, `confirm` for held-out seeds), `retune_live_set`, `check_causal`.
+- `aei.score_prediction`: THL county series, P2 (`score_forecaster`, `persistence`, `seasonal_naive`) and P1
+  exposure with the label-permutation null (`score_exposure`).
+- `aei.inject` gained generic trials that take any detector (`seed_trials`, `rare_hits`, `common_hits`,
+  `two_unit_hits`, `gap_hits`); its earlier functions are unchanged.
+
 ## Tests
 
     uv run pytest libs/utils/py/tests         # about 30 s; needs the dataset in data/ and Node 22

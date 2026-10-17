@@ -1,0 +1,4224 @@
+{
+  "note": "exploratory: every setting scored on the scoring period at the level its tuning-year rule gives; a row picked from here was picked on the scoring period",
+  "settings": [
+    {
+      "H": 0.0384615,
+      "w": 2,
+      "tuning_level": 0.5,
+      "tuning_row": {
+        "level": 0.5,
+        "noise_per_year": 3.9918,
+        "noise_count": 2,
+        "rare": 0.2,
+        "rare_hit": 8,
+        "rare_n": 40,
+        "rare_delay": 1,
+        "common_esbl": 0.2,
+        "common_esbl_hit": 8,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 1
+      },
+      "parts": {
+        "both": {
+          "D2_rare_k4": 0.14,
+          "D2_common_esbl_k4": 0.135,
+          "D2_intervals": {
+            "rare_k4": [
+              0.0986698,
+              0.194899
+            ],
+            "common_esbl_k4": [
+              0.0944657,
+              0.189291
+            ]
+          },
+          "D4": {
+            "episodes_per_year": 6.53129,
+            "sentinel": 0.0,
+            "cluster": 1.50722,
+            "trend": 0.0,
+            "divergence": 5.02407,
+            "data": 0.0,
+            "alerts_per_week": 0.125172
+          },
+          "D4_counts": {
+            "episodes_per_year": 13,
+            "sentinel": 0,
+            "cluster": 3,
+            "trend": 0,
+            "divergence": 10,
+            "data": 0,
+            "alerts_per_week": 13
+          },
+          "D5": {
+            "level": 0.5,
+            "noise": 1.50722,
+            "rare": 0.14,
+            "rare_delay": 3,
+            "common_esbl": 0.135,
+            "common_esbl_delay": 3
+          },
+          "D5_interval": {
+            "rare": [
+              0.0986698,
+              0.194899
+            ],
+            "common_esbl": [
+              0.0944657,
+              0.189291
+            ]
+          },
+          "D5_whole_tool": {
+            "level": 0.4,
+            "whole_tool": 2.00963,
+            "rare": 0.1,
+            "rare_hit": 20,
+            "rare_delay": 3,
+            "common_esbl": 0.105,
+            "common_esbl_hit": 21,
+            "common_esbl_delay": 4
+          }
+        },
+        "count": {
+          "D2_rare_k4": 0.015,
+          "D2_common_esbl_k4": 0.01,
+          "D2_intervals": {
+            "rare_k4": [
+              0.00511424,
+              0.0431657
+            ],
+            "common_esbl_k4": [
+              0.00274666,
+              0.0357218
+            ]
+          },
+          "D4": {
+            "episodes_per_year": 1.50722,
+            "sentinel": 0.0,
+            "cluster": 1.50722,
+            "trend": 0.0,
+            "divergence": 0.0,
+            "data": 0.0,
+            "alerts_per_week": 0.0288858
+          },
+          "D4_counts": {
+            "episodes_per_year": 3,
+            "sentinel": 0,
+            "cluster": 3,
+            "trend": 0,
+            "divergence": 0,
+            "data": 0,
+            "alerts_per_week": 3
+          },
+          "D5": {
+            "level": 0.5,
+            "noise": 1.50722,
+            "rare": 0.015,
+            "rare_delay": 4,
+            "common_esbl": 0.01,
+            "common_esbl_delay": 1
+          },
+          "D5_interval": {
+            "rare": [
+              0.00511424,
+              0.0431657
+            ],
+            "common_esbl": [
+              0.00274666,
+              0.0357218
+            ]
+          },
+          "D5_whole_tool": {
+            "level": 0.5,
+            "whole_tool": 1.50722,
+            "rare": 0.015,
+            "rare_hit": 3,
+            "rare_delay": 4,
+            "common_esbl": 0.01,
+            "common_esbl_hit": 2,
+            "common_esbl_delay": 1
+          }
+        },
+        "rate": {
+          "D2_rare_k4": 0.125,
+          "D2_common_esbl_k4": 0.13,
+          "D2_intervals": {
+            "rare_k4": [
+              0.0861197,
+              0.178014
+            ],
+            "common_esbl_k4": [
+              0.090282,
+              0.183664
+            ]
+          },
+          "D4": {
+            "episodes_per_year": 5.02407,
+            "sentinel": 0.0,
+            "cluster": 0.0,
+            "trend": 0.0,
+            "divergence": 5.02407,
+            "data": 0.0,
+            "alerts_per_week": 0.0962861
+          },
+          "D4_counts": {
+            "episodes_per_year": 10,
+            "sentinel": 0,
+            "cluster": 0,
+            "trend": 0,
+            "divergence": 10,
+            "data": 0,
+            "alerts_per_week": 10
+          },
+          "D5": {
+            "level": 0.5,
+            "noise": 0.0,
+            "rare": 0.125,
+            "rare_delay": 3,
+            "common_esbl": 0.13,
+            "common_esbl_delay": 3
+          },
+          "D5_interval": {
+            "rare": [
+              0.0861197,
+              0.178014
+            ],
+            "common_esbl": [
+              0.090282,
+              0.183664
+            ]
+          },
+          "D5_whole_tool": {
+            "level": 0.4,
+            "whole_tool": 2.00963,
+            "rare": 0.085,
+            "rare_hit": 17,
+            "rare_delay": 3,
+            "common_esbl": 0.105,
+            "common_esbl_hit": 21,
+            "common_esbl_delay": 4
+          }
+        }
+      }
+    },
+    {
+      "H": 0.0384615,
+      "w": 4,
+      "tuning_level": 0.1,
+      "tuning_row": {
+        "level": 0.1,
+        "noise_per_year": 1.9959,
+        "noise_count": 1,
+        "rare": 0.075,
+        "rare_hit": 3,
+        "rare_n": 40,
+        "rare_delay": 6,
+        "common_esbl": 0.125,
+        "common_esbl_hit": 5,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 3
+      },
+      "parts": {
+        "both": {
+          "D2_rare_k4": 0.07,
+          "D2_common_esbl_k4": 0.075,
+          "D2_intervals": {
+            "rare_k4": [
+              0.0421522,
+              0.114055
+            ],
+            "common_esbl_k4": [
+              0.0459749,
+              0.120044
+            ]
+          },
+          "D4": {
+            "episodes_per_year": 0.502407,
+            "sentinel": 0.0,
+            "cluster": 0.0,
+            "trend": 0.0,
+            "divergence": 0.502407,
+            "data": 0.0,
+            "alerts_per_week": 0.00962861
+          },
+          "D4_counts": {
+            "episodes_per_year": 1,
+            "sentinel": 0,
+            "cluster": 0,
+            "trend": 0,
+            "divergence": 1,
+            "data": 0,
+            "alerts_per_week": 1
+          },
+          "D5": {
+            "level": 0.4,
+            "noise": 4.01926,
+            "rare": 0.49,
+            "rare_delay": 5,
+            "common_esbl": 0.455,
+            "common_esbl_delay": 5
+          },
+          "D5_interval": {
+            "rare": [
+              0.421563,
+              0.558814
+            ],
+            "common_esbl": [
+              0.387482,
+              0.524214
+            ]
+          },
+          "D5_whole_tool": {
+            "level": 0.3,
+            "whole_tool": 3.01444,
+            "rare": 0.32,
+            "rare_hit": 64,
+            "rare_delay": 6,
+            "common_esbl": 0.365,
+            "common_esbl_hit": 73,
+            "common_esbl_delay": 6
+          }
+        },
+        "count": {
+          "D2_rare_k4": 0.0,
+          "D2_common_esbl_k4": 0.0,
+          "D2_intervals": {
+            "rare_k4": [
+              0.0,
+              0.0188453
+            ],
+            "common_esbl_k4": [
+              0.0,
+              0.0188453
+            ]
+          },
+          "D4": {
+            "episodes_per_year": 0.0,
+            "sentinel": 0.0,
+            "cluster": 0.0,
+            "trend": 0.0,
+            "divergence": 0.0,
+            "data": 0.0,
+            "alerts_per_week": 0.0
+          },
+          "D4_counts": {
+            "episodes_per_year": 0,
+            "sentinel": 0,
+            "cluster": 0,
+            "trend": 0,
+            "divergence": 0,
+            "data": 0,
+            "alerts_per_week": 0
+          },
+          "D5": {
+            "level": 0.4,
+            "noise": 4.01926,
+            "rare": 0.115,
+            "rare_delay": 6,
+            "common_esbl": 0.125,
+            "common_esbl_delay": 7
+          },
+          "D5_interval": {
+            "rare": [
+              0.0778637,
+              0.166647
+            ],
+            "common_esbl": [
+              0.0861197,
+              0.178014
+            ]
+          },
+          "D5_whole_tool": {
+            "level": 0.4,
+            "whole_tool": 4.01926,
+            "rare": 0.115,
+            "rare_hit": 23,
+            "rare_delay": 6,
+            "common_esbl": 0.125,
+            "common_esbl_hit": 25,
+            "common_esbl_delay": 7
+          }
+        },
+        "rate": {
+          "D2_rare_k4": 0.07,
+          "D2_common_esbl_k4": 0.075,
+          "D2_intervals": {
+            "rare_k4": [
+              0.0421522,
+              0.114055
+            ],
+            "common_esbl_k4": [
+              0.0459749,
+              0.120044
+            ]
+          },
+          "D4": {
+            "episodes_per_year": 0.502407,
+            "sentinel": 0.0,
+            "cluster": 0.0,
+            "trend": 0.0,
+            "divergence": 0.502407,
+            "data": 0.0,
+            "alerts_per_week": 0.00962861
+          },
+          "D4_counts": {
+            "episodes_per_year": 1,
+            "sentinel": 0,
+            "cluster": 0,
+            "trend": 0,
+            "divergence": 1,
+            "data": 0,
+            "alerts_per_week": 1
+          },
+          "D5": {
+            "level": 0.5,
+            "noise": 0.0,
+            "rare": 0.575,
+            "rare_delay": 4,
+            "common_esbl": 0.535,
+            "common_esbl_delay": 5
+          },
+          "D5_interval": {
+            "rare": [
+              0.505709,
+              0.641464
+            ],
+            "common_esbl": [
+              0.465866,
+              0.602814
+            ]
+          },
+          "D5_whole_tool": {
+            "level": 0.3,
+            "whole_tool": 2.51204,
+            "rare": 0.3,
+            "rare_hit": 60,
+            "rare_delay": 6,
+            "common_esbl": 0.34,
+            "common_esbl_hit": 68,
+            "common_esbl_delay": 5
+          }
+        }
+      }
+    },
+    {
+      "H": 0.0192308,
+      "w": 2,
+      "tuning_level": 0.5,
+      "tuning_row": {
+        "level": 0.5,
+        "noise_per_year": 3.9918,
+        "noise_count": 2,
+        "rare": 0.075,
+        "rare_hit": 3,
+        "rare_n": 40,
+        "rare_delay": 4,
+        "common_esbl": 0.15,
+        "common_esbl_hit": 6,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 3
+      },
+      "parts": {
+        "both": {
+          "D2_rare_k4": 0.085,
+          "D2_common_esbl_k4": 0.1,
+          "D2_intervals": {
+            "rare_k4": [
+              0.0537457,
+              0.131896
+            ],
+            "common_esbl_k4": [
+              0.0656704,
+              0.149406
+            ]
+          },
+          "D4": {
+            "episodes_per_year": 0.502407,
+            "sentinel": 0.0,
+            "cluster": 0.0,
+            "trend": 0.0,
+            "divergence": 0.502407,
+            "data": 0.0,
+            "alerts_per_week": 0.00962861
+          },
+          "D4_counts": {
+            "episodes_per_year": 1,
+            "sentinel": 0,
+            "cluster": 0,
+            "trend": 0,
+            "divergence": 1,
+            "data": 0,
+            "alerts_per_week": 1
+          },
+          "D5": {
+            "level": 0.5,
+            "noise": 0.0,
+            "rare": 0.085,
+            "rare_delay": 4,
+            "common_esbl": 0.1,
+            "common_esbl_delay": 3
+          },
+          "D5_interval": {
+            "rare": [
+              0.0537457,
+              0.131896
+            ],
+            "common_esbl": [
+              0.0656704,
+              0.149406
+            ]
+          },
+          "D5_whole_tool": {
+            "level": 0.5,
+            "whole_tool": 0.502407,
+            "rare": 0.085,
+            "rare_hit": 17,
+            "rare_delay": 4,
+            "common_esbl": 0.1,
+            "common_esbl_hit": 20,
+            "common_esbl_delay": 3
+          }
+        },
+        "count": {
+          "D2_rare_k4": 0.015,
+          "D2_common_esbl_k4": 0.0,
+          "D2_intervals": {
+            "rare_k4": [
+              0.00511424,
+              0.0431657
+            ],
+            "common_esbl_k4": [
+              0.0,
+              0.0188453
+            ]
+          },
+          "D4": {
+            "episodes_per_year": 0.0,
+            "sentinel": 0.0,
+            "cluster": 0.0,
+            "trend": 0.0,
+            "divergence": 0.0,
+            "data": 0.0,
+            "alerts_per_week": 0.0
+          },
+          "D4_counts": {
+            "episodes_per_year": 0,
+            "sentinel": 0,
+            "cluster": 0,
+            "trend": 0,
+            "divergence": 0,
+            "data": 0,
+            "alerts_per_week": 0
+          },
+          "D5": {
+            "level": 0.5,
+            "noise": 0.0,
+            "rare": 0.015,
+            "rare_delay": 4,
+            "common_esbl": 0.0,
+            "common_esbl_delay": null
+          },
+          "D5_interval": {
+            "rare": [
+              0.00511424,
+              0.0431657
+            ],
+            "common_esbl": [
+              0.0,
+              0.0188453
+            ]
+          },
+          "D5_whole_tool": {
+            "level": 0.5,
+            "whole_tool": 0.0,
+            "rare": 0.015,
+            "rare_hit": 3,
+            "rare_delay": 4,
+            "common_esbl": 0.0,
+            "common_esbl_hit": 0,
+            "common_esbl_delay": null
+          }
+        },
+        "rate": {
+          "D2_rare_k4": 0.07,
+          "D2_common_esbl_k4": 0.1,
+          "D2_intervals": {
+            "rare_k4": [
+              0.0421522,
+              0.114055
+            ],
+            "common_esbl_k4": [
+              0.0656704,
+              0.149406
+            ]
+          },
+          "D4": {
+            "episodes_per_year": 0.502407,
+            "sentinel": 0.0,
+            "cluster": 0.0,
+            "trend": 0.0,
+            "divergence": 0.502407,
+            "data": 0.0,
+            "alerts_per_week": 0.00962861
+          },
+          "D4_counts": {
+            "episodes_per_year": 1,
+            "sentinel": 0,
+            "cluster": 0,
+            "trend": 0,
+            "divergence": 1,
+            "data": 0,
+            "alerts_per_week": 1
+          },
+          "D5": {
+            "level": 0.5,
+            "noise": 0.0,
+            "rare": 0.07,
+            "rare_delay": 4,
+            "common_esbl": 0.1,
+            "common_esbl_delay": 3
+          },
+          "D5_interval": {
+            "rare": [
+              0.0421522,
+              0.114055
+            ],
+            "common_esbl": [
+              0.0656704,
+              0.149406
+            ]
+          },
+          "D5_whole_tool": {
+            "level": 0.5,
+            "whole_tool": 0.502407,
+            "rare": 0.07,
+            "rare_hit": 14,
+            "rare_delay": 4,
+            "common_esbl": 0.1,
+            "common_esbl_hit": 20,
+            "common_esbl_delay": 3
+          }
+        }
+      }
+    },
+    {
+      "H": 0.0192308,
+      "w": 4,
+      "tuning_level": 0.2,
+      "tuning_row": {
+        "level": 0.2,
+        "noise_per_year": 3.9918,
+        "noise_count": 2,
+        "rare": 0.125,
+        "rare_hit": 5,
+        "rare_n": 40,
+        "rare_delay": 6,
+        "common_esbl": 0.15,
+        "common_esbl_hit": 6,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 2
+      },
+      "parts": {
+        "both": {
+          "D2_rare_k4": 0.12,
+          "D2_common_esbl_k4": 0.13,
+          "D2_intervals": {
+            "rare_k4": [
+              0.0819799,
+              0.172343
+            ],
+            "common_esbl_k4": [
+              0.090282,
+              0.183664
+            ]
+          },
+          "D4": {
+            "episodes_per_year": 0.0,
+            "sentinel": 0.0,
+            "cluster": 0.0,
+            "trend": 0.0,
+            "divergence": 0.0,
+            "data": 0.0,
+            "alerts_per_week": 0.0
+          },
+          "D4_counts": {
+            "episodes_per_year": 0,
+            "sentinel": 0,
+            "cluster": 0,
+            "trend": 0,
+            "divergence": 0,
+            "data": 0,
+            "alerts_per_week": 0
+          },
+          "D5": {
+            "level": 0.5,
+            "noise": 0.502407,
+            "rare": 0.43,
+            "rare_delay": 6,
+            "common_esbl": 0.435,
+            "common_esbl_delay": 6
+          },
+          "D5_interval": {
+            "rare": [
+              0.363343,
+              0.499295
+            ],
+            "common_esbl": [
+              0.368157,
+              0.504293
+            ]
+          },
+          "D5_whole_tool": {
+            "level": 0.5,
+            "whole_tool": 2.51204,
+            "rare": 0.43,
+            "rare_hit": 86,
+            "rare_delay": 6,
+            "common_esbl": 0.435,
+            "common_esbl_hit": 87,
+            "common_esbl_delay": 6
+          }
+        },
+        "count": {
+          "D2_rare_k4": 0.005,
+          "D2_common_esbl_k4": 0.005,
+          "D2_intervals": {
+            "rare_k4": [
+              0.000883169,
+              0.0277737
+            ],
+            "common_esbl_k4": [
+              0.000883169,
+              0.0277737
+            ]
+          },
+          "D4": {
+            "episodes_per_year": 0.0,
+            "sentinel": 0.0,
+            "cluster": 0.0,
+            "trend": 0.0,
+            "divergence": 0.0,
+            "data": 0.0,
+            "alerts_per_week": 0.0
+          },
+          "D4_counts": {
+            "episodes_per_year": 0,
+            "sentinel": 0,
+            "cluster": 0,
+            "trend": 0,
+            "divergence": 0,
+            "data": 0,
+            "alerts_per_week": 0
+          },
+          "D5": {
+            "level": 0.5,
+            "noise": 0.502407,
+            "rare": 0.09,
+            "rare_delay": 6,
+            "common_esbl": 0.105,
+            "common_esbl_delay": 7
+          },
+          "D5_interval": {
+            "rare": [
+              0.0576874,
+              0.137766
+            ],
+            "common_esbl": [
+              0.0697075,
+              0.15518
+            ]
+          },
+          "D5_whole_tool": {
+            "level": 0.5,
+            "whole_tool": 0.502407,
+            "rare": 0.09,
+            "rare_hit": 18,
+            "rare_delay": 6,
+            "common_esbl": 0.105,
+            "common_esbl_hit": 21,
+            "common_esbl_delay": 7
+          }
+        },
+        "rate": {
+          "D2_rare_k4": 0.115,
+          "D2_common_esbl_k4": 0.125,
+          "D2_intervals": {
+            "rare_k4": [
+              0.0778637,
+              0.166647
+            ],
+            "common_esbl_k4": [
+              0.0861197,
+              0.178014
+            ]
+          },
+          "D4": {
+            "episodes_per_year": 0.0,
+            "sentinel": 0.0,
+            "cluster": 0.0,
+            "trend": 0.0,
+            "divergence": 0.0,
+            "data": 0.0,
+            "alerts_per_week": 0.0
+          },
+          "D4_counts": {
+            "episodes_per_year": 0,
+            "sentinel": 0,
+            "cluster": 0,
+            "trend": 0,
+            "divergence": 0,
+            "data": 0,
+            "alerts_per_week": 0
+          },
+          "D5": {
+            "level": 0.5,
+            "noise": 0.0,
+            "rare": 0.375,
+            "rare_delay": 6,
+            "common_esbl": 0.405,
+            "common_esbl_delay": 6
+          },
+          "D5_interval": {
+            "rare": [
+              0.310854,
+              0.443857
+            ],
+            "common_esbl": [
+              0.339378,
+              0.474203
+            ]
+          },
+          "D5_whole_tool": {
+            "level": 0.5,
+            "whole_tool": 2.00963,
+            "rare": 0.375,
+            "rare_hit": 75,
+            "rare_delay": 6,
+            "common_esbl": 0.405,
+            "common_esbl_hit": 81,
+            "common_esbl_delay": 6
+          }
+        }
+      }
+    },
+    {
+      "H": 0.00961538,
+      "w": 2,
+      "tuning_level": 0.5,
+      "tuning_row": {
+        "level": 0.5,
+        "noise_per_year": 3.9918,
+        "noise_count": 2,
+        "rare": 0.05,
+        "rare_hit": 2,
+        "rare_n": 40,
+        "rare_delay": 0,
+        "common_esbl": 0.1,
+        "common_esbl_hit": 4,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 4
+      },
+      "parts": {
+        "both": {
+          "D2_rare_k4": 0.06,
+          "D2_common_esbl_k4": 0.065,
+          "D2_intervals": {
+            "rare_k4": [
+              0.0346522,
+              0.101932
+            ],
+            "common_esbl_k4": [
+              0.0383764,
+              0.108019
+            ]
+          },
+          "D4": {
+            "episodes_per_year": 0.0,
+            "sentinel": 0.0,
+            "cluster": 0.0,
+            "trend": 0.0,
+            "divergence": 0.0,
+            "data": 0.0,
+            "alerts_per_week": 0.0
+          },
+          "D4_counts": {
+            "episodes_per_year": 0,
+            "sentinel": 0,
+            "cluster": 0,
+            "trend": 0,
+            "divergence": 0,
+            "data": 0,
+            "alerts_per_week": 0
+          },
+          "D5": {
+            "level": 0.5,
+            "noise": 0.0,
+            "rare": 0.06,
+            "rare_delay": 4,
+            "common_esbl": 0.065,
+            "common_esbl_delay": 4
+          },
+          "D5_interval": {
+            "rare": [
+              0.0346522,
+              0.101932
+            ],
+            "common_esbl": [
+              0.0383764,
+              0.108019
+            ]
+          },
+          "D5_whole_tool": {
+            "level": 0.5,
+            "whole_tool": 0.0,
+            "rare": 0.06,
+            "rare_hit": 12,
+            "rare_delay": 4,
+            "common_esbl": 0.065,
+            "common_esbl_hit": 13,
+            "common_esbl_delay": 4
+          }
+        },
+        "count": {
+          "D2_rare_k4": 0.005,
+          "D2_common_esbl_k4": 0.0,
+          "D2_intervals": {
+            "rare_k4": [
+              0.000883169,
+              0.0277737
+            ],
+            "common_esbl_k4": [
+              0.0,
+              0.0188453
+            ]
+          },
+          "D4": {
+            "episodes_per_year": 0.0,
+            "sentinel": 0.0,
+            "cluster": 0.0,
+            "trend": 0.0,
+            "divergence": 0.0,
+            "data": 0.0,
+            "alerts_per_week": 0.0
+          },
+          "D4_counts": {
+            "episodes_per_year": 0,
+            "sentinel": 0,
+            "cluster": 0,
+            "trend": 0,
+            "divergence": 0,
+            "data": 0,
+            "alerts_per_week": 0
+          },
+          "D5": {
+            "level": 0.5,
+            "noise": 0.0,
+            "rare": 0.005,
+            "rare_delay": 3,
+            "common_esbl": 0.0,
+            "common_esbl_delay": null
+          },
+          "D5_interval": {
+            "rare": [
+              0.000883169,
+              0.0277737
+            ],
+            "common_esbl": [
+              0.0,
+              0.0188453
+            ]
+          },
+          "D5_whole_tool": {
+            "level": 0.5,
+            "whole_tool": 0.0,
+            "rare": 0.005,
+            "rare_hit": 1,
+            "rare_delay": 3,
+            "common_esbl": 0.0,
+            "common_esbl_hit": 0,
+            "common_esbl_delay": null
+          }
+        },
+        "rate": {
+          "D2_rare_k4": 0.055,
+          "D2_common_esbl_k4": 0.065,
+          "D2_intervals": {
+            "rare_k4": [
+              0.0309853,
+              0.095787
+            ],
+            "common_esbl_k4": [
+              0.0383764,
+              0.108019
+            ]
+          },
+          "D4": {
+            "episodes_per_year": 0.0,
+            "sentinel": 0.0,
+            "cluster": 0.0,
+            "trend": 0.0,
+            "divergence": 0.0,
+            "data": 0.0,
+            "alerts_per_week": 0.0
+          },
+          "D4_counts": {
+            "episodes_per_year": 0,
+            "sentinel": 0,
+            "cluster": 0,
+            "trend": 0,
+            "divergence": 0,
+            "data": 0,
+            "alerts_per_week": 0
+          },
+          "D5": {
+            "level": 0.5,
+            "noise": 0.0,
+            "rare": 0.055,
+            "rare_delay": 5,
+            "common_esbl": 0.065,
+            "common_esbl_delay": 4
+          },
+          "D5_interval": {
+            "rare": [
+              0.0309853,
+              0.095787
+            ],
+            "common_esbl": [
+              0.0383764,
+              0.108019
+            ]
+          },
+          "D5_whole_tool": {
+            "level": 0.5,
+            "whole_tool": 0.0,
+            "rare": 0.055,
+            "rare_hit": 11,
+            "rare_delay": 5,
+            "common_esbl": 0.065,
+            "common_esbl_hit": 13,
+            "common_esbl_delay": 4
+          }
+        }
+      }
+    },
+    {
+      "H": 0.00961538,
+      "w": 4,
+      "tuning_level": 0.3,
+      "tuning_row": {
+        "level": 0.3,
+        "noise_per_year": 3.9918,
+        "noise_count": 2,
+        "rare": 0.15,
+        "rare_hit": 6,
+        "rare_n": 40,
+        "rare_delay": 6,
+        "common_esbl": 0.15,
+        "common_esbl_hit": 6,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 2
+      },
+      "parts": {
+        "both": {
+          "D2_rare_k4": 0.15,
+          "D2_common_esbl_k4": 0.135,
+          "D2_intervals": {
+            "rare_k4": [
+              0.107136,
+              0.206056
+            ],
+            "common_esbl_k4": [
+              0.0944657,
+              0.189291
+            ]
+          },
+          "D4": {
+            "episodes_per_year": 0.0,
+            "sentinel": 0.0,
+            "cluster": 0.0,
+            "trend": 0.0,
+            "divergence": 0.0,
+            "data": 0.0,
+            "alerts_per_week": 0.0
+          },
+          "D4_counts": {
+            "episodes_per_year": 0,
+            "sentinel": 0,
+            "cluster": 0,
+            "trend": 0,
+            "divergence": 0,
+            "data": 0,
+            "alerts_per_week": 0
+          },
+          "D5": {
+            "level": 0.5,
+            "noise": 0.502407,
+            "rare": 0.305,
+            "rare_delay": 7,
+            "common_esbl": 0.33,
+            "common_esbl_delay": 6
+          },
+          "D5_interval": {
+            "rare": [
+              0.245364,
+              0.371986
+            ],
+            "common_esbl": [
+              0.268574,
+              0.397833
+            ]
+          },
+          "D5_whole_tool": {
+            "level": 0.5,
+            "whole_tool": 1.00481,
+            "rare": 0.305,
+            "rare_hit": 61,
+            "rare_delay": 7,
+            "common_esbl": 0.33,
+            "common_esbl_hit": 66,
+            "common_esbl_delay": 6
+          }
+        },
+        "count": {
+          "D2_rare_k4": 0.005,
+          "D2_common_esbl_k4": 0.01,
+          "D2_intervals": {
+            "rare_k4": [
+              0.000883169,
+              0.0277737
+            ],
+            "common_esbl_k4": [
+              0.00274666,
+              0.0357218
+            ]
+          },
+          "D4": {
+            "episodes_per_year": 0.0,
+            "sentinel": 0.0,
+            "cluster": 0.0,
+            "trend": 0.0,
+            "divergence": 0.0,
+            "data": 0.0,
+            "alerts_per_week": 0.0
+          },
+          "D4_counts": {
+            "episodes_per_year": 0,
+            "sentinel": 0,
+            "cluster": 0,
+            "trend": 0,
+            "divergence": 0,
+            "data": 0,
+            "alerts_per_week": 0
+          },
+          "D5": {
+            "level": 0.5,
+            "noise": 0.502407,
+            "rare": 0.045,
+            "rare_delay": 9,
+            "common_esbl": 0.055,
+            "common_esbl_delay": 9
+          },
+          "D5_interval": {
+            "rare": [
+              0.0238525,
+              0.0832967
+            ],
+            "common_esbl": [
+              0.0309853,
+              0.095787
+            ]
+          },
+          "D5_whole_tool": {
+            "level": 0.5,
+            "whole_tool": 0.502407,
+            "rare": 0.045,
+            "rare_hit": 9,
+            "rare_delay": 9,
+            "common_esbl": 0.055,
+            "common_esbl_hit": 11,
+            "common_esbl_delay": 9
+          }
+        },
+        "rate": {
+          "D2_rare_k4": 0.145,
+          "D2_common_esbl_k4": 0.125,
+          "D2_intervals": {
+            "rare_k4": [
+              0.102894,
+              0.200487
+            ],
+            "common_esbl_k4": [
+              0.0861197,
+              0.178014
+            ]
+          },
+          "D4": {
+            "episodes_per_year": 0.0,
+            "sentinel": 0.0,
+            "cluster": 0.0,
+            "trend": 0.0,
+            "divergence": 0.0,
+            "data": 0.0,
+            "alerts_per_week": 0.0
+          },
+          "D4_counts": {
+            "episodes_per_year": 0,
+            "sentinel": 0,
+            "cluster": 0,
+            "trend": 0,
+            "divergence": 0,
+            "data": 0,
+            "alerts_per_week": 0
+          },
+          "D5": {
+            "level": 0.5,
+            "noise": 0.0,
+            "rare": 0.275,
+            "rare_delay": 7,
+            "common_esbl": 0.305,
+            "common_esbl_delay": 6
+          },
+          "D5_interval": {
+            "rare": [
+              0.217797,
+              0.340683
+            ],
+            "common_esbl": [
+              0.245364,
+              0.371986
+            ]
+          },
+          "D5_whole_tool": {
+            "level": 0.5,
+            "whole_tool": 0.502407,
+            "rare": 0.275,
+            "rare_hit": 55,
+            "rare_delay": 7,
+            "common_esbl": 0.305,
+            "common_esbl_hit": 61,
+            "common_esbl_delay": 6
+          }
+        }
+      }
+    },
+    {
+      "H": 0.00480769,
+      "w": 2,
+      "tuning_level": 0.5,
+      "tuning_row": {
+        "level": 0.5,
+        "noise_per_year": 1.9959,
+        "noise_count": 1,
+        "rare": 0.025,
+        "rare_hit": 1,
+        "rare_n": 40,
+        "rare_delay": 6,
+        "common_esbl": 0.075,
+        "common_esbl_hit": 3,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 4
+      },
+      "parts": {
+        "both": {
+          "D2_rare_k4": 0.025,
+          "D2_common_esbl_k4": 0.055,
+          "D2_intervals": {
+            "rare_k4": [
+              0.0107247,
+              0.0571783
+            ],
+            "common_esbl_k4": [
+              0.0309853,
+              0.095787
+            ]
+          },
+          "D4": {
+            "episodes_per_year": 0.0,
+            "sentinel": 0.0,
+            "cluster": 0.0,
+            "trend": 0.0,
+            "divergence": 0.0,
+            "data": 0.0,
+            "alerts_per_week": 0.0
+          },
+          "D4_counts": {
+            "episodes_per_year": 0,
+            "sentinel": 0,
+            "cluster": 0,
+            "trend": 0,
+            "divergence": 0,
+            "data": 0,
+            "alerts_per_week": 0
+          },
+          "D5": {
+            "level": 0.5,
+            "noise": 0.0,
+            "rare": 0.025,
+            "rare_delay": 4,
+            "common_esbl": 0.055,
+            "common_esbl_delay": 4
+          },
+          "D5_interval": {
+            "rare": [
+              0.0107247,
+              0.0571783
+            ],
+            "common_esbl": [
+              0.0309853,
+              0.095787
+            ]
+          },
+          "D5_whole_tool": {
+            "level": 0.5,
+            "whole_tool": 0.0,
+            "rare": 0.025,
+            "rare_hit": 5,
+            "rare_delay": 4,
+            "common_esbl": 0.055,
+            "common_esbl_hit": 11,
+            "common_esbl_delay": 4
+          }
+        },
+        "count": {
+          "D2_rare_k4": 0.0,
+          "D2_common_esbl_k4": 0.0,
+          "D2_intervals": {
+            "rare_k4": [
+              0.0,
+              0.0188453
+            ],
+            "common_esbl_k4": [
+              0.0,
+              0.0188453
+            ]
+          },
+          "D4": {
+            "episodes_per_year": 0.0,
+            "sentinel": 0.0,
+            "cluster": 0.0,
+            "trend": 0.0,
+            "divergence": 0.0,
+            "data": 0.0,
+            "alerts_per_week": 0.0
+          },
+          "D4_counts": {
+            "episodes_per_year": 0,
+            "sentinel": 0,
+            "cluster": 0,
+            "trend": 0,
+            "divergence": 0,
+            "data": 0,
+            "alerts_per_week": 0
+          },
+          "D5": {
+            "level": 0.5,
+            "noise": 0.0,
+            "rare": 0.0,
+            "rare_delay": null,
+            "common_esbl": 0.0,
+            "common_esbl_delay": null
+          },
+          "D5_interval": {
+            "rare": [
+              0.0,
+              0.0188453
+            ],
+            "common_esbl": [
+              0.0,
+              0.0188453
+            ]
+          },
+          "D5_whole_tool": {
+            "level": 0.5,
+            "whole_tool": 0.0,
+            "rare": 0.0,
+            "rare_hit": 0,
+            "rare_delay": null,
+            "common_esbl": 0.0,
+            "common_esbl_hit": 0,
+            "common_esbl_delay": null
+          }
+        },
+        "rate": {
+          "D2_rare_k4": 0.025,
+          "D2_common_esbl_k4": 0.055,
+          "D2_intervals": {
+            "rare_k4": [
+              0.0107247,
+              0.0571783
+            ],
+            "common_esbl_k4": [
+              0.0309853,
+              0.095787
+            ]
+          },
+          "D4": {
+            "episodes_per_year": 0.0,
+            "sentinel": 0.0,
+            "cluster": 0.0,
+            "trend": 0.0,
+            "divergence": 0.0,
+            "data": 0.0,
+            "alerts_per_week": 0.0
+          },
+          "D4_counts": {
+            "episodes_per_year": 0,
+            "sentinel": 0,
+            "cluster": 0,
+            "trend": 0,
+            "divergence": 0,
+            "data": 0,
+            "alerts_per_week": 0
+          },
+          "D5": {
+            "level": 0.5,
+            "noise": 0.0,
+            "rare": 0.025,
+            "rare_delay": 4,
+            "common_esbl": 0.055,
+            "common_esbl_delay": 4
+          },
+          "D5_interval": {
+            "rare": [
+              0.0107247,
+              0.0571783
+            ],
+            "common_esbl": [
+              0.0309853,
+              0.095787
+            ]
+          },
+          "D5_whole_tool": {
+            "level": 0.5,
+            "whole_tool": 0.0,
+            "rare": 0.025,
+            "rare_hit": 5,
+            "rare_delay": 4,
+            "common_esbl": 0.055,
+            "common_esbl_hit": 11,
+            "common_esbl_delay": 4
+          }
+        }
+      }
+    },
+    {
+      "H": 0.00480769,
+      "w": 4,
+      "tuning_level": 0.4,
+      "tuning_row": {
+        "level": 0.4,
+        "noise_per_year": 1.9959,
+        "noise_count": 1,
+        "rare": 0.175,
+        "rare_hit": 7,
+        "rare_n": 40,
+        "rare_delay": 6,
+        "common_esbl": 0.15,
+        "common_esbl_hit": 6,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 2
+      },
+      "parts": {
+        "both": {
+          "D2_rare_k4": 0.165,
+          "D2_common_esbl_k4": 0.12,
+          "D2_intervals": {
+            "rare_k4": [
+              0.119969,
+              0.222658
+            ],
+            "common_esbl_k4": [
+              0.0819799,
+              0.172343
+            ]
+          },
+          "D4": {
+            "episodes_per_year": 0.0,
+            "sentinel": 0.0,
+            "cluster": 0.0,
+            "trend": 0.0,
+            "divergence": 0.0,
+            "data": 0.0,
+            "alerts_per_week": 0.0
+          },
+          "D4_counts": {
+            "episodes_per_year": 0,
+            "sentinel": 0,
+            "cluster": 0,
+            "trend": 0,
+            "divergence": 0,
+            "data": 0,
+            "alerts_per_week": 0
+          },
+          "D5": {
+            "level": 0.5,
+            "noise": 0.0,
+            "rare": 0.245,
+            "rare_delay": 7,
+            "common_esbl": 0.19,
+            "common_esbl_delay": 6
+          },
+          "D5_interval": {
+            "rare": [
+              0.190569,
+              0.309042
+            ],
+            "common_esbl": [
+              0.141672,
+              0.250012
+            ]
+          },
+          "D5_whole_tool": {
+            "level": 0.5,
+            "whole_tool": 0.0,
+            "rare": 0.245,
+            "rare_hit": 49,
+            "rare_delay": 7,
+            "common_esbl": 0.19,
+            "common_esbl_hit": 38,
+            "common_esbl_delay": 6
+          }
+        },
+        "count": {
+          "D2_rare_k4": 0.005,
+          "D2_common_esbl_k4": 0.01,
+          "D2_intervals": {
+            "rare_k4": [
+              0.000883169,
+              0.0277737
+            ],
+            "common_esbl_k4": [
+              0.00274666,
+              0.0357218
+            ]
+          },
+          "D4": {
+            "episodes_per_year": 0.0,
+            "sentinel": 0.0,
+            "cluster": 0.0,
+            "trend": 0.0,
+            "divergence": 0.0,
+            "data": 0.0,
+            "alerts_per_week": 0.0
+          },
+          "D4_counts": {
+            "episodes_per_year": 0,
+            "sentinel": 0,
+            "cluster": 0,
+            "trend": 0,
+            "divergence": 0,
+            "data": 0,
+            "alerts_per_week": 0
+          },
+          "D5": {
+            "level": 0.5,
+            "noise": 0.0,
+            "rare": 0.025,
+            "rare_delay": 9,
+            "common_esbl": 0.025,
+            "common_esbl_delay": 8
+          },
+          "D5_interval": {
+            "rare": [
+              0.0107247,
+              0.0571783
+            ],
+            "common_esbl": [
+              0.0107247,
+              0.0571783
+            ]
+          },
+          "D5_whole_tool": {
+            "level": 0.5,
+            "whole_tool": 0.0,
+            "rare": 0.025,
+            "rare_hit": 5,
+            "rare_delay": 9,
+            "common_esbl": 0.025,
+            "common_esbl_hit": 5,
+            "common_esbl_delay": 8
+          }
+        },
+        "rate": {
+          "D2_rare_k4": 0.16,
+          "D2_common_esbl_k4": 0.11,
+          "D2_intervals": {
+            "rare_k4": [
+              0.115674,
+              0.217141
+            ],
+            "common_esbl_k4": [
+              0.0737724,
+              0.160927
+            ]
+          },
+          "D4": {
+            "episodes_per_year": 0.0,
+            "sentinel": 0.0,
+            "cluster": 0.0,
+            "trend": 0.0,
+            "divergence": 0.0,
+            "data": 0.0,
+            "alerts_per_week": 0.0
+          },
+          "D4_counts": {
+            "episodes_per_year": 0,
+            "sentinel": 0,
+            "cluster": 0,
+            "trend": 0,
+            "divergence": 0,
+            "data": 0,
+            "alerts_per_week": 0
+          },
+          "D5": {
+            "level": 0.5,
+            "noise": 0.0,
+            "rare": 0.23,
+            "rare_delay": 7,
+            "common_esbl": 0.18,
+            "common_esbl_delay": 6
+          },
+          "D5_interval": {
+            "rare": [
+              0.177093,
+              0.293083
+            ],
+            "common_esbl": [
+              0.132946,
+              0.239115
+            ]
+          },
+          "D5_whole_tool": {
+            "level": 0.5,
+            "whole_tool": 0.0,
+            "rare": 0.23,
+            "rare_hit": 46,
+            "rare_delay": 7,
+            "common_esbl": 0.18,
+            "common_esbl_hit": 36,
+            "common_esbl_delay": 6
+          }
+        }
+      }
+    }
+  ],
+  "extended_levels": {
+    "chosen_on_tuning_year": {
+      "H": 0.0384615,
+      "w": 2,
+      "level": 0.5,
+      "tune_row": {
+        "level": 0.5,
+        "noise_per_year": 3.9918,
+        "noise_count": 2,
+        "rare": 0.2,
+        "rare_hit": 8,
+        "rare_n": 40,
+        "rare_delay": 1,
+        "common_esbl": 0.2,
+        "common_esbl_hit": 8,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 1
+      }
+    },
+    "at_the_plan_setting": {
+      "both": {
+        "D5": {
+          "level": 0.6,
+          "noise": 4.01926,
+          "rare": 0.225,
+          "rare_delay": 3,
+          "common_esbl": 0.25,
+          "common_esbl_delay": 3
+        },
+        "D5_interval": {
+          "rare": [
+            0.172624,
+            0.287741
+          ],
+          "common_esbl": [
+            0.195082,
+            0.314341
+          ]
+        },
+        "curve": [
+          {
+            "level": 0.9,
+            "noise": 128.616,
+            "noise_count": 256,
+            "whole_tool": 150.722,
+            "rare": 0.9,
+            "rare_hit": 180,
+            "rare_n": 200,
+            "rare_delay": 1,
+            "common_esbl": 0.935,
+            "common_esbl_hit": 187,
+            "common_esbl_n": 200,
+            "common_esbl_delay": 1
+          },
+          {
+            "level": 0.8,
+            "noise": 24.1155,
+            "noise_count": 48,
+            "whole_tool": 35.6709,
+            "rare": 0.56,
+            "rare_hit": 112,
+            "rare_n": 200,
+            "rare_delay": 2,
+            "common_esbl": 0.66,
+            "common_esbl_hit": 132,
+            "common_esbl_n": 200,
+            "common_esbl_delay": 3
+          },
+          {
+            "level": 0.7,
+            "noise": 9.04333,
+            "noise_count": 18,
+            "whole_tool": 15.0722,
+            "rare": 0.35,
+            "rare_hit": 70,
+            "rare_n": 200,
+            "rare_delay": 3,
+            "common_esbl": 0.405,
+            "common_esbl_hit": 81,
+            "common_esbl_n": 200,
+            "common_esbl_delay": 3
+          },
+          {
+            "level": 0.6,
+            "noise": 4.01926,
+            "noise_count": 8,
+            "whole_tool": 10.0481,
+            "rare": 0.225,
+            "rare_hit": 45,
+            "rare_n": 200,
+            "rare_delay": 3,
+            "common_esbl": 0.25,
+            "common_esbl_hit": 50,
+            "common_esbl_n": 200,
+            "common_esbl_delay": 3
+          },
+          {
+            "level": 0.5,
+            "noise": 1.50722,
+            "noise_count": 3,
+            "whole_tool": 6.53129,
+            "rare": 0.14,
+            "rare_hit": 28,
+            "rare_n": 200,
+            "rare_delay": 3,
+            "common_esbl": 0.135,
+            "common_esbl_hit": 27,
+            "common_esbl_n": 200,
+            "common_esbl_delay": 3
+          },
+          {
+            "level": 0.4,
+            "noise": 0.0,
+            "noise_count": 0,
+            "whole_tool": 2.00963,
+            "rare": 0.1,
+            "rare_hit": 20,
+            "rare_n": 200,
+            "rare_delay": 3,
+            "common_esbl": 0.105,
+            "common_esbl_hit": 21,
+            "common_esbl_n": 200,
+            "common_esbl_delay": 4
+          },
+          {
+            "level": 0.3,
+            "noise": 0.0,
+            "noise_count": 0,
+            "whole_tool": 0.502407,
+            "rare": 0.04,
+            "rare_hit": 8,
+            "rare_n": 200,
+            "rare_delay": 3,
+            "common_esbl": 0.06,
+            "common_esbl_hit": 12,
+            "common_esbl_n": 200,
+            "common_esbl_delay": 3
+          },
+          {
+            "level": 0.2,
+            "noise": 0.0,
+            "noise_count": 0,
+            "whole_tool": 0.0,
+            "rare": 0.01,
+            "rare_hit": 2,
+            "rare_n": 200,
+            "rare_delay": 4,
+            "common_esbl": 0.03,
+            "common_esbl_hit": 6,
+            "common_esbl_n": 200,
+            "common_esbl_delay": 3
+          },
+          {
+            "level": 0.1,
+            "noise": 0.0,
+            "noise_count": 0,
+            "whole_tool": 0.0,
+            "rare": 0.01,
+            "rare_hit": 2,
+            "rare_n": 200,
+            "rare_delay": 4,
+            "common_esbl": 0.015,
+            "common_esbl_hit": 3,
+            "common_esbl_n": 200,
+            "common_esbl_delay": 5
+          },
+          {
+            "level": 0.05,
+            "noise": 0.0,
+            "noise_count": 0,
+            "whole_tool": 0.0,
+            "rare": 0.0,
+            "rare_hit": 0,
+            "rare_n": 200,
+            "rare_delay": null,
+            "common_esbl": 0.0,
+            "common_esbl_hit": 0,
+            "common_esbl_n": 200,
+            "common_esbl_delay": null
+          },
+          {
+            "level": 0.02,
+            "noise": 0.0,
+            "noise_count": 0,
+            "whole_tool": 0.0,
+            "rare": 0.0,
+            "rare_hit": 0,
+            "rare_n": 200,
+            "rare_delay": null,
+            "common_esbl": 0.0,
+            "common_esbl_hit": 0,
+            "common_esbl_n": 200,
+            "common_esbl_delay": null
+          },
+          {
+            "level": 0.01,
+            "noise": 0.0,
+            "noise_count": 0,
+            "whole_tool": 0.0,
+            "rare": 0.0,
+            "rare_hit": 0,
+            "rare_n": 200,
+            "rare_delay": null,
+            "common_esbl": 0.0,
+            "common_esbl_hit": 0,
+            "common_esbl_n": 200,
+            "common_esbl_delay": null
+          },
+          {
+            "level": 0.005,
+            "noise": 0.0,
+            "noise_count": 0,
+            "whole_tool": 0.0,
+            "rare": 0.0,
+            "rare_hit": 0,
+            "rare_n": 200,
+            "rare_delay": null,
+            "common_esbl": 0.0,
+            "common_esbl_hit": 0,
+            "common_esbl_n": 200,
+            "common_esbl_delay": null
+          }
+        ],
+        "whole_tool": {
+          "level": 0.4,
+          "whole_tool": 2.00963,
+          "rare": 0.1,
+          "rare_hit": 20,
+          "rare_delay": 3,
+          "common_esbl": 0.105,
+          "common_esbl_hit": 21,
+          "common_esbl_delay": 4
+        }
+      },
+      "count": {
+        "D5": {
+          "level": 0.6,
+          "noise": 4.01926,
+          "rare": 0.035,
+          "rare_delay": 5,
+          "common_esbl": 0.05,
+          "common_esbl_delay": 4
+        },
+        "D5_interval": {
+          "rare": [
+            0.0170555,
+            0.0704706
+          ],
+          "common_esbl": [
+            0.0273826,
+            0.0895781
+          ]
+        },
+        "curve": [
+          {
+            "level": 0.9,
+            "noise": 128.616,
+            "noise_count": 256,
+            "whole_tool": 128.616,
+            "rare": 0.62,
+            "rare_hit": 124,
+            "rare_n": 200,
+            "rare_delay": 2,
+            "common_esbl": 0.64,
+            "common_esbl_hit": 128,
+            "common_esbl_n": 200,
+            "common_esbl_delay": 3
+          },
+          {
+            "level": 0.8,
+            "noise": 24.1155,
+            "noise_count": 48,
+            "whole_tool": 24.1155,
+            "rare": 0.225,
+            "rare_hit": 45,
+            "rare_n": 200,
+            "rare_delay": 3,
+            "common_esbl": 0.25,
+            "common_esbl_hit": 50,
+            "common_esbl_n": 200,
+            "common_esbl_delay": 3
+          },
+          {
+            "level": 0.7,
+            "noise": 9.04333,
+            "noise_count": 18,
+            "whole_tool": 9.04333,
+            "rare": 0.11,
+            "rare_hit": 22,
+            "rare_n": 200,
+            "rare_delay": 3,
+            "common_esbl": 0.095,
+            "common_esbl_hit": 19,
+            "common_esbl_n": 200,
+            "common_esbl_delay": 4
+          },
+          {
+            "level": 0.6,
+            "noise": 4.01926,
+            "noise_count": 8,
+            "whole_tool": 4.01926,
+            "rare": 0.035,
+            "rare_hit": 7,
+            "rare_n": 200,
+            "rare_delay": 5,
+            "common_esbl": 0.05,
+            "common_esbl_hit": 10,
+            "common_esbl_n": 200,
+            "common_esbl_delay": 4
+          },
+          {
+            "level": 0.5,
+            "noise": 1.50722,
+            "noise_count": 3,
+            "whole_tool": 1.50722,
+            "rare": 0.015,
+            "rare_hit": 3,
+            "rare_n": 200,
+            "rare_delay": 4,
+            "common_esbl": 0.01,
+            "common_esbl_hit": 2,
+            "common_esbl_n": 200,
+            "common_esbl_delay": 1
+          },
+          {
+            "level": 0.4,
+            "noise": 0.0,
+            "noise_count": 0,
+            "whole_tool": 0.0,
+            "rare": 0.015,
+            "rare_hit": 3,
+            "rare_n": 200,
+            "rare_delay": 4,
+            "common_esbl": 0.0,
+            "common_esbl_hit": 0,
+            "common_esbl_n": 200,
+            "common_esbl_delay": null
+          },
+          {
+            "level": 0.3,
+            "noise": 0.0,
+            "noise_count": 0,
+            "whole_tool": 0.0,
+            "rare": 0.005,
+            "rare_hit": 1,
+            "rare_n": 200,
+            "rare_delay": 3,
+            "common_esbl": 0.0,
+            "common_esbl_hit": 0,
+            "common_esbl_n": 200,
+            "common_esbl_delay": null
+          },
+          {
+            "level": 0.2,
+            "noise": 0.0,
+            "noise_count": 0,
+            "whole_tool": 0.0,
+            "rare": 0.0,
+            "rare_hit": 0,
+            "rare_n": 200,
+            "rare_delay": null,
+            "common_esbl": 0.0,
+            "common_esbl_hit": 0,
+            "common_esbl_n": 200,
+            "common_esbl_delay": null
+          },
+          {
+            "level": 0.1,
+            "noise": 0.0,
+            "noise_count": 0,
+            "whole_tool": 0.0,
+            "rare": 0.0,
+            "rare_hit": 0,
+            "rare_n": 200,
+            "rare_delay": null,
+            "common_esbl": 0.0,
+            "common_esbl_hit": 0,
+            "common_esbl_n": 200,
+            "common_esbl_delay": null
+          },
+          {
+            "level": 0.05,
+            "noise": 0.0,
+            "noise_count": 0,
+            "whole_tool": 0.0,
+            "rare": 0.0,
+            "rare_hit": 0,
+            "rare_n": 200,
+            "rare_delay": null,
+            "common_esbl": 0.0,
+            "common_esbl_hit": 0,
+            "common_esbl_n": 200,
+            "common_esbl_delay": null
+          },
+          {
+            "level": 0.02,
+            "noise": 0.0,
+            "noise_count": 0,
+            "whole_tool": 0.0,
+            "rare": 0.0,
+            "rare_hit": 0,
+            "rare_n": 200,
+            "rare_delay": null,
+            "common_esbl": 0.0,
+            "common_esbl_hit": 0,
+            "common_esbl_n": 200,
+            "common_esbl_delay": null
+          },
+          {
+            "level": 0.01,
+            "noise": 0.0,
+            "noise_count": 0,
+            "whole_tool": 0.0,
+            "rare": 0.0,
+            "rare_hit": 0,
+            "rare_n": 200,
+            "rare_delay": null,
+            "common_esbl": 0.0,
+            "common_esbl_hit": 0,
+            "common_esbl_n": 200,
+            "common_esbl_delay": null
+          },
+          {
+            "level": 0.005,
+            "noise": 0.0,
+            "noise_count": 0,
+            "whole_tool": 0.0,
+            "rare": 0.0,
+            "rare_hit": 0,
+            "rare_n": 200,
+            "rare_delay": null,
+            "common_esbl": 0.0,
+            "common_esbl_hit": 0,
+            "common_esbl_n": 200,
+            "common_esbl_delay": null
+          }
+        ],
+        "whole_tool": {
+          "level": 0.6,
+          "whole_tool": 4.01926,
+          "rare": 0.035,
+          "rare_hit": 7,
+          "rare_delay": 5,
+          "common_esbl": 0.05,
+          "common_esbl_hit": 10,
+          "common_esbl_delay": 4
+        }
+      },
+      "rate": {
+        "D5": {
+          "level": 0.9,
+          "noise": 0.0,
+          "rare": 0.8,
+          "rare_delay": 2,
+          "common_esbl": 0.875,
+          "common_esbl_delay": 2
+        },
+        "D5_interval": {
+          "rare": [
+            0.739145,
+            0.849548
+          ],
+          "common_esbl": [
+            0.821986,
+            0.91388
+          ]
+        },
+        "curve": [
+          {
+            "level": 0.9,
+            "noise": 0.0,
+            "noise_count": 0,
+            "whole_tool": 47.2263,
+            "rare": 0.8,
+            "rare_hit": 160,
+            "rare_n": 200,
+            "rare_delay": 2,
+            "common_esbl": 0.875,
+            "common_esbl_hit": 175,
+            "common_esbl_n": 200,
+            "common_esbl_delay": 2
+          },
+          {
+            "level": 0.8,
+            "noise": 0.0,
+            "noise_count": 0,
+            "whole_tool": 15.0722,
+            "rare": 0.465,
+            "rare_hit": 93,
+            "rare_n": 200,
+            "rare_delay": 2,
+            "common_esbl": 0.555,
+            "common_esbl_hit": 111,
+            "common_esbl_n": 200,
+            "common_esbl_delay": 2
+          },
+          {
+            "level": 0.7,
+            "noise": 0.0,
+            "noise_count": 0,
+            "whole_tool": 6.53129,
+            "rare": 0.295,
+            "rare_hit": 59,
+            "rare_n": 200,
+            "rare_delay": 3,
+            "common_esbl": 0.345,
+            "common_esbl_hit": 69,
+            "common_esbl_n": 200,
+            "common_esbl_delay": 3
+          },
+          {
+            "level": 0.6,
+            "noise": 0.0,
+            "noise_count": 0,
+            "whole_tool": 6.02889,
+            "rare": 0.205,
+            "rare_hit": 41,
+            "rare_n": 200,
+            "rare_delay": 3,
+            "common_esbl": 0.22,
+            "common_esbl_hit": 44,
+            "common_esbl_n": 200,
+            "common_esbl_delay": 3
+          },
+          {
+            "level": 0.5,
+            "noise": 0.0,
+            "noise_count": 0,
+            "whole_tool": 5.02407,
+            "rare": 0.125,
+            "rare_hit": 25,
+            "rare_n": 200,
+            "rare_delay": 3,
+            "common_esbl": 0.13,
+            "common_esbl_hit": 26,
+            "common_esbl_n": 200,
+            "common_esbl_delay": 3
+          },
+          {
+            "level": 0.4,
+            "noise": 0.0,
+            "noise_count": 0,
+            "whole_tool": 2.00963,
+            "rare": 0.085,
+            "rare_hit": 17,
+            "rare_n": 200,
+            "rare_delay": 3,
+            "common_esbl": 0.105,
+            "common_esbl_hit": 21,
+            "common_esbl_n": 200,
+            "common_esbl_delay": 4
+          },
+          {
+            "level": 0.3,
+            "noise": 0.0,
+            "noise_count": 0,
+            "whole_tool": 0.502407,
+            "rare": 0.035,
+            "rare_hit": 7,
+            "rare_n": 200,
+            "rare_delay": 4,
+            "common_esbl": 0.06,
+            "common_esbl_hit": 12,
+            "common_esbl_n": 200,
+            "common_esbl_delay": 3
+          },
+          {
+            "level": 0.2,
+            "noise": 0.0,
+            "noise_count": 0,
+            "whole_tool": 0.0,
+            "rare": 0.01,
+            "rare_hit": 2,
+            "rare_n": 200,
+            "rare_delay": 4,
+            "common_esbl": 0.03,
+            "common_esbl_hit": 6,
+            "common_esbl_n": 200,
+            "common_esbl_delay": 3
+          },
+          {
+            "level": 0.1,
+            "noise": 0.0,
+            "noise_count": 0,
+            "whole_tool": 0.0,
+            "rare": 0.01,
+            "rare_hit": 2,
+            "rare_n": 200,
+            "rare_delay": 4,
+            "common_esbl": 0.015,
+            "common_esbl_hit": 3,
+            "common_esbl_n": 200,
+            "common_esbl_delay": 5
+          },
+          {
+            "level": 0.05,
+            "noise": 0.0,
+            "noise_count": 0,
+            "whole_tool": 0.0,
+            "rare": 0.0,
+            "rare_hit": 0,
+            "rare_n": 200,
+            "rare_delay": null,
+            "common_esbl": 0.0,
+            "common_esbl_hit": 0,
+            "common_esbl_n": 200,
+            "common_esbl_delay": null
+          },
+          {
+            "level": 0.02,
+            "noise": 0.0,
+            "noise_count": 0,
+            "whole_tool": 0.0,
+            "rare": 0.0,
+            "rare_hit": 0,
+            "rare_n": 200,
+            "rare_delay": null,
+            "common_esbl": 0.0,
+            "common_esbl_hit": 0,
+            "common_esbl_n": 200,
+            "common_esbl_delay": null
+          },
+          {
+            "level": 0.01,
+            "noise": 0.0,
+            "noise_count": 0,
+            "whole_tool": 0.0,
+            "rare": 0.0,
+            "rare_hit": 0,
+            "rare_n": 200,
+            "rare_delay": null,
+            "common_esbl": 0.0,
+            "common_esbl_hit": 0,
+            "common_esbl_n": 200,
+            "common_esbl_delay": null
+          },
+          {
+            "level": 0.005,
+            "noise": 0.0,
+            "noise_count": 0,
+            "whole_tool": 0.0,
+            "rare": 0.0,
+            "rare_hit": 0,
+            "rare_n": 200,
+            "rare_delay": null,
+            "common_esbl": 0.0,
+            "common_esbl_hit": 0,
+            "common_esbl_n": 200,
+            "common_esbl_delay": null
+          }
+        ],
+        "whole_tool": {
+          "level": 0.4,
+          "whole_tool": 2.00963,
+          "rare": 0.085,
+          "rare_hit": 17,
+          "rare_delay": 3,
+          "common_esbl": 0.105,
+          "common_esbl_hit": 21,
+          "common_esbl_delay": 4
+        }
+      }
+    }
+  },
+  "prior_mean_ablation": [
+    {
+      "scale": 4.0,
+      "H": 0.00480769,
+      "w": 4,
+      "level": 0.3,
+      "tuning_row": {
+        "level": 0.3,
+        "noise_per_year": 3.9918,
+        "noise_count": 2,
+        "rare": 0.275,
+        "rare_hit": 11,
+        "rare_n": 40,
+        "rare_delay": 6,
+        "common_esbl": 0.375,
+        "common_esbl_hit": 15,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 7
+      },
+      "parts": {
+        "both": {
+          "D2_rare_k4": 0.18,
+          "D2_common_esbl_k4": 0.17,
+          "D2_intervals": {
+            "rare_k4": [
+              0.132946,
+              0.239115
+            ],
+            "common_esbl_k4": [
+              0.124279,
+              0.228159
+            ]
+          },
+          "D2_rare_k0": 0.0,
+          "D4": {
+            "episodes_per_year": 0.0,
+            "sentinel": 0.0,
+            "cluster": 0.0,
+            "trend": 0.0,
+            "divergence": 0.0,
+            "data": 0.0,
+            "alerts_per_week": 0.0
+          },
+          "D4_counts": {
+            "episodes_per_year": 0,
+            "sentinel": 0,
+            "cluster": 0,
+            "trend": 0,
+            "divergence": 0,
+            "data": 0,
+            "alerts_per_week": 0
+          },
+          "D5": {
+            "level": 0.5,
+            "noise": 2.00963,
+            "rare": 0.48,
+            "rare_delay": 6,
+            "common_esbl": 0.32,
+            "common_esbl_delay": 6
+          },
+          "D5_interval": {
+            "rare": [
+              0.411792,
+              0.548962
+            ],
+            "common_esbl": [
+              0.259265,
+              0.387519
+            ]
+          },
+          "D5_whole_tool": {
+            "level": 0.5,
+            "whole_tool": 2.00963,
+            "rare": 0.48,
+            "rare_hit": 96,
+            "rare_delay": 6,
+            "common_esbl": 0.32,
+            "common_esbl_hit": 64,
+            "common_esbl_delay": 6
+          }
+        },
+        "count": {
+          "D2_rare_k4": 0.125,
+          "D2_common_esbl_k4": 0.14,
+          "D2_intervals": {
+            "rare_k4": [
+              0.0861197,
+              0.178014
+            ],
+            "common_esbl_k4": [
+              0.0986698,
+              0.194899
+            ]
+          },
+          "D2_rare_k0": 0.0,
+          "D4": {
+            "episodes_per_year": 0.0,
+            "sentinel": 0.0,
+            "cluster": 0.0,
+            "trend": 0.0,
+            "divergence": 0.0,
+            "data": 0.0,
+            "alerts_per_week": 0.0
+          },
+          "D4_counts": {
+            "episodes_per_year": 0,
+            "sentinel": 0,
+            "cluster": 0,
+            "trend": 0,
+            "divergence": 0,
+            "data": 0,
+            "alerts_per_week": 0
+          },
+          "D5": {
+            "level": 0.5,
+            "noise": 2.00963,
+            "rare": 0.38,
+            "rare_delay": 6,
+            "common_esbl": 0.28,
+            "common_esbl_delay": 6
+          },
+          "D5_interval": {
+            "rare": [
+              0.31559,
+              0.448933
+            ],
+            "common_esbl": [
+              0.222369,
+              0.345923
+            ]
+          },
+          "D5_whole_tool": {
+            "level": 0.5,
+            "whole_tool": 2.00963,
+            "rare": 0.38,
+            "rare_hit": 76,
+            "rare_delay": 6,
+            "common_esbl": 0.28,
+            "common_esbl_hit": 56,
+            "common_esbl_delay": 6
+          }
+        },
+        "rate": {
+          "D2_rare_k4": 0.1,
+          "D2_common_esbl_k4": 0.085,
+          "D2_intervals": {
+            "rare_k4": [
+              0.0656704,
+              0.149406
+            ],
+            "common_esbl_k4": [
+              0.0537457,
+              0.131896
+            ]
+          },
+          "D2_rare_k0": 0.0,
+          "D4": {
+            "episodes_per_year": 0.0,
+            "sentinel": 0.0,
+            "cluster": 0.0,
+            "trend": 0.0,
+            "divergence": 0.0,
+            "data": 0.0,
+            "alerts_per_week": 0.0
+          },
+          "D4_counts": {
+            "episodes_per_year": 0,
+            "sentinel": 0,
+            "cluster": 0,
+            "trend": 0,
+            "divergence": 0,
+            "data": 0,
+            "alerts_per_week": 0
+          },
+          "D5": {
+            "level": 0.5,
+            "noise": 0.0,
+            "rare": 0.23,
+            "rare_delay": 7,
+            "common_esbl": 0.18,
+            "common_esbl_delay": 6
+          },
+          "D5_interval": {
+            "rare": [
+              0.177093,
+              0.293083
+            ],
+            "common_esbl": [
+              0.132946,
+              0.239115
+            ]
+          },
+          "D5_whole_tool": {
+            "level": 0.5,
+            "whole_tool": 0.0,
+            "rare": 0.23,
+            "rare_hit": 46,
+            "rare_delay": 7,
+            "common_esbl": 0.18,
+            "common_esbl_hit": 36,
+            "common_esbl_delay": 6
+          }
+        }
+      }
+    },
+    {
+      "scale": 16.0,
+      "H": 0.0384615,
+      "w": 4,
+      "level": 0.1,
+      "tuning_row": {
+        "level": 0.1,
+        "noise_per_year": 3.9918,
+        "noise_count": 2,
+        "rare": 0.325,
+        "rare_hit": 13,
+        "rare_n": 40,
+        "rare_delay": 5,
+        "common_esbl": 0.45,
+        "common_esbl_hit": 18,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 3
+      },
+      "parts": {
+        "both": {
+          "D2_rare_k4": 0.295,
+          "D2_common_esbl_k4": 0.235,
+          "D2_intervals": {
+            "rare_k4": [
+              0.236139,
+              0.361587
+            ],
+            "common_esbl_k4": [
+              0.181574,
+              0.298414
+            ]
+          },
+          "D2_rare_k0": 0.0,
+          "D4": {
+            "episodes_per_year": 2.51204,
+            "sentinel": 0.0,
+            "cluster": 2.00963,
+            "trend": 0.0,
+            "divergence": 0.502407,
+            "data": 0.0,
+            "alerts_per_week": 0.0481431
+          },
+          "D4_counts": {
+            "episodes_per_year": 5,
+            "sentinel": 0,
+            "cluster": 4,
+            "trend": 0,
+            "divergence": 1,
+            "data": 0,
+            "alerts_per_week": 5
+          },
+          "D5": {
+            "level": 0.1,
+            "noise": 2.00963,
+            "rare": 0.295,
+            "rare_delay": 4,
+            "common_esbl": 0.235,
+            "common_esbl_delay": 4
+          },
+          "D5_interval": {
+            "rare": [
+              0.236139,
+              0.361587
+            ],
+            "common_esbl": [
+              0.181574,
+              0.298414
+            ]
+          },
+          "D5_whole_tool": {
+            "level": 0.1,
+            "whole_tool": 2.51204,
+            "rare": 0.295,
+            "rare_hit": 59,
+            "rare_delay": 4,
+            "common_esbl": 0.235,
+            "common_esbl_hit": 47,
+            "common_esbl_delay": 4
+          }
+        },
+        "count": {
+          "D2_rare_k4": 0.28,
+          "D2_common_esbl_k4": 0.21,
+          "D2_intervals": {
+            "rare_k4": [
+              0.222369,
+              0.345923
+            ],
+            "common_esbl_k4": [
+              0.159284,
+              0.271646
+            ]
+          },
+          "D2_rare_k0": 0.0,
+          "D4": {
+            "episodes_per_year": 2.00963,
+            "sentinel": 0.0,
+            "cluster": 2.00963,
+            "trend": 0.0,
+            "divergence": 0.0,
+            "data": 0.0,
+            "alerts_per_week": 0.0385144
+          },
+          "D4_counts": {
+            "episodes_per_year": 4,
+            "sentinel": 0,
+            "cluster": 4,
+            "trend": 0,
+            "divergence": 0,
+            "data": 0,
+            "alerts_per_week": 4
+          },
+          "D5": {
+            "level": 0.1,
+            "noise": 2.00963,
+            "rare": 0.28,
+            "rare_delay": 4,
+            "common_esbl": 0.21,
+            "common_esbl_delay": 4
+          },
+          "D5_interval": {
+            "rare": [
+              0.222369,
+              0.345923
+            ],
+            "common_esbl": [
+              0.159284,
+              0.271646
+            ]
+          },
+          "D5_whole_tool": {
+            "level": 0.1,
+            "whole_tool": 2.00963,
+            "rare": 0.28,
+            "rare_hit": 56,
+            "rare_delay": 4,
+            "common_esbl": 0.21,
+            "common_esbl_hit": 42,
+            "common_esbl_delay": 4
+          }
+        },
+        "rate": {
+          "D2_rare_k4": 0.07,
+          "D2_common_esbl_k4": 0.075,
+          "D2_intervals": {
+            "rare_k4": [
+              0.0421522,
+              0.114055
+            ],
+            "common_esbl_k4": [
+              0.0459749,
+              0.120044
+            ]
+          },
+          "D2_rare_k0": 0.0,
+          "D4": {
+            "episodes_per_year": 0.502407,
+            "sentinel": 0.0,
+            "cluster": 0.0,
+            "trend": 0.0,
+            "divergence": 0.502407,
+            "data": 0.0,
+            "alerts_per_week": 0.00962861
+          },
+          "D4_counts": {
+            "episodes_per_year": 1,
+            "sentinel": 0,
+            "cluster": 0,
+            "trend": 0,
+            "divergence": 1,
+            "data": 0,
+            "alerts_per_week": 1
+          },
+          "D5": {
+            "level": 0.5,
+            "noise": 0.0,
+            "rare": 0.575,
+            "rare_delay": 4,
+            "common_esbl": 0.535,
+            "common_esbl_delay": 5
+          },
+          "D5_interval": {
+            "rare": [
+              0.505709,
+              0.641464
+            ],
+            "common_esbl": [
+              0.465866,
+              0.602814
+            ]
+          },
+          "D5_whole_tool": {
+            "level": 0.3,
+            "whole_tool": 2.51204,
+            "rare": 0.3,
+            "rare_hit": 60,
+            "rare_delay": 6,
+            "common_esbl": 0.34,
+            "common_esbl_hit": 68,
+            "common_esbl_delay": 5
+          }
+        }
+      }
+    }
+  ],
+  "tuning": {
+    "H=1/26,w=2": [
+      {
+        "level": 0.9,
+        "noise_per_year": 179.631,
+        "noise_count": 90,
+        "rare": 0.85,
+        "rare_hit": 34,
+        "rare_n": 40,
+        "rare_delay": 1,
+        "common_esbl": 1.0,
+        "common_esbl_hit": 40,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 1
+      },
+      {
+        "level": 0.8,
+        "noise_per_year": 59.877,
+        "noise_count": 30,
+        "rare": 0.725,
+        "rare_hit": 29,
+        "rare_n": 40,
+        "rare_delay": 2,
+        "common_esbl": 0.8,
+        "common_esbl_hit": 32,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 3
+      },
+      {
+        "level": 0.7,
+        "noise_per_year": 25.9467,
+        "noise_count": 13,
+        "rare": 0.425,
+        "rare_hit": 17,
+        "rare_n": 40,
+        "rare_delay": 2,
+        "common_esbl": 0.45,
+        "common_esbl_hit": 18,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 2
+      },
+      {
+        "level": 0.6,
+        "noise_per_year": 17.9631,
+        "noise_count": 9,
+        "rare": 0.25,
+        "rare_hit": 10,
+        "rare_n": 40,
+        "rare_delay": 1,
+        "common_esbl": 0.275,
+        "common_esbl_hit": 11,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 2
+      },
+      {
+        "level": 0.5,
+        "noise_per_year": 3.9918,
+        "noise_count": 2,
+        "rare": 0.2,
+        "rare_hit": 8,
+        "rare_n": 40,
+        "rare_delay": 1,
+        "common_esbl": 0.2,
+        "common_esbl_hit": 8,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 1
+      },
+      {
+        "level": 0.4,
+        "noise_per_year": 3.9918,
+        "noise_count": 2,
+        "rare": 0.1,
+        "rare_hit": 4,
+        "rare_n": 40,
+        "rare_delay": 0,
+        "common_esbl": 0.15,
+        "common_esbl_hit": 6,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 3
+      },
+      {
+        "level": 0.3,
+        "noise_per_year": 3.9918,
+        "noise_count": 2,
+        "rare": 0.05,
+        "rare_hit": 2,
+        "rare_n": 40,
+        "rare_delay": 0,
+        "common_esbl": 0.15,
+        "common_esbl_hit": 6,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 3
+      },
+      {
+        "level": 0.2,
+        "noise_per_year": 1.9959,
+        "noise_count": 1,
+        "rare": 0.05,
+        "rare_hit": 2,
+        "rare_n": 40,
+        "rare_delay": 0,
+        "common_esbl": 0.125,
+        "common_esbl_hit": 5,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 4
+      },
+      {
+        "level": 0.1,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.0,
+        "rare_hit": 0,
+        "rare_n": 40,
+        "rare_delay": null,
+        "common_esbl": 0.05,
+        "common_esbl_hit": 2,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 2
+      },
+      {
+        "level": 0.05,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.0,
+        "rare_hit": 0,
+        "rare_n": 40,
+        "rare_delay": null,
+        "common_esbl": 0.025,
+        "common_esbl_hit": 1,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 2
+      },
+      {
+        "level": 0.02,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.0,
+        "rare_hit": 0,
+        "rare_n": 40,
+        "rare_delay": null,
+        "common_esbl": 0.0,
+        "common_esbl_hit": 0,
+        "common_esbl_n": 40,
+        "common_esbl_delay": null
+      },
+      {
+        "level": 0.01,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.0,
+        "rare_hit": 0,
+        "rare_n": 40,
+        "rare_delay": null,
+        "common_esbl": 0.0,
+        "common_esbl_hit": 0,
+        "common_esbl_n": 40,
+        "common_esbl_delay": null
+      },
+      {
+        "level": 0.005,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.0,
+        "rare_hit": 0,
+        "rare_n": 40,
+        "rare_delay": null,
+        "common_esbl": 0.0,
+        "common_esbl_hit": 0,
+        "common_esbl_n": 40,
+        "common_esbl_delay": null
+      }
+    ],
+    "H=1/26,w=4": [
+      {
+        "level": 0.9,
+        "noise_per_year": 295.393,
+        "noise_count": 148,
+        "rare": 1.0,
+        "rare_hit": 40,
+        "rare_n": 40,
+        "rare_delay": 0,
+        "common_esbl": 1.0,
+        "common_esbl_hit": 40,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 0
+      },
+      {
+        "level": 0.8,
+        "noise_per_year": 161.668,
+        "noise_count": 81,
+        "rare": 0.925,
+        "rare_hit": 37,
+        "rare_n": 40,
+        "rare_delay": 2,
+        "common_esbl": 1.0,
+        "common_esbl_hit": 40,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 1
+      },
+      {
+        "level": 0.7,
+        "noise_per_year": 85.8238,
+        "noise_count": 43,
+        "rare": 0.85,
+        "rare_hit": 34,
+        "rare_n": 40,
+        "rare_delay": 2,
+        "common_esbl": 0.95,
+        "common_esbl_hit": 38,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 2
+      },
+      {
+        "level": 0.6,
+        "noise_per_year": 53.8893,
+        "noise_count": 27,
+        "rare": 0.725,
+        "rare_hit": 29,
+        "rare_n": 40,
+        "rare_delay": 3,
+        "common_esbl": 0.9,
+        "common_esbl_hit": 36,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 3
+      },
+      {
+        "level": 0.5,
+        "noise_per_year": 29.9385,
+        "noise_count": 15,
+        "rare": 0.575,
+        "rare_hit": 23,
+        "rare_n": 40,
+        "rare_delay": 4,
+        "common_esbl": 0.825,
+        "common_esbl_hit": 33,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 5
+      },
+      {
+        "level": 0.4,
+        "noise_per_year": 19.959,
+        "noise_count": 10,
+        "rare": 0.5,
+        "rare_hit": 20,
+        "rare_n": 40,
+        "rare_delay": 4,
+        "common_esbl": 0.7,
+        "common_esbl_hit": 28,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 4
+      },
+      {
+        "level": 0.3,
+        "noise_per_year": 11.9754,
+        "noise_count": 6,
+        "rare": 0.4,
+        "rare_hit": 16,
+        "rare_n": 40,
+        "rare_delay": 6,
+        "common_esbl": 0.525,
+        "common_esbl_hit": 21,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 5
+      },
+      {
+        "level": 0.2,
+        "noise_per_year": 5.9877,
+        "noise_count": 3,
+        "rare": 0.225,
+        "rare_hit": 9,
+        "rare_n": 40,
+        "rare_delay": 6,
+        "common_esbl": 0.275,
+        "common_esbl_hit": 11,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 3
+      },
+      {
+        "level": 0.1,
+        "noise_per_year": 1.9959,
+        "noise_count": 1,
+        "rare": 0.075,
+        "rare_hit": 3,
+        "rare_n": 40,
+        "rare_delay": 6,
+        "common_esbl": 0.125,
+        "common_esbl_hit": 5,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 3
+      },
+      {
+        "level": 0.05,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.025,
+        "rare_hit": 1,
+        "rare_n": 40,
+        "rare_delay": 5,
+        "common_esbl": 0.1,
+        "common_esbl_hit": 4,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 4
+      },
+      {
+        "level": 0.02,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.0,
+        "rare_hit": 0,
+        "rare_n": 40,
+        "rare_delay": null,
+        "common_esbl": 0.075,
+        "common_esbl_hit": 3,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 5
+      },
+      {
+        "level": 0.01,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.0,
+        "rare_hit": 0,
+        "rare_n": 40,
+        "rare_delay": null,
+        "common_esbl": 0.05,
+        "common_esbl_hit": 2,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 2
+      },
+      {
+        "level": 0.005,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.0,
+        "rare_hit": 0,
+        "rare_n": 40,
+        "rare_delay": null,
+        "common_esbl": 0.0,
+        "common_esbl_hit": 0,
+        "common_esbl_n": 40,
+        "common_esbl_delay": null
+      }
+    ],
+    "H=1/52,w=2": [
+      {
+        "level": 0.9,
+        "noise_per_year": 59.877,
+        "noise_count": 30,
+        "rare": 0.75,
+        "rare_hit": 30,
+        "rare_n": 40,
+        "rare_delay": 2,
+        "common_esbl": 0.875,
+        "common_esbl_hit": 35,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 3
+      },
+      {
+        "level": 0.8,
+        "noise_per_year": 19.959,
+        "noise_count": 10,
+        "rare": 0.35,
+        "rare_hit": 14,
+        "rare_n": 40,
+        "rare_delay": 1,
+        "common_esbl": 0.425,
+        "common_esbl_hit": 17,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 3
+      },
+      {
+        "level": 0.7,
+        "noise_per_year": 9.97951,
+        "noise_count": 5,
+        "rare": 0.225,
+        "rare_hit": 9,
+        "rare_n": 40,
+        "rare_delay": 2,
+        "common_esbl": 0.325,
+        "common_esbl_hit": 13,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 2
+      },
+      {
+        "level": 0.6,
+        "noise_per_year": 7.98361,
+        "noise_count": 4,
+        "rare": 0.175,
+        "rare_hit": 7,
+        "rare_n": 40,
+        "rare_delay": 2,
+        "common_esbl": 0.2,
+        "common_esbl_hit": 8,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 3
+      },
+      {
+        "level": 0.5,
+        "noise_per_year": 3.9918,
+        "noise_count": 2,
+        "rare": 0.075,
+        "rare_hit": 3,
+        "rare_n": 40,
+        "rare_delay": 4,
+        "common_esbl": 0.15,
+        "common_esbl_hit": 6,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 3
+      },
+      {
+        "level": 0.4,
+        "noise_per_year": 3.9918,
+        "noise_count": 2,
+        "rare": 0.05,
+        "rare_hit": 2,
+        "rare_n": 40,
+        "rare_delay": 0,
+        "common_esbl": 0.15,
+        "common_esbl_hit": 6,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 3
+      },
+      {
+        "level": 0.3,
+        "noise_per_year": 1.9959,
+        "noise_count": 1,
+        "rare": 0.05,
+        "rare_hit": 2,
+        "rare_n": 40,
+        "rare_delay": 0,
+        "common_esbl": 0.1,
+        "common_esbl_hit": 4,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 4
+      },
+      {
+        "level": 0.2,
+        "noise_per_year": 1.9959,
+        "noise_count": 1,
+        "rare": 0.025,
+        "rare_hit": 1,
+        "rare_n": 40,
+        "rare_delay": 6,
+        "common_esbl": 0.075,
+        "common_esbl_hit": 3,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 4
+      },
+      {
+        "level": 0.1,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.0,
+        "rare_hit": 0,
+        "rare_n": 40,
+        "rare_delay": null,
+        "common_esbl": 0.025,
+        "common_esbl_hit": 1,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 2
+      },
+      {
+        "level": 0.05,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.0,
+        "rare_hit": 0,
+        "rare_n": 40,
+        "rare_delay": null,
+        "common_esbl": 0.025,
+        "common_esbl_hit": 1,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 2
+      },
+      {
+        "level": 0.02,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.0,
+        "rare_hit": 0,
+        "rare_n": 40,
+        "rare_delay": null,
+        "common_esbl": 0.0,
+        "common_esbl_hit": 0,
+        "common_esbl_n": 40,
+        "common_esbl_delay": null
+      },
+      {
+        "level": 0.01,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.0,
+        "rare_hit": 0,
+        "rare_n": 40,
+        "rare_delay": null,
+        "common_esbl": 0.0,
+        "common_esbl_hit": 0,
+        "common_esbl_n": 40,
+        "common_esbl_delay": null
+      },
+      {
+        "level": 0.005,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.0,
+        "rare_hit": 0,
+        "rare_n": 40,
+        "rare_delay": null,
+        "common_esbl": 0.0,
+        "common_esbl_hit": 0,
+        "common_esbl_n": 40,
+        "common_esbl_delay": null
+      }
+    ],
+    "H=1/52,w=4": [
+      {
+        "level": 0.9,
+        "noise_per_year": 177.635,
+        "noise_count": 89,
+        "rare": 1.0,
+        "rare_hit": 40,
+        "rare_n": 40,
+        "rare_delay": 2,
+        "common_esbl": 1.0,
+        "common_esbl_hit": 40,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 1
+      },
+      {
+        "level": 0.8,
+        "noise_per_year": 65.8648,
+        "noise_count": 33,
+        "rare": 0.825,
+        "rare_hit": 33,
+        "rare_n": 40,
+        "rare_delay": 4,
+        "common_esbl": 0.925,
+        "common_esbl_hit": 37,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 3
+      },
+      {
+        "level": 0.7,
+        "noise_per_year": 37.9221,
+        "noise_count": 19,
+        "rare": 0.675,
+        "rare_hit": 27,
+        "rare_n": 40,
+        "rare_delay": 4,
+        "common_esbl": 0.85,
+        "common_esbl_hit": 34,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 4
+      },
+      {
+        "level": 0.6,
+        "noise_per_year": 21.9549,
+        "noise_count": 11,
+        "rare": 0.55,
+        "rare_hit": 22,
+        "rare_n": 40,
+        "rare_delay": 3,
+        "common_esbl": 0.775,
+        "common_esbl_hit": 31,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 5
+      },
+      {
+        "level": 0.5,
+        "noise_per_year": 15.9672,
+        "noise_count": 8,
+        "rare": 0.5,
+        "rare_hit": 20,
+        "rare_n": 40,
+        "rare_delay": 4,
+        "common_esbl": 0.675,
+        "common_esbl_hit": 27,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 5
+      },
+      {
+        "level": 0.4,
+        "noise_per_year": 9.97951,
+        "noise_count": 5,
+        "rare": 0.4,
+        "rare_hit": 16,
+        "rare_n": 40,
+        "rare_delay": 7,
+        "common_esbl": 0.45,
+        "common_esbl_hit": 18,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 3
+      },
+      {
+        "level": 0.3,
+        "noise_per_year": 5.9877,
+        "noise_count": 3,
+        "rare": 0.25,
+        "rare_hit": 10,
+        "rare_n": 40,
+        "rare_delay": 6,
+        "common_esbl": 0.225,
+        "common_esbl_hit": 9,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 2
+      },
+      {
+        "level": 0.2,
+        "noise_per_year": 3.9918,
+        "noise_count": 2,
+        "rare": 0.125,
+        "rare_hit": 5,
+        "rare_n": 40,
+        "rare_delay": 6,
+        "common_esbl": 0.15,
+        "common_esbl_hit": 6,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 2
+      },
+      {
+        "level": 0.1,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.075,
+        "rare_hit": 3,
+        "rare_n": 40,
+        "rare_delay": 6,
+        "common_esbl": 0.1,
+        "common_esbl_hit": 4,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 3
+      },
+      {
+        "level": 0.05,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.025,
+        "rare_hit": 1,
+        "rare_n": 40,
+        "rare_delay": 5,
+        "common_esbl": 0.1,
+        "common_esbl_hit": 4,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 5
+      },
+      {
+        "level": 0.02,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.0,
+        "rare_hit": 0,
+        "rare_n": 40,
+        "rare_delay": null,
+        "common_esbl": 0.05,
+        "common_esbl_hit": 2,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 2
+      },
+      {
+        "level": 0.01,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.0,
+        "rare_hit": 0,
+        "rare_n": 40,
+        "rare_delay": null,
+        "common_esbl": 0.0,
+        "common_esbl_hit": 0,
+        "common_esbl_n": 40,
+        "common_esbl_delay": null
+      },
+      {
+        "level": 0.005,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.0,
+        "rare_hit": 0,
+        "rare_n": 40,
+        "rare_delay": null,
+        "common_esbl": 0.0,
+        "common_esbl_hit": 0,
+        "common_esbl_n": 40,
+        "common_esbl_delay": null
+      }
+    ],
+    "H=1/104,w=2": [
+      {
+        "level": 0.9,
+        "noise_per_year": 21.9549,
+        "noise_count": 11,
+        "rare": 0.4,
+        "rare_hit": 16,
+        "rare_n": 40,
+        "rare_delay": 1,
+        "common_esbl": 0.45,
+        "common_esbl_hit": 18,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 2
+      },
+      {
+        "level": 0.8,
+        "noise_per_year": 9.97951,
+        "noise_count": 5,
+        "rare": 0.25,
+        "rare_hit": 10,
+        "rare_n": 40,
+        "rare_delay": 1,
+        "common_esbl": 0.325,
+        "common_esbl_hit": 13,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 3
+      },
+      {
+        "level": 0.7,
+        "noise_per_year": 9.97951,
+        "noise_count": 5,
+        "rare": 0.175,
+        "rare_hit": 7,
+        "rare_n": 40,
+        "rare_delay": 2,
+        "common_esbl": 0.2,
+        "common_esbl_hit": 8,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 3
+      },
+      {
+        "level": 0.6,
+        "noise_per_year": 3.9918,
+        "noise_count": 2,
+        "rare": 0.075,
+        "rare_hit": 3,
+        "rare_n": 40,
+        "rare_delay": 4,
+        "common_esbl": 0.175,
+        "common_esbl_hit": 7,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 3
+      },
+      {
+        "level": 0.5,
+        "noise_per_year": 3.9918,
+        "noise_count": 2,
+        "rare": 0.05,
+        "rare_hit": 2,
+        "rare_n": 40,
+        "rare_delay": 0,
+        "common_esbl": 0.1,
+        "common_esbl_hit": 4,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 4
+      },
+      {
+        "level": 0.4,
+        "noise_per_year": 1.9959,
+        "noise_count": 1,
+        "rare": 0.05,
+        "rare_hit": 2,
+        "rare_n": 40,
+        "rare_delay": 0,
+        "common_esbl": 0.075,
+        "common_esbl_hit": 3,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 4
+      },
+      {
+        "level": 0.3,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.025,
+        "rare_hit": 1,
+        "rare_n": 40,
+        "rare_delay": 6,
+        "common_esbl": 0.075,
+        "common_esbl_hit": 3,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 4
+      },
+      {
+        "level": 0.2,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.025,
+        "rare_hit": 1,
+        "rare_n": 40,
+        "rare_delay": 6,
+        "common_esbl": 0.05,
+        "common_esbl_hit": 2,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 2
+      },
+      {
+        "level": 0.1,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.0,
+        "rare_hit": 0,
+        "rare_n": 40,
+        "rare_delay": null,
+        "common_esbl": 0.025,
+        "common_esbl_hit": 1,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 2
+      },
+      {
+        "level": 0.05,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.0,
+        "rare_hit": 0,
+        "rare_n": 40,
+        "rare_delay": null,
+        "common_esbl": 0.025,
+        "common_esbl_hit": 1,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 2
+      },
+      {
+        "level": 0.02,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.0,
+        "rare_hit": 0,
+        "rare_n": 40,
+        "rare_delay": null,
+        "common_esbl": 0.0,
+        "common_esbl_hit": 0,
+        "common_esbl_n": 40,
+        "common_esbl_delay": null
+      },
+      {
+        "level": 0.01,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.0,
+        "rare_hit": 0,
+        "rare_n": 40,
+        "rare_delay": null,
+        "common_esbl": 0.0,
+        "common_esbl_hit": 0,
+        "common_esbl_n": 40,
+        "common_esbl_delay": null
+      },
+      {
+        "level": 0.005,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.0,
+        "rare_hit": 0,
+        "rare_n": 40,
+        "rare_delay": null,
+        "common_esbl": 0.0,
+        "common_esbl_hit": 0,
+        "common_esbl_n": 40,
+        "common_esbl_delay": null
+      }
+    ],
+    "H=1/104,w=4": [
+      {
+        "level": 0.9,
+        "noise_per_year": 69.8566,
+        "noise_count": 35,
+        "rare": 0.9,
+        "rare_hit": 36,
+        "rare_n": 40,
+        "rare_delay": 4,
+        "common_esbl": 0.975,
+        "common_esbl_hit": 39,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 2
+      },
+      {
+        "level": 0.8,
+        "noise_per_year": 29.9385,
+        "noise_count": 15,
+        "rare": 0.65,
+        "rare_hit": 26,
+        "rare_n": 40,
+        "rare_delay": 4,
+        "common_esbl": 0.85,
+        "common_esbl_hit": 34,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 4
+      },
+      {
+        "level": 0.7,
+        "noise_per_year": 21.9549,
+        "noise_count": 11,
+        "rare": 0.55,
+        "rare_hit": 22,
+        "rare_n": 40,
+        "rare_delay": 4,
+        "common_esbl": 0.75,
+        "common_esbl_hit": 30,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 5
+      },
+      {
+        "level": 0.6,
+        "noise_per_year": 15.9672,
+        "noise_count": 8,
+        "rare": 0.45,
+        "rare_hit": 18,
+        "rare_n": 40,
+        "rare_delay": 4,
+        "common_esbl": 0.575,
+        "common_esbl_hit": 23,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 4
+      },
+      {
+        "level": 0.5,
+        "noise_per_year": 9.97951,
+        "noise_count": 5,
+        "rare": 0.35,
+        "rare_hit": 14,
+        "rare_n": 40,
+        "rare_delay": 5,
+        "common_esbl": 0.4,
+        "common_esbl_hit": 16,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 3
+      },
+      {
+        "level": 0.4,
+        "noise_per_year": 7.98361,
+        "noise_count": 4,
+        "rare": 0.275,
+        "rare_hit": 11,
+        "rare_n": 40,
+        "rare_delay": 7,
+        "common_esbl": 0.175,
+        "common_esbl_hit": 7,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 2
+      },
+      {
+        "level": 0.3,
+        "noise_per_year": 3.9918,
+        "noise_count": 2,
+        "rare": 0.15,
+        "rare_hit": 6,
+        "rare_n": 40,
+        "rare_delay": 6,
+        "common_esbl": 0.15,
+        "common_esbl_hit": 6,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 2
+      },
+      {
+        "level": 0.2,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.1,
+        "rare_hit": 4,
+        "rare_n": 40,
+        "rare_delay": 6,
+        "common_esbl": 0.125,
+        "common_esbl_hit": 5,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 3
+      },
+      {
+        "level": 0.1,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.05,
+        "rare_hit": 2,
+        "rare_n": 40,
+        "rare_delay": 5,
+        "common_esbl": 0.1,
+        "common_esbl_hit": 4,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 3
+      },
+      {
+        "level": 0.05,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.0,
+        "rare_hit": 0,
+        "rare_n": 40,
+        "rare_delay": null,
+        "common_esbl": 0.1,
+        "common_esbl_hit": 4,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 5
+      },
+      {
+        "level": 0.02,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.0,
+        "rare_hit": 0,
+        "rare_n": 40,
+        "rare_delay": null,
+        "common_esbl": 0.0,
+        "common_esbl_hit": 0,
+        "common_esbl_n": 40,
+        "common_esbl_delay": null
+      },
+      {
+        "level": 0.01,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.0,
+        "rare_hit": 0,
+        "rare_n": 40,
+        "rare_delay": null,
+        "common_esbl": 0.0,
+        "common_esbl_hit": 0,
+        "common_esbl_n": 40,
+        "common_esbl_delay": null
+      },
+      {
+        "level": 0.005,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.0,
+        "rare_hit": 0,
+        "rare_n": 40,
+        "rare_delay": null,
+        "common_esbl": 0.0,
+        "common_esbl_hit": 0,
+        "common_esbl_n": 40,
+        "common_esbl_delay": null
+      }
+    ],
+    "H=1/208,w=2": [
+      {
+        "level": 0.9,
+        "noise_per_year": 9.97951,
+        "noise_count": 5,
+        "rare": 0.275,
+        "rare_hit": 11,
+        "rare_n": 40,
+        "rare_delay": 2,
+        "common_esbl": 0.325,
+        "common_esbl_hit": 13,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 3
+      },
+      {
+        "level": 0.8,
+        "noise_per_year": 9.97951,
+        "noise_count": 5,
+        "rare": 0.175,
+        "rare_hit": 7,
+        "rare_n": 40,
+        "rare_delay": 2,
+        "common_esbl": 0.2,
+        "common_esbl_hit": 8,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 2
+      },
+      {
+        "level": 0.7,
+        "noise_per_year": 5.9877,
+        "noise_count": 3,
+        "rare": 0.075,
+        "rare_hit": 3,
+        "rare_n": 40,
+        "rare_delay": 4,
+        "common_esbl": 0.175,
+        "common_esbl_hit": 7,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 4
+      },
+      {
+        "level": 0.6,
+        "noise_per_year": 3.9918,
+        "noise_count": 2,
+        "rare": 0.05,
+        "rare_hit": 2,
+        "rare_n": 40,
+        "rare_delay": 0,
+        "common_esbl": 0.125,
+        "common_esbl_hit": 5,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 4
+      },
+      {
+        "level": 0.5,
+        "noise_per_year": 1.9959,
+        "noise_count": 1,
+        "rare": 0.025,
+        "rare_hit": 1,
+        "rare_n": 40,
+        "rare_delay": 6,
+        "common_esbl": 0.075,
+        "common_esbl_hit": 3,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 4
+      },
+      {
+        "level": 0.4,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.025,
+        "rare_hit": 1,
+        "rare_n": 40,
+        "rare_delay": 6,
+        "common_esbl": 0.075,
+        "common_esbl_hit": 3,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 4
+      },
+      {
+        "level": 0.3,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.025,
+        "rare_hit": 1,
+        "rare_n": 40,
+        "rare_delay": 6,
+        "common_esbl": 0.05,
+        "common_esbl_hit": 2,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 2
+      },
+      {
+        "level": 0.2,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.025,
+        "rare_hit": 1,
+        "rare_n": 40,
+        "rare_delay": 6,
+        "common_esbl": 0.05,
+        "common_esbl_hit": 2,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 2
+      },
+      {
+        "level": 0.1,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.0,
+        "rare_hit": 0,
+        "rare_n": 40,
+        "rare_delay": null,
+        "common_esbl": 0.025,
+        "common_esbl_hit": 1,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 2
+      },
+      {
+        "level": 0.05,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.0,
+        "rare_hit": 0,
+        "rare_n": 40,
+        "rare_delay": null,
+        "common_esbl": 0.0,
+        "common_esbl_hit": 0,
+        "common_esbl_n": 40,
+        "common_esbl_delay": null
+      },
+      {
+        "level": 0.02,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.0,
+        "rare_hit": 0,
+        "rare_n": 40,
+        "rare_delay": null,
+        "common_esbl": 0.0,
+        "common_esbl_hit": 0,
+        "common_esbl_n": 40,
+        "common_esbl_delay": null
+      },
+      {
+        "level": 0.01,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.0,
+        "rare_hit": 0,
+        "rare_n": 40,
+        "rare_delay": null,
+        "common_esbl": 0.0,
+        "common_esbl_hit": 0,
+        "common_esbl_n": 40,
+        "common_esbl_delay": null
+      },
+      {
+        "level": 0.005,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.0,
+        "rare_hit": 0,
+        "rare_n": 40,
+        "rare_delay": null,
+        "common_esbl": 0.0,
+        "common_esbl_hit": 0,
+        "common_esbl_n": 40,
+        "common_esbl_delay": null
+      }
+    ],
+    "H=1/208,w=4": [
+      {
+        "level": 0.9,
+        "noise_per_year": 35.9262,
+        "noise_count": 18,
+        "rare": 0.675,
+        "rare_hit": 27,
+        "rare_n": 40,
+        "rare_delay": 4,
+        "common_esbl": 0.875,
+        "common_esbl_hit": 35,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 3
+      },
+      {
+        "level": 0.8,
+        "noise_per_year": 19.959,
+        "noise_count": 10,
+        "rare": 0.525,
+        "rare_hit": 21,
+        "rare_n": 40,
+        "rare_delay": 4,
+        "common_esbl": 0.725,
+        "common_esbl_hit": 29,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 5
+      },
+      {
+        "level": 0.7,
+        "noise_per_year": 13.9713,
+        "noise_count": 7,
+        "rare": 0.4,
+        "rare_hit": 16,
+        "rare_n": 40,
+        "rare_delay": 4,
+        "common_esbl": 0.525,
+        "common_esbl_hit": 21,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 4
+      },
+      {
+        "level": 0.6,
+        "noise_per_year": 7.98361,
+        "noise_count": 4,
+        "rare": 0.35,
+        "rare_hit": 14,
+        "rare_n": 40,
+        "rare_delay": 5,
+        "common_esbl": 0.3,
+        "common_esbl_hit": 12,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 4
+      },
+      {
+        "level": 0.5,
+        "noise_per_year": 7.98361,
+        "noise_count": 4,
+        "rare": 0.225,
+        "rare_hit": 9,
+        "rare_n": 40,
+        "rare_delay": 6,
+        "common_esbl": 0.15,
+        "common_esbl_hit": 6,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 2
+      },
+      {
+        "level": 0.4,
+        "noise_per_year": 1.9959,
+        "noise_count": 1,
+        "rare": 0.175,
+        "rare_hit": 7,
+        "rare_n": 40,
+        "rare_delay": 6,
+        "common_esbl": 0.15,
+        "common_esbl_hit": 6,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 2
+      },
+      {
+        "level": 0.3,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.125,
+        "rare_hit": 5,
+        "rare_n": 40,
+        "rare_delay": 6,
+        "common_esbl": 0.125,
+        "common_esbl_hit": 5,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 2
+      },
+      {
+        "level": 0.2,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.1,
+        "rare_hit": 4,
+        "rare_n": 40,
+        "rare_delay": 6,
+        "common_esbl": 0.125,
+        "common_esbl_hit": 5,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 3
+      },
+      {
+        "level": 0.1,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.025,
+        "rare_hit": 1,
+        "rare_n": 40,
+        "rare_delay": 8,
+        "common_esbl": 0.1,
+        "common_esbl_hit": 4,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 3
+      },
+      {
+        "level": 0.05,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.0,
+        "rare_hit": 0,
+        "rare_n": 40,
+        "rare_delay": null,
+        "common_esbl": 0.025,
+        "common_esbl_hit": 1,
+        "common_esbl_n": 40,
+        "common_esbl_delay": 7
+      },
+      {
+        "level": 0.02,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.0,
+        "rare_hit": 0,
+        "rare_n": 40,
+        "rare_delay": null,
+        "common_esbl": 0.0,
+        "common_esbl_hit": 0,
+        "common_esbl_n": 40,
+        "common_esbl_delay": null
+      },
+      {
+        "level": 0.01,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.0,
+        "rare_hit": 0,
+        "rare_n": 40,
+        "rare_delay": null,
+        "common_esbl": 0.0,
+        "common_esbl_hit": 0,
+        "common_esbl_n": 40,
+        "common_esbl_delay": null
+      },
+      {
+        "level": 0.005,
+        "noise_per_year": 0.0,
+        "noise_count": 0,
+        "rare": 0.0,
+        "rare_hit": 0,
+        "rare_n": 40,
+        "rare_delay": null,
+        "common_esbl": 0.0,
+        "common_esbl_hit": 0,
+        "common_esbl_n": 40,
+        "common_esbl_delay": null
+      }
+    ]
+  },
+  "pruning": [
+    {
+      "H": 0.0384615,
+      "w": 2,
+      "signals_exact": 1578,
+      "signals_pruned": 1578,
+      "only_exact": 0,
+      "only_pruned": 0,
+      "max_abs_dp": 0.0208695
+    },
+    {
+      "H": 0.0384615,
+      "w": 4,
+      "signals_exact": 27829,
+      "signals_pruned": 27837,
+      "only_exact": 1,
+      "only_pruned": 9,
+      "max_abs_dp": 0.0613075
+    },
+    {
+      "H": 0.0192308,
+      "w": 2,
+      "signals_exact": 309,
+      "signals_pruned": 309,
+      "only_exact": 0,
+      "only_pruned": 0,
+      "max_abs_dp": 0.00559836
+    },
+    {
+      "H": 0.0192308,
+      "w": 4,
+      "signals_exact": 3395,
+      "signals_pruned": 3397,
+      "only_exact": 0,
+      "only_pruned": 2,
+      "max_abs_dp": 0.0172664
+    },
+    {
+      "H": 0.00961538,
+      "w": 2,
+      "signals_exact": 99,
+      "signals_pruned": 99,
+      "only_exact": 0,
+      "only_pruned": 0,
+      "max_abs_dp": 0.00146928
+    },
+    {
+      "H": 0.00961538,
+      "w": 4,
+      "signals_exact": 923,
+      "signals_pruned": 922,
+      "only_exact": 1,
+      "only_pruned": 0,
+      "max_abs_dp": 0.00416196
+    },
+    {
+      "H": 0.00480769,
+      "w": 2,
+      "signals_exact": 36,
+      "signals_pruned": 36,
+      "only_exact": 0,
+      "only_pruned": 0,
+      "max_abs_dp": 3.33067e-16
+    },
+    {
+      "H": 0.00480769,
+      "w": 4,
+      "signals_exact": 378,
+      "signals_pruned": 378,
+      "only_exact": 0,
+      "only_pruned": 0,
+      "max_abs_dp": 0.00254335
+    },
+    {
+      "chosen": {
+        "H": 0.0384615,
+        "w": 2,
+        "level": 0.5,
+        "signals_exact": 33,
+        "signals_pruned": 33,
+        "only_exact": 0,
+        "only_pruned": 0
+      }
+    }
+  ],
+  "trial_path_check": [
+    {
+      "family": "rare",
+      "units": "URO",
+      "start": "2025-04-30",
+      "signals_full": 0,
+      "signals_focused": 0,
+      "same": true
+    },
+    {
+      "family": "rare",
+      "units": "ICU",
+      "start": "2025-06-23",
+      "signals_full": 21,
+      "signals_focused": 21,
+      "same": true
+    },
+    {
+      "family": "rare",
+      "units": "PHC-N",
+      "start": "2026-07-15",
+      "signals_full": 5,
+      "signals_focused": 5,
+      "same": true
+    },
+    {
+      "family": "common_esbl",
+      "units": "PHC-S",
+      "start": "2024-11-24",
+      "signals_full": 4,
+      "signals_focused": 4,
+      "same": true
+    },
+    {
+      "family": "common_esbl",
+      "units": "ED",
+      "start": "2026-08-11",
+      "signals_full": 2,
+      "signals_focused": 2,
+      "same": true
+    },
+    {
+      "family": "two_unit",
+      "units": "GER+MED-B",
+      "start": "2025-11-14",
+      "signals_full": 1,
+      "signals_focused": 1,
+      "same": true
+    },
+    {
+      "family": "gap",
+      "units": "ED",
+      "start": "2026-07-13",
+      "signals_full": 7,
+      "signals_focused": 7,
+      "same": true
+    },
+    {
+      "family": "gap",
+      "units": "PHC-S",
+      "start": "2025-01-27",
+      "signals_full": 9,
+      "signals_focused": 9,
+      "same": true
+    }
+  ],
+  "data_checks": {
+    "count_series": 117,
+    "rate_series": 198,
+    "weeks": 156,
+    "anchor": "2023-10-02",
+    "last_day": "2026-09-27",
+    "events_total": 22312,
+    "rate_results_total": 107464,
+    "rate_R_total": 8891,
+    "organisms_in_data": true,
+    "URO_esbl_per_week": 0.5,
+    "ED_esbl_per_week": 0.602564,
+    "ICU_esbl_per_week": 0.0576923,
+    "ICU_mrsa_per_week": 0.115385,
+    "ICU_mrsa_zero_weeks": 0.942308,
+    "PHC-N_ecoli_cro_per_week": 10.109,
+    "PHC-S_ecoli_cro_per_week": 10.0897,
+    "URO_ecoli_cro_per_week": 6.82051,
+    "ICU_ecoli_cro_per_week": 1.26923,
+    "prior_mean_URO_esbl": 0.256231,
+    "prior_mean_ICU_mrsa": 0.02,
+    "prior_mean_floor_series": 19,
+    "prior_share_URO_ecoli_cro": 0.0396069
+  }
+}
