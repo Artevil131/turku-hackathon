@@ -8,7 +8,7 @@ import { GuideSummary, guideCodes } from "./Guide.tsx";
 import { priorText, withPrior } from "./Patient.tsx";
 import { InfoIcon, Popover } from "./Popover.tsx";
 import { PrintSheet } from "./PrintSheet.tsx";
-import { type Item, STANDING } from "./reason.ts";
+import { type Item, recentText, STANDING } from "./reason.ts";
 import type { UnitSignal } from "./signals.ts";
 
 export type ListStatus = "loading" | "error" | "ready";
@@ -49,6 +49,7 @@ export function itemsOf(
     n: row.basis === "spectrum" ? row.coverage.spectrum.counts.known : row.coverage.counts.known,
     row,
     pair: null,
+    recent: row.coverage.recent,
   }));
   const pairs = data.combinationSuggestions.map<Item>((p) => ({
     id: p.antibiotics.join("+"),
@@ -59,6 +60,7 @@ export function itemsOf(
     n: p.coverage.counts.known,
     row: null,
     pair: p,
+    recent: null,
   }));
   return withPrior(singles, pairs, patient);
 }
@@ -101,9 +103,8 @@ export function CoverageList({
     });
   };
 
-  const annual = filters.period === 365;
   const meta = [
-    t(locale, "drPeriodDays", { days: filters.period }),
+    t(locale, "drPeriodDays", { days: 365 }),
     cov && cov.level !== "unit" ? t(locale, cov.level === "ward type" ? "drLevelWardTypeShort" : "drLevelHospitalShort") : null,
   ]
     .filter(Boolean)
@@ -155,6 +156,7 @@ export function CoverageList({
               </span>
             ) : null}
             <span className="cl-secondary cl-meta">{meta}</span>
+            <span className="cl-secondary cl-recent-row num">{recentText(locale, item.recent)}</span>
           </span>
           <span className="cl-res" data-standing={item.standing} title={t(locale, st.long)}>
             <span className="cl-glyph" aria-hidden="true">
@@ -206,7 +208,8 @@ export function CoverageList({
           label={t(locale, "drInfo")}
           content={
             <>
-              <p>{t(locale, "drForestInfo", { period: t(locale, filters.period === 365 ? "drPeriodYear" : "drPeriodMonth") })}</p>
+              <p>{t(locale, "drForestInfo", { period: t(locale, "drPeriodYear") })}</p>
+              <p>{t(locale, "drRecentContext")}</p>
               {ready ? droppedFilters(filters, cov).map((d) => <p key={d.long}>{t(locale, d.long, { bar })}</p>) : null}
               <p>
                 {t(locale, "drFoot", { mild: BAR.mild, severe: BAR.severe })} {t(locale, "drFootOnset", { bar: BAR.severe })}
@@ -280,10 +283,12 @@ export function CoverageList({
                 {t(locale, "drBarName", { bar })}
               </b>
             </span>
-            <span className="cl-r">{t(locale, "drCovers")}</span>
+            <span className="cl-r" title={t(locale, "drRecentContext")}>
+              {t(locale, "drCovers")}
+              <small className="cl-recent-head"> · {t(locale, "drRecentHead")}</small>
+            </span>
             <span>{t(locale, "drStandingCol")}</span>
           </div>
-          {annual ? null : <p className="cl-recent">{t(locale, "drRecentContext")}</p>}
           <ul className="cl-rows" aria-label={t(locale, "drCoverage")}>
             {renderGroup(singles, firstBelow, t(locale, "drBelowDivider", { bar }))}
             {pairs.length > 0 ? renderGroup(pairs, 0, t(locale, "drTwoTogether")) : null}

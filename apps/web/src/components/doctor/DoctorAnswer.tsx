@@ -1,12 +1,12 @@
 import { type Locale, specimenName, t, wardName } from "@aei/i18n";
 import type React from "react";
 import { type DoctorFilters, num, pct } from "./filters.ts";
-import type { Item } from "./reason.ts";
+import { type Item, recentText } from "./reason.ts";
 
 // The top of the coverage window, before any control: what to start with, then the others in rows of one shape
 // (glyph, name, share). The list below is the evidence.
 
-function Rows({ items, mark, bar }: { items: readonly Item[]; mark: string; bar: number }) {
+function Rows({ items, mark, bar, locale }: { items: readonly Item[]; mark: string; bar: number; locale: Locale }) {
   return (
     <ul className="dr-answer-rows">
       {items.map((i) => (
@@ -19,6 +19,7 @@ function Rows({ items, mark, bar }: { items: readonly Item[]; mark: string; bar:
             <i />
           </span>
           <b>{pct(i.share ?? 0)}&nbsp;%</b>
+          <span className="dr-recent num">{recentText(locale, i.recent)}</span>
         </li>
       ))}
     </ul>
@@ -107,13 +108,13 @@ export function DoctorAnswer({
           {clears.length > 1 ? (
             <>
               <h3 className="dr-answer-sub">{t(locale, "drAnswerAlsoHead", { bar })}</h3>
-              <Rows items={clears.slice(1)} mark="✓" bar={bar} />
+              <Rows locale={locale} items={clears.slice(1)} mark="✓" bar={bar} />
             </>
           ) : null}
           {below.length ? (
             <>
               <h3 className="dr-answer-sub dr-answer-low">{t(locale, "drAnswerBelowHead", { bar })}</h3>
-              <Rows items={below} mark="✕" bar={bar} />
+              <Rows locale={locale} items={below} mark="✕" bar={bar} />
             </>
           ) : null}
         </>

@@ -496,11 +496,22 @@
   pointer-events: none;
 }
 
-.cl-recent {
-  margin: 0 0 6px;
-  color: var(--d-watch);
+.cl-recent-head {
+  color: var(--d-ink-3);
   font-size: var(--d-xs);
-  font-weight: 600;
+  font-weight: 400;
+}
+
+.cl-recent-row {
+  color: var(--d-ink-3);
+  white-space: normal;
+}
+
+.dr-answer-rows .dr-recent {
+  grid-column: 2 / -1;
+  color: var(--ink-3);
+  font-size: var(--t-s);
+  font-weight: 400;
 }
 
 .cl-note {

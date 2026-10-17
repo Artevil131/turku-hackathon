@@ -5,7 +5,7 @@ import { type Locale, specimenName, t, wardName } from "@aei/i18n";
 import { AGE_KEYS, BAR, barOf, certaintyOf, type DoctorFilters, dmy, droppedFilters, num, pct, sexWord } from "./filters.ts";
 import { guideCodes, guideLines } from "./Guide.tsx";
 import { carrierLines, findingLines, priorText } from "./Patient.tsx";
-import { flagsOf, type Item, levelKey, reasonOf, STANDING } from "./reason.ts";
+import { flagsOf, type Item, levelKey, reasonOf, recentText, STANDING } from "./reason.ts";
 import { signalDate, type UnitSignal } from "./signals.ts";
 
 interface Props {
@@ -35,7 +35,7 @@ export function PrintSheet({ locale, filters, data, asOf, signals, singles, pair
     filters.age === "any" ? null : t(locale, "drPrintAge", { age: t(locale, AGE_KEYS[filters.age]) }),
     filters.onset ? t(locale, "drOnset").toLowerCase() : null,
     `${t(locale, filters.sev === "mild" ? "drSevMildShort" : "drSevSevereShort")}, ${t(locale, "drBarName", { bar: barOf(data, filters) })}`,
-    t(locale, filters.period === 365 ? "drPeriodYear" : "drPeriodMonth"),
+    t(locale, "drPeriodYear"),
     t(locale, "drPrintAsOf", { date: dmy(data.asOf) }),
   ]
     .filter(Boolean)
@@ -54,6 +54,8 @@ export function PrintSheet({ locale, filters, data, asOf, signals, singles, pair
         <span className="pr-num">
           {assessable && item.share !== null ? `${pct(item.share)}\u00a0% ` : ""}
           {item.interval && assessable ? `(${pct(item.interval[0])}–${pct(item.interval[1])}) ` : ""}n {num(locale, item.n)}
+          {" · "}
+          {recentText(locale, item.recent)}
         </span>
         <span className="pr-res">
           {st.glyph} {t(locale, st.long)}

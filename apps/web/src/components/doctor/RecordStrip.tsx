@@ -2,7 +2,7 @@ import type { Severity } from "@aei/contract";
 import type { Sex, Specimen, WardCode } from "@aei/domain";
 import { type Locale, type MessageKey, specimenName, t, wardName } from "@aei/i18n";
 import { type ReactNode, useState } from "react";
-import { AGE_GROUPS, AGE_KEYS, type AgeGroup, barOf, type DoctorFilters, type Period, SITES, sexWord, unitGroups } from "./filters.ts";
+import { AGE_GROUPS, AGE_KEYS, type AgeGroup, barOf, type DoctorFilters, SITES, sexWord, unitGroups } from "./filters.ts";
 import { useMedia } from "./useMedia.ts";
 import "./RecordStrip.css";
 
@@ -69,7 +69,6 @@ export function RecordStrip({ locale, filters, onChange, patientId = "", onPatie
     filters.age === "any" ? null : t(locale, "drPrintAge", { age: tr(AGE_KEYS[filters.age]) }),
     filters.onset ? tr("drOnsetPhone") : null,
     tr(filters.sev === "mild" ? "drSevMildShort" : "drSevSevereShort"),
-    tr(filters.period === 365 ? "drPeriodYear" : "drPeriodMonth"),
   ]
     .filter(Boolean)
     .join(" · ");
@@ -126,18 +125,6 @@ export function RecordStrip({ locale, filters, onChange, patientId = "", onPatie
         ]}
         value={filters.sev}
         onPick={(v) => onChange({ sev: v })}
-      />
-    </Group>
-  );
-  const period = (
-    <Group label={tr("drPeriod")}>
-      <Choices<Period>
-        options={[
-          [365, wide ? tr("drPeriodYearShort") : tr("drPeriodYear"), tr("drPeriodYear")],
-          [28, wide ? tr("drPeriodMonthShort") : tr("drPeriodMonth"), tr("drPeriodMonth")],
-        ]}
-        value={filters.period}
-        onPick={(v) => change({ period: v })}
       />
     </Group>
   );
@@ -208,7 +195,6 @@ export function RecordStrip({ locale, filters, onChange, patientId = "", onPatie
             {sex}
             {age}
             {onset}
-            {period}
             {patient}
           </div>
         </details>
@@ -230,7 +216,6 @@ export function RecordStrip({ locale, filters, onChange, patientId = "", onPatie
           {sex}
           {severity}
           {age}
-          {period}
           {onset}
           {patient}
           <button

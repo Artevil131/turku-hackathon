@@ -39,6 +39,13 @@ export function reasonOf(locale: Locale, row: Row, data: CoverageResponse, filte
   return row.share === null ? t(locale, "drNaFew") : t(locale, "drNaUntested", { pct: pct(untested) });
 }
 
+/** The muted 28-day text: counts always, the percentage only from 30 known results, an em dash without data. */
+export function recentText(locale: Locale, recent: Item["recent"]): string {
+  if (!recent) return t(locale, "drRecentNone");
+  const base = { covered: num(locale, recent.covered), known: num(locale, recent.known) };
+  return recent.known >= 30 ? t(locale, "drRecentPct", { ...base, pct: pct(recent.covered / recent.known) }) : t(locale, "drRecent", base);
+}
+
 /** Organisms a row leaves out, only the ones that are a real share of the pool. */
 export function flagsOf(row: Row) {
   const notCovering = row.coverage.notCovering.filter((o) => o.share >= 0.05);
@@ -59,6 +66,8 @@ export interface Item {
   pair: CoverageResponse["combinationSuggestions"][number] | null;
   /** The patient's finding that makes this antibiotic inferred resistant (D-050); absent without a patient. */
   prior?: Prior | null;
+  /** The unit's last 28 days, all organisms, as context (D-023); absent for combinations. */
+  recent?: { covered: number; known: number } | null;
 }
 
 /** A patient's finding as a row carries it: the phenotype and the date of its newest isolate. */
