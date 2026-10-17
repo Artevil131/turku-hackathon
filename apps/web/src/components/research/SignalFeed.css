@@ -309,6 +309,16 @@
   font-weight: 600;
 }
 
+.feed-brief {
+  font-size: var(--t-xs, 12px);
+  color: var(--ink-3);
+}
+
+.feed-unit {
+  font-weight: 400;
+  color: var(--ink-2);
+}
+
 .feed-section-note {
   margin: 0 12px 8px;
   color: var(--ink-2);

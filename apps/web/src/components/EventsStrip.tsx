@@ -73,6 +73,7 @@ export function EventsStrip({ locale, incidents, selected, disabled, onPick, onM
                 className={`tl-ev${current ? " is-current" : ""}${entering(i.key) ? " is-entering" : ""}`}
                 disabled={disabled}
                 aria-pressed={current}
+                aria-label={`${shortTitle(locale, i.lead)}, ${unitLabel(locale, i.ward)}, ${compactDate(i.date)}`}
                 title={alertEvidence(locale, i.lead)}
                 onClick={() => onPick(i.key)}
               >

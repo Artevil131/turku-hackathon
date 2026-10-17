@@ -1,9 +1,25 @@
-import { alertEvidence, formatDateNumeric, incidentPriority, incidentResponsibility, type Locale, t } from "@aei/i18n";
+import { alertEvidence, alertEvidenceShort, formatDateNumeric, incidentPriority, incidentResponsibility, type Locale, t } from "@aei/i18n";
+import { Gloss } from "../../Gloss.tsx";
 import { KindGlyph } from "./glyphs.tsx";
 import type { Incident } from "./model.ts";
 import { kindLabel, shortTitle, unitLabel } from "./names.ts";
 import { SpanLine } from "./SpanChips.tsx";
 import type { Spans } from "./spans.ts";
+
+const TITLE_TERM = /^(ESBL|MRSA|VRE|CPE)(?=\W|$)/;
+
+/** A feed title with a leading resistance abbreviation glossed; the rest stays plain text. */
+function GlossedTitle({ locale, title }: { locale: Locale; title: string }) {
+  const m = TITLE_TERM.exec(title);
+  const term = m?.[1] as "ESBL" | "MRSA" | "VRE" | "CPE" | undefined;
+  if (!term) return <>{title}</>;
+  return (
+    <>
+      <Gloss term={term} locale={locale} />
+      {title.slice(term.length)}
+    </>
+  );
+}
 
 interface Props {
   locale: Locale;
@@ -32,39 +48,48 @@ export function IncidentRow({ locale, incident: inc, selected, spans, onSelect }
             <KindGlyph kind={inc.kind} />
             <span className="visually-hidden">{kindLabel(locale, inc.kind)}</span>
           </span>
-          <span className="feed-name">{shortTitle(locale, inc.lead)}</span>
+          <span className="feed-name">
+            <GlossedTitle locale={locale} title={shortTitle(locale, inc.lead)} />
+            <span className="feed-unit"> · {unitLabel(locale, inc.ward)}</span>
+          </span>
           <time className="feed-date" dateTime={inc.date}>
             {formatDateNumeric(inc.date)}
           </time>
         </span>
-        <span className="feed-summary">
-          {unitLabel(locale, inc.ward)} · {t(locale, priority === "high" ? "feedSeverityHigh" : "feedSeverityMedium")}
+        <span className="feed-brief">
+          {t(locale, priority === "high" ? "feedSeverityHigh" : "feedSeverityMedium")} · {alertEvidenceShort(locale, inc.lead)}
         </span>
-        <span className="feed-summary">
-          {t(locale, inc.members.length === 1 ? "feedIncidentOne" : "feedIncidentMany", { n: inc.members.length })}
-        </span>
-        <span className="feed-evidence">{t(locale, "feedLatestEvidence", { evidence: alertEvidence(locale, inc.lead) })}</span>
-        <span className="feed-owner">{incidentResponsibility(locale, inc.members)}</span>
-        {spans ? (
-          <span className="feed-row-bottom">
-            <SpanLine locale={locale} spans={spans} ward={inc.ward} />
-          </span>
+        {selected ? (
+          <>
+            <span className="feed-summary">
+              {t(locale, inc.members.length === 1 ? "feedIncidentOne" : "feedIncidentMany", { n: inc.members.length })}
+            </span>
+            <span className="feed-evidence">{t(locale, "feedLatestEvidence", { evidence: alertEvidence(locale, inc.lead) })}</span>
+            <span className="feed-owner">{incidentResponsibility(locale, inc.members)}</span>
+            {spans ? (
+              <span className="feed-row-bottom">
+                <SpanLine locale={locale} spans={spans} ward={inc.ward} />
+              </span>
+            ) : null}
+            <span className="feed-open">{t(locale, "feedMathOpen")} →</span>
+          </>
         ) : null}
-        <span className="feed-open">{t(locale, "feedMathOpen")} →</span>
       </button>
-      <details className="feed-members">
-        <summary>{t(locale, "feedMembers")}</summary>
-        <p>{t(locale, "feedMembersNote")}</p>
-        <ul>
-          {inc.members.map((a) => (
-            <li key={a.id}>
-              <time dateTime={a.date}>{formatDateNumeric(a.date)}</time>
-              {" · "}
-              {shortTitle(locale, a)} · {alertEvidence(locale, a)}
-            </li>
-          ))}
-        </ul>
-      </details>
+      {selected ? (
+        <details className="feed-members">
+          <summary>{t(locale, "feedMembers")}</summary>
+          <p>{t(locale, "feedMembersNote")}</p>
+          <ul>
+            {inc.members.map((a) => (
+              <li key={a.id}>
+                <time dateTime={a.date}>{formatDateNumeric(a.date)}</time>
+                {" · "}
+                <GlossedTitle locale={locale} title={shortTitle(locale, a)} /> · {alertEvidence(locale, a)}
+              </li>
+            ))}
+          </ul>
+        </details>
+      ) : null}
     </article>
   );
 }

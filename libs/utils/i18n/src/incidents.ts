@@ -49,6 +49,16 @@ export function incidentResponsibility(locale: Locale, members: readonly AlertFa
   return ward ? t(locale, "feedNotifyHigh", { unit: wardName(locale, ward) }) : t(locale, "feedNotifyHospital");
 }
 
+/** The one-line form for a collapsed row: observed and usual only, no dates. Other kinds fall back to the full line. */
+export function alertEvidenceShort(locale: Locale, a: AlertFacts): string {
+  if (a.kind !== "detector") return t(locale, "feedEvidenceOne");
+  if ((a.detector === "profile-excess" || a.detector === "phenotype-excess") && a.observed !== undefined && a.expected !== undefined) {
+    const number = (n: number) => new Intl.NumberFormat(locale === "fi" ? "fi-FI" : "en-GB", { maximumFractionDigits: 1 }).format(n);
+    return t(locale, "feedEvidenceShort", { observed: number(a.observed), expected: number(a.expected) });
+  }
+  return alertEvidence(locale, a);
+}
+
 /** Counts retain their original units: patients, cultures, days, or resistant share. Never sum member alerts. */
 export function alertEvidence(locale: Locale, a: AlertFacts): string {
   const date = formatDateNumeric(a.date);

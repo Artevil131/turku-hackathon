@@ -69,8 +69,10 @@ describe("research incident feed", () => {
     expect(html.indexOf("Earlier incidents")).toBeLessThan(html.indexOf('data-key="history"'));
     expect(html).toContain("Escherichia coli");
     expect(html).toContain("Urology");
-    expect(html).toContain("3 patients observed · expected 0.2");
-    expect(html).toContain("responsible doctor");
+    expect(html).toContain("3 patients · usual 0.2");
+    // detail waits for the selection
+    expect(html).not.toContain("responsible doctor");
+    expect(html).not.toContain("One incident");
   });
   it("keeps the open summary consistent with unit filters", () => {
     const html = render({ ...state, unit: "MED-A" });

@@ -15,7 +15,7 @@ import {
   useState,
 } from "react";
 import { allWards, currentSite, isMulti, siteWards } from "../../sites.ts";
-import { hashPage } from "../../url.ts";
+import { hashPage, sharedQuery } from "../../url.ts";
 import {
   bandPath,
   compactDate,
@@ -415,11 +415,13 @@ const StaticLayer = memo(function StaticLayer({
   const lanesEnd = L.lanesEnd;
   const todayLabel = `${t(locale, "tlToday")} · ${compactDate(asOf)}`;
   const todayW = Math.ceil(todayLabel.length * 6.6 + 10);
-  const open = (a: Alert) => {
+  const open = (p: { a: Alert; members: readonly Alert[] }) => {
     onOpen();
-    const key = incidentKey(a);
-    if (onSelect) onSelect(key);
-    if (!onSelect || hashPage() !== "research") location.hash = `research?inc=${encodeURIComponent(key)}`;
+    // A merged pill already ringed for an older member keeps that member when pressed again.
+    const target = p.members.find((m) => incidentKey(m) === selected) ?? p.a;
+    const key = incidentKey(target);
+    if (onSelect && hashPage() === "research") onSelect(key);
+    else location.hash = `research?inc=${encodeURIComponent(key)}${sharedQuery().replace("?", "&")}`;
   };
   const pressLane = (ward: WardCode) => onFocusUnit?.(ward === focusUnit ? null : ward);
   return (
@@ -561,12 +563,12 @@ const StaticLayer = memo(function StaticLayer({
           tabIndex={disabled ? -1 : 0}
           aria-label={p.members.map((x) => pillLine(locale, x)).join("; ")}
           data-week={weekIndex(m.weekDays, dayNumber(p.a.date))}
-          onClick={() => open(p.a)}
+          onClick={() => open(p)}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {
               e.preventDefault();
               e.stopPropagation();
-              open(p.a);
+              open(p);
             }
           }}
         >

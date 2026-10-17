@@ -38,8 +38,7 @@ describe("returning staff home summary", () => {
       />,
     );
     expect(html).toContain("Avoimet tapahtumat · 1");
-    expect(html).toContain("Yksi tapahtuma · 2 siihen liittyvää hälytystä");
-    expect(html).toContain("vastuulääkäri");
+    expect(html).toContain("potilasta · tavallisesti");
     expect(html).toContain('dateTime="2025-06-07"');
     expect(html).toContain('value="7"');
     expect(html).toContain('value="28"');

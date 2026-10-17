@@ -23,5 +23,5 @@ export function unitOfIncident(alerts: readonly Alert[], key: string | null | un
   if (key == null) return null;
   let found: Alert | undefined;
   for (const a of alerts) if (incidentKey(a) === key && (!found || a.date >= found.date)) found = a;
-  return (found?.ward as WardCode | undefined) ?? null;
+  return found?.ward ?? null;
 }

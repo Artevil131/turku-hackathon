@@ -2,6 +2,7 @@
 // and a one-line meaning (research-unified.md §6). Keys are global: prefix them `gloss`.
 // Unit codes take the unit's full name from the dataset's WARDS list (libs/utils/domain).
 
+import { WARDS } from "@aei/domain";
 import type { Locale } from "../index.ts";
 
 export const GLOSS_TERMS = [
@@ -36,6 +37,14 @@ export type GlossEntry = { long: string; meaning: string };
 const HOSPITAL_UNIT = { en: "a hospital unit", fi: "sairaalan yksikkö" } as const;
 const PRIMARY_UNIT = { en: "a primary-care unit", fi: "perusterveydenhuollon yksikkö" } as const;
 
+type UnitTerm = "ED" | "MED-A" | "MED-B" | "SURG" | "URO" | "ICU" | "GER" | "PHC-N" | "PHC-S";
+
+/** Each unit code spelled out with the dataset's own name for it. */
+const unitEntries = (locale: Locale): Record<UnitTerm, GlossEntry> =>
+  Object.fromEntries(
+    WARDS.map((w) => [w.code, { long: w[locale], meaning: (w.institution === "hospital" ? HOSPITAL_UNIT : PRIMARY_UNIT)[locale] }]),
+  ) as Record<UnitTerm, GlossEntry>;
+
 export const GLOSSARY: Record<Locale, Record<GlossTerm, GlossEntry>> = {
   en: {
     ESBL: {
@@ -66,15 +75,7 @@ export const GLOSSARY: Record<Locale, Record<GlossTerm, GlossEntry>> = {
     },
     TMP: { long: "trimethoprim", meaning: "antibiotic, reported for urine" },
     TZP: { long: "piperacillin-tazobactam", meaning: "penicillin with a beta-lactamase inhibitor" },
-    ED: { long: "Emergency department", meaning: HOSPITAL_UNIT.en },
-    "MED-A": { long: "Internal medicine A", meaning: HOSPITAL_UNIT.en },
-    "MED-B": { long: "Internal medicine B", meaning: HOSPITAL_UNIT.en },
-    SURG: { long: "Surgery", meaning: HOSPITAL_UNIT.en },
-    URO: { long: "Urology", meaning: HOSPITAL_UNIT.en },
-    ICU: { long: "Intensive care unit", meaning: HOSPITAL_UNIT.en },
-    GER: { long: "Geriatrics", meaning: HOSPITAL_UNIT.en },
-    "PHC-N": { long: "Health centre North", meaning: PRIMARY_UNIT.en },
-    "PHC-S": { long: "Health centre South", meaning: PRIMARY_UNIT.en },
+    ...unitEntries("en"),
   },
   fi: {
     ESBL: {
@@ -105,15 +106,7 @@ export const GLOSSARY: Record<Locale, Record<GlossTerm, GlossEntry>> = {
     },
     TMP: { long: "trimetopriimi", meaning: "antibiootti, raportoidaan virtsasta" },
     TZP: { long: "piperasilliini-tatsobaktaami", meaning: "penisilliini ja beetalaktamaasin estäjä" },
-    ED: { long: "Päivystys", meaning: HOSPITAL_UNIT.fi },
-    "MED-A": { long: "Sisätaudit A", meaning: HOSPITAL_UNIT.fi },
-    "MED-B": { long: "Sisätaudit B", meaning: HOSPITAL_UNIT.fi },
-    SURG: { long: "Kirurgia", meaning: HOSPITAL_UNIT.fi },
-    URO: { long: "Urologia", meaning: HOSPITAL_UNIT.fi },
-    ICU: { long: "Teho-osasto", meaning: HOSPITAL_UNIT.fi },
-    GER: { long: "Geriatria", meaning: HOSPITAL_UNIT.fi },
-    "PHC-N": { long: "Terveysasema Pohjoinen", meaning: PRIMARY_UNIT.fi },
-    "PHC-S": { long: "Terveysasema Etelä", meaning: PRIMARY_UNIT.fi },
+    ...unitEntries("fi"),
   },
 };
 

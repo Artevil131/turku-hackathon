@@ -27,6 +27,7 @@ export const timelineEn = {
   tlPillLegend: "7 · 1.4 = observed · usual",
   tlLaneLegend:
     "Lanes: each unit's resistant finds a week. A pill is a signal; its number is observed against usual, so 7 against 1.4 means seven patients where 1.4 were expected.",
+  tlLaneLegendShort: "Lanes: resistant finds per unit and week · a pill is a signal, observed · usual",
   tlPillSignals: "{n} signals",
   tlUnitsLane: "Resistant finds per unit",
   tlWeekRange: "Week {from} – {to}",
@@ -105,6 +106,7 @@ export const timelineFi: Record<keyof typeof timelineEn, string> = {
   tlPillLegend: "7 · 1,4 = havaittu · tavallinen",
   tlLaneLegend:
     "Kaistat: yksikön resistentit löydökset viikossa. Merkki on signaali; sen luku on havaittu suhteessa tavalliseen, eli 7 · 1,4 tarkoittaa seitsemää potilasta, kun 1,4 oli odotettavissa.",
+  tlLaneLegendShort: "Kaistat: resistentit löydökset yksikköä ja viikkoa kohti · merkki on signaali, havaittu · tavallinen",
   tlPillSignals: "{n} signaalia",
   tlUnitsLane: "Resistentit löydökset yksiköittäin",
   tlWeekRange: "Viikko {from} – {to}",
