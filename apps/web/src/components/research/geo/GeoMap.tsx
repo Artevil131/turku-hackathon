@@ -3,6 +3,7 @@ import { countyName, formatMonth, type Locale, t } from "@aei/i18n";
 import { addDaysIso } from "@aei/viz";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AsOf } from "../../AsOf.tsx";
+import { InfoButton } from "../../Info.tsx";
 import { HOSPITALS, LINKS } from "../../intro/surface.ts";
 import type { PanelProps } from "../board.ts";
 import { centroidOf, pathOf } from "../map/geo.ts";
@@ -290,6 +291,12 @@ export function GeoMap({ client, locale, asOf, reducedMotion, hasSelection = fal
           </select>
         </label>
       </header>
+      <p className="geo-caption">
+        {t(locale, "geoCaption", { month: month ? monthLong(month) : "–" })}
+        <InfoButton locale={locale} label={t(locale, "geoCaptionSource")}>
+          {t(locale, "geoCaptionSource")}
+        </InfoButton>
+      </p>
 
       {hasError ? (
         <div className="geo-state" role="alert">

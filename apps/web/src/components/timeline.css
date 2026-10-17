@@ -686,6 +686,15 @@
     color var(--mo-1, 120ms) var(--mo-ease, ease-out);
 }
 
+/* The band with its legend under it. */
+.tl-band-col {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
 /* The lane legend, in words, left-aligned with the lanes. */
 .tl-legend {
   margin: 0;

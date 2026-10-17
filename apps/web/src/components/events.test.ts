@@ -22,12 +22,12 @@ describe("resolveEvents", () => {
   it("ignores a matching alert from before the event's window (the ICU had an MRSA in January 2025)", () => {
     const earlyIcu = { kind: "new-in-unit", id: "icu-old", date: "2025-01-19", ward: "ICU", phenotype: "mrsa" } as unknown as Alert;
     const lateIcu = { kind: "new-in-unit", id: "icu-new", date: "2026-03-03", ward: "ICU", phenotype: "mrsa" } as unknown as Alert;
-    expect(resolveEvents([earlyIcu]).find((e) => e.code === "E2")).toMatchObject({ date: "2026-03-01", incident: null });
+    expect(resolveEvents([earlyIcu]).find((e) => e.code === "E2")).toMatchObject({ date: "2026-03-03", incident: null });
     expect(resolveEvents([earlyIcu, lateIcu]).find((e) => e.code === "E2")).toMatchObject({ date: "2026-03-03", incident: "icu-new" });
   });
 
   it("falls back to the planted date with no incident", () => {
-    expect(resolveEvents(alerts).find((e) => e.code === "E3")).toMatchObject({ date: "2025-12-08", incident: null });
+    expect(resolveEvents(alerts).find((e) => e.code === "E3")).toMatchObject({ date: "2025-12-15", incident: null });
   });
 
   it("sorts by date", () => {

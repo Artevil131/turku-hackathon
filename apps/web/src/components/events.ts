@@ -2,7 +2,8 @@ import type { Alert } from "@aei/contract";
 
 // The four planted events (benchmarks/planted-events/README.md) as the tiles of the
 // replay timeline's events strip. The date is the first alert a detector actually
-// raised for the event; the fallback below is used until such an alert exists.
+// raised for the event; the fallback below (the day the live detector raises it, DEMO.md and
+// benchmarks/planted-events) is used until the replay reaches it.
 
 type EventName = "tlEvN1Name" | "tlEvN2Name" | "tlEvN3Name" | "tlEvN4Name";
 type EventWhat = "tlEvN1What" | "tlEvN2What" | "tlEvN3What" | "tlEvN4What";
@@ -29,7 +30,7 @@ export const PLANTED_EVENTS: readonly PlantedEvent[] = [
   {
     code: "E1",
     notBefore: "2025-05-01",
-    fallbackDate: "2025-06-02",
+    fallbackDate: "2025-06-04",
     unit: "URO",
     name: "tlEvN1Name",
     what: "tlEvN1What",
@@ -41,7 +42,7 @@ export const PLANTED_EVENTS: readonly PlantedEvent[] = [
   {
     code: "E2",
     notBefore: "2026-02-01",
-    fallbackDate: "2026-03-01",
+    fallbackDate: "2026-03-03",
     unit: "ICU",
     name: "tlEvN2Name",
     what: "tlEvN2What",
@@ -53,7 +54,7 @@ export const PLANTED_EVENTS: readonly PlantedEvent[] = [
   {
     code: "E3",
     notBefore: "2025-11-15",
-    fallbackDate: "2025-12-08",
+    fallbackDate: "2025-12-15",
     unit: "PHC-S",
     name: "tlEvN3Name",
     what: "tlEvN3What",

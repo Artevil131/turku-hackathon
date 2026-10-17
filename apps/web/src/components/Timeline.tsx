@@ -1,10 +1,11 @@
 import type { AeiClient, ClockCommand, ClockState } from "@aei/contract";
 import type { WardCode } from "@aei/domain";
-import { type Locale, t } from "@aei/i18n";
+import { type Locale, t, wardName } from "@aei/i18n";
 import { type KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { type LiveAlerts, useAlertsSinceStart } from "../alertsSince.ts";
 import type { Connection } from "../live.ts";
+import { currentHospitalName, siteWards } from "../sites.ts";
 import { useHashParam } from "../url.ts";
 import { EventsStrip } from "./EventsStrip.tsx";
 import { type ResolvedEvent, resolveEvents } from "./events.ts";
@@ -53,13 +54,17 @@ function writeCollapsed(value: boolean) {
 
 const clampDate = (iso: string, start: string, end: string) => (iso < start ? start : iso > end ? end : iso);
 
-type SpeedKey = "tlSpeedDay2s" | "tlSpeedDay" | "tlSpeedWeek" | "tlSpeedMonth";
-const SPEEDS: readonly { key: SpeedKey; tickMs: number; daysPerTick: number }[] = [
-  { key: "tlSpeedDay2s", tickMs: 2000, daysPerTick: 1 },
-  { key: "tlSpeedDay", tickMs: 1000, daysPerTick: 1 },
-  { key: "tlSpeedWeek", tickMs: 1000, daysPerTick: 7 },
-  { key: "tlSpeedMonth", tickMs: 1000, daysPerTick: 30 },
-];
+// Step (how far each tick moves) and speed (how often it ticks) are two controls; the clock takes them apart.
+const STEPS = [
+  { key: "tlStepByDay", daysPerTick: 1 },
+  { key: "tlStepByWeek", daysPerTick: 7 },
+  { key: "tlStepByMonth", daysPerTick: 30 },
+] as const;
+const SPEEDS = [
+  { key: "tlSpeedSlow", tickMs: 2000 },
+  { key: "tlSpeedNormal", tickMs: 1000 },
+  { key: "tlSpeedFast", tickMs: 500 },
+] as const;
 
 const IGNORED_TARGET = "input, textarea, select, [contenteditable], [role=dialog]";
 
@@ -187,12 +192,41 @@ export function Timeline({
   );
 
   const events = useMemo(() => resolveEvents(alerts), [alerts]);
+  // An event's alert may not have been raised yet when its tile is pressed (the history only runs to the
+  // clock); the tile seeks first and the selection follows once the alert arrives.
+  const [pendingEvent, setPendingEvent] = useState<ResolvedEvent["code"] | null>(null);
   const pickEvent = (ev: ResolvedEvent) => {
     command({ action: "pause" });
     seek(ev.date);
     if (ev.incident) setInc(ev.incident);
+    else setPendingEvent(ev.code);
     setSheet(false);
   };
+  useEffect(() => {
+    if (!pendingEvent) return;
+    const incident = events.find((e) => e.code === pendingEvent)?.incident;
+    if (!incident) return;
+    setInc(incident);
+    setPendingEvent(null);
+  }, [events, pendingEvent, setInc]);
+
+  const hospital = currentHospitalName(locale);
+  const title = unit ? (
+    <h2 className="tl-title">
+      <span className="tl-title-unit">{t(locale, "tlTitleUnit", { hospital, unit: wardName(locale, unit as WardCode) })}</span>
+      <button
+        type="button"
+        className="tl-title-clear"
+        onClick={() => setUnit(null)}
+        aria-label={t(locale, "tlClearUnit")}
+        title={t(locale, "tlClearUnit")}
+      >
+        ×
+      </button>
+    </h2>
+  ) : (
+    <h2 className="tl-title">{t(locale, "tlTitle", { hospital, n: siteWards().length })}</h2>
+  );
 
   // Keyboard shortcuts, like a video player.
   useEffect(() => {
@@ -314,22 +348,65 @@ export function Timeline({
     </div>
   );
 
-  const selectedSpeed = clock ? SPEEDS.findIndex((s) => s.tickMs === clock.tickMs && s.daysPerTick === clock.daysPerTick) : -1;
+  // Step and speed as two labelled segmented groups; the hover title says it in words.
+  const stepNow = STEPS.find((s) => s.daysPerTick === clock?.daysPerTick);
+  const speedNow = SPEEDS.find((s) => s.tickMs === clock?.tickMs);
+  const hint = (speedKey: (typeof SPEEDS)[number]["key"], stepKey: (typeof STEPS)[number]["key"], ms: number) =>
+    t(locale, "tlSpeedHint", { speed: t(locale, speedKey), step: t(locale, stepKey), s: ms / 1000 });
+  const ctlGroups = (
+    <>
+      <div className="tl-ctl-group" role="group" aria-label={t(locale, "tlStep")}>
+        <span className="tl-ctl-label">{t(locale, "tlStep")}</span>
+        <div className="seg">
+          {STEPS.map((s) => (
+            <button
+              key={s.key}
+              type="button"
+              aria-pressed={stepNow?.key === s.key}
+              disabled={!ready}
+              title={hint(speedNow?.key ?? "tlSpeedNormal", s.key, speedNow?.tickMs ?? 1000)}
+              onClick={() => command({ action: "configure", daysPerTick: s.daysPerTick })}
+            >
+              {t(locale, s.key)}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="tl-ctl-group" role="group" aria-label={t(locale, "tlSpeed")}>
+        <span className="tl-ctl-label">{t(locale, "tlSpeed")}</span>
+        <div className="seg">
+          {SPEEDS.map((s) => (
+            <button
+              key={s.key}
+              type="button"
+              aria-pressed={speedNow?.key === s.key}
+              disabled={!ready}
+              title={hint(s.key, stepNow?.key ?? "tlStepByDay", s.tickMs)}
+              onClick={() => command({ action: "configure", tickMs: s.tickMs })}
+            >
+              {t(locale, s.key)}
+            </button>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+  // The folded line has room for one small control: the step; speed waits for the expanded view.
   const speed = (
     <select
       className="tl-select"
-      aria-label={t(locale, "tlSpeed")}
-      title={t(locale, "tlSpeed")}
+      aria-label={t(locale, "tlStep")}
+      title={t(locale, "tlStep")}
       disabled={!ready}
-      value={selectedSpeed < 0 ? "" : selectedSpeed}
+      value={stepNow?.key ?? ""}
       onChange={(e) => {
-        const s = SPEEDS[Number(e.target.value)];
-        if (s) command({ action: "configure", tickMs: s.tickMs, daysPerTick: s.daysPerTick });
+        const s = STEPS.find((x) => x.key === e.target.value);
+        if (s) command({ action: "configure", daysPerTick: s.daysPerTick });
       }}
     >
-      {selectedSpeed < 0 ? <option value="">–</option> : null}
-      {SPEEDS.map((s, i) => (
-        <option key={s.key} value={i}>
+      {stepNow ? null : <option value="">–</option>}
+      {STEPS.map((s) => (
+        <option key={s.key} value={s.key}>
           {t(locale, s.key)}
         </option>
       ))}
@@ -426,6 +503,7 @@ export function Timeline({
         {eventsStrip()}
         {sheet ? (
           <Sheet locale={locale} onClose={() => setSheet(false)} still={reducedMotion}>
+            {title}
             <div className="tl-sheet-read">
               <b className="tl-readout num">{readout}</b>
               {status}
@@ -437,7 +515,7 @@ export function Timeline({
             <div className="tl-sheet-band">{band(false)}</div>
             <div className="tl-sheet-ctl">
               {transport(true)}
-              {speed}
+              {ctlGroups}
             </div>
             {dateJump}
           </Sheet>
@@ -451,7 +529,7 @@ export function Timeline({
       <div className="timeline timeline-folded" ref={rootRef} aria-busy={seekingTo ? true : undefined} data-running={running || undefined}>
         {transport(true)}
         <span className="tl-when">
-          <span className="tl-folded-label">{t(locale, "tlCollapsedLabel")}</span>
+          {title}
           <b className="tl-readout num">{readout}</b>
         </span>
         {speed}
@@ -475,9 +553,10 @@ export function Timeline({
   return (
     <div className="timeline" ref={rootRef} aria-busy={seekingTo ? true : undefined} data-running={running || undefined}>
       <div className="tl-left">
+        {title}
         <div className="tl-ctl">
           {transport(false)}
-          {speed}
+          {ctlGroups}
         </div>
         <div className="tl-read">
           <b className="tl-readout num">{readout}</b>
@@ -507,7 +586,10 @@ export function Timeline({
           {dateJump}
         </div>
       </div>
-      {band(false)}
+      <div className="tl-band-col">
+        {band(false)}
+        <p className="tl-legend">{t(locale, "tlLaneLegend")}</p>
+      </div>
       {eventsStrip()}
     </div>
   );
