@@ -1,8 +1,10 @@
 import { createElement as h } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { expect, describe as group, it } from "vitest";
+import { expect, describe as group, it, vi } from "vitest";
 import type { FeedMeta, Result } from "../../feed/types.ts";
+import { toSignals } from "../../model/alerts.ts";
 import type { Signal } from "../../model/types.ts";
+import { store } from "../../ui/hooks.ts";
 import { describe } from "./describe.tsx";
 import { DEFAULT_FILTERS, isActive, passes, reveal, sortAlerts, unseenActive } from "./filters.ts";
 import { AlertsScreen } from "./index.tsx";
@@ -218,12 +220,81 @@ group("alerts screen", () => {
   };
   it("lists the active alerts with a summary line and the filters", () => {
     const html = renderToStaticMarkup(h(AlertsScreen, props));
-    expect(html).toContain("4</strong> new · 5 active in the last 4 weeks");
+    expect(html).toContain("4</strong> not yet marked seen · 5 active in the last 4 weeks");
+    expect(html).toContain('href="#timeline"');
+    expect(html).toContain("Real THL county signals");
     expect(html).toContain("Checked up to 30 June 2025");
     expect(html).toContain("Results stopped arriving from Clinic Nine");
     expect(html).not.toContain("4 patients in 14 days"); // ended in January: not active
     expect(html).toContain("Hidden by the filters: 1"); // the low one
     expect(html).not.toMatch(/\b\d+%\s*\(4 of 9\)/);
+  });
+  it("shows the previous browser visit, not the replay date, and rejects invalid saved values", () => {
+    const saved = vi.spyOn(store, "get");
+    try {
+      saved.mockReturnValue("2026-10-14T14:00:00.000Z");
+      expect(renderToStaticMarkup(h(AlertsScreen, props))).toContain("This browser last opened Alerts on 14 October 2026.");
+      expect(renderToStaticMarkup(h(AlertsScreen, { ...props, locale: "fi" }))).toContain("14. lokakuuta 2026");
+      for (const value of [undefined, "invalid", "5", 123]) {
+        saved.mockReturnValue(value);
+        expect(renderToStaticMarkup(h(AlertsScreen, props))).toContain("No previous Alerts visit saved in this browser.");
+      }
+    } finally {
+      saved.mockRestore();
+    }
+  });
+  it("relates incident patients by patient identity even when their isolate ids differ", () => {
+    const s = { ...cluster, related: [{ ...shiftFew, isolateIds: ["i3", "i4"] }] };
+    const cases = [...props.results, result({ isolateId: "i3" }), result({ isolateId: "i4", patientId: "PX0088888" })];
+    for (const locale of ["en", "fi"] as const) {
+      const html = renderToStaticMarkup(h(Body, { ...props, locale, results: cases, s, d: describe(locale, meta, s, asOf), seen: false }));
+      expect(html).toContain(
+        locale === "en"
+          ? "Patients in both: 1 · only above: 1 · only in this related alert: 1."
+          : "Potilaita molemmissa: 1 · vain yllä: 1 · vain tässä liittyvässä hälytyksessä: 1.",
+      );
+    }
+    const html = renderToStaticMarkup(h(Body, { ...props, s, d: describe("en", meta, s, asOf), seen: false }));
+    expect(html).toContain("Patient overlap cannot be determined from the released cases.");
+    expect(html).not.toContain("Patients in both: 0");
+  });
+  it("keeps a folded incident's lead cases separate from its related alert's cases", () => {
+    const cases = [
+      result({ isolateId: "i1", ward: "URO", sampleDate: "2025-06-15", phenotypes: ["esbl"] }),
+      result({ isolateId: "i2", patientId: "PX0099999", ward: "URO", sampleDate: "2025-06-15", phenotypes: ["esbl"] }),
+      result({ isolateId: "i3", patientId: "PX0088888", ward: "URO", sampleDate: "2025-06-22", phenotypes: ["esbl"] }),
+    ];
+    const [s] = toSignals(
+      [
+        {
+          kind: "detector",
+          id: "lead",
+          incident: "lead",
+          date: "2025-06-20",
+          ward: "URO",
+          detector: "phenotype-excess",
+          phenotype: "esbl",
+          observed: 2,
+        },
+        {
+          kind: "detector",
+          id: "related",
+          incident: "lead",
+          date: "2025-06-25",
+          ward: "URO",
+          detector: "phenotype-excess",
+          phenotype: "esbl",
+          observed: 3,
+        },
+      ],
+      cases,
+    );
+    expect(s?.patients).toBe(2);
+    expect(s?.isolateIds).toEqual(["i1", "i2"]);
+    expect(s?.related[0]?.isolateIds).toEqual(["i1", "i2", "i3"]);
+    if (!s) throw new Error("Expected the folded incident");
+    const html = renderToStaticMarkup(h(Body, { ...props, results: cases, s, d: describe("en", meta, s, asOf), seen: false }));
+    expect(html).toContain("Patients in both: 2 · only above: 0 · only in this related alert: 1.");
   });
   it("shows cases without identifying the patient", () => {
     const d = describe("en", meta, cluster, asOf);

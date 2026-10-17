@@ -1,3 +1,4 @@
+import { patientOverlap } from "@aei/alerts";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import type { FeedMeta, IsoDate, Result } from "../../feed/types.ts";
 import { formatMonth, formatNumber, formatShare, type Locale, t } from "../../i18n/index.ts";
@@ -70,6 +71,43 @@ function useCases(results: readonly Result[], ids: readonly string[]): { cases: 
     cases.sort((a, b) => (a.sampleDate < b.sampleDate ? -1 : a.sampleDate > b.sampleDate ? 1 : a.isolateId < b.isolateId ? -1 : 1));
     return { cases, missing: Math.max(0, want.size - cases.length) };
   }, [results, ids]);
+}
+
+function RelatedAlert({
+  locale,
+  meta,
+  results,
+  asOf,
+  related,
+  above,
+  complete,
+}: {
+  locale: Locale;
+  meta: FeedMeta;
+  results: readonly Result[];
+  asOf: IsoDate;
+  related: Signal;
+  above: readonly Result[];
+  complete: boolean;
+}) {
+  const { cases, missing } = useCases(results, related.isolateIds);
+  const overlap = useMemo(() => patientOverlap(above, cases), [above, cases]);
+  const canCompare = complete && missing === 0 && related.isolateIds.length > 0;
+  return (
+    <li>
+      <span className="u-num alerts-related-date">{dateText(locale, related.firstDate, asOf)}</span>{" "}
+      {describe(locale, meta, related, asOf).title.node}
+      <p className="u-small u-soft u-num">
+        {canCompare
+          ? t(locale, "alerts.related.overlap", {
+              both: formatNumber(locale, overlap.both),
+              above: formatNumber(locale, overlap.onlyAbove),
+              related: formatNumber(locale, overlap.onlyRelated),
+            })
+          : t(locale, "alerts.related.unavailable")}
+      </p>
+    </li>
+  );
 }
 
 /** Only the end of the patient code, so no one is identified on a shared screen. */
@@ -374,10 +412,16 @@ export function Body({
           <p className="u-eyebrow">{t(locale, "alerts.label.incident")}</p>
           <ul className="alerts-related">
             {s.related.map((r) => (
-              <li key={r.id}>
-                <span className="u-num alerts-related-date">{dateText(locale, r.firstDate, asOf)}</span>{" "}
-                {describe(locale, meta, r, asOf).title.node}
-              </li>
+              <RelatedAlert
+                key={r.id}
+                locale={locale}
+                meta={meta}
+                results={results}
+                asOf={asOf}
+                related={r}
+                above={cases}
+                complete={missing === 0 && s.isolateIds.length > 0}
+              />
             ))}
           </ul>
         </div>

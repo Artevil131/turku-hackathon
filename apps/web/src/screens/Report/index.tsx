@@ -248,9 +248,9 @@ export function ReportScreen(p: {
         {organism ? null : <p>{t(locale, "report.foot.unknown")}</p>}
         {view === "table" ? <p>{t(locale, "report.foot.aware")}</p> : null}
         <p>{t(locale, "report.foot.decide")}</p>
-        <p>
+        <div>
           <QualityLine locale={locale} quality={p.quality} />
-        </p>
+        </div>
       </footer>
     </section>
   );

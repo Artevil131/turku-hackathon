@@ -43,8 +43,6 @@ const KIND_OF: Record<SignalSource, SignalKind> = {
 
 const RANK: Record<Severity, number> = { high: 0, medium: 1, low: 2 };
 
-const distinct = (ids: readonly string[]) => [...new Set(ids)];
-
 function mostCommon(values: readonly string[]): string | undefined {
   const count = new Map<string, number>();
   for (const v of values) count.set(v, (count.get(v) ?? 0) + 1);
@@ -192,7 +190,9 @@ export function toSignals(alerts: readonly Alert[], results: readonly Result[]):
       id,
       severity,
       lastDate: list.reduce((d, s) => (s.lastDate > d ? s.lastDate : d), lead.lastDate),
-      isolateIds: distinct(list.flatMap((s) => s.isolateIds)),
+      // Keep the lead alert's cases with its patient count; related alerts have
+      // their own case lists, which may overlap but are not the same group.
+      isolateIds: lead.isolateIds,
       related,
     });
   }

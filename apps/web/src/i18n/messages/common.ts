@@ -14,7 +14,7 @@ const en = {
   "common.tab.report": "Report",
   "common.tab.timeline": "Timeline",
   "common.tab.settings": "Settings",
-  "common.tab.badge": "{count} new",
+  "common.tab.badge": "{count} not yet marked seen",
 
   "common.fresh.upTo": "Results up to {date}",
   "common.fresh.upToShort": "Up to {date}",
@@ -65,6 +65,9 @@ const en = {
 
   "common.quality.title": "Data checks",
   "common.quality.passed": "Every check passed",
+  "common.quality.checkPassed": "Passed",
+  "common.quality.checkResult": "{result}: {findings}",
+  "common.quality.showChecks": "See all 15 checks",
   "common.quality.findings": "{count} findings",
   "common.quality.findingsOne": "1 finding",
   "common.quality.line": "Data checks: every check passed over {rows}.",
@@ -138,6 +141,9 @@ const en = {
   "common.settings.rank": "Best match prefers first-choice antibiotics when they work nearly as well",
   "common.settings.rankWhy": "This saves last-resort antibiotics for the patients who need them most.",
   "common.settings.data": "About the data",
+  "common.settings.regional":
+    "The county signals on Timeline use real public THL communicable disease notifications (CC BY 4.0), separate from the synthetic hospital results.",
+  "common.settings.regionalFetched": "THL data fetched {date}.",
   "common.settings.feed":
     "Results come from the laboratory as they are reported. In this demo they are the organisers' synthetic Tyks dataset, released day by day.",
   "common.settings.range": "The feed covers {start} to {end}. Results are released up to {asOf}.",
@@ -154,7 +160,7 @@ const en = {
   "common.settings.aiCheck": "Check again",
   "common.settings.aiChecking": "Checking…",
   "common.settings.forget": "Remembered choices",
-  "common.settings.forgetBody": "Your unit, language, last page and seen alerts are kept on this device only.",
+  "common.settings.forgetBody": "Your unit, language, last page, seen alerts and last Alerts visit are kept on this device only.",
   "common.settings.forgetButton": "Forget remembered choices",
   "common.settings.forgotten": "Forgotten. Defaults are back.",
 
@@ -204,7 +210,7 @@ const fi: Record<keyof typeof en, string> = {
   "common.tab.report": "Raportti",
   "common.tab.timeline": "Aikajana",
   "common.tab.settings": "Asetukset",
-  "common.tab.badge": "{count} uutta",
+  "common.tab.badge": "{count} kuittaamatta",
 
   "common.fresh.upTo": "Tulokset {date} asti",
   "common.fresh.upToShort": "{date} asti",
@@ -256,6 +262,9 @@ const fi: Record<keyof typeof en, string> = {
 
   "common.quality.title": "Tietojen tarkistukset",
   "common.quality.passed": "Kaikki tarkistukset läpäisty",
+  "common.quality.checkPassed": "Läpäisty",
+  "common.quality.checkResult": "{result}: {findings}",
+  "common.quality.showChecks": "Näytä kaikki 15 tarkistusta",
   "common.quality.findings": "{count} havaintoa",
   "common.quality.findingsOne": "1 havainto",
   "common.quality.line": "Tietojen tarkistukset: kaikki läpäisty, {rows}.",
@@ -329,6 +338,9 @@ const fi: Record<keyof typeof en, string> = {
   "common.settings.rank": "Paras vaihtoehto suosii ensisijaisia antibiootteja, kun ne tehoavat lähes yhtä hyvin",
   "common.settings.rankWhy": "Näin viimesijaiset antibiootit säästyvät niitä eniten tarvitseville.",
   "common.settings.data": "Tiedoista",
+  "common.settings.regional":
+    "Aikajanan aluesignaalit perustuvat THL:n todellisiin julkisiin tartuntatauti-ilmoituksiin (CC BY 4.0), erillään synteettisistä sairaalatuloksista.",
+  "common.settings.regionalFetched": "THL-tiedot haettu {date}.",
   "common.settings.feed":
     "Tulokset tulevat laboratoriosta sitä mukaa kuin ne valmistuvat. Tässä demossa ne ovat järjestäjien synteettinen Tyksin aineisto, julkaistuna päivä kerrallaan.",
   "common.settings.range": "Syöte kattaa {start}–{end}. Tulokset on julkaistu {asOf} asti.",
@@ -345,7 +357,8 @@ const fi: Record<keyof typeof en, string> = {
   "common.settings.aiCheck": "Tarkista uudelleen",
   "common.settings.aiChecking": "Tarkistetaan…",
   "common.settings.forget": "Muistetut valinnat",
-  "common.settings.forgetBody": "Yksikkö, kieli, viimeisin sivu ja nähdyt hälytykset tallentuvat vain tälle laitteelle.",
+  "common.settings.forgetBody":
+    "Yksikkö, kieli, viimeisin sivu, nähdyt hälytykset ja edellinen käynti Hälytyksissä tallentuvat vain tälle laitteelle.",
   "common.settings.forgetButton": "Unohda muistetut valinnat",
   "common.settings.forgotten": "Unohdettu. Oletukset palautettu.",
 

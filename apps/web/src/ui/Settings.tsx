@@ -8,6 +8,7 @@ import { QualityLine } from "./Quality.tsx";
 import { Segmented } from "./Segmented.tsx";
 import { MIN_ISOLATES } from "./ShareBar.tsx";
 import type { QualityState } from "./useQuality.ts";
+import { useRegional } from "./useRegional.ts";
 
 /*
   Settings (route #settings): language, about the data, the optional AI's
@@ -48,6 +49,7 @@ export function Settings({
   onCheckAi: () => void;
   onForget: () => void;
 }) {
+  const regional = useRegional(asOf?.slice(0, 7) ?? "");
   const [forgotten, setForgotten] = useState(false);
   const d = (iso: string) => formatDate(locale, iso, "long");
 
@@ -74,6 +76,13 @@ export function Settings({
             <Icon name="flask" size={18} />
             <span>{t(locale, "common.settings.feed")}</span>
           </li>
+          <li>
+            <Icon name="info" size={18} />
+            <span>
+              {t(locale, "common.settings.regional")}
+              {regional.status === "ok" ? ` ${t(locale, "common.settings.regionalFetched", { date: d(regional.data.fetched) })}` : null}
+            </span>
+          </li>
           {meta && asOf ? (
             <li>
               <Icon name="calendar" size={18} />
@@ -83,10 +92,6 @@ export function Settings({
           <li>
             <Icon name="report" size={18} />
             <span className="u-num">{t(locale, "common.settings.count", { count: formatNumber(locale, resultCount) })}</span>
-          </li>
-          <li>
-            <Icon name="check" size={18} />
-            <QualityLine locale={locale} quality={quality} />
           </li>
           <li>
             <Icon name="play" size={18} />
@@ -106,6 +111,7 @@ export function Settings({
             <span className="u-strong">{t(locale, "common.settings.decide")}</span>
           </li>
         </ul>
+        <QualityLine locale={locale} quality={quality} />
       </Card>
 
       <Card title={t(locale, "common.settings.ai")} pad="md">
