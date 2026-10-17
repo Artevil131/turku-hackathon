@@ -8,7 +8,7 @@ import { GuideSummary, guideCodes } from "./Guide.tsx";
 import { priorText, withPrior } from "./Patient.tsx";
 import { InfoIcon, Popover } from "./Popover.tsx";
 import { PrintSheet } from "./PrintSheet.tsx";
-import { type Item, recentText, STANDING } from "./reason.ts";
+import { type Item, STANDING } from "./reason.ts";
 import type { UnitSignal } from "./signals.ts";
 
 export type ListStatus = "loading" | "error" | "ready";
@@ -103,12 +103,8 @@ export function CoverageList({
     });
   };
 
-  const meta = [
-    t(locale, "drPeriodDays", { days: 365 }),
-    cov && cov.level !== "unit" ? t(locale, cov.level === "ward type" ? "drLevelWardTypeShort" : "drLevelHospitalShort") : null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  // The level only when it is not the unit's own data; the year itself is the figure's label.
+  const meta = cov && cov.level !== "unit" ? t(locale, cov.level === "ward type" ? "drLevelWardTypeShort" : "drLevelHospitalShort") : null;
 
   const renderItem = (item: Item) => {
     const st = STANDING[item.standing];
@@ -143,20 +139,57 @@ export function CoverageList({
             {assessable && item.share !== null ? <i className="cl-point" style={{ left: `${at(item.share)}%` }} /> : null}
           </span>
           <span className="cl-num num">
-            <span>
-              {t(locale, item.row?.basis === "spectrum" ? "drWithinSpectrum" : "drAllOrgShort")}{" "}
-              <b>{assessable && item.share !== null ? `${pct(item.share)}\u00a0%` : "–"}</b>
-              {item.standing === "borderline" && range ? ` (${range}\u00a0%)` : ""}
-              <span className="cl-n"> · n {num(locale, item.n)}</span>
-            </span>
-            {item.row?.basis === "spectrum" ? (
-              <span className="cl-secondary">
-                {t(locale, "drAllOrgShort")} {item.row.allOrganisms.share === null ? "–" : `${pct(item.row.allOrganisms.share)}\u00a0%`}
-                <span className="cl-n"> · n {num(locale, item.row.coverage.counts.known)}</span>
+            {/* The brief's comparison, the loudest thing in the row: the year the ranking rests on, the unit's last
+                four weeks beside it in the same shape (D-023; no flag between them, D-044). */}
+            <span className="cl-figs">
+              {/* The judged figure first: the year on the row's own basis (likely bacteria for a mild case). */}
+              <span className="cl-fig">
+                <b>{assessable && item.share !== null ? `${pct(item.share)}\u00a0%` : "–"}</b>
+                <small>
+                  {t(locale, item.row?.basis === "spectrum" ? "drWithinSpectrum" : "drAllOrgShort")} · {t(locale, "drFigYear")}
+                  {item.standing === "borderline" && range ? ` · ${range}\u00a0%` : ""} · n {num(locale, item.n)}
+                </small>
               </span>
-            ) : null}
-            <span className="cl-secondary cl-meta">{meta}</span>
-            <span className="cl-secondary cl-recent-row num">{recentText(locale, item.recent)}</span>
+              {/* Then the brief's pair on one basis, all organisms: the year and this unit's last four weeks. */}
+              <span className="cl-pair">
+                {item.row?.basis === "spectrum" ? (
+                  <span className="cl-fig cl-fig-quiet">
+                    <b>{item.row.allOrganisms.share === null ? "–" : `${pct(item.row.allOrganisms.share)}\u00a0%`}</b>
+                    <small>
+                      {t(locale, "drAllOrgShort")} · {t(locale, "drFigYear")} · n {num(locale, item.row.coverage.counts.known)}
+                    </small>
+                  </span>
+                ) : null}
+                <span className="cl-fig cl-fig-quiet">
+                  {item.recent && item.recent.known >= 30 ? (
+                    <>
+                      <b>{pct(item.recent.covered / item.recent.known)}&nbsp;%</b>
+                      <small>
+                        {t(locale, "drAllOrgShort")} · {t(locale, "drFigRecent")} · {num(locale, item.recent.covered)} /{" "}
+                        {num(locale, item.recent.known)}
+                      </small>
+                    </>
+                  ) : item.recent && item.recent.known > 0 ? (
+                    <>
+                      <b>
+                        {num(locale, item.recent.covered)} / {num(locale, item.recent.known)}
+                      </b>
+                      <small>
+                        {t(locale, "drAllOrgShort")} · {t(locale, "drFigRecent")}
+                      </small>
+                    </>
+                  ) : (
+                    <>
+                      <b>—</b>
+                      <small>
+                        {t(locale, "drAllOrgShort")} · {t(locale, "drFigRecent")}
+                      </small>
+                    </>
+                  )}
+                </span>
+              </span>
+            </span>
+            {meta ? <span className="cl-secondary cl-basis">{meta}</span> : null}
           </span>
           <span className="cl-res" data-standing={item.standing} title={t(locale, st.long)}>
             <span className="cl-glyph" aria-hidden="true">

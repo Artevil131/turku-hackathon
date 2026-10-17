@@ -233,6 +233,41 @@
 .cl-num > span {
   display: block;
 }
+/* Two figures, year then four weeks, each a number over its label. */
+.cl-figs {
+  display: flex;
+  justify-content: flex-end;
+  gap: 2px 16px;
+}
+.cl-fig {
+  display: grid;
+  gap: 1px;
+  text-align: right;
+}
+.cl-fig b {
+  font-size: var(--d-m, 16px);
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+.cl-fig small {
+  color: var(--d-ink-3);
+  font-size: var(--d-xs);
+  white-space: nowrap;
+}
+.cl-pair {
+  display: flex;
+  gap: 2px 14px;
+  padding-left: 14px;
+  border-left: 1px solid var(--d-line);
+}
+.cl-fig-quiet b {
+  color: var(--d-ink-2);
+  font-weight: 500;
+}
+.cl-basis {
+  margin-top: 3px;
+  color: var(--d-ink-3);
+}
 
 .cl-num b {
   color: var(--d-ink);
@@ -405,6 +440,12 @@
     text-align: left;
     line-height: 1.6;
   }
+  .cl-figs {
+    justify-content: flex-start;
+  }
+  .cl-fig {
+    text-align: left;
+  }
   .cl-res {
     grid-column: 2;
     grid-row: 1;
@@ -503,7 +544,7 @@
 }
 
 .cl-recent-row {
-  color: var(--d-ink-3);
+  color: var(--d-ink-2);
   white-space: normal;
 }
 
@@ -626,6 +667,98 @@
 }
 .dr-answer-low {
   color: var(--ink-3);
+}
+/* The comparison strip: one basis named once, the year and the four weeks as two cells under it. */
+.dr-answer-compare {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: start;
+  gap: 2px 28px;
+  width: fit-content;
+  margin: 6px 0 0;
+  padding: 10px 14px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--glass-1);
+}
+.dr-answer-compare-title {
+  grid-column: 1 / -1;
+  color: var(--ink-2);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.dr-answer-compare > div {
+  display: grid;
+  gap: 1px;
+}
+.dr-answer-compare b {
+  color: var(--ink);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+.dr-answer-compare small {
+  color: var(--ink-3);
+  font-size: var(--t-xs);
+  white-space: nowrap;
+}
+.dr-answer-compare-why {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+  color: var(--ink-3);
+  font-size: var(--t-xs);
+}
+/* The rest of the list as pills: a name and its share each, scanned in one look. */
+.dr-answer-pills {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  margin: 6px 0 0;
+}
+.dr-answer-pills-lead {
+  color: var(--ink-2);
+  font-size: var(--t-s);
+  font-weight: 600;
+}
+.dr-answer-pills ul {
+  display: contents;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dr-answer-pills li {
+  padding: 3px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--glass-1);
+  color: var(--ink);
+  font-size: var(--t-s);
+  white-space: nowrap;
+}
+.dr-answer-pills li b {
+  font-weight: 600;
+}
+.dr-answer-pills.dr-answer-low li {
+  color: var(--ink-3);
+  background: transparent;
+}
+.dr-answer-pills.dr-answer-low li b {
+  color: var(--ink-2);
+}
+.dr-answer-pivot,
+.sig-pivot {
+  color: var(--live);
+  text-decoration: none;
+  font-size: var(--t-s);
+  white-space: nowrap;
+}
+.dr-answer-pivot:hover,
+.sig-pivot:hover {
+  text-decoration: underline;
 }
 .dr-answer-when {
   margin: 2px 0 0;

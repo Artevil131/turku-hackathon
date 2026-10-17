@@ -77,14 +77,15 @@ describe("doctor list disclosure", () => {
     );
     const html = list(data);
     const row = html.slice(html.indexOf('data-row="MEC"'), html.indexOf("</button>", html.indexOf('data-row="MEC"')));
-    expect(row).toMatch(/kattavuusalueella.*95\u00a0%/);
-    expect(row).toMatch(/kaikki bakteerit.*75\u00a0%/);
+    // The year's figure leads; the basis and the all-organism share follow in small print.
+    expect(row).toMatch(/95\u00a0%<\/b><small>kattavuusalueella · vuosi/);
+    expect(row).toMatch(/75\u00a0%<\/b><small>kaikki bakteerit · vuosi · n 190/);
     expect(row).toContain("Tiedot");
     expect(html).not.toContain('class="info-btn cl-info"');
     expect(itemsOf(data, "fi").singles.map((item) => item.id)).toEqual(data.suggestions.map((item) => item.antibiotic));
     expect(list(data, "en")).toContain("within spectrum");
     expect(list(data, "en")).toContain("all organisms");
-    expect(list(data, "en")).toContain("365 days");
+    expect(list(data, "en")).toContain("· year");
     expect(list(data, "en")).toContain("not the chance treatment works");
   });
   it("explains a borderline row and its interval without a popover", () => {
@@ -92,7 +93,7 @@ describe("doctor list disclosure", () => {
       Array.from({ length: 65 }, (_, i) => record(i, { specimen: "blood", results: { CIP: i < 60 ? "S" : "R" } })),
       "severe",
     );
-    expect(list(data)).toContain("92\u00a0%</b> (83–97\u00a0%)");
+    expect(list(data)).toContain("92\u00a0%</b><small>kaikki bakteerit · vuosi · 83–97\u00a0%");
     expect(list(data)).toContain("rajaa arvioidaan 95\u00a0%:n välin alapään mukaan, ja se on 83\u00a0%.");
   });
   it("leads with the first API-ranked pair when no severe single clears", () => {

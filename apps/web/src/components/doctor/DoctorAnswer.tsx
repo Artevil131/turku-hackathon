@@ -1,28 +1,23 @@
 import { formatDate, type Locale, specimenName, t, wardName } from "@aei/i18n";
-import type React from "react";
 import { type DoctorFilters, num, pct } from "./filters.ts";
-import { type Item, recentText } from "./reason.ts";
+import type { Item } from "./reason.ts";
 
 // The top of the coverage window, before any control: what to start with, then the others in rows of one shape
 // (glyph, name, share). The list below is the evidence.
 
-function Rows({ items, mark, bar, locale }: { items: readonly Item[]; mark: string; bar: number; locale: Locale }) {
+/** The drugs of one standing as pills: the name, then its share. */
+function Pills({ items, lead, muted }: { items: readonly Item[]; lead: string; muted?: boolean }) {
   return (
-    <ul className="dr-answer-rows">
-      {items.map((i) => (
-        <li key={i.id}>
-          <span className="dr-mark" aria-hidden="true">
-            {mark}
-          </span>
-          <span className="dr-name">{i.name}</span>
-          <span className="dr-bar" aria-hidden="true" style={{ "--w": `${pct(i.share ?? 0)}%`, "--bar": `${bar}%` } as React.CSSProperties}>
-            <i />
-          </span>
-          <b>{pct(i.share ?? 0)}&nbsp;%</b>
-          <span className="dr-recent num">{recentText(locale, i.recent)}</span>
-        </li>
-      ))}
-    </ul>
+    <div className={`dr-answer-pills${muted ? " dr-answer-low" : ""}`}>
+      <span className="dr-answer-pills-lead">{lead}</span>
+      <ul>
+        {items.map((i) => (
+          <li key={i.id}>
+            {i.name} <b>{pct(i.share ?? 0)}&nbsp;%</b>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -110,29 +105,49 @@ export function DoctorAnswer({
               )}
           </p>
           <p className="dr-answer-line">{t(locale, "drAnswerCovers", { share: pct(first.share ?? 0), n: num(locale, first.n) })}</p>
-          {clears.length > 1 ? (
-            <>
-              <h3 className="dr-answer-sub">{t(locale, "drAnswerAlsoHead", { bar })}</h3>
-              <Rows locale={locale} items={clears.slice(1)} mark="✓" bar={bar} />
-            </>
+          {/* The brief's comparison on one basis, all organisms: the year the ranking rests on and this unit's last
+              four weeks, labelled as a pair (D-023; no flag between them, D-044). */}
+          {first.row ? (
+            <div className="dr-answer-compare" role="group" aria-label={t(locale, "drAnswerAllOrg")}>
+              <span className="dr-answer-compare-title">{t(locale, "drAnswerAllOrg")}</span>
+              <div>
+                <b>{first.row.allOrganisms.share === null ? "–" : `${pct(first.row.allOrganisms.share)}\u00a0%`}</b>
+                <small>
+                  {t(locale, "drAnswerFigYear")} · n {num(locale, first.row.coverage.counts.known)}
+                </small>
+              </div>
+              <div>
+                <b>
+                  {first.recent && first.recent.known >= 30
+                    ? `${pct(first.recent.covered / first.recent.known)}\u00a0%`
+                    : first.recent && first.recent.known > 0
+                      ? `${num(locale, first.recent.covered)} / ${num(locale, first.recent.known)}`
+                      : "—"}
+                </b>
+                <small>
+                  {t(locale, "drAnswerFigRecent")}
+                  {first.recent && first.recent.known >= 30
+                    ? ` · ${num(locale, first.recent.covered)} / ${num(locale, first.recent.known)}`
+                    : ""}
+                </small>
+              </div>
+              <span className="dr-answer-compare-why">{t(locale, "drAnswerRankNote")}</span>
+            </div>
           ) : null}
-          {below.length ? (
-            <>
-              <h3 className="dr-answer-sub dr-answer-low">{t(locale, "drAnswerBelowHead", { bar })}</h3>
-              <Rows locale={locale} items={below} mark="✕" bar={bar} />
-            </>
-          ) : null}
+          {/* The rest of the list as pills; the table below has the bars and the details. */}
+          {clears.length > 1 ? <Pills items={clears.slice(1)} lead={t(locale, "drAnswerAlsoShort")} /> : null}
+          {below.length ? <Pills items={below} lead={t(locale, "drAnswerBelowShort")} muted /> : null}
         </>
       ) : (
         <p className="dr-answer-head">{t(locale, "drAnswerNone", { bar })}</p>
       )}
       {asOf && !loading && !failed ? (
         <p className="dr-answer-when">
-          {t(locale, "drAnswerWhen", {
-            date: formatDate(locale, asOf, "long"),
-            days: windowDays ?? 365,
-            unit: wardName(locale, filters.unit as never),
-          })}
+          {t(locale, "drAnswerData", { date: formatDate(locale, asOf, "long"), unit: wardName(locale, filters.unit as never) })}{" "}
+          {/* The doctor's view hands the board its ward: one click to this unit's signals. */}
+          <a className="dr-answer-pivot" href={`#research?unit=${encodeURIComponent(filters.unit)}`}>
+            {t(locale, "drAnswerBoard")}
+          </a>
         </p>
       ) : null}
       <p className="dr-answer-note">{t(locale, "drAnswerNote")}</p>

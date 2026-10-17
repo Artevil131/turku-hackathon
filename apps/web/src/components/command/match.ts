@@ -181,7 +181,8 @@ const words = (s: string) => s.split(/[^a-z0-9]+/).filter(Boolean);
 function tokenScore(term: string, token: string): number {
   if (term === token) return 100;
   if (term.startsWith(token)) return 80;
-  if (words(term).some((w) => w.startsWith(token))) return 60;
+  // "in" must not read as "infection": a word inside a term needs three letters of the token
+  if (token.length >= 3 && words(term).some((w) => w.startsWith(token))) return 60;
   // an infix match is a weak hint: it must never outrank a prefix match
   if (term.includes(token)) return 10;
   return 0;
@@ -204,8 +205,17 @@ export function scoreEntry(entry: Entry, tokens: string[]): number {
  * group capped), at most `MAX_RESULTS` in all. With no query it offers the
  * newest alerts and the main pages.
  */
+/** Words a question carries that name nothing: "e. coli in urology", "what works for icu sepsis". Dropped before matching when anything else remains. */
+const CONNECTORS = new Set([
+  ...["in", "on", "at", "for", "with", "from", "and", "or", "vs", "of", "the", "a", "an", "to", "is", "my"],
+  ...["ward", "unit", "patient", "what", "works", "best", "drug", "treat", "treatment", "cases", "rising"],
+  ...["ja", "tai", "osasto", "osastolla", "osastolle", "potilas", "potilaalle", "mikä", "mitä", "toimii", "paras", "lääke", "hoito"],
+]);
+
 export function search(entries: readonly Entry[], query: string, limit = MAX_RESULTS, locale: Locale = "en"): Result[] {
-  const tokens = normalize(query).split(/\s+/).filter(Boolean);
+  const typed = normalize(query).split(/\s+/).filter(Boolean);
+  const meaningful = typed.filter((tok) => !CONNECTORS.has(tok));
+  const tokens = meaningful.length > 0 ? meaningful : typed;
   let scored: Result[];
   if (tokens.length === 0) {
     const alerts = entries.filter((e) => e.group === "alerts").slice(0, 3);
