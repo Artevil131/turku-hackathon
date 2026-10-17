@@ -2,7 +2,7 @@ import type { Alert } from "@aei/alerts";
 import type { AgeGroup } from "@aei/ask";
 import type { CombinationSuggestion, CoverageResult, CoverageQuery as GearCoverageQuery, Severity, Suggestion } from "@aei/coverage";
 import type { Antibiotic, IsoDate, IsolateRecord, Organism, Sex, Site, SiteId, Specimen, Ward, WardCode } from "@aei/domain";
-import type { CheckSummary } from "@aei/quality";
+import type { CheckSummary, Finding } from "@aei/quality";
 import type { Flow, TrailLink } from "@aei/relations";
 import type { ClockState } from "@aei/replay";
 import type { WeeklySeries } from "@aei/viz";
@@ -79,6 +79,22 @@ export interface SiteStatus extends Site {
   /** Rows of the site up to the clock. */
   counts: { cultures: number; isolates: number; patients: number };
   feed: SiteFeed;
+}
+
+/** What POST /api/ingest answers (D-035, D-051): 200 with what was accepted, 422 with nothing usable, 401 or 415 with an error. */
+export interface IngestResponse {
+  format?: "hl7v2" | "fhir" | "csv";
+  /** The site the token named (D-051). */
+  site?: SiteId;
+  accepted?: number;
+  isolates?: number;
+  results?: number;
+  /** The clock after the results arrived; it moves forward to results dated after it. */
+  asOf?: IsoDate;
+  newAlerts?: string[];
+  warnings?: string[];
+  quality?: Finding[];
+  error?: string;
 }
 
 export interface SitesResponse {
@@ -382,6 +398,11 @@ export interface AeiClient {
   quality(query?: QualityQuery): Promise<QualityResponse>;
   /** The connected hospitals with their status (D-051). */
   sites(): Promise<SitesResponse>;
+  /**
+   * Sends lab results to POST /api/ingest with the sending site's token (none for the home site without one).
+   * Resolves with the server's answer and its HTTP status, also for 401, 415 and 422, which carry a reason.
+   */
+  ingest(body: string, contentType: string, token?: string): Promise<{ status: number; body: IngestResponse }>;
   /** Opens the live stream; returns a function that closes it. */
   live(onEvent: (event: LiveEvent) => void, onError?: (error: Event) => void): () => void;
 }
@@ -431,6 +452,21 @@ export function createAeiClient(options: AeiClientOptions): AeiClient {
     weekly: (query) => json<WeeklyResponse>(withQuery(ROUTES.weekly, query)),
     quality: (query = {}) => json<QualityResponse>(withQuery(ROUTES.quality, query)),
     sites: () => json<SitesResponse>(ROUTES.sites),
+    async ingest(body, contentType, token) {
+      const res = await doFetch(url(ROUTES.ingest), {
+        method: "POST",
+        headers: { "content-type": contentType, ...(token ? { authorization: `Bearer ${token}` } : {}) },
+        body,
+      });
+      const text = await res.text();
+      let parsed: IngestResponse;
+      try {
+        parsed = JSON.parse(text) as IngestResponse;
+      } catch {
+        parsed = { error: text };
+      }
+      return { status: res.status, body: parsed };
+    },
     live(onEvent, onError) {
       const source = new ES(url(ROUTES.live));
       for (const type of LIVE_EVENT_TYPES) {

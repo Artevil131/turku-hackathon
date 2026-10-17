@@ -3,7 +3,7 @@ import { formatDate, type Locale, t } from "@aei/i18n";
 import type { ReactNode } from "react";
 import { CommandField } from "./command/CommandField.tsx";
 import { openSignals } from "./home/changes.ts";
-import { Gear } from "./Icons.tsx";
+import { Gear, Plug } from "./Icons.tsx";
 import { SitePicker } from "./SitePicker.tsx";
 
 export type Page = "home" | "doctor" | "research" | "method" | "connect" | "settings" | "intro";
@@ -53,7 +53,15 @@ export function TopBar(props: Props) {
           ) : null,
         )}
         {tab("method", t(locale, "methodNav"))}
-        {tab("connect", t(locale, "connectNav"))}
+        <button
+          type="button"
+          className="section-tab section-tab-connect"
+          aria-current={page === "connect" ? "page" : undefined}
+          onClick={() => props.onPage("connect")}
+        >
+          <Plug />
+          {t(locale, "connectNav")}
+        </button>
       </nav>
 
       <div className="top-tools">

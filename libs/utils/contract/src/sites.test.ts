@@ -20,6 +20,23 @@ describe("sites in the contract", () => {
     expect(requests.at(-1)).toBe("/api/sites");
   });
 
+  it("sends results with the site's token and returns a refusal with its status", async () => {
+    const seen: [string, RequestInit | undefined][] = [];
+    const ingesting = createAeiClient({
+      baseUrl: "",
+      fetch: async (input, init) => {
+        seen.push([String(input), init]);
+        return new Response(JSON.stringify({ error: "unknown token" }), { status: 401 });
+      },
+    });
+    await expect(ingesting.ingest("MSH|...", "x-application/hl7-v2+er7", "t0k")).resolves.toEqual({
+      status: 401,
+      body: { error: "unknown token" },
+    });
+    expect(seen[0]?.[0]).toBe("/api/ingest");
+    expect(seen[0]?.[1]?.headers).toEqual({ "content-type": "x-application/hl7-v2+er7", authorization: "Bearer t0k" });
+  });
+
   it("passes site filters on every per-site query", async () => {
     expect(isolatesUrl({ site: "sata", ward: "sata/ICU" })).toBe("/api/isolates?site=sata&ward=sata%2FICU");
     await client.alerts({ site: "sata" });

@@ -1403,3 +1403,26 @@ fieldset.setting {
     max-width: 140px;
   }
 }
+
+/* The Connect tab: an outlined pill with a plug, set apart from the plain section tabs. */
+.section-tab-connect {
+  border: 1px solid var(--brand-accent-line);
+  border-radius: 999px;
+  color: var(--live);
+  background: var(--glass-1);
+}
+
+.section-tab-connect:not([aria-current="page"]):hover {
+  border-color: var(--live);
+  background: var(--live-soft);
+  color: var(--live);
+}
+
+.section-tab-connect[aria-current="page"] {
+  border-color: var(--live);
+}
+
+.section-tab-connect:focus-visible {
+  outline: 2px solid var(--live);
+  outline-offset: 2px;
+}

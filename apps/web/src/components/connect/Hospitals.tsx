@@ -1,96 +1,12 @@
-import type { AeiClient, SiteStatus, SitesResponse } from "@aei/contract";
-import { formatDate, type Locale, siteName, t } from "@aei/i18n";
+import { type Locale, t } from "@aei/i18n";
 import { COUNTIES } from "@aei/sites";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useSites } from "../../sites.ts";
 
-// The Connect page's hospitals (D-051): every site on this server with its status, rows and feed, and a
-// panel that writes a new site's sites.json entry with a fresh token made in the browser (sent nowhere).
+// "Connect a hospital" (D-051): numbered steps that write a new site's sites.json entry with a fresh token
+// made in the browser (sent nowhere), the endpoint, curl examples and the demo-day command.
 
-const num = (locale: Locale, n: number) => new Intl.NumberFormat(locale === "fi" ? "fi-FI" : "en-GB").format(n);
-const FORMAT_LABEL = { hl7v2: "HL7 v2", fhir: "FHIR R4", csv: "CSV" } as const;
 const shortCounty = (c: string) => c.replace(/n hyvinvointialue$/, "").replace(/ hyvinvointialue$/, "");
-
-function statusOf(s: SiteStatus): {
-  status: "on" | "ready" | "off";
-  key: "connectSiteHome" | "connectSiteConnected" | "connectSiteAwaiting";
-} {
-  if (s.status === "home") return { status: "on", key: "connectSiteHome" };
-  if (s.status === "connected") return { status: "ready", key: "connectSiteConnected" };
-  return { status: "off", key: "connectSiteAwaiting" };
-}
-
-export function SiteList({ client, locale }: { client: AeiClient; locale: Locale }) {
-  const { site } = useSites();
-  const [data, setData] = useState<SitesResponse | null>(null);
-  useEffect(() => {
-    let live = true;
-    client.sites().then(
-      (d) => live && setData(d),
-      () => live && setData(null),
-    );
-    return () => {
-      live = false;
-    };
-  }, [client]);
-  if (!data) return null;
-  // The selected hospital first, then the home site, then the rest in file order.
-  const sites = [...data.sites].sort((a, b) => Number(b.id === site) - Number(a.id === site));
-  return (
-    <section aria-labelledby="cx-sites-title">
-      <h2 id="cx-sites-title" className="cx-h2">
-        {t(locale, "connectSitesTitle")}
-      </h2>
-      <p className="cx-lead">{t(locale, "connectSitesLead")}</p>
-      <ul className="cx-grid">
-        {sites.map((s) => {
-          const st = statusOf(s);
-          const f = s.feed;
-          return (
-            <li key={s.id} className="cx-source" data-status={st.status} data-current={s.id === site}>
-              <div className="cx-source-head">
-                <h3>
-                  {siteName(locale, s.id)} <span className="cx-site-id">{s.id}</span>
-                </h3>
-                <span className="cx-status" data-status={st.status}>
-                  <i aria-hidden="true" />
-                  {t(locale, st.key)}
-                </span>
-              </div>
-              <p>
-                {t(locale, "connectSiteCounts", {
-                  cultures: num(locale, s.counts.cultures),
-                  isolates: num(locale, s.counts.isolates),
-                  patients: num(locale, s.counts.patients),
-                  date: formatDate(locale, data.asOf),
-                  units: s.wards.length,
-                })}
-              </p>
-              <p>
-                {f.messages && f.lastAt
-                  ? t(locale, "connectSiteFeed", {
-                      messages: num(locale, f.messages),
-                      at: new Date(f.lastAt).toLocaleString(locale === "fi" ? "fi-FI" : "en-GB"),
-                      format: f.lastFormat ? FORMAT_LABEL[f.lastFormat] : "?",
-                      accepted: num(locale, f.lastAccepted),
-                    })
-                  : s.status === "home"
-                    ? t(locale, "connectSiteHomeFeed")
-                    : t(locale, "connectSiteNoFeed")}
-              </p>
-              {f.warnings || f.unregistered || f.rejected ? (
-                <p className="cx-site-issues">
-                  {t(locale, "connectSiteIssues", { warnings: f.warnings, unregistered: f.unregistered, rejected: f.rejected })}
-                </p>
-              ) : null}
-              <p className="cx-site-county">{t(locale, "connectSiteCounty", { county: shortCounty(s.county) })}</p>
-            </li>
-          );
-        })}
-      </ul>
-    </section>
-  );
-}
 
 /** 32 random bytes as hex, from the browser's cryptographic generator. */
 function newToken(): string {
@@ -137,7 +53,7 @@ function Copy({ locale, text }: { locale: Locale; text: string }) {
   );
 }
 
-export function ConnectHospital({ locale }: { locale: Locale }) {
+export function ConnectHospital({ locale }: { locale: Locale; site?: string }) {
   const { sites } = useSites();
   const [id, setId] = useState("vaasa");
   const [fi, setFi] = useState("Vaasan keskussairaala");
@@ -155,10 +71,11 @@ export function ConnectHospital({ locale }: { locale: Locale }) {
   const curl = (type: string, file: string) =>
     `curl -X POST ${endpoint} \\\n  -H "Authorization: Bearer ${token}" \\\n  -H "Content-Type: ${type}" \\\n  --data-binary @${file}`;
   const example = `${id || "site"}/${units[0]?.code ?? "ICU"}`;
+  const demo = `uv run python scripts/send_lab_results.py --from 2025-06-02 --to 2025-06-02 --format hl7 \\\n  --site ${id || "site"} --token ${token} --shared-patients 0.2 --url ${endpoint}`;
 
   return (
     <section className="cx-try cx-add" aria-labelledby="cx-add-title">
-      <h2 id="cx-add-title" className="cx-h2">
+      <h2 id="cx-add-title" className="cx-h2" tabIndex={-1}>
         {t(locale, "connectAddTitle")}
       </h2>
       <p className="cx-lead">{t(locale, "connectAddLead")}</p>
@@ -259,6 +176,19 @@ export function ConnectHospital({ locale }: { locale: Locale }) {
         </div>
       ))}
       <p className="cx-lead">{t(locale, "connectAddQualified", { id: id || "site", example })}</p>
+
+      <h3 id="cx-demo-title" className="cx-h3" tabIndex={-1}>
+        {t(locale, "connectAddDemo")}
+      </h3>
+      <p className="cx-lead">{t(locale, "connectDemoCommand")}</p>
+      <div className="cx-out-head">
+        <span className="cx-k">scripts/send_lab_results.py</span>
+        <Copy locale={locale} text={demo} />
+      </div>
+      <pre className="cx-code">
+        <code>{demo}</code>
+      </pre>
+      <p className="cx-note">{t(locale, "connectAddDemoBody")}</p>
     </section>
   );
 }
