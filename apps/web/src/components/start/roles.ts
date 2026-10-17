@@ -71,6 +71,56 @@ export const CHIPS: Record<Role, Chip[]> = {
   ],
 };
 
+const MRSA: ChipAction = { kind: "view", template: null, params: { ph: "mrsa" } };
+const VRE: ChipAction = { kind: "view", template: null, params: { ph: "vre" } };
+const CPE: ChipAction = { kind: "view", template: null, params: { ph: "cpe" } };
+const BLOOD: ChipAction = { kind: "view", template: "patient", params: { "cov.site": "blood" } };
+const WOUND: ChipAction = { kind: "view", template: "patient", params: { "cov.site": "wound" } };
+const OUTBREAK: ChipAction = { kind: "view", template: "outbreak" };
+const FIRST_LINE: ChipAction = { kind: "view", template: "antibiogram" };
+const REGIONAL: ChipAction = { kind: "view", template: "regional" };
+const MAP: ChipAction = { kind: "hash", href: "#research?panel=map" };
+const GRID: ChipAction = { kind: "hash", href: "#research?panel=grid" };
+
+/** Every question the "More questions" window can offer, by id. */
+const QUESTION: Record<string, Chip> = {
+  rising: { label: "startAskQ1", action: RISING },
+  urine: { label: "startAskQ2", action: URINE },
+  esbl: { label: "startAskQ3", action: ESBL },
+  blood: { label: "qBlood", action: BLOOD },
+  wound: { label: "qWound", action: WOUND },
+  mrsa: { label: "qMrsa", action: MRSA },
+  vre: { label: "qVre", action: VRE },
+  cpe: { label: "qCpe", action: CPE },
+  outbreak: { label: "qOutbreak", action: OUTBREAK },
+  firstLine: { label: "chipFirstLine", action: FIRST_LINE },
+  myWard: { label: "chipMyWard", action: FIRST_LINE },
+  compareWards: { label: "chipCompareWards", action: GRID },
+  shared: { label: "chipSharedPatients", action: { kind: "hash", href: "#research?panel=network" } },
+  feed: { label: "chipFeedHealthy", action: { kind: "hash", href: "#data" } },
+  cultures: { label: "chipCulturesWeek", action: GRID },
+  county: { label: "chipCountyPicture", action: MAP },
+  trends: { label: "chipRegionalTrends", action: REGIONAL },
+  howWeDo: { label: "chipHowWeDo", action: RISING },
+  blank: { label: "chipBlankNotebook", action: { kind: "view", template: "blank" } },
+  map: { label: "chipRegionalMap", action: MAP },
+};
+
+/** The questions each role sees in the "More questions" window, most relevant first. */
+export const MORE_QUESTIONS: Record<Role, Chip[]> = Object.fromEntries(
+  (
+    [
+      ["clinician", ["urine", "blood", "wound", "myWard", "firstLine", "rising", "esbl", "mrsa"]],
+      ["control", ["rising", "esbl", "mrsa", "vre", "cpe", "outbreak", "shared", "compareWards"]],
+      ["stewardship", ["firstLine", "urine", "blood", "wound", "compareWards", "trends", "rising", "esbl"]],
+      ["lab", ["feed", "cultures", "rising", "esbl", "mrsa", "vre", "cpe", "compareWards"]],
+      ["researcher", ["blank", "esbl", "mrsa", "cpe", "trends", "map", "outbreak", "firstLine"]],
+      ["surveillance", ["county", "trends", "map", "rising", "cpe", "mrsa", "vre", "firstLine"]],
+      ["management", ["howWeDo", "rising", "trends", "outbreak", "compareWards", "county", "firstLine", "feed"]],
+    ] as const
+  ).map(([role, ids]) => [role, ids.flatMap((id) => QUESTION[id] ?? [])]),
+) as Record<Role, Chip[]>;
+
 export const TEMPLATE_ORDER: Record<Role, Template[]> = {
   clinician: ["patient", "antibiogram", "outbreak", "regional", "blank"],
   control: ["outbreak", "antibiogram", "patient", "regional", "blank"],

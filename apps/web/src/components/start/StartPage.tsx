@@ -9,8 +9,20 @@ import { parseLayout } from "../research/workspace/layout.ts";
 import { QUICK_STARTS, TEMPLATE_KEYS, type Template } from "../research/workspace/templates.ts";
 import { openSearch } from "../shell/Sidebar.tsx";
 import type { Audience } from "./audience.ts";
+import { MoreQuestions } from "./MoreQuestions.tsx";
 import { NewProjectDialog } from "./NewProjectDialog.tsx";
-import { CHIPS, type ChipAction, ROLE_DEMO, ROLE_LABEL, ROLES, type Role, storedRole, storeRole, TEMPLATE_ORDER } from "./roles.ts";
+import {
+  CHIPS,
+  type ChipAction,
+  MORE_QUESTIONS,
+  ROLE_DEMO,
+  ROLE_LABEL,
+  ROLES,
+  type Role,
+  storedRole,
+  storeRole,
+  TEMPLATE_ORDER,
+} from "./roles.ts";
 import { ShareDialog } from "./ShareDialog.tsx";
 import { TemplateArt } from "./TemplateArt.tsx";
 import "../home/home.css";
@@ -130,6 +142,7 @@ export function StartPage({
   const [projects, setProjects] = useState<Project[] | null>(null);
   const [failed, setFailed] = useState(false);
   const [revision, setRevision] = useState(0);
+  const [more, setMore] = useState(false);
   const [creating, setCreating] = useState<Template | null>(null);
   const [sharing, setSharing] = useState<Project | null>(null);
   const [deleting, setDeleting] = useState<Project | null>(null);
@@ -225,6 +238,9 @@ export function StartPage({
                 {t(locale, c.label)}
               </button>
             ))}
+            <button type="button" className="start-ask-more" data-more-questions onClick={() => setMore(true)}>
+              {t(locale, "qMoreOpen")}
+            </button>
           </div>
         </div>
         <section id="start-recent" tabIndex={-1}>
@@ -385,6 +401,17 @@ export function StartPage({
         </section>
         {actionError ? <p role="alert">{t(locale, "startError")}</p> : null}
       </div>
+      {more ? (
+        <MoreQuestions
+          locale={locale}
+          questions={MORE_QUESTIONS[role]}
+          onPick={(action) => {
+            setMore(false);
+            run(action);
+          }}
+          onClose={() => setMore(false)}
+        />
+      ) : null}
       {creating ? (
         <NewProjectDialog client={client} locale={locale} clock={clock} initial={creating} onClose={() => setCreating(null)} />
       ) : null}

@@ -853,6 +853,54 @@
   color: var(--live);
 }
 
+/* "More questions": the last chip, quieter, opens a small window with every question for the role. */
+.start-ask-chips .start-ask-more {
+  border-style: dashed;
+  background: none;
+  color: var(--ink-2);
+}
+.project-dialog .start-more-note {
+  margin: -6px 0 12px;
+  color: var(--ink-2);
+}
+.project-dialog .start-more {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.project-dialog .start-more button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 46px;
+  padding: 8px 14px;
+  border-color: var(--line);
+  border-radius: 12px;
+  text-align: left;
+  font-size: var(--t-m, 15px);
+}
+.project-dialog .start-more button i {
+  color: var(--ink-3);
+  font-style: normal;
+  font-size: 1.3em;
+  transition: transform var(--mo-1) var(--mo-ease);
+}
+.project-dialog .start-more button:hover:not(:disabled),
+.project-dialog .start-more button:focus-visible {
+  border-color: var(--live);
+  background: var(--live-soft);
+  color: var(--live);
+}
+.project-dialog .start-more button:hover i,
+.project-dialog .start-more button:focus-visible i {
+  color: var(--live);
+  transform: translateX(3px);
+}
+
 /* The way back to the full tour: a bluish box first among the demo files. */
 .start-tour {
   justify-content: center;

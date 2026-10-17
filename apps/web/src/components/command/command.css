@@ -162,6 +162,29 @@
   align-items: stretch;
 }
 
+/* The palette glides in (scrim fades, field settles, list follows) and rows warm up under the pointer. */
+@keyframes cmd-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-8px) scale(0.98);
+  }
+}
+.palette .cmd[data-expanded],
+.palette .cmd:focus-within {
+  animation: cmd-in var(--mo-2) var(--mo-ease) both;
+}
+.palette:has(.cmd[data-expanded], .cmd:focus-within)::before {
+  animation: appear-backdrop var(--mo-3) var(--mo-ease) both;
+}
+.palette .cmd-pop {
+  animation: appear var(--mo-3) var(--mo-ease) 40ms both;
+}
+.cmd-option {
+  transition:
+    background-color var(--mo-1) var(--mo-ease),
+    border-color var(--mo-1) var(--mo-ease);
+}
+
 .palette .cmd:not([data-expanded]):not(:focus-within) {
   display: none;
 }
