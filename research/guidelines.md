@@ -110,7 +110,7 @@ dots; the `L` level suffix returns 403 here. Dimension ids
 (`fact_lite.dimensions.json`): time 9–26 = 2008–2025; organism 56
 Escherichia, 58 Klebsiella, 64 Staphylococcus, 55 Enterococcus, 61
 Pseudomonas, 54 Enterobacter, 65 Streptococcus; antibiotic 149 AMP, 169
-MEC, 180 TZP, 165 CXM, 164 CRO, 162 CAZ, 168 MEM, 182 CIP, 187 TMP, 174 NIT,
+MEC, 180 TZP, 165 CXM, 164 CRO, 162 CAZ, 168 MEM (the server resolves id 168 to a time member, so `aei.finres` asks for its sid 45550), 182 CIP, 187 TMP, 174 NIT,
 189 VAN, 166 CLI, 153 ESBL, 170 MRSA, 188 VRE; spec_type 195 urine, 190
 blood, 191 pus and other; measure 196 strains, 197 tests, 200 R, 201 %R,
 202 and 203 the interval. Example:
