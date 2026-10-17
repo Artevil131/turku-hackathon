@@ -136,7 +136,13 @@ on purpose. (Open question 2 below.)
 - Understanding: the per-detector sentences of 3.2 and the Method page are
   the deliverable. Artem reviews each sentence against ENGINE.md.
 
-### 3.8 Many hospitals and more data (team decision; colleague builds the connections)
+### 3.8 Many hospitals and more data
+
+Decided on main after this section was written: D-051, one server, a sites
+file (`@aei/sites`), `site?` on the queries, `Meta.sites`, `hospital=` in
+the URL, ingest attributed by token. The timeline title of 3.4 reads the
+selected site from `Meta.sites`. The options below are kept as the record
+of what was weighed; option B is what shipped.
 
 The server today holds one dataset (`apps/api/src/main.ts`, `derive()`),
 one fixed unit list (`@aei/domain` `WARDS`, imported directly by many web

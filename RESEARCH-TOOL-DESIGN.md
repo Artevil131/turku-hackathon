@@ -20,6 +20,14 @@ depends on it (AGENTS.md).
 - Frozen project = an as-of date cut-off applied to every query, on the
   live data (the release index already supports `upTo(date)`).
 - Motion: CSS and the View Transitions API, no new dependency.
+- Decided on main meanwhile (D-051): several hospitals on one server, a
+  sites file, `site?` on queries, `Meta.sites`, `hospital=` as a shared URL
+  parameter. A project's scope therefore carries `sites: SiteId[]` beside
+  `units`, and statistics stay within a site (sites README).
+- Added to the vision the same evening (VISION.md, "The workbench"):
+  notebook-style cells, comparing locked frames, free computation, the
+  researcher's own tables injected into a project. Section 9 below says how
+  this design grows into it without being rewritten.
 
 ## 1. What the code already gives us
 
@@ -459,6 +467,100 @@ import and one spread each; agree the surface file names now: `project.ts`,
 7. CSV defaults and the results JSON schema as a stable artefact.
 8. Projects are shared by construction (one server, no auth, D-040); record
    that per-person scoping is a pilot question.
-9. Still open elsewhere and needed here: `Meta.site { id, name, county }`
-   (the report's hospital name and the timeline title); the events strip
-   order and E4 as a hospital-level signal (RESEARCH-PLAN.md question 3).
+9. Still open elsewhere and needed here: the events strip order and E4 as
+   a hospital-level signal (RESEARCH-PLAN.md question 3). (`Meta.site` is
+   answered by D-051's `Meta.sites`.)
+10. The computation cell's engine (section 9.3) and what a researcher's own
+    table may contain and join on (section 9.4).
+
+DECISIONS.md numbering: main is at D-056; the first entry from this work
+is D-057.
+
+## 9. Growing into the workbench (VISION.md, "The workbench")
+
+The project shell above is the spine; the workbench adds cell types to it.
+Nothing in sections 2 to 7 changes shape; three things grow.
+
+### 9.1 Cells
+
+A `Project` gains `cells: Cell[]`, ordered, each with an id and a kind:
+
+```ts
+export type Cell =
+  | { kind: "note"; id: string; text: string; anchor?: NoteAnchor }
+  | { kind: "view"; id: string; view: PinnedView }        // a frozen reference to something on screen
+  | { kind: "table"; id: string; source: TableSource; columns?: string[] }
+  | { kind: "compare"; id: string; frames: Frame[]; view: PinnedView["view"]; test?: CompareTest }
+  | { kind: "compute"; id: string; engine: ComputeEngine; source: string; inputs: string[]; output?: ComputeOutput };
+
+export interface Frame { label: string; from: IsoDate; to: IsoDate; units?: WardCode[]; sites?: SiteId[]; }
+export type PinnedView =
+  | { view: "timeline"; frame: Frame; layers: string }       // the band's tl= code
+  | { view: "map"; month: string; group: string; region?: string }
+  | { view: "signal"; incident: string }
+  | { view: "grid"; frame: Frame; weeks: 12 | 26 | 52 }
+  | { view: "chart"; spec: ChartSpec };                      // built from a table cell
+```
+
+Notes of section 2 become `note` cells with an anchor; `notesAt` is kept
+as a lookup over cells. "Pin" is one action on every panel: it appends a
+`view` cell with the panel's current state (the same state the URL holds,
+so pinning is `boardToParams` plus the frame). In a continuous project a
+`view` cell re-renders from live data; in a frozen one it renders at the
+project's `asOf`.
+
+### 9.2 Compare frames
+
+A `compare` cell holds two or more `Frame`s and one view kind. Rendering:
+the same view once per frame in a row, then a difference row for views
+that have a number per unit or per week (grid, timeline counts, coverage
+shares): the difference, and a test with its method named. The first tests
+are ones already in the gears: two-proportion comparison with Wilson
+intervals (`@aei/coverage wilson`) for shares; Poisson rate ratio for
+counts (`@aei/viz` distributions); the rising-trend test across the frames
+(`@aei/detect cochranArmitageRising`). **Team decision:** the test set and
+its wording; nothing beyond what is measured ships without an experiment.
+The frames come from the timeline: a "lock this frame" action on the band
+creates a `Frame`; two locks open a compare cell.
+
+### 9.3 Compute cells
+
+The engine is a team decision (VISION.md open questions). Options and
+cost:
+
+| Engine | Cost | Fits |
+|---|---|---|
+| A. Our tools as a menu with parameters, no code | lowest; each tool is a gear function behind a form | the two measures (clear, useful) for most researchers; limited to what we ship |
+| B. A small expression language over tables (filter, group, derive, rate) | medium; a parser and evaluator gear, ~2 days | spreadsheet users; safe; exports as the same expressions |
+| C. JavaScript in a sandboxed iframe/worker over the fetched rows | medium; sandboxing and a tiny API; no new dependency | people who code; hard to keep clear |
+| D. Python in the browser (Pyodide, pandas; ~10 MB first load) | high; a worker, package loading, a bridge for tables | pandas users; the most "notebook" feel; slow first load |
+
+Recommended for the hackathon: **A now, B next**, with the cell model
+keeping `engine` so C or D can be added without touching projects. Every
+compute cell stores `source`, `inputs` (cell ids or scope) and `output`
+(a table or numbers) so it exports as a `ResultsDocument`.
+
+### 9.4 Injecting the researcher's own data
+
+`Project` gains `tables: ProjectTable[]`: a name, columns with types, the
+rows (stored in the project file up to a size cap, else a sidecar
+`<id>.<table>.csv` beside it), and a declared join (`date`, `unit`,
+`patientId`, `site`). Upload is a CSV through a new
+`POST /api/projects/:id/tables` (parsed with the same CSV reader as
+`@aei/dataset/csv`). A `table` cell can show it; a `compute` cell can join
+it; a derived rate (isolates per 100 bed-days) is the first use. The
+hospital's own feed needs nothing new: `/api/ingest` per site (D-051)
+already injects live data and a continuous project sees it. **Team
+decision:** what a table may contain (no free-text patient data) and
+whether patient ids are allowed as a join key.
+
+### 9.5 Order after step 8
+
+9. `cells` with `note` and `view` kinds; "Pin" on every panel; the notebook
+   window renders the cells; notes migrate into cells (schema 2).
+10. Frames: "lock this frame" on the band; `compare` cell with the two
+    views side by side and the difference row; the first test.
+11. `tables` upload and the `table` cell; the bed-day rate as a `compute`
+    cell under engine A.
+12. Export of a cell and of the notebook as the report (the `docx` path of
+    section 5 takes cells as sections).

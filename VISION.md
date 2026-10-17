@@ -80,6 +80,43 @@ What a researcher finds has to leave the tool cleanly.
   can load into R (or Python, or a spreadsheet) to keep working. The exact
   formats are an open question below.
 
+## The workbench (added 2026-10-17, evening)
+
+The researcher page becomes a workbench, not a dashboard with a notes
+field. Two measures decide every choice in it:
+
+1. **Clear and intuitive**: a tool is understood and used without a
+   manual, and every number it shows says how it was made.
+2. **Useful**: a researcher gets something out of it they could not get
+   as quickly otherwise.
+
+What the workbench does:
+
+- **Notebook-style cells.** A project is a sequence of cells the researcher
+  arranges: a note, a pinned view (the timeline at a frame, a map month, a
+  signal card, a chart), a table, a computation. Cells keep their inputs,
+  re-run when the data changes in a continuous project, and stay fixed in a
+  frozen one. Pin anything on screen into the notebook with one action.
+- **Compare frames.** Lock two (or more) time frames, units or hospitals
+  side by side and examine their differences: the same view twice, the
+  difference as its own view, and our tests of the difference with the
+  method stated. This is the first real tool, because it is what the
+  annual report cannot do.
+- **Operate freely.** We propose our metrics and our mathematics (the
+  measured detectors, the coverage model, the tests), but the researcher
+  can filter, group, derive and compute on the data without us in the way.
+  What they compute with is open (below): the judge said they do not use R.
+- **Inject data.** A project can take in more data: the hospital's live
+  feed (already `/api/ingest`, per site D-051), and the researcher's own
+  tables (a CSV of bed-days, a list of patients under study, an earlier
+  analysis) joined on date, unit or patient, so a derived rate such as
+  isolates per 100 bed-days is possible.
+- **Export anything pinned.** Every cell exports (image, table, numbers
+  with method), and the notebook as a whole becomes the report.
+
+The judge's near-term points (JUDGE-FEEDBACK.md) are the first cells of
+this: a signal selected anywhere is the pinned signal card.
+
 ## What stays the same
 
 - The current researcher UI is good; the judge did not ask to replace it.
@@ -112,3 +149,10 @@ None of these are decided. Each one goes into DECISIONS.md when it is.
 - What "import their own notes" accepts: text, Markdown, Word, PDF,
   their own data tables.
 - What we can show in the hackathon demo, and what stays in this vision.
+- What a computation cell runs: a fixed menu of our tools with parameters
+  (no code), a small expression language over the tables, JavaScript in a
+  browser sandbox, or Python in the browser (Pyodide, pandas, about 10 MB
+  to load). Which statistics the researchers actually use is unknown (not
+  R, per the judge); ask them before choosing.
+- How a researcher's own table joins the data (keys: date, unit, patient
+  id), what it may contain, and whether it is stored with the project.
