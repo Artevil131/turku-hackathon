@@ -72,4 +72,39 @@ describe("method registry", () => {
     expect(filled).toContain('"2025-05-12" <= s.date <= "2025-06-08"');
     expect(filled).not.toMatch(/\{(ward|organism|from|to)\}/);
   });
+
+  it.each(IDS)("%s has an R snippet that reads the package and leaves no placeholder after filling", (id) => {
+    const filled = fillSnippet(
+      METHODS[id],
+      {
+        ward: "URO",
+        organism: "Escherichia coli",
+        from: "2025-05-12",
+        to: "2025-06-08",
+        phenotype: "esbl",
+        profile: "SR",
+        antibiotic: "CRO",
+        observed: "7",
+        expected: "1.2",
+      },
+      "r",
+    );
+    expect(filled).toContain("library(aei)");
+    expect(filled).toContain("as_amr(pkg)");
+    expect(filled).toContain('as.Date("2025-06-08")');
+    expect(filled).not.toMatch(/\{[a-z]+\}/);
+    expect(filled.split("\n")[0]).toMatch(/^# .*D-0\d\d/);
+  });
+
+  it("fills a missing count with NA in R, never a brace", () => {
+    const filled = fillSnippet(METHODS["phenotype-excess"], { ward: "URO", organism: "", from: "a", to: "b" }, "r");
+    expect(filled).toContain("ppois(y - 1, NA, lower.tail = FALSE)");
+    const cut = fillSnippet(
+      METHODS["phenotype-excess"],
+      { ward: "URO", organism: "", from: "a", to: "b", testFrom: "2025-05-13", testTo: "2025-06-09" },
+      "r",
+    );
+    expect(cut).toContain('as.Date("2025-05-13") & x$sampleDate <= as.Date("2025-06-09")');
+    expect(filled).not.toMatch(/\{[a-z]+\}/);
+  });
 });

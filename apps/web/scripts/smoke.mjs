@@ -961,7 +961,7 @@ async function main() {
       return;
     }
     await evaluate(cdp, `document.querySelector(".feed-row").click()`);
-    const shown = await waitIn(`document.querySelectorAll(".feed-isolates li").length > 0`, 15_000);
+    const shown = await waitIn(`document.querySelectorAll(".feed-iso-table tbody tr").length > 0`, 15_000);
     if (!shown) {
       const seen = await evaluate(
         cdp,
@@ -977,6 +977,8 @@ async function main() {
     )
       reasons.push("incident summary does not distinguish the incident from its alerts");
     const explain = ".math .alert-explanation > button";
+    // The explanation sits in the card's "In plain words" fold; open it as a reader would.
+    await evaluate(cdp, `document.querySelector(".math .sig-plain")?.setAttribute("open", "")`);
     const valid = await evaluate(
       cdp,
       `(() => { const b = document.querySelector(${JSON.stringify(explain)}); return b?.tagName === "BUTTON" && b.type === "button" && !!b.textContent.trim() && !!b.getAttribute("aria-controls"); })()`,

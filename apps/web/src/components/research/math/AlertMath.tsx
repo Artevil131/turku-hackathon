@@ -1,6 +1,8 @@
 import { NEW_IN_UNIT_DAYS } from "@aei/alerts";
 import type { AeiClient, Alert, ClockCommand } from "@aei/contract";
 import { LIVE_SETTINGS } from "@aei/detect";
+import { ANTIBIOTICS, type IsolateRecord } from "@aei/domain";
+import { csv, isolateTable } from "@aei/export";
 import {
   alertEvidence,
   antibioticName,
@@ -9,9 +11,10 @@ import {
   incidentResponsibility,
   type Locale,
   phenotypeName,
+  specimenName,
   t,
 } from "@aei/i18n";
-import { fillSnippet, type Method, methodOf } from "@aei/method";
+import { fillSnippet, type Method, methodOf, type SnippetValues } from "@aei/method";
 import { formatNum } from "@aei/viz";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import type { Finding } from "../../../live.ts";
@@ -19,12 +22,11 @@ import { allSites, currentSite, homeSite } from "../../../sites.ts";
 import { AlertExplanation } from "../../AlertExplanation.tsx";
 import { InfoButton } from "../../Info.tsx";
 import { PoissonTail, SurpriseScale } from "../../math/index.ts";
-import { Assistant } from "../assistant/Assistant.tsx";
 import type { BoardState } from "../board.ts";
 import { KindGlyph } from "../feed/glyphs.tsx";
 import { GlossedTitle } from "../feed/IncidentRow.tsx";
-import { IsolateList, useIsolates } from "../feed/Isolates.tsx";
-import { type Incident, oneDecimal, windowOf } from "../feed/model.ts";
+import { IsolateTable, useIsolates } from "../feed/Isolates.tsx";
+import { type Incident, oneDecimal, shift, windowOf } from "../feed/model.ts";
 import { signalTitle, surpriseOf } from "../feed/names.ts";
 import { SpanGroups } from "../feed/SpanChips.tsx";
 import type { Spans } from "../feed/spans.ts";
@@ -32,9 +34,11 @@ import type { Slice } from "../tools/model.ts";
 import { SignalAnalysis } from "./SignalAnalysis.tsx";
 import "./math.css";
 
-// The signal card (research-unified.md section 3, signals-redesign.md section 2.6): the one
-// title every surface shows, the window; the two bars and the surprise; one sentence in words;
-// then the collapsed sections (how we calculate it, reaches, isolates, explain) and the actions.
+// The signal card (research-unified.md section 3, signals-redesign.md section 2.6): the kind and the
+// one title every surface shows, the window; the two bars and the surprise; the method (formula,
+// this signal's numbers, constants, code in Python, R and TypeScript); the data behind it (the
+// counts the test used, the isolates, copy and download); reaches, the ready analyses, the actions.
+// No line restates a number in words; the prose waits in "In plain words" (Artem, 2026-10-17).
 // The root keeps the `math` class for the workspace's window rules.
 
 /** The detectors whose sentence and ⓘ figure rest on a Poisson count (D-020). */
@@ -128,31 +132,6 @@ export function howSentence(locale: Locale, a: Alert): string {
   }
 }
 
-/** What the signal means, in one plain sentence; it adds no claim the audited how-sentence does not make. */
-export function meaningSentence(locale: Locale, a: Alert): string {
-  if (a.kind === "cpe") return t(locale, "cardMeansCpe");
-  if (a.kind === "new-in-unit") return t(locale, "cardMeansSentinel", { phenotype: phenotypeName(a.phenotype), days: NEW_IN_UNIT_DAYS });
-  if (a.kind !== "detector") return "";
-  switch (a.detector) {
-    case "profile-excess":
-      return t(locale, "cardMeansProfile", { organism: a.organism ?? "", days: LIVE_SETTINGS.profileExcess.windowDays });
-    case "phenotype-excess":
-      return t(locale, "cardMeansPhenotype", {
-        phenotype: a.phenotype ? phenotypeName(a.phenotype) : (a.organism ?? ""),
-        days: LIVE_SETTINGS.phenotypeExcess.windowDays,
-      });
-    case "sampling-drop":
-      return t(locale, "cardMeansData");
-    case "empty-run":
-      return t(locale, "cardMeansEmpty", { n: a.observed });
-    case "rising-trend":
-      return t(locale, "cardMeansTrend", {
-        antibiotic: a.antibiotic ? antibioticName(locale, a.antibiotic) : "",
-        organism: a.organism ?? "",
-      });
-  }
-}
-
 export function AlertMath({
   client,
   locale,
@@ -174,6 +153,9 @@ export function AlertMath({
   useEffect(() => {
     if (explain <= 0 || !how.current) return;
     how.current.open = true;
+    // The explanation lives in the "In plain words" fold; the request opens it too.
+    const fold = how.current.querySelector<HTMLDetailsElement>(".sig-plain");
+    if (fold) fold.open = true;
     how.current.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }, [explain]);
   // The body of a new incident fades in (keyed, so it remounts; the class leaves on animationend); the frame and the action row stay put.
@@ -212,18 +194,34 @@ export function AlertMath({
   const win = windowOf(inc);
   const specimen = lead.kind === "cpe" ? lead.specimen : null;
   const doctor = `#doctor?${new URLSearchParams({ ...(inc.ward ? { unit: inc.ward } : {}), ...(specimen ? { site: specimen } : {}) }).toString()}`;
-  const dataNote =
-    lead.kind === "detector"
-      ? t(locale, "feedNoIsolatesData", { observed: lead.observed, expected: oneDecimal(locale, lead.expected ?? 0) })
-      : "";
   const onDay = asOf === lead.date;
   const method = methodOf(lead);
-  const snippetValues = {
+  const test = testWindows(lead);
+  const snippetValues: SnippetValues = {
     ward: inc.ward ?? "",
     organism: "organism" in lead ? (lead.organism ?? "") : "",
     from: win.from,
     to: win.to,
+    phenotype: "phenotype" in lead ? (lead.phenotype ?? "") : "",
+    profile: lead.kind === "detector" ? (lead.profile ?? "") : "",
+    antibiotic: lead.kind === "detector" ? (lead.antibiotic ?? "") : "",
+    ...(test ? { testFrom: test.window[0], testTo: test.window[1] } : {}),
+    ...(lead.kind === "detector" ? { observed: String(lead.observed) } : {}),
+    ...(lead.kind === "detector" && lead.expected !== undefined ? { expected: String(lead.expected) } : {}),
   };
+  const plain = (
+    <>
+      <p className="sig-how-text">{howSentence(locale, lead)}</p>
+      {howDetail(locale, lead) ? <p className="sig-detail">{howDetail(locale, lead)}</p> : null}
+      <p className="feed-evidence">{t(locale, "feedLatestEvidence", { evidence: alertEvidence(locale, lead) })}</p>
+      <p className="feed-owner">{incidentResponsibility(locale, inc.members)}</p>
+    </>
+  );
+  const explanation = (
+    <div className="math-explain">
+      <AlertExplanation client={client} id={lead.id} locale={locale} openKey={explain} />
+    </div>
+  );
 
   const high = incidentPriority(inc.members) === "high";
   const title = (
@@ -270,54 +268,35 @@ export function AlertMath({
 
         <Numbers locale={locale} alert={lead} />
 
-        <p className="sig-means">{meaningSentence(locale, lead)}</p>
-
-        {/* The assistant's reading of this signal: template text by default, the model's wording when the API offers it (D-049). */}
-        <section className="sig-section" aria-labelledby={`sig-assist-${inc.key}`}>
-          <h4 className="sig-section-title" id={`sig-assist-${inc.key}`}>
-            {t(locale, "wsLeadAssistant")}
-          </h4>
-          <Assistant client={client} locale={locale} incident={inc} spans={spans} waiting={false} inline />
+        {/* The method stands open in the layer; the row's "Open calculation and explanation" opens it in the window too. */}
+        <section className="sig-how-section" aria-labelledby={`sig-how-${inc.key}`}>
+          <details className="sig-how" ref={how} open={onBack ? true : undefined}>
+            <summary className="sig-how-head">
+              <h3 className="sig-section-title" id={`sig-how-${inc.key}`}>
+                {t(locale, "cardHow")}
+              </h3>
+            </summary>
+            {method ? (
+              <MethodEntry locale={locale} method={method} values={snippetValues} alert={lead} plain={plain} explain={explanation} />
+            ) : (
+              <details className="sig-plain">
+                <summary>{t(locale, "cardPlainWords")}</summary>
+                {plain}
+                {explanation}
+              </details>
+            )}
+          </details>
         </section>
 
-        {/* Two ready results on the signal's own slice, from the Tools model; "Open in Tools" continues there. */}
-        <details className="sig-analyse" open>
-          <summary>{t(locale, "cardAnalyse")}</summary>
-          <SignalAnalysis client={client} locale={locale} incident={inc} onOpenTools={onOpenTools} />
-        </details>
-
-        {/* Concise first: the method opens on request (Artem, 2026-10-17: detail only when the researcher asks). */}
-        <details className="sig-how" ref={how}>
-          <summary className="sig-how-head">{t(locale, "cardHow")}</summary>
-          {method ? (
-            <MethodEntry
-              locale={locale}
-              method={method}
-              values={snippetValues}
-              alert={lead}
-              plain={
-                <>
-                  <p className="sig-how-text">{howSentence(locale, lead)}</p>
-                  {howDetail(locale, lead) ? <p className="sig-detail">{howDetail(locale, lead)}</p> : null}
-                </>
-              }
-              explain={
-                <div className="math-explain">
-                  <AlertExplanation client={client} id={lead.id} locale={locale} openKey={explain} />
-                </div>
-              }
-            />
-          ) : (
-            <>
-              <p className="sig-how-text">{howSentence(locale, lead)}</p>
-              <div className="math-explain">
-                <AlertExplanation client={client} id={lead.id} locale={locale} openKey={explain} />
-              </div>
-            </>
-          )}
-          <p className="feed-evidence">{t(locale, "feedLatestEvidence", { evidence: alertEvidence(locale, lead) })}</p>
-          <p className="feed-owner">{incidentResponsibility(locale, inc.members)}</p>
-        </details>
+        <DataBehind
+          locale={locale}
+          incident={inc}
+          method={method}
+          status={iso.status}
+          matched={iso.matched}
+          retry={iso.retry}
+          asOf={asOf ?? lead.date}
+        />
 
         {spans ? (
           <details className="sig-reach">
@@ -326,16 +305,11 @@ export function AlertMath({
           </details>
         ) : null}
 
-        {inc.kind !== "data" ? (
-          <details className="sig-isolates">
-            <summary>{t(locale, "cardIsolates", { n: iso.status === "ready" ? iso.matched.length : "…" })}</summary>
-            <IsolateList locale={locale} status={iso.status} matched={iso.matched} retry={iso.retry} window={win} dataNote={dataNote} />
-          </details>
-        ) : null}
-
-        <div className="math-explain">
-          <AlertExplanation client={client} id={lead.id} locale={locale} />
-        </div>
+        {/* Two ready results on the signal's own slice, from the Tools model; "Open in Tools" continues there. */}
+        <details className="sig-analyse" open>
+          <summary>{t(locale, "cardAnalyse")}</summary>
+          <SignalAnalysis client={client} locale={locale} incident={inc} onOpenTools={onOpenTools} />
+        </details>
       </div>
 
       <footer className="sig-actions">
@@ -381,13 +355,11 @@ function whereLine(locale: Locale, inc: Incident, win: { from: string; to: strin
   return parts.join(" · ");
 }
 
-/** The ⓘ of the how-section: the Poisson tail for the count detectors; sentinels and trends have none. The registry entry follows (D-075). */
-/** What the notebook snippet fills in: this card's unit, organism and window. */
-type SnippetValues = Record<"ward" | "organism" | "from" | "to", string>;
+type CopyState = "idle" | "copied" | "manual";
 
 /** Copies text; the state tells the button what to say. */
-function useCopy(): [state: "idle" | "copied" | "manual", copy: (text: string) => void] {
-  const [state, setState] = useState<"idle" | "copied" | "manual">("idle");
+function useCopy(): [state: CopyState, copy: (text: string) => void] {
+  const [state, setState] = useState<CopyState>("idle");
   const copy = (text: string) => {
     const clip = typeof navigator === "undefined" ? undefined : navigator.clipboard;
     if (!clip) return setState("manual");
@@ -400,6 +372,22 @@ function useCopy(): [state: "idle" | "copied" | "manual", copy: (text: string) =
     );
   };
   return [state, copy];
+}
+
+/** One copy button: says "Copied" on the button and in a polite live region beside it. */
+function CopyButton({ locale, label, text }: { locale: Locale; label: string; text: () => string }) {
+  const [state, copy] = useCopy();
+  const said = state === "copied" ? t(locale, "cardRegistryCopied") : state === "manual" ? t(locale, "cardCopyManual") : "";
+  return (
+    <>
+      <button type="button" className="sig-copy" onClick={() => copy(text())}>
+        {said || label}
+      </button>
+      <span className="visually-hidden" role="status">
+        {said}
+      </span>
+    </>
+  );
 }
 
 /** A p-value as a × 10^b in MathML; 1 and 0 stay plain. */
@@ -427,7 +415,7 @@ function WithThisSignal({ locale, alert: a }: { locale: Locale; alert: Alert }) 
   return (
     <p className="sig-with">
       <span className="sig-method-label">{t(locale, "cardMethodWith")}</span>
-      <math xmlns="http://www.w3.org/1998/Math/MathML">
+      <math>
         <mrow>
           {trend ? (
             <>
@@ -496,23 +484,22 @@ export function MethodEntry({
   /** The plain explanation component (the server's template), also under "In plain words". */
   explain?: ReactNode;
 }) {
-  const [latexState, copyLatex] = useCopy();
-  const [codeState, copyCode] = useCopy();
-  const [lang, setLang] = useState<"py" | "ts">("py");
-  const snippet = fillSnippet(method, values);
-  const tsLine = `${method.code.fn}()  // ${method.code.ts}`;
+  const [lang, setLang] = useState<"py" | "r" | "ts">("py");
+  const code = lang === "ts" ? `${method.code.fn}()  // ${method.code.ts}` : fillSnippet(method, values, lang);
   const figure = a?.kind === "detector" && COUNT_DETECTORS.includes(a.detector) && a.p !== undefined && a.expected !== undefined;
-  const said = (s: "idle" | "copied" | "manual", idle: string) =>
-    s === "copied" ? t(locale, "cardRegistryCopied") : s === "manual" ? t(locale, "cardRegistryManual") : idle;
+  const note =
+    lang === "r"
+      ? t(locale, "cardCodeRuns", { fn: "read_package(), as_amr()", path: "libs/utils/r (D-063)" })
+      : lang === "ts" || method.code.py
+        ? t(locale, "cardCodeRuns", { fn: lang === "py" ? method.code.py : method.code.fn, path: lang === "py" ? "aei" : method.code.ts })
+        : t(locale, "cardCodeNoPy");
   return (
     <div className="sig-method">
       <p className="sig-method-name">{method.name[locale]}</p>
       <div className="sig-formula-row">
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: the MathML is our own registry text, not user input. */}
         <div className="sig-formula" dangerouslySetInnerHTML={{ __html: method.mathml }} />
-        <button type="button" className="sig-copy" onClick={() => copyLatex(method.latex)}>
-          {said(latexState, t(locale, "cardCopyLatex"))}
-        </button>
+        <CopyButton locale={locale} label={t(locale, "cardCopyLatex")} text={() => method.latex} />
       </div>
       {a ? <WithThisSignal locale={locale} alert={a} /> : null}
       <dl className="sig-constants">
@@ -530,27 +517,20 @@ export function MethodEntry({
       ) : null}
       <div className="sig-code">
         <div className="sig-code-head">
-          <div className="sig-seg" role="group" aria-label="code">
-            <button type="button" aria-pressed={lang === "py"} onClick={() => setLang("py")}>
-              Python
-            </button>
-            <button type="button" aria-pressed={lang === "ts"} onClick={() => setLang("ts")}>
-              TypeScript
-            </button>
+          <div className="sig-seg" role="group" aria-label={t(locale, "cardCodeLanguage")}>
+            {LANGS.map(([id, name]) => (
+              <button key={id} type="button" aria-pressed={lang === id} onClick={() => setLang(id)}>
+                {name}
+              </button>
+            ))}
           </div>
-          <button type="button" className="sig-copy" onClick={() => copyCode(lang === "py" ? snippet : tsLine)}>
-            {said(codeState, t(locale, "cardCopyCode"))}
-          </button>
+          <CopyButton locale={locale} label={t(locale, "cardCopyCode")} text={() => code} />
         </div>
-        <pre className="sig-snippet">{lang === "py" ? snippet : tsLine}</pre>
-        <p className="sig-code-note">
-          {lang === "ts" || method.code.py
-            ? t(locale, "cardCodeRuns", {
-                fn: lang === "py" ? method.code.py : method.code.fn,
-                path: lang === "py" ? "aei" : method.code.ts,
-              })
-            : t(locale, "cardCodeNoPy")}
-        </p>
+        {/* biome-ignore lint/a11y/noNoninteractiveTabindex: the snippet scrolls sideways, so the keyboard needs to reach it. */}
+        <pre className="sig-snippet" tabIndex={0}>
+          {code}
+        </pre>
+        <p className="sig-code-note">{note}</p>
       </div>
       {plain || explain ? (
         <details className="sig-plain">
@@ -560,6 +540,161 @@ export function MethodEntry({
         </details>
       ) : null}
     </div>
+  );
+}
+
+const LANGS = [
+  ["py", "Python"],
+  ["r", "R"],
+  ["ts", "TypeScript"],
+] as const;
+
+/** The test's own window and baseline, as the detectors compute them (libs/utils/detect/src/detectors.ts). */
+export function testWindows(a: Alert): { window: [string, string]; baseline: [string, string] } | null {
+  if (a.kind !== "detector" || a.detector === "rising-trend") return null;
+  const s = LIVE_SETTINGS;
+  const [days, base] =
+    a.detector === "profile-excess"
+      ? [s.profileExcess.windowDays, s.profileExcess.baselineDays]
+      : a.detector === "phenotype-excess"
+        ? [s.phenotypeExcess.windowDays, s.phenotypeExcess.baselineDays]
+        : a.detector === "sampling-drop"
+          ? [s.samplingDrop.windowDays, s.samplingDrop.baselineDays]
+          : [a.observed, s.emptyRun.baselineDays];
+  const from = shift(a.date, 1 - days);
+  return { window: [from, a.date], baseline: [shift(from, -base), shift(from, -1)] };
+}
+
+/** One row of the counts table: the formula's letter (if any), the quantity, the value. */
+type CountRow = { sym?: string; name: string; value: string };
+
+/** The counts the test used, read off the alert and the method's constants; nothing is computed anew. */
+export function countRows(locale: Locale, a: Alert, method: Method | null): CountRow[] {
+  const rows: CountRow[] = [];
+  const range = ([from, to]: [string, string]) => `${from} – ${to}`;
+  const alpha = method?.constants.find((k) => k.name === "alpha");
+  if (a.kind === "detector") {
+    const gap = a.detector === "empty-run";
+    const trend = a.detector === "rising-trend";
+    rows.push({
+      sym: trend ? undefined : gap ? "L" : "y",
+      name: t(locale, trend ? "cardRowShare" : gap ? "cardRowDays" : "cardRowObserved"),
+      value: String(a.observed),
+    });
+    if (a.expected !== undefined)
+      rows.push({
+        sym: gap ? "λ" : "μ",
+        name: t(locale, gap ? "cardRowRate" : "cardRowExpected"),
+        value: String(Number(a.expected.toPrecision(4))),
+      });
+    // The p row is named by the tail it is, the formula's own words.
+    const tail = trend ? t(locale, "cardRowPTrend") : gap ? "e^(−λL)" : a.detector === "sampling-drop" ? "P(Y ≤ y)" : "P(Y ≥ y)";
+    if (a.p !== undefined) rows.push({ sym: "p", name: tail, value: a.p < 0.001 ? a.p.toExponential(2) : a.p.toPrecision(3) });
+    if (alpha) rows.push({ sym: "α", name: `${t(locale, "cardRowAlpha")} (${alpha.decision})`, value: String(alpha.value) });
+    const w = testWindows(a);
+    if (w) {
+      rows.push({ name: t(locale, "cardRowWindow"), value: range(w.window) });
+      rows.push({ name: t(locale, "cardRowBaseline"), value: range(w.baseline) });
+    }
+  } else {
+    rows.push({ name: t(locale, "cardRowDate"), value: a.date });
+  }
+  if (a.ward) rows.push({ name: t(locale, "cardRowUnit"), value: a.ward });
+  if ("organism" in a && a.organism) rows.push({ name: t(locale, "feedColOrganism"), value: a.organism });
+  if ("phenotype" in a && a.phenotype) rows.push({ name: t(locale, "feedColPhenotypes"), value: phenotypeName(a.phenotype) });
+  if (a.kind === "detector" && a.profile) rows.push({ name: t(locale, "cardRowProfile"), value: a.profile });
+  if (a.kind === "detector" && a.antibiotic)
+    rows.push({ name: t(locale, "cardRowAntibiotic"), value: antibioticName(locale, a.antibiotic) });
+  if ("specimen" in a && a.specimen) rows.push({ name: t(locale, "feedColSpecimen"), value: specimenName(locale, a.specimen) });
+  if ("isolateId" in a && a.isolateId) rows.push({ name: t(locale, "cardRowIsolate"), value: a.isolateId });
+  if (a.kind === "detector") rows.push({ name: t(locale, "cardRowDetector"), value: a.detector });
+  return rows;
+}
+
+/** One line: "AEI, <method>, D-020, D-042, as of 2025-06-09, <the page's URL with its hash>". */
+export function citation(method: Method | null, asOf: string, url: string): string {
+  return ["AEI (Antibiotic Efficacy Indicator)", method?.name.en ?? "", ...(method?.decisions ?? []), `as of ${asOf}`, url]
+    .filter(Boolean)
+    .join(", ");
+}
+
+/** The data behind the signal: the counts the test used, the isolates, and copy, download and cite. */
+function DataBehind({
+  locale,
+  incident: inc,
+  method,
+  status,
+  matched,
+  retry,
+  asOf,
+}: {
+  locale: Locale;
+  incident: Incident;
+  method: Method | null;
+  status: "loading" | "error" | "ready" | "data";
+  matched: IsolateRecord[];
+  retry: () => void;
+  asOf: string;
+}) {
+  const a = inc.lead;
+  const rows = countRows(locale, a, method);
+  const id = `sig-data-${inc.key}`;
+  const table = () =>
+    csv(
+      isolateTable(
+        matched,
+        ANTIBIOTICS.map((x) => x.code),
+      ),
+    );
+  const filename = `aei-signal-${a.id.replace(/[^A-Za-z0-9-]+/g, "-")}-${asOf}.csv`;
+  const download = () => {
+    const url = URL.createObjectURL(new Blob([`﻿${table()}`], { type: "text/csv;charset=utf-8" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+  const csvReady = status === "ready" && matched.length > 0;
+  return (
+    <section className="sig-data" aria-labelledby={id}>
+      <h3 className="sig-section-title" id={id}>
+        {t(locale, "cardData")}
+      </h3>
+      <table className="sig-counts">
+        <caption className="visually-hidden">{t(locale, "cardDataCounts")}</caption>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.name}>
+              <th scope="row">
+                {r.sym ? <i className="sig-sym">{r.sym}</i> : null}
+                {r.name}
+              </th>
+              <td>{r.value}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {status === "data" ? null : (
+        <IsolateTable locale={locale} status={status} matched={matched} retry={retry} profile={a.kind === "detector" && !!a.profile} />
+      )}
+      <div className="sig-data-actions">
+        {csvReady ? (
+          <>
+            <CopyButton locale={locale} label={t(locale, "cardCopyCsv")} text={table} />
+            <button type="button" className="sig-copy" onClick={download} title={filename}>
+              {t(locale, "cardDownloadCsv")}
+            </button>
+          </>
+        ) : null}
+        <CopyButton locale={locale} label={t(locale, "cardCopyJson")} text={() => JSON.stringify(a, null, 2)} />
+        <CopyButton
+          locale={locale}
+          label={t(locale, "cardCopyCitation")}
+          text={() => citation(method, asOf, typeof location === "undefined" ? "" : location.href)}
+        />
+      </div>
+    </section>
   );
 }
 

@@ -531,64 +531,44 @@
   font-size: var(--t-xs, 12px);
 }
 
-.feed-isolates {
-  display: flex;
-  flex-direction: column;
-  margin: 0;
-  padding: 0;
-  list-style: none;
+/* The isolates behind a signal, as rows; cells wrap so five columns fit a 300 px window. */
+.feed-iso-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.feed-iso-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.feed-iso-table caption {
+  padding: 0 0 4px;
+  text-align: left;
+  color: var(--ink-2);
   font-size: var(--t-xs, 12px);
 }
 
-.feed-isolates li {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  padding: 6px 0;
+.feed-iso-table th,
+.feed-iso-table td {
+  padding: 3px 6px 3px 0;
   border-bottom: 1px solid var(--line);
-}
-
-.feed-iso-main,
-.feed-iso-sub {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0 8px;
+  text-align: left;
+  vertical-align: top;
   overflow-wrap: anywhere;
 }
 
-.feed-iso-sub {
-  color: var(--ink-2);
-}
-
-.feed-res {
-  font-size: var(--t-xs, 12px);
-}
-
-.feed-res summary {
-  cursor: pointer;
-  color: var(--ink-2);
-  padding: 2px 0;
-}
-
-.feed-profile {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 2px 14px;
-  margin: 4px 0 6px;
-  padding: 0;
-  list-style: none;
-}
-
-.feed-profile li {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 0;
-  border-bottom: 1px dotted var(--line);
-}
-
-.feed-profile li[data-result="none"] {
+.feed-iso-table th {
   color: var(--ink-3);
+  font-weight: 600;
+  overflow-wrap: normal;
+  hyphens: auto;
+}
+
+.feed-iso-table td.num {
+  white-space: nowrap;
 }
 
 .mono {
