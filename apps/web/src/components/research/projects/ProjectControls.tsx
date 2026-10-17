@@ -16,12 +16,14 @@ export function ProjectControls({
   clock,
   board,
   selection,
+  onReproduce,
 }: {
   client: AeiClient;
   locale: Locale;
   clock: string | null;
   board: BoardState;
   selection: ReturnType<typeof useProject>;
+  onReproduce?: () => void;
 }) {
   const [panel, setPanel] = useState<"projects" | "export" | null>(null);
   const [busy, setBusy] = useState(false);
@@ -88,6 +90,7 @@ export function ProjectControls({
         <button
           type="button"
           className="ws-tray-button"
+          data-project-dialog
           aria-haspopup="dialog"
           aria-expanded={panel === "projects"}
           disabled={!!selection.id && !project && !selection.failed}
@@ -109,6 +112,11 @@ export function ProjectControls({
         >
           {t(locale, busy ? "exportBuilding" : "exportButton")}
         </button>
+        {project && onReproduce ? (
+          <button type="button" className="ws-tray-button" data-open-reproduce onClick={onReproduce}>
+            {t(locale, "boardReproduce")}
+          </button>
+        ) : null}
         {panel !== "export" && (busy || status) ? (
           <span className="project-export-status" role={status === "exportError" ? "alert" : "status"}>
             {t(locale, busy ? "exportBuilding" : (status ?? "exportDone"))}

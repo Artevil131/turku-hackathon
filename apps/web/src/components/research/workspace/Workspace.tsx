@@ -43,8 +43,9 @@ const TITLE_KEY = {
   math: "boardMath",
   assistant: "boardAssistant",
   grid: "boardGrid",
+  reproduce: "boardReproduce",
 } as const;
-const STACK_ORDER: readonly WinId[] = ["signals", "math", "assistant", "map", "graph", "grid"];
+const STACK_ORDER: readonly WinId[] = ["signals", "math", "assistant", "map", "graph", "grid", "reproduce"];
 const PRESETS = ["default", "map", "signals", "units"] as const;
 const PRESET_KEY = { default: "wsDefault", map: "wsMap", signals: "wsSignals", units: "wsUnits" } as const;
 function loadLayout(): Layout {
@@ -102,9 +103,12 @@ export function Workspace({
   initiallyOpen,
   reveal,
   toolbar,
+  overlay,
 }: {
   locale: Locale;
   toolbar?: ReactNode;
+  /** Stable content outside the reparented dock windows. */
+  overlay?: ReactNode;
   content: Record<WinId, ReactNode>;
   onOpened?: (id: WinId) => void;
   onClosed?: (id: WinId) => void;
@@ -459,6 +463,7 @@ export function Workspace({
           </div>
         ) : null}
       </div>
+      {overlay}
       {moving ? (
         <div className="ws-drag-label" aria-hidden="true" style={{ left: moving.x + 12, top: moving.y + 12 }}>
           {title(moving.id)}

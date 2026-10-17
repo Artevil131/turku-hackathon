@@ -46,7 +46,7 @@ describe("docked layout", () => {
   it("fits the default to the board: at most two windows a column, and none below its minimum", () => {
     // A 900 px screen with the timeline expanded leaves about 600 px.
     expect(ids(defaultLayout(600))).toEqual([["signals"], ["math"], ["map"]]);
-    expect(Object.keys(defaultLayout(600).closed).sort()).toEqual(["assistant", "graph", "grid"]);
+    expect(Object.keys(defaultLayout(600).closed).sort()).toEqual(["assistant", "graph", "grid", "reproduce"]);
     expect(ids(defaultLayout(700))).toEqual([["signals"], ["math", "assistant"], ["map"]]);
     expect(ids(defaultLayout(stackNeed(["map", "graph"])))).toEqual(ids(defaultLayout()));
     for (const height of [300, 500, 600, 620, 700, 800, 900, 1000, 1400]) {
@@ -236,7 +236,10 @@ describe("persistence and migration", () => {
           ],
         },
       ],
-      closed: { grid: { column: "map", columnIndex: 1, index: 1, size: 0.5 } },
+      closed: {
+        grid: { column: "map", columnIndex: 1, index: 1, size: 0.5 },
+        reproduce: { column: "map", columnIndex: 1, index: 2, size: 0.6 },
+      },
       maximized: null,
     };
     const raw = serializeLayout(old);
