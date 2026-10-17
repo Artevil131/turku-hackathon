@@ -475,6 +475,15 @@ export function Workspace({
       {wide ? (
         <div className="ws-toolbar">
           {focusBar ?? layouts}
+          <button
+            type="button"
+            className="ws-tool-open"
+            aria-pressed={layout.wins.tools.open}
+            title={t(locale, "toolsWindow")}
+            onClick={() => (layout.wins.tools.open ? focusWin("tools") : open("tools"))}
+          >
+            {t(locale, "toolsWindow")}
+          </button>
           {toolbar}
         </div>
       ) : null}

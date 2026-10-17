@@ -534,3 +534,44 @@
 .ws-win {
   transition: box-shadow var(--mo-3, 320ms) var(--mo-ease, ease-out);
 }
+
+/* The toolbar row: layouts left, a Tools shortcut, the project controls right, one type size.
+   The project controls reuse .ws-tray-button with text; here that class is an icon square, so the
+   text variant is given the segmented look. */
+.ws-toolbar {
+  gap: 12px;
+}
+.ws-toolbar .project-controls {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.ws-toolbar .project-controls .ws-tray-button,
+.ws-toolbar .ws-tool-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: auto;
+  height: 24px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control, 6px);
+  background: #fff;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: var(--t-xs, 12px);
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+}
+.ws-toolbar .project-controls .ws-tray-button:hover,
+.ws-toolbar .ws-tool-open:hover {
+  background: var(--brand-accent-soft, #ecebfc);
+  color: var(--ink);
+}
+.ws-toolbar .ws-tool-open[aria-pressed="true"] {
+  background: var(--brand-accent, #635bf1);
+  border-color: var(--brand-accent, #635bf1);
+  color: #fff;
+}
