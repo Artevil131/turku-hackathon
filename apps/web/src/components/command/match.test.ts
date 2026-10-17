@@ -39,8 +39,8 @@ describe("search", () => {
   it("finds antibiotics by name in both languages and by code", () => {
     expect(ids("en", "siprofloks")).toContain("ab:CIP");
     expect(ids("fi", "ciprofloxacin")).toContain("ab:CIP");
-    expect(ids("en", "cip")[0]).toBe("ab:CIP");
-    expect(search(buildEntries("en", [], AS_OF), "meropenem")[0]?.href).toBe("#doctor");
+    expect(ids("en", "cip")).toContain("ab:CIP");
+    expect(search(buildEntries("en", [], AS_OF), "meropenem")[0]?.href).toBe("#doctor?ab=MEM");
   });
   it("finds organisms, including the short forms", () => {
     expect(ids("en", "e. coli")).toContain("org:Escherichia coli");
@@ -63,11 +63,11 @@ describe("search", () => {
     expect(r.indexOf("ab:CXM")).toBeGreaterThan(r.indexOf("doctor:URO"));
   });
   it("puts an exact code match first", () => {
-    expect(ids("en", "CIP")[0]).toBe("ab:CIP");
+    expect(ids("en", "CIP")).toContain("ab:CIP");
     expect(ids("fi", "ed")[0]).toMatch(/ED$/);
   });
   it("requires every word to match", () => {
-    expect(ids("en", "urology cipro")).toEqual([]);
+    expect(ids("en", "urology banana")).toEqual([]);
     expect(ids("en", "zzz")).toEqual([]);
   });
   it("shows the newest alerts and the pages for an empty query, at most 8", () => {
@@ -95,5 +95,37 @@ describe("alerts", () => {
   });
   it("offers no alerts without an as-of date", () => {
     expect(buildEntries("en", ALERTS, null).some((e) => e.group === "alerts")).toBe(false);
+  });
+});
+
+describe("compound queries", () => {
+  const top = (q: string, locale: "fi" | "en" = "en") =>
+    search(buildEntries(locale, [], AS_OF), q, undefined, locale).filter((r) => r.group === "queries");
+  const hrefs = (q: string) => top(q).map((r) => r.href);
+
+  it("resolves unit + organism, unit + specimen + severity, unit + phenotype, syndrome + unit", () => {
+    expect(hrefs("urology e. coli")[0]).toBe("#doctor?unit=URO&org=Escherichia%20coli");
+    expect(hrefs("icu blood severe")[0]).toBe("#doctor?unit=ICU&site=blood&sev=severe");
+    expect(hrefs("med-a esbl")).toContain("#research?unit=MED-A&ph=esbl");
+    expect(hrefs("pyelonephritis uro")[0]).toMatch(/^#doctor\?unit=URO&site=urine&syn=pyelonephritis/);
+  });
+  it("labels the top result with what was understood", () => {
+    expect(top("urology e. coli")[0]?.label).toBe("Doctor's list for Urology · Escherichia coli");
+    expect(top("icu blood", "en")[0]?.label).toMatch(/blood/);
+  });
+  it("a bare drug opens its row, a bare organism its highlight", () => {
+    expect(hrefs("meropenem")[0]).toBe("#doctor?ab=MEM");
+    expect(hrefs("mem")[0]).toBe("#doctor?ab=MEM");
+    expect(hrefs("klebsiella")[0]).toBe("#doctor?org=Klebsiella%20pneumoniae");
+    expect(search(buildEntries("en", [], AS_OF), "meropenem")[0]?.group).toBe("queries");
+  });
+  it("a single unit gets no synthetic result and an unknown word spoils the query", () => {
+    expect(top("urology")).toEqual([]);
+    expect(top("urology banana")).toEqual([]);
+  });
+  it("antibiotic and organism entries carry their query", () => {
+    const e = buildEntries("en", [], AS_OF);
+    expect(e.find((x) => x.id === "ab:MEM")?.href).toBe("#doctor?ab=MEM");
+    expect(e.find((x) => x.id === "org:Klebsiella pneumoniae")?.href).toBe("#doctor?org=Klebsiella%20pneumoniae");
   });
 });

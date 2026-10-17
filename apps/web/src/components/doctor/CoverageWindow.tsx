@@ -5,7 +5,7 @@ import type { Locale } from "@aei/i18n";
 import { t } from "@aei/i18n";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { previousUnits, useFlows } from "../../relations.ts";
-import { hashPage, hashParams, writeHashParams } from "../../url.ts";
+import { hashPage, hashParams, writeHashParam, writeHashParams } from "../../url.ts";
 import { AsOf } from "../AsOf.tsx";
 import { DataQuality } from "../DataQuality.tsx";
 import { CoverageList, itemsOf, type ListStatus } from "./CoverageList.tsx";
@@ -20,6 +20,8 @@ import {
   type DoctorFilters,
   filtersFromUrl,
   filtersToParams,
+  focusAb,
+  focusOrg,
   patchFilters,
   storeUnit,
   syndromeOf,
@@ -60,6 +62,13 @@ function readCoverageFilters(embedded: boolean): DoctorFilters {
   );
 }
 
+/** The drug and organism a link asked for (`ab`, `org`; `cov.ab`, `cov.org` in a workspace). */
+function readFocus(embedded: boolean): { ab: string | null; org: string | null } {
+  const params = hashParams();
+  const k = (name: string) => (embedded ? `cov.${name}` : name);
+  return { ab: focusAb(params.get(k("ab"))), org: focusOrg(params.get(k("org"))) };
+}
+
 /** How long typing pauses before the patient id is looked up. */
 const PATIENT_PAUSE_MS = 600;
 
@@ -92,7 +101,10 @@ export function CoverageWindow({
   const [status, setStatus] = useState<ListStatus>("loading");
   const [attempt, setAttempt] = useState(0);
   const flows = useFlows();
-  const [selected, setSelected] = useState<string | null>(null);
+  const [focus, setFocus] = useState(() => readFocus(embedded));
+  const [selected, setSelected] = useState<string | null>(focus.ab);
+  // A link that names a drug scrolls its row into view once, when the list first has it.
+  const scrolled = useRef(false);
   const [editing, setEditing] = useState(false);
   const sheetRef = useRef<HTMLDivElement>(null);
   const [national, setNational] = useState<NationalResponse | null>(null);
@@ -138,14 +150,30 @@ export function CoverageWindow({
     };
   }, [client]);
 
+  const firstWrite = useRef(true);
+  const fromLink = useRef(false);
+  const focusRef = useRef(focus);
+  focusRef.current = focus;
   useEffect(() => {
     storeUnit(filters.unit);
+    // The first write keeps what the link asked for; a changed case or another row clears it.
+    const keep = firstWrite.current || fromLink.current;
+    firstWrite.current = false;
+    fromLink.current = false;
+    if (!keep) setFocus({ ab: null, org: null });
     const own = filtersToParams(filters);
+    const k = (name: string) => (embedded ? `cov.${name}` : name);
+    if (keep && focusRef.current.ab) own.ab = focusRef.current.ab;
+    if (keep && focusRef.current.org) own.org = focusRef.current.org;
     if (embedded) {
       const params = Object.fromEntries(hashParams());
       for (const [key, value] of Object.entries(own)) {
-        if (value) params[`cov.${key}`] = value;
-        else delete params[`cov.${key}`];
+        if (value) params[k(key)] = value;
+        else delete params[k(key)];
+      }
+      if (!keep) {
+        delete params["cov.ab"];
+        delete params["cov.org"];
       }
       writeHashParams(params);
     } else writeHashParams(own);
@@ -153,7 +181,13 @@ export function CoverageWindow({
   // A link followed inside the app (search, home, back button) changes the hash without remounting.
   useEffect(() => {
     const onHash = () => {
-      if (embedded || hashPage() === "doctor") setFilters(readCoverageFilters(embedded));
+      if (!embedded && hashPage() !== "doctor") return;
+      const asked = readFocus(embedded);
+      fromLink.current = true;
+      scrolled.current = false;
+      setFocus(asked);
+      setSelected(asked.ab);
+      setFilters(readCoverageFilters(embedded));
     };
     addEventListener("hashchange", onHash);
     return () => removeEventListener("hashchange", onHash);
@@ -228,6 +262,19 @@ export function CoverageWindow({
   }, [current, locale, patientFindings]);
   const detailsDate = current?.asOf ?? null;
   const item = items.find((i) => i.id === selected) ?? null;
+  useEffect(() => {
+    if (scrolled.current || !focus.ab || !item) return;
+    scrolled.current = true;
+    requestAnimationFrame(() =>
+      surfaceRef.current?.querySelector<HTMLElement>(`[data-row="${CSS.escape(item.id)}"]`)?.scrollIntoView({ block: "center" }),
+    );
+  }, [focus.ab, item]);
+  const pickRow = (id: string | null) => {
+    fromLink.current = false;
+    setSelected(id);
+    setFocus((f) => (f.ab ? { ...f, ab: null } : f));
+    if (focus.ab) writeHashParam(embedded ? "cov.ab" : "ab", null);
+  };
   const closeSheet = () => {
     const id = selected;
     setSelected(null);
@@ -282,7 +329,7 @@ export function CoverageWindow({
               data={current}
               signals={signals}
               selected={item ? item.id : null}
-              onSelect={setSelected}
+              onSelect={pickRow}
               onRetry={() => setAttempt((a) => a + 1)}
               syndrome={syndrome}
               patient={patientFindings}
@@ -300,6 +347,7 @@ export function CoverageWindow({
                 alertsStatus={alertsStatus}
                 onRetryAlerts={onRetryAlerts}
                 onOpenSignals={onOpenSignals}
+                highlightOrganism={focus.org}
               />
               <PatientPanel locale={locale} state={patient} syndrome={syndrome} />
               {wide ? (

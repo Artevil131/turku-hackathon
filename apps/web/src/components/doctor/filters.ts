@@ -1,5 +1,5 @@
 import { barFor, type CoverageQuery, type CoverageResponse, type Level, type Severity, THRESHOLDS } from "@aei/contract";
-import { type AgeGroup as AgeBand, isAgeGroup, type Sex, type Specimen, type WardCode } from "@aei/domain";
+import { type AgeGroup as AgeBand, ANTIBIOTICS, isAgeGroup, ORGANISMS, type Sex, type Specimen, type WardCode } from "@aei/domain";
 import { guide, type Syndrome, type SyndromeId, syndromeDefaults } from "@aei/guideline";
 import { type Locale, type MessageKey, t } from "@aei/i18n";
 import { inSite, knownWard, siteWards } from "../../sites.ts";
@@ -120,6 +120,12 @@ export function coverageQuery(f: DoctorFilters): CoverageQuery {
   };
 }
 
+/** A drug code a link asks the list to select; anything but a dataset code is ignored. */
+export const focusAb = (v: string | null): string | null => ANTIBIOTICS.find((a) => a.code === v)?.code ?? null;
+
+/** An organism a link asks the unit context to highlight; anything but a dataset organism is ignored. */
+export const focusOrg = (v: string | null): string | null => ORGANISMS.find((o) => o === v) ?? null;
+
 /** Carries legacy doctor deep links into a workspace without borrowing its filter names. */
 export function doctorParamsToWindow(params: URLSearchParams): Record<string, string> {
   const result: Record<string, string> = {};
@@ -127,6 +133,10 @@ export function doctorParamsToWindow(params: URLSearchParams): Record<string, st
     const value = params.get(key);
     if (value !== null) result[`cov.${key}`] = value;
   }
+  const ab = focusAb(params.get("ab"));
+  if (ab) result["cov.ab"] = ab;
+  const org = focusOrg(params.get("org"));
+  if (org) result["cov.org"] = org;
   return result;
 }
 

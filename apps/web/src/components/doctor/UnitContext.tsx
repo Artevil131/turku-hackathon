@@ -24,6 +24,8 @@ interface Props {
   alertsStatus?: ListStatus;
   onRetryAlerts?: () => void;
   onOpenSignals: (ward: WardCode) => void;
+  /** An organism a link asked for: marked in the list, shown even beyond the first seven. */
+  highlightOrganism?: string | null;
 }
 
 /** Level ladder, likely organisms and the unit's own signals: context for the list, never a filter on it. */
@@ -39,11 +41,15 @@ export function UnitContext({
   alertsStatus,
   onRetryAlerts,
   onOpenSignals,
+  highlightOrganism = null,
 }: Props) {
   const cov = data?.coverage;
   const unit = wardName(locale, filters.unit);
   const site = specimenName(locale, filters.site).toLowerCase();
-  const top = cov?.organisms.slice(0, 7) ?? [];
+  const all = cov?.organisms ?? [];
+  const marked = highlightOrganism ? all.find((o) => o.organism === highlightOrganism) : undefined;
+  const first = all.slice(0, 7);
+  const top = marked && !first.includes(marked) ? [...first.slice(0, 6), marked] : first;
   const rest = top.length ? Math.max(0, 1 - top.reduce((s, o) => s + o.share, 0)) : 0;
   const orgState: ListStatus = cov ? "ready" : status === "error" ? "error" : "loading";
   const sigState: ListStatus = alertsStatus ?? (asOf ? "ready" : "loading");
@@ -80,7 +86,16 @@ export function UnitContext({
             </div>
             <ul className="uc-orgs">
               {top.map((o, i) => (
-                <li key={o.organism}>
+                <li
+                  key={o.organism}
+                  data-marked={o.organism === highlightOrganism ? "" : undefined}
+                  aria-current={o.organism === highlightOrganism ? "true" : undefined}
+                  style={
+                    o.organism === highlightOrganism
+                      ? { fontWeight: 600, background: "color-mix(in srgb, var(--ink-2, #1d204e) 8%, transparent)" }
+                      : undefined
+                  }
+                >
                   <span className="uc-swatch" aria-hidden="true" style={{ background: SHADES[i] }} />
                   <i className="uc-org-name">{shortOrganism(o.organism)}</i>
                   <span className="uc-org-n num">

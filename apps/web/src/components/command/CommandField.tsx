@@ -15,6 +15,7 @@ const GROUP_LABEL: Record<Group, MessageKey> = {
   phenotypes: "cmdGroupPhenotypes",
   alerts: "cmdGroupAlerts",
   pages: "cmdGroupPages",
+  queries: "cmdGroupQueries",
 };
 
 const SearchIcon = () => (
@@ -62,18 +63,35 @@ function typing(target: EventTarget | null): boolean {
 const RECENT_KEY = "aei.cmd.recent";
 const RECENT_MAX = 3;
 
-function readRecent(): string[] {
+/** A pick kept for the empty field. Compound results are not in `entries`, so they carry their own text. */
+interface Recent {
+  id: string;
+  href: string;
+  label: string;
+  sub: string;
+}
+
+function readRecent(): Recent[] {
   try {
     const v = JSON.parse(localStorage.getItem(RECENT_KEY) ?? "[]");
-    return Array.isArray(v) ? v.filter((x): x is string => typeof x === "string").slice(0, RECENT_MAX) : [];
+    if (!Array.isArray(v)) return [];
+    return v
+      .flatMap((x): Recent[] => {
+        if (typeof x === "string") return [{ id: x, href: "", label: "", sub: "" }];
+        const r = x as Partial<Recent> | null;
+        return r && typeof r.id === "string" && typeof r.href === "string"
+          ? [{ id: r.id, href: r.href, label: r.label ?? "", sub: r.sub ?? "" }]
+          : [];
+      })
+      .slice(0, RECENT_MAX);
   } catch {
     return [];
   }
 }
 
-function writeRecent(ids: string[]): void {
+function writeRecent(list: Recent[]): void {
   try {
-    localStorage.setItem(RECENT_KEY, JSON.stringify(ids));
+    localStorage.setItem(RECENT_KEY, JSON.stringify(list));
   } catch {
     // storage may be blocked; recents are a convenience only
   }
@@ -104,14 +122,21 @@ export function CommandField({ locale, alerts, asOf = null }: Props) {
   const wrap = useRef<HTMLDivElement>(null);
 
   const entries = useMemo(() => buildEntries(locale, alerts ?? [], asOf), [locale, alerts, asOf]);
-  const [recent, setRecent] = useState<string[]>(readRecent);
+  const [recent, setRecent] = useState<Recent[]>(readRecent);
   // With nothing typed, what the user chose last comes first, one click from the board.
   const results = useMemo(() => {
-    const found = search(entries, query);
+    const found = search(entries, query, undefined, locale);
     if (query.trim()) return found;
-    const mine = recent.flatMap((id) => entries.find((e) => e.id === id) ?? []).map((e) => ({ ...e, score: 1 }));
-    return [...mine, ...found.filter((r) => !recent.includes(r.id))];
-  }, [entries, query, recent]);
+    const mine = recent.flatMap((r): Result[] => {
+      const e = entries.find((x) => x.id === r.id);
+      if (e) return [{ ...e, score: 1 }];
+      return r.id.startsWith("q:") && r.label
+        ? [{ id: r.id, group: "queries", label: r.label, sub: r.sub, href: r.href, terms: [], score: 1 }]
+        : [];
+    });
+    return [...mine, ...found.filter((r) => !mine.some((m) => m.id === r.id))];
+  }, [entries, query, recent, locale]);
+  const recentCount = !query.trim() ? results.filter((r) => recent.some((x) => x.id === r.id)).length : 0;
   const showList = focused;
   const current = results[Math.min(active, results.length - 1)];
 
@@ -167,7 +192,7 @@ export function CommandField({ locale, alerts, asOf = null }: Props) {
 
   const choose = (r: Result | undefined) => {
     if (!r) return;
-    const next = [r.id, ...recent.filter((id) => id !== r.id)].slice(0, RECENT_MAX);
+    const next = [{ id: r.id, href: r.href, label: r.label, sub: r.sub }, ...recent.filter((x) => x.id !== r.id)].slice(0, RECENT_MAX);
     setRecent(next);
     writeRecent(next);
     close();
@@ -259,7 +284,7 @@ export function CommandField({ locale, alerts, asOf = null }: Props) {
           {results.length ? (
             <div className="cmd-list" id={listId} role="listbox" aria-label={t(locale, "cmdResults")}>
               {results.map((r, i) => {
-                const isRecent = !query.trim() && i < recent.filter((id) => entries.some((e) => e.id === id)).length;
+                const isRecent = i < recentCount;
                 const section = isRecent ? "recent" : r.group;
                 const header = section !== lastGroup;
                 lastGroup = section as Group;
