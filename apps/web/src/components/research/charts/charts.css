@@ -94,6 +94,7 @@
 }
 .ch-foot {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--gap);
 }
 @keyframes ch-in {

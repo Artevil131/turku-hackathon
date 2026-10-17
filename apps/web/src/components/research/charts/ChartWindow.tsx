@@ -1,10 +1,10 @@
 import type { AeiClient } from "@aei/contract";
 import { figureSvgFile, toCsv } from "@aei/export";
 import { type Locale, t } from "@aei/i18n";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { downloadFile } from "../../../downloadFile.ts";
 import { BetaCurve } from "../tools/Charts.tsx";
-import { standaloneSvg } from "./exportSvg.ts";
+import { copyPng, saveBlob, standaloneSvg, svgToPng } from "./exportSvg.ts";
 import { Bars, type Period, ShareChart, SmallMultiples } from "./Figures.tsx";
 import { type ChartData, chartAria, chartTable, chartTitle, hasData, pct } from "./model.ts";
 import type { ChartSpec, Frame } from "./spec.ts";
@@ -46,6 +46,25 @@ export function ChartView({ spec, data, locale, asOf, onPeriod, onUnit }: ChartV
     if (svg) downloadFile(figureSvgFile({ name: `chart-${spec.type}-${spec.event}`, title, svg: standaloneSvg(svg) }));
   };
   const exportCsv = () => downloadFile(toCsv(chartTable(data)));
+  // The figure as a PNG: on the clipboard (pasted into a slide or a message) or as a file.
+  const [imageState, setImageState] = useState<"idle" | "copied" | "saved">("idle");
+  const png = () => {
+    const svg = root.current?.querySelector<SVGSVGElement>("svg[role='img']");
+    return svg ? svgToPng(standaloneSvg(svg)) : Promise.reject(new Error("no figure"));
+  };
+  const pngName = `chart-${spec.type}-${spec.event}${asOf ? `-${asOf}` : ""}.png`;
+  const copyImage = () =>
+    png()
+      .then((blob) => copyPng(blob, pngName))
+      .then((how) => {
+        setImageState(how);
+        setTimeout(() => setImageState("idle"), 1800);
+      })
+      .catch(() => undefined);
+  const downloadPng = () =>
+    png()
+      .then((blob) => saveBlob(blob, pngName))
+      .catch(() => undefined);
   return (
     <article className="ch" aria-label={title} data-type={spec.type}>
       <header className="ch-head">
@@ -74,6 +93,16 @@ export function ChartView({ spec, data, locale, asOf, onPeriod, onUnit }: ChartV
         ) : null}
       </div>
       <footer className="ch-foot">
+        <button type="button" className="btn" disabled={!hasData(data)} onClick={copyImage} aria-live="polite">
+          {imageState === "copied"
+            ? t(locale, "chartCopied")
+            : imageState === "saved"
+              ? t(locale, "chartSaved")
+              : t(locale, "chartCopyImage")}
+        </button>
+        <button type="button" className="btn" disabled={!hasData(data)} onClick={downloadPng}>
+          {t(locale, "chartDownloadPng")}
+        </button>
         <button type="button" className="btn" disabled={!hasData(data)} onClick={exportSvg}>
           {t(locale, "chartExportSvg")}
         </button>

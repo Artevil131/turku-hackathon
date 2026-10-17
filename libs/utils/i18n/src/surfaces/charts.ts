@@ -28,6 +28,10 @@ export const chartsEn = {
   chartBetaWords: "{k} of {n} isolates; mean {mean}, 95 % credible interval {range}.",
   chartExportSvg: "Export SVG",
   chartExportCsv: "Export CSV",
+  chartCopyImage: "Copy image",
+  chartDownloadPng: "Download PNG",
+  chartCopied: "Copied",
+  chartSaved: "Saved as a file",
 };
 
 export const chartsFi: Record<keyof typeof chartsEn, string> = {
@@ -58,4 +62,8 @@ export const chartsFi: Record<keyof typeof chartsEn, string> = {
   chartBetaWords: "{k} / {n} eristettä; keskiarvo {mean}, 95 %:n uskottavuusväli {range}.",
   chartExportSvg: "Vie SVG",
   chartExportCsv: "Vie CSV",
+  chartCopyImage: "Kopioi kuva",
+  chartDownloadPng: "Lataa PNG",
+  chartCopied: "Kopioitu",
+  chartSaved: "Tallennettu tiedostona",
 };
