@@ -70,7 +70,6 @@ const TITLE_KEY = {
   assistant: "boardAssistant",
   grid: "boardGrid",
   reproduce: "boardReproduce",
-  tools: "toolsWindow",
 } as const;
 
 /** A request to add a chart window: a new `key` adds `spec`. */
@@ -80,7 +79,24 @@ export interface ChartRequest {
 }
 
 /** The stacked order under 1100 px: the list first, the map last (as before). */
-const STACK_ORDER: readonly WinId[] = ["signals", "math", "assistant", "map", "graph", "grid", "reproduce", "tools"];
+const STACK_ORDER: readonly WinId[] = ["signals", "math", "assistant", "map", "graph", "grid", "reproduce"];
+
+const RAIL_KEY = "aei.research.rail";
+/** Whether the tool rail is shown: open unless the researcher closed it (kept beside the layout). */
+function loadRail(): boolean {
+  try {
+    return localStorage.getItem(RAIL_KEY) !== "closed";
+  } catch {
+    return true;
+  }
+}
+function saveRail(open: boolean): void {
+  try {
+    localStorage.setItem(RAIL_KEY, open ? "open" : "closed");
+  } catch {
+    // Blocked storage: the rail's state simply does not persist.
+  }
+}
 
 function useWide(): boolean {
   const query = "(min-width: 1100px)";
@@ -131,6 +147,8 @@ export function Workspace({
   chartRequest = null,
   chartContent,
   chartMenu,
+  rail,
+  revealRail,
 }: {
   locale: Locale;
   content: Record<WinId, ReactNode>;
@@ -156,8 +174,23 @@ export function Workspace({
   chartContent?: (id: string, spec: ChartSpec) => ReactNode;
   /** The form behind "+ Chart" in the tray; `done` closes the tray. */
   chartMenu?: (done: () => void) => ReactNode;
+  /** The tool rail, docked on the left of the board; the toolbar's Tools button, T and a double-click on the empty board toggle it. */
+  rail?: ReactNode;
+  /** Each new value shows the rail (the card's "Open in Tools" sends the slice there). */
+  revealRail?: number;
 }) {
   const wide = useWide();
+  const [railOpen, setRailOpen] = useState(loadRail);
+  const seenRailReveal = useRef(revealRail ?? 0);
+  useEffect(() => {
+    if (revealRail === undefined || revealRail === seenRailReveal.current) return;
+    seenRailReveal.current = revealRail;
+    if (!railOpen) toggleRail(true);
+  });
+  const toggleRail = (to = !railOpen) => {
+    setRailOpen(to);
+    saveRail(to);
+  };
   const areaRef = useRef<HTMLDivElement>(null);
   // null = the default layout for the board's height; set once the user changes anything.
   const [saved, setSaved] = useState<Layout | null>(loadLayout);
@@ -252,6 +285,19 @@ export function Workspace({
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   });
+  useEffect(() => {
+    if (!rail) return;
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey || (e.key !== "t" && e.key !== "T")) return;
+      const el = e.target instanceof Element ? e.target : null;
+      if (el?.closest("input, textarea, select, [contenteditable='true']") || document.querySelector("[aria-modal='true'], dialog[open]"))
+        return;
+      e.preventDefault();
+      toggleRail();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  });
 
   // A link that names a window (the unit grid) opens it once the board is measured.
   const wanted = useRef(initiallyOpen);
@@ -319,6 +365,7 @@ export function Workspace({
     setSaved(l);
     saveLayout(l);
     if (focus) setFocusTo(null);
+    if (p === "analysis" && rail && !railOpen) toggleRail(true);
     setStatus(t(locale, "wsPresetApplied", { title: t(locale, PRESET_KEY[p]) }));
   };
   const layouts = (
@@ -482,19 +529,34 @@ export function Workspace({
       {wide ? (
         <div className="ws-toolbar">
           {focusBar ?? layouts}
-          <button
-            type="button"
-            className="ws-tool-open"
-            aria-pressed={layout.wins.tools.open}
-            title={t(locale, "toolsWindow")}
-            onClick={() => (layout.wins.tools.open ? focusWin("tools") : open("tools"))}
-          >
-            {t(locale, "toolsWindow")}
-          </button>
+          {rail ? (
+            <button
+              type="button"
+              className="ws-tool-open"
+              aria-pressed={railOpen}
+              aria-keyshortcuts="T"
+              title={`${t(locale, railOpen ? "toolsRailHide" : "toolsRailShow")} · T`}
+              onClick={() => toggleRail()}
+            >
+              {t(locale, "toolsWindow")}
+            </button>
+          ) : null}
           {toolbar}
         </div>
       ) : null}
-      <div className="ws-area" ref={areaRef} style={wide ? { height: boardRows(layout) * ROW_PX } : undefined}>
+      {rail ? (
+        <div className="ws-dock" hidden={!railOpen}>
+          {rail}
+        </div>
+      ) : null}
+      {/* A double-click on the empty board (not on a window) shows or hides the tool rail. */}
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: a pointer shortcut; the keyboard has T and the toolbar button. */}
+      <div
+        className="ws-area"
+        ref={areaRef}
+        style={wide ? { height: boardRows(layout) * ROW_PX } : undefined}
+        onDoubleClick={rail ? (e) => e.target === e.currentTarget && toggleRail() : undefined}
+      >
         {wide && dragging ? <div className="ws-ghost" aria-hidden="true" style={place(winOf(layout, dragging))} /> : null}
         {ids.map((id) => {
           const w = winOf(layout, id);
@@ -603,7 +665,7 @@ export function Workspace({
           );
         })}
       </div>
-      {wide ? <div className="ws-rail">{tray}</div> : null}
+      {wide ? <div className="ws-traydock">{tray}</div> : null}
       {overlay}
       <p className="visually-hidden" role="status" aria-live="polite">
         {status}

@@ -19,7 +19,7 @@ import { type NotebookLanguage, Reproduce, ReproduceHost } from "./projects/Repr
 import { useProject } from "./projects/useProject.ts";
 import { SignalFeed } from "./SignalFeed.tsx";
 import type { Cell, Slice } from "./tools/model.ts";
-import { ToolsWindow } from "./tools/ToolsWindow.tsx";
+import { ToolRail } from "./tools/ToolRail.tsx";
 import { UnitGrid } from "./UnitGrid.tsx";
 import type { WinId } from "./workspace/layout.ts";
 import { type ChartRequest, Workspace } from "./workspace/Workspace.tsx";
@@ -55,7 +55,11 @@ export function ResearchBoard(props: Props) {
   // The project (the friend's shell, D-057 on main) travels in the hash beside the board's own params.
   const project = useProject(client, asOf);
   const [notebookLanguage, setNotebookLanguage] = useState<NotebookLanguage>("python");
-  useEffect(() => writeHashParams({ ...boardToParams(state), project: hashParams().get("project") }), [state]);
+  // The timeline's dragged range (`from=`, `to=`) stays too: the tool rail reads it as its frame.
+  useEffect(() => {
+    const keep = hashParams();
+    writeHashParams({ ...boardToParams(state), project: keep.get("project"), from: keep.get("from"), to: keep.get("to") });
+  }, [state]);
   // A link followed inside the app (or the back button) changes the hash without remounting.
   // Also when another component (the timeline's pills and lanes) writes `inc=` or `unit=` through url.ts.
   useEffect(() => {
@@ -79,9 +83,11 @@ export function ResearchBoard(props: Props) {
     setMapCounty(null);
     setToolsPreset(null);
   }, [state.incident]);
+  // "Open in Tools" shows the rail and opens the Rate inspector on the signal's slice.
+  const [railRequest, setRailRequest] = useState<{ key: number; tool: "rate" } | null>(null);
   const openTools = useCallback((slice: Slice) => {
     setToolsPreset(slice);
-    setReveal({ id: "tools", key: `tools-${slice.unit}|${slice.phenotype}|${slice.from}` });
+    setRailRequest((r) => ({ key: (r?.key ?? 0) + 1, tool: "rate" }));
   }, []);
   const showMap = useCallback((county: string) => {
     setMapCounty(county);
@@ -132,8 +138,7 @@ export function ResearchBoard(props: Props) {
     };
   }, [explicit, selected, locale]);
 
-  // The Tools window's frame follows the selected signal: the window its relations cover, or, after
-  // "Open in Tools", the signal's own slice.
+  // The tool rail's frame follows the selected signal: the window its relations cover.
   const selectedSpans = explicit && selected ? spansOf(selected) : null;
   const signalWindow = selectedSpans?.from && selectedSpans.to ? { from: selectedSpans.from, to: selectedSpans.to } : null;
 
@@ -200,8 +205,20 @@ export function ResearchBoard(props: Props) {
     assistant: (
       <Assistant client={client} locale={locale} incident={selected} spans={selected ? spansOf(selected) : null} waiting={loading} />
     ),
-    tools: <ToolsWindow {...panelProps} window={toolsWindow} onAddChart={addChart} onCells={setCells} />,
   };
+
+  const chartMenu = (done: () => void) => (
+    <ChartForm
+      locale={locale}
+      cells={cells}
+      unit={state.unit ?? ""}
+      phenotype={state.phenotype ?? ""}
+      onAdd={(spec) => {
+        addChart(spec);
+        done();
+      }}
+    />
+  );
 
   // The URL's `panel` follows the last of the map and the unit grid that was opened or closed.
   const initiallyOpen = useRef<WinId[] | undefined>(state.panel === "grid" ? ["grid"] : undefined);
@@ -237,18 +254,18 @@ export function ResearchBoard(props: Props) {
             onUnit={(unit) => onChange({ unit: unit as never })}
           />
         )}
-        chartMenu={(done) => (
-          <ChartForm
-            locale={locale}
-            cells={cells}
-            unit={state.unit ?? ""}
-            phenotype={state.phenotype ?? ""}
-            onAdd={(spec) => {
-              addChart(spec);
-              done();
-            }}
+        chartMenu={chartMenu}
+        rail={
+          <ToolRail
+            {...panelProps}
+            window={toolsWindow}
+            onAddChart={addChart}
+            onCells={setCells}
+            chartMenu={chartMenu}
+            request={railRequest}
           />
-        )}
+        }
+        revealRail={railRequest?.key}
         onOpened={(id) => (id === "grid" ? onChange({ panel: "grid" }) : id === "map" ? onChange({ panel: "geo" }) : undefined)}
         onClosed={(id) => (id === "grid" ? onChange({ panel: "geo" }) : undefined)}
       />

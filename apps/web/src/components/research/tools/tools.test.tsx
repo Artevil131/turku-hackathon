@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { cellTable, computeBeta, computeCompare, computeDetector, computeRate, poissonInterval, pythonCall, type Slice } from "./model.ts";
 import { ResultCell } from "./ResultCell.tsx";
-import { previousFrame, sliceSentence, type ToolsProps, ToolsWindow } from "./ToolsWindow.tsx";
+import { type InspectorProps, pickFrame, previousFrame, sliceSentence, ToolInspector } from "./ToolsWindow.tsx";
 
 // Fixed inputs: every number the cells show comes from the gear calls, so the tests pin the figures.
 
@@ -117,7 +117,7 @@ describe("tool 5: detector here", () => {
   });
 });
 
-describe("the Tools window", () => {
+describe("the inspector", () => {
   const props = {
     client: {},
     locale: "en",
@@ -126,25 +126,24 @@ describe("the Tools window", () => {
     onChange: () => {},
     reducedMotion: true,
     window: null,
-  } as unknown as ToolsProps;
-  const out = renderToStaticMarkup(<ToolsWindow {...props} />);
+  } as unknown as InspectorProps;
+  const rate = renderToStaticMarkup(<ToolInspector {...props} tool="rate" />);
+  const data = renderToStaticMarkup(<ToolInspector {...props} tool="data" />);
 
-  it("says the slice in one sentence and offers Edit, not a form", () => {
+  it("says the slice in one sentence; a tool shows its line, an empty state in words and Run, not the slice form", () => {
     expect(sliceSentence("en", { ...slice, organism: "Escherichia coli", specimen: "urine" })).toMatch(
       /^Intensive care unit · Escherichia coli · .+ · ESBL · .+ · first isolates$/,
     );
-    expect(out).toContain("All units · ");
-    expect(out).toContain("Edit");
-    expect(out).not.toContain('type="date"');
+    expect(rate).toContain("All units · ");
+    expect(rate).toContain("How many per week in this frame, with its interval.");
+    expect(rate).toContain("Run it on the slice above");
+    expect(rate).toMatch(/>Run<kbd>/);
+    expect(rate).not.toContain('type="date"');
   });
-  it("shows one tool at a time: a picker of five, the tool's line, an empty state in words and Run", () => {
-    for (const name of ["Rate", "Compare", "Share over time", "Beta posterior", "Run a detector"])
-      expect(out).toContain(`>${name}</button>`);
-    expect(out.match(/role="tab"/g)).toHaveLength(5);
-    expect(out).toContain("How many per week in this frame, with its interval.");
-    expect(out).toContain("Choose a tool and run it on the slice above");
-    expect(out).toContain(">Run</button>");
-    expect(out).not.toContain("tl-tool");
+  it("edits the slice in the Data tool and says where the frame came from", () => {
+    expect(data).toContain('type="date"');
+    expect(data).toContain("First isolate per patient");
+    expect(data).toContain("Last 12 weeks");
   });
   it("puts frame B right before frame A, of the same length", () => {
     expect(previousFrame({ ...slice, from: "2026-09-01", to: "2026-09-28" })).toEqual({
@@ -152,5 +151,18 @@ describe("the Tools window", () => {
       to: "2026-08-31",
       unit: "ICU",
     });
+  });
+});
+
+describe("the frame", () => {
+  const signal = { from: "2026-08-01", to: "2026-08-28" };
+  it("prefers the range dragged on the timeline (from= and to= in the hash) over the signal's window", () => {
+    expect(pickFrame("2026-09-01", "2026-09-14", signal)).toEqual({ frame: { from: "2026-09-01", to: "2026-09-14" }, origin: "timeline" });
+    expect(pickFrame("2026-09-14", "2026-09-01", signal).frame).toEqual({ from: "2026-09-01", to: "2026-09-14" });
+  });
+  it("falls back to the signal's window, then to the last 12 weeks", () => {
+    expect(pickFrame("2026-09-01", null, signal)).toEqual({ frame: signal, origin: "signal" });
+    expect(pickFrame("soon", "2026-09-14", signal)).toEqual({ frame: signal, origin: "signal" });
+    expect(pickFrame(null, null, null)).toEqual({ frame: null, origin: "default" });
   });
 });

@@ -1,0 +1,263 @@
+/* The tool rail and its inspector (ToolRail.tsx). Clinical white, tokens only. Wide: a 36 px column docked on the
+   left of the workspace, sticky while the board scrolls, the inspector floating beside it over the windows.
+   Narrow (the stack): a horizontal strip above the windows, the inspector a sheet under it. */
+
+.ws-dock {
+  flex: 0 0 auto;
+  position: sticky;
+  top: 0;
+  z-index: 210;
+  align-self: flex-start;
+}
+.ws-dock[hidden] {
+  display: none;
+}
+.ws-tools {
+  position: relative;
+}
+
+.ws-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 36px;
+  padding: 3px 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel, 10px);
+  background: var(--glass-1, #fff);
+}
+.ws-rail-btn {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-control, 6px);
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition:
+    background-color var(--mo-1, 120ms) var(--mo-ease, ease-out),
+    color var(--mo-1, 120ms) var(--mo-ease, ease-out);
+}
+.ws-rail-btn:hover {
+  background: var(--brand-accent-soft, #ecebfc);
+  color: var(--ink);
+}
+.ws-rail-btn[aria-pressed="true"] {
+  background: var(--brand-accent, #635bf1);
+  color: var(--brand-accent-ink, #fff);
+}
+/* Select is the resting state: pressed, but quiet. */
+.ws-rail-btn[data-tool="select"][aria-pressed="true"] {
+  background: var(--brand-accent-soft, #ecebfc);
+  color: var(--ink);
+}
+.ws-rail-btn:focus-visible {
+  outline: 2px solid var(--brand-accent, #635bf1);
+  outline-offset: 1px;
+}
+.ws-rail-sep {
+  width: 18px;
+  height: 1px;
+  margin: 4px 0;
+  background: var(--line);
+}
+
+/* The tooltip: the tool's name and its key, after a short pause. */
+.ws-rail-tip {
+  position: absolute;
+  left: calc(100% + 8px);
+  top: 50%;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: var(--radius-control, 6px);
+  background: var(--ink, #07081c);
+  color: #fff;
+  font-size: var(--t-xs, 12px);
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-2px, -50%);
+  transition:
+    opacity var(--mo-1, 120ms) var(--mo-ease, ease-out),
+    transform var(--mo-1, 120ms) var(--mo-ease, ease-out);
+  z-index: 5;
+}
+.ws-rail-tip kbd {
+  font: inherit;
+  font-weight: 500;
+  opacity: 0.7;
+}
+.ws-rail-btn:hover .ws-rail-tip,
+.ws-rail-btn:focus-visible .ws-rail-tip {
+  opacity: 1;
+  transform: translate(0, -50%);
+  transition-delay: 350ms;
+}
+.ws-rail-btn:focus-visible .ws-rail-tip {
+  transition-delay: 0ms;
+}
+/* No tooltip over an open inspector: the inspector names the tool. */
+.ws-tools[data-open="true"] .ws-rail-btn:not(:hover) .ws-rail-tip {
+  display: none;
+}
+
+/* The inspector: attached to the rail, no title bar, the board stays visible beside it. */
+.ws-inspector {
+  position: absolute;
+  top: 0;
+  left: calc(36px + 6px);
+  width: 300px;
+  max-height: calc(100vh - 140px);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel, 10px);
+  background: var(--glass-1, #fff);
+  box-shadow: var(--pop-shadow, 0 4px 16px rgb(7 8 28 / 0.12));
+  overflow: hidden;
+  animation: ws-inspector-in 160ms var(--mo-ease, cubic-bezier(0.16, 1, 0.3, 1));
+}
+.ws-inspector[hidden],
+.ws-inspector-body[hidden] {
+  display: none;
+}
+@keyframes ws-inspector-in {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ws-inspector {
+    animation: none;
+  }
+  .ws-rail-tip {
+    transition: none;
+  }
+}
+.ws-inspector-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 8px 0 var(--pad, 12px);
+  font-size: var(--t-xs, 12px);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ink-3);
+}
+.ws-inspector-close {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-control, 6px);
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+.ws-inspector-close:hover {
+  background: var(--brand-accent-soft, #ecebfc);
+  color: var(--ink);
+}
+.ws-inspector-body {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.ws-inspector-body > .ch-form {
+  padding: 8px var(--pad, 12px) var(--pad, 12px);
+}
+
+/* The inspector's content: tighter than the old window, one column. */
+.tl-inspect {
+  padding-top: 6px;
+  gap: 10px;
+}
+.tl-inspect .tl-sentence {
+  flex: none;
+  font-size: var(--t-s, 13px);
+}
+.tl-inspect .tl-sentence .tl-link {
+  font-weight: 500;
+}
+.tl-inspect .tl-hint,
+.tl-inspect .tl-empty {
+  margin: 0;
+}
+.tl-inspect .tl-fields {
+  margin-bottom: 0;
+}
+.tl-inspect .tl-fields-1 .tl-field {
+  flex-basis: 100%;
+}
+.tl-inspect .tl-slice-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap, 8px);
+}
+.tl-origin {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin: 0;
+  font-size: var(--t-xs, 12px);
+  color: var(--ink-3);
+}
+.tl-inspect .tl-run kbd {
+  margin-left: 6px;
+  font: inherit;
+  opacity: 0.65;
+}
+.tl-inspect .tl-results {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap, 8px);
+}
+.tl-clear {
+  align-self: flex-start;
+}
+
+/* The phone stack: a strip of tools above the windows, the inspector a sheet under it. */
+.ws[data-float="false"] .ws-dock {
+  position: static;
+  align-self: stretch;
+}
+.ws[data-float="false"] .ws-rail {
+  flex-direction: row;
+  flex-wrap: wrap;
+  width: auto;
+  padding: 3px;
+}
+.ws[data-float="false"] .ws-rail-sep {
+  width: 1px;
+  height: 18px;
+  margin: 0 4px;
+}
+.ws[data-float="false"] .ws-rail-tip {
+  display: none;
+}
+.ws[data-float="false"] .ws-inspector {
+  position: static;
+  width: auto;
+  max-height: none;
+  margin-top: 6px;
+  box-shadow: none;
+  animation-name: ws-sheet-in;
+}
+@keyframes ws-sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}

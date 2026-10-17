@@ -1,8 +1,9 @@
 import type { IsolateRecord, Phenotype } from "@aei/domain";
 import { ANTIBIOTICS, ORGANISMS, PHENOTYPES, SPECIMENS } from "@aei/domain";
 import { antibioticName, formatDate, type Locale, phenotypeName, specimenName, t, wardName } from "@aei/i18n";
-import { type KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { siteWards } from "../../../sites.ts";
+import { useHashParam } from "../../../url.ts";
 import type { PanelProps } from "../board.ts";
 import { specFromResult, specFromSlice } from "../charts/model.ts";
 import type { ChartSpec } from "../charts/spec.ts";
@@ -22,15 +23,17 @@ import {
   parseEvent,
   prepare,
   type Slice,
-  TOOL_IDS,
   type ToolId,
 } from "./model.ts";
 import { ResultCell } from "./ResultCell.tsx";
-import { EditIcon } from "./ToolIcons.tsx";
 import "./tools.css";
 
-// The Tools window (D-065 engine A, D-076): the slice as one sentence, a picker of five analyses, the newest result
-// under the picker, the chosen tool's few parameters with Run, the older results below. No code is typed.
+// The body of the tool rail's inspector (D-065 engine A, D-076): the slice as one sentence, then either the slice
+// editor (the Data tool) or one analysis's few parameters with Run and its results, newest first. No code is typed.
+// It stays mounted while the rail is open, so the slice, the options and the results survive switching tools.
+
+/** What the inspector shows: the slice editor or one of the five analyses. */
+export type InspectorTool = "data" | ToolId;
 
 export interface ToolsProps extends PanelProps {
   /** The selected signal's window; null falls back to the last 12 weeks to the clock. */
@@ -43,19 +46,53 @@ export interface ToolsProps extends PanelProps {
   onCells?: (cells: Cell[]) => void;
 }
 
+export interface InspectorProps extends ToolsProps {
+  tool: InspectorTool;
+  /** Opens the slice editor (the sentence's Change link). */
+  onEditSlice?: () => void;
+  /** Each new value puts the slice back to where its frame came from (the rail's Reset). */
+  resetKey?: number;
+}
+
 const DEFAULT_WEEKS = 12;
 const PERIODS = [7, 14, 28] as const;
+const ISO = /^\d{4}-\d{2}-\d{2}$/;
 
-/** The defaults: the selected signal's unit, phenotype and window, else the last 12 weeks to the clock over all units. */
-function initialSlice(w: ToolsProps["window"], asOf: string | null, state: PanelProps["state"], preset?: Partial<Slice>): Slice {
-  const to = w?.to ?? asOf ?? new Date().toISOString().slice(0, 10);
+/** Where the slice's frame came from, in priority order. */
+export type FrameOrigin = "timeline" | "signal" | "default";
+
+/**
+ * The frame the tools read: the range dragged on the timeline (`from=` and `to=` in the hash, both present and
+ * valid), else the selected signal's window, else none (the last 12 weeks to the clock).
+ */
+export function pickFrame(
+  hashFrom: string | null,
+  hashTo: string | null,
+  signal: { from: string; to: string } | null,
+): { frame: { from: string; to: string } | null; origin: FrameOrigin } {
+  if (hashFrom && hashTo && ISO.test(hashFrom) && ISO.test(hashTo)) {
+    const [from, to] = hashFrom <= hashTo ? [hashFrom, hashTo] : [hashTo, hashFrom];
+    return { frame: { from, to }, origin: "timeline" };
+  }
+  return signal ? { frame: signal, origin: "signal" } : { frame: null, origin: "default" };
+}
+
+/** The defaults: the frame's dates, the selected signal's unit and phenotype, else the last 12 weeks over all units. */
+function initialSlice(
+  frame: { from: string; to: string; unit?: string; phenotype?: Phenotype | ""; organism?: string } | null,
+  hasSignal: boolean,
+  asOf: string | null,
+  state: PanelProps["state"],
+  preset?: Partial<Slice>,
+): Slice {
+  const to = frame?.to ?? asOf ?? new Date().toISOString().slice(0, 10);
   return {
-    from: w?.from ?? shift(to, 1 - DEFAULT_WEEKS * 7),
+    from: frame?.from ?? shift(to, 1 - DEFAULT_WEEKS * 7),
     to,
-    unit: w ? (w.unit ?? state.unit ?? state.focus ?? "") : "",
-    organism: w?.organism ?? "",
+    unit: hasSignal ? (frame?.unit ?? state.unit ?? state.focus ?? "") : "",
+    organism: frame?.organism ?? "",
     specimen: "",
-    phenotype: w ? (w.phenotype ?? state.phenotype ?? "") : "",
+    phenotype: hasSignal ? (frame?.phenotype ?? state.phenotype ?? "") : "",
     firstOnly: true,
     ...preset,
   };
@@ -105,22 +142,36 @@ function EventSelect({ locale, id, value, onChange }: { locale: Locale; id: stri
   );
 }
 
-export function ToolsWindow(props: ToolsProps) {
-  const { client, locale, asOf, state, window: win, preset, onAddChart, onCells } = props;
-  const [slice, setSlice] = useState<Slice>(() => initialSlice(win, asOf, state, preset));
-  // The selected signal's slice (or a preset handed over): the defaults, and what "Use the selected signal" restores.
-  const signal = win || preset ? initialSlice(win, asOf, state, preset) : null;
+const ORIGIN_KEY = { timeline: "toolsFrameTimeline", signal: "toolsFrameSignal", default: "toolsFrameDefault" } as const;
+
+export function ToolInspector(props: InspectorProps) {
+  const { client, locale, asOf, state, window: win, preset, onAddChart, onCells, tool, onEditSlice, resetKey = 0 } = props;
+  const [hashFrom] = useHashParam("from");
+  const [hashTo] = useHashParam("to");
+  const { frame, origin } = pickFrame(hashFrom, hashTo, win);
+  // Where the frame came from: the defaults, and what Reset restores.
+  const source = initialSlice(frame, win !== null, asOf, state, preset);
+  const [slice, setSlice] = useState<Slice>(source);
+  // The selected signal's own slice (its window, unit and phenotype): what "Use the signal's window" restores.
+  const signal = win ? initialSlice(win, true, asOf, state, preset) : null;
+
+  // A newly selected signal moves the whole slice to its own; a new range on the timeline moves the dates only.
+  // The researcher's edits stay until then.
   const signalKey = JSON.stringify([win, win ? [state.unit ?? state.focus, state.phenotype] : null, preset]);
-  const seenSignal = useRef(signalKey);
-  // A newly selected signal moves the slice to its own; the researcher's edits stay until then.
+  const frameKey = JSON.stringify(frame);
+  const seen = useRef({ signal: signalKey, frame: frameKey, reset: resetKey });
   useEffect(() => {
-    if (seenSignal.current === signalKey) return;
-    seenSignal.current = signalKey;
-    if (signal) setSlice(signal);
-  }, [signalKey, signal]);
+    const s = seen.current;
+    if (s.signal !== signalKey || s.reset !== resetKey) setSlice(source);
+    else if (s.frame !== frameKey) setSlice((cur) => ({ ...cur, from: source.from, to: source.to }));
+    seen.current = { signal: signalKey, frame: frameKey, reset: resetKey };
+  }, [signalKey, frameKey, resetKey, source]);
   useEffect(() => {
-    if (!win && asOf) setSlice((s) => (s.to > asOf && s.from > asOf ? initialSlice(null, asOf, state, preset) : s));
-  }, [asOf, win, state, preset]);
+    if (!frame && asOf) setSlice((s) => (s.to > asOf && s.from > asOf ? initialSlice(null, win !== null, asOf, state, preset) : s));
+  }, [asOf, frame, win, state, preset]);
+  const sameDates = (f: { from: string; to: string } | null) => f !== null && slice.from === f.from && slice.to === f.to;
+  // What the hint says: the source of the dates shown, or the researcher's own.
+  const shownOrigin = sameDates(source) ? ORIGIN_KEY[origin] : sameDates(win) ? ORIGIN_KEY.signal : "toolsFrameOwn";
   const differs = signal !== null && !sameSlice(slice, signal);
 
   const [cells, setCells] = useState<Cell[]>([]);
@@ -128,9 +179,6 @@ export function ToolsWindow(props: ToolsProps) {
   const next = useRef(1);
   const [busy, setBusy] = useState<ToolId | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [tool, setTool] = useState<ToolId>("rate");
-  const [editing, setEditing] = useState(false);
-  const tabs = useRef<Partial<Record<ToolId, HTMLButtonElement | null>>>({});
 
   // Per-tool options.
   const [event, setEvent] = useState<string>(
@@ -216,31 +264,6 @@ export function ToolsWindow(props: ToolsProps) {
     }
   };
 
-  const pick = (id: ToolId, focus = false) => {
-    setTool(id);
-    if (focus) tabs.current[id]?.focus();
-  };
-  const onTabKey = (e: KeyboardEvent<HTMLElement>) => {
-    const i = TOOL_IDS.indexOf(tool);
-    const to =
-      e.key === "ArrowRight" || e.key === "ArrowDown"
-        ? TOOL_IDS[(i + 1) % TOOL_IDS.length]
-        : e.key === "ArrowLeft" || e.key === "ArrowUp"
-          ? TOOL_IDS[(i + TOOL_IDS.length - 1) % TOOL_IDS.length]
-          : e.key === "Home"
-            ? TOOL_IDS[0]
-            : e.key === "End"
-              ? TOOL_IDS[TOOL_IDS.length - 1]
-              : null;
-    if (to) {
-      e.preventDefault();
-      pick(to, true);
-    } else if (e.key === "Enter") {
-      e.preventDefault();
-      void run(tool);
-    }
-  };
-
   const dateField = (id: string, label: string, value: string, onChange: (v: string) => void) => (
     <label className="tl-field" htmlFor={id}>
       <span>{label}</span>
@@ -255,152 +278,103 @@ export function ToolsWindow(props: ToolsProps) {
           {wardName(locale, w.code)}
         </option>
       ));
-  const name = (id: ToolId) => t(locale, `toolsPick_${id}` as "toolsPick_rate");
   const addChart =
     onAddChart &&
     ((r: Cell["result"]) => {
       const spec = specFromResult(r);
       if (spec) onAddChart(spec);
     });
-  const [latest, ...older] = cells;
-  const cellOf = (c: Cell, fresh: boolean) => (
-    <ResultCell
-      key={c.id}
-      cell={c}
-      locale={locale}
-      fresh={fresh}
-      onChart={addChart}
-      onRemove={(id) => setCells((all) => all.filter((x) => x.id !== id))}
-    />
-  );
+  const mine = tool === "data" ? [] : cells.filter((c) => c.result.kind === tool);
   const waiting = busy === "compare" ? "toolsFetchingBoth" : busy === "detector" ? "toolsFetchingBaseline" : "toolsFetching";
+  const warn = !valid && <p className="tl-warn">{t(locale, asOf === null ? "toolsNoClock" : "toolsBadFrame")}</p>;
 
-  return (
-    <div className="tl board-panel">
-      <section className="tl-slice" aria-label={t(locale, "toolsSliceTitle")}>
+  if (tool === "data") {
+    return (
+      <div className="tl tl-inspect" data-tool="data">
         <p className="tl-sentence">{sliceSentence(locale, slice)}</p>
-        <div className="tl-slice-actions">
+        <p className="tl-origin">
+          <span>{t(locale, shownOrigin)}</span>
           {differs && signal && (
             <button type="button" className="tl-link" onClick={() => setSlice(signal)}>
-              {t(locale, "toolsUseSignal")}
+              {t(locale, "toolsUseSignalWindow")}
             </button>
           )}
-          <button
-            type="button"
-            className="btn tl-act"
-            aria-expanded={editing}
-            aria-controls="tl-slice-fields"
-            onClick={() => setEditing((v) => !v)}
-          >
-            <EditIcon />
-            {t(locale, editing ? "toolsEditDone" : "toolsEdit")}
-          </button>
-        </div>
-        {editing && (
-          <div id="tl-slice-fields" className="tl-slice-fields">
-            <div className="tl-fields">
-              {dateField("tl-from", t(locale, "toolsFrom"), slice.from, (v) => set("from", v))}
-              {dateField("tl-to", t(locale, "toolsTo"), slice.to, (v) => set("to", v))}
-              <label className="tl-field" htmlFor="tl-unit">
-                <span>{t(locale, "toolsUnit")}</span>
-                <select id="tl-unit" value={slice.unit} onChange={(e) => set("unit", e.target.value)}>
-                  <option value="">{t(locale, "toolsUnitAll")}</option>
-                  {unitOptions()}
-                </select>
-              </label>
-              <label className="tl-field" htmlFor="tl-organism">
-                <span>{t(locale, "toolsOrganism")}</span>
-                <select id="tl-organism" value={slice.organism} onChange={(e) => set("organism", e.target.value)}>
-                  <option value="">{t(locale, "toolsOrganismAll")}</option>
-                  {ORGANISMS.map((o) => (
-                    <option key={o} value={o}>
-                      {o}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="tl-field" htmlFor="tl-specimen">
-                <span>{t(locale, "toolsSpecimen")}</span>
-                <select id="tl-specimen" value={slice.specimen} onChange={(e) => set("specimen", e.target.value)}>
-                  <option value="">{t(locale, "toolsSpecimenAll")}</option>
-                  {SPECIMENS.map((sp) => (
-                    <option key={sp.code} value={sp.code}>
-                      {specimenName(locale, sp.code)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="tl-field" htmlFor="tl-phenotype">
-                <span>{t(locale, "toolsPhenotype")}</span>
-                <select id="tl-phenotype" value={slice.phenotype} onChange={(e) => set("phenotype", e.target.value as Phenotype | "")}>
-                  <option value="">{t(locale, "toolsPhenotypeNone")}</option>
-                  {PHENOTYPES.map((p) => (
-                    <option key={p} value={p}>
-                      {phenotypeName(p)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-            <label className="tl-check">
-              <input type="checkbox" checked={slice.firstOnly} onChange={(e) => set("firstOnly", e.target.checked)} />
-              <span>{t(locale, "toolsFirstOnly")}</span>
+        </p>
+        <div id="tl-slice-fields" className="tl-slice-fields">
+          <div className="tl-fields">
+            {dateField("tl-from", t(locale, "toolsFrom"), slice.from, (v) => set("from", v))}
+            {dateField("tl-to", t(locale, "toolsTo"), slice.to, (v) => set("to", v))}
+          </div>
+          <div className="tl-fields tl-fields-1">
+            <label className="tl-field" htmlFor="tl-unit">
+              <span>{t(locale, "toolsUnit")}</span>
+              <select id="tl-unit" value={slice.unit} onChange={(e) => set("unit", e.target.value)}>
+                <option value="">{t(locale, "toolsUnitAll")}</option>
+                {unitOptions()}
+              </select>
+            </label>
+            <label className="tl-field" htmlFor="tl-organism">
+              <span>{t(locale, "toolsOrganism")}</span>
+              <select id="tl-organism" value={slice.organism} onChange={(e) => set("organism", e.target.value)}>
+                <option value="">{t(locale, "toolsOrganismAll")}</option>
+                {ORGANISMS.map((o) => (
+                  <option key={o} value={o}>
+                    {o}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="tl-field" htmlFor="tl-specimen">
+              <span>{t(locale, "toolsSpecimen")}</span>
+              <select id="tl-specimen" value={slice.specimen} onChange={(e) => set("specimen", e.target.value)}>
+                <option value="">{t(locale, "toolsSpecimenAll")}</option>
+                {SPECIMENS.map((sp) => (
+                  <option key={sp.code} value={sp.code}>
+                    {specimenName(locale, sp.code)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="tl-field" htmlFor="tl-phenotype">
+              <span>{t(locale, "toolsPhenotype")}</span>
+              <select id="tl-phenotype" value={slice.phenotype} onChange={(e) => set("phenotype", e.target.value as Phenotype | "")}>
+                <option value="">{t(locale, "toolsPhenotypeNone")}</option>
+                {PHENOTYPES.map((p) => (
+                  <option key={p} value={p}>
+                    {phenotypeName(p)}
+                  </option>
+                ))}
+              </select>
             </label>
           </div>
-        )}
-        {!valid && <p className="tl-warn">{t(locale, asOf === null ? "toolsNoClock" : "toolsBadFrame")}</p>}
-      </section>
-
-      <div className="tl-pick">
-        <div className="tl-tabs" role="tablist" aria-label={t(locale, "toolsMenu")} onKeyDown={onTabKey}>
-          {TOOL_IDS.map((id) => (
-            <button
-              key={id}
-              ref={(el) => {
-                tabs.current[id] = el;
-              }}
-              type="button"
-              role="tab"
-              id={`tl-tab-${id}`}
-              aria-selected={tool === id}
-              aria-controls="tl-panel"
-              tabIndex={tool === id ? 0 : -1}
-              onClick={() => pick(id)}
-            >
-              {name(id)}
-            </button>
-          ))}
+          <label className="tl-check">
+            <input type="checkbox" checked={slice.firstOnly} onChange={(e) => set("firstOnly", e.target.checked)} />
+            <span>{t(locale, "toolsFirstOnly")}</span>
+          </label>
         </div>
-        <select className="tl-select" aria-label={t(locale, "toolsMenu")} value={tool} onChange={(e) => pick(e.target.value as ToolId)}>
-          {TOOL_IDS.map((id) => (
-            <option key={id} value={id}>
-              {name(id)}
-            </option>
-          ))}
-        </select>
-        <p className="tl-hint">{t(locale, `toolsHint_${tool}` as "toolsHint_rate")}</p>
+        {warn}
+        <p className="tl-hint">{t(locale, "toolsSliceHint")}</p>
       </div>
+    );
+  }
 
-      <section className="tl-results" aria-label={t(locale, "toolsResults")} aria-live="polite">
-        {busy && (
-          <p className="tl-wait" role="status">
-            {t(locale, waiting)}
-          </p>
+  return (
+    <div className="tl tl-inspect" data-tool={tool}>
+      <p className="tl-sentence">
+        {sliceSentence(locale, slice)}{" "}
+        {onEditSlice && (
+          <button type="button" className="tl-link" onClick={onEditSlice}>
+            {t(locale, "toolsChangeSlice")}
+          </button>
         )}
-        {error && (
-          <p className="tl-warn" role="alert">
-            {t(locale, "toolsError", { error })}
-          </p>
-        )}
-        {latest ? cellOf(latest, true) : !busy && <p className="tl-empty">{t(locale, "toolsEmpty")}</p>}
-      </section>
+      </p>
+      {warn}
+      <p className="tl-hint">{t(locale, `toolsHint_${tool}` as "toolsHint_rate")}</p>
 
       <form
         className="tl-params"
-        role="tabpanel"
         id="tl-panel"
-        aria-label={name(tool)}
-        data-tool={tool}
+        aria-label={t(locale, `toolsRail_${tool}` as "toolsRail_rate")}
         onSubmit={(e) => {
           e.preventDefault();
           void run(tool);
@@ -413,7 +387,6 @@ export function ToolsWindow(props: ToolsProps) {
           }
         }}
       >
-        {tool === "rate" && <p className="tl-hint">{t(locale, "toolsNoParams")}</p>}
         {(tool === "compare" || tool === "shares" || tool === "beta") && (
           <div className="tl-fields">
             <label className="tl-field" htmlFor="tl-event">
@@ -527,6 +500,7 @@ export function ToolsWindow(props: ToolsProps) {
         <div className="tl-runrow">
           <button type="submit" className="btn btn-primary tl-run" disabled={!valid || busy !== null} aria-busy={busy === tool}>
             {busy === tool ? t(locale, "toolsRunning") : t(locale, "toolsRun")}
+            <kbd>↵</kbd>
           </button>
           {onAddChart && (tool === "shares" || tool === "beta") && (
             <button
@@ -541,17 +515,34 @@ export function ToolsWindow(props: ToolsProps) {
         </div>
       </form>
 
-      {older.length > 0 && (
-        <section className="tl-older" aria-label={t(locale, "toolsEarlier", { n: older.length })}>
-          <header>
-            <h2 className="tl-h">{t(locale, "toolsEarlier", { n: older.length })}</h2>
-            <button type="button" className="tl-link" onClick={() => setCells([])}>
-              {t(locale, "toolsClearAll")}
-            </button>
-          </header>
-          {older.map((c) => cellOf(c, false))}
-        </section>
-      )}
+      <section className="tl-results" aria-label={t(locale, "toolsResults")} aria-live="polite">
+        {busy === tool && (
+          <p className="tl-wait" role="status">
+            {t(locale, waiting)}
+          </p>
+        )}
+        {error && (
+          <p className="tl-warn" role="alert">
+            {t(locale, "toolsError", { error })}
+          </p>
+        )}
+        {mine.length === 0 && busy !== tool && <p className="tl-empty">{t(locale, "toolsEmpty")}</p>}
+        {mine.map((c, i) => (
+          <ResultCell
+            key={c.id}
+            cell={c}
+            locale={locale}
+            fresh={i === 0}
+            onChart={addChart}
+            onRemove={(id) => setCells((all) => all.filter((x) => x.id !== id))}
+          />
+        ))}
+        {mine.length > 1 && (
+          <button type="button" className="tl-link tl-clear" onClick={() => setCells((all) => all.filter((x) => x.result.kind !== tool))}>
+            {t(locale, "toolsClearAll")}
+          </button>
+        )}
+      </section>
     </div>
   );
 }

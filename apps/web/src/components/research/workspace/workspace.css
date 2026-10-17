@@ -21,7 +21,7 @@
   flex: 1 1 auto;
   min-width: 0;
 }
-.ws-rail {
+.ws-traydock {
   flex: 0 0 28px;
   position: sticky;
   top: 0;
@@ -380,7 +380,10 @@
   color: var(--ink);
 }
 
-/* stacked under 1100 px */
+/* stacked under 1100 px; no wrapping, or each child of the column takes its widest content's width */
+.ws[data-float="false"] {
+  flex-wrap: nowrap;
+}
 .ws[data-float="false"] .ws-area {
   display: flex;
   flex-direction: column;

@@ -10,7 +10,7 @@ export const MAX_ROWS = 160;
 
 import { type ChartSpec, parseSpec } from "../charts/spec.ts";
 
-export const WIN_IDS = ["signals", "map", "graph", "math", "assistant", "grid", "reproduce", "tools"] as const;
+export const WIN_IDS = ["signals", "map", "graph", "math", "assistant", "grid", "reproduce"] as const;
 export type WinId = (typeof WIN_IDS)[number];
 
 export interface Rect {
@@ -48,7 +48,6 @@ export const MIN_SIZE: Record<WinId, { w: number; h: number }> = {
   assistant: { w: 3, h: 5 },
   grid: { w: 4, h: 8 },
   reproduce: { w: 5, h: 14 },
-  tools: { w: 4, h: 10 },
 };
 
 export const CHART_MIN_SIZE = { w: 4, h: 10 };
@@ -79,9 +78,8 @@ export function defaultLayout(): Layout {
     assistant: { x: 9, y: 36, w: 3, h: 8, open: false },
     grid: { x: 0, y: 0, w: 12, h: 30, open: false },
     reproduce: { x: 0, y: 0, w: 12, h: 32, open: false },
-    tools: { x: 0, y: 40, w: 12, h: 36, open: false },
   };
-  return { wins, charts: {}, order: ["signals", "map", "graph", "math", "assistant", "grid", "reproduce", "tools"] };
+  return { wins, charts: {}, order: ["signals", "map", "graph", "math", "assistant", "grid", "reproduce"] };
 }
 
 export type Preset = "default" | "map" | "signals" | "units" | "analysis";
@@ -116,10 +114,12 @@ export function presetLayout(preset: Preset): Layout {
       });
     case "analysis":
       return w({
+        // The tools are on the rail (it opens with this layout); the signal card beside the list, the flow under it.
         signals: { x: 0, y: 0, w: 4, h: 40, open: true },
-        tools: { x: 4, y: 0, w: 8, h: 40, open: true },
+        math: { x: 4, y: 0, w: 8, h: 18, open: true },
+        graph: { x: 4, y: 18, w: 8, h: 22, open: true },
         map: { open: false },
-        graph: { open: false },
+        assistant: { open: false },
       });
     default:
       return d;
