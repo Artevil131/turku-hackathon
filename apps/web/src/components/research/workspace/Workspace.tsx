@@ -61,6 +61,15 @@ function saveLayout(layout: Layout) {
     /* Blocked storage: keep the session usable. */
   }
 }
+/**
+ * The board height the viewport offers. When the open windows need more, the board
+ * grows and the page scrolls, so the part of the board below the fold is subtracted.
+ */
+function viewportHeight(el: HTMLElement | null): number {
+  if (!el) return 0;
+  const page = document.scrollingElement ?? document.documentElement;
+  return el.clientHeight - Math.max(0, page.scrollHeight - page.clientHeight);
+}
 function useWide() {
   const [wide, setWide] = useState(() => typeof matchMedia === "function" && matchMedia("(min-width: 1100px)").matches);
   useEffect(() => {
@@ -121,11 +130,11 @@ export function Workspace({
   const keep = useRef(initiallyOpen ?? []);
   useLayoutEffect(() => {
     if (fitted) return;
-    const height = area.current?.clientHeight ?? 0;
+    const height = viewportHeight(area.current);
     if (wide && height > 0) setLayout((l) => fitLayout(l, height, keep.current));
     setFitted(true);
   }, [fitted, wide]);
-  const boardHeight = () => (wide && area.current?.clientHeight) || Number.POSITIVE_INFINITY;
+  const boardHeight = () => (wide && viewportHeight(area.current)) || Number.POSITIVE_INFINITY;
   const revealed = useRef(reveal?.key ?? null);
   useEffect(() => {
     if (!reveal || reveal.key === revealed.current) return;

@@ -1,4 +1,8 @@
-/* The console's final grid row is the research board's viewport. */
+/*
+ * The console's final grid row is the research board. It fills the viewport; when the
+ * open windows' minimum heights need more, the console grows to the tallest column and
+ * the document scrolls (an inner column scrollbar was easy to miss).
+ */
 .board {
   display: block;
   min-width: 0;
@@ -6,8 +10,9 @@
   position: relative;
 }
 @media (min-width: 1100px) {
-  .page:has(> .board) {
-    overflow: hidden;
+  .console:has(> .page > .board) {
+    height: auto;
+    min-height: 100%;
   }
   .board {
     height: 100%;
