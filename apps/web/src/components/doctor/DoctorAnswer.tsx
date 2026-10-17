@@ -143,11 +143,7 @@ export function DoctorAnswer({
       )}
       {asOf && !loading && !failed ? (
         <p className="dr-answer-when">
-          {t(locale, "drAnswerData", { date: formatDate(locale, asOf, "long"), unit: wardName(locale, filters.unit as never) })}{" "}
-          {/* The doctor's view hands the board its ward: one click to this unit's signals. */}
-          <a className="dr-answer-pivot" href={`#research?unit=${encodeURIComponent(filters.unit)}`}>
-            {t(locale, "drAnswerBoard")}
-          </a>
+          {t(locale, "drAnswerData", { date: formatDate(locale, asOf, "long"), unit: wardName(locale, filters.unit as never) })}
         </p>
       ) : null}
       <p className="dr-answer-note">{t(locale, "drAnswerNote")}</p>

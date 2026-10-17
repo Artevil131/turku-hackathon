@@ -749,17 +749,6 @@
 .dr-answer-pills.dr-answer-low li b {
   color: var(--ink-2);
 }
-.dr-answer-pivot,
-.sig-pivot {
-  color: var(--live);
-  text-decoration: none;
-  font-size: var(--t-s);
-  white-space: nowrap;
-}
-.dr-answer-pivot:hover,
-.sig-pivot:hover {
-  text-decoration: underline;
-}
 .dr-answer-when {
   margin: 2px 0 0;
   color: var(--ink-3);
