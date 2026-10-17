@@ -1,12 +1,25 @@
 import { formatDate, type Locale, specimenName, t, wardName } from "@aei/i18n";
 import { type DoctorFilters, num, pct } from "./filters.ts";
-import { type Item, recentText } from "./reason.ts";
+import type { Item } from "./reason.ts";
 
 // The top of the coverage window, before any control: what to start with, then the others in rows of one shape
 // (glyph, name, share). The list below is the evidence.
 
-/** "nitrofurantoin 94 %, fosfomycin 93 %": the drugs of one standing, names and shares in a row. */
-const listed = (locale: Locale, items: readonly Item[]) => items.map((i) => `${i.name} ${pct(i.share ?? 0)} %`).join(", ");
+/** The drugs of one standing as pills: the name, then its share. */
+function Pills({ items, lead, muted }: { items: readonly Item[]; lead: string; muted?: boolean }) {
+  return (
+    <div className={`dr-answer-pills${muted ? " dr-answer-low" : ""}`}>
+      <span className="dr-answer-pills-lead">{lead}</span>
+      <ul>
+        {items.map((i) => (
+          <li key={i.id}>
+            {i.name} <b>{pct(i.share ?? 0)}&nbsp;%</b>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 export function DoctorAnswer({
   locale,
@@ -91,35 +104,44 @@ export function DoctorAnswer({
                     ],
               )}
           </p>
-          <p className="dr-answer-line">
-            {t(locale, "drAnswerCovers", { share: pct(first.share ?? 0), n: num(locale, first.n) })}
-            {first.recent ? <span className="dr-answer-recent"> · {recentText(locale, first.recent)}</span> : null}
-          </p>
-          {/* The rest of the list in one breath each; the table below has the bars and the details. */}
-          {clears.length > 1 ? (
-            <p className="dr-answer-alt">
-              <b>{t(locale, "drAnswerAlsoHead", { bar })}:</b> {listed(locale, clears.slice(1))}
-            </p>
-          ) : null}
-          {below.length ? (
-            <p className="dr-answer-alt dr-answer-low">
-              <b>{t(locale, "drAnswerBelowHead", { bar })}:</b> {listed(locale, below)}
-            </p>
-          ) : null}
+          {/* The two figures the brief asks for, side by side: the year the ranking rests on, the unit's last four
+              weeks as context (D-023; no flag between them, D-044). */}
+          <dl className="dr-answer-figs">
+            <div>
+              <dd>{pct(first.share ?? 0)}&nbsp;%</dd>
+              <dt>
+                {t(locale, "drAnswerFigYear")} · n {num(locale, first.n)}
+              </dt>
+            </div>
+            <div className="dr-answer-fig-recent">
+              <dd>
+                {first.recent && first.recent.known >= 30
+                  ? `${pct(first.recent.covered / first.recent.known)}\u00a0%`
+                  : first.recent
+                    ? `${num(locale, first.recent.covered)} / ${num(locale, first.recent.known)}`
+                    : "—"}
+              </dd>
+              <dt>
+                {t(locale, "drAnswerFigRecent")}
+                {first.recent && first.recent.known >= 30
+                  ? ` · ${num(locale, first.recent.covered)} / ${num(locale, first.recent.known)}`
+                  : ""}
+              </dt>
+            </div>
+          </dl>
+          {/* The rest of the list as pills; the table below has the bars and the details. */}
+          {clears.length > 1 ? <Pills items={clears.slice(1)} lead={t(locale, "drAnswerAlsoShort")} /> : null}
+          {below.length ? <Pills items={below} lead={t(locale, "drAnswerBelowShort")} muted /> : null}
         </>
       ) : (
         <p className="dr-answer-head">{t(locale, "drAnswerNone", { bar })}</p>
       )}
       {asOf && !loading && !failed ? (
         <p className="dr-answer-when">
-          {t(locale, "drAnswerWhen", {
-            date: formatDate(locale, asOf, "long"),
-            days: windowDays ?? 365,
-            unit: wardName(locale, filters.unit as never),
-          })}{" "}
+          {t(locale, "drAnswerData", { date: formatDate(locale, asOf, "long"), unit: wardName(locale, filters.unit as never) })}{" "}
           {/* The doctor's view hands the board its ward: one click to this unit's signals. */}
           <a className="dr-answer-pivot" href={`#research?unit=${encodeURIComponent(filters.unit)}`}>
-            {t(locale, "drAnswerBoard", { unit: wardName(locale, filters.unit as never) })}
+            {t(locale, "drAnswerBoard")}
           </a>
         </p>
       ) : null}

@@ -503,7 +503,7 @@
 }
 
 .cl-recent-row {
-  color: var(--d-ink-3);
+  color: var(--d-ink-2);
   white-space: normal;
 }
 
@@ -627,21 +627,68 @@
 .dr-answer-low {
   color: var(--ink-3);
 }
-.dr-answer-recent {
+/* The two figures: the year loud, the four weeks beside it in the same shape, quieter. */
+.dr-answer-figs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 28px;
+  margin: 4px 0 0;
+}
+.dr-answer-figs > div {
+  display: grid;
+  gap: 2px;
+}
+.dr-answer-figs dd {
+  margin: 0;
+  color: var(--ink);
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.dr-answer-figs dt {
   color: var(--ink-3);
   font-size: var(--t-s);
 }
-.dr-answer-alt {
+.dr-answer-fig-recent dd {
+  color: var(--ink-2);
+}
+/* The rest of the list as pills: a name and its share each, scanned in one look. */
+.dr-answer-pills {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
   margin: 6px 0 0;
+}
+.dr-answer-pills-lead {
   color: var(--ink-2);
   font-size: var(--t-s);
-  line-height: 1.5;
-}
-.dr-answer-alt b {
   font-weight: 600;
-  color: var(--ink);
 }
-.dr-answer-alt.dr-answer-low b {
+.dr-answer-pills ul {
+  display: contents;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dr-answer-pills li {
+  padding: 3px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--glass-1);
+  color: var(--ink);
+  font-size: var(--t-s);
+  white-space: nowrap;
+}
+.dr-answer-pills li b {
+  font-weight: 600;
+}
+.dr-answer-pills.dr-answer-low li {
+  color: var(--ink-3);
+  background: transparent;
+}
+.dr-answer-pills.dr-answer-low li b {
   color: var(--ink-2);
 }
 .dr-answer-pivot,
