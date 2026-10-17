@@ -1,0 +1,49 @@
+/* A softer, friendlier skin over the existing design: rounder frames, quieter shadows and borders, gentler ink in the
+   timeline's ribbons and pills. Colours still come from the tokens, so nothing here changes what anything means. */
+
+.ws-frame,
+.timeline,
+.answer,
+.start-card,
+.start-demo,
+.dr-answer {
+  border-radius: 14px;
+}
+.ws-frame {
+  border-color: color-mix(in oklab, var(--line) 65%, transparent);
+  box-shadow:
+    0 1px 2px rgb(7 8 28 / 0.04),
+    0 8px 20px rgb(7 8 28 / 0.05);
+}
+.nb-cell[data-kind="note"] {
+  border-radius: 12px;
+}
+
+/* The lanes: lighter ribbons, a calmer drop shadow under the pills, no navy slabs. */
+.hs-ribbon {
+  fill: color-mix(in oklab, var(--brand-accent, #635bf1) 28%, var(--ink-3, #6f7292));
+  opacity: 0.6;
+}
+.hs-pill-bg {
+  filter: drop-shadow(0 1px 2px rgb(7 8 28 / 0.12));
+}
+.hs-pill[data-kind="cluster"] .hs-pill-bg {
+  fill: color-mix(in oklab, var(--ink-2, #1d204e) 75%, var(--brand-accent, #635bf1));
+}
+.hs-pill[data-kind="sentinel"] .hs-pill-bg {
+  fill: color-mix(in oklab, var(--st-alert, #d0004b) 88%, #fff);
+}
+.hs-lane-label {
+  font-weight: 400;
+}
+
+/* Controls round off with the frames. */
+.timeline .seg,
+.timeline .seg button,
+.tl-btn,
+.ws-toolbar .seg {
+  border-radius: 10px;
+}
+.tl-play {
+  border-radius: 12px;
+}
