@@ -1,7 +1,10 @@
 import type { AeiClient, Meta, QualityResponse, RegionalResponse } from "@aei/contract";
-import { formatDate, type Locale, t } from "@aei/i18n";
+import { formatDate, type Locale, siteName, t } from "@aei/i18n";
 import { detectFormat, type IngestFormat, type IngestResult, ingest } from "@aei/ingest";
-import { useEffect, useState } from "react";
+import { qualifyResult, registryFromList } from "@aei/sites";
+import { useEffect, useMemo, useState } from "react";
+import { allSites, allWards, currentSite, homeSite, useSites } from "../../sites.ts";
+import { ConnectHospital, SiteList } from "./Hospitals.tsx";
 import "./connect.css";
 
 // The Connect page: which data sources this server is connected to, checked live,
@@ -68,7 +71,16 @@ export function ConnectPage({ client, locale }: { client: AeiClient; locale: Loc
   const base = import.meta.env.BASE_URL.replace(/\/$/, "");
   const [format, setFormat] = useState<IngestFormat>("hl7v2");
   const [text, setText] = useState("");
-  const [result, setResult] = useState<{ format: IngestFormat | null; parsed: IngestResult | null } | null>(null);
+  const [result, setResult] = useState<{
+    format: IngestFormat | null;
+    parsed: IngestResult | null;
+    units?: string[];
+    unregistered?: string[];
+  } | null>(null);
+  // The checker reads a message as the chosen hospital would send it (D-051): its units, qualified.
+  const { multi } = useSites();
+  const [checkSite, setCheckSite] = useState<string>(() => currentSite() ?? homeSite().id);
+  const registry = useMemo(() => registryFromList(allSites(), allWards(), homeSite()), []);
 
   const loadSample = async (id: IngestFormat) => {
     setFormat(id);
@@ -92,7 +104,15 @@ export function ConnectPage({ client, locale }: { client: AeiClient; locale: Loc
     const detected = detectFormat(text, type);
     if (!detected) return setResult({ format: null, parsed: null });
     try {
-      setResult({ format: detected, parsed: ingest(text, detected) });
+      const from = registry.connection(checkSite);
+      if (!from || checkSite === homeSite().id) return setResult({ format: detected, parsed: ingest(text, detected) });
+      const { result: parsed, unregistered } = qualifyResult(ingest(text, detected, { maps: from.maps }), from, homeSite().id);
+      setResult({
+        format: detected,
+        parsed,
+        units: [...new Set(parsed.cultures.map((c) => c.ward))],
+        unregistered: [...new Set(unregistered)],
+      });
     } catch {
       setResult({ format: null, parsed: null });
     }
@@ -114,6 +134,8 @@ export function ConnectPage({ client, locale }: { client: AeiClient; locale: Loc
         <p className="cx-lead">{t(locale, "connectLead")}</p>
         <p className="cx-note">{t(locale, "connectDemoNote")}</p>
       </header>
+
+      {multi ? <SiteList client={client} locale={locale} /> : null}
 
       <h2 className="cx-h2">{t(locale, "connectNow")}</h2>
       <ul className="cx-grid">
@@ -174,6 +196,25 @@ export function ConnectPage({ client, locale }: { client: AeiClient; locale: Loc
             </button>
           ))}
         </div>
+        {multi ? (
+          <label className="cx-field cx-check-site">
+            <span className="cx-label">{t(locale, "connectCheckSite")}</span>
+            <select
+              className="cx-input"
+              value={checkSite}
+              onChange={(e) => {
+                setCheckSite(e.target.value);
+                setResult(null);
+              }}
+            >
+              {allSites().map((s) => (
+                <option key={s.id} value={s.id}>
+                  {siteName(locale, s.id)}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
         <label className="cx-label" htmlFor="cx-message">
           {t(locale, "connectMessage")}
         </label>
@@ -204,6 +245,11 @@ export function ConnectPage({ client, locale }: { client: AeiClient; locale: Loc
                     results: num(locale, result.parsed.susceptibility.length),
                   })}
                 </p>
+                {result.units?.length ? <p>{t(locale, "connectCheckUnits", { units: result.units.join(", ") })}</p> : null}
+                {result.unregistered?.length ? (
+                  <p>{t(locale, "connectCheckUnregistered", { units: result.unregistered.join(", ") })}</p>
+                ) : null}
+                {result.units ? <p className="cx-note">{t(locale, "connectCheckSiteMap")}</p> : null}
                 {organisms.length ? (
                   <p>
                     <span className="cx-k">{t(locale, "connectOrganisms")}:</span> <i>{organisms.join(", ")}</i>
@@ -236,6 +282,8 @@ export function ConnectPage({ client, locale }: { client: AeiClient; locale: Loc
           <code>{`curl -X POST https://<aei-server>/api/ingest \\\n  -H "Content-Type: ${contentType}" \\\n  --data-binary @${FORMATS.find((x) => x.id === format)?.file ?? "report"}`}</code>
         </pre>
       </section>
+
+      <ConnectHospital locale={locale} />
     </section>
   );
 }

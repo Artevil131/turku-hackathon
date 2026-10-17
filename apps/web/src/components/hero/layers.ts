@@ -1,6 +1,6 @@
 import type { WardCode } from "@aei/domain";
-import { WARDS } from "@aei/domain";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { knownWard, siteWards } from "../../sites.ts";
 import { hashPage, hashParams } from "../../url.ts";
 import { dayNumber, PHENOTYPE_ORDER, type Ph, type PillKind, type WeekRow } from "./geometry.ts";
 
@@ -13,7 +13,8 @@ export const LINE_KEYS: readonly LineKey[] = [...PHENOTYPE_ORDER, "cult"];
 export const PILL_KINDS: readonly PillKind[] = ["sentinel", "cluster", "trend", "data"];
 export const WINDOWS = [0, 52, 26, 12] as const;
 export type WindowWeeks = (typeof WINDOWS)[number];
-export const WARD_CODES = WARDS.map((w) => w.code) as WardCode[];
+/** The unit lanes: the selected hospital's units (D-051). */
+export const wardCodes = (): WardCode[] => siteWards().map((w) => w.code);
 
 export interface Layers {
   /** Hidden lines. */
@@ -34,7 +35,7 @@ export const DEFAULT_LAYERS: Layers = {
   lines: allOn(LINE_KEYS),
   metric: "count",
   stacked: true,
-  units: allOn(WARD_CODES),
+  units: {},
   kinds: allOn(PILL_KINDS),
   window: 0,
 };
@@ -46,7 +47,7 @@ export function encodeLayers(l: Layers): string {
   if (l.metric === "ratio") out.push("r");
   if (!l.stacked) out.push("o");
   if (l.window) out.push(`w${l.window}`);
-  for (const u of WARD_CODES) if (!l.units[u]) out.push(`-u:${u}`);
+  for (const [u, on] of Object.entries(l.units)) if (on === false) out.push(`-u:${u}`);
   for (const k of PILL_KINDS) if (!l.kinds[k]) out.push(`-k:${k}`);
   return out.join(".");
 }
@@ -67,7 +68,7 @@ export function decodeLayers(code: string | null | undefined): Layers {
       if (WINDOWS.includes(n)) l.window = n;
     } else if (tok.startsWith("-u:")) {
       const u = tok.slice(3);
-      if (u in l.units) l.units[u] = false;
+      if (knownWard(u)) l.units[u] = false;
     } else if (tok.startsWith("-k:")) {
       const k = tok.slice(3) as PillKind;
       if (k in l.kinds) l.kinds[k] = false;

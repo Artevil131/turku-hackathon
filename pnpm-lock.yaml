@@ -117,6 +117,9 @@ importers:
       '@aei/relations':
         specifier: workspace:*
         version: link:../../libs/utils/relations
+      '@aei/sites':
+        specifier: workspace:*
+        version: link:../../libs/utils/sites
       '@aei/viz':
         specifier: workspace:*
         version: link:../../libs/utils/viz

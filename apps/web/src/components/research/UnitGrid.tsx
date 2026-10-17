@@ -1,6 +1,7 @@
-import { type IsolateRecord, PHENOTYPES, type Phenotype, WARDS, type WardCode } from "@aei/domain";
+import { type IsolateRecord, PHENOTYPES, type Phenotype, type WardCode } from "@aei/domain";
 import { formatDate, phenotypeName, t } from "@aei/i18n";
 import { type KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { siteWards } from "../../sites.ts";
 import { AsOf } from "../AsOf.tsx";
 import { InfoButton } from "../Info.tsx";
 import { GRID_WEEKS, kindOf, type PanelProps } from "./board.ts";
@@ -110,7 +111,7 @@ export function UnitGrid({ client, locale, asOf, state, onChange }: PanelProps) 
       counts.set(k, (counts.get(k) ?? 0) + 1);
     }
     const rows: Cell[][] = weekStarts.map((weekMs) =>
-      WARDS.map((w) => {
+      siteWards().map((w) => {
         const k = cellKey(w.code, weekMs);
         return { ward: w.code, weekMs, n: counts.get(k) ?? 0, quality: shown.quality.has(k), cluster: shown.clusters.has(k) };
       }),
@@ -138,7 +139,7 @@ export function UnitGrid({ client, locale, asOf, state, onChange }: PanelProps) 
       const cur = ranges[s];
       ranges[s] = cur ? { min: Math.min(cur.min, n), max: Math.max(cur.max, n) } : { min: n, max: n };
     }
-    const colTotals = WARDS.map((_, c) => rows.reduce((sum, row) => sum + (row[c]?.n ?? 0), 0));
+    const colTotals = siteWards().map((_, c) => rows.reduce((sum, row) => sum + (row[c]?.n ?? 0), 0));
     const total = colTotals.reduce((a, b) => a + b, 0);
     return { rows, stepOf, ranges, colTotals, total, weekStarts };
   }, [shown, phenotype]);
@@ -150,7 +151,7 @@ export function UnitGrid({ client, locale, asOf, state, onChange }: PanelProps) 
 
   const onKey = (e: KeyboardEvent, r: number, c: number) => {
     const rows = model?.rows.length ?? 0;
-    const cols = WARDS.length;
+    const cols = siteWards().length;
     const go = (nr: number, nc: number) => {
       e.preventDefault();
       move(Math.max(0, Math.min(rows - 1, nr)), Math.max(0, Math.min(cols - 1, nc)));
@@ -237,7 +238,7 @@ export function UnitGrid({ client, locale, asOf, state, onChange }: PanelProps) 
                   <th scope="col" className="ugrid-corner">
                     {t(locale, "gridWeekHeader")}
                   </th>
-                  {WARDS.map((w) => (
+                  {siteWards().map((w) => (
                     <th
                       key={w.code}
                       scope="col"
@@ -271,7 +272,7 @@ export function UnitGrid({ client, locale, asOf, state, onChange }: PanelProps) 
                       </th>
                       {row.map((cell, c) => {
                         const step = cell.quality ? 0 : model.stepOf(cell.n);
-                        const unitName = WARDS[c]?.[locale] ?? cell.ward;
+                        const unitName = siteWards()[c]?.[locale] ?? cell.ward;
                         const label = [
                           t(locale, "gridCell", { unit: unitName, date: date(cell.weekMs), n: cell.n }),
                           cell.quality ? t(locale, "gridQualityWeek") : null,
@@ -316,7 +317,7 @@ export function UnitGrid({ client, locale, asOf, state, onChange }: PanelProps) 
                     {t(locale, "gridTotal")}
                   </th>
                   {model.colTotals.map((n, c) => (
-                    <td key={WARDS[c]?.code} className="ugrid-sum" data-selected={lit === WARDS[c]?.code}>
+                    <td key={siteWards()[c]?.code} className="ugrid-sum" data-selected={lit === siteWards()[c]?.code}>
                       {n}
                     </td>
                   ))}

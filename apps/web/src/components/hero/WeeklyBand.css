@@ -282,6 +282,11 @@
 .hs-read-partial {
   color: var(--ink-3, #6f7292);
 }
+.hs-read-site {
+  margin-left: auto;
+  color: var(--ink-2, #1d204e);
+  font-weight: 500;
+}
 .hs-read-grid {
   display: grid;
   gap: 2px 8px;

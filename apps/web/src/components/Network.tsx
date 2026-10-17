@@ -127,7 +127,7 @@ export function Network({ locale, findings, onOpenWard, reducedMotion }: Props) 
           </svg>
 
           {WARDS.map((w) => {
-            const [x, y] = (POS[w.code] ?? [0, 0]);
+            const [x, y] = POS[w.code] ?? [0, 0];
             const lit = sightings.get(w.code);
             return (
               <button

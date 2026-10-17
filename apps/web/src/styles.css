@@ -1359,3 +1359,47 @@ fieldset.setting {
   left: auto;
   right: 0;
 }
+
+/* Hospital selector and the page's hospital line (D-051); shown only with more than one hospital. */
+.site-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.site-select {
+  height: var(--control-h);
+  max-width: 220px;
+  padding: 0 24px 0 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: #fff;
+  color: var(--ink);
+  font-size: var(--t-s);
+  font-weight: 500;
+}
+
+:root[data-theme="dark"] .site-select {
+  background: var(--glass-1);
+}
+
+.site-select:hover {
+  border-color: var(--line-strong);
+}
+
+.site-select:focus-visible {
+  outline: 2px solid var(--live);
+  outline-offset: 1px;
+}
+
+.site-line {
+  margin: 0 0 var(--gap);
+  font-size: var(--t-s);
+  color: var(--ink-3);
+}
+
+@media (max-width: 640px) {
+  .site-select {
+    max-width: 140px;
+  }
+}

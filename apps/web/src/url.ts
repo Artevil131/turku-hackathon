@@ -14,7 +14,26 @@ export function hashParams(): URLSearchParams {
 
 /** Replaces the current page's params in the URL without a history entry. */
 /** Params that belong to the whole app (the timeline's layers), kept when a page writes its own. */
-const SHARED_PARAMS = ["tl"] as const;
+const SHARED_PARAMS = ["tl", "hospital"] as const;
+
+/** The selected hospital as a query string ("?hospital=sata"), or "" for the home site; carried to another page. */
+export function sharedQuery(keys: readonly (typeof SHARED_PARAMS)[number][] = ["hospital"]): string {
+  const current = hashParams();
+  const search = new URLSearchParams();
+  for (const key of keys) if (current.get(key)) search.set(key, current.get(key) as string);
+  const qs = search.toString();
+  return qs ? `?${qs}` : "";
+}
+
+/** Sets or removes one app-wide param, keeping every other param of the page. */
+export function writeSharedParam(key: (typeof SHARED_PARAMS)[number], value: string | null): void {
+  const search = hashParams();
+  if (value) search.set(key, value);
+  else search.delete(key);
+  const qs = search.toString();
+  const next = `#${hashPage()}${qs ? `?${qs}` : ""}`;
+  if (location.hash !== next && !(next === "#" && location.hash === "")) history.replaceState(history.state, "", next);
+}
 
 export function writeHashParams(params: Record<string, string | null | undefined>): void {
   const page = hashPage();

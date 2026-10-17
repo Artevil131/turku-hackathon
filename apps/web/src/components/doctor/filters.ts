@@ -1,6 +1,7 @@
 import { type CoverageResponse, type Level, type Severity, THRESHOLDS } from "@aei/contract";
-import { isWardCode, type Sex, type Specimen, WARDS, type WardCode } from "@aei/domain";
+import type { Sex, Specimen, WardCode } from "@aei/domain";
 import { type Locale, type MessageKey, t } from "@aei/i18n";
+import { inSite, knownWard, siteWards } from "../../sites.ts";
 
 // The doctor's one-click filters, their defaults, and how they travel in the URL
 // (`#doctor?unit=URO&site=urine&sex=F&sev=severe&period=28`) and in localStorage (`aei.unit`).
@@ -40,7 +41,7 @@ const UNIT_KEY = "aei.unit";
 export function readStoredUnit(): WardCode | null {
   try {
     const v = localStorage.getItem(UNIT_KEY);
-    return v && isWardCode(v) ? v : null;
+    return v && knownWard(v) && inSite(v) ? v : null;
   } catch {
     return null;
   }
@@ -54,14 +55,21 @@ export function storeUnit(unit: WardCode): void {
   }
 }
 
-/** URL first, then the remembered unit, then the default. */
+/** The selected hospital's default unit (D-051): MED-A at the home site, else the hospital's first inpatient unit. */
+export function defaultUnit(): WardCode {
+  if (knownWard(DEFAULT_UNIT) && inSite(DEFAULT_UNIT)) return DEFAULT_UNIT;
+  const wards = siteWards();
+  return (wards.find((w) => w.type === "in") ?? wards[0])?.code ?? DEFAULT_UNIT;
+}
+
+/** URL first, then the remembered unit, then the default; a unit of a hospital other than the selected one is not used. */
 export function filtersFromUrl(params: URLSearchParams): DoctorFilters {
   const unit = params.get("unit");
   const site = params.get("site");
   const sex = params.get("sex");
   const sev = params.get("sev");
   return {
-    unit: unit && isWardCode(unit) ? unit : (readStoredUnit() ?? DEFAULT_UNIT),
+    unit: unit && knownWard(unit) && inSite(unit) ? unit : (readStoredUnit() ?? defaultUnit()),
     site: SITES.find((s) => s === site) ?? DEFAULTS.site,
     sex: sex === "F" || sex === "M" ? sex : DEFAULTS.sex,
     age: DEFAULTS.age,
@@ -84,11 +92,15 @@ export function filtersToParams(f: DoctorFilters): Record<string, string | null>
   };
 }
 
+/** The ward picker's units: the selected hospital's, or every hospital's (D-051). */
 export const unitGroups = {
-  hospital: WARDS.filter((w) => w.institution === "hospital"),
-  primary: WARDS.filter((w) => w.institution === "primary_care"),
+  get hospital() {
+    return siteWards().filter((w) => w.institution === "hospital");
+  },
+  get primary() {
+    return siteWards().filter((w) => w.institution === "primary_care");
+  },
 };
-
 // ---- certainty: what the figures rest on, a lookup on the level D-023/D-033 reached ----
 
 export interface Certainty {

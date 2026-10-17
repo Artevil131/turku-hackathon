@@ -255,6 +255,28 @@ export function buildRegistry(file: SitesFile = { sites: [] }, options: Registry
   };
 }
 
+/**
+ * The registry again from what a server publishes (`/api/meta` sites and wards), without tokens or code
+ * map files: for a client that checks a message as a given site would send it.
+ */
+export function registryFromList(sites: readonly Site[], wards: readonly Ward[], home: Site = HOME_SITE): SiteRegistry {
+  const bare = (code: WardCode) => code.slice(code.indexOf("/") + 1);
+  const file: SitesFile = {
+    sites: sites
+      .filter((s) => s.id !== home.id)
+      .map((s) => ({
+        id: s.id,
+        fi: s.fi,
+        en: s.en,
+        county: s.county,
+        wards: wards
+          .filter((w) => w.site === s.id)
+          .map((w) => ({ code: bare(w.code), fi: w.fi, en: w.en, type: w.type, institution: w.institution })),
+      })),
+  };
+  return buildRegistry(file, { home, homeWards: wards.filter((w) => w.site === home.id) });
+}
+
 export type Authorization = { ok: true; site: ConnectedSite } | { ok: false; status: 401; error: string };
 
 /**

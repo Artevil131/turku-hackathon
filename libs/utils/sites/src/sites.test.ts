@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { WARDS } from "@aei/domain";
 import { ingest } from "@aei/ingest";
 import { describe, expect, it } from "vitest";
-import { authorize, buildRegistry, parseSitesFile, qualifyResult, qualifyWard, SitesFileError } from "./index.ts";
+import { authorize, buildRegistry, parseSitesFile, qualifyResult, qualifyWard, registryFromList, SitesFileError } from "./index.ts";
 import { loadSites } from "./node.ts";
 
 const sata = {
@@ -83,6 +83,16 @@ describe("buildRegistry", () => {
     expect(qualifyWard("sata", "ICU")).toBe("sata/ICU");
     expect(qualifyWard("sata", "sata/ICU")).toBe("sata/ICU");
     expect(qualifyWard("tyks", "ICU")).toBe("ICU");
+  });
+});
+
+describe("registryFromList", () => {
+  it("rebuilds a site's ward map from the published sites and units", () => {
+    const published = buildRegistry(parseSitesFile({ sites: [sata] }));
+    const again = registryFromList(published.sites, published.wards);
+    expect(again.wardsOf("sata").map((w) => w.code)).toEqual(["sata/ICU", "sata/PKL"]);
+    expect(again.connection("sata")?.maps.wards.pkl).toBe("PKL");
+    expect(again.connection("sata")?.token).toBeUndefined();
   });
 });
 

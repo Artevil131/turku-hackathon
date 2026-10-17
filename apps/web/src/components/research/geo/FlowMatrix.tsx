@@ -1,17 +1,17 @@
-import { WARDS, type WardCode } from "@aei/domain";
+import type { WardCode } from "@aei/domain";
 import { type Locale, t, wardName } from "@aei/i18n";
 import { type KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
+import { networkUnits } from "../../../sites.ts";
 import type { SignalKind } from "../board.ts";
 import { KindGlyph } from "../feed/glyphs.tsx";
 import { flowMatrix, shadeStep } from "./flowLayout.ts";
 
-// All units at once: a 9 x 9 flow matrix, rows = from, columns = to, units in
-// WARDS order. One shade ramp (seven steps) by patients; the number is printed
+// All units at once: a flow matrix, rows = from, columns = to, units in
+// registry order, other hospitals' units after the selected one's. One shade ramp (seven steps) by patients; the number is printed
 // when the cell is wide enough. The diagonal is blank. The focus unit's row and
 // column are outlined; a unit with a signal carries its kind glyph in the row
 // and column header. A cell re-centres the Sankey on its row's unit.
 
-const CODES = WARDS.map((w) => w.code);
 const FIT = 22; // narrowest cell (px) that still shows its number
 
 interface Props {
@@ -26,7 +26,9 @@ interface Props {
 }
 
 export function FlowMatrix({ locale, flows, focus, kindOf, signalText, onPick }: Props) {
-  const m = useMemo(() => flowMatrix(flows, CODES), [flows]);
+  // The selected hospital's units, then any other hospital's units patients moved to or from, grouped by hospital (D-051).
+  const CODES = useMemo(() => networkUnits(flows), [flows]);
+  const m = useMemo(() => flowMatrix(flows, CODES), [flows, CODES]);
   const wrap = useRef<HTMLDivElement>(null);
   const [cellW, setCellW] = useState(40);
   useEffect(() => {
@@ -38,7 +40,7 @@ export function FlowMatrix({ locale, flows, focus, kindOf, signalText, onPick }:
     const ro = new ResizeObserver(read);
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [CODES.length]);
 
   const fi = focus ? CODES.indexOf(focus) : -1;
   // Roving tabindex: one cell is in the tab order; it starts on the focus unit's row.

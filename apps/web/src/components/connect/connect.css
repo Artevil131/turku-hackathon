@@ -207,3 +207,100 @@
   border: 1px solid var(--line);
   border-radius: var(--radius-control);
 }
+
+/* Hospitals on this server and "Connect a hospital" (D-051). */
+
+.cx-source[data-current="true"] {
+  border-color: var(--brand-accent-line);
+}
+
+.cx-site-id {
+  margin-left: 4px;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-size: var(--t-xs);
+  font-weight: 400;
+  color: var(--ink-3);
+}
+
+.cx-source p.cx-site-issues {
+  color: var(--st-watch);
+}
+
+.cx-source p.cx-site-county {
+  color: var(--ink-3);
+}
+
+.cx-steps {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 4px;
+  max-width: 68ch;
+  font-size: var(--t-s);
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+.cx-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px 12px;
+}
+
+.cx-field {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+}
+
+.cx-field-wide {
+  grid-column: 1 / -1;
+}
+
+.cx-input {
+  height: var(--control-h);
+  min-width: 0;
+  padding: 0 8px;
+  color: var(--ink);
+  background: var(--chassis);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control);
+  font-size: var(--t-s);
+}
+
+.cx-input:focus-visible {
+  outline: 2px solid var(--live);
+  outline-offset: 1px;
+}
+
+.cx-input[aria-invalid="true"],
+.cx-message[aria-invalid="true"] {
+  border-color: var(--st-alert);
+}
+
+.cx-units {
+  min-height: 96px;
+}
+
+.cx-problem {
+  font-size: var(--t-xs);
+  color: var(--st-alert);
+}
+
+.cx-out-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.cx-out-tools {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.cx-check-site {
+  justify-self: start;
+  min-width: 220px;
+}

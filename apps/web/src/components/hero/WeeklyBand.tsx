@@ -1,6 +1,6 @@
 import type { Alert, WeeklyResponse } from "@aei/contract";
-import { WARDS, type WardCode } from "@aei/domain";
-import { type Locale, phenotypeName, t, wardName } from "@aei/i18n";
+import { bareWardCode, type WardCode } from "@aei/domain";
+import { type Locale, phenotypeName, siteName, t, wardName } from "@aei/i18n";
 import {
   type KeyboardEvent,
   memo,
@@ -14,6 +14,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { allWards, currentSite, isMulti, siteWards } from "../../sites.ts";
 import {
   bandPath,
   compactDate,
@@ -36,7 +37,7 @@ import {
   weekRows,
 } from "./geometry.ts";
 import { LayersControl } from "./LayersControl.tsx";
-import { type Layers, type LineKey, type ViewRow, viewRows, WARD_CODES, windowRows, windowStart } from "./layers.ts";
+import { type Layers, type LineKey, type ViewRow, viewRows, windowRows, windowStart } from "./layers.ts";
 import "./WeeklyBand.css";
 
 // The hero band: the weekly stream (resistant finds stacked by phenotype, cultures on its own
@@ -702,11 +703,8 @@ export function WeeklyBand(p: Props) {
   const rawRows = useMemo(() => weekRows(weekly, asOf), [weekly, asOf]);
   const win = useMemo(() => windowRows(rawRows, layers.window), [rawRows, layers.window]);
   const rows = useMemo(() => viewRows(win, layers), [win, layers]);
-  const wards = useMemo(
-    () => WARD_CODES.filter((c) => layers.units[c] !== false && weekly?.units[c] !== undefined),
-    [weekly, layers.units],
-  );
-  const L = useMemo(() => (compact ? SMALL : fullLayout(weekly ? wards.length : WARD_CODES.length)), [compact, weekly, wards.length]);
+  const wards = useMemo(() => Object.keys(weekly?.units ?? {}).filter((c) => layers.units[c] !== false), [weekly, layers.units]);
+  const L = useMemo(() => (compact ? SMALL : fullLayout(weekly ? wards.length : siteWards().length)), [compact, weekly, wards.length]);
   const d0 = windowStart(start, win[0], layers.window);
   const shownAlerts = useMemo(() => alerts.filter((a) => layers.kinds[pillKind(a)]), [alerts, layers.kinds]);
   const m = useMemo(
@@ -910,6 +908,11 @@ export function WeeklyBand(p: Props) {
           <div className="hs-read-head">
             <b className="num">{t(locale, "tlWeekRange", { from: compactDate(row.date), to: compactDate(row.last) })}</b>
             {row.partial ? <span className="hs-read-partial">{t(locale, "tlPartial", { to: compactDate(row.last) })}</span> : null}
+            {isMulti() ? (
+              <span className="hs-read-site">
+                {currentSite() === null ? t(locale, "siteAll") : siteName(locale, currentSite() as string)}
+              </span>
+            ) : null}
           </div>
           {row.hidden ? null : (
             <>
@@ -930,11 +933,14 @@ export function WeeklyBand(p: Props) {
                 ) : null}
               </div>
               <div className="hs-read-grid hs-read-units">
-                {WARDS.filter((w) => wards.includes(w.code) && row.v.units[w.code] !== undefined).map((w) => (
-                  <span key={w.code} className="hs-read-item" title={wardName(locale, w.code)}>
-                    {w.code} <b className="num">{fmtVal(row.v.units[w.code] ?? null, layers)}</b>
-                  </span>
-                ))}
+                {allWards()
+                  .filter((w) => wards.includes(w.code) && row.v.units[w.code] !== undefined)
+                  .map((w) => (
+                    <span key={w.code} className="hs-read-item" title={wardName(locale, w.code)}>
+                      {currentSite() === null ? w.code : bareWardCode(w.code)}{" "}
+                      <b className="num">{fmtVal(row.v.units[w.code] ?? null, layers)}</b>
+                    </span>
+                  ))}
               </div>
             </>
           )}

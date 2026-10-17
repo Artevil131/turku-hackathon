@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { CommandField } from "./command/CommandField.tsx";
 import { openSignals } from "./home/changes.ts";
 import { Gear } from "./Icons.tsx";
+import { SitePicker } from "./SitePicker.tsx";
 
 export type Page = "home" | "doctor" | "research" | "method" | "connect" | "settings" | "intro";
 
@@ -56,6 +57,7 @@ export function TopBar(props: Props) {
       </nav>
 
       <div className="top-tools">
+        <SitePicker locale={locale} compact />
         <CommandField locale={locale} alerts={props.alerts} asOf={props.asOf ?? null} />
         <button
           type="button"
