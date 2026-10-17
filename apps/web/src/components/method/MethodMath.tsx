@@ -190,8 +190,6 @@ export function BetaBinomialMath({ locale }: { locale: Locale }) {
           />
         </Display>
       </ol>
-      <p className="mt-math-foot">{t(locale, "methodBbSymbols")}</p>
-      <p className="mt-math-foot">{t(locale, "methodBbExact")}</p>
       <p className="mt-status">{t(locale, "methodBbStatus")}</p>
     </section>
   );
@@ -338,6 +336,25 @@ export function LiveRulesMath({
         </Row>
         <O>&lt;</O>
         <I>α</I>
+        <O>,</O>
+        <mspace width="0.6em" />
+        <I>α</I>
+        <O>=</O>
+        <msup>
+          <N>10</N>
+          <Row>
+            <O>−</O>
+            <N>4</N>
+          </Row>
+        </msup>
+        <O>/</O>
+        <msup>
+          <N>10</N>
+          <Row>
+            <O>−</O>
+            <N>3</N>
+          </Row>
+        </msup>
       </math>
     ),
     drop: (
@@ -462,6 +479,24 @@ export function LiveRulesMath({
             </msqrt>
           }
         />
+        <O>,</O>
+        <mspace width="0.6em" />
+        <Row>
+          <I>P</I>
+          <O>(</O>
+          <I>Z</I>
+          <O>≥</O>
+          <I>z</I>
+          <O>)</O>
+        </Row>
+        <O>&lt;</O>
+        <msup>
+          <N>10</N>
+          <Row>
+            <O>−</O>
+            <N>3</N>
+          </Row>
+        </msup>
       </math>
     ),
     sentinel: (
