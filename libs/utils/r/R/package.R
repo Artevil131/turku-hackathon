@@ -71,6 +71,13 @@ read_package <- function(path) {
     on.exit(unlink(root, recursive = TRUE), add = TRUE)
     utils::unzip(path, exdir = root)
     root <- normalizePath(root, mustWork = TRUE)
+    if (!"datapackage.json" %in% entries) {
+      tops <- unique(vapply(strsplit(entries, "/"), `[`, character(1), 1L))
+      if (length(tops) != 1L || !paste0(tops, "/datapackage.json") %in% entries) {
+        stop("Expected datapackage.json at the root or in one top-level folder", call. = FALSE)
+      }
+      root <- .package_file(root, tops)
+    }
   }
   descriptor <- jsonlite::fromJSON(.package_file(root, "datapackage.json"), simplifyVector = FALSE)
   if (!identical(descriptor$aei$format, "aei-package/1")) {
@@ -106,4 +113,71 @@ print.aei_package <- function(x, ...) {
     cat("  ", name, ": ", nrow(table), " rows x ", ncol(table), " columns\n", sep = "")
   }
   invisible(x)
+}
+
+verify.aei_package <- function(project, client = NULL) {
+  pkg <- project
+  codes <- vapply(Filter(function(field) identical(field$role, "result"), pkg$fields$isolates),
+                  function(field) field$name, character(1))
+  table <- pkg$isolates
+  records <- lapply(seq_len(nrow(table)), function(i) {
+    results <- lapply(codes, function(code) table[[code]][i])
+    names(results) <- codes
+    results <- Filter(function(value) !is.na(value) && nzchar(value), results)
+    list(isolateId = table$isolateId[i], sampleDate = format(table$sampleDate[i], "%Y-%m-%d"),
+         ward = table$ward[i], organism = table$organism[i], results = results)
+  })
+  actual <- fingerprint_rows(records)
+  expected <- pkg$meta$fingerprint
+  ok <- NA
+  if (identical(pkg$meta$mode, "continuous")) {
+    message <- paste0("Continuous project: no frozen fingerprint to check; ", actual$rows,
+                      " rows as of ", pkg$meta$asOf, ".")
+  } else if (is.null(expected)) {
+    message <- paste0("No frozen fingerprint to check; ", actual$rows, " rows.")
+  } else {
+    ok <- identical(actual$sha256, expected$sha256) && actual$rows == expected$rows
+    message <- if (ok) paste0("Same data: ", actual$rows, " rows, fingerprint matches the frozen project.") else
+      paste0("Data changed: ", actual$rows, " rows, row count or fingerprint differs from the frozen project.")
+  }
+  structure(list(ok = ok, rows = actual$rows, sha256 = actual$sha256,
+                 expected_rows = expected$rows, expected_sha256 = expected$sha256, message = message),
+            class = "aei_verify_result")
+}
+
+print.aei_verify_result <- function(x, ...) {
+  symbol <- if (is.na(x$ok)) "\u2139" else if (x$ok) "\u2713" else "\u2717"
+  cat(symbol, " ", x$message, "\n", sep = "")
+  invisible(x)
+}
+
+reproduce <- function(pkg) {
+  rows <- lapply(pkg$methods, function(number) {
+    recipe <- number$recipe
+    computed <- NA_integer_
+    match <- NA
+    if (!is.null(recipe$op) && recipe$op %in% c("count", "distinct")) {
+      table <- pkg$tables[[recipe$table]]
+      if (is.null(table)) stop("Unknown recipe table: ", recipe$table, call. = FALSE)
+      for (column in names(recipe$where)) {
+        if (!column %in% names(table)) stop("Unknown recipe column: ", column, call. = FALSE)
+        value <- recipe$where[[column]]
+        mask <- if (is.null(value)) is.na(table[[column]]) else !is.na(table[[column]]) & table[[column]] == value
+        table <- table[mask, , drop = FALSE]
+      }
+      computed <- if (recipe$op == "count") nrow(table) else {
+        if (!recipe$column %in% names(table)) stop("Unknown recipe column: ", recipe$column, call. = FALSE)
+        length(unique(table[[recipe$column]][!is.na(table[[recipe$column]])]))
+      }
+      match <- computed == number$value
+    }
+    list(number = if (is.null(number$label)) NA_character_ else number$label,
+         id = if (is.null(number$id)) NA_character_ else number$id,
+         shown = if (is.null(number$value)) NA else number$value,
+         recomputed = computed, match = match,
+         method = if (is.null(number$method)) NA_character_ else number$method)
+  })
+  if (!length(rows)) return(data.frame(number = character(), id = character(), shown = numeric(),
+                                       recomputed = integer(), match = logical(), method = character()))
+  .rows_frame(rows)
 }

@@ -5,12 +5,32 @@ from __future__ import annotations
 import io
 import json
 from dataclasses import dataclass
+from html import escape
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import TYPE_CHECKING
 from zipfile import ZipFile
 
+from aei.fingerprint import _fingerprint_rows
+
 if TYPE_CHECKING:
     import pandas as pd
+
+
+@dataclass
+class VerifyResult:
+    ok: bool | None
+    rows: int
+    sha256: str
+    expected_rows: int | None
+    expected_sha256: str | None
+    message: str
+
+    def __repr__(self) -> str:
+        symbol = "✓" if self.ok else "✗" if self.ok is False else "ℹ"
+        return f"{symbol} {self.message}"
+
+    def _repr_html_(self) -> str:
+        return f"<p>{escape(repr(self))}</p>"
 
 
 @dataclass
@@ -22,6 +42,31 @@ class Package:
     fields: dict[str, list[dict]]
     methods: list[dict]
     readme: str
+
+    def verify(self) -> VerifyResult:
+        """Check exported isolates against the frozen project's fingerprint, offline."""
+        import pandas as pd
+
+        codes = [field["name"] for field in self.fields["isolates"] if field.get("role") == "result"]
+        records = []
+        for row in self.isolates.to_dict("records"):
+            records.append({
+                "isolateId": row["isolateId"], "sampleDate": row["sampleDate"].strftime("%Y-%m-%d"),
+                "ward": row["ward"], "organism": row["organism"],
+                "results": {code: row[code] for code in codes if pd.notna(row[code]) and row[code] != ""},
+            })
+        actual = _fingerprint_rows(records)
+        expected = self.meta.get("fingerprint") or {}
+        ok = None
+        if self.meta.get("mode") == "continuous":
+            message = f"Continuous project: no frozen fingerprint to check; {actual['rows']} rows as of {self.meta.get('asOf')}."
+        elif not expected:
+            message = f"No frozen fingerprint to check; {actual['rows']} rows."
+        else:
+            ok = actual == expected
+            message = (f"Same data: {actual['rows']} rows, fingerprint matches the frozen project." if ok else
+                       f"Data changed: {actual['rows']} rows, row count or fingerprint differs from the frozen project.")
+        return VerifyResult(ok, actual["rows"], actual["sha256"], expected.get("rows"), expected.get("sha256"), message)
 
     def __getattr__(self, name: str):
         tables = self.__dict__.get("tables", {})
@@ -99,4 +144,33 @@ def read_package(path: str | Path) -> Package:
 
         return load(read)
     with ZipFile(path) as archive:
-        return load(archive.read)
+        names = archive.namelist()
+        for name in names:
+            _safe_path(name)
+        prefix = ""
+        if "datapackage.json" not in names:
+            tops = {PurePosixPath(name).parts[0] for name in names}
+            if len(tops) != 1 or f"{next(iter(tops), '')}/datapackage.json" not in names:
+                raise ValueError("Expected datapackage.json at the root or in one top-level folder")
+            prefix = f"{next(iter(tops))}/"
+        return load(lambda name: archive.read(prefix + _safe_path(name)))
+
+
+def reproduce(pkg: Package) -> pd.DataFrame:
+    """Recompute supported methods.json recipes; unknown recipes remain unchecked."""
+    import pandas as pd
+
+    rows = []
+    for number in pkg.methods:
+        recipe = number.get("recipe") or {}
+        computed = match = None
+        if recipe.get("op") in ("count", "distinct"):
+            table = pkg.tables[recipe["table"]]
+            for column, value in recipe.get("where", {}).items():
+                mask = table[column].isna() if value is None else table[column].eq(value).fillna(False)
+                table = table.loc[mask]
+            computed = len(table) if recipe["op"] == "count" else int(table[recipe["column"]].nunique())
+            match = computed == number.get("value")
+        rows.append({"number": number.get("label"), "id": number.get("id"), "shown": number.get("value"),
+                     "recomputed": computed, "match": match, "method": number.get("method")})
+    return pd.DataFrame(rows, columns=["number", "id", "shown", "recomputed", "match", "method"])

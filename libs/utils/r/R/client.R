@@ -126,7 +126,9 @@ fingerprint_rows <- function(records_df) {
   list(rows = length(rows), sha256 = digest::digest(enc2utf8(paste(rows, collapse = "\n")), algo = "sha256", serialize = FALSE))
 }
 
-verify <- function(project, client = project$`_client`) {
+verify <- function(project, client = project$`_client`) UseMethod("verify")
+
+verify.aei_project <- function(project, client = project$`_client`) {
   if (!identical(project$mode, "frozen")) stop("Only frozen projects have a fingerprint to verify", call. = FALSE)
   if (is.null(client) || is.null(project$asOf) || is.null(project$fingerprint)) {
     stop("Verification needs a client, asOf and fingerprint", call. = FALSE)

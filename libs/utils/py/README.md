@@ -29,6 +29,29 @@ leading zeroes stay intact. Units remain in `pkg.fields`; figures and
 reports are not loaded. Unsupported package versions and paths outside
 the package are rejected. Zip files are read without extracting them.
 
+## Reproduce the same data and numbers, offline
+
+```python
+pkg = aei.read_package("research-package.zip")
+pkg.verify()          # ✓ Same data: … rows, fingerprint matches the frozen project.
+aei.reproduce(pkg)    # number, id, shown, recomputed, match, method
+```
+
+Verification recomputes the D-058 row count and SHA-256 from `pkg.isolates`,
+using fields marked `role: "result"` for antibiotic results. It never contacts
+a server. The returned `VerifyResult` exposes `ok`, `rows`, `sha256`,
+`expected_rows`, `expected_sha256` and `message`, and renders in notebooks.
+Changed rows give `ok=False`; continuous packages or packages without a
+frozen fingerprint give `ok=None`, not a claim that the data matches.
+
+`reproduce()` checks the count and distinct recipes recorded in `methods.json`,
+including equality filters in `where`. Distinct counts exclude missing cells;
+a null filter selects missing cells. A wrong shown value gives `match=False`;
+missing or unknown recipes give `match=None` and no recomputed value. These
+are reproducibility checks, not new detector implementations or an assertion
+that unsupported numbers were checked. Both root-layout zips and the writer's
+single-top-folder zips are accepted.
+
 ## Connect to the live API
 
 ```python
@@ -147,7 +170,9 @@ UTF-16 code units, Python uses Unicode code points).
 
 Package and HTTP-client tests use temporary fixtures and a local test
 server. The fingerprint parity test skips only when Node is unavailable;
-other dataset-dependent parity tests skip when the dataset is absent.
+other dataset-dependent parity tests skip when the dataset is absent. The
+offline package fixture also checks R parity when `Rscript` is on `PATH`
+(or selected by `AEI_RSCRIPT`), using exactly the same exported package.
 
 `tests/ts_dump.ts` runs the TypeScript gears on the full dataset through
 Node (in the background while pytest computes the Python side), and

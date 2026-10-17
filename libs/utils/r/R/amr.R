@@ -1,6 +1,7 @@
 .amr_columns <- function(table, fields) {
   marked <- vapply(fields, function(field) {
-    grepl("antibiotic|susceptibility|S/I/R", paste(c(field$title, field$description), collapse = " "), ignore.case = TRUE)
+    identical(field$role, "result") ||
+      grepl("antibiotic|susceptibility|S/I/R", paste(c(field$title, field$description), collapse = " "), ignore.case = TRUE)
   }, logical(1))
   columns <- if (any(marked)) {
     vapply(fields[marked], function(field) field$name, character(1))
