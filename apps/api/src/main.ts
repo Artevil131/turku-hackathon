@@ -431,6 +431,10 @@ export const server = createServer(async (req, res) => {
       }
       if ((id === undefined && req.method === "POST") || (previous && req.method === "PUT")) {
         const input = parseProjectInput(await readJson(req));
+        // Rows after the replay clock are not released yet (D-058 cuts the live data, it does not see ahead).
+        if (input.asOf !== undefined && input.asOf > clock.state().asOf) {
+          return send(res, 400, { error: `asOf ${input.asOf} is after the replay clock ${clock.state().asOf}` });
+        }
         if (input.scope.site !== undefined && !registry.site(input.scope.site)) {
           return send(res, 400, { error: `unknown site ${input.scope.site}` });
         }

@@ -98,10 +98,13 @@ describe("research projects (D-057, D-058)", () => {
       asOf: "2025-06-01",
       scope: { ...input.scope, units: ["ICU"], phenotypes: ["cpe"] },
     };
+    // Rows after the replay clock are not released, so a cut beyond it is refused.
+    await expect(client.createProject(frozen)).rejects.toMatchObject({ status: 400 });
+    await client.command({ action: "seek", date: "2025-06-01" });
     const { project } = await client.createProject(frozen);
     expect(project.fingerprint?.rows).toBe(2);
     expect(await client.project(project.id)).toEqual({ project, drift: false });
-    expect((await client.clock()).asOf).toBe("2025-05-01");
+    expect((await client.clock()).asOf).toBe("2025-06-01");
     const body =
       "patient_id,sex,birth_year,culture_id,sample_date,ward,specimen,organism,cpe,MEM\np9,F,1950,c9,2025-05-01,ICU,urine,Klebsiella pneumoniae,1,R\n";
     expect((await client.ingest(body, "text/csv")).status).toBe(200);
