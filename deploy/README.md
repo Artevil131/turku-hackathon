@@ -109,7 +109,10 @@ answers at `/llm`, and `SMOKE_URL=http://localhost:8097 pnpm smoke` passes
 It is published as the demo at https://yourlab.aapolipponen.com (since
 2026-10-17; it replaced aei.aapolipponen.com, now removed). The host's
 nginx (`/etc/nginx/conf.d/yourlab.aapolipponen.com.conf`) proxies to the web
-container on 127.0.0.1:8097 behind basic auth (`/etc/nginx/aei.htpasswd`);
+container on 127.0.0.1:8097. It is public since 2026-10-17 (the basic auth was
+removed; `/etc/nginx/aei.htpasswd` is no longer used), and `/llm/` is limited
+to 20 requests a minute per visitor (burst 10) so the model on Myy cannot be
+flooded;
 haproxy on :443 passes TLS to it, the Let's Encrypt certificate renews by
 webroot (`/var/www/yourlab-acme`), and the DNS record is a DNS-only A record
 in Cloudflare.
