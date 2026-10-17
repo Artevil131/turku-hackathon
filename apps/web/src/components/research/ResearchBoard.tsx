@@ -23,7 +23,7 @@ import { appendResult, pageSlot, withSite } from "./notebook/model.ts";
 import { Notebook } from "./notebook/Notebook.tsx";
 import { useNotebookPage } from "./notebook/usePage.ts";
 import { ProjectActions } from "./projects/ProjectActions.tsx";
-import { type NotebookLanguage, Reproduce, ReproduceHost } from "./projects/Reproduce.tsx";
+import { type NotebookLanguage, Reproduce } from "./projects/Reproduce.tsx";
 import { useProject } from "./projects/useProject.ts";
 import { SignalFeed } from "./SignalFeed.tsx";
 import type { Cell, CellResult, Slice } from "./tools/model.ts";
@@ -335,7 +335,6 @@ export function ResearchBoard(props: Props) {
         initiallyOpen={initiallyOpen.current}
         reveal={reveal}
         onGone={gone}
-        overlay={<ReproduceHost locale={locale} projectId={project.id} language={notebookLanguage} />}
         primary={primary}
         answers={ANSWERS}
         chartRequest={chartRequest}

@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Deploys the latest main on the OCI host: fast-forward ~/aei, rebuild and restart the compose stack, wait until the
+# API answers. Installed as ~/bin/aei-deploy and run as the forced command of the GitHub Actions deploy key
+# (deploy/autodeploy/README.md), so that key can do this and nothing else. A failed build leaves the running stack
+# untouched: compose builds the images before it replaces any container.
+set -euo pipefail
+exec 9>/tmp/aei-deploy.lock
+flock -w 900 9 || { echo "another deploy is still running"; exit 1; }
+cd "$HOME/aei"
+git fetch -q origin main
+before=$(git rev-parse --short HEAD)
+git merge -q --ff-only origin/main
+after=$(git rev-parse --short HEAD)
+echo "deploying $before -> $after: $(git log -1 --format=%s | cut -c1-100)"
+docker compose -p aei -f deploy/container/compose.yaml up -d --build 2>&1 | grep -vE "^ *#|^\s*$" | tail -15
+for _ in $(seq 1 60); do
+  if curl -sf -o /dev/null http://127.0.0.1:8097/api/clock && curl -sf -o /dev/null http://127.0.0.1:8097/; then
+    echo "up: web and API answer on 127.0.0.1:8097 ($after)"
+    exit 0
+  fi
+  sleep 2
+done
+echo "deployed $after but the site did not answer within 120 s"
+docker ps --format '{{.Names}} {{.Status}}' | grep aei || true
+exit 1

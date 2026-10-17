@@ -736,7 +736,7 @@ async function main() {
 
   const en = async (idle) => {
     await load(cdp, urlOf("settings"), idle);
-    await evaluate(cdp, `localStorage.setItem('aei.locale', 'en'); localStorage.setItem('aei.audience', 'control'); true`);
+    await evaluate(cdp, `localStorage.setItem('aei.lang', 'en'); localStorage.setItem('aei.audience', 'control'); true`);
   };
   // Home loads the project list after it paints; wait for it, or a click can land on a card that moved in.
   const goHome = async () => {

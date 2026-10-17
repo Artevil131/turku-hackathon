@@ -1,6 +1,7 @@
+import { randomBytes } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
-import { resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { buildAlerts, patientFindings, sortAlerts } from "@aei/alerts";
 import {
   alertExplainInput,
@@ -126,7 +127,25 @@ const config = {
   // THL Finres national reference, written by scripts/fetch_finres.py (D-048); read on each request.
   nationalFile: resolve(env.AEI_NATIONAL ?? "../../data/external/thl/finres.json"),
 };
-const projects = createProjectStore(config.stateDir);
+// Each browser has its own projects: an anonymous id in a cookie (no login), its projects in their own folder under
+// the state directory, or in memory without one. Projects made before this, in <state>/projects, are no longer listed.
+const VISITOR_COOKIE = "aei_visitor";
+const memoryStores = new Map<string, ReturnType<typeof createProjectStore>>();
+function visitorStore(visitor: string) {
+  if (config.stateDir) return createProjectStore(join(config.stateDir, "visitors", visitor));
+  const store = memoryStores.get(visitor) ?? createProjectStore();
+  memoryStores.set(visitor, store);
+  return store;
+}
+/** The request's visitor id from its cookie, or a new one, set on the response so the browser keeps it a year. */
+function visitorOf(req: IncomingMessage, res: ServerResponse): string {
+  const found = /(?:^|;\s*)aei_visitor=([a-f0-9]{32})(?:;|$)/.exec(req.headers.cookie ?? "")?.[1];
+  if (found) return found;
+  const id = randomBytes(16).toString("hex");
+  const secure = req.headers["x-forwarded-proto"] === "https" ? "; Secure" : "";
+  res.setHeader("set-cookie", `${VISITOR_COOKIE}=${id}; Path=/; Max-Age=31536000; SameSite=Lax; HttpOnly${secure}`);
+  return id;
+}
 const codeMaps: CodeMaps = config.codeMapFile
   ? extendCodeMaps(JSON.parse(readFileSync(resolve(config.codeMapFile), "utf8")) as Partial<CodeMaps>)
   : DEFAULT_CODE_MAPS;
@@ -491,6 +510,7 @@ export const server = createServer(async (req, res) => {
   try {
     if (url.pathname.startsWith("/api/lite/")) {
       if (req.method !== "GET") return send(res, 405, { error: "method not allowed" });
+      const projects = visitorStore(visitorOf(req, res));
       if (url.pathname === "/api/lite/contents/projects/all.json") {
         const all = projects.list();
         const timestamp = new Date().toISOString();
@@ -521,6 +541,7 @@ export const server = createServer(async (req, res) => {
       return void res.end(file.data);
     }
     if (url.pathname === ROUTES.projects || url.pathname.startsWith(`${ROUTES.projects}/`)) {
+      const projects = visitorStore(visitorOf(req, res));
       const id = url.pathname === ROUTES.projects ? undefined : decodeURIComponent(url.pathname.slice(ROUTES.projects.length + 1));
       if (id !== undefined && !isProjectId(id)) return send(res, 400, { error: "invalid project id" });
       if (id === undefined && req.method === "GET") return send(res, 200, { projects: projects.list() });

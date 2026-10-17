@@ -98,8 +98,7 @@ export const DEMOS: readonly DemoSpec[] = [
     board: "unit=MED-A&ph=esbl",
     layout: gridLayout({
       notebook: { x: 0, y: 0, w: 8, h: 70 },
-      reproduce: { x: 8, y: 0, w: 4, h: 30 },
-      signals: { x: 8, y: 30, w: 4, h: 40 },
+      signals: { x: 8, y: 0, w: 4, h: 70 },
     }),
     page: (locale, site) => {
       const s = slice(site, { from: "2025-03-01", to: "2025-04-30", unit: "MED-A", phenotype: "esbl" });

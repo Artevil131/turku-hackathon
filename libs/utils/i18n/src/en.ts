@@ -23,6 +23,7 @@ import { sitesEn } from "./surfaces/sites.ts";
 import { startEn } from "./surfaces/start.ts";
 import { timelineEn } from "./surfaces/timeline.ts";
 import { toolsEn } from "./surfaces/tools.ts";
+import { tourEn } from "./surfaces/tour.ts";
 
 export const en = {
   ...startEn,
@@ -280,6 +281,7 @@ export const en = {
   ...networkEn,
   ...mapEn,
   ...demoEn,
+  ...tourEn,
   ...homeEn,
   ...introEn,
   ...cardEn,

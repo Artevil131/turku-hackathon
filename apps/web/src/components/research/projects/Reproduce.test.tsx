@@ -11,13 +11,13 @@ describe("Reproduce window", () => {
     expect(html).toContain(">Save as project…</button>");
     expect(html).not.toContain("data-reproduce-slot");
   });
-  it("renders a slot, language controls and a standalone notebook link, never an iframe in the dock", () => {
+  it("renders language controls and a standalone notebook link with a note, never an iframe in the dock", () => {
     const html = renderToStaticMarkup(
       <Reproduce locale="en" project={{ id: "a/b?", name: "Study <1>" }} language="r" onLanguage={vi.fn()} />,
     );
     expect(html).toContain("Study &lt;1&gt;");
     expect(html).toContain('aria-pressed="true">R</button>');
-    expect(html).toContain("data-reproduce-slot");
+    expect(html).toContain("opens in its own tab");
     expect(html).toContain('target="_blank" rel="noopener noreferrer"');
     expect(html).toContain(notebookUrl("a/b?", "r"));
     expect(html).not.toContain("<iframe");

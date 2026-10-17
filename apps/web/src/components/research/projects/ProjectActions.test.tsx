@@ -90,6 +90,7 @@ describe("project actions in the sidebar", () => {
           onCloseTab={noop}
           onNew={noop}
           onDemo={noop}
+          onLocale={noop}
           onPage={noop}
           setActionsSlot={noop}
           setWindowsSlot={noop}

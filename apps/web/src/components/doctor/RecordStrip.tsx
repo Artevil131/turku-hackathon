@@ -42,6 +42,7 @@ function Choices<T extends string | number>(props: {
           key={value}
           type="button"
           className="rs-choice"
+          data-value={value}
           title={title}
           disabled={props.disabled}
           aria-pressed={!props.disabled && props.value === value}

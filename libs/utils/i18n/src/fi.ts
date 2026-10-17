@@ -24,6 +24,7 @@ import { sitesFi } from "./surfaces/sites.ts";
 import { startFi } from "./surfaces/start.ts";
 import { timelineFi } from "./surfaces/timeline.ts";
 import { toolsFi } from "./surfaces/tools.ts";
+import { tourFi } from "./surfaces/tour.ts";
 
 export const fi: Record<keyof typeof en, string> = {
   ...startFi,
@@ -282,6 +283,7 @@ export const fi: Record<keyof typeof en, string> = {
   ...networkFi,
   ...mapFi,
   ...demoFi,
+  ...tourFi,
   ...homeFi,
   ...introFi,
   ...cardFi,
