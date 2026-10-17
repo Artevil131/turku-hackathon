@@ -41,3 +41,4 @@ Code, Opus 5.5, operated by Artem).
 | 08:36 | harness fixes | finish | Sonnet 5.5 | | additive; 112 tests pass; baselines and 0012 metrics regenerated |
 | 08:36 | 0020 review | start | Fable 5.1 | | beats its baseline (P2 log skill +0.40) |
 | 08:43 | 0020 review | finish | Fable 5.1 | 6 min | stands with caveats: pooled skill robust (+0.378 at persistence's best floor 0.25); VRE log skill mostly the floor (+0.06 at floor 0.1), VRE/CPE MAE skill is forecasting zero; ship rule should not fire for VRE; method line and data field corrected by the orchestrator, one rounding slip fixed |
+| 08:43 | 0014 pooling levels (m6) | plan start | Sonnet 5.5 | | plan then implement |
