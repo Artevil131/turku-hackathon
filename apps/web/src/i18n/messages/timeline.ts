@@ -102,6 +102,17 @@ const en = {
   "timeline.legend.severity": "Signal colour shows how serious it is; the mark inside shows the kind",
 
   "timeline.region.title": "The region: county signals",
+  "timeline.region.jump": "The region: county signals below",
+  "timeline.region.loading": "Loading THL county signals…",
+  "timeline.region.method": "How this is calculated",
+  "timeline.region.methodExpected":
+    "Expected cases come from a Poisson model fitted to the county's previous 36 months, with trend and seasonality. Quasi-Poisson dispersion accounts for variation beyond a Poisson model.",
+  "timeline.region.methodSignal":
+    "A signal requires at least 5 notifications and P(cases or more) < 0.001: that many cases would be very unlikely under the model.",
+  "timeline.region.methodStrong":
+    "A strong signal also survives a Bonferroni correction at 0.05 over all {tested} county-months tested (across the notification series). Other signals may be chance.",
+  "timeline.region.methodCounts":
+    "Counts are THL notifications, not confirmed outbreaks. The latest months are still revised. These real public data are separate from the synthetic hospital demo.",
   "timeline.region.sub": "THL notifications of MRSA, ESBL, VRE and CPE per wellbeing services county, months up to {month}",
   "timeline.region.signal": "{month}: {cases} cases, about {expected} expected",
   "timeline.region.strong": "Strong signal",
@@ -236,6 +247,17 @@ const fi: Record<keyof typeof en, string> = {
   "timeline.legend.severity": "Signaalin väri kertoo vakavuuden, merkki sen sisällä lajin",
 
   "timeline.region.title": "Alue: hyvinvointialueiden signaalit",
+  "timeline.region.jump": "Alue: hyvinvointialueiden signaalit alempana",
+  "timeline.region.loading": "Ladataan THL:n aluesignaaleja…",
+  "timeline.region.method": "Miten tämä lasketaan",
+  "timeline.region.methodExpected":
+    "Odotettu tapausmäärä saadaan Poisson-mallista, joka sovitetaan alueen edeltäviin 36 kuukauteen huomioiden trendi ja kausivaihtelu. Kvasipoisson-hajonta huomioi Poisson-mallia suuremman vaihtelun.",
+  "timeline.region.methodSignal":
+    "Signaali edellyttää vähintään 5 ilmoitusta ja P(tapauksia vähintään havaittu määrä) < 0,001: näin suuri määrä olisi mallin mukaan hyvin epätodennäköinen.",
+  "timeline.region.methodStrong":
+    "Vahva signaali kestää myös Bonferroni-korjauksen tasolla 0,05 kaikkien {tested} testatun alue-kuukauden yli (kaikissa ilmoitussarjoissa). Muut signaalit voivat olla sattumaa.",
+  "timeline.region.methodCounts":
+    "Luvut ovat THL:n ilmoituksia, eivät vahvistettuja epidemioita. Viimeisimpiä kuukausia tarkennetaan vielä. Nämä todelliset julkiset tiedot ovat erillään synteettisestä sairaalademosta.",
   "timeline.region.sub": "THL:n MRSA-, ESBL-, VRE- ja CPE-ilmoitukset hyvinvointialueittain, kuukaudet {month} asti",
   "timeline.region.signal": "{month}: {cases} tapausta, odotettu noin {expected}",
   "timeline.region.strong": "Vahva signaali",

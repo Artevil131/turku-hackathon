@@ -2,6 +2,7 @@ import { type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState }
 import type { FeedMeta, IsoDate, Result } from "../../feed/types.ts";
 import { formatDate, formatNumber, type Locale, named, t } from "../../i18n/index.ts";
 import type { Severity, Signal, SignalKind } from "../../model/types.ts";
+import { store } from "../../ui/hooks.ts";
 import {
   Card,
   ChipGroup,
@@ -81,6 +82,16 @@ export function AlertsScreen(p: {
   const { locale, meta, results, asOf, signals, seen, onSeen, focus, onFocus, onOpenTreat, onOpenTimeline } = p;
   const desktop = useIsDesktop();
   const reduced = useReducedMotion();
+  const [lastVisit] = useState(() => {
+    const saved = store.get<unknown>("alertsLastOpened");
+    return typeof saved === "string" && /^\d{4}-\d{2}-\d{2}T/.test(saved) && Number.isFinite(Date.parse(saved)) ? saved : null;
+  });
+  const visitRecorded = useRef(false);
+  useEffect(() => {
+    if (visitRecorded.current) return;
+    visitRecorded.current = true;
+    store.set("alertsLastOpened", new Date().toISOString());
+  }, []);
 
   const [filters, setFilters] = useState<AlertFilters>(remembered);
   useEffect(() => {
@@ -268,6 +279,14 @@ export function AlertsScreen(p: {
         </p>
       ) : null}
       <p className="alerts-checked u-num">{t(locale, "alerts.summary.checked", { date: asOfLong })}</p>
+      <p className="alerts-checked u-num">
+        {lastVisit
+          ? t(locale, "alerts.lastVisit", { date: formatDate(locale, lastVisit.slice(0, 10), "long") })
+          : t(locale, "alerts.firstVisit")}
+      </p>
+      <p className="u-small alerts-region-pointer">
+        <a href="#timeline">{t(locale, "alerts.regionPointer")}</a>
+      </p>
     </header>
   );
 

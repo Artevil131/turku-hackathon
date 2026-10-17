@@ -732,6 +732,20 @@
 }
 
 /* ---------- The region (Regional.tsx) ---------- */
+.timeline-region-jump {
+  align-self: flex-start;
+  max-width: 100%;
+  white-space: normal;
+  text-align: left;
+}
+.timeline-region-target {
+  scroll-margin-top: calc(var(--header-h) + var(--sp-4));
+}
+.timeline-region-target:focus-visible {
+  outline: 3px solid var(--blue-ring);
+  outline-offset: 3px;
+  border-radius: var(--r-md);
+}
 .timeline-region-list {
   list-style: none;
   margin: 0 0 var(--sp-3);

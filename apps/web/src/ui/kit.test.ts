@@ -111,7 +111,9 @@ describe("kit", () => {
         h(FreshChip, { locale: "fi", status: "live", asOf: "2025-05-12", arrivalSeq: 0, checking: false, short: false }),
       ),
     ).toContain("Tulokset 12. toukokuuta 2025 asti");
-    expect(renderToStaticMarkup(h(Tabs, { locale: "en", route: "treat", alertsBadge: 3, variant: "top" }))).toContain("3 new");
+    expect(renderToStaticMarkup(h(Tabs, { locale: "en", route: "treat", alertsBadge: 3, variant: "top" }))).toContain(
+      "3 not yet marked seen",
+    );
   });
 });
 

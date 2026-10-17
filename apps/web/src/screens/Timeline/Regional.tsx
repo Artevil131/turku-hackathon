@@ -1,11 +1,12 @@
 import type { RegionalResponse, RegionalSignal } from "@aei/contract";
-import { useEffect, useRef, useState } from "react";
 import type { IsoDate } from "../../feed/types.ts";
 import { formatDate, formatMonth, formatNumber, type Locale, t } from "../../i18n/index.ts";
 import { Badge } from "../../ui/Badge.tsx";
 import { Card } from "../../ui/Card.tsx";
+import { Disclosure } from "../../ui/Disclosure.tsx";
 import { EmptyState } from "../../ui/EmptyState.tsx";
 import { Sparkline } from "../../ui/Sparkline.tsx";
+import { useRegional } from "../../ui/useRegional.ts";
 
 /*
   The region around the hospital: THL's monthly MRSA, ESBL, VRE and CPE
@@ -19,31 +20,6 @@ import { Sparkline } from "../../ui/Sparkline.tsx";
 const HOME = "Varsinais-Suomen hyvinvointialue";
 const NATIONAL = "Finland (all counties)";
 const SERIES_MONTHS = 24;
-
-type Fetched = { status: "loading" } | { status: "missing" } | { status: "failed" } | { status: "ok"; data: RegionalResponse };
-
-/** The regional data as of `month` (YYYY-MM); fetched again only when the month changes. */
-function useRegional(month: string, base = ""): Fetched {
-  const [state, setState] = useState<Fetched>({ status: "loading" });
-  const latest = useRef(0);
-  // biome-ignore lint/correctness/useExhaustiveDependencies: `month` is not in the URL, but the server cuts the data at its clock, so a new month refetches.
-  useEffect(() => {
-    const id = ++latest.current;
-    const ctrl = new AbortController();
-    fetch(`${base}/api/regional`, { signal: ctrl.signal })
-      .then(async (res) => {
-        if (id !== latest.current) return;
-        if (res.status === 404) setState({ status: "missing" });
-        else if (!res.ok) setState({ status: "failed" });
-        else setState({ status: "ok", data: (await res.json()) as RegionalResponse });
-      })
-      .catch((error: unknown) => {
-        if (id === latest.current && !(error instanceof DOMException && error.name === "AbortError")) setState({ status: "failed" });
-      });
-    return () => ctrl.abort();
-  }, [month, base]);
-  return state;
-}
 
 /** "CPE carriage, E. coli" -> "CPE, kantajuus, E. coli" in Finnish; English as THL's group name. */
 function groupLabel(locale: Locale, group: string): string {
@@ -61,10 +37,25 @@ function regionLabel(locale: Locale, region: string): string {
 const monthLabel = (locale: Locale, month: string) => formatMonth(locale, `${month}-01`);
 
 export function RegionalCard({ locale, asOf }: { locale: Locale; asOf: IsoDate }) {
+  return (
+    <div id="timeline-region" tabIndex={-1} className="timeline-region-target">
+      <RegionalContent locale={locale} asOf={asOf} />
+    </div>
+  );
+}
+
+function RegionalContent({ locale, asOf }: { locale: Locale; asOf: IsoDate }) {
   const state = useRegional(asOf.slice(0, 7));
   const title = t(locale, "timeline.region.title");
 
-  if (state.status === "loading") return null;
+  if (state.status === "loading")
+    return (
+      <Card title={title}>
+        <p className="u-soft" role="status">
+          {t(locale, "timeline.region.loading")}
+        </p>
+      </Card>
+    );
   if (state.status !== "ok") {
     return (
       <Card title={title} className="timeline-region">
@@ -106,6 +97,14 @@ export function RegionalCard({ locale, asOf }: { locale: Locale; asOf: IsoDate }
           </p>
         </>
       )}
+      <Disclosure summary={t(locale, "timeline.region.method")}>
+        <div className="u-stack-sm u-small u-soft">
+          <p>{t(locale, "timeline.region.methodExpected")}</p>
+          <p>{t(locale, "timeline.region.methodSignal")}</p>
+          <p>{t(locale, "timeline.region.methodStrong", { tested: formatNumber(locale, data.settings.testedSeriesMonths) })}</p>
+          <p>{t(locale, "timeline.region.methodCounts")}</p>
+        </div>
+      </Disclosure>
     </Card>
   );
 }

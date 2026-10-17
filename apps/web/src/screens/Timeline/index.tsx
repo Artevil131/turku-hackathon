@@ -114,6 +114,17 @@ export function TimelineScreen(p: {
               {t(locale, "timeline.period", { start: formatDate(locale, meta.start, "long"), end: formatDate(locale, meta.end, "long") })}
             </p>
             <p className="u-soft timeline-lede">{t(locale, "timeline.lede")}</p>
+            <button
+              type="button"
+              className="k-btn is-ghost timeline-region-jump"
+              onClick={() => {
+                const panel = document.getElementById("timeline-region");
+                panel?.scrollIntoView({ block: "start" });
+                panel?.focus({ preventScroll: true });
+              }}
+            >
+              {t(locale, "timeline.region.jump")} <Icon name="chevron-down" size={16} />
+            </button>
           </div>
         </div>
         <div

@@ -11,9 +11,9 @@
 //
 // Per route and viewport it checks: no uncaught exception or console error, no /api request that failed or
 // answered 400 or more, a main heading (h1) with text, the header and tab bar present, no horizontal page
-// overflow, at least one visible control, and the page finished loading. Then three interactions: switching
-// tabs through the nav, stepping the simulation one day (the date chip must change; the clock is put back
-// afterwards), and switching the language in Settings. Writes a PNG per check and report.md / report.json to
+// overflow, at least one visible control, and the page finished loading. Interactions cover navigation,
+// stepping the simulation, language switching, expanded data checks, the county jump, the previous Alerts
+// visit and eight concurrent tabs. Writes a PNG per check and report.md / report.json to
 // the output directory, and exits 1 if anything failed.
 
 import { spawn, spawnSync } from "node:child_process";
@@ -610,6 +610,57 @@ async function main() {
       ))
     )
       reasons.push("Report's Open Treat link lost its unit");
+  });
+
+  await interaction("data-check-details", async (idle, reasons) => {
+    await load(cdp, `${base}/#settings`, idle);
+    await evaluate(cdp, `document.querySelector(".k-quality-list")?.closest(".k-disc")?.querySelector("button")?.click()`);
+    const expanded = await waitIn(
+      `document.querySelector(".k-quality-list")?.closest(".k-disc")?.querySelector("button")?.getAttribute("aria-expanded") === "true"`,
+    );
+    if (!expanded) reasons.push("data-check disclosure did not expand");
+    const checks = await evaluate(
+      cdp,
+      `[...document.querySelectorAll(".k-quality-list li")].filter(el => el.getBoundingClientRect().height > 0).length`,
+    );
+    if (checks !== 15) reasons.push(`expected fifteen visible data checks after expanding, got ${checks}`);
+  });
+
+  await interaction("regional-jump", async (idle, reasons) => {
+    await load(cdp, `${base}/#timeline`, idle);
+    const jump = await evaluate(
+      cdp,
+      `(() => {
+      document.querySelector(".timeline-region-jump")?.click();
+      const panel = document.getElementById("timeline-region");
+      return {
+        focused: document.activeElement === panel,
+        top: panel?.getBoundingClientRect().top ?? -1,
+        headerBottom: document.querySelector(".app-top")?.getBoundingClientRect().bottom ?? 0,
+        hash: location.hash,
+      };
+    })()`,
+    );
+    if (!jump.focused || jump.hash !== "#timeline") reasons.push("county jump did not focus the panel on Timeline");
+    if (jump.top < jump.headerBottom - 1) reasons.push("county panel scrolled behind the sticky header");
+  });
+
+  await interaction("alerts-last-visit", async (idle, reasons) => {
+    await load(cdp, `${base}/#settings`, idle);
+    await evaluate(
+      cdp,
+      `localStorage.setItem("aei.alertsLastOpened", JSON.stringify("2026-10-14T14:00:00.000Z"));
+      document.querySelector('nav.app-tabs a[href="#alerts"]')?.click();`,
+    );
+    const previous = await waitIn(
+      `!!document.querySelector(".alerts-head") && /14.*2026/.test(document.querySelector(".alerts-head").textContent)`,
+    );
+    if (!previous) reasons.push("Alerts did not show the previous browser visit");
+    const stored = await evaluate(cdp, `JSON.parse(localStorage.getItem("aei.alertsLastOpened"))`);
+    if (!stored || stored === "2026-10-14T14:00:00.000Z" || !Number.isFinite(Date.parse(stored))) {
+      reasons.push("opening Alerts did not record a new browser timestamp");
+    }
+    await idle();
   });
 
   // Eight tabs at once in one browser: HTTP/1.1 allows six connections per host, so the app must share one

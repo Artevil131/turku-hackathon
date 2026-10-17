@@ -6,8 +6,13 @@
 
 const en = {
   "alerts.title": "Alerts",
-  "alerts.summary.active": "{new} new · {count} active in the last {weeks} weeks",
-  "alerts.summary.all": "{new} new · {count} since {date}",
+  "alerts.lastVisit": "This browser last opened Alerts on {date}.",
+  "alerts.firstVisit": "No previous Alerts visit saved in this browser.",
+  "alerts.regionPointer": "Real THL county signals are on Timeline →",
+  "alerts.related.overlap": "Patients in both: {both} · only above: {above} · only in this related alert: {related}.",
+  "alerts.related.unavailable": "Patient overlap cannot be determined from the released cases.",
+  "alerts.summary.active": "{new} not yet marked seen · {count} active in the last {weeks} weeks",
+  "alerts.summary.all": "{new} not yet marked seen · {count} since {date}",
   "alerts.summary.checked": "Checked up to {date}",
   "alerts.checking": "Checking the results for alerts…",
 
@@ -26,7 +31,7 @@ const en = {
   "alerts.markAll": "Mark all seen",
   "alerts.markSeen": "Mark seen",
   "alerts.seen": "Seen",
-  "alerts.new": "New",
+  "alerts.new": "Not marked seen",
   "alerts.earlier": "Earlier",
   "alerts.activeNow": "Active in the last {weeks} weeks",
   "alerts.list": "Alerts, most serious first",
@@ -172,8 +177,13 @@ const en = {
 
 const fi: Record<keyof typeof en, string> = {
   "alerts.title": "Hälytykset",
-  "alerts.summary.active": "{new} uutta · {count} aktiivista viimeisten {weeks} viikon aikana",
-  "alerts.summary.all": "{new} uutta · {count} {date} alkaen",
+  "alerts.lastVisit": "Edellinen käynti Hälytyksissä tällä selaimella: {date}.",
+  "alerts.firstVisit": "Tähän selaimeen ei ole tallennettu aiempaa käyntiä Hälytyksissä.",
+  "alerts.regionPointer": "THL:n todelliset aluesignaalit löytyvät Aikajanalta →",
+  "alerts.related.overlap": "Potilaita molemmissa: {both} · vain yllä: {above} · vain tässä liittyvässä hälytyksessä: {related}.",
+  "alerts.related.unavailable": "Potilaiden päällekkäisyyttä ei voida määrittää julkaistuista tapauksista.",
+  "alerts.summary.active": "{new} kuittaamatta · {count} aktiivista viimeisten {weeks} viikon aikana",
+  "alerts.summary.all": "{new} kuittaamatta · {count} {date} alkaen",
   "alerts.summary.checked": "Tarkistettu {date} asti",
   "alerts.checking": "Tarkistetaan tuloksia hälytysten varalta…",
 
@@ -192,7 +202,7 @@ const fi: Record<keyof typeof en, string> = {
   "alerts.markAll": "Kuittaa kaikki",
   "alerts.markSeen": "Kuittaa nähdyksi",
   "alerts.seen": "Kuitattu",
-  "alerts.new": "Uusi",
+  "alerts.new": "Kuittaamatta",
   "alerts.earlier": "Aiemmat",
   "alerts.activeNow": "Aktiiviset viimeisten {weeks} viikon aikana",
   "alerts.list": "Hälytykset, vakavimmat ensin",
