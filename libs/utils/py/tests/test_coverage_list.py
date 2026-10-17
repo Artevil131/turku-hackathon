@@ -105,7 +105,7 @@ for (const asOf of ["2025-01-31", "2025-08-31", "2026-06-30"])
               a.outsideSpectrum.map((u) => [u.organism, u.share])]),
             combinations: r.combinations.map((c) => [c.antibiotics, c.share, c.interval, [c.counts.covered, c.counts.known], c.alone, c.untested]),
             mild: sug(suggest(r, "mild")), severe: sug(suggest(r, "severe")),
-            pairs: suggestCombinations(r, "severe").map((c) => [c.antibiotics, c.access, c.standing, c.gain]),
+            pairs: suggestCombinations(r, "severe").map((c) => [c.antibiotics, c.standing, c.gain]),
           });
         }
 console.log(JSON.stringify(out));
@@ -156,7 +156,7 @@ def test_coverage_suggest_and_combinations_match_typescript(dataset, ts_queries)
         for sev in ("mild", "severe"):
             mine = [[s.antibiotic, s.standing, s.share, lst(s.interval), s.all_share, lst(s.all_interval)] for s in cl.suggest(r, sev)]
             assert_same(t[sev], mine, where + sev)
-        pairs = [[list(c.antibiotics), c.access, c.standing, c.gain] for c in cl.suggest_combinations(r, "severe")]
+        pairs = [[list(c.antibiotics), c.standing, c.gain] for c in cl.suggest_combinations(r, "severe")]
         assert_same(t["pairs"], pairs, where + " pairs")
         saw["sex_applied"] += r.sex_applied
         saw["pairs"] += bool(pairs)
@@ -188,8 +188,8 @@ def test_standings_and_order():
         row("CRO", None, None),  # no estimate: not assessable
     ]
     assert order(rows, "severe") == [
-        ("AMP", "clears"),  # Access before Watch among those that clear, although TZP covers more
-        ("TZP", "clears"),
+        ("TZP", "clears"),  # Coverage first, without an AWaRe tier (D-056).
+        ("AMP", "clears"),
         ("MEM", "borderline"),
         ("CIP", "below"),
         ("CXM", "not assessable"),  # not assessable last, in all-organism share order
