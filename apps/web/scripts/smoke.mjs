@@ -1058,6 +1058,126 @@ async function main() {
     await idle();
   });
 
+  await interaction("reproduce", async (idle, reasons) => {
+    await load(cdp, urlOf("settings"), idle);
+    await click(".settings button[lang='en']");
+    await cleanWorkspace(idle);
+    await cdp.send("Page.addScriptToEvaluateOnNewDocument", {
+      source: `addEventListener("unhandledrejection", e => { console.error(String(e.reason?.stack ?? e.reason)); });`,
+    });
+    await click("[data-project-dialog]");
+    if (!(await waitIn(`!!document.querySelector('.project-list[aria-busy=false]')`))) throw new Error("Project dialog did not load");
+    await click('.project-dialog form input[maxlength="200"]');
+    await cdp.send("Input.insertText", { text: "Smoke reproduce" });
+    await click('.project-dialog input[value="frozen"]');
+    await click('.project-dialog button[type="submit"]');
+    if (!(await waitIn(`!!document.querySelector('[data-open-reproduce]') && !document.querySelector('.project-dialog')`)))
+      throw new Error("Frozen project did not open");
+    const id = await evaluate(cdp, `new URLSearchParams(location.hash.split('?')[1]).get('project')`);
+    try {
+      await click("[data-open-reproduce]");
+      if (!(await waitIn(`!!document.querySelector('#ws-win-reproduce')`))) throw new Error("Reproduce window did not open");
+      // Give the editor the whole board while the browser kernel loads.
+      await click("#ws-win-reproduce .ws-maximize");
+      const frame = `document.querySelector('.reproduce-frame')`;
+      const doc = `${frame}?.contentDocument`;
+      const win = `${frame}?.contentWindow`;
+      if (!(await waitIn(`!!${doc}?.querySelector('.jp-Notebook')`, 120_000))) {
+        throw new Error(`JupyterLab notebook did not load in 120 s: ${await evaluate(cdp, `${doc}?.body?.innerText?.slice(-1800)`)}`);
+      }
+      const notebookClick = async (selector, label) => {
+        const point = await evaluate(
+          cdp,
+          `(() => {
+          const f = ${frame}, d = f.contentDocument;
+          const el = [...d.querySelectorAll(${JSON.stringify(selector)})].find(e => e.textContent.trim().includes(${JSON.stringify(label)}));
+          if (!el) throw new Error('JupyterLab control missing: ' + ${JSON.stringify(label)});
+          const r = el.getBoundingClientRect(), origin = f.getBoundingClientRect();
+          return { x: origin.left + r.left + r.width / 2, y: origin.top + r.top + r.height / 2 };
+        })()`,
+        );
+        await mouse("mousePressed", point, { button: "left", buttons: 1, clickCount: 1 });
+        await mouse("mouseReleased", point, { button: "left", buttons: 0, clickCount: 1 });
+      };
+      const kernelIdle = `(() => {
+        const app = ${win}?.jupyterapp;
+        if (app?.shell?.currentWidget?.sessionContext) return app.shell.currentWidget.sessionContext.session?.kernel?.status === 'idle';
+        const d = ${doc};
+        return [...(d?.querySelectorAll('[title], [data-status]') ?? [])].some(e => /kernel.*idle|idle.*kernel/i.test(e.title) || e.dataset.status === 'idle') || /Python.*Idle|Idle.*Python/s.test(d?.querySelector('.jp-StatusBar')?.textContent ?? '');
+      })()`;
+      if (!(await waitIn(kernelIdle, 120_000)))
+        throw new Error(`Python kernel not idle in 120 s: ${await evaluate(cdp, `${doc}?.body?.innerText?.slice(-1800)`)}`);
+      const command = await evaluate(
+        cdp,
+        `(() => { const app = ${win}?.jupyterapp; if (!app?.commands) return false; void app.commands.execute('notebook:run-all-cells'); return true; })()`,
+      );
+      if (!command) {
+        await notebookClick(".lm-MenuBar-item", "Run");
+        if (!(await waitIn(`[...(${doc}?.querySelectorAll('.lm-Menu-item') ?? [])].some(e => /Run All Cells/.test(e.textContent))`)))
+          throw new Error(`JupyterLab Run All Cells menu missing: ${await evaluate(cdp, `${doc}?.body?.innerText?.slice(-1800)`)}`);
+        await notebookClick(".lm-Menu-item", "Run All Cells");
+      }
+      const outputs = `[...(${doc}?.querySelectorAll('.jp-OutputArea-output') ?? [])].map(e => e.textContent).join('\\n')`;
+      if (!(await waitIn(`(${outputs}).includes('✓') && !!${doc}?.querySelector('.jp-OutputArea-output table') && ${kernelIdle}`, 120_000)))
+        reasons.push(
+          `Notebook verify/table did not complete: ${await evaluate(cdp, outputs)} | ${await evaluate(cdp, `${doc}?.body?.innerText?.slice(-2000)`)}`,
+        );
+      if (await evaluate(cdp, `[...(${doc}?.querySelectorAll('.jp-Dialog') ?? [])].some(e => /Select Kernel/.test(e.textContent))`))
+        reasons.push("JupyterLite asked the researcher to select a kernel instead of starting Python");
+      const result = await evaluate(
+        cdp,
+        `(() => {
+        const cells = [...${doc}.querySelectorAll('.jp-CodeCell')];
+        const verify = cells.find(c => /aei\\.verify|project\\.verify|pkg\\.verify/.test(c.querySelector('.jp-InputArea')?.textContent ?? ''));
+        const reproduce = cells.find(c => /\\.reproduce\\(/.test(c.querySelector('.jp-InputArea')?.textContent ?? ''));
+        return { verify: verify?.querySelector('.jp-OutputArea')?.textContent ?? '', table: reproduce?.querySelector('.jp-OutputArea table')?.textContent ?? '', errors: [...${doc}.querySelectorAll('.jp-OutputArea-output[data-mime-type="application/vnd.jupyter.stderr"]')].map(e => e.textContent) };
+      })()`,
+      );
+      if (!result.verify.includes("✓")) reasons.push(`Verify cell has no checkmark: ${result.verify}`);
+      if (!result.table || /\bFalse\b/.test(result.table)) reasons.push(`Reproduce table missing or contains False: ${result.table}`);
+      if (result.errors.length) reasons.push(`Notebook errors: ${result.errors.join("; ")}`);
+      await evaluate(cdp, `window.__reproduceFrame = ${frame}; ${frame}.contentWindow.__reproduceSmoke = 'alive'`);
+      await click("#ws-win-reproduce .ws-maximize");
+      const source = await pointOf("#ws-title-reproduce"),
+        target = await pointOf("#ws-title-signals");
+      await mouse("mousePressed", source, { button: "left", buttons: 1, clickCount: 1 });
+      await mouse("mouseMoved", target, { buttons: 1 });
+      if (await evaluate(cdp, `getComputedStyle(${frame}).pointerEvents !== 'none'`)) reasons.push("Iframe swallows workspace drag");
+      await mouse("mouseReleased", target, { button: "left", buttons: 0, clickCount: 1 });
+      if (!(await waitIn(`!!document.querySelector('#ws-win-reproduce')?.closest('.ws-column')?.querySelector('#ws-win-signals')`)))
+        reasons.push("Reproduce did not move to the signals column");
+      const preserved = `${frame} === window.__reproduceFrame && ${win}.__reproduceSmoke === 'alive'`;
+      if (!(await evaluate(cdp, preserved))) reasons.push("Moving Reproduce reloaded its iframe/kernel");
+      await click("#ws-win-reproduce .ws-close");
+      if (!(await waitIn(`getComputedStyle(${frame}).visibility === 'hidden'`))) reasons.push("Closed notebook iframe remains visible");
+      await click("#ws-tray-button");
+      await click('[data-reopen="reproduce"]');
+      await key("Escape");
+      if (!(await evaluate(cdp, preserved))) reasons.push("Reopening Reproduce reloaded its iframe/kernel");
+      await cdp.send("Emulation.setDeviceMetricsOverride", { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
+      if (!(await waitIn(`document.querySelector('.ws')?.dataset.docked === 'false'`))) reasons.push("Phone layout did not activate");
+      if (!(await evaluate(cdp, preserved))) reasons.push("Phone layout reloaded notebook iframe/kernel");
+      await evaluate(cdp, `document.querySelector('#ws-win-reproduce').scrollIntoView({ block: 'start' })`);
+      if (
+        !(await waitIn(`(() => {
+          const slot = document.querySelector('[data-reproduce-slot]').getBoundingClientRect(), frame = ${frame}.getBoundingClientRect();
+          return Math.abs(slot.top - frame.top) < 2 && Math.abs(slot.left - frame.left) < 2;
+        })()`))
+      )
+        reasons.push("Notebook overlay lost its phone slot after scrolling");
+      await screenshot(cdp, join(outDir, "reproduce-phone.png"));
+      await cdp.send("Emulation.setDeviceMetricsOverride", {
+        width: VIEWPORTS[0].width,
+        height: VIEWPORTS[0].height,
+        deviceScaleFactor: 1,
+        mobile: false,
+      });
+      await click("#ws-win-reproduce .ws-maximize");
+    } finally {
+      await fetch(`${base}/api/projects/${encodeURIComponent(id)}`, { method: "DELETE" });
+    }
+  });
+
   await interaction("home-incident-period", async (idle, reasons) => {
     await load(cdp, urlOf("home"), idle);
     if (!(await waitIn(`!!document.querySelector(".hm-period select")`, 15_000))) {

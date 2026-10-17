@@ -4,10 +4,10 @@ Research exports from one bundle (D-059). Pure browser-safe TypeScript:
 no network, filesystem, DOM or rasterisation. The app supplies the data
 it is showing and, for Word or PNG downloads, rasterised PNG bytes.
 
-    packageFiles(bundle, opts) // -> root-relative package files; opts.docx optional
+    packageFiles(bundle, opts) // -> root-relative files; opts.docx and opts.target optional
     toResearchPackage(bundle) // -> Promise<ExportFile>; research zip with Word report
-    pythonNotebook(bundle)   // -> nbformat 4.5 Python reproducibility notebook JSON
-    rNotebook(bundle)        // -> nbformat 4.5 R (xeus-r) notebook JSON
+    pythonNotebook(bundle, opts) // -> nbformat 4.5 Python notebook; opts.target optional
+    rNotebook(bundle, opts)    // -> nbformat 4.5 R notebook; opts.target optional
     pythonAnalysis(bundle)   // -> reproducibility script using aei and pandas
     rAnalysis(bundle)        // -> reproducibility script using aei in R
     toCsv(table)             // -> ExportFile; BOM, RFC 4180, CRLF, column keys
@@ -62,7 +62,11 @@ Supply PNG figures to include them both in the zip and the report.
 
 The package contains Frictionless `datapackage.json` (`aei-package/1`
 metadata), typed CSVs, `methods.json`, a README, figures, `analysis.py`,
-`analysis.R`, `reproduce.ipynb` (Python) and `reproduce-r.ipynb` (xeus-r).
+`analysis.R`, `reproduce.ipynb` (Python) and `reproduce-r.ipynb` (R).
+Notebook `target` defaults to `"desktop"`: `python3` and IRkernel's `ir`.
+The Lite API passes `{ target: "lite" }` for the installed browser kernels,
+`python` (Python (Pyodide)) and `xr` (R 4.5.1 (xr)); cell content is unchanged.
+`toResearchPackage` always uses desktop kernels for the downloaded zip.
 Unpack and run `import aei; pkg = aei.read_package(".")` in Python or
 `library(aei); pkg <- read_package(".")` in R from the package folder.
 Notebooks and scripts check the same data fingerprint, reproduce numbers,

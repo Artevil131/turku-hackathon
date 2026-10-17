@@ -12,6 +12,11 @@ export const boardEn = {
   boardGraph: "Patient flow",
   boardMath: "Alert math",
   boardAssistant: "Assistant",
+  boardReproduce: "Reproduce",
+  reproduceEmpty:
+    "Save or open a project to reproduce its numbers: the same rows, checked by fingerprint, and the same methods, recomputed in Python or R.",
+  reproduceNewTab: "Open in new tab",
+  reproduceLanguage: "Notebook language",
   wsClose: "Close {title}",
   wsHandle: "Resize or move {title}",
   wsHint: "Move a title with Alt + arrow keys. Focus a divider and use arrow keys to resize; Enter resets it.",
@@ -64,6 +69,11 @@ export const boardFi: Record<keyof typeof boardEn, string> = {
   boardGraph: "Potilasvirta",
   boardMath: "Hälytyksen laskenta",
   boardAssistant: "Avustaja",
+  boardReproduce: "Toista",
+  reproduceEmpty:
+    "Tallenna tai avaa projekti toistaaksesi sen luvut: samat rivit tarkistetaan sormenjäljellä ja samat menetelmät lasketaan uudelleen Pythonilla tai R:llä.",
+  reproduceNewTab: "Avaa uudessa välilehdessä",
+  reproduceLanguage: "Muistikirjan kieli",
   wsClose: "Sulje {title}",
   wsHandle: "Muuta kokoa tai siirrä: {title}",
   wsHint: "Siirrä otsikosta Alt + nuolilla. Muuta jakajan kokoa nuolilla; Enter tasaa koot.",

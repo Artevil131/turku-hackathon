@@ -289,6 +289,7 @@ function liteFiles(project: Project) {
         frozenNote: t("en", "exportFrozenNote"),
       },
     }),
+    { target: "lite" },
   );
   litePackages.set(project.id, { key, files });
   return files;

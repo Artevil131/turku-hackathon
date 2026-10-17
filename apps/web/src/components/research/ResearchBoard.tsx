@@ -9,6 +9,7 @@ import { GeoMap } from "./geo/GeoMap.tsx";
 import { UnitGraph } from "./geo/UnitGraph.tsx";
 import { AlertMath } from "./math/AlertMath.tsx";
 import { ProjectControls } from "./projects/ProjectControls.tsx";
+import { type NotebookLanguage, Reproduce, ReproduceHost } from "./projects/Reproduce.tsx";
 import { useProject } from "./projects/useProject.ts";
 import { SignalFeed } from "./SignalFeed.tsx";
 import { UnitGrid } from "./UnitGrid.tsx";
@@ -27,7 +28,10 @@ type Props = Omit<FeedProps, "state" | "onChange">;
 export function ResearchBoard(props: Props) {
   const { locale, client, asOf, findings, acknowledge } = props;
   const project = useProject(client, asOf);
+  const [notebookLanguage, setNotebookLanguage] = useState<NotebookLanguage>("python");
   const [state, setState] = useState<BoardState>(boardFromUrl);
+  const [reveal, setReveal] = useState<{ id: WinId; key: string | null }>({ id: "math", key: state.incident });
+  useEffect(() => setReveal({ id: "math", key: state.incident }), [state.incident]);
   const onChange = useCallback((patch: Partial<BoardState>) => setState((s) => ({ ...s, ...patch })), []);
   useEffect(() => writeHashParams({ ...boardToParams(state), project: hashParams().get("project") }), [state]);
   // A link followed inside the app (or the back button) changes the hash without remounting.
@@ -65,6 +69,9 @@ export function ResearchBoard(props: Props) {
     signals: (
       <SignalFeed {...panelProps} load={load} incidents={incidents} retry={retry} spansOf={spansOf} selected={selected?.key ?? null} />
     ),
+    reproduce: (
+      <Reproduce locale={locale} project={project.response?.project} language={notebookLanguage} onLanguage={setNotebookLanguage} />
+    ),
     map: <GeoMap {...panelProps} />,
     graph: <UnitGraph {...panelProps} />,
     grid: <UnitGrid {...panelProps} />,
@@ -92,9 +99,19 @@ export function ResearchBoard(props: Props) {
       <Workspace
         locale={locale}
         content={content}
-        toolbar={<ProjectControls client={client} locale={locale} clock={asOf} board={state} selection={project} />}
+        toolbar={
+          <ProjectControls
+            client={client}
+            locale={locale}
+            clock={asOf}
+            board={state}
+            selection={project}
+            onReproduce={() => setReveal({ id: "reproduce", key: `reproduce-${Date.now()}` })}
+          />
+        }
+        overlay={<ReproduceHost locale={locale} projectId={project.id} language={notebookLanguage} />}
         initiallyOpen={initiallyOpen.current}
-        reveal={{ id: "math", key: state.incident }}
+        reveal={reveal}
         onOpened={(id) => (id === "grid" ? onChange({ panel: "grid" }) : id === "map" ? onChange({ panel: "geo" }) : undefined)}
         onClosed={(id) => (id === "grid" ? onChange({ panel: "geo" }) : undefined)}
       />

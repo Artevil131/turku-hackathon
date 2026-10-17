@@ -128,7 +128,15 @@ describe("research projects (D-057, D-058)", () => {
     const notebookResponse = await fetch(`${fileBase}/reproduce.ipynb`);
     expect(notebookResponse.headers.get("content-type")).toBe("application/x-ipynb+json");
     const notebook = await notebookResponse.json();
-    expect(notebook).toMatchObject({ nbformat: 4, metadata: { kernelspec: { language: "python" } } });
+    expect(notebook).toMatchObject({
+      nbformat: 4,
+      metadata: { kernelspec: { name: "python", display_name: "Python (Pyodide)", language: "python" } },
+    });
+    expect((await (await fetch(`${fileBase}/reproduce-r.ipynb`)).json()).metadata.kernelspec).toEqual({
+      name: "xr",
+      display_name: "R 4.5.1 (xr)",
+      language: "R",
+    });
     expect(notebook.cells.some((cell: { source: string }) => cell.source.includes("aei.reproduce(pkg)"))).toBe(true);
     expect(contents.content.find((file: { name: string }) => file.name === "reproduce.ipynb")).toMatchObject({
       type: "notebook",

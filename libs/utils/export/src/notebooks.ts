@@ -1,5 +1,7 @@
 import type { ExportBundle } from "./bundle.ts";
 
+export type NotebookTarget = "lite" | "desktop";
+
 const pythonLoad = 'import aei\npkg = aei.read_package(".")';
 const rLoad = 'library(aei)\npkg <- read_package(".")';
 const pythonExample = 'pkg.isolates.groupby([pd.Grouper(key="sampleDate", freq="W"), "ward"]).size().unstack(fill_value=0).tail()';
@@ -9,7 +11,7 @@ function introduction(bundle: ExportBundle): string {
   return `# Reproduce: ${bundle.title}\n\nThis notebook reproduces the numbers the tool showed for this project as of ${bundle.asOf ?? bundle.generatedAt}, from the same rows (checked by fingerprint) and the same methods.`;
 }
 
-function notebook(bundle: ExportBundle, language: "python" | "R"): string {
+function notebook(bundle: ExportBundle, language: "python" | "R", target: NotebookTarget): string {
   const python = language === "python";
   const cells = [
     ["markdown", introduction(bundle)],
@@ -38,8 +40,12 @@ function notebook(bundle: ExportBundle, language: "python" | "R"): string {
       nbformat_minor: 5,
       metadata: {
         kernelspec: python
-          ? { name: "python3", display_name: "Python 3", language: "python" }
-          : { name: "xr", display_name: "R (xeus-r)", language: "R" },
+          ? target === "lite"
+            ? { name: "python", display_name: "Python (Pyodide)", language: "python" }
+            : { name: "python3", display_name: "Python 3", language: "python" }
+          : target === "lite"
+            ? { name: "xr", display_name: "R 4.5.1 (xr)", language: "R" }
+            : { name: "ir", display_name: "R", language: "R" },
         language_info: { name: language },
       },
       cells,
@@ -49,12 +55,12 @@ function notebook(bundle: ExportBundle, language: "python" | "R"): string {
   )}\n`;
 }
 
-export function pythonNotebook(bundle: ExportBundle): string {
-  return notebook(bundle, "python");
+export function pythonNotebook(bundle: ExportBundle, opts?: { target?: NotebookTarget }): string {
+  return notebook(bundle, "python", opts?.target ?? "desktop");
 }
 
-export function rNotebook(bundle: ExportBundle): string {
-  return notebook(bundle, "R");
+export function rNotebook(bundle: ExportBundle, opts?: { target?: NotebookTarget }): string {
+  return notebook(bundle, "R", opts?.target ?? "desktop");
 }
 
 export function pythonAnalysis(bundle: ExportBundle): string {

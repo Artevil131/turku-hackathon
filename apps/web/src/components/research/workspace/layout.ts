@@ -1,6 +1,6 @@
 // Dock geometry only: ordered stacks, fractional sizes and a tray. No DOM or storage access.
 export const STORAGE_KEY = "aei.research.layout.v2";
-export const WIN_IDS = ["signals", "map", "graph", "math", "assistant", "grid"] as const;
+export const WIN_IDS = ["signals", "map", "graph", "math", "assistant", "grid", "reproduce"] as const;
 export type WinId = (typeof WIN_IDS)[number];
 export type Preset = "default" | "map" | "signals" | "units";
 export interface DockWindow {
@@ -105,6 +105,7 @@ export const MIN_BODY: Readonly<Record<WinId, number>> = {
   math: 320,
   assistant: 220,
   grid: 320,
+  reproduce: 360,
 };
 /** A window's header (40 px) and its 1 px border, top and bottom. */
 export const WINDOW_CHROME = 42;
@@ -165,7 +166,10 @@ export function defaultLayout(height = Number.POSITIVE_INFINITY): Layout {
           ],
         },
       ],
-      closed: { grid: { column: "map", columnIndex: 2, index: 2, size: 0.4 } },
+      closed: {
+        grid: { column: "map", columnIndex: 2, index: 2, size: 0.4 },
+        reproduce: { column: "map", columnIndex: 2, index: 3, size: 0.6 },
+      },
       maximized: null,
     },
     height,
@@ -191,6 +195,7 @@ export function presetLayout(preset: Preset, height = Number.POSITIVE_INFINITY):
           },
         ],
         closed: {
+          reproduce: { column: "detail", columnIndex: 1, index: 2, size: 0.6 },
           map: { column: "detail", columnIndex: 1, index: 2, size: 0.5 },
           graph: { column: "detail", columnIndex: 1, index: 3, size: 0.4 },
           grid: { column: "detail", columnIndex: 1, index: 3, size: 0.4 },
@@ -206,6 +211,7 @@ export function presetLayout(preset: Preset, height = Number.POSITIVE_INFINITY):
       { id: "map", width: 0.74, windows: [{ id: big, size: 1 }] },
     ],
     closed: {
+      reproduce: { column: "map", columnIndex: 1, index: 1, size: 0.6 },
       graph: { column: "map", columnIndex: 1, index: 1, size: 0.4 },
       math: { column: "signals", columnIndex: 0, index: 1, size: 0.5 },
       assistant: { column: "signals", columnIndex: 0, index: 2, size: 0.3 },
