@@ -5,6 +5,7 @@ Laboratories: a continuously updated, ward-level view of antibiotic
 resistance, for doctors choosing empirical treatment and for researchers
 watching for spread. The problem, the data and the open questions are in
 CONTEXT.md; who we build for and what they need is in AUDIENCE.md.
+Where we are taking it, a full research tool, is in VISION.md.
 
 ## What we built: alerts we measured
 
@@ -66,6 +67,8 @@ experiment, it belongs in `libs/utils`, from the start.
     AUDIENCE.md     the audiences, what each needs from the data, and who on
                     the team does what
     PRODUCT.md      product context for design work
+    VISION.md       where we are going: a full research tool (projects,
+                    notes, tools, export)
     OBJECTIVES.md   what we prove with the data, how it is measured, system design
     ENGINE.md       the mathematical engine, draft: every formula and output
     QUESTIONS.md    open machinery decisions with proposals, to be answered
