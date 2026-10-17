@@ -123,20 +123,8 @@ export function ResearchBoard(props: Props) {
   const loading = load.status === "loading";
 
   // The reading order for a selected signal: the Signals window (its card layer) first, the flow and the map
-  // answer it, the rest step back. Each window opens with one line saying what it answers for this signal.
+  // answer it, the rest step back.
   const primary: WinId | null = explicit ? "signals" : null;
-  const lead = useMemo<Partial<Record<WinId, string>> | undefined>(() => {
-    if (!explicit || !selected) return undefined;
-    const unit = unitLabel(locale, selected.ward);
-    return {
-      math: t(locale, "wsLeadMath"),
-      signals: t(locale, "wsLeadMath"),
-      map: t(locale, "wsLeadMap", { hospital: currentHospitalName(locale) }),
-      graph: t(locale, "wsLeadGraph", { unit }),
-      grid: t(locale, "wsLeadGrid", { unit }),
-      assistant: t(locale, "wsLeadAssistant"),
-    };
-  }, [explicit, selected, locale]);
 
   // The tool rail's frame follows the selected signal: the window its relations cover.
   const selectedSpans = explicit && selected ? spansOf(selected) : null;
@@ -242,7 +230,6 @@ export function ResearchBoard(props: Props) {
         overlay={<ReproduceHost locale={locale} projectId={project.id} language={notebookLanguage} />}
         primary={primary}
         answers={ANSWERS}
-        lead={lead}
         chartRequest={chartRequest}
         chartContent={(_id, spec) => (
           <ChartWindow

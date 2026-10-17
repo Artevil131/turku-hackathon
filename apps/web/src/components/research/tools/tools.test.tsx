@@ -130,13 +130,13 @@ describe("the inspector", () => {
   const rate = renderToStaticMarkup(<ToolInspector {...props} tool="rate" />);
   const data = renderToStaticMarkup(<ToolInspector {...props} tool="data" />);
 
-  it("says the slice in one sentence; a tool shows its line, an empty state in words and Run, not the slice form", () => {
+  it("says the slice in one sentence; a tool shows its line and Run, no empty-state prose, not the slice form", () => {
     expect(sliceSentence("en", { ...slice, organism: "Escherichia coli", specimen: "urine" })).toMatch(
       /^Intensive care unit · Escherichia coli · .+ · ESBL · .+ · first isolates$/,
     );
     expect(rate).toContain("All units · ");
     expect(rate).toContain("How many per week in this frame, with its interval.");
-    expect(rate).toContain("Run it on the slice above");
+    expect(rate).not.toContain("tl-empty");
     expect(rate).toMatch(/>Run<kbd>/);
     expect(rate).not.toContain('type="date"');
   });

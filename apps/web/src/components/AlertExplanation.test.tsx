@@ -58,6 +58,6 @@ describe("explanation controls", () => {
     expect(html).toContain("0.3 usual");
     // The method block holds the explanation under "In plain words"; the isolates follow the how-section.
     expect(html.indexOf("In plain words")).toBeLessThan(html.indexOf("Explain"));
-    expect(html.indexOf("responsible doctor")).toBeLessThan(html.indexOf("Isolates behind it"));
+    expect(html.indexOf("responsible doctor")).toBeLessThan(html.indexOf("Data behind it"));
   });
 });

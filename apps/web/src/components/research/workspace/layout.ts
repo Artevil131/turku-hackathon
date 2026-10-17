@@ -77,7 +77,7 @@ export function defaultLayout(): Layout {
     math: { x: 9, y: 22, w: 3, h: 14, open: false },
     assistant: { x: 9, y: 36, w: 3, h: 8, open: false },
     grid: { x: 0, y: 0, w: 12, h: 30, open: false },
-    reproduce: { x: 0, y: 0, w: 12, h: 32, open: false },
+    reproduce: { x: 4, y: 0, w: 5, h: 14, open: false },
   };
   return { wins, charts: {}, order: ["signals", "map", "graph", "math", "assistant", "grid", "reproduce"] };
 }

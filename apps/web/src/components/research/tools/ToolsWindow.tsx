@@ -353,7 +353,6 @@ export function ToolInspector(props: InspectorProps) {
           </label>
         </div>
         {warn}
-        <p className="tl-hint">{t(locale, "toolsSliceHint")}</p>
       </div>
     );
   }
@@ -526,7 +525,6 @@ export function ToolInspector(props: InspectorProps) {
             {t(locale, "toolsError", { error })}
           </p>
         )}
-        {mine.length === 0 && busy !== tool && <p className="tl-empty">{t(locale, "toolsEmpty")}</p>}
         {mine.map((c, i) => (
           <ResultCell
             key={c.id}
