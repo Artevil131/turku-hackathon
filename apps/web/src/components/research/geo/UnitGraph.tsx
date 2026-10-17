@@ -2,7 +2,7 @@ import type { Alert, RelationsResponse } from "@aei/contract";
 import type { WardCode } from "@aei/domain";
 import { t, wardName } from "@aei/i18n";
 import { type CSSProperties, type KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
-import { networkUnits } from "../../../sites.ts";
+import { currentHospitalName, networkUnits } from "../../../sites.ts";
 import { AsOf } from "../../AsOf.tsx";
 import { InfoButton } from "../../Info.tsx";
 import { kindOf, type PanelProps, type SignalKind } from "../board.ts";
@@ -342,7 +342,7 @@ export function UnitGraph({ client, locale, asOf, state, onChange, reducedMotion
           {centre ? t(locale, "netGraphHeading", { unit: centre }) : t(locale, "graphTitle")}
         </h2>
         {rel ? <AsOf locale={locale} date={rel.to} pending={updating} clockDate={asOf ?? undefined} /> : null}
-        <p className="ug-caption">{t(locale, "geoTyksSource")}</p>
+        <p className="ug-caption">{t(locale, "geoTyksSource", { hospital: currentHospitalName(locale) })}</p>
         <p className="ug-caption">{t(locale, "netFlowCaption")}</p>
         <InfoButton locale={locale} label={t(locale, "netFlowInfoLabel")} align="end">
           {t(locale, "netFlowInfo")}

@@ -1,6 +1,6 @@
 import type { AeiClient, Alert, Flow, LiveEvent, Meta, WeeklyResponse } from "@aei/contract";
 import { HOME_SITE, type IsolateRecord, type Site, type SiteId, siteOfWard, WARDS, type Ward, type WardCode } from "@aei/domain";
-import { registerSites, registerWards } from "@aei/i18n";
+import { type Locale, registerSites, registerWards, siteName, t } from "@aei/i18n";
 import { createContext, useContext } from "react";
 
 // Hospitals in the web app (D-051). The server's sites and units come with
@@ -32,6 +32,8 @@ export const isMulti = (): boolean => sites.length > 1;
 export const homeSite = (): Site => sites.find((s) => s.home) ?? HOME_SITE;
 /** The selected hospital, or null for all hospitals. */
 export const currentSite = (): SiteId | null => selected;
+/** The selected hospital's name, or "All hospitals"; with one hospital, its name. */
+export const currentHospitalName = (locale: Locale): string => (selected === null ? t(locale, "siteAll") : siteName(locale, selected));
 /** A hospital's units, or every unit for all hospitals. */
 export const siteWards = (site: SiteId | null = selected): readonly Ward[] =>
   site === null ? wards : wards.filter((w) => w.site === site);

@@ -456,7 +456,7 @@ const StaticLayer = memo(function StaticLayer({
               {l.path ? <path className="hs-ribbon" d={l.path} /> : null}
               <text className="hs-lane-label" x={L.gutter - 6} y={l.mid + 4} textAnchor="end">
                 <title>{wardName(locale, l.ward)}</title>
-                {l.ward}
+                {currentSite() === null ? l.ward : bareWardCode(l.ward)}
               </text>
             </g>
           ))

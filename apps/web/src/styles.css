@@ -1401,6 +1401,10 @@ fieldset.setting {
   outline-offset: 1px;
 }
 
+.page:has(> .site-line) {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
 .site-line {
   margin: 0 0 var(--gap);
   font-size: var(--t-s);
