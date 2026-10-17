@@ -23,6 +23,19 @@
   scroll-snap-type: x proximity;
 }
 
+/* Desktop and laptop widths: the chips wrap onto a second line rather than being cut off at the right edge. */
+@media (min-width: 960px) {
+  .syn-row {
+    flex-wrap: wrap;
+    row-gap: 6px;
+    overflow: visible;
+  }
+  .syn-group {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+}
+
 .syn-group {
   display: flex;
   align-items: center;

@@ -6,7 +6,7 @@
 //   SMOKE_URL=http://localhost:5173 pnpm smoke   # test an app that is already running
 //
 // Options: --data DIR, --as-of YYYY-MM-DD, --api-port 8798, --web-port 5176, --out DIR (default
-// apps/web/smoke-out), --routes home,doctor,... (home is the empty hash), --interactions all|doctor|name,..., --headed. Chrome comes from $CHROME, else google-chrome,
+// apps/web/smoke-out), --desktop WxH (laptop sizes, default 1440x1000), --routes home,doctor,... (home is the empty hash), --interactions all|doctor|name,..., --headed. Chrome comes from $CHROME, else google-chrome,
 // google-chrome-stable, chromium or chromium-browser on the PATH.
 //
 // Per route and viewport it checks: no uncaught exception or console error, no /api request that failed or
@@ -44,8 +44,10 @@ const outDir = resolve(opt("out", join(WEB, "smoke-out")));
 const interactionGroup = opt("interactions", "all");
 const ROUTES = opt("routes", "home,doctor,research,method,settings,intro").split(",");
 const INTERACTIONS = interactionGroup === "all" || interactionGroup === "doctor" ? [] : interactionGroup.split(",").filter(Boolean);
+// --desktop 1366x768 runs the desktop checks and interactions at a laptop-sized window instead of 1440x1000.
+const desktopSize = /^(\d+)x(\d+)$/.exec(opt("desktop", "1440x1000")) ?? ["", "1440", "1000"];
 const VIEWPORTS = [
-  { name: "desktop", width: 1440, height: 1000, mobile: false },
+  { name: "desktop", width: Number(desktopSize[1]), height: Number(desktopSize[2]), mobile: false },
   { name: "phone", width: 390, height: 844, mobile: true },
 ];
 const external = process.env.SMOKE_URL?.replace(/\/$/, "");
