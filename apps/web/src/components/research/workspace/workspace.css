@@ -24,7 +24,7 @@
   min-height: 0;
   isolation: isolate;
 }
-/* A column whose windows need more than the board scrolls itself, never the page. */
+/* The board grows to its tallest column (the page scrolls); a column scrolls itself only as a fallback. */
 .ws-column {
   position: relative;
   display: flex;

@@ -655,14 +655,20 @@ async function main() {
         cdp,
         `(() => {
       const b = document.querySelector('.ws-area').getBoundingClientRect();
-      const p = document.querySelector('.page');
+      const p = document.scrollingElement;
       const svg = document.querySelector('.geo-svg').getBoundingClientRect();
       const body = document.querySelector('#ws-win-map .ws-body').getBoundingClientRect();
-      return { bottom: b.bottom, height: b.height, overflow: p.scrollHeight - p.clientHeight,
+      const need = Math.max(...[...document.querySelectorAll('.ws-column')].map(c => {
+        const w = [...c.querySelectorAll('.ws-win')];
+        return w.reduce((s, e) => s + Number(e.dataset.minBody) + 42, 0) + (w.length - 1) * 8;
+      }));
+      return { bottom: b.bottom, height: b.height, need, overflow: p.scrollHeight - p.clientHeight,
         mapFits: svg.left >= body.left && svg.right <= body.right + 1 && svg.top >= body.top && svg.bottom <= body.bottom + 1 };
     })()`,
       );
-      if (geometry.bottom > 900 || geometry.height < 200 || geometry.overflow > 1)
+      // The fitted default fits the board, so the board ends inside the viewport and the page does not scroll.
+      if (geometry.need > geometry.height + 1) reasons.push(`the fitted default needs more than the board: ${JSON.stringify(geometry)}`);
+      else if (geometry.bottom > 900 || geometry.height < 200 || geometry.overflow > 1)
         reasons.push(`board does not fit viewport: ${JSON.stringify(geometry)}`);
       if (!geometry.mapFits) reasons.push("map SVG clipped in its default dock");
       // No open window is squashed to its header: each body keeps its minimum (the column scrolls instead).
@@ -831,6 +837,57 @@ async function main() {
       await cdp.send("Page.navigate", { url: "about:blank" });
       await load(cdp, urlOf("research"), idle);
       if ((await evaluate(cdp, order)) !== initial) reasons.push("layout was not persisted across reload");
+      // Overflow: three windows in Alert math's column need more than the viewport. The board grows,
+      // the page scrolls, no window is squashed and scrolling down shows the last one whole.
+      const page = `document.scrollingElement`;
+      for (const id of ["assistant", "graph"]) {
+        if (await evaluate(cdp, `!!document.querySelector('#ws-win-${id}')`)) continue;
+        await click("#ws-tray-button");
+        await click(`[data-reopen="${id}"]`);
+        await key("Escape");
+      }
+      for (let i = 0; i < 3 && (await evaluate(cdp, `${mathStack}.querySelectorAll('.ws-win').length`)) < 3; i++) {
+        const loose = await evaluate(
+          cdp,
+          `['assistant', 'graph'].find(id => document.querySelector('#ws-win-' + id).closest('.ws-column') !== ${mathStack})`,
+        );
+        const side = await evaluate(
+          cdp,
+          `${mathColumn} - Number(document.querySelector('#ws-win-${loose}').closest('.ws-column').dataset.columnIndex)`,
+        );
+        await evaluate(cdp, `document.querySelector('#ws-title-${loose}').focus()`);
+        await key(side > 0 ? "ArrowRight" : "ArrowLeft", 1);
+        await idle();
+      }
+      const tall = await evaluate(cdp, `${mathStack}.querySelectorAll('.ws-win').length`);
+      if (tall !== 3) reasons.push(`could not stack three windows in Alert math's column: ${await evaluate(cdp, order)}`);
+      const grown = await evaluate(
+        cdp,
+        `(() => { const c = ${mathStack}; return JSON.stringify({ page: ${page}.scrollHeight - ${page}.clientHeight, inner: c.scrollHeight - c.clientHeight }); })()`,
+      );
+      const { page: pageOverflow, inner } = JSON.parse(grown);
+      if (pageOverflow < 50 || inner > 1) reasons.push(`overflowing board did not grow the page (${grown})`);
+      const tallSquashed = await evaluate(cdp, squashed);
+      if (tallSquashed !== "[]") reasons.push(`overflowing board squashed windows: ${tallSquashed}`);
+      await evaluate(cdp, `window.scrollTo(0, ${page}.scrollHeight)`);
+      await idle();
+      const last = await evaluate(
+        cdp,
+        `(() => { const w = [...${mathStack}.querySelectorAll('.ws-win')].at(-1).getBoundingClientRect(); return w.top >= 0 && w.bottom <= innerHeight + 1; })()`,
+      );
+      if (!last) reasons.push("scrolled to the bottom, the last window of the tall column is not entirely visible");
+      await screenshot(cdp, join(outDir, "research-overflow-bottom.png"));
+      // Maximize fills the viewport, not the grown board.
+      await evaluate(cdp, `window.scrollTo(0, 0)`);
+      await click("#ws-win-math .ws-maximize");
+      const maxFits = await waitIn(
+        `${page}.scrollHeight <= ${page}.clientHeight + 1 && document.querySelector('#ws-win-math').getBoundingClientRect().bottom <= innerHeight`,
+        2000,
+      );
+      if (!maxFits) reasons.push("maximize in an overflowing board did not fit the viewport");
+      await click("#ws-win-math .ws-maximize");
+      await click("#ws-tray-button");
+      await click(".ws-pop-reset");
       // Edge drop from a two-column preset creates a third column, never a free-floating window.
       await click("#ws-tray-button");
       await click('[data-preset="map"]');
@@ -855,8 +912,11 @@ async function main() {
         await load(cdp, urlOf("settings"), idle);
         await click(".settings button[lang='en']");
         await waitIn(`document.documentElement.lang === "en"`);
-        await load(cdp, urlOf("research"), idle);
       }
+      // The default is fitted to the board when the page loads, so load it at this size: a layout
+      // fitted to 900 px would now overflow and (correctly) grow the page instead.
+      await cdp.send("Page.navigate", { url: "about:blank" });
+      await load(cdp, urlOf("research"), idle);
       const compact = await evaluate(
         cdp,
         `(() => {
