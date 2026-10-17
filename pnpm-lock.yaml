@@ -114,6 +114,9 @@ importers:
       '@aei/domain':
         specifier: workspace:*
         version: link:../../libs/utils/domain
+      '@aei/guideline':
+        specifier: workspace:*
+        version: link:../../libs/utils/guideline
       '@aei/i18n':
         specifier: workspace:*
         version: link:../../libs/utils/i18n
