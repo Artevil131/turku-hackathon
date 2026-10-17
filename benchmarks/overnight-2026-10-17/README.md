@@ -56,155 +56,273 @@ P2 skill is against persistence (MAE: 1 - MAE / MAE of persistence; log: differe
 
 ## Morning report
 
-Interim, refreshed by the orchestrator (Claude Code, Opus 5.5, operated by
-Artem) at 08:35. Every experiment here is exploratory (PROTOCOL.md): it
-describes, it proposes, it decides nothing. Numbers are tagged measured (in
-the data), computed (by a run here), derived or assumed; each names the
-record it comes from. The run lost about six hours to a session usage limit:
-three agents stopped at about 02:15 and nothing ran until 08:31 (log.md).
-Artem extended the run to 12:00.
+Closed at 09:53 by the orchestrator (Claude Code, Opus 5.5, operated by
+Artem), on Artem's closing instructions. Every experiment is exploratory
+(PROTOCOL.md): it describes and proposes, it decides nothing. Numbers are
+tagged measured, computed (by a run here), derived or assumed, and name
+their record. The run lost about six hours to a session usage limit (02:15
+to 08:31, log.md).
 
-### 0. State of the method list (Artem's addendum, 01:15)
+### For the pitch (one slide)
 
-| Method (brief no.) | Record | State |
+**The shipped detector set (D-020, D-021, D-031, D-034), scored 2024-10-01
+to 2026-09-27** (computed, harness; baselines/live-set-shipped.json).
+
+| Planted event | Found | Delay | Named right |
+|---|---|---|---|
+| E1 ESBL *E. coli*, Urology | yes | 5 days from the first outbreak isolate (0 from 0002's start date) | cluster |
+| E2 MRSA, ICU | yes | 0 days: sentinel on the first ICU MRSA | sentinel, then cluster |
+| E3 no samples, Health centre South | yes | 0 days from the first empty day | data problem |
+| E4 trimethoprim resistance, urinary *E. coli* | yes | first signal 2026-05-10 | trend |
+
+These four were found by inspection and the thresholds were chosen on them
+(`tuned-on-test`), so this is a demonstration, not a measurement. Delays
+add 2 to 3 days of laboratory turnaround in practice (assumed).
+
+- **Noise:** 4.5 signal episodes a year (95 % 2.1 to 8.6): cluster 1.0,
+  sentinel 1.5, data 2.0, trend 0; 0.09 alerts a week.
+- **Injected clusters** (D2, 200 trials each, seed 2026; held-out seeds
+  2027–2030 in brackets): 4 patients sharing a rare resistant strain within
+  2 weeks, caught in **89 %** (84–93) [89 %] at the shipped thresholds,
+  median 6 days; common ESBL *E. coli* 61 % (54–67) [59 %]; split across
+  two linked units 24 % (19–30) [28.5 %]; common resistant or fully
+  susceptible strains at most 0.5 % (counts cannot see them without
+  typing). At 3 episodes a year the same detectors reach 92 % (87–95) [94
+  %] and 75 % (69–80) [69.5 %] (D5).
+- **N = 8 alternative methods tested, none beat the shipped set at 5
+  episodes a year:** five detectors (Gamma-Poisson with FDR, CUSUM,
+  Farrington, Bayesian change points, an ensemble of the live set and the
+  CUSUM) and three coverage estimators (discounted Beta-binomial, organism
+  mix × per-organism Beta, pooling levels). Closest: the ensemble, at 5
+  episodes a year 0.966 rare and 0.772 common ESBL on held-out seeds,
+  against the shipped set's 0.960 and 0.817 (at 3 a year a stacked
+  combination trained on the injection generator reads 0.800 against 0.695
+  for common ESBL, intervals overlapping, chosen after the run); best
+  single alternative, CUSUM,
+  66.5 % (60–73) [66 %] against 92 %. No coverage estimator met the
+  replacement rule (best C1 +0.0001 against the hospital year, −0.0000 to
+  +0.0002).
+- Scope: these rates measure events shaped like the injections, identical
+  copies of one isolate, which favours the shipped profile-matching test.
+
+### D-020: what to check before accepting or changing it
+
+D-020 is provisional until Artem reviews experiments/0002. Nothing here
+decides it. To accept or change it, check:
+
+1. **Tuned on test.** 0002 chose each alpha by its delay on E1 to E4, all
+   inside the scoring period. Decide whether that is acceptable for the
+   demo, or whether the year-1 re-tune stands in (Choices 5): it chose
+   profile 1e-3, phenotype 1e-2, sampling drop 1e-3, empty run 1e-3, and
+   doubles the noise (9.5 episodes a year against 4.5) for rare k = 4 of
+   0.98 against 0.89 (computed, baselines). Its alphas were chosen on
+   165–320-day baselines, not 365 (harness-review.md finding 13).
+2. **The quoted noise.** D-020 says "about 5 other episodes a year" over
+   all three years with each detector's own key. On the scoring period with
+   METRICS.md's fixed key the shipped set has 4.5 (2.1–8.6), of which only
+   cluster 1.0 and the sampling drop belong to D-020; sentinel episodes are
+   D-021 and part of the data episodes are D-031.
+3. **"Caught every planted event."** After 0002's review: E1 starts
+   2025-05-30, so its delay is 5 days, and 0002's E1 matcher credits any
+   Urology *E. coli* or ESBL episode; E2 is caught first by D-021's sentinel
+   (D-020's excess tests catch it at 6 days, 0002 review); E3 is caught
+   first by D-031's empty run (D-020's sampling drop alone at 3 days); E4's
+   trend moved to 2026-05-10 under D-022.
+4. **Scope of the sensitivity claim.** At the shipped thresholds: rare
+   clone 89 %, common ESBL 61 %, two-unit 24 %, common strains about 0
+   (computed; 0007, 0011). Accept with that scope stated, or not.
+5. **No multiplicity control.** Each test runs at its own alpha over many
+   units, profiles and days (0002). ENGINE.md 3.3 proposes FDR and a
+   budget; 0015 found FDR across 280 unit series loses most sensitivity,
+   while on the 36 phenotype series alone it matches the live phenotype
+   test.
+6. **The two candidate events** of 0002's hand check inside the scoring
+   period (MED-A sampling gap in May 2025; MED-A ampicillin-trimethoprim
+   *E. coli* in September 2025): planted or not is CONTEXT.md question 13
+   for the organiser; until then they are quarantined from D4.
+7. **Sampling drop on real data** needs a weekday and holiday baseline
+   (0002 review); the synthetic data has neither.
+8. **The trend test** (Cochran-Armitage, cumulative 28-day bins, 22 pairs
+   at 0.001 each) differs from ENGINE.md 3.4's 24-month proposal (QUESTIONS
+   C6, open).
+
+The choice is Artem's: accept as is (with its scope), accept with the
+year-1 alphas, or change.
+
+### 0. The method list (Artem's addendum, 01:15)
+
+| Method (brief no.) | Record | Verdict against its baseline |
 |---|---|---|
-| Discounted Beta-binomial (1) | [0012](../../experiments/0012-discounted-beta-binomial/) | closed |
-| Dirichlet organism mix × Beta, WISCA (3) | [0013](../../experiments/0013-dirichlet-organism-mix/) | closed |
-| Pooling levels (6) | 0014 | not started |
-| Gamma-Poisson, guard band, BH (8) | [0015](../../experiments/0015-gamma-poisson-guard-band/) | plan committed, running |
-| CUSUM (9) | 0016 | planning |
-| Farrington-Noufaily (11) | 0017 | not started |
-| BOCPD (13) | [0018](../../experiments/0018-bocpd/) | plan committed, running |
-| Exposure ranking (22) | [0019](../../experiments/0019-exposure-ranking/) | closed |
-| County forecasts: persistence, seasonal naive, Poisson GLM (24) | [0020](../../experiments/0020-county-forecasts/) | closed, Fable review pending |
-| Naming step (27) | 0021 | not started (needs 0015) |
-| Ensemble of the two best detectors (21) | 0022 | not started (needs the detectors) |
+| Discounted Beta-binomial (1) | [0012](../../experiments/0012-discounted-beta-binomial/) | replacement rule not met (C8, C3(b)) |
+| Organism mix × Beta, WISCA (3) | [0013](../../experiments/0013-dirichlet-organism-mix/) | not met (C4, a hair) |
+| Pooling levels (6) | [0014](../../experiments/0014-pooling-levels/) | year-1 choice is the hospital pool; no level meets the rule |
+| Gamma-Poisson, guard band, FDR (8) | [0015](../../experiments/0015-gamma-poisson-guard-band/) | refuted, far behind on D5 |
+| CUSUM (9) | [0016](../../experiments/0016-cusum/) | behind on D5, held-out re-score agrees |
+| Farrington-Noufaily (11) | [0017](../../experiments/0017-farrington-noufaily/) | refuted, far behind on D5 |
+| BOCPD (13) | [0018](../../experiments/0018-bocpd/) | refuted, far behind on D5 |
+| Exposure ranking (22) | [0019](../../experiments/0019-exposure-ranking/) | not above the permutation null |
+| County forecasts (24) | [0020](../../experiments/0020-county-forecasts/) | beats persistence (Fable review: stands with caveats) |
+| Naming step (27) | [0021](../../experiments/0021-naming-step/) | rule names every signal; D7 0.974 (0.966–0.980) for the live set |
+| Ensemble of the two best (21) | [0022](../../experiments/0022-ensemble/) | headline reads higher at 4.5 episodes a year, but no gain at matched noise; held-out seeds agree |
 
-The harness, its specification and choices (harness-spec.md) and a Fable
-review of it (harness-review.md: sound, reproductions of 0004, 0007, 0010
-and 0011 exact, 18 findings, none invalidates a row) were built first.
+Built first: the harness (harness-spec.md), its Fable review
+(harness-review.md: sound; reproductions of 0004, 0007, 0010 and 0011
+exact), the baseline rows, and the leaderboard above (screening, not
+selection).
 
 ### 1. The comparison table
 
-Above, between the markers, regenerated by `leaderboard.py` from every
-`out/metrics.json`; the full flattened table is full-table.md. It is
-screening, not selection: a method is named best in its family only after a
-re-score on the held-out injection seeds 2027 to 2030 (none yet).
+Above, between the markers; every flattened metric in full-table.md.
 
 ### 2. Detection
 
-Only the baseline rows exist so far (computed, harness, seed 2026, 200
-trials per cell). The live set as shipped (`tuned-on-test`): D5 headline
-rare 0.92, common ESBL *E. coli* 0.75, at threshold level m = 3 with 3.0
-cluster and sentinel episodes a year, median delay 6 days; held out (seeds
-2027 to 2030) 0.94 and 0.695. D2 at k = 2, 3, 4, 6: rare 0.165, 0.615,
-0.89, 1.0; common ESBL 0.045, 0.345, 0.61, 0.945; two-unit 0.135, 0.21,
-0.24, 0.805; common resistant and wild type at most 3.5 % at every k.
-Two-unit clusters are the live set's weak family: 4 patients split across
-two linked units are caught in 24 % of trials (held out 28.5 %) against
-89 % in one unit. The year-1 re-tune (Choices 5) chose looser alphas and
-doubles the noise (D4 9.55 episodes a year against 4.52) for D2 rare k = 4
-of 0.98; its D5 headline equals the shipped one because the two threshold
-sweeps overlap (harness-review.md finding 12). D5 measures detection of
-events shaped like `aei.inject`'s injections: identical copies of one
-isolate, within 14 days, in one unit or two.
+![D5 curves](d5-curves.png)
 
-The four planted events, demonstration only (D1 cannot rank methods): the
-shipped live set signals E1 on its first day (5 days from the corrected
-onset 2025-05-30), E2 on the first ICU MRSA (sentinel), E3 on the first
-empty day (empty run), E4 first on 2026-05-10 (computed, harness).
+The figure (d5_figure.py) plots D2 at k = 4 against noise (cluster and
+sentinel episodes a year) for every detection row, one panel per injection
+family; the open dot is each row's headline at 5 a year or less, with its
+median delay. D5 measures detection of events shaped like `aei.inject`'s
+injections. The four planted events are a demonstration only (section
+"For the pitch").
 
-The new detectors (0015, 0016, 0018) are running; this section is filled
-when they close.
+| Row | D5 rare | D5 common ESBL | noise a year | D2 rare k = 3 | D2 two-unit k = 4 |
+|---|---|---|---|---|---|
+| live set shipped (`tuned-on-test`) | 0.92 (0.87–0.95) [held out 0.94] | 0.75 (0.69–0.80) [0.695] | 3.0 | 0.615 | 0.24 |
+| live set re-tuned on year 1 (reference) | 0.92 [0.94] | 0.75 [0.695] | 3.0 | 0.86 | 0.565 |
+| 0016 CUSUM union | 0.665 (0.60–0.73) [0.66] | 0.485 (0.42–0.55) [0.435] | 3.5 | 0.345 | 0.19 |
+| 0017 Farrington-Noufaily | 0.31 (0.25–0.38) | 0.24 (0.19–0.30) | 4.5 | 0.055 | 0.01 |
+| 0015 Gamma-Poisson + FDR | 0.205 (0.155–0.27) | 0.095 | 1.0 | 0.20 | 0.135 |
+| 0018 BOCPD | 0.14 (0.10–0.19) | 0.135 | 1.5 | 0.095 | 0.105 |
+| 0022 ensemble, rank product (primary) | 0.94 (0.90–0.97) [0.965] | 0.83 (0.77–0.88) [0.765] | 4.5 | — | 0.04 |
+| 0022 read at matched noise, 5 a year (interpolated) | 0.942 [0.966] against live 0.960 [0.960] | 0.834 [0.772] against live 0.836 [0.817] | 5.0 | | |
+
+All computed, seed 2026, 200 trials per cell; held-out seeds 2027–2030 in
+brackets, run only for the live set and the best alternative (0016),
+Artem's winner's-curse rule. D2 columns are at each row's own operating
+level (0017's year-1 level turned out ten times too strict on the scoring
+period; at its D5 level it reads 0.19 and 0.16).
+
+The ensemble (0022) is the one alternative close to the live set. Read at
+its own headline (4.5 episodes a year) it looks better, but at matched
+noise it is level, and the held-out seeds put its common ESBL rate below
+the live set's (0.772 against 0.817 at 5 a year). Where it may help is a
+quieter operating point: at 1.5 episodes a year it keeps common ESBL at
+0.735 against the live set's 0.44 (screening only, computed, 0022); that
+reading was not chosen before the run and needs its own held-out test.
+
+What catches 3-patient and common-profile clusters that the live set
+misses: nothing tonight. At k = 3 the re-tuned live set catches 0.86 of
+rare clones and the best alternative 0.345; every method stays at or below
+4.5 % on common resistant and fully susceptible strains (0011's finding,
+now across five methods). The likeliest reason the live set wins is
+information, not statistics: its profile-excess test matches the exact
+13-drug profile that every injected copy shares, while the alternatives
+count unit × phenotype or unit × organism series (0015, 0016, 0018 say so;
+0015 on the 36 phenotype series alone matches the live phenotype test). A
+real outbreak's isolates are not identical copies, so this advantage is
+partly the injection's shape.
+
+Naming (0021, computed): a lookup from detector to ENGINE.md 3.6's five
+kinds names all 50,521 signals of the live set and 0015 the way the
+harness does; D7 is 0.974 (0.966–0.980) for the live set, 0.943 counting
+only the first matching signal; D-034's incident rule reproduces 18
+alerts in 15 incidents, and windows of 14, 28 or 56 days change nothing at
+the operating level. The trend sentence lacks two fields (start share and
+span); D7 is partly circular, since the injection labels and the rule share
+one taxonomy.
+
+Two corrections to the harness's own choices: Choice 3 counts D5 noise over
+cluster and sentinel signals only, which leaves out signals named
+divergence (BOCPD's %R part adds 5.0 episodes a year that D5 does not
+count, 0018); and the D5 headline sits on a knife-edge when a sweep level
+lands near 5 a year (0015: 5.02).
 
 ### 3. Coverage
 
-No estimator meets the replacement rule (METRICS.md "Decision rules": C1
-within 0.002, C4 not worse in either untested convention, C8 better,
-C3(b) and C7(a) passing).
+No estimator meets the replacement rule (C1 within 0.002, C4 not worse in
+either untested convention, C8 better, C3(b) and C7(a) passing).
 
-| Row | C1 all (Δ vs hospital-365) | C8 C1 | C3(b) | C7(a) | C6 E1 ceftriaxone | Verdict |
+| Row | C1 all, Δ vs hospital-365 | C8 | C3(b) severe obs / exp | C7(a) | C6 E1 ceftriaxone | Verdict |
 |---|---|---|---|---|---|---|
-| hospital-365 (baseline) | 0.1414 | 0.1669 | severe 29 / 26.2 | 0.899 | not reached | reference |
-| shipped D-023/D-033 (`tuned-on-test`) | +0.0003 (+0.0001 to +0.0005) | 0.1656 | 23 / 19.6, passes | 0.902 | 47 d | the row to replace |
-| 0012 discounted Beta-binomial δ 0.95, M 10 | +0.0002 (−0.0000 to +0.0004) | worse than shipped by 0.0011 (0.0002 to 0.0021) | severe 14 / 7.3, fails (ratio 1.92, tail p 0.017) | 0.929 | 48 d | not met (C8, C3(b)) |
-| 0013 organism mix × Beta, M_π 100, M 30 | +0.0001 (−0.0000 to +0.0002) | 0.1653 | 29 / 27.8, passes | 0.905 | 48 d | not met (C4, a hair below shipped, inside its interval) |
+| hospital-365 (baseline) | 0.1414 | C1 0.1669 | 29 / 26.2 | 0.899 | not reached | reference |
+| shipped D-023/D-033 (`tuned-on-test`) | +0.0003 (+0.0001 to +0.0005) | C1 0.1656 | 23 / 19.6 | 0.902 | 47 d | the row to replace |
+| 0012 discounted Beta-binomial | +0.0002 (−0.0000 to +0.0004) | worse than shipped by 0.0011 | 14 / 7.3, fails | 0.929 | 48 d | not met |
+| 0013 organism mix × Beta | +0.0001 (−0.0000 to +0.0002) | C1 0.1653 | 29 / 27.8 | 0.905 | 48 d | not met (C4) |
+| 0014 pooling levels (year-1 pick: hospital) | 0 (in/out pool −0.00005, −0.00011 to +0.00001) | every level fails | — | — | — | not met |
 
-All computed (harness; 0012, 0013). C6, days from the first outbreak
-isolate until the 90 % interval excludes the pre-onset value: E1
-ceftriaxone in Urology urine 47 to 48 days for every estimator that
-reaches it; cefuroxime only 0013 (117 days); E2 (ICU wound cefuroxime,
-about 3 isolates a week) is never reached by any estimator within 120
-days. The hospital year never reacts. In 0012 even δ = 0.90 needed 44 to
-48 days; its no-onset-split ablation reached E1 in 25 to 34 days with a
-narrower interval, which C6 rewards and C7 and C8 must then judge.
+All computed. C6, days from the first outbreak isolate until the 90 %
+interval excludes the pre-onset value: E1 ceftriaxone 47 to 48 days for
+every estimator that reaches it; E2 (ICU wound, about 3 isolates a week) is
+reached by none within 120 days; the hospital year never moves. The doctor's
+four-week figure and its "differs" flag (Artem's point 4) have no decided
+rule: options with costs are QUESTIONS.md B10 (a unit's four-week cell has a
+median of 27 tested results in urine, 6 in wound, 2 in blood; 59 % of cells
+have under 10, computed). The reliability label (point 5) is B11.
 
 ### 4. Prediction
 
-County forecasts (0020, computed, targets 2024-10 to 2026-09, THL fetch of
-2026-10-17): the cell chosen on 2024-01 to 2024-09 is a 24-month rolling
-mean with a pooled negative-binomial width; no harmonic or trend term was
-chosen anywhere, so "Poisson GLM" here is in effect a rolling mean (the
-leaderboard's method line still says "with annual harmonics"). Skill
-against persistence, pooled over 92 county series: log score +0.402
-(+0.309 to +0.482), MAE +0.144 (+0.063 to +0.213); without the last two
-months +0.408 and +0.150. Log skill by phenotype: MRSA +0.62, ESBL +0.52,
-VRE +0.25, CPE +0.22, all intervals above zero; MAE skill intervals include
-zero for ESBL and VRE; national totals worse than persistence on MAE
-(−0.126, −0.489 to +0.134). By OBJECTIVES.md's rule the pooled forecast
-beats the baseline; whether to ship it is Artem's call.
+County forecasts (0020): a 24-month rolling mean with a pooled
+negative-binomial width beats persistence, log score +0.402 (+0.309 to
++0.482), MAE +0.144 (+0.063 to +0.213), and +0.408 without the last two
+months; by phenotype MRSA +0.62, ESBL +0.52, CPE +0.22 (log skill, all
+above zero). The Fable review stands it with caveats: VRE's +0.25 is mostly
+persistence's floor (+0.06 at a floor of 0.1), VRE and CPE MAE skill is the
+skill of forecasting zero, and THL's last month is about half reported, so
+the ship rule of OBJECTIVES.md should not be read as firing for VRE.
 
-Exposure (0019, computed): after E1 and after E2 no unit other than the
-source exceeds its own 26-week baseline, so their AUC is undefined. Over
-24 real ESBL and MRSA episodes (7 with a positive unit), pooled AUC 0.627
-(share) and 0.657 (raw), permutation p 0.22 and 0.14: exposure did not
-rank the right units better than rewired graphs with the same volumes. The
-flow-partner injection control reaches only 0.51 to 0.58, because flows on
-this data are mostly unit volume, which the null keeps.
+Exposure (0019): after E1 and E2 no other unit exceeds its baseline (AUC
+undefined); over 24 real ESBL and MRSA episodes the pooled AUC is 0.627
+(share) and 0.657 (raw), permutation p 0.22 and 0.14: not above graphs with
+the same unit volumes. Lead-lag was not on tonight's list.
 
-Lead-lag (brief's method 25) is not on tonight's list.
-
-### 5. Other things learned (patterns that are not the four events)
+### 5. Other things learned (not the four events)
 
 - Background counts are close to Poisson: weekly cultures per unit
-  variance/mean 0.84 to 1.15 in the wards and ED; phenotype weekly counts
-  0.9 to 1.2 except URO ESBL 2.54 and ICU MRSA 2.57, the planted events
-  (measured, orchestrator). Over-dispersion models have little to gain
-  outside the events.
+  variance/mean 0.84 to 1.15 in the wards and ED, phenotype counts 0.9 to
+  1.2 except the planted URO ESBL (2.54) and ICU MRSA (2.57) (measured,
+  orchestrator).
 - The health centres sample seasonally: PHC-N and PHC-S monthly cultures
   peak in June and July (270 to 302) and dip in January and February (184
-  to 213); ED and the wards are flat (measured). PHC-N's weekly
-  variance/mean 1.45 falls to 0.80 after a 9-week rolling mean is removed
-  (computed). A 365-day baseline averages over the season.
-- 10.7 % of positive cultures grow two organisms, none three (measured);
-  counting them as one episode (WISCA) lowers realised coverage of the top
-  severe pick by 0.5 points (computed, 0013).
+  to 213); ED and the wards are flat (measured).
+- 10.7 % of positive cultures grow two organisms (measured); WISCA by
+  episode lowers the top severe pick's realised coverage by 0.5 points
+  (computed, 0013).
 - The organism mix within a specimen is the same in every unit (chi-square
   p 0.36 to 0.90, measured, 0013); 16 organism × drug pairs are 96 to 100 %
-  untested, so testing is by organism panel (measured, 0013).
-- ENGINE.md 2.4's closed-form coverage variance is correct (maximum
-  relative error 0.64 % against Monte Carlo, computed, 0013); the prior
-  strengths of QUESTIONS B1 and B4 move C1 by at most 0.00023 (computed,
-  0013).
+  untested (testing by organism panel, measured, 0013).
+- ENGINE.md 2.4's closed-form coverage variance is correct (maximum relative
+  error 0.64 % against Monte Carlo, computed, 0013); QUESTIONS B1 and B4's
+  prior strengths move C1 by at most 0.00023 (computed, 0013).
+- Year 1 chooses CUSUM's θ = 8, not QUESTIONS C5's 2.5 (computed, 0016);
+  Siegmund's run-length approximation is within 9 % of simulation (0016).
+- Farrington's down-weighting never acts here: the outbreak inflates the
+  dispersion that standardises its own residuals (computed, 0017).
 
 ### 6. Methods that did well, and their pictures
 
-The county forecast (0020) is the one row so far that beats its baseline.
-Proposed picture (0020's record, "Proposed visualisation"): on the
-researcher's flat county map, each county shows next month's expected
-incidence per 100,000 as its fill, with the 80 % predictive interval
-written under the count ("12 (7–18)") and a one-line comparison with last
-month; sketch `experiments/0020-county-forecasts/out/skill_by_phenotype.svg`
-(skill by phenotype with intervals).
+Only the county forecast (0020) beats its baseline. Its picture
+(0020, "Proposed visualisation"): on the researcher's flat county map each
+county's fill is next month's expected incidence per 100,000, with the 80 %
+predictive interval under the count ("12 (7–18)") and a one-line comparison
+with last month; sketch `experiments/0020-county-forecasts/out/skill_by_phenotype.svg`.
+The live set needs no new picture; its D5 curve is the figure above.
 
 ### 7. What failed, what next, and QUESTIONS.md items
 
-- Failed or stalled: the session usage limit (02:15 to 08:31) stopped
-  0015, 0013's run and the harness fixes; all resumed. E1's exposure AUC is
-  undefined by METRICS.md's outcome definition.
-- QUESTIONS B1, B4 (prior strengths): sharpened, they matter little on this
-  data (0013). B3 (δ): no δ reacts to E1 faster than 44 days without onset
-  splitting (0012). D1, D2 (edges and null): exposure over real episodes is
-  not above the label-permutation null (0019). D6 (county forecast): the
-  rolling mean beats persistence (0020).
-- Next: filled at the end of the run.
+- **Failed:** every new detector trails the live set on injections shaped
+  like `aei.inject`'s; no coverage estimator beats the hospital year by a
+  margin a doctor would notice; exposure is not above its null; E1 and E2
+  give no exposure AUC. The session usage limit stopped three agents for
+  six hours; all resumed and closed.
+- **Next, for Artem to choose** (Artem's closing instructions stop new
+  detector and estimator experiments tonight): injections that are not
+  identical copies (one or two results differing), so D5 stops favouring
+  exact profile matching; a scan statistic over linked units for the
+  two-unit family (the live set's weakest, 24 %); the engine port
+  (engine-port-plan.md), which waits for Artem's OK.
+- **QUESTIONS.md:** B1 and B4 sharpened (prior strengths matter little,
+  0013); B3 (δ: no δ reacts to E1 in under 44 days without the onset split,
+  0012); B10 and B11 added with options and costs, no pick; C3 and C4 (the
+  Gamma-Poisson with FDR loses sensitivity on unit organism series, 0015);
+  C5 (θ = 8 on year 1, 0016); D1 and D2 (exposure not above the null, 0019);
+  D6 (the rolling mean beats persistence, 0020).
