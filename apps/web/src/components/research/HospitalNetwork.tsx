@@ -76,6 +76,8 @@ export function HospitalNetwork({ client, locale, asOf, state, onChange }: Panel
   }, [client, asOf, reload]);
 
   const rel = data?.relations ?? null;
+  // A refetch keeps the previous data on screen, dimmed, with an "updating" line next to the as-of.
+  const updating = !!rel && (loading || (!!asOf && asOf !== rel.asOf));
   const flows = rel?.flows ?? [];
   const pairs = useMemo(() => undirectedFlows(flows), [flows]);
   const maxPair = pairs[0]?.patients ?? 0;
@@ -133,13 +135,13 @@ export function HospitalNetwork({ client, locale, asOf, state, onChange }: Panel
   const unitsLit = WARDS.filter((w) => signals.byUnit.has(w.code));
 
   return (
-    <section className="board-panel hnet" aria-labelledby="hnet-title" aria-busy={loading}>
+    <section className="board-panel hnet" aria-labelledby="hnet-title" aria-busy={loading} data-stale={updating}>
       <header className="hnet-head">
         <div className="hnet-titleline">
           <h2 id="hnet-title" className="hnet-title">
             {rel ? t(locale, "netTitle", { from, to }) : t(locale, "netPanelAria")}
           </h2>
-          {rel ? <AsOf locale={locale} date={rel.asOf} pending={!!asOf && asOf !== rel.asOf} clockDate={asOf ?? undefined} /> : null}
+          {rel ? <AsOf locale={locale} date={rel.asOf} pending={updating} clockDate={asOf ?? undefined} /> : null}
         </div>
         <p className="hnet-note">{t(locale, "netShareNote")}</p>
         <div className="hnet-controls">

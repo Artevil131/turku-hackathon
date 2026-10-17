@@ -1,5 +1,5 @@
 import { t } from "@aei/i18n";
-import { useCallback, useEffect, useState } from "react";
+import { type KeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
 import { hashParams, writeHashParams } from "../../url.ts";
 import { type BoardState, boardFromUrl, boardToParams, type FeedProps, PANELS, type Panel } from "./board.ts";
 import { HospitalNetwork } from "./HospitalNetwork.tsx";
@@ -60,6 +60,24 @@ export function ResearchBoard(props: Props) {
     if (x !== "feed") onChange({ panel: x });
   };
 
+  const selected: Tab = wide ? state.panel : tab;
+  const tabRefs = useRef(new Map<Tab, HTMLButtonElement>());
+  // Roving tabindex: one tab stop; arrows, Home and End move and select (the panel swap is instant).
+  const onTabKey = (e: KeyboardEvent, x: Tab) => {
+    const order = wide ? PANELS : tabs;
+    const i = order.indexOf(x as Panel);
+    let next: number | null = null;
+    if (e.key === "ArrowRight") next = (i + 1) % order.length;
+    else if (e.key === "ArrowLeft") next = (i - 1 + order.length) % order.length;
+    else if (e.key === "Home") next = 0;
+    else if (e.key === "End") next = order.length - 1;
+    const to = next === null ? undefined : order[next];
+    if (to === undefined) return;
+    e.preventDefault();
+    choose(to);
+    tabRefs.current.get(to)?.focus();
+  };
+
   return (
     <div className="section board">
       <div className="board-tabs" role="tablist" aria-label={t(locale, "boardPanels")}>
@@ -68,9 +86,17 @@ export function ResearchBoard(props: Props) {
             key={x}
             type="button"
             role="tab"
+            id={`board-tab-${x}`}
             className="board-tab"
             data-panel={x}
-            aria-selected={wide ? state.panel === x : tab === x}
+            aria-selected={selected === x}
+            aria-controls={x === "feed" ? "board-panel-feed" : "board-panel-main"}
+            tabIndex={selected === x ? 0 : -1}
+            ref={(el) => {
+              if (el) tabRefs.current.set(x, el);
+              else tabRefs.current.delete(x);
+            }}
+            onKeyDown={(e) => onTabKey(e, x)}
             onClick={() => choose(x)}
           >
             {x === "feed" ? (
@@ -86,10 +112,21 @@ export function ResearchBoard(props: Props) {
           </button>
         ))}
       </div>
-      <div className="board-feed" data-shown={wide || tab === "feed"}>
+      <div
+        className="board-feed"
+        id="board-panel-feed"
+        {...(wide ? {} : { role: "tabpanel", "aria-labelledby": "board-tab-feed" })}
+        data-shown={wide || tab === "feed"}
+      >
         <SignalFeed {...panelProps} />
       </div>
-      <div className="board-main" data-shown={wide || tab !== "feed"}>
+      <div
+        className="board-main"
+        id="board-panel-main"
+        role="tabpanel"
+        aria-labelledby={`board-tab-${state.panel}`}
+        data-shown={wide || tab !== "feed"}
+      >
         {state.panel === "grid" ? <UnitGrid {...panelProps} /> : null}
         {state.panel === "network" ? <HospitalNetwork {...panelProps} /> : null}
         {state.panel === "map" ? <RegionalMap {...panelProps} /> : null}

@@ -2,7 +2,7 @@ import { type IsolateRecord, PHENOTYPES, type Phenotype, WARDS, type WardCode } 
 import { formatDate, phenotypeName, t } from "@aei/i18n";
 import { type KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AsOf } from "../AsOf.tsx";
-import { kindOf, type PanelProps } from "./board.ts";
+import { GRID_WEEKS, kindOf, type PanelProps } from "./board.ts";
 import "./UnitGrid.css";
 
 // The researcher's unit grid (spec-research.md): nine units across, ISO weeks
@@ -10,7 +10,6 @@ import "./UnitGrid.css";
 // selected phenotype in that unit and week. The shade is a count, not
 // surprise: the API has no weekly expected count (gap R5).
 
-const WEEK_CHOICES = [12, 26, 52] as const;
 const STEPS = 5;
 const DAY = 86_400_000;
 
@@ -51,7 +50,7 @@ interface Cell {
 
 export function UnitGrid({ client, locale, asOf, state, onChange }: PanelProps) {
   const phenotype: Phenotype = state.phenotype ?? "esbl";
-  const [weeks, setWeeks] = useState<number>(12);
+  const weeks = state.weeks;
   const [data, setData] = useState<Loaded | null>(null);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -93,7 +92,9 @@ export function UnitGrid({ client, locale, asOf, state, onChange }: PanelProps) 
     };
   }, [client, asOf, weeks, reload]);
 
-  const shown = data && data.weeks === weeks ? data : null;
+  // The previous window stays on screen, dimmed, while a new one loads; only the first load shows a skeleton.
+  const shown = data;
+  const updating = !!shown && !error && (loading || shown.weeks !== weeks || (!!asOf && asOf !== shown.asOf));
 
   const model = useMemo(() => {
     if (!shown) return null;
@@ -168,13 +169,13 @@ export function UnitGrid({ client, locale, asOf, state, onChange }: PanelProps) 
   const topWeek = asOf ? mondayMs(asOf) : null;
 
   return (
-    <section className="board-panel ugrid" aria-labelledby="ugrid-title" aria-busy={loading}>
+    <section className="board-panel ugrid" aria-labelledby="ugrid-title" aria-busy={loading} data-stale={updating}>
       <header className="ugrid-head">
         <div className="ugrid-titleline">
           <h2 id="ugrid-title" className="ugrid-title">
             {t(locale, "gridTitle", { phenotype: ph })}
           </h2>
-          {shown ? <AsOf locale={locale} date={shown.asOf} pending={!!asOf && asOf !== shown.asOf} clockDate={asOf ?? undefined} /> : null}
+          {shown ? <AsOf locale={locale} date={shown.asOf} pending={updating} clockDate={asOf ?? undefined} /> : null}
         </div>
         <p className="ugrid-note">{t(locale, "gridNote")}</p>
         {first !== undefined && last !== undefined ? (
@@ -198,8 +199,8 @@ export function UnitGrid({ client, locale, asOf, state, onChange }: PanelProps) 
             ))}
           </div>
           <div className="ugrid-seg" role="group" aria-label={t(locale, "gridWeeksLabel")}>
-            {WEEK_CHOICES.map((n) => (
-              <button key={n} type="button" className="ugrid-segbtn" aria-pressed={n === weeks} onClick={() => setWeeks(n)}>
+            {GRID_WEEKS.map((n) => (
+              <button key={n} type="button" className="ugrid-segbtn" aria-pressed={n === weeks} onClick={() => onChange({ weeks: n })}>
                 {t(locale, "gridWeeks", { n })}
               </button>
             ))}

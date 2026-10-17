@@ -30,8 +30,14 @@ export function kindOf(alert: Alert): SignalKind | null {
   }
 }
 
+export const GRID_WEEKS = [12, 26, 52] as const;
+export type GridWeeks = (typeof GRID_WEEKS)[number];
+export const DEFAULT_WEEKS: GridWeeks = 12;
+
 export interface BoardState {
   panel: Panel;
+  /** The unit grid's window in weeks; 12 is the default and stays out of the URL. */
+  weeks: GridWeeks;
   /** Filters the feed and highlights the unit in every panel. */
   unit: WardCode | null;
   kinds: SignalKind[];
@@ -48,7 +54,9 @@ export function boardFromUrl(): BoardState {
   const unit = p.get("unit");
   const ph = p.get("ph");
   const focus = p.get("focus");
+  const weeks = Number(p.get("weeks"));
   return {
+    weeks: GRID_WEEKS.find((w) => w === weeks) ?? DEFAULT_WEEKS,
     panel: PANELS.includes(panel as Panel) ? (panel as Panel) : "grid",
     unit: unit && isWardCode(unit) ? unit : null,
     kinds: (p.get("kind") ?? "").split(",").filter((k): k is SignalKind => KINDS.includes(k as SignalKind)),
@@ -62,6 +70,7 @@ export function boardToParams(s: BoardState): Record<string, string | null> {
   // The default panel stays out of the URL, so a link that names one is a deliberate choice.
   return {
     panel: s.panel === "grid" ? null : s.panel,
+    weeks: s.weeks === DEFAULT_WEEKS ? null : String(s.weeks),
     unit: s.unit,
     kind: s.kinds.join(",") || null,
     ph: s.phenotype,

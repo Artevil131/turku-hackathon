@@ -17,20 +17,24 @@ const FIRST_MONTH_COL = 2021;
 type View = "rate" | "certainty";
 type Load<T> = { state: "loading" } | { state: "ok"; data: T } | { state: "404" } | { state: "error" };
 
-function useLoad<T>(fetcher: () => Promise<T>, deps: unknown[], attempt: number): Load<T> {
+function useLoad<T>(fetcher: () => Promise<T>, deps: unknown[], attempt: number): Load<T> & { fetching: boolean } {
   const [res, setRes] = useState<Load<T>>({ state: "loading" });
+  const [fetching, setFetching] = useState(true);
   // biome-ignore lint/correctness/useExhaustiveDependencies: fetcher is rebuilt each render; deps say when to refetch
   useEffect(() => {
     let live = true;
-    fetcher().then(
-      (data) => live && setRes({ state: "ok", data }),
-      (e) => live && setRes(e instanceof ApiError && e.status === 404 ? { state: "404" } : { state: "error" }),
-    );
+    setFetching(true);
+    fetcher()
+      .then(
+        (data) => live && setRes({ state: "ok", data }),
+        (e) => live && setRes(e instanceof ApiError && e.status === 404 ? { state: "404" } : { state: "error" }),
+      )
+      .finally(() => live && setFetching(false));
     return () => {
       live = false;
     };
   }, [...deps, attempt]);
-  return res;
+  return { ...res, fetching };
 }
 
 // Region names exactly as THL and Statistics Finland give them (Finnish genitive forms are official names, not cut).
@@ -138,6 +142,8 @@ export function RegionalMap({ client, locale, asOf }: PanelProps) {
   const focusSeries = focusName ? byRegion.get(focusName) : undefined;
   const hasGeo = counties.state === "ok";
   const loading = regional.state === "loading" || counties.state === "loading";
+  // A refetch (clock move, group change) keeps the previous data on screen, dimmed, with an "updating" line.
+  const updating = !loading && data !== null && (regional.fetching || (asOf !== null && asOf !== data.asOf));
   const noMonths = data !== null && months.length === 0;
 
   const retry = () => {
@@ -149,7 +155,7 @@ export function RegionalMap({ client, locale, asOf }: PanelProps) {
       <h2 className="map-title">{t(locale, "mapTitle")}</h2>
       {data ? (
         <span className="map-asof">
-          <AsOf locale={locale} date={data.asOf} pending={asOf !== null && asOf !== data.asOf} clockDate={asOf ?? undefined} />
+          <AsOf locale={locale} date={data.asOf} pending={updating} clockDate={asOf ?? undefined} />
           {month ? <span className="map-monthshown">{t(locale, "mapMonthShown", { month: monthLong(month) })}</span> : null}
         </span>
       ) : null}
@@ -260,7 +266,7 @@ export function RegionalMap({ client, locale, asOf }: PanelProps) {
   );
 
   return (
-    <section className="board-panel map" aria-label={t(locale, "mapTitle")} aria-busy={loading}>
+    <section className="board-panel map" aria-label={t(locale, "mapTitle")} aria-busy={loading || updating} data-stale={updating}>
       {header}
       {quantity}
 
