@@ -106,7 +106,7 @@ def live_signals(records, cultures):
     documented on each detector above; no tuning parameters. D-051: split by
     hospital, home first, and exclude detected clusters from trends causally.
     """
-    return _signals(_detect.live_signals(_records(records), _records(cultures, _Culture)))
+    return _signals(_detect.live_signals(_records(records), _records(cultures, _Culture), current_app=True))
 
 
 def cpe_alerts(records, window=None):
@@ -174,7 +174,7 @@ def coverage(records, *, as_of, ward, specimen, sex=None, age_group=None, onset=
     {code, type, ...}, default dataset units. Informs, does not prescribe.
     """
     r = _coverage.coverage(_records(records), as_of=as_of, ward=ward, specimen=specimen, sex=sex,
-        age_group=age_group, onset=onset, window_days=window_days, min_tested=min_tested, wards=wards)
+        age_group=age_group, onset=onset, window_days=window_days, min_tested=min_tested, wards=wards, current_app=True)
     return dict(query=r.query, level=r.level, isolates=r.isolates, sexApplied=r.sex_applied,
         ageGroupApplied=r.age_group_applied, onsetApplied=r.onset_applied,
         **{"from": r.from_}, organisms=[dict(organism=o, isolates=n, share=s) for o, n, s in r.organisms],
@@ -209,7 +209,7 @@ def suggest(result, severity):
     """
     return [dict(antibiotic=s.antibiotic, standing=s.standing, basis=s.basis, share=s.share, interval=s.interval,
         allOrganisms=dict(share=s.all_share, interval=s.all_interval), coverage=_antibiotic_dict(s.coverage))
-        for s in _coverage.suggest(_coverage_result(result), severity)]
+        for s in _coverage.suggest(_coverage_result(result), severity, current_app=True)]
 
 
 def suggest_combinations(result, severity, limit=5):
@@ -222,4 +222,4 @@ def suggest_combinations(result, severity, limit=5):
     standing then coverage without AWaRe (D-056). limit defaults to 5.
     """
     return [dict(antibiotics=s.antibiotics, standing=s.standing, gain=s.gain, coverage=asdict(s.coverage))
-        for s in _coverage.suggest_combinations(_coverage_result(result), severity, limit)]
+        for s in _coverage.suggest_combinations(_coverage_result(result), severity, limit, current_app=True)]

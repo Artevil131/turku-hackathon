@@ -138,7 +138,7 @@ def test_coverage_suggest_and_combinations_match_typescript(dataset, ts_queries)
     for t in ts_queries:
         q = t["q"]
         r = cl.coverage(
-            records, as_of=q["asOf"], ward=q["ward"], specimen=q["specimen"], sex=q.get("sex"), window_days=q["windowDays"], min_tested=q["minTested"]
+            records, as_of=q["asOf"], ward=q["ward"], specimen=q["specimen"], sex=q.get("sex"), window_days=q["windowDays"], min_tested=q["minTested"], current_app=True
         )
         where = json.dumps(q)
         assert (r.level, r.isolates, r.sex_applied, r.from_) == (t["level"], t["isolates"], t["sexApplied"], t["from"]), where
@@ -154,9 +154,9 @@ def test_coverage_suggest_and_combinations_match_typescript(dataset, ts_queries)
         mine = [[list(c.antibiotics), c.share, lst(c.interval), [c.counts.covered, c.counts.known], list(c.alone), c.untested] for c in r.combinations]
         assert_same(t["combinations"], mine, where + " combinations")
         for sev in ("mild", "severe"):
-            mine = [[s.antibiotic, s.standing, s.share, lst(s.interval), s.all_share, lst(s.all_interval)] for s in cl.suggest(r, sev)]
+            mine = [[s.antibiotic, s.standing, s.share, lst(s.interval), s.all_share, lst(s.all_interval)] for s in cl.suggest(r, sev, current_app=True)]
             assert_same(t[sev], mine, where + sev)
-        pairs = [[list(c.antibiotics), c.standing, c.gain] for c in cl.suggest_combinations(r, "severe")]
+        pairs = [[list(c.antibiotics), c.standing, c.gain] for c in cl.suggest_combinations(r, "severe", current_app=True)]
         assert_same(t["pairs"], pairs, where + " pairs")
         saw["sex_applied"] += r.sex_applied
         saw["pairs"] += bool(pairs)
@@ -188,8 +188,8 @@ def test_standings_and_order():
         row("CRO", None, None),  # no estimate: not assessable
     ]
     assert order(rows, "severe") == [
-        ("TZP", "clears"),  # Coverage first, without an AWaRe tier (D-056).
-        ("AMP", "clears"),
+        ("AMP", "clears"),  # Recorded experiment order: Access before Watch.
+        ("TZP", "clears"),
         ("MEM", "borderline"),
         ("CIP", "below"),
         ("CXM", "not assessable"),  # not assessable last, in all-organism share order

@@ -125,7 +125,12 @@ relative; these parity tests skip when Node is unavailable.
 ## Analysis helpers
 
 The modules below are internal analysis interfaces, not the stable public
-method surface above.
+method surface above. Their coverage/suggestion and detector helpers retain
+the recorded experiment behaviour by default; `aei.methods` explicitly opts
+into today's app behaviour (`current_app=True`). `coverage_list.month_loop`
+defaults to today's app, like its TypeScript backtest; recorded-figure checks
+select `month_loop(..., current_app=False)`. This keeps D-056's ordering change
+and later hospital/filter rules from rewriting earlier experiment results.
 
 The root uv workspace keeps the experiment dependencies (D-024):
 

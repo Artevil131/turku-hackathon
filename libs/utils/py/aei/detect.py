@@ -598,9 +598,13 @@ def in_detected_cluster(clusters: Sequence[Signal]) -> DetectedClusters:
     return DetectedClusters(clusters)
 
 
-def live_signals(records: Sequence[IsolateRecord], cultures: Sequence[Culture]) -> list[Signal]:
+def live_signals(records: Sequence[IsolateRecord], cultures: Sequence[Culture], *, current_app: bool = False) -> list[Signal]:
     """Every signal of the live detector set over a history; cluster isolates are left out of the trend test
-    from the day their cluster was detected."""
+    from the day their cluster was detected. The default keeps the experiments' pooled history;
+    `current_app=True` applies today's per-site splitting (D-051), used by `aei.methods`.
+    """
+    if not current_app:
+        return _site_signals(records, cultures)
     records_by_site = by_site(records)
     cultures_by_site = by_site(cultures)
     sites = list(dict.fromkeys([*records_by_site, *cultures_by_site]))

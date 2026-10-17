@@ -243,3 +243,33 @@ def test_seeded_fixtures_exercise_every_statistical_detector(ts_results):
     assert any(s.get('site') == 'sata' for s in ts_results['live-multisite'])
     assert ts_results['pair-gain-2-limit5']
     assert not ts_results['pair-gain-1-limit5']
+
+
+def test_experiment_defaults_remain_separate_from_public_methods():
+    from aei import coverage_list, detect
+
+    rows = [isolate(i, 440, ward=ward) for i, ward in enumerate(['URO'] * 10 + ['ED'] * 10 + ['sata/URO'] * 10)]
+    records = methods._records(rows)
+    query = dict(as_of='2025-03-23', ward='URO', specimen='urine')
+    # The recorded helper knows only the dataset's wards, not later site registries.
+    with pytest.raises(KeyError, match='sata/URO'):
+        coverage_list.coverage(records, **query)
+    recorded = coverage_list.coverage(records[:20], **query)
+    assert recorded.isolates == 20
+    assert 'ageGroup' not in recorded.query
+    assert methods.coverage(rows, **query)['isolates'] == 20
+    assert coverage_list.coverage(records[:20], **query, age_group='older').isolates == 20
+    assert methods.coverage(rows, **query, age_group='older')['isolates'] == 0
+
+    result = methods.coverage([], **query)
+    for row in result['antibiotics']:
+        if row['antibiotic'] in ('AMP', 'CIP'):
+            row.update(share=0.93 if row['antibiotic'] == 'AMP' else 0.99, interval=[0.91, 1])
+    recorded_suggestions = coverage_list.suggest(methods._coverage_result(result), 'severe')
+    assert recorded_suggestions[0].antibiotic == 'AMP'  # Recorded AWaRe tier.
+    assert methods.suggest(result, 'severe')[0]['antibiotic'] == 'CIP'  # D-056.
+
+    case = next(c for c in CASES if c['id'] == 'live-multisite')
+    recorded_signals = detect.live_signals(methods._records(case['rows']), methods._records(case['cultures'], methods._Culture))
+    assert all(s.site is None for s in recorded_signals)
+    assert any(s.get('site') == 'sata' for s in methods.live_signals(case['rows'], case['cultures']))
