@@ -223,9 +223,9 @@ async function watching(cdp, body) {
     }
     if (m.method === "Network.responseReceived") {
       const u = p.response.url;
-      // /api/regional (D-037) and /api/counties (D-043) answer 404 when their files are not mounted, as in CI
+      // /api/regional (D-037), /api/counties (D-043) and /api/national (D-048) answer 404 when their files are not mounted, as in CI
       // where data/ is not in git: the app shows an empty state, so a warning, not a failure.
-      const optional = p.response.status === 404 && (u.includes("/api/regional") || u.includes("/api/counties"));
+      const optional = p.response.status === 404 && ["/api/regional", "/api/counties", "/api/national"].some((r) => u.includes(r));
       if (p.response.status >= 400)
         (u.includes("/api/") && !optional ? problems.api : problems.other).push(`${p.response.status} ${u.replace(base, "")}`);
     }
@@ -420,22 +420,29 @@ async function main() {
     await interaction(
       `doctor-usability-${vp.name}`,
       async (idle, reasons) => {
-        await load(cdp, `${urlOf("doctor")}?age=older&onset=1`, idle);
+        // Age group and onset are live filters (D-049, D-053): a link carrying them keeps them and presses their controls.
+        await load(cdp, `${urlOf("doctor")}?age=older&onset=hospital`, idle);
         const initial = await evaluate(
           cdp,
           `(() => {
         const row = document.querySelector('.cl-row');
         return { row: row?.textContent, disclosure: document.querySelector('.cl-disclosure')?.textContent,
-          unavailableInSummary: /65+|Hoitopäivä/.test(document.querySelector('.rs-sum')?.textContent ?? '') };
+          liveInUrl: location.hash.includes('age=older') && location.hash.includes('onset=hospital') };
       })()`,
         );
         if (!/kaikki (kasvavat|bakteerit)/.test(initial.row ?? "")) reasons.push("unopened row omits all-growth denominator");
         if (!initial.disclosure?.includes("ei potilashoitoon") || !initial.disclosure?.includes("Tukee päätöstä"))
           reasons.push("demo/decision disclosure missing");
-        if (initial.unavailableInSummary) reasons.push("unavailable filters appear active");
+        if (!initial.liveInUrl) reasons.push("age group or onset did not stay in the link");
         await evaluate(cdp, `document.querySelector('.rs-sumrow')?.click()`);
-        const unavailable = await evaluate(cdp, `document.querySelectorAll('.rs-choice:disabled').length`);
-        if (unavailable !== 0) reasons.push(`expected no disabled filter controls, saw ${unavailable}`);
+        const controls = await evaluate(
+          cdp,
+          `(() => { const pressed = [...document.querySelectorAll('.rs-choice[aria-pressed=true]')].map((b) => b.textContent);
+        return { disabled: document.querySelectorAll('.rs-choice:disabled').length, age: pressed.includes('65+'),
+          onset: !!document.querySelector('.rs-toggle[aria-pressed=true]') }; })()`,
+        );
+        if (controls.disabled !== 0) reasons.push(`expected no disabled filter controls, saw ${controls.disabled}`);
+        if (!controls.age || !controls.onset) reasons.push("age group or onset control not shown as chosen");
         const shortcut = await evaluate(
           cdp,
           `(() => { const b = document.querySelector('.rs-quick'); const r = b?.getBoundingClientRect(); if (!b || r.height < 44) return false; b.click(); return true; })()`,

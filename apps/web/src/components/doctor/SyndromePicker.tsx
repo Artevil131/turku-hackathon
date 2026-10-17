@@ -21,19 +21,19 @@ export function SyndromePicker({ locale, value, onPick }: Props) {
     (group) => group.syndromes.length > 0,
   );
   return (
-    <nav className="sp" aria-label={t(locale, "drSyndrome")} title={t(locale, "drSyndromeHint")}>
-      <span className="sp-label">{t(locale, "drSyndrome")}</span>
-      <div className="sp-row">
+    <nav className="syn" aria-label={t(locale, "drSyndrome")} title={t(locale, "drSyndromeHint")}>
+      <span className="syn-label">{t(locale, "drSyndrome")}</span>
+      <div className="syn-row">
         {groups.map(({ site, syndromes }) => (
-          <div key={site} className="sp-group" role="group" aria-label={specimenName(locale, site)}>
-            <span className="sp-site" aria-hidden="true">
+          <div key={site} className="syn-group" role="group" aria-label={specimenName(locale, site)}>
+            <span className="syn-site" aria-hidden="true">
               {specimenName(locale, site)}
             </span>
             {syndromes.map((s) => (
               <button
                 key={s.id}
                 type="button"
-                className="sp-chip"
+                className="syn-chip"
                 data-syn={s.id}
                 aria-pressed={value === s.id}
                 onClick={() => onPick(value === s.id ? null : s)}

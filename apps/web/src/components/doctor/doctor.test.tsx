@@ -180,7 +180,7 @@ describe("onset (D-049)", () => {
     expect(barOf(data, filters)).toBe(80);
     const hospital = { ...data, bar: 0.9 };
     expect(barOf(hospital, { ...filters, onset: true })).toBe(90);
-    expect(list(hospital)).toContain("raja 90 %");
+    expect(list(hospital)).toContain("raja 90\u00a0%");
     expect(barOf(null, { sev: "mild", onset: true })).toBe(90);
   });
   it("chips the ladder when the onset filter was dropped", () => {
@@ -199,7 +199,7 @@ describe("onset (D-049)", () => {
         onOpenSignals={() => {}}
       />,
     );
-    expect(html).toContain("onset filter dropped to keep the unit&#x27;s data; bar still 90 %");
+    expect(html).toContain("onset filter dropped to keep the unit&#x27;s data; bar still 90\u00a0%");
   });
 });
 
@@ -225,7 +225,7 @@ describe("syndrome chooser (D-047)", () => {
   });
   it("renders one chip per syndrome grouped by specimen, the chosen one pressed", () => {
     const html = renderToStaticMarkup(<SyndromePicker locale="en" value="pyelonephritis" onPick={() => {}} />);
-    expect(html.match(/class="sp-chip"/g)).toHaveLength(guide().syndromes.length);
+    expect(html.match(/class="syn-chip"/g)).toHaveLength(guide().syndromes.length);
     expect(html.indexOf('aria-label="urine"')).toBeLessThan(html.indexOf('aria-label="blood"'));
     expect(html).toMatch(/aria-pressed="true"[^>]*>Pyelonephritis</);
   });
@@ -248,7 +248,7 @@ describe("guide beside the data (D-047)", () => {
     for (const code of ["MEC", "NIT", "TMP"]) expect(rowOf(html, code)).toContain('class="cl-guide"');
     expect(rowOf(html, "CIP")).not.toContain('class="cl-guide"');
     expect(html).toContain(
-      "Mikrobilääkesuositus (Varsinais-Suomen hyvinvointialue), 13.4.2026, p. 37: first choice nitrofurantoin covers 92 % here (bar 80 %)",
+      "Mikrobilääkesuositus (Varsinais-Suomen hyvinvointialue), 13.4.2026, p. 37: first choice nitrofurantoin covers 92\u00a0% here (bar 80\u00a0%)",
     );
     expect(html).toContain('href="https://hoito-ohjeet.fi/');
     expect(html).toContain('target="_blank"');
@@ -306,13 +306,13 @@ const details = (data: CoverageResponse, id: string, national: NationalResponse 
 describe("national line (D-048)", () => {
   it("gives Finres's genus figure with its source, and no difference sentence under 10 points", () => {
     const html = details(urine(), "NIT", NATIONAL);
-    expect(html).toContain("Finland 2025, Escherichia (genus): 2 % resistant, 81,234 tests");
+    expect(html).toContain("Finland 2025, Escherichia (genus): 2\u00a0% resistant, 81,234 tests");
     expect(html).toContain("CC BY 4.0");
     expect(html).not.toContain("nationally");
   });
   it("says in words when the leading organism differs by 10 points or more", () => {
-    // Trimethoprim covers 40 of 60 here: 33 % resistant against 20 % nationally.
-    expect(details(urine(), "TMP", NATIONAL)).toContain("more resistance here than nationally (33 % here, 20 % in Finland)");
+    // Trimethoprim covers 40 of 60 here: 33\u00a0% resistant against 20\u00a0% nationally.
+    expect(details(urine(), "TMP", NATIONAL)).toContain("more resistance here than nationally (33\u00a0% here, 20\u00a0% in Finland)");
   });
   it("shows nothing without a national figure", () => {
     expect(details(urine(), "MEC", NATIONAL)).not.toContain("dt-national");
