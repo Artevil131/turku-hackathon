@@ -6,7 +6,7 @@
 //   SMOKE_URL=http://localhost:5173 pnpm smoke   # test an app that is already running
 //
 // Options: --data DIR, --as-of YYYY-MM-DD, --api-port 8798, --web-port 5176, --out DIR (default
-// apps/web/smoke-out), --routes home,doctor,... (home is the empty hash), --headed. Chrome comes from $CHROME, else google-chrome,
+// apps/web/smoke-out), --routes home,doctor,... (home is the empty hash), --interactions name,..., --headed. Chrome comes from $CHROME, else google-chrome,
 // google-chrome-stable, chromium or chromium-browser on the PATH.
 //
 // Per route and viewport it checks: no uncaught exception or console error, no /api request that failed or
@@ -42,6 +42,7 @@ const apiPort = Number(opt("api-port", "8798"));
 const webPort = Number(opt("web-port", "5176"));
 const outDir = resolve(opt("out", join(WEB, "smoke-out")));
 const ROUTES = opt("routes", "home,doctor,research,method,settings,intro").split(",");
+const INTERACTIONS = opt("interactions", "").split(",").filter(Boolean);
 const VIEWPORTS = [
   { name: "desktop", width: 1440, height: 1000, mobile: false },
   { name: "phone", width: 390, height: 844, mobile: true },
@@ -386,6 +387,7 @@ async function main() {
   // ---------- interactions (desktop) ----------
   let cdp = null;
   const interaction = async (name, body, viewport = VIEWPORTS[0]) => {
+    if (INTERACTIONS.length && !INTERACTIONS.includes(name)) return;
     const reasons = [];
     const file = join(outDir, `interaction-${name}.png`);
     cdp = await browser.newPage(viewport);
@@ -482,6 +484,194 @@ async function main() {
       reasons.push(`tab labels unchanged after choosing "${clicked}"`);
     await idle();
   });
+
+  // Real pointer events, not element.click(): reparenting on pointerdown used to swallow close clicks.
+  const pointOf = (selector) =>
+    evaluate(
+      cdp,
+      `(() => {
+    const el = document.querySelector(${JSON.stringify(selector)});
+    if (!el) throw new Error('Missing control: ' + ${JSON.stringify(selector)});
+    el.scrollIntoView({ block: 'nearest' });
+    const r = el.getBoundingClientRect();
+    const x = r.left + r.width / 2, y = r.top + r.height / 2;
+    if (!el.contains(document.elementFromPoint(x, y))) throw new Error('Control covered: ' + ${JSON.stringify(selector)});
+    return { x, y };
+  })()`,
+    );
+  const mouse = async (type, p, extra = {}) => {
+    // A physical pointer enters its target before pressing. CDP press coordinates alone do not move it.
+    if (type === "mousePressed") await cdp.send("Input.dispatchMouseEvent", { type: "mouseMoved", ...p });
+    return cdp.send("Input.dispatchMouseEvent", { type, ...p, ...extra });
+  };
+  const click = async (selector, clickCount = 1) => {
+    const p = await pointOf(selector);
+    await mouse("mousePressed", p, { button: "left", buttons: 1, clickCount });
+    await mouse("mouseReleased", p, { button: "left", buttons: 0, clickCount });
+  };
+  const key = async (key, modifiers = 0) => {
+    await cdp.send("Input.dispatchKeyEvent", { type: "keyDown", key, modifiers });
+    await cdp.send("Input.dispatchKeyEvent", { type: "keyUp", key, modifiers });
+  };
+  const cleanWorkspace = async (idle) => {
+    await load(cdp, urlOf("research"), idle);
+    await evaluate(cdp, `localStorage.removeItem('aei.research.layout.v2')`);
+    await cdp.send("Page.navigate", { url: "about:blank" });
+    await load(cdp, urlOf("research"), idle);
+  };
+  await interaction(
+    "research-workspace-close",
+    async (idle, reasons) => {
+      await cleanWorkspace(idle);
+      for (const id of ["math", "graph"]) {
+        await click(`#ws-win-${id} .ws-close`);
+        if (!(await waitIn(`!document.querySelector('#ws-win-${id}')`, 1000)))
+          reasons.push(`${id} not dismissed by its first real close click`);
+      }
+    },
+    { name: "desktop-900", width: 1440, height: 900, mobile: false },
+  );
+
+  await interaction(
+    "research-workspace",
+    async (idle, reasons) => {
+      await cleanWorkspace(idle);
+      const order = `JSON.stringify([...document.querySelectorAll('.ws-column')].map(c => [...c.querySelectorAll('.ws-win')].map(w => w.dataset.win)))`;
+      const initial = await evaluate(cdp, order);
+      const geometry = await evaluate(
+        cdp,
+        `(() => {
+      const b = document.querySelector('.ws-area').getBoundingClientRect();
+      const p = document.querySelector('.page');
+      const svg = document.querySelector('.geo-svg').getBoundingClientRect();
+      const body = document.querySelector('#ws-win-map .ws-body').getBoundingClientRect();
+      return { bottom: b.bottom, height: b.height, overflow: p.scrollHeight - p.clientHeight,
+        mapFits: svg.left >= body.left && svg.right <= body.right + 1 && svg.top >= body.top && svg.bottom <= body.bottom + 1 };
+    })()`,
+      );
+      if (geometry.bottom > 900 || geometry.height < 200 || geometry.overflow > 1)
+        reasons.push(`board does not fit viewport: ${JSON.stringify(geometry)}`);
+      if (!geometry.mapFits) reasons.push("map SVG clipped in its default dock");
+      // Reopen into the previous right-hand stack, maximize, then restore exactly.
+      await click("#ws-win-math .ws-close");
+      await click("#ws-tray-button");
+      await click(".ws-pop-list li:nth-child(4) input");
+      if (!(await waitIn(`${order} === ${JSON.stringify(initial)}`))) reasons.push("reopen changed the stack order");
+      await key("Escape");
+      await click("#ws-win-math .ws-maximize");
+      const max = await evaluate(
+        cdp,
+        `(() => {
+      const w = document.querySelector('#ws-win-math').getBoundingClientRect(), a = document.querySelector('.ws-area').getBoundingClientRect();
+      return Math.abs(w.width-a.width)<2 && Math.abs(w.height-a.height)<2 && [...document.querySelectorAll('.ws-win')].filter(e=>e.getBoundingClientRect().width>0).length === 1;
+    })()`,
+      );
+      if (!max) reasons.push("maximize did not fill the board and hide the other windows");
+      await click("#ws-win-math .ws-maximize");
+      if ((await evaluate(cdp, order)) !== initial) reasons.push("restore changed dock order");
+      // Preview must not rearrange any stack. Esc must leave both DOM and persisted layout unchanged.
+      const before = await evaluate(cdp, `localStorage.getItem('aei.research.layout.v2')`);
+      const source = await pointOf("#ws-title-math"),
+        target = await pointOf("#ws-title-map");
+      await mouse("mousePressed", source, { button: "left", buttons: 1, clickCount: 1 });
+      await mouse("mouseMoved", { x: target.x, y: target.y + 20 }, { buttons: 1 });
+      if (!(await waitIn(`!!document.querySelector('.ws-insert')`, 1000))) reasons.push("drag has no insertion indicator");
+      if ((await evaluate(cdp, order)) !== initial) reasons.push("drag preview reshuffled the windows");
+      await key("Escape");
+      await mouse("mouseReleased", target, { button: "left", buttons: 0, clickCount: 1 });
+      if ((await evaluate(cdp, `localStorage.getItem('aei.research.layout.v2')`)) !== before) reasons.push("Esc did not cancel the move");
+      // Drop into the map column, then move back using only the keyboard.
+      await mouse("mousePressed", source, { button: "left", buttons: 1, clickCount: 1 });
+      await mouse("mouseMoved", target, { buttons: 1 });
+      await mouse("mouseReleased", target, { button: "left", buttons: 0, clickCount: 1 });
+      if (!(await waitIn(`document.querySelector('#ws-win-math')?.closest('.ws-column')?.dataset.columnIndex === '1'`)))
+        reasons.push("drop did not insert into target column");
+      await evaluate(cdp, `document.querySelector('#ws-title-math').focus()`);
+      await key("ArrowRight", 1);
+      if (!(await waitIn(`document.querySelector('#ws-win-math')?.closest('.ws-column')?.dataset.columnIndex === '2'`)))
+        reasons.push("Alt + arrow did not move the window");
+      // Focusable splitters change the fraction, reset equally on double click/Enter.
+      await evaluate(cdp, `document.querySelector('.ws-splitter-col').focus()`);
+      const width = await evaluate(cdp, `document.querySelector('.ws-splitter-col').getAttribute('aria-valuenow')`);
+      await key("ArrowRight");
+      if ((await evaluate(cdp, `document.querySelector('.ws-splitter-col').getAttribute('aria-valuenow')`)) === width)
+        reasons.push("keyboard column resize did not update aria-valuenow");
+      await click(".ws-splitter-col", 2);
+      const equal = await evaluate(
+        cdp,
+        `JSON.parse(localStorage.getItem('aei.research.layout.v2')).columns.every(c=>Math.abs(c.width-1/3)<0.001)`,
+      );
+      if (!equal) reasons.push("double-click did not equalize columns");
+      const divider = await pointOf(".ws-splitter-col");
+      const leftEdge = await evaluate(cdp, `document.querySelector('.ws-area').getBoundingClientRect().left + 1`);
+      await mouse("mousePressed", divider, { button: "left", buttons: 1, clickCount: 1 });
+      await mouse("mouseMoved", { x: leftEdge, y: divider.y }, { buttons: 1 });
+      await mouse("mouseReleased", { x: leftEdge, y: divider.y }, { button: "left", buttons: 0, clickCount: 1 });
+      const clamped = await waitIn(
+        `(() => {
+        const a=document.querySelector('.ws-area').getBoundingClientRect();
+        const expected=Math.max(240,(a.width-16)*0.18);
+        return Math.abs(document.querySelector('.ws-column').getBoundingClientRect().width-expected)<2;
+      })()`,
+        1000,
+      );
+      if (!clamped) reasons.push("column pointer drag did not clamp at its minimum");
+      const row = await pointOf(".ws-splitter-row");
+      const stackBefore = await evaluate(cdp, `document.querySelector('.ws-splitter-row').getAttribute('aria-valuenow')`);
+      await mouse("mousePressed", row, { button: "left", buttons: 1, clickCount: 1 });
+      await mouse("mouseMoved", { x: row.x, y: row.y + 40 }, { buttons: 1 });
+      await mouse("mouseReleased", { x: row.x, y: row.y + 40 }, { button: "left", buttons: 0, clickCount: 1 });
+      if ((await evaluate(cdp, `document.querySelector('.ws-splitter-row').getAttribute('aria-valuenow')`)) === stackBefore)
+        reasons.push("pointer stack resize did not change the fraction");
+      await evaluate(cdp, `document.querySelector('.ws-splitter-row').focus()`);
+      await key("ArrowDown");
+      await key("Enter");
+      const heights = await evaluate(cdp, `JSON.parse(localStorage.getItem('aei.research.layout.v2')).columns[2].windows.map(w=>w.size)`);
+      if (heights.some((h) => Math.abs(h - 1 / 3) > 0.001)) reasons.push("Enter did not equalize stack heights");
+      // Presets and reset must change visible geometry, and a fresh load must keep the new model.
+      for (const p of ["map", "signals", "units"]) {
+        await click("#ws-tray-button");
+        await click(`[data-preset="${p}"]`);
+        if ((await evaluate(cdp, order)) === initial) reasons.push(`preset ${p} made no visible change`);
+      }
+      await click("#ws-tray-button");
+      await click(".ws-pop-reset");
+      if ((await evaluate(cdp, order)) !== initial) reasons.push("reset did not visibly restore the default stack order");
+      await cdp.send("Page.navigate", { url: "about:blank" });
+      await load(cdp, urlOf("research"), idle);
+      if ((await evaluate(cdp, order)) !== initial) reasons.push("layout was not persisted across reload");
+      // Edge drop from a two-column preset creates a third column, never a free-floating window.
+      await click("#ws-tray-button");
+      await click('[data-preset="signals"]');
+      const start = await pointOf("#ws-title-math");
+      const edge = await evaluate(
+        cdp,
+        `(() => { const r=document.querySelectorAll('.ws-column')[1].getBoundingClientRect(); return {x:r.left+2,y:r.top+40}; })()`,
+      );
+      await mouse("mousePressed", start, { button: "left", buttons: 1, clickCount: 1 });
+      await mouse("mouseMoved", edge, { buttons: 1 });
+      if (!(await waitIn(`!!document.querySelector('.ws-new-column')`, 1000))) reasons.push("edge drop has no new-column indicator");
+      await mouse("mouseReleased", edge, { button: "left", buttons: 0, clickCount: 1 });
+      if (!(await waitIn(`document.querySelectorAll('.ws-column').length === 3`)))
+        reasons.push("edge drop did not create a third docked column");
+      await click("#ws-tray-button");
+      await click(".ws-pop-reset");
+      await cdp.send("Emulation.setDeviceMetricsOverride", { width: 1100, height: 768, deviceScaleFactor: 1, mobile: false });
+      if ((await evaluate(cdp, "document.documentElement.lang")) !== "en") await click(".top-tools button[lang]");
+      const compact = await evaluate(
+        cdp,
+        `(() => {
+        const a=document.querySelector('.ws-area').getBoundingClientRect();
+        return a.bottom <= 768 && [...document.querySelectorAll('.ws-column')].every(c=>c.getBoundingClientRect().width>=239) && document.documentElement.scrollWidth<=1100;
+      })()`,
+      );
+      if (!compact) reasons.push("compact desktop overflows or loses column minimums");
+      await screenshot(cdp, join(outDir, "research-compact-en.png"));
+      await cdp.send("Emulation.setDeviceMetricsOverride", { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
+      await idle();
+    },
+    { name: "desktop-900", width: 1440, height: 900, mobile: false },
+  );
 
   await interaction("research-signal-isolates", async (idle, reasons) => {
     await load(cdp, urlOf("research"), idle);
