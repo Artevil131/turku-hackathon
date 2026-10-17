@@ -153,6 +153,7 @@ function Basis({
           </span>
         ))}
       </p>
+      <p className="treat-basis-demo">{t(locale, "treat.basis.demo")}</p>
       {c.level !== "unit" ? (
         <p className="treat-note is-widened">
           <Icon name="alert-triangle" size={18} />
@@ -240,13 +241,24 @@ function TopMatch({ locale, meta, s, threshold, min }: { locale: Locale; meta: F
           {t(locale, "treat.top.labelFew")}
         </p>
       )}
-      <ShareBar locale={locale} share={asShare(basisCounts)} min={min} size="lg" caption={caption} />
+      <ShareBar
+        locale={locale}
+        share={asShare(basisCounts)}
+        min={min}
+        size="lg"
+        label={t(locale, s.basis === "spectrum" ? "treat.fig.spectrum" : "treat.fig.all")}
+        caption={caption}
+      />
       <p className={`treat-top-standing is-${s.standing.replace(" ", "-")}`}>{standingText(locale, s.standing, threshold, min)}</p>
       {s.basis === "spectrum" ? (
         <p className="treat-top-all">
           {all !== null ? (
             <>
               <strong>{t(locale, "treat.top.allOrganisms", { percent: pct(locale, all) })}</strong>
+              <span className="treat-top-all-range u-num">
+                {" · "}
+                {formatNumber(locale, c.counts.covered)}/{formatNumber(locale, c.counts.known)}
+              </span>
               {allRange ? <span className="treat-top-all-range"> · {allRange}</span> : null}
             </>
           ) : (

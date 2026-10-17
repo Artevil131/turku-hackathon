@@ -437,6 +437,15 @@
 }
 
 /* ---------- Main ---------- */
+@media (max-width: 1023px) {
+  html {
+    --bottom-clearance: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + var(--sp-4));
+    scroll-padding-bottom: var(--bottom-clearance);
+  }
+  .app-main {
+    scroll-padding-bottom: var(--bottom-clearance);
+  }
+}
 .app-main {
   flex: 1;
   width: 100%;

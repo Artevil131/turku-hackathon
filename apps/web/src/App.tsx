@@ -133,7 +133,14 @@ export function App() {
     },
     [meta],
   );
-  const onReportPrefs = useCallback((patch: Partial<ReportPrefs>) => setReportPrefs((p) => (p ? { ...p, ...patch } : p)), []);
+  const onReportPrefs = useCallback(
+    (patch: Partial<ReportPrefs>) => {
+      setReportPrefs((p) => (p ? { ...p, ...patch } : p));
+      // A concrete unit is shared with Treat; "all" is only a Report filter.
+      if (patch.ward !== undefined && patch.ward !== "all") onTreatPrefs({ ward: patch.ward });
+    },
+    [onTreatPrefs],
+  );
   const openTreat = useCallback(
     (patch: Partial<TreatPrefs>) => {
       onTreatPrefs(patch);
