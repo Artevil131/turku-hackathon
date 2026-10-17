@@ -15,7 +15,7 @@ import {
 } from "@aei/domain";
 import { addDays } from "@aei/replay";
 
-// "Fails together" (D-048): when antibiotic A failed on an isolate from this
+// "Fails together" (D-054): when antibiotic A failed on an isolate from this
 // unit, how often did antibiotic B fail on the same isolate? Measured from the
 // hospital's own first isolates, never from a drug-class table: any antibiotic
 // codes in the data are paired with each other. Only results the laboratory

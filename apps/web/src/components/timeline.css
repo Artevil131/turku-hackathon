@@ -1,4 +1,4 @@
-/* Replay timeline hero: a full-width band under the top bar (about 212 px laptop: weekly stream over nine unit lanes), a sticky 56 px strip plus bottom sheet (phone). */
+/* Replay timeline hero: a full-width band under the top bar (about 160 px on a laptop: weekly stream over nine unit lanes, controls in a 228 px column beside it), one 44 px line when folded (the default), a sticky 56 px strip plus bottom sheet (phone). */
 
 .console:has(.timeline) {
   grid-template-rows: auto auto minmax(0, 1fr);
@@ -10,8 +10,7 @@
   display: flex;
   align-items: stretch;
   gap: 12px;
-  height: 212px;
-  padding: 4px 12px;
+  padding: 4px 12px 4px 8px;
   min-width: 0;
   border: 1px solid var(--line, #e4e6ee);
   border-radius: var(--brand-radius, 10px);
@@ -31,25 +30,80 @@
   outline-offset: 2px;
 }
 
-/* Left cluster: controls above, the as-of date below. */
+/* Left cluster: transport and speed, the as-of date, then data checks and the demo jumps. */
 .tl-left {
   flex: none;
-  width: 220px;
+  width: 228px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 4px;
+  gap: 6px;
+  min-width: 0;
 }
 
 .tl-ctl {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+}
+
+/* Play and the steps as one segmented control: 26 px to the eye, 44 px tall to the finger. */
+.tl-transport {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  padding: 1px;
+  border: 1px solid var(--line, #e4e6ee);
+  border-radius: 7px;
+  background: var(--glass-1, #fff);
+}
+
+.timeline[data-running] .tl-transport {
+  border-color: var(--brand-accent-line, #c6c4ed);
+}
+
+.tl-transport .tl-steps {
+  gap: 0;
+  margin-inline-start: 1px;
+}
+
+.tl-transport .tl-btn {
+  position: relative;
+  min-width: 30px;
+  height: 26px;
+  padding: 0 7px;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+}
+
+.tl-transport .tl-btn::after,
+.tl-seg::after,
+.tl-fold::after,
+.tl-info-btn::after {
+  content: "";
+  position: absolute;
+  inset: -9px 0;
+}
+
+.tl-transport .tl-steps .tl-btn:hover:not(:disabled) {
+  background: var(--brand-accent-soft, #ecebfc);
+}
+
+.tl-transport .tl-play {
+  min-width: 32px;
+  background: var(--brand-accent, #635bf1);
+}
+
+.tl-transport .tl-btn:focus-visible {
+  outline-offset: 0;
+  z-index: 1;
 }
 
 .tl-btn,
 .tl-seg,
 .tl-select {
+  position: relative;
   display: inline-grid;
   place-items: center;
   min-width: 28px;
@@ -109,6 +163,7 @@
   display: block;
   line-height: 26px;
   padding: 0 4px;
+  color: var(--ink-3, #6f7292);
 }
 
 .tl-read {
@@ -120,12 +175,41 @@
 }
 
 .tl-readout {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-family: var(--brand-font-display, inherit);
   font-size: var(--t-l, 22px);
   font-weight: 600;
   line-height: 28px;
   color: var(--ink, #07081c);
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* While the replay runs, a pulsing dot beside the date (the play button also turns to pause). */
+.timeline[data-running] .tl-readout::after {
+  content: "";
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--brand-accent, #635bf1);
+  animation: tl-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes tl-pulse {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.tl-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
 }
 
 .timeline[aria-busy] .tl-readout {
@@ -144,6 +228,7 @@
 }
 
 .tl-info-btn {
+  position: relative;
   display: inline-grid;
   place-items: center;
   width: 28px;
@@ -196,7 +281,6 @@
 .tl-menu-wrap {
   position: relative;
   flex: none;
-  align-self: center;
 }
 
 .tl-events-btn[aria-expanded="true"] {
@@ -207,9 +291,10 @@
 .tl-menu {
   position: absolute;
   top: calc(100% + 8px);
-  right: 0;
+  left: 0;
   z-index: 40;
   width: 320px;
+  max-width: calc(100vw - 32px);
   padding: 8px;
   border: 1px solid var(--line, #e4e6ee);
   border-radius: 8px;
@@ -395,20 +480,25 @@
   padding-bottom: 28px; /* room for the tooltip */
 }
 
+/* Two rows on a phone: play and the four steps as one control, then the speed. */
 .tl-sheet-ctl {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
-  align-items: center;
 }
 
-.tl-sheet-ctl .tl-select {
-  grid-column: 1 / -1;
+.tl-sheet .tl-transport {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
 }
 
 .tl-sheet .tl-steps {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.tl-sheet .tl-transport .tl-btn::after {
+  content: none;
 }
 
 .tl-sheet .tl-btn,
@@ -424,7 +514,7 @@
 }
 
 .tl-sheet .tl-play {
-  width: 44px;
+  width: auto;
 }
 
 .tl-sheet .tl-select {
@@ -446,7 +536,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tl-sheet {
+  .tl-sheet,
+  .timeline[data-running] .tl-readout::after {
     animation: none;
   }
 }
@@ -471,4 +562,62 @@
 .tl-quality {
   display: flex;
   min-width: 0;
+}
+
+.tl-foot .tl-quality {
+  flex: 1;
+}
+
+/* Folded outside the research page: one line with play, the replay date, freshness and the expand control. */
+.timeline.timeline-folded {
+  min-height: 44px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  padding: 4px 8px;
+}
+
+.tl-when {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.timeline-folded .tl-readout {
+  font-size: var(--t-m, 16px);
+  line-height: 24px;
+}
+
+.tl-folded-fresh {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.tl-folded-label,
+.tl-folded-fresh {
+  font-size: var(--t-xs, 12px);
+  color: var(--ink-3, #6f7292);
+}
+
+.tl-fold {
+  margin-inline-start: auto;
+  border-color: transparent;
+  background: none;
+}
+
+.tl-fold svg {
+  transition: transform 0.15s;
+}
+
+.timeline-folded .tl-fold svg {
+  transform: rotate(180deg);
+}
+
+.timeline-folded .tl-select {
+  flex: none;
+  width: auto;
+  max-width: 128px;
 }

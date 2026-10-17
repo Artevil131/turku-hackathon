@@ -1,5 +1,5 @@
 import type { CountiesResponse, RegionalResponse, RegionalSeries, RegionalSignal, WeeklyResponse } from "@aei/contract";
-import { formatMonth, type Locale, t } from "@aei/i18n";
+import { countyName, formatMonth, type Locale, t } from "@aei/i18n";
 import { addDaysIso } from "@aei/viz";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AsOf } from "../../AsOf.tsx";
@@ -38,7 +38,6 @@ const SERIES_KEY = {
 const seriesLabel = (locale: Locale, group: string) =>
   group in SERIES_KEY ? t(locale, SERIES_KEY[group as keyof typeof SERIES_KEY]) : group;
 
-const shortName = (region: string) => region.replace(/ hyvinvointialue$/, "");
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 const fmt = (locale: Locale, v: number, digits = 1) =>
   new Intl.NumberFormat(locale === "fi" ? "fi-FI" : "en-GB", { maximumFractionDigits: digits }).format(v);
@@ -374,7 +373,7 @@ export function GeoMap({ client, locale, asOf, reducedMotion }: PanelProps) {
                     vectorEffect="non-scaling-stroke"
                     role="button"
                     tabIndex={0}
-                    aria-label={shortName(c.name)}
+                    aria-label={countyName(locale, c.name)}
                     aria-pressed={chosen === c.name}
                     onClick={() => setChosen((cur) => (cur === c.name ? null : c.name))}
                     onKeyDown={(e) => {
@@ -387,12 +386,12 @@ export function GeoMap({ client, locale, asOf, reducedMotion }: PanelProps) {
                     <title>
                       {data && month
                         ? t(locale, "mapCountyLabel", {
-                            region: shortName(c.name),
+                            region: countyName(locale, c.name),
                             cases: casesAt(c.name) ?? 0,
                             month: monthLong(month),
                             rate: rateText(c.name),
                           })
-                        : shortName(c.name)}
+                        : countyName(locale, c.name)}
                     </title>
                   </path>
                 ))}
@@ -465,7 +464,7 @@ export function GeoMap({ client, locale, asOf, reducedMotion }: PanelProps) {
                         className={s.strong ? "geo-glyph geo-glyph-strong" : "geo-glyph geo-glyph-weak"}
                       >
                         <title>
-                          {shortName(c.name)}:{" "}
+                          {countyName(locale, c.name)}:{" "}
                           {t(locale, "mapSignalDetail", { cases: s.cases, expected: fmt(locale, s.expected), p: fmtP(locale, s.p) })}
                         </title>
                       </circle>
@@ -511,7 +510,7 @@ export function GeoMap({ client, locale, asOf, reducedMotion }: PanelProps) {
                         <span className="geo-row-glyphs" aria-hidden="true">
                           {signalOf.has(c.name) ? <Glyph strong={(signalOf.get(c.name) as RegionalSignal).strong} size={14} /> : null}
                         </span>
-                        <span className="geo-row-name">{shortName(c.name)}</span>
+                        <span className="geo-row-name">{countyName(locale, c.name)}</span>
                         <span className="geo-row-figs">
                           {c.rate === null ? "–" : fmt(locale, c.rate)} · n {c.cases ?? 0}
                         </span>

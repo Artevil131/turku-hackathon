@@ -90,7 +90,7 @@ export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetry
     };
   }, [client, asOf, key, attempt]);
 
-  // "Fails together" (D-048) for the same filters, fetched beside the coverage list.
+  // "Fails together" (D-054) for the same filters, fetched beside the coverage list.
   const [fails, setFails] = useState<{ key: string; response: FailsTogetherResponse } | null>(null);
   // biome-ignore lint/correctness/useExhaustiveDependencies: `key` stands for the filters it covers.
   useEffect(() => {

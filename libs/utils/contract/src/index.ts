@@ -1,8 +1,8 @@
-import type { Alert } from "@aei/alerts";
+import type { Alert, PatientFinding } from "@aei/alerts";
 import type { AgeGroup, AiStatus } from "@aei/ask";
 import type { FailsTogetherResponse, FailsTogetherRouteQuery } from "@aei/coresistance/route";
 import type { CombinationSuggestion, CoverageResult, CoverageQuery as GearCoverageQuery, Severity, Suggestion } from "@aei/coverage";
-import type { Antibiotic, IsoDate, IsolateRecord, Organism, Sex, Specimen, Ward, WardCode } from "@aei/domain";
+import type { Antibiotic, AntibioticCode, IsoDate, IsolateRecord, Organism, Phenotype, Sex, Specimen, Ward, WardCode } from "@aei/domain";
 import type { CheckSummary } from "@aei/quality";
 import type { Flow, TrailLink } from "@aei/relations";
 import type { ClockState } from "@aei/replay";
@@ -38,7 +38,11 @@ export const ROUTES = {
   weekly: "/api/weekly",
   /** Plausibility checks over the rows the server holds (D-038). */
   quality: "/api/quality",
-  /** Antibiotics that fail together, from the hospital's own first isolates (D-048). */
+  /** National reference per genus, antibiotic and specimen from THL's Finres cube (D-048); 404 without the file. */
+  national: "/api/national",
+  /** A patient's ESBL, MRSA, VRE and CPE findings of the year before the replay date (D-050). */
+  patientFindings: "/api/patient/findings",
+  /** Antibiotics that fail together, from the hospital's own first isolates (D-054). */
   failsTogether: "/api/fails-together",
 } as const;
 
@@ -77,8 +81,11 @@ export interface IsolateQuery {
 }
 
 export type { AntibioticCoverage, CombinationSuggestion, Counts, CoverageResult, Level, Onset, Severity, Suggestion } from "@aei/coverage";
-/** The bar each severity is judged against (D-026, D-027), so clients label it from the same source. */
-export { THRESHOLDS } from "@aei/coverage";
+/**
+ * The bar each severity is judged against (D-026, D-027), so clients label it from the same source;
+ * `barFor` gives the one a query uses (hospital onset: 90 % whatever the severity, D-049).
+ */
+export { barFor, ONSETS, THRESHOLDS } from "@aei/coverage";
 
 /** The doctor's coverage list (D-023). The server sets the as-of date from its clock. */
 export type CoverageQuery = Omit<GearCoverageQuery, "asOf" | "minTested"> & {
@@ -89,11 +96,28 @@ export type CoverageQuery = Omit<GearCoverageQuery, "asOf" | "minTested"> & {
 export interface CoverageResponse {
   asOf: IsoDate;
   severity: Severity;
+  /**
+   * The bar the suggestions were judged against: `barFor(coverage.query, severity)` (D-049). Optional so
+   * servers and fixtures from before D-049 still type; a client missing it computes `barFor` itself.
+   */
+  bar?: number;
   coverage: CoverageResult;
   /** Ordered: clears, borderline, below, not assessable. Decision support only. */
   suggestions: Suggestion[];
   /** Pairs, only when no single antibiotic clears (D-028). */
   combinationSuggestions: CombinationSuggestion[];
+}
+
+export type { PatientFinding } from "@aei/alerts";
+
+/** A patient's earlier resistant findings (D-050), from released records only. */
+export interface PatientFindingsResponse {
+  asOf: IsoDate;
+  patientId: string;
+  /** ESBL, MRSA, VRE and CPE isolates sampled in the 365 days up to and including `asOf`, newest first. */
+  findings: PatientFinding[];
+  /** For each phenotype found, the antibiotics `@aei/eucast` infers resistant from it (empty when none). */
+  affects: Partial<Record<Phenotype, AntibioticCode[]>>;
 }
 
 export interface AskResponse {
@@ -284,6 +308,64 @@ export interface QualityResponse {
   summary: CheckSummary[];
 }
 
+/** The genera Finres reports (D-048); Finres has no species. */
+export type FinresGenus = "Escherichia" | "Klebsiella" | "Staphylococcus" | "Enterococcus" | "Pseudomonas";
+
+/** Our antibiotic codes as Finres reports them, plus its three phenotype flags; the cefoxitin screen is the MRSA flag. */
+export type NationalAntibiotic = Exclude<Antibiotic["code"], "FOX"> | "ESBL" | "MRSA" | "VRE";
+
+/** One Finres cell; null where the cube has no figure (for example tested but %R not published). */
+export interface NationalCell {
+  genus: FinresGenus;
+  antibiotic: NationalAntibiotic;
+  specimen: Specimen;
+  tests: number | null;
+  resistant: number | null;
+  /** Percent resistant, 0 to 100. */
+  pctR: number | null;
+  /** 95 % interval of `pctR`, in percent. */
+  interval: [number, number] | null;
+}
+
+/** The file `scripts/fetch_finres.py` writes (`aei.finres`): the latest year with figures. */
+export interface NationalResponse {
+  source: string;
+  licence: string;
+  fetched: IsoDate;
+  year: number;
+  cells: NationalCell[];
+}
+
+/** The dataset's species to the Finres genus (D-048, mirrors `aei.finres.SPECIES_GENUS`); others have no national line. */
+export const FINRES_GENUS: Partial<Record<Organism, FinresGenus>> = {
+  "Escherichia coli": "Escherichia",
+  "Klebsiella pneumoniae": "Klebsiella",
+  "Klebsiella oxytoca": "Klebsiella",
+  "Enterococcus faecalis": "Enterococcus",
+  "Staphylococcus aureus": "Staphylococcus",
+  "Pseudomonas aeruginosa": "Pseudomonas",
+};
+
+/** Our specimens to the Finres spec_type labels (mirrors `aei.finres.SPECIMEN_LABELS`). */
+export const FINRES_SPECIMEN: Record<Specimen, string> = {
+  urine: "virtsa",
+  blood: "veri",
+  wound: "märkä- ja muut löydökset",
+};
+
+/** The national cell for one of our species, antibiotics (or a flag) and specimens; undefined means no national line. */
+export function nationalCell(
+  response: NationalResponse,
+  organism: Organism,
+  antibiotic: Antibiotic["code"] | NationalAntibiotic,
+  specimen: Specimen,
+): NationalCell | undefined {
+  const genus = FINRES_GENUS[organism];
+  if (!genus) return undefined;
+  const code = antibiotic === "FOX" ? "MRSA" : antibiotic;
+  return response.cells.find((c) => c.genus === genus && c.antibiotic === code && c.specimen === specimen);
+}
+
 /** Server-sent events on ROUTES.live. The event name is the `type`. */
 export type LiveEvent =
   | { type: "clock"; clock: ClockState }
@@ -334,6 +416,10 @@ export interface AeiClient {
   /** Weekly raw counts per unit up to the clock (optional route). */
   weekly(query: WeeklyQuery): Promise<WeeklyResponse>;
   quality(): Promise<QualityResponse>;
+  /** Finres national reference (D-048); 404 when the server has no file. */
+  national(): Promise<NationalResponse>;
+  /** The patient's prior resistant findings (D-050); 400 without an id, an empty list for an unknown one. */
+  patientFindings(id: string): Promise<PatientFindingsResponse>;
   /** Opens the live stream; returns a function that closes it. */
   live(onEvent: (event: LiveEvent) => void, onError?: (error: Event) => void): () => void;
 }
@@ -383,6 +469,8 @@ export function createAeiClient(options: AeiClientOptions): AeiClient {
     counties: () => json<CountiesResponse>(ROUTES.counties),
     weekly: (query) => json<WeeklyResponse>(withQuery(ROUTES.weekly, query)),
     quality: () => json<QualityResponse>(ROUTES.quality),
+    national: () => json<NationalResponse>(ROUTES.national),
+    patientFindings: (id) => json<PatientFindingsResponse>(withQuery(ROUTES.patientFindings, { id })),
     live(onEvent, onError) {
       const source = new ES(url(ROUTES.live));
       for (const type of LIVE_EVENT_TYPES) {

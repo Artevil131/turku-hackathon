@@ -44,6 +44,9 @@ importers:
       '@aei/domain':
         specifier: workspace:*
         version: link:../../libs/utils/domain
+      '@aei/eucast':
+        specifier: workspace:*
+        version: link:../../libs/utils/eucast
       '@aei/i18n':
         specifier: workspace:*
         version: link:../../libs/utils/i18n
@@ -251,6 +254,12 @@ importers:
   libs/utils/domain: {}
 
   libs/utils/eucast:
+    dependencies:
+      '@aei/domain':
+        specifier: workspace:*
+        version: link:../domain
+
+  libs/utils/guideline:
     dependencies:
       '@aei/domain':
         specifier: workspace:*

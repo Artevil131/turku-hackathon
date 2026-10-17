@@ -1,4 +1,4 @@
-// Copy for the "fails together" lines (apps/web/src/components/doctor/FailsTogether.tsx, D-048). Keys are global: prefix `ft`.
+// Copy for the "fails together" lines (apps/web/src/components/doctor/FailsTogether.tsx, D-054). Keys are global: prefix `ft`.
 
 export const failsTogetherEn = {
   ftTitle: "Fails together",

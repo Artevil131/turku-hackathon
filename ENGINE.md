@@ -82,7 +82,7 @@ pool       first isolates of that specimen sampled in [t − 364, t], then the p
 level      the unit if its pool has ≥ 30 isolates, else its ward type, else the hospital
            (patient filters are dropped one at a time, age group, then onset, then sex,
            until the filtered unit has ≥ 30, when the unfiltered unit has ≥ 30;
-           if the unfiltered unit has < 30, keep them all while widening the level; D-047)
+           if the unfiltered unit has < 30, keep them all while widening the level; D-053)
 per drug d offered for the specimen, on the chosen level's pool:
   known    isolates with a result (tested, by nature, inferred, or no breakpoint)
   k        those covered (effective result S)
@@ -96,7 +96,7 @@ per drug d offered for the specimen, on the chosen level's pool:
 90 % for severe. A drug *clears* when its interval's lower end reaches the
 threshold, is *borderline* when its share does, *below* otherwise, and *not
 assessable* without 30 results or with over 20 % of the pool untested.
-Clearing drugs come first, by share (no WHO AWaRe tier, D-050). Mild leaves out injection-only drugs; vancomycin and clindamycin
+Clearing drugs come first, by share (no WHO AWaRe tier, D-056). Mild leaves out injection-only drugs; vancomycin and clindamycin
 are not offered for urine. Pairs, for severe infections
 only and only when no single drug clears: covered if either drug covers the
 isolate, counted on isolates known for both; the partner must add 2 points;

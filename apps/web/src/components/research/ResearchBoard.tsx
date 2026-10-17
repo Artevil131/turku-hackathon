@@ -18,6 +18,7 @@ import "./ResearchBoard.css";
 // incident list on the left, the geographic panel or the unit grid in the
 // centre, the alert math on the right, all linked through one state that
 // lives in the URL. Under 1100 px the three stack: list, math, panel.
+// Choosing a signal opens the alert math again if it was closed.
 
 type Props = Omit<FeedProps, "state" | "onChange">;
 
@@ -89,6 +90,7 @@ export function ResearchBoard(props: Props) {
         locale={locale}
         content={content}
         initiallyOpen={initiallyOpen.current}
+        reveal={{ id: "math", key: state.incident }}
         onOpened={(id) => (id === "grid" ? onChange({ panel: "grid" }) : id === "map" ? onChange({ panel: "geo" }) : undefined)}
         onClosed={(id) => (id === "grid" ? onChange({ panel: "geo" }) : undefined)}
       />

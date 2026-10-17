@@ -28,7 +28,7 @@ the THL county file. Both are mounted read-only at run time:
 | Mount | Host path (default) | Variable |
 |---|---|---|
 | `/data` | `data/synthetic_microbiology_dataset` | `AEI_DATASET` |
-| `/regional` | `data/external/thl` (from `scripts/fetch_thl_ttr.py`; without it `/api/regional` answers 404) | `AEI_THL_DIR` |
+| `/regional` | `data/external/thl` (from `scripts/fetch_thl_ttr.py` and `scripts/fetch_finres.py`; without them `/api/regional` and `/api/national` answer 404) | `AEI_THL_DIR` |
 | `/config` | `deploy/container/config` (a site's code map) | `AEI_CONFIG_DIR` |
 
 The API runs as the image's user `node`, who must be able to read the

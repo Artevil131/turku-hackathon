@@ -2,7 +2,7 @@ import type { Severity } from "@aei/contract";
 import type { Sex, Specimen, WardCode } from "@aei/domain";
 import { type Locale, type MessageKey, specimenName, t, wardName } from "@aei/i18n";
 import { type ReactNode, useState } from "react";
-import { AGE_GROUPS, AGE_KEYS, type AgeGroup, type DoctorFilters, type Period, SITES, sexWord, unitGroups } from "./filters.ts";
+import { AGE_GROUPS, AGE_KEYS, type AgeGroup, DEFAULTS, type DoctorFilters, type Period, SITES, sexWord, unitGroups } from "./filters.ts";
 import { useMedia } from "./useMedia.ts";
 import "./RecordStrip.css";
 
@@ -163,13 +163,15 @@ export function RecordStrip({ locale, filters, onChange }: Props) {
     </Group>
   );
 
+  const severeBloodOn = filters.site === "blood" && filters.sev === "severe";
   const severeBlood = (
     <button
       type="button"
       className="rs-choice rs-quick"
-      aria-pressed={filters.site === "blood" && filters.sev === "severe"}
+      aria-pressed={severeBloodOn}
       onClick={() => {
-        onChange({ site: "blood", sev: "severe" });
+        // A second tap turns the shortcut off: back to the default site and severity.
+        onChange(severeBloodOn ? { site: DEFAULTS.site, sev: DEFAULTS.sev } : { site: "blood", sev: "severe" });
         setMore(false);
       }}
     >

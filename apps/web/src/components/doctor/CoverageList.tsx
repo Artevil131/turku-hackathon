@@ -76,6 +76,14 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
     });
   };
 
+  const annual = filters.period === 365;
+  const meta = [
+    t(locale, "drPeriodDays", { days: filters.period }),
+    cov && cov.level !== "unit" ? t(locale, cov.level === "ward type" ? "drLevelWardTypeShort" : "drLevelHospitalShort") : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   const renderItem = (item: Item) => {
     const st = STANDING[item.standing];
     const assessable = item.standing !== "not assessable" && item.share !== null;
@@ -109,17 +117,18 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
           </span>
           <span className="cl-num num">
             <span>
-              {t(locale, item.row?.basis === "spectrum" ? "drTargetMicrobes" : "drAllGrowing")}{" "}
-              <b>{assessable && item.share !== null ? `${pct(item.share)} %` : "–"}</b>
-              {item.standing === "borderline" && range ? ` (${range} %)` : ""}
+              {t(locale, item.row?.basis === "spectrum" ? "drWithinSpectrum" : "drAllOrgShort")}{" "}
+              <b>{assessable && item.share !== null ? `${pct(item.share)}\u00a0%` : "–"}</b>
+              {item.standing === "borderline" && range ? ` (${range}\u00a0%)` : ""}
               <span className="cl-n"> · n {num(locale, item.n)}</span>
             </span>
             {item.row?.basis === "spectrum" ? (
               <span className="cl-secondary">
-                {t(locale, "drAllGrowing")} {item.row.allOrganisms.share === null ? "–" : `${pct(item.row.allOrganisms.share)} %`}
+                {t(locale, "drAllOrgShort")} {item.row.allOrganisms.share === null ? "–" : `${pct(item.row.allOrganisms.share)}\u00a0%`}
                 <span className="cl-n"> · n {num(locale, item.row.coverage.counts.known)}</span>
               </span>
             ) : null}
+            <span className="cl-secondary cl-meta">{meta}</span>
           </span>
           <span className="cl-res" data-standing={item.standing} title={t(locale, st.long)}>
             <span className="cl-glyph" aria-hidden="true">
@@ -130,7 +139,11 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
           <span className="cl-details">
             {t(locale, "drDetails")} <span aria-hidden="true">{isSel ? "−" : "+"}</span>
           </span>
-          {item.standing === "borderline" ? <span className="cl-why">{t(locale, "drBorderlineWhy", { bar })}</span> : null}
+          {item.standing === "borderline" ? (
+            <span className="cl-why">
+              {t(locale, item.interval ? "drBorderlineWhyLow" : "drBorderlineWhy", { bar, lo: item.interval ? pct(item.interval[0]) : "" })}
+            </span>
+          ) : null}
         </button>
       </li>
     );
@@ -194,7 +207,7 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
           {bestPair.standing !== "clears" ? (
             <p>
               {t(locale, STANDING[bestPair.standing].long)}
-              {bestPair.interval ? ` · ${t(locale, "drInterval")}: ${pct(bestPair.interval[0])}–${pct(bestPair.interval[1])} %` : ""}
+              {bestPair.interval ? ` · ${t(locale, "drInterval")}: ${pct(bestPair.interval[0])}–${pct(bestPair.interval[1])}\u00a0%` : ""}
             </p>
           ) : null}
         </div>
@@ -240,10 +253,12 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
             <span className="cl-r">{t(locale, "drCovers")}</span>
             <span>{t(locale, "drStandingCol")}</span>
           </div>
+          {annual ? null : <p className="cl-recent">{t(locale, "drRecentContext")}</p>}
           <ul className="cl-rows" aria-label={t(locale, "drCoverage")}>
             {renderGroup(singles, firstBelow, t(locale, "drBelowDivider", { bar }))}
             {pairs.length > 0 ? renderGroup(pairs, 0, t(locale, "drTwoTogether")) : null}
           </ul>
+          <p className="cl-note">{t(locale, "drListNote")}</p>
         </div>
       ) : null}
       {data && cov ? (

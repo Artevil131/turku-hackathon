@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { resolve } from "node:path";
-import { buildAlerts, sortAlerts } from "@aei/alerts";
+import { buildAlerts, patientFindings, sortAlerts } from "@aei/alerts";
 import {
   alertExplainInput,
   createAiMonitor,
@@ -19,6 +19,8 @@ import {
   type IsolateQuery,
   type LiveEvent,
   type Meta,
+  type NationalResponse,
+  type PatientFindingsResponse,
   type QualityResponse,
   type RegionalData,
   type RegionalQuery,
@@ -32,19 +34,22 @@ import {
   handle as failsTogetherHandle,
   parseQuery as parseFailsQuery,
 } from "@aei/coresistance/route";
-import { type CoverageResult, coverage, suggest, suggestCombinations } from "@aei/coverage";
+import { barFor, type CoverageResult, coverage, ONSETS, type Onset, suggest, suggestCombinations } from "@aei/coverage";
 import { type Dataset, joinIsolates, loadDataset } from "@aei/dataset";
 import {
   AGE_GROUPS,
   ANTIBIOTICS,
+  type AntibioticCode,
   type IsolateRecord,
   isAgeGroup,
   ORGANISMS,
+  type Phenotype,
   SPECIMENS,
   type Specimen,
   WARDS,
   type WardCode,
 } from "@aei/domain";
+import { defeatedBy } from "@aei/eucast";
 import { antibioticName, phenotypeName, specimenName, wardName } from "@aei/i18n";
 import { asResult, type CodeMaps, DEFAULT_CODE_MAPS, detectFormat, extendCodeMaps, ingest, mergeResults } from "@aei/ingest";
 import { checkRows, type Finding, summarize } from "@aei/quality";
@@ -95,6 +100,8 @@ const config = {
   regionalFile: resolve(env.AEI_REGIONAL ?? "../../data/external/thl/regional.json"),
   // County polygons for the regional map, written by scripts/fetch_county_geometry.py.
   countiesFile: resolve(env.AEI_COUNTIES ?? "../../data/external/statfi/counties.geojson"),
+  // THL Finres national reference, written by scripts/fetch_finres.py (D-048); read on each request.
+  nationalFile: resolve(env.AEI_NATIONAL ?? "../../data/external/thl/finres.json"),
 };
 const codeMaps: CodeMaps = config.codeMapFile
   ? extendCodeMaps(JSON.parse(readFileSync(resolve(config.codeMapFile), "utf8")) as Partial<CodeMaps>)
@@ -357,7 +364,7 @@ export const server = createServer(async (req, res) => {
       if (sex !== null && sex !== "F" && sex !== "M") return send(res, 400, { error: "sex must be F or M" });
       if (ageGroup !== null && !isAgeGroup(ageGroup))
         return send(res, 400, { error: `ageGroup must be one of ${Object.keys(AGE_GROUPS).join(", ")}` });
-      if (onset !== null && onset !== "hospital") return send(res, 400, { error: "onset must be hospital" });
+      if (onset !== null && !ONSETS.includes(onset as Onset)) return send(res, 400, { error: "onset must be hospital, community or any" });
       const days = windowDays === null ? undefined : Number(windowDays);
       if (days !== undefined && (!Number.isInteger(days) || days < 1))
         return send(res, 400, { error: "windowDays must be a positive integer" });
@@ -375,16 +382,28 @@ export const server = createServer(async (req, res) => {
           ...(ageGroup ? { ageGroup } : {}),
           ...(onset ? { onset } : {}),
           ...(days ? { windowDays: days } : {}),
+          onset: onset as Onset,
         });
         coverages.set(key, result);
       }
       return send(res, 200, {
         asOf,
         severity,
+        bar: barFor(result.query, severity),
         coverage: result,
         suggestions: suggest(result, severity),
         combinationSuggestions: suggestCombinations(result, severity),
       });
+    }
+    if (url.pathname === ROUTES.patientFindings) {
+      const id = url.searchParams.get("id")?.trim();
+      if (!id) return send(res, 400, { error: "id is required" });
+      const asOf = clock.state().asOf;
+      // Only released records, so nothing after the replay date leaks in (D-050).
+      const findings = patientFindings(state.released.upTo(asOf), id, asOf);
+      const affects: Partial<Record<Phenotype, AntibioticCode[]>> = {};
+      for (const f of findings) affects[f.phenotype] ??= defeatedBy(f.phenotype);
+      return send(res, 200, { asOf, patientId: id, findings, affects } satisfies PatientFindingsResponse);
     }
     if (url.pathname === ROUTES.failsTogether) {
       const parsed = parseFailsQuery(
@@ -415,6 +434,11 @@ export const server = createServer(async (req, res) => {
       const data = JSON.parse(readFileSync(config.regionalFile, "utf8")) as RegionalData;
       const query: RegionalQuery = { group: url.searchParams.get("group") ?? "", region: url.searchParams.get("region") ?? "" };
       return send(res, 200, regionalUpTo(data, clock.state().asOf, query));
+    }
+    if (url.pathname === ROUTES.national) {
+      if (!existsSync(config.nationalFile))
+        return send(res, 404, { error: "No national data; run `uv run python scripts/fetch_finres.py`" });
+      return send(res, 200, JSON.parse(readFileSync(config.nationalFile, "utf8")) as NationalResponse);
     }
     if (url.pathname === ROUTES.weekly) {
       const asOf = clock.state().asOf;

@@ -14,6 +14,7 @@ and response types, live event types, and a typed client.
 | `/api/ingest` | POST HL7 v2 / FHIR Bundle / CSV | lab results from a laboratory system, parsed by `@aei/ingest` (D-035); returns what was accepted, new alert ids, warnings and data-check findings (`quality`, D-038) |
 | `/api/quality` | GET | `QualityResponse`: rows checked and findings per check over everything the server holds (`@aei/quality`, D-038) |
 | `/api/regional?group&region` | GET | `RegionalResponse`: THL county series of MRSA, ESBL, VRE and CPE and their regional signals (each marked `strong` when it survives a Bonferroni correction), months before the clock only (D-025, D-037); 404 until `scripts/fetch_thl_ttr.py` has run |
+| `/api/national` | GET | `NationalResponse`: THL Finres national %R per genus, antibiotic and specimen for the latest year (CC BY 4.0, D-048); `nationalCell(response, organism, antibiotic, specimen)` looks a row up by our species and codes (cefoxitin → the MRSA flag); 404 until `scripts/fetch_finres.py` has run |
 | `/api/live` | SSE | `LiveEvent`: `clock`, `arrivals`, `alerts`, `reset` |
 
 `createAeiClient({ baseUrl })` wraps them, with `live(onEvent)` for the

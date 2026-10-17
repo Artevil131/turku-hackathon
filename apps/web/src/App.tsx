@@ -142,6 +142,7 @@ export function App() {
           lastArrivals={live.lastArrivals}
           command={live.command}
           reducedMotion={reducedMotion}
+          collapsible
         />
 
         <main id="main-content" className="page" tabIndex={-1}>
@@ -153,7 +154,7 @@ export function App() {
               lastRole={lastRole}
               onRole={setPage}
               connection={live.connection}
-              alerts={live.alerts}
+              alerts={live.alertsLoaded ? live.alerts : undefined}
               records={live.records}
             />
           ) : null}

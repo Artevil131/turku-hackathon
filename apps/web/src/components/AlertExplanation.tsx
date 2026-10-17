@@ -1,6 +1,6 @@
 import type { AeiClient, Alert, ExplainResponse, ExplainWording } from "@aei/contract";
 import { formatDate, type Locale, phenotypeName, t, wardName } from "@aei/i18n";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 
 /**
  * The code's plain-language template first (D-029). Where the server has a
@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
  * by code, and the reworded text says it should be read against the figures.
  */
 export function AlertExplanation({ client, id, locale, ai = false }: { client: AeiClient; id: string; locale: Locale; ai?: boolean }) {
+  const panelId = useId();
   const [wording, setWording] = useState<ExplainWording | null>(null);
   const [attempt, setAttempt] = useState(0);
   const open = wording !== null;
@@ -39,11 +40,17 @@ export function AlertExplanation({ client, id, locale, ai = false }: { client: A
   const fellBack = wording === "model" && result?.source === "template";
   return (
     <div className="alert-explanation">
-      <button type="button" className="link" aria-expanded={open} onClick={() => setWording(open ? null : "template")}>
+      <button
+        type="button"
+        className="link"
+        aria-expanded={open}
+        aria-controls={panelId}
+        onClick={() => setWording(open ? null : "template")}
+      >
         {t(locale, open ? "hideExplanation" : "explain")}
       </button>
       {open ? (
-        <div aria-live="polite">
+        <div id={panelId} aria-live="polite">
           {pending ? <p className="field-hint">{t(locale, "explainLoading")}</p> : null}
           {error ? (
             <p className="field-hint">

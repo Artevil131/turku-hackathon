@@ -1,7 +1,7 @@
 import type { IsolateRecord } from "@aei/domain";
 import { addDays } from "@aei/replay";
 import { describe, expect, it } from "vitest";
-import { coverage, IV_ONLY, suggest, suggestCombinations, wilson } from "./index.ts";
+import { barFor, coverage, IV_ONLY, onsetOf, suggest, suggestCombinations, THRESHOLDS, wilson } from "./index.ts";
 
 let n = 0;
 const iso = (extra: Partial<IsolateRecord>): IsolateRecord => {
@@ -163,7 +163,64 @@ describe("review fixes (D-033)", () => {
   });
 });
 
-describe("age group and onset (D-047)", () => {
+describe("onset (D-049)", () => {
+  const stay = (day: number) => ({ admissionDate: addDays("2026-06-01", 1 - day), sampleDate: "2026-06-01" });
+
+  it("counts day 3 of the stay and later as hospital-acquired, earlier days and no admission date as community", () => {
+    expect(onsetOf(stay(1))).toBe("community");
+    expect(onsetOf(stay(2))).toBe("community");
+    expect(onsetOf(stay(3))).toBe("hospital");
+    expect(onsetOf(stay(10))).toBe("hospital");
+    expect(onsetOf({ admissionDate: null, sampleDate: "2026-06-01" })).toBe("community");
+  });
+
+  it("filters the pool by onset and records it", () => {
+    const records = [...Array.from({ length: 30 }, () => iso(stay(3))), ...Array.from({ length: 40 }, () => iso(stay(2)))];
+    const q = { asOf: "2026-06-30", ward: "URO", specimen: "urine" } as const;
+    const hospital = coverage(records, { ...q, onset: "hospital" });
+    expect([hospital.isolates, hospital.onsetApplied, hospital.query.onset]).toEqual([30, true, "hospital"]);
+    const community = coverage(records, { ...q, onset: "community" });
+    expect([community.isolates, community.onsetApplied]).toEqual([40, true]);
+    const any = coverage(records, q);
+    expect([any.isolates, any.onsetApplied, any.query.onset]).toEqual([70, false, "any"]);
+  });
+
+  it("drops the onset filter before the sex filter, and both before the unit", () => {
+    const q = { asOf: "2026-06-30", ward: "URO", specimen: "urine", sex: "F", onset: "hospital" } as const;
+    const make = (hf: number, hm: number, cf: number, cm: number) => [
+      ...Array.from({ length: hf }, () => iso({ ...stay(3), sex: "F" })),
+      ...Array.from({ length: hm }, () => iso({ ...stay(3), sex: "M" })),
+      ...Array.from({ length: cf }, () => iso({ ...stay(1), sex: "F" })),
+      ...Array.from({ length: cm }, () => iso({ ...stay(1), sex: "M" })),
+    ];
+    const pick = (r: ReturnType<typeof coverage>) => [r.level, r.isolates, r.onsetApplied, r.sexApplied];
+    // Onset and sex together keep 30 isolates: both stay.
+    expect(pick(coverage(make(30, 5, 5, 5), q))).toEqual(["unit", 30, true, true]);
+    // Hospital women are 20, hospital patients 35, women 40: onset goes first, sex stays (a sex-first order would keep onset).
+    expect(pick(coverage(make(20, 15, 20, 0), q))).toEqual(["unit", 40, false, true]);
+    // Women are 20 in all, the unit 45: both filters go, the unit stays.
+    expect(pick(coverage(make(10, 10, 10, 15), q))).toEqual(["unit", 45, false, false]);
+    // The unit never reaches 30: both filters stay and the level falls back to the ward type.
+    const sparse = [...make(5, 5, 5, 5), ...Array.from({ length: 30 }, () => iso({ ...stay(4), sex: "F", ward: "SURG" }))];
+    expect(pick(coverage(sparse, q))).toEqual(["ward type", 35, true, true]);
+  });
+
+  it("judges hospital-acquired infections against the 90 % bar whatever the severity", () => {
+    expect(barFor({ onset: "hospital" }, "mild")).toBe(THRESHOLDS.severe);
+    expect(barFor({ onset: "community" }, "mild")).toBe(THRESHOLDS.mild);
+    expect(barFor({}, "mild")).toBe(THRESHOLDS.mild);
+    expect(barFor({ onset: "any" }, "severe")).toBe(THRESHOLDS.severe);
+    // 85 of 100 covered: borderline against 80 %, below against 90 %.
+    const records = Array.from({ length: 100 }, (_, i) => iso({ ...stay(5), results: { NIT: i < 85 ? "S" : "R" } }));
+    const q = { asOf: "2026-06-30", ward: "URO", specimen: "urine" } as const;
+    const nit = (onset: "hospital" | "any") => suggest(coverage(records, { ...q, onset }), "mild").find((s) => s.antibiotic === "NIT");
+    expect(nit("any")?.standing).toBe("borderline");
+    expect(nit("hospital")?.standing).toBe("below");
+    expect(nit("hospital")?.basis).toBe("spectrum"); // only the bar changes, not the basis
+  });
+});
+
+describe("age group and onset (D-053)", () => {
   const day3 = { admissionDate: "2026-05-30", sampleDate: "2026-06-01" }; // day 3 of the stay
   const day2 = { admissionDate: "2026-05-31", sampleDate: "2026-06-01" };
 
