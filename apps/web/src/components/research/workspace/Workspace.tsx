@@ -701,6 +701,16 @@ export function Workspace({
       {wide ? (
         <div className="ws-toolbar">
           {focusBar ?? layouts}
+          <button
+            type="button"
+            className="ws-add-open"
+            onClick={(e) => {
+              const b = e.currentTarget.getBoundingClientRect();
+              setPicker({ x: b.left, y: b.bottom + 6, at: {} });
+            }}
+          >
+            + {t(locale, "wsEmptyAdd")}
+          </button>
           {rail ? (
             <button
               type="button"
@@ -990,27 +1000,31 @@ function WindowsMenu({
   chartMenu?: (done: () => void) => ReactNode;
 }) {
   return (
-    <Menu id="ws-tray-button" label={t(locale, "wsToolbar")} icon={<SidebarIcon name="windows" />} wide>
-      <MenuLabel>{t(locale, "wsEmptyAdd")}</MenuLabel>
-      {WIN_IDS.map((id) => (
-        <MenuItem key={id} data-add={id} hint={count(id) ? String(count(id)) : undefined} onSelect={() => onAdd(id)}>
-          {t(locale, TITLE_KEY[id])}
+    <>
+      {/* Where a window is made: one plain row, always visible, with the plus. */}
+      <Menu id="ws-add-button" label={t(locale, "wsEmptyAdd")} icon={<SidebarIcon name="add" />} wide>
+        {WIN_IDS.map((id) => (
+          <MenuItem key={id} data-add={id} hint={count(id) ? String(count(id)) : undefined} onSelect={() => onAdd(id)}>
+            {t(locale, TITLE_KEY[id])}
+          </MenuItem>
+        ))}
+        <p className="sb-pop-foot">{t(locale, "wsAddHint")}</p>
+      </Menu>
+      <Menu id="ws-tray-button" label={t(locale, "wsPresets")} icon={<SidebarIcon name="windows" />} wide>
+        <MenuLabel>{t(locale, "wsPresets")}</MenuLabel>
+        {presets.map((p) => (
+          <MenuItem key={p} data-preset={p} onSelect={() => onPreset(p)}>
+            {t(locale, presetKey[p] as "wsDefault")}
+          </MenuItem>
+        ))}
+        {chartMenu ? <ChartEntry locale={locale} chartMenu={chartMenu} /> : null}
+        <MenuSeparator />
+        <MenuItem data-reset onSelect={onReset}>
+          {t(locale, "wsReset")}
         </MenuItem>
-      ))}
-      <MenuSeparator />
-      <MenuLabel>{t(locale, "wsPresets")}</MenuLabel>
-      {presets.map((p) => (
-        <MenuItem key={p} data-preset={p} onSelect={() => onPreset(p)}>
-          {t(locale, presetKey[p] as "wsDefault")}
-        </MenuItem>
-      ))}
-      {chartMenu ? <ChartEntry locale={locale} chartMenu={chartMenu} /> : null}
-      <MenuSeparator />
-      <MenuItem data-reset onSelect={onReset}>
-        {t(locale, "wsReset")}
-      </MenuItem>
-      <p className="sb-pop-foot">{t(locale, "wsHint")}</p>
-    </Menu>
+        <p className="sb-pop-foot">{t(locale, "wsHint")}</p>
+      </Menu>
+    </>
   );
 }
 

@@ -41,6 +41,7 @@ export const ICONS = {
     "M8.5 10.5 15.5 6.5M8.5 13.5l7 4M18 7.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5ZM6 14.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5ZM18 21.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z",
   reproduce: "M4.5 12a7.5 7.5 0 0 1 13-5.1M19.5 12a7.5 7.5 0 0 1-13 5.1M17.5 3.5v3.6h-3.6M6.5 20.5v-3.6h3.6",
   windows: "M3.5 4.5h17v15h-17zM9.5 4.5v15M9.5 11h11",
+  add: "M12 5v14M5 12h14",
 };
 export const SidebarIcon = ({ name }: { name: keyof typeof ICONS }) => <Icon d={ICONS[name]} />;
 

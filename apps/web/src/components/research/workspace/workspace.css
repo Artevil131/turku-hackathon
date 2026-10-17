@@ -646,3 +646,22 @@
   color: var(--ink-3);
   font-size: var(--t-xs);
 }
+
+/* The visible way to make a window, at the end of the toolbar row. */
+.ws-toolbar .ws-add-open {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--live);
+  border-radius: 999px;
+  background: var(--live-soft);
+  color: var(--live);
+  font: inherit;
+  font-size: var(--t-s);
+  font-weight: 600;
+  cursor: pointer;
+}
+.ws-toolbar .ws-add-open:hover,
+.ws-toolbar .ws-add-open:focus-visible {
+  background: var(--live);
+  color: #fff;
+}
