@@ -356,6 +356,7 @@ export function ResearchBoard(props: Props) {
         />
       </InSlot>
       <Workspace
+        clock={asOf}
         projectId={project.id}
         project={project.response?.project}
         client={client}

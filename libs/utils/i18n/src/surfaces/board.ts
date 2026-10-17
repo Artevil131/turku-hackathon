@@ -54,6 +54,13 @@ export const boardEn = {
   pick_answer_sub: "The answer in one card",
 
   wsFind: "Find a ward, signal or drug",
+  wsDateTitle: "Today in this data",
+  wsDateLiveTag: "replay clock",
+  wsDateFrozenTag: "frozen demo",
+  wsDateLive: "The replay clock stands at {date} and moves on as results arrive. The calendar on the wall says {today}.",
+  wsDateFrozen:
+    "This project is frozen at {date}: every number on the board is as of that day, and the data is synthetic. The calendar on the wall says {today}.",
+  wsDateFutureNote: "Muted days: no results yet.",
   wsDefault: "Default",
   wsMap: "Map",
   wsSignals: "Signals",
@@ -152,6 +159,13 @@ export const boardFi: Record<keyof typeof boardEn, string> = {
   pick_answer_sub: "Vastaus yhdellä kortilla",
 
   wsFind: "Hae osasto, signaali tai lääke",
+  wsDateTitle: "Tämä päivä aineistossa",
+  wsDateLiveTag: "toistokello",
+  wsDateFrozenTag: "jäädytetty esimerkki",
+  wsDateLive: "Toistokello on päivässä {date} ja etenee tulosten saapuessa. Seinäkalenterissa on {today}.",
+  wsDateFrozen:
+    "Tämä projekti on jäädytetty päivään {date}: jokainen luku taululla on sen päivän tilanne, ja aineisto on synteettistä. Seinäkalenterissa on {today}.",
+  wsDateFutureNote: "Himmeät päivät: ei vielä tuloksia.",
   wsDefault: "Oletus",
   wsMap: "Kartta",
   wsSignals: "Signaalit",

@@ -56,6 +56,7 @@ import {
 } from "./layout.ts";
 import { templateLayout } from "./templates.ts";
 import "./workspace.css";
+import { DateChip } from "./DateChip.tsx";
 
 // The window workspace of the researcher page. At 1100 px and wider the
 // windows float on a 12-column grid with 24 px rows: drag the top edge to
@@ -226,10 +227,13 @@ export function Workspace({
   chartMenu,
   rail,
   revealRail,
+  clock = null,
 }: {
   /** The project open in this tab (null: the browser's own layout). */
   projectId?: string | null;
   project?: Project;
+  /** The replay clock's day: the data's "today", shown in the toolbar (a frozen project stands at its own day). */
+  clock?: string | null;
   client?: AeiClient;
   /** The project was deleted elsewhere: its layout save answered 404. */
   onGone?: () => void;
@@ -651,6 +655,7 @@ export function Workspace({
           </button>
         ))}
       </div>
+      <DateChip locale={locale} date={project?.mode === "frozen" ? (project.asOf ?? clock) : clock} frozen={project?.mode === "frozen"} />
       <button
         type="button"
         className="ws-find"

@@ -840,6 +840,117 @@
 }
 
 /* A visible way to the search: one click from the board to any ward, signal or drug. */
+/* The data's "today": a chip with the date and whether it moves; open, a month with the day marked. */
+.ws-date {
+  position: relative;
+  margin-left: 8px;
+}
+.ws-date-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: var(--control-h);
+  padding: 0 10px 0 9px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--glass-1);
+  color: var(--ink);
+  font-size: var(--t-s);
+  cursor: pointer;
+  list-style: none;
+  white-space: nowrap;
+}
+.ws-date-chip::-webkit-details-marker {
+  display: none;
+}
+.ws-date-chip b {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.ws-date-tag {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--live) 14%, transparent);
+  color: var(--live);
+  font-size: var(--t-xs);
+  font-weight: 600;
+}
+.ws-date-tag[data-frozen] {
+  background: color-mix(in oklab, var(--st-warn, #b7791f) 16%, transparent);
+  color: var(--st-warn, #8a5a12);
+}
+.ws-date[open] .ws-date-chip,
+.ws-date-chip:hover,
+.ws-date-chip:focus-visible {
+  border-color: var(--live);
+}
+.ws-date-pop {
+  position: absolute;
+  z-index: 60;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 300px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel, #fff);
+  box-shadow: 0 12px 32px rgb(7 8 28 / 0.14);
+}
+.ws-date-head {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.ws-date-big {
+  margin: 2px 0 6px;
+  font: 600 var(--t-l) / 1.2 var(--font-display);
+}
+.ws-date-why {
+  margin: 0 0 12px;
+  color: var(--ink-2);
+  font-size: var(--t-s);
+  line-height: 1.45;
+}
+.ws-cal-month {
+  margin: 0 0 6px;
+  font-size: var(--t-s);
+  font-weight: 600;
+}
+.ws-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.ws-cal-wd {
+  color: var(--ink-3);
+  font-size: var(--t-xs);
+  padding-bottom: 2px;
+}
+.ws-cal-day {
+  height: 30px;
+  line-height: 30px;
+  border-radius: 8px;
+  font-size: var(--t-s);
+}
+.ws-cal-day[data-future] {
+  color: var(--ink-3);
+  opacity: 0.45;
+}
+.ws-cal-day[data-today] {
+  background: var(--live);
+  color: var(--live-ink, #fff);
+  font-weight: 700;
+}
+.ws-cal-note {
+  margin: 8px 0 0;
+  color: var(--ink-3);
+  font-size: var(--t-xs);
+}
 .ws-find {
   margin-left: 8px;
   display: inline-flex;
