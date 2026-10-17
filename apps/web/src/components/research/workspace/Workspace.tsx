@@ -61,11 +61,10 @@ const TITLE_KEY = {
   math: "boardMath",
   assistant: "boardAssistant",
   grid: "boardGrid",
-  notebook: "boardNotebook",
 } as const;
 
 /** The stacked order under 1100 px: the list first, the map last (as before). */
-const STACK_ORDER: readonly WinId[] = ["signals", "math", "assistant", "map", "graph", "grid", "notebook"];
+const STACK_ORDER: readonly WinId[] = ["signals", "math", "assistant", "map", "graph", "grid"];
 
 function useWide(): boolean {
   const query = "(min-width: 1100px)";

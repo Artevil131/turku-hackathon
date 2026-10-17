@@ -8,7 +8,7 @@ export const STORAGE_KEY = "aei.research.layout";
 /** The board grows downward as windows move down; this is only a sanity limit. */
 export const MAX_ROWS = 160;
 
-export const WIN_IDS = ["signals", "map", "graph", "math", "assistant", "grid", "notebook"] as const;
+export const WIN_IDS = ["signals", "map", "graph", "math", "assistant", "grid"] as const;
 export type WinId = (typeof WIN_IDS)[number];
 
 export interface Rect {
@@ -34,7 +34,6 @@ export const MIN_SIZE: Record<WinId, { w: number; h: number }> = {
   math: { w: 3, h: 6 },
   assistant: { w: 3, h: 5 },
   grid: { w: 4, h: 8 },
-  notebook: { w: 6, h: 16 },
 };
 
 const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
@@ -60,9 +59,8 @@ export function defaultLayout(): Layout {
     graph: { x: 7, y: 14, w: 5, h: 18, open: true },
     assistant: { x: 7, y: 32, w: 5, h: 8, open: true },
     grid: { x: 0, y: 0, w: 12, h: 30, open: false },
-    notebook: { x: 6, y: 40, w: 6, h: 18, open: false },
   };
-  return { wins, order: ["signals", "map", "graph", "math", "assistant", "grid", "notebook"] };
+  return { wins, order: ["signals", "map", "graph", "math", "assistant", "grid"] };
 }
 
 export type Preset = "default" | "map" | "signals" | "units";
@@ -202,8 +200,7 @@ export function parseLayout(raw: string | null): Layout | null {
     if (v.v !== 1 || !v.wins || !Array.isArray(v.order)) return null;
     const wins = {} as Record<WinId, WinState>;
     for (const id of WIN_IDS) {
-      // A layout saved before a window existed keeps the rest of the user's arrangement; the new window starts closed.
-      const w = v.wins[id] ?? (id === "notebook" ? defaultLayout().wins.notebook : undefined);
+      const w = v.wins[id];
       if (!w || !isInt(w.x) || !isInt(w.y) || !isInt(w.w) || !isInt(w.h) || typeof w.open !== "boolean") return null;
       wins[id] = { x: w.x, y: w.y, w: w.w, h: w.h, open: w.open };
     }
