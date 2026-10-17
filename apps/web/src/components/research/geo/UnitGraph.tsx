@@ -1,41 +1,70 @@
 import type { Alert, RelationsResponse } from "@aei/contract";
 import { WARDS, type WardCode } from "@aei/domain";
-import { phenotypeName, t, wardName } from "@aei/i18n";
-import { nextUnits, undirectedFlows } from "@aei/relations";
-import { type KeyboardEvent, useMemo, useState } from "react";
+import { t, wardName } from "@aei/i18n";
+import { type KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { AsOf } from "../../AsOf.tsx";
-import type { PanelProps } from "../board.ts";
+import { InfoButton } from "../../Info.tsx";
+import { kindOf, type PanelProps, type SignalKind } from "../board.ts";
 import { KindGlyph } from "../feed/glyphs.tsx";
-import { badgeText, shiftDays, signalsOf } from "../network/model.ts";
+import { badgeText, shiftDays, signalsOf, type UnitSignals } from "../network/model.ts";
 import "./geo.css";
-import { arc, curve, GRAPH_H, GRAPH_W, NODE_HALF_H, NODE_HALF_W, nodeRect, outwardSide, placeTags, route, unitPoint } from "./layout.ts";
+import { bandPath, groupFlows, type Item, layoutFlow, type Placed } from "./flowLayout.ts";
 import { useLoad } from "./useLoad.ts";
 
-// The Tyks unit graph (its own window): the six hospital units on an inner
-// ring, the emergency department and the health centres outside it. Only the
-// meaningful flows are drawn: each unit's strongest two outgoing flows plus
-// every flow that touches a lit or selected unit; "all flows" adds the rest,
-// faint. Edge width is the number of patients on a linear scale, edges bulge
-// round the ring instead of across it, lit units get the red ring and one
-// glyph per kind of signal, and accent arrows show where the patients of a lit
-// unit go next, each labelled "share · n" beside the edge. Positions are
-// schematic.
+// The researcher's unit graph: one unit at a time, as a small three-column
+// Sankey. The unit in focus stands in the middle, the units that sent patients
+// to it on the left, the units its patients went to next on the right, each
+// band as thick as the number of patients. Clicking a side unit moves the focus
+// there. Beside a wide panel the columns sit side by side; on a narrow one they
+// stack (in-flows above, out-flows below). Positions are schematic.
 
 const WINDOW_DAYS = 28;
-const MAX_SPREAD = 3;
-const KEEP_OUT = 2;
-/** Edge width in viewBox units: linear in patients, from a hairline to 8. */
-const edgeWidth = (patients: number, max: number) => 1.2 + 6.8 * (max > 0 ? patients / max : 0);
+const NARROW = 560;
+const PAD = 8;
+const LABEL_W = 132;
+const BAR = 8;
+const CENTRE_W = 92;
 const pct = (v: number) => Math.round(v * 100);
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 
 type Net = { relations: RelationsResponse; alerts: Alert[] };
 
+/** The glyph kind of a unit's signals: a resistance kind first, else the data problem. */
+function glyphKind(s: UnitSignals | undefined): SignalKind | null {
+  if (!s) return null;
+  return s.badges.find((b) => b.kind !== "data")?.kind ?? s.badges[0]?.kind ?? null;
+}
+
+interface Size {
+  w: number;
+  h: number;
+}
+
+function useSize() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState<Size>({ w: 640, h: 300 });
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const read = () =>
+      setSize((p) =>
+        Math.round(el.clientWidth) === p.w && Math.round(el.clientHeight) === p.h
+          ? p
+          : { w: Math.round(el.clientWidth), h: Math.round(el.clientHeight) },
+      );
+    read();
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(read);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return { ref, size };
+}
+
 export function UnitGraph({ client, locale, asOf, state, onChange, reducedMotion }: PanelProps) {
   const [hover, setHover] = useState<WardCode | null>(null);
-  const [showTrail, setShowTrail] = useState(false);
-  const [showAll, setShowAll] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const { ref: stage, size } = useSize();
 
   const net = useLoad<Net>(
     () =>
@@ -50,60 +79,246 @@ export function UnitGraph({ client, locale, asOf, state, onChange, reducedMotion
   const rel = net.state === "ok" ? net.data.relations : null;
   const flows = rel?.flows ?? [];
   const signals = useMemo(() => signalsOf(locale, net.state === "ok" ? net.data.alerts : []), [locale, net]);
-  const pairs = useMemo(() => undirectedFlows(flows), [flows]);
-  const maxPair = pairs[0]?.patients ?? 0;
-  const sel = hover ?? state.unit ?? state.focus;
-
-  const spread = useMemo(() => {
-    const out: { from: WardCode; to: WardCode; share: number; n: number; total: number }[] = [];
-    for (const [unit, s] of signals.byUnit) {
-      if (!s.resistance) continue;
-      for (const n of nextUnits(flows, unit, MAX_SPREAD)) {
-        out.push({ from: unit, to: n.ward, share: n.share, n: n.patients, total: n.share ? Math.round(n.patients / n.share) : n.patients });
-      }
-    }
-    return out;
-  }, [signals, flows]);
-
   const lit = useMemo(() => new Set<WardCode>([...signals.byUnit].filter(([, s]) => s.resistance).map(([unit]) => unit)), [signals]);
 
-  // The flows worth drawing: each unit's strongest outgoing ones, and everything that touches a lit or chosen unit.
-  const strongest = useMemo(() => {
-    const keys = new Set<string>();
-    for (const w of WARDS) {
-      for (const n of nextUnits(flows, w.code, KEEP_OUT)) keys.add(w.code < n.ward ? `${w.code}|${n.ward}` : `${n.ward}|${w.code}`);
+  // Where the view opens: the open signal's unit, else the unit chosen for the feed, else the unit of the newest
+  // resistance signal of the window, else the unit with the most patients moving through it.
+  const newest = useMemo(() => {
+    let best: Alert | null = null;
+    for (const a of net.state === "ok" ? net.data.alerts : []) {
+      const kind = kindOf(a);
+      if (!kind || kind === "data" || !a.ward) continue;
+      if (!best || a.date > best.date) best = a;
     }
-    return keys;
+    return best?.ward ?? null;
+  }, [net]);
+  const busiest = useMemo(() => {
+    const load = new Map<WardCode, number>();
+    for (const f of flows) {
+      load.set(f.from, (load.get(f.from) ?? 0) + f.patients);
+      load.set(f.to, (load.get(f.to) ?? 0) + f.patients);
+    }
+    return WARDS.map((w) => w.code).sort((a, b) => (load.get(b) ?? 0) - (load.get(a) ?? 0) || a.localeCompare(b))[0] ?? null;
   }, [flows]);
 
-  const spreadTags = useMemo(() => {
-    const list = [...spread]
-      .sort((x, y) => x.from.localeCompare(y.from) || x.to.localeCompare(y.to))
-      .map((sp) => {
-        const g = curve(unitPoint(sp.from), unitPoint(sp.to), route(sp.from, sp.to));
-        const label = t(locale, "geoSpread", { share: pct(sp.share), n: sp.n });
-        return { sp, g, label, w: Math.round(label.length * 6.8 + 18), side: outwardSide(g) };
-      });
-    const spots = placeTags(
-      list.map((x) => ({ id: `${x.sp.from}|${x.sp.to}`, w: x.w, side: x.side, at: x.g.at, tan: x.g.tan })),
-      WARDS.map((w) => nodeRect(unitPoint(w.code))),
-      { x0: 0, y0: 0, x1: GRAPH_W, y1: GRAPH_H },
-    );
-    return list.map((x) => ({ ...x, spot: spots.get(`${x.sp.from}|${x.sp.to}`) }));
-  }, [spread, locale]);
+  // The signal's own unit, remembered: a click here moves `focus`, which is also where the signal's unit lives.
+  const mine = useRef<WardCode | null>(null);
+  const [open, setOpen] = useState<WardCode | null>(state.focus);
+  useEffect(() => {
+    if (state.focus !== mine.current) setOpen(state.focus);
+  }, [state.focus]);
+  const home = open ?? state.unit ?? newest ?? busiest;
+  const centre = state.focus ?? state.unit ?? newest ?? busiest;
 
-  const choose = (code: WardCode) => {
-    setHover(code);
-    onChange({ unit: state.unit === code ? null : code });
+  const recentre = (unit: WardCode) => {
+    mine.current = unit;
+    onChange({ focus: unit });
   };
-  const onKey = (e: KeyboardEvent, code: WardCode) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      choose(code);
-    }
-  };
+
+  const narrow = size.w < NARROW;
+  const view = useMemo(() => {
+    if (!centre) return null;
+    const ins = groupFlows(
+      flows.filter((f) => f.to === centre).map((f) => ({ unit: f.from, patients: f.patients })),
+      narrow ? { maxItems: 5 } : {},
+    );
+    const outs = groupFlows(
+      flows.filter((f) => f.from === centre).map((f) => ({ unit: f.to, patients: f.patients })),
+      narrow ? { maxItems: 5 } : {},
+    );
+    const nIn = sum(ins.map((i) => i.patients));
+    const nOut = sum(outs.map((i) => i.patients));
+    return { ins, outs, nIn, nOut };
+  }, [centre, flows, narrow]);
+
+  const W = Math.max(size.w, 280);
+  // Wide: the stage's own height, within bounds; narrow: the stack's fixed height.
+  const ZONE = 46;
+  const ROW = 60;
+  const CH = 88;
+  const H = narrow ? ZONE + BAR + ROW + CH + ROW + BAR + ZONE + 4 : Math.min(Math.max(size.h, 250), 420);
+  const geom = useMemo(() => {
+    if (!view) return null;
+    const lay = narrow
+      ? layoutFlow(view.ins, view.outs, { span: W - 2 * PAD, minNode: 48, gap: 4, margin: 0, centreMin: W * 0.5 })
+      : layoutFlow(view.ins, view.outs, { span: H - 2 * PAD, minNode: 28, gap: 6, margin: 0, centreMin: 64 });
+    return lay;
+  }, [view, narrow, W, H]);
+
   const loading = net.state === "loading";
   const updating = net.fetching && rel !== null;
+  const showBack = centre !== null && home !== null && centre !== home;
+
+  const aria = (unit: WardCode, item: Item, dir: "in" | "out") => {
+    const s = signals.byUnit.get(unit);
+    return [
+      dir === "in"
+        ? t(locale, "netBandIn", { from: unit, to: centre ?? "", n: item.patients, share: pct(item.share) })
+        : t(locale, "netBandOut", { from: centre ?? "", to: unit, n: item.patients, share: pct(item.share) }),
+      wardName(locale, unit),
+      s ? t(locale, "netNodeSignals", { n: s.alerts.length, list: s.badges.map(badgeText).join("; ") }) : null,
+      t(locale, "netFlowRecentre"),
+    ]
+      .filter(Boolean)
+      .join(". ");
+  };
+
+  const bandAria = (item: Item, dir: "in" | "out") => {
+    const list = item.units.join(", ");
+    const share = pct(item.share);
+    const c = centre ?? "";
+    if (item.unit === null) {
+      return dir === "in"
+        ? t(locale, "netBandOthers", { list, to: c, n: item.patients, share })
+        : t(locale, "netBandOthersOut", { list, from: c, n: item.patients, share });
+    }
+    return dir === "in"
+      ? t(locale, "netBandIn", { from: item.unit, to: c, n: item.patients, share })
+      : t(locale, "netBandOut", { from: c, to: item.unit, n: item.patients, share });
+  };
+
+  // Geometry of the columns (wide) or rows (narrow).
+  const xa = PAD + LABEL_W + 6 + BAR; // where the left bands leave their bars
+  const xb = W - PAD - LABEL_W - 6 - BAR; // where the right bands reach theirs
+  const cx0 = W / 2 - CENTRE_W / 2;
+  const cx1 = cx0 + CENTRE_W;
+  const yIn = ZONE + BAR; // narrow: where the upper bands leave their bars
+  const yC0 = yIn + ROW;
+  const yC1 = yC0 + CH;
+  const yOut = yC1 + ROW; // narrow: where the lower bands reach their bars
+
+  const cS = centre ? signals.byUnit.get(centre) : undefined;
+  const cLit = centre ? lit.has(centre) : false;
+  const cKind = glyphKind(cS);
+  const cChip = cS ? `${cS.badges[0]?.text ?? ""}${cS.badges.length > 1 ? ` +${cS.badges.length - 1}` : ""}` : "";
+
+  const onKey = (e: KeyboardEvent, unit: WardCode) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      recentre(unit);
+    }
+  };
+
+  const renderSide = (items: Placed[], dir: "in" | "out") =>
+    items.map((p) => {
+      const unit = p.unit;
+      const s = unit ? signals.byUnit.get(unit) : undefined;
+      const isLit = unit ? lit.has(unit) : false;
+      const gk = glyphKind(s);
+      const accent = dir === "out" && isLit;
+      const label = `${unit ?? t(locale, "netOthers")} · ${pct(p.share)} % · n ${p.patients}`;
+      const d = narrow
+        ? dir === "in"
+          ? bandPath(yIn, PAD + p.b0, PAD + p.b1, yC0, PAD + p.c0, PAD + p.c1, true)
+          : bandPath(yC1, PAD + p.c0, PAD + p.c1, yOut, PAD + p.b0, PAD + p.b1, true)
+        : dir === "in"
+          ? bandPath(xa, PAD + p.b0, PAD + p.b1, cx0, PAD + p.c0, PAD + p.c1)
+          : bandPath(cx1, PAD + p.c0, PAD + p.c1, xb, PAD + p.b0, PAD + p.b1);
+      // The bar of the unit node and its label.
+      const mid = PAD + (p.n0 + p.n1) / 2;
+      const bar = narrow
+        ? { x: PAD + p.b0, y: dir === "in" ? ZONE : yOut, w: p.t, h: BAR }
+        : { x: dir === "in" ? xa - BAR : xb, y: PAD + p.b0, w: BAR, h: p.t };
+      const ring = 3;
+      const box = narrow
+        ? { x: PAD + p.n0, y: dir === "in" ? 0 : yOut - 2, w: p.n1 - p.n0, h: ZONE + BAR + 2 }
+        : dir === "in"
+          ? { x: PAD, y: PAD + p.n0, w: xa - PAD, h: p.n1 - p.n0 }
+          : { x: xb, y: PAD + p.n0, w: W - PAD - xb, h: p.n1 - p.n0 };
+      const nodeKey = `${dir}|${p.key}`;
+      const active = hover !== null && hover === unit;
+      const labelEl = narrow ? (
+        <text className="ug-label" textAnchor="middle" x={PAD + (p.n0 + p.n1) / 2}>
+          {[unit ?? t(locale, "netOthers"), `${pct(p.share)} %`, `n ${p.patients}`].map((line, i) => (
+            <tspan
+              key={line}
+              x={PAD + (p.n0 + p.n1) / 2}
+              y={(dir === "in" ? 12 : yOut + BAR + 14) + i * 13}
+              className={i === 0 ? "ug-code" : undefined}
+            >
+              {line}
+            </tspan>
+          ))}
+        </text>
+      ) : (
+        <text className="ug-label" x={dir === "in" ? xa - BAR - 8 : xb + BAR + 8} y={mid + 4} textAnchor={dir === "in" ? "end" : "start"}>
+          {label}
+        </text>
+      );
+      const glyph =
+        gk && unit ? (
+          <g
+            className="ug-glyph"
+            transform={
+              narrow
+                ? `translate(${PAD + (p.n0 + p.n1) / 2 + 14},${dir === "in" ? 0 : yOut + BAR + 2}) scale(0.8)`
+                : dir === "in"
+                  ? `translate(${xa - BAR - 8 - label.length * 6.1 - 20},${mid - 8})`
+                  : `translate(${xb + BAR + 8 + label.length * 6.1 + 4},${mid - 8})`
+            }
+            data-kind={gk}
+          >
+            <KindGlyph kind={gk} />
+          </g>
+        ) : null;
+      const content = (
+        <>
+          <path d={d} className="ug-band" data-dir={dir} data-accent={accent} data-active={active}>
+            <title>{bandAria(p, dir)}</title>
+          </path>
+          <rect
+            className="ug-bar"
+            data-lit={isLit}
+            data-data={!!s?.data && !isLit}
+            x={bar.x}
+            y={bar.y}
+            width={bar.w}
+            height={bar.h}
+            rx="2"
+          />
+          {isLit ? (
+            <rect className="ug-ring" x={bar.x - ring} y={bar.y - ring} width={bar.w + 2 * ring} height={bar.h + 2 * ring} rx="5" />
+          ) : null}
+          {labelEl}
+          {glyph}
+        </>
+      );
+      if (!unit) {
+        return (
+          // biome-ignore lint/a11y/noInteractiveElementToNoninteractiveRole: a labelled SVG group, not an interactive element
+          <g key={nodeKey} className="ug-others" role="img" aria-label={bandAria(p, dir)}>
+            {content}
+          </g>
+        );
+      }
+      return (
+        <g
+          key={nodeKey}
+          className="ug-node"
+          role="button"
+          tabIndex={0}
+          aria-label={aria(unit, p, dir)}
+          onClick={() => recentre(unit)}
+          onKeyDown={(e) => onKey(e, unit)}
+          onMouseEnter={() => setHover(unit)}
+          onMouseLeave={() => setHover(null)}
+          onFocus={() => setHover(unit)}
+          onBlur={() => setHover(null)}
+        >
+          <rect className="ug-hit" x={box.x} y={box.y} width={box.w} height={box.h} rx="6" />
+          <rect className="ug-focus" x={box.x} y={box.y} width={box.w} height={box.h} rx="6" />
+          {content}
+        </g>
+      );
+    });
+
+  const cTop = narrow ? yC0 : PAD + (geom?.centre.c0 ?? 0);
+  const cBottom = narrow ? yC1 : PAD + (geom?.centre.c1 ?? 0);
+  const cLeft = narrow ? PAD + (geom?.centre.c0 ?? 0) : cx0;
+  const cRight = narrow ? PAD + (geom?.centre.c1 ?? 0) : cx1;
+  const cMidX = (cLeft + cRight) / 2;
+  const cMidY = (cTop + cBottom) / 2;
+  const chipW = Math.round(cChip.length * 6.4 + 34);
 
   return (
     <section
@@ -118,16 +333,22 @@ export function UnitGraph({ client, locale, asOf, state, onChange, reducedMotion
           {t(locale, "graphTitle")}
         </h2>
         {rel ? <AsOf locale={locale} date={rel.to} pending={updating} clockDate={asOf ?? undefined} /> : null}
-        <span className="ug-window">{t(locale, "netWindowNote")}</span>
-        <button type="button" className="geo-chip" aria-pressed={showAll} onClick={() => setShowAll((v) => !v)}>
-          {t(locale, "netAllFlows")}
-        </button>
-        <button type="button" className="geo-chip" aria-pressed={showTrail} onClick={() => setShowTrail((v) => !v)}>
-          <svg viewBox="0 0 28 10" width="28" height="10" aria-hidden="true">
-            <path d="M1 5 H27" stroke="currentColor" strokeWidth="2" strokeDasharray="5 3" />
-          </svg>
-          {t(locale, "netTrailLayer")}
-        </button>
+        <p className="ug-caption">{t(locale, "netFlowCaption")}</p>
+        <InfoButton locale={locale} label={t(locale, "netFlowInfoLabel")} align="end">
+          {t(locale, "netFlowInfo")}
+        </InfoButton>
+        {showBack && home ? (
+          <button
+            type="button"
+            className="ug-back"
+            onClick={() => {
+              mine.current = home;
+              onChange({ focus: home });
+            }}
+          >
+            ← {t(locale, "netBackToSignal")}
+          </button>
+        ) : null}
       </header>
 
       {net.state === "error" ? (
@@ -144,204 +365,70 @@ export function UnitGraph({ client, locale, asOf, state, onChange, reducedMotion
         </p>
       ) : null}
 
-      <div className="ug-stage">
-        <svg viewBox={`0 0 ${GRAPH_W} ${GRAPH_H}`} className="ug-svg" role="group" aria-label={t(locale, "graphTitle")}>
-          <defs>
-            <marker
-              id="ug-arrow"
-              viewBox="0 0 10 10"
-              refX="8"
-              refY="5"
-              markerWidth="9"
-              markerHeight="9"
-              markerUnits="userSpaceOnUse"
-              orient="auto"
-            >
-              <path d="M1 1 L9 5 L1 9 Z" className="geo-spread-head" />
-            </marker>
-            <marker
-              id="ug-arrow-trail"
-              viewBox="0 0 10 10"
-              refX="8"
-              refY="5"
-              markerWidth="9"
-              markerHeight="9"
-              markerUnits="userSpaceOnUse"
-              orient="auto"
-            >
-              <path d="M1 1 L9 5 L1 9 Z" className="geo-trail-head" />
-            </marker>
-          </defs>
-
-          <g className="geo-tubes">
-            {pairs.map(({ a, b, patients }) => {
-              const active = sel === a || sel === b;
-              const key = `${a}|${b}`;
-              const shown = strongest.has(key) || lit.has(a) || lit.has(b) || a === state.focus || b === state.focus || active;
-              if (!shown && !showAll) return null;
-              return (
-                <path
-                  key={key}
-                  d={curve(unitPoint(a), unitPoint(b), route(a, b)).d}
-                  className="geo-tube"
-                  data-active={active}
-                  data-faint={!shown}
-                  strokeWidth={edgeWidth(patients, maxPair) * (shown ? 1 : 0.6)}
-                >
-                  <title>{t(locale, "netEdgeTitle", { a, b, patients, from: rel?.from ?? "", to: rel?.to ?? "" })}</title>
-                </path>
-              );
-            })}
-          </g>
-
-          {showTrail ? (
-            <g className="geo-trails">
-              {(rel?.links ?? []).map((l, i, all) => {
-                const same = all.filter((o, j) => j < i && o.from === l.from && o.to === l.to).length;
-                const g = arc(unitPoint(l.from), unitPoint(l.to), 0.3 + 0.15 * same);
-                return (
-                  <g key={`${l.from}|${l.to}|${l.phenotype}`}>
-                    <title>
-                      {t(locale, "netTrailEdge", { phenotype: phenotypeName(l.phenotype), patients: l.patients, confirmed: l.confirmed })}
-                    </title>
-                    <path
-                      d={g.d}
-                      className="geo-trail"
-                      strokeWidth={1.5 + Math.min(l.patients, 6) * 0.4}
-                      markerEnd="url(#ug-arrow-trail)"
-                    />
-                    <text x={g.mx} y={g.my + 4} textAnchor="middle" className="geo-tag-text">
-                      {phenotypeName(l.phenotype)} · n {l.patients}
-                    </text>
-                  </g>
-                );
-              })}
-            </g>
-          ) : null}
-
-          <g className="geo-spreads">
-            {spreadTags.map(({ sp, g, label, w, spot }) => (
-              <g key={`${sp.from}|${sp.to}`} data-active={sel === sp.from || sel === sp.to}>
-                <title>{t(locale, "geoSpreadTitle", { share: pct(sp.share), from: sp.from, n: sp.n, total: sp.total, to: sp.to })}</title>
-                <path d={g.d} className="geo-spread" strokeWidth={2.4} markerEnd="url(#ug-arrow)" />
-                {spot ? (
-                  <>
-                    {spot.from ? <line x1={spot.from[0]} y1={spot.from[1]} x2={spot.x} y2={spot.y} className="geo-leader" /> : null}
-                    <rect x={spot.x - w / 2} y={spot.y - 10} width={w} height="20" rx="10" className="geo-tag" />
-                    <text x={spot.x} y={spot.y + 4} textAnchor="middle" className="geo-tag-text">
-                      {label}
-                    </text>
-                  </>
-                ) : null}
+      <div className="ug-stage" ref={stage} data-narrow={narrow}>
+        {view && geom && centre && (view.ins.length > 0 || view.outs.length > 0) ? (
+          <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="ug-svg" role="group" aria-label={t(locale, "graphTitle")}>
+            <g key={centre} className="ug-flow">
+              <g className="ug-bands">
+                {renderSide(geom.ins, "in")}
+                {renderSide(geom.outs, "out")}
               </g>
-            ))}
-          </g>
-
-          {WARDS.map((w) => {
-            const [x, y] = unitPoint(w.code);
-            const s = signals.byUnit.get(w.code);
-            const isLit = lit.has(w.code);
-            const dataOnly = !!s?.data && !isLit;
-            const kinds = [...new Set((s?.badges ?? []).map((b) => b.kind))].slice(0, 3);
-            const aria = [
-              t(locale, "netNodeAria", { unit: w.code, name: wardName(locale, w.code) }),
-              s
-                ? t(locale, "netNodeSignals", { n: s.alerts.length, list: s.badges.map(badgeText).join("; ") })
-                : rel
-                  ? t(locale, "netNodeNoSignals")
-                  : null,
-              state.unit === w.code ? t(locale, "geoUnitSelected") : null,
-              state.focus === w.code ? t(locale, "geoUnitFocus") : null,
-            ]
-              .filter(Boolean)
-              .join(". ");
-            const bw = kinds.length * 15 + 6;
-            return (
+              {/* biome-ignore lint/a11y/noInteractiveElementToNoninteractiveRole: a labelled SVG group, not an interactive element */}
               <g
-                key={w.code}
-                className="geo-node"
-                role="button"
-                tabIndex={0}
-                aria-pressed={state.unit === w.code}
-                aria-label={aria}
-                data-selected={state.unit === w.code}
-                data-focus={state.focus === w.code}
-                onClick={() => choose(w.code)}
-                onKeyDown={(e) => onKey(e, w.code)}
-                onMouseEnter={() => setHover(w.code)}
-                onMouseLeave={() => setHover(null)}
-                onFocus={() => setHover(w.code)}
-                onBlur={() => setHover(null)}
+                className="ug-centre"
+                role="group"
+                aria-label={[
+                  t(locale, "netCentreAria", { unit: centre, name: wardName(locale, centre), nIn: view.nIn, nOut: view.nOut }),
+                  cS ? t(locale, "netNodeSignals", { n: cS.alerts.length, list: cS.badges.map(badgeText).join("; ") }) : null,
+                ]
+                  .filter(Boolean)
+                  .join(". ")}
               >
-                <title>{aria}</title>
+                {cLit ? (
+                  <rect className="ug-ring" x={cLeft - 4} y={cTop - 4} width={cRight - cLeft + 8} height={cBottom - cTop + 8} rx="12" />
+                ) : null}
                 <rect
-                  className="geo-ring"
-                  x={x - NODE_HALF_W - 5}
-                  y={y - NODE_HALF_H - 5}
-                  width={NODE_HALF_W * 2 + 10}
-                  height={NODE_HALF_H * 2 + 10}
-                  rx="12"
-                />
-                <rect
-                  className={isLit ? "geo-box geo-lit" : "geo-box"}
-                  x={x - NODE_HALF_W}
-                  y={y - NODE_HALF_H}
-                  width={NODE_HALF_W * 2}
-                  height={NODE_HALF_H * 2}
+                  className="ug-centre-box"
+                  data-data={!!cS?.data && !cLit}
+                  x={cLeft}
+                  y={cTop}
+                  width={cRight - cLeft}
+                  height={cBottom - cTop}
                   rx="8"
-                  strokeDasharray={dataOnly ? "5 3" : undefined}
                 />
-                <text x={x} y={y + 4.5} textAnchor="middle" className="geo-code">
-                  {w.code}
+                <text className="ug-centre-code" x={cMidX} y={narrow ? cTop + 22 : cMidY - 8} textAnchor="middle">
+                  {centre}
                 </text>
-                {kinds.length > 0 ? (
-                  <g transform={`translate(${x + NODE_HALF_W - bw + 8},${y - NODE_HALF_H - 12})`}>
-                    <rect width={bw} height="19" rx="9.5" className="geo-badge" />
-                    {kinds.map((k, i) => (
-                      <g key={k} transform={`translate(${4 + i * 15},1.5) scale(0.95)`} className="geo-badge-glyph">
-                        <KindGlyph kind={k} />
-                      </g>
-                    ))}
+                <text className="ug-centre-n" x={cMidX} y={narrow ? cTop + 39 : cMidY + 10} textAnchor="middle">
+                  {t(locale, "netFlowIn", { n: view.nIn })} · {t(locale, "netFlowOut", { n: view.nOut })}
+                </text>
+                <text className="ug-centre-name" x={cMidX} y={narrow ? cTop + 55 : cBottom + 20} textAnchor="middle" data-in={narrow}>
+                  {wardName(locale, centre)}
+                </text>
+                {cKind ? (
+                  <g
+                    transform={`translate(${cMidX - chipW / 2},${narrow ? cBottom - 30 : Math.max(2, cTop - 32)})`}
+                    className="ug-chip"
+                    data-lit={cLit}
+                  >
+                    <rect width={chipW} height="24" rx="12" />
+                    <g transform="translate(8,4)" className="ug-glyph" data-kind={cKind}>
+                      <KindGlyph kind={cKind} />
+                    </g>
+                    <text x="30" y="16">
+                      {cChip}
+                    </text>
                   </g>
                 ) : null}
               </g>
-            );
-          })}
-        </svg>
+            </g>
+          </svg>
+        ) : rel ? (
+          <p className="geo-faint ug-empty">{t(locale, "netFlowEmpty", { unit: centre ?? "" })}</p>
+        ) : null}
       </div>
 
-      <ul className="ug-keys">
-        <li>
-          <svg width="26" height="12" viewBox="0 0 26 12" aria-hidden="true">
-            <path d="M1 6 Q13 0 25 6" className="geo-tube" strokeWidth="5" />
-          </svg>
-          {t(locale, "geoLegendFlow")}
-        </li>
-        <li>
-          <svg width="26" height="14" viewBox="0 0 26 14" aria-hidden="true">
-            <rect x="2" y="2" width="22" height="10" rx="4" className="geo-box geo-lit" />
-          </svg>
-          {t(locale, "geoLegendLit")}
-        </li>
-        <li>
-          <svg width="26" height="12" viewBox="0 0 26 12" aria-hidden="true">
-            <line x1="1" x2="20" y1="6" y2="6" className="geo-spread" strokeWidth="2" />
-            <path d="M17 2 L25 6 L17 10Z" className="geo-spread-head" />
-          </svg>
-          {t(locale, "geoLegendSpread")}
-        </li>
-        {showTrail ? (
-          <li>
-            <svg width="26" height="12" viewBox="0 0 26 12" aria-hidden="true">
-              <line x1="1" x2="25" y1="6" y2="6" className="geo-trail" strokeWidth="2" />
-            </svg>
-            {t(locale, "geoLegendTrail")}
-          </li>
-        ) : null}
-        <li className="ug-schematic">{t(locale, "geoSchematic")}</li>
-      </ul>
       {signals.hospitalWide > 0 ? <p className="geo-faint">{t(locale, "netHospitalWide", { n: signals.hospitalWide })}</p> : null}
-      {rel && sum(flows.map((f) => f.patients)) === 0 ? <p className="geo-faint">{t(locale, "netNoFlows")}</p> : null}
     </section>
   );
 }
