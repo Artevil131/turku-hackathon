@@ -725,6 +725,45 @@ async function main() {
     { name: "desktop-900", width: 1440, height: 900, mobile: false },
   );
 
+  // A Python code cell runs in the page: the first Run starts Pyodide (allow 90 s), `print(1 + 1)` shows 2.
+  await interaction(
+    "research-notebook-run",
+    async (idle, reasons) => {
+      await cleanWorkspace(idle);
+      await evaluate(cdp, `localStorage.removeItem('aei.research.notebook')`);
+      await load(cdp, urlOf("research"), idle);
+      const skip = await evaluate(
+        cdp,
+        `(async () => typeof WebAssembly !== 'object' ? 'this Chrome has no WebAssembly' : (await fetch('/notebook/pypi/aei.json')).ok ? '' : 'no JupyterLite build at /notebook (apps/notebook/build.sh)')()`,
+      );
+      if (skip) {
+        console.log(`skip research-notebook-run: ${skip}`);
+        return;
+      }
+      if (!(await waitIn(`!!document.querySelector('#ws-win-notebook .nb-plus')`, 5000))) {
+        reasons.push("the Notebook window is not open by default");
+        return;
+      }
+      await evaluate(cdp, `document.querySelector('#ws-win-notebook .nb-plus').scrollIntoView({ block: 'center' })`);
+      await click("#ws-win-notebook .nb-plus");
+      if (!(await waitIn(`!!document.querySelector('#ws-win-notebook [role=menu] [data-add="code"]')`, 1500))) {
+        reasons.push('"+" opened no menu with Code');
+        return;
+      }
+      await click('#ws-win-notebook [data-add="code"]');
+      await click('#ws-win-notebook .nb-cell[data-kind="code"] textarea');
+      await cdp.send("Input.insertText", { text: "print(1 + 1)" });
+      await click('#ws-win-notebook .nb-cell[data-kind="code"] [data-run]');
+      const out = `document.querySelector('#ws-win-notebook .nb-cell[data-kind="code"] [data-output]')?.innerText.trim()`;
+      if (!(await waitIn(`${out} === '2'`, 90_000)))
+        reasons.push(
+          `print(1 + 1) did not show 2 in 90 s: ${await evaluate(cdp, `(${out} ?? '') + ' | ' + (document.querySelector('#ws-win-notebook .nb-run-status')?.textContent ?? '')`)}`,
+        );
+      await idle();
+    },
+    { name: "desktop-900", width: 1440, height: 900, mobile: false },
+  );
+
   await interaction("projects", async (idle, reasons) => {
     // Use English labels so this check is independent of earlier language interactions.
     await load(cdp, urlOf("settings"), idle);
