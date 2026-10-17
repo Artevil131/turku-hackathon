@@ -117,6 +117,5 @@ haproxy on :443 passes TLS to it, the Let's Encrypt certificate renews by
 webroot (`/var/www/yourlab-acme`), and the DNS record is a DNS-only A record
 in Cloudflare.
 
-
 Every push to `main` deploys there automatically; see
 [autodeploy/README.md](autodeploy/README.md).
