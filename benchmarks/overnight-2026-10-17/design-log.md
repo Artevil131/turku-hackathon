@@ -99,3 +99,4 @@ Screenshots come from headless Chrome through
 | 09:35 | orchestrator (Opus 5.5) | Started: final UX review of the doctor's journey (Fable 5.1, the first of two), U metrics on 0c283ee (Haiku 5.5), timeline legibility polish (Sonnet 5.5) |
 | 09:37 | quality (Haiku 5.5) | Redesign 0c283ee: U4 100 / 92 / 97 (doctor and research regressed: list divider inside the listbox, 1 contrast item on doctor, 34 on research); U5 0 (239 keys); U6 3.5 / 4.2 / 4.7 s (noisy) |
 | 09:37 | orchestrator (Opus 5.5) | U4 regression fixed instead of reverted (the redesign is Artem's order): --ink-3 #6f7292 → #5c6080, the list divider hidden from assistive tech (rows state their result in words); to be re-measured after the timeline polish |
+| 09:39 | builder (Sonnet 5.5) | Timeline polish: all band text 11 px, pills merge into 'N signals' instead of overlapping, one-line legend, strong 'Today' edge with the partial week marked, y-axis ticks and lane baselines; band 212 px |

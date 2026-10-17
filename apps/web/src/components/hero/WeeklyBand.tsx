@@ -37,10 +37,10 @@ interface Layout {
   pitch: number;
   axis: number;
 }
-const FULL: Layout = { gutter: 40, height: 170, legend: 12, top: 15, base: 53, lanes: 58, pitch: 11, axis: 168 };
+const FULL: Layout = { gutter: 46, height: 200, legend: 14, top: 20, base: 62, lanes: 68, pitch: 13, axis: 197 };
 const SMALL: Layout = { gutter: 0, height: 44, legend: 0, top: 3, base: 26, lanes: 0, pitch: 0, axis: 43 };
 
-const PILL_H = 10;
+const PILL_H = 12;
 const READ_W = 276;
 
 interface Props {
@@ -58,15 +58,19 @@ interface Props {
 }
 
 interface PillPlace {
+  /** The latest alert of the pill; a press opens its incident. */
   a: Alert;
+  /** Every alert the pill stands for, oldest first (more than one: a run collapsed into "n signals"). */
+  members: Alert[];
   kind: PillKind;
   x: number;
   y: number;
   w: number;
   label: string;
-  short: boolean;
   s: number | null;
 }
+
+const KIND_RANK: Record<PillKind, number> = { sentinel: 3, cluster: 2, trend: 1, data: 0 };
 
 interface Model {
   rows: WeekRow[];
@@ -79,6 +83,7 @@ interface Model {
   cultureDot: Pt | null;
   partial: { x0: number; x1: number; stacks: { ph: Ph; y: number; h: number }[]; dot: Pt | null } | null;
   ymax: number;
+  yTop: number;
   cmax: number;
   top: Pt[];
   lanes: { ward: WardCode; mid: number; path: string }[];
@@ -100,7 +105,7 @@ function build(
   const d0 = dayNumber(start);
   const dEnd = dayNumber(asOf) + 1;
   const span = Math.max(7, dEnd - d0);
-  const right = width - 2;
+  const right = width - 3;
   const plotW = Math.max(40, right - L.gutter);
   const xOf = (day: number) => L.gutter + Math.min(1, Math.max(0, (day - d0) / span)) * plotW;
   const full = rows.filter((r) => !r.partial);
@@ -178,43 +183,56 @@ function build(
 
   // Alerts: on the unit's lane (full) or as small markers on the axis (compact); hospital-wide ones on the stream.
   const shown = alerts.filter((a) => a.date >= start && a.date <= asOf);
-  const placed = new Map<number, [number, number][]>();
   const pills: PillPlace[] = [];
   const dots: Model["dots"] = [];
-  const order = [...shown].sort((a, b) => b.date.localeCompare(a.date));
-  for (const a of order) {
-    const kind = pillKind(a);
-    const ax = xOf(dayNumber(a.date) + 0.5);
-    if (compact) {
-      dots.push({ x: ax, kind, id: a.id });
-      continue;
+  const order = [...shown].sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
+  if (compact) for (const a of order) dots.push({ x: xOf(dayNumber(a.date) + 0.5), kind: pillKind(a), id: a.id });
+  else {
+    // One row per lane. A pill that would touch the one before it joins it: the run becomes one "n signals" pill.
+    const lanesAlerts = new Map<number, { members: Alert[]; right: number; w: number; label: string }[]>();
+    for (const a of order) {
+      const lane = a.ward ? wards.indexOf(a.ward) : -1;
+      if (a.ward && lane < 0) continue;
+      const label = pillLabel(locale, a);
+      const w = pillWidth(label, pillKind(a) === "sentinel");
+      const edge = Math.max(L.gutter + w, Math.min(xOf(dayNumber(a.date) + 0.5) + 3, right - 1));
+      const stack = lanesAlerts.get(lane) ?? [];
+      stack.push({ members: [a], right: edge, w, label });
+      while (stack.length > 1) {
+        const cur = stack[stack.length - 1];
+        const prev = stack[stack.length - 2];
+        if (!cur || !prev || cur.right - cur.w >= prev.right + 2) break;
+        stack.pop();
+        const members = [...prev.members, ...cur.members];
+        const merged = t(locale, "tlPillSignals", { n: members.length });
+        stack[stack.length - 1] = {
+          members,
+          right: cur.right,
+          w: pillWidth(
+            merged,
+            members.some((x) => pillKind(x) === "sentinel"),
+          ),
+          label: merged,
+        };
+      }
+      lanesAlerts.set(lane, stack);
     }
-    const lane = a.ward ? wards.indexOf(a.ward) : -1;
-    if (a.ward && lane < 0) continue;
-    const label = pillLabel(locale, a);
-    const glyph = kind === "sentinel";
-    const key = lane;
-    const taken = placed.get(key) ?? [];
-    let w = pillWidth(label, glyph);
-    let x0 = Math.max(L.gutter, ax - w + 3);
-    let short = false;
-    if (taken.some(([p, q]) => x0 < q + 1 && x0 + w > p - 1)) {
-      short = true;
-      w = 10;
-      x0 = Math.max(L.gutter, ax - 7);
-    }
-    taken.push([x0, x0 + w]);
-    placed.set(key, taken);
-    pills.push({
-      a,
-      kind,
-      x: x0,
-      y: lane < 0 ? 1 : L.lanes + lane * L.pitch + (L.pitch - PILL_H) / 2,
-      w,
-      label,
-      short,
-      s: surprise(a),
-    });
+    for (const [lane, stack] of lanesAlerts)
+      for (const g of stack) {
+        const latest = g.members[g.members.length - 1] as Alert;
+        const kind = g.members.map(pillKind).reduce((k, c) => (KIND_RANK[c] > KIND_RANK[k] ? c : k));
+        const ss = g.members.map(surprise).filter((v): v is number => v !== null);
+        pills.push({
+          a: latest,
+          members: g.members,
+          kind,
+          x: g.right - g.w,
+          y: lane < 0 ? 1 : L.lanes + lane * L.pitch + (L.pitch - PILL_H) / 2,
+          w: g.w,
+          label: g.label,
+          s: ss.length ? Math.max(...ss) : null,
+        });
+      }
   }
 
   return {
@@ -228,6 +246,7 @@ function build(
     cultureDot,
     partial,
     ymax,
+    yTop: yv(ymax),
     cmax,
     top,
     lanes,
@@ -279,6 +298,8 @@ interface StaticProps {
 /** Everything that does not change with the pointer; re-rendered only when the data, width or date change. */
 const StaticLayer = memo(function StaticLayer({ m, L, id, locale, compact, asOf, disabled }: StaticProps) {
   const lanesEnd = compact ? L.base : L.lanes + m.lanes.length * L.pitch;
+  const todayLabel = `${t(locale, "tlToday")} · ${compactDate(asOf)}`;
+  const todayW = Math.ceil(todayLabel.length * 6.6 + 10);
   const open = (a: Alert) => {
     location.hash = `research?inc=${encodeURIComponent(a.incident ?? a.id)}`;
   };
@@ -327,7 +348,7 @@ const StaticLayer = memo(function StaticLayer({ m, L, id, locale, compact, asOf,
             <g key={l.ward}>
               <line className="hs-lane-line" x1={L.gutter} x2={m.right} y1={l.mid} y2={l.mid} />
               {l.path ? <path className="hs-ribbon" d={l.path} /> : null}
-              <text className="hs-lane-label" x={L.gutter - 5} y={l.mid + 3} textAnchor="end">
+              <text className="hs-lane-label" x={L.gutter - 6} y={l.mid + 4} textAnchor="end">
                 <title>{wardName(locale, l.ward)}</title>
                 {l.ward}
               </text>
@@ -337,13 +358,16 @@ const StaticLayer = memo(function StaticLayer({ m, L, id, locale, compact, asOf,
 
       {!compact ? (
         <>
-          <text className="hs-ylab" x={L.gutter - 5} y={L.top + 7} textAnchor="end">
+          <line className="hs-yaxis" x1={L.gutter} x2={L.gutter} y1={L.top} y2={lanesEnd} />
+          <line className="hs-grid" x1={L.gutter - 3} x2={m.right} y1={m.yTop} y2={m.yTop} />
+          <line className="hs-yaxis" x1={L.gutter - 3} x2={L.gutter} y1={L.base} y2={L.base} />
+          <text className="hs-ylab" x={L.gutter - 6} y={m.yTop + 4} textAnchor="end">
             {m.ymax}
           </text>
-          <text className="hs-ylab" x={L.gutter - 5} y={L.base} textAnchor="end">
+          <text className="hs-ylab" x={L.gutter - 6} y={L.base + 4} textAnchor="end">
             0
           </text>
-          <Legend id={id} L={L} locale={locale} />
+          <Legend id={id} L={L} locale={locale} right={m.right} />
         </>
       ) : null}
 
@@ -357,7 +381,7 @@ const StaticLayer = memo(function StaticLayer({ m, L, id, locale, compact, asOf,
             y1={compact ? L.base : lanesEnd}
             y2={(compact ? L.base : lanesEnd) + (k.year ? 5 : 3)}
           />
-          {k.label && (compact || k.x + 40 < m.right - 112) ? (
+          {k.label && (compact || k.x + 40 < m.right - todayW - 8) ? (
             <text className="hs-axis-text" x={k.x + 3} y={L.axis}>
               {k.label}
             </text>
@@ -381,10 +405,10 @@ const StaticLayer = memo(function StaticLayer({ m, L, id, locale, compact, asOf,
           key={p.a.id}
           className="hs-pill"
           data-kind={p.kind}
-          data-short={p.short || undefined}
+          data-count={p.members.length > 1 ? p.members.length : undefined}
           role="button"
           tabIndex={disabled ? -1 : 0}
-          aria-label={pillLine(locale, p.a)}
+          aria-label={p.members.map((x) => pillLine(locale, x)).join("; ")}
           data-week={weekIndex(m.weekDays, dayNumber(p.a.date))}
           onClick={() => open(p.a)}
           onKeyDown={(e) => {
@@ -395,22 +419,20 @@ const StaticLayer = memo(function StaticLayer({ m, L, id, locale, compact, asOf,
             }
           }}
         >
-          <title>{`${pillLine(locale, p.a)} · ${t(locale, "tlOpenIncident")}`}</title>
+          <title>{`${p.members.map((x) => pillLine(locale, x)).join("\n")}\n${t(locale, "tlOpenIncident")}`}</title>
           <rect className="hs-pill-hit" x={p.x - 2} y={p.y - 1} width={p.w + 4} height={PILL_H + 2} />
           <rect className="hs-pill-bg" x={p.x} y={p.y} width={p.w} height={PILL_H} rx={2.5} />
-          {p.kind === "sentinel" ? <path className="hs-pill-glyph" d={`M${p.x + 4.5} ${p.y + 2}l3 5.5h-6z`} /> : null}
-          {p.short ? null : (
-            <text className="hs-pill-text" x={p.x + (p.kind === "sentinel" ? 11 : 4)} y={p.y + 7}>
-              {p.label}
-            </text>
-          )}
+          {p.kind === "sentinel" ? <path className="hs-pill-glyph" d={`M${p.x + 5} ${p.y + 2.5}l3.5 6h-7z`} /> : null}
+          <text className="hs-pill-text" x={p.x + (p.kind === "sentinel" ? 12 : 4)} y={p.y + 9}>
+            {p.label}
+          </text>
           {p.s !== null ? (
             <>
-              <rect className="hs-pill-track" x={p.x + 1} y={p.y + PILL_H - 2} width={p.w - 2} height={1.5} />
+              <rect className="hs-pill-track" x={p.x + 1} y={p.y + PILL_H - 1.5} width={p.w - 2} height={1.5} />
               <rect
                 className="hs-pill-bar"
                 x={p.x + 1}
-                y={p.y + PILL_H - 2}
+                y={p.y + PILL_H - 1.5}
                 width={Math.max(1, ((p.w - 2) * p.s) / SURPRISE_CAP)}
                 height={1.5}
               />
@@ -419,37 +441,51 @@ const StaticLayer = memo(function StaticLayer({ m, L, id, locale, compact, asOf,
         </g>
       ))}
 
-      <line className="hs-today" x1={m.right} x2={m.right} y1={0} y2={compact ? L.height : lanesEnd + 2} />
+      {m.partial && !compact ? (
+        <line className="hs-partial-rule" x1={m.partial.x0} x2={m.right} y1={lanesEnd + 2} y2={lanesEnd + 2} />
+      ) : null}
+      <line className="hs-today" x1={m.right} x2={m.right} y1={0} y2={compact ? L.height : lanesEnd + 4} />
       {!compact ? (
-        <text className="hs-today-text" x={m.right - 4} y={L.axis} textAnchor="end">
-          {t(locale, "tlToday")} · {compactDate(asOf)}
-        </text>
+        <g>
+          <rect className="hs-today-bg" x={m.right - todayW} y={L.axis - 12} width={todayW} height={15} rx={3} />
+          <text className="hs-today-text" x={m.right - 5} y={L.axis} textAnchor="end">
+            {todayLabel}
+          </text>
+        </g>
       ) : null}
     </g>
   );
 });
 
-function Legend({ id, L, locale }: { id: string; L: Layout; locale: Locale }) {
+function Legend({ id, L, locale, right }: { id: string; L: Layout; locale: Locale; right: number }) {
   let x = L.gutter;
+  for (const p of PHENOTYPE_ORDER) x += 18 + phenotypeName(p).length * 6.6 + 8;
+  const full = t(locale, "tlCulturesScale");
+  const short = t(locale, "tlCulturesShort");
+  const room = right - x - 18;
+  const text = full.length * 6.2 <= room ? full : short.length * 6.2 <= room ? short : null;
+  x = L.gutter;
   return (
     <g>
       {PHENOTYPE_ORDER.map((p) => {
         const name = phenotypeName(p);
         const at = x;
-        x += 20 + name.length * 6.2 + 8;
+        x += 18 + name.length * 6.6 + 8;
         return (
           <g key={p}>
-            <rect className="hs-swatch" x={at} y={2} width={14} height={7} style={{ fill: `url(#${id}-${p})` }} />
-            <text className="hs-legend" x={at + 18} y={9}>
+            <rect className="hs-swatch" x={at} y={3} width={13} height={8} style={{ fill: `url(#${id}-${p})` }} />
+            <text className="hs-legend" x={at + 17} y={11}>
               {name}
             </text>
           </g>
         );
       })}
-      <path className="hs-cult" d={`M${x} 5.5h14`} />
-      <text className="hs-legend" x={x + 18} y={9}>
-        {t(locale, "tlCulturesScale")}
-      </text>
+      <path className="hs-cult" d={`M${x} 7.5h13`} />
+      {text ? (
+        <text className="hs-legend" x={x + 17} y={11}>
+          {text}
+        </text>
+      ) : null}
     </g>
   );
 }

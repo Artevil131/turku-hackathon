@@ -1,4 +1,4 @@
-/* Replay timeline hero: a full-width band under the top bar (about 178 px laptop: weekly stream over nine unit lanes), a sticky 56 px strip plus bottom sheet (phone). */
+/* Replay timeline hero: a full-width band under the top bar (about 212 px laptop: weekly stream over nine unit lanes), a sticky 56 px strip plus bottom sheet (phone). */
 
 .console:has(.timeline) {
   grid-template-rows: auto auto minmax(0, 1fr);
@@ -10,7 +10,7 @@
   display: flex;
   align-items: stretch;
   gap: 12px;
-  height: 178px;
+  height: 212px;
   padding: 4px 12px;
   min-width: 0;
   border: 1px solid var(--line, #e4e6ee);
