@@ -206,7 +206,21 @@ export function ResearchBoard(props: Props) {
     reproduce: (
       <Reproduce locale={locale} project={project.response?.project} language={notebookLanguage} onLanguage={setNotebookLanguage} />
     ),
-    map: <GeoMap {...panelProps} focusCounty={mapCounty} />,
+    map: (
+      <GeoMap
+        {...panelProps}
+        focusCounty={mapCounty}
+        signal={
+          explicit && selected
+            ? {
+                phenotypes: selected.phenotypes,
+                organism: "organism" in selected.lead ? (selected.lead.organism as string | undefined) : undefined,
+                ward: selected.ward,
+              }
+            : null
+        }
+      />
+    ),
     graph: <UnitGraph {...panelProps} />,
     grid: <UnitGrid {...panelProps} />,
     math: card(false),

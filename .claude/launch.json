@@ -4,14 +4,48 @@
     {
       "name": "explore",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8765", "--bind", "127.0.0.1"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8765",
+        "--bind",
+        "127.0.0.1"
+      ],
       "port": 8765
     },
     {
       "name": "web",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["dev"],
+      "runtimeArgs": [
+        "dev"
+      ],
       "port": 5173
+    },
+    {
+      "name": "api-unified",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "AEI_PORT=8790",
+        "pnpm",
+        "dev:api"
+      ],
+      "port": 8790
+    },
+    {
+      "name": "web-unified",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "AEI_API_URL=http://localhost:8790",
+        "pnpm",
+        "--filter",
+        "@aei/web",
+        "exec",
+        "vite",
+        "--port",
+        "5180",
+        "--strictPort"
+      ],
+      "port": 5180
     }
   ]
 }

@@ -38,6 +38,22 @@ const SERIES_KEY = {
   "VRE blood/CSF": "mapSeriesVreBlood",
   "VRE carriage": "mapSeriesVreCarr",
 } as const;
+/** The THL series that matches a hospital signal: same phenotype, carriage, same organism where THL has it. */
+export function seriesForSignal(phenotypes: readonly string[], organism?: string): string | null {
+  const kpn = organism?.includes("pneumoniae");
+  if (phenotypes.includes("cpe")) return organism?.includes("cloacae") ? "CPE carriage, E. cloacae" : kpn ? "CPE carriage, K. pneumoniae" : "CPE carriage, E. coli";
+  if (phenotypes.includes("esbl")) return kpn ? "ESBL carriage, K. pneumoniae" : "ESBL carriage, E. coli";
+  if (phenotypes.includes("mrsa")) return "MRSA carriage";
+  if (phenotypes.includes("vre")) return "VRE carriage";
+  return null;
+}
+
+export interface MapSignal {
+  phenotypes: readonly string[];
+  organism?: string;
+  ward: string | null;
+}
+
 const seriesLabel = (locale: Locale, group: string) =>
   group in SERIES_KEY ? t(locale, SERIES_KEY[group as keyof typeof SERIES_KEY]) : group;
 
@@ -133,9 +149,15 @@ export function GeoMap({
   reducedMotion,
   hasSelection = false,
   focusCounty = null,
-}: PanelProps & { focusCounty?: string | null }) {
+  signal = null,
+}: PanelProps & { focusCounty?: string | null; signal?: MapSignal | null }) {
   const TYKS_COUNTY = siteCounty();
   const [group, setGroup] = useState(DEFAULT_GROUP);
+  // A selected signal switches the map to the THL series of the same phenotype; the select still overrides it.
+  const signalSeries = signal ? seriesForSignal(signal.phenotypes, signal.organism) : null;
+  useEffect(() => {
+    if (signalSeries) setGroup(signalSeries);
+  }, [signalSeries]);
   // The map shows first; the county detail replaces it in the tile once a county is picked.
   const [chosen, setChosen] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
@@ -326,7 +348,21 @@ export function GeoMap({
           {t(locale, "geoCaption", { month: month ? monthLong(month) : "–" })} {t(locale, "geoCaptionSource")}
         </InfoButton>
       </p>
-      <p className="geo-caption">{t(locale, "geoHowTo")}</p>
+      {signal && signalSeries ? (
+        <div className="geo-signal" role="status">
+          <strong>
+            {t(locale, "geoSignalHead", { series: seriesLabel(locale, signalSeries), unit: signal.ward ?? "" })}
+          </strong>
+          <span>{t(locale, signalSeries === group ? "geoSignalBody" : "geoSignalOther", { county: TYKS_COUNTY })}</span>
+          {signalSeries !== group ? (
+            <button type="button" className="geo-chip" onClick={() => setGroup(signalSeries)}>
+              {t(locale, "geoSignalShow")}
+            </button>
+          ) : null}
+        </div>
+      ) : (
+        <p className="geo-caption">{t(locale, "geoHowTo")}</p>
+      )}
 
       {hasError ? (
         <div className="geo-state" role="alert">

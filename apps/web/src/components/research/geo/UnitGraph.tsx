@@ -383,6 +383,34 @@ export function UnitGraph({ client, locale, asOf, state, onChange, reducedMotion
         </p>
       ) : null}
 
+      {mode === "around" && view && centre ? (
+        <p className="ug-story">
+          {t(locale, "netStory", { unit: centre, nIn: view.nIn, nOut: view.nOut })}{" "}
+          {(() => {
+            const top = (xs: typeof view.ins) => xs.filter((x) => x.unit).sort((a, b) => b.patients - a.patients)[0];
+            const a = top(view.ins);
+            const b = top(view.outs);
+            return [
+              a ? t(locale, "netStoryFrom", { unit: a.unit ?? "", share: pct(a.share) }) : null,
+              b ? t(locale, "netStoryTo", { unit: b.unit ?? "", share: pct(b.share) }) : null,
+              cLit ? t(locale, "netStorySignal", { unit: centre }) : null,
+            ]
+              .filter(Boolean)
+              .join(" ");
+          })()}
+        </p>
+      ) : null}
+      {mode === "around" && view && centre && narrow ? (
+        <p className="ug-dir" data-side="in">
+          ↓ {t(locale, "netDirIn", { unit: centre })}
+        </p>
+      ) : null}
+      {mode === "around" && view && centre && !narrow ? (
+        <p className="ug-dir ug-dir-row">
+          <span>→ {t(locale, "netDirIn", { unit: centre })}</span>
+          <span>{t(locale, "netDirOut", { unit: centre })} →</span>
+        </p>
+      ) : null}
       <div className="ug-stage" ref={stage} data-narrow={narrow} data-view={mode}>
         {mode === "all" ? (
           rel ? (
@@ -475,6 +503,11 @@ export function UnitGraph({ client, locale, asOf, state, onChange, reducedMotion
         ) : null}
       </div>
 
+      {mode === "around" && view && centre && narrow ? (
+        <p className="ug-dir" data-side="out">
+          ↓ {t(locale, "netDirOut", { unit: centre })}
+        </p>
+      ) : null}
       {signals.hospitalWide > 0 ? <p className="geo-faint">{t(locale, "netHospitalWide", { n: signals.hospitalWide })}</p> : null}
     </section>
   );
