@@ -17,6 +17,8 @@ export const boardEn = {
   reproduceEmpty:
     "Save or open a project to reproduce its numbers: the same rows, checked by fingerprint, and the same methods, recomputed in Python or R.",
   reproduceNewTab: "Open in new tab",
+  reproduceInTab:
+    "The notebook opens in its own tab: the same rows, checked by fingerprint, and the same methods, recomputed in Python or R. It loads only when you open it, so this page stays quick.",
   reproduceLanguage: "Notebook language",
   wsClose: "Close {title}",
   wsHandle: "Resize or move {title}",
@@ -89,6 +91,8 @@ export const boardFi: Record<keyof typeof boardEn, string> = {
   reproduceEmpty:
     "Tallenna tai avaa projekti toistaaksesi sen luvut: samat rivit tarkistetaan sormenjäljellä ja samat menetelmät lasketaan uudelleen Pythonilla tai R:llä.",
   reproduceNewTab: "Avaa uudessa välilehdessä",
+  reproduceInTab:
+    "Muistio aukeaa omaan välilehteensä: samat rivit sormenjäljellä tarkistettuina ja samat menetelmät laskettuina uudelleen Pythonilla tai R:llä. Se latautuu vasta kun avaat sen, joten tämä sivu pysyy nopeana.",
   reproduceLanguage: "Muistikirjan kieli",
   wsClose: "Sulje {title}",
   wsHandle: "Muuta kokoa tai siirrä: {title}",

@@ -1,10 +1,10 @@
-// Copy for the guided demo tours: a cursor walks through a demo file, opens windows, uses tools and runs Python,
+// Copy for the guided demo tours: a cursor walks through a demo file, opens windows and uses tools,
 // and these captions say what is on screen: short, plain, a little dry. Keys are global: prefix them `tour`.
 
 export const tourEn = {
   tourOfferTitle: "Two minutes, one cursor?",
   tourOfferBody:
-    "A cursor drives this project for you: it opens windows, runs the tools and some Python, and says what each number means. Click what it points at to hurry it along.",
+    "A cursor drives this project for you: it opens windows, runs the tools, and says what each number means. Click what it points at to hurry it along.",
   tourOfferPlay: "Watch the tour",
   tourOfferSkip: "Explore on my own",
   tourLabel: "Guided tour",
@@ -85,12 +85,8 @@ export const tourEn = {
     "Belief: a Beta distribution for the true ESBL share, given k resistant of n tested. Its 95 % interval is where the truth most plausibly hides.",
   tourResDetector: "The detector: what the live alerts would have flagged in this frame, with their everyday thresholds.",
   tourResCode: "Every result comes with code. This is the detector's, ready to copy into a longer script or open in Reproduce.",
-  tourResNew: "Python also runs right here, in the browser, on the same data. The plus adds a cell.",
-  tourResType: "A short script: weekly counts up to the cut, ESBL per 100 cultures, plotted.",
-  tourResRun: "Run starts Python inside the page. The first run brings Python and pandas along, so give it a few seconds.",
-  tourResOutput:
-    "Table and figure land under the cell. Per 100 cultures, not per patient, and thin weeks jump: that is why the tools print intervals.",
-  tourResReproduce: "Reproduce hands over the frozen cut and the exact code, Python or R, so a reviewer can check your homework.",
+  tourResReproduce:
+    "Open in Reproduce hands over the frozen cut and the exact code, Python or R, in a tab of its own, so a reviewer can check your homework.",
   tourResInfer:
     "Fair to conclude: whether a rise beats chance, when it began, and where. Not from these data alone: the cause, or that one strain spread. That takes lab typing.",
   tourResOutro:
@@ -100,7 +96,7 @@ export const tourEn = {
 export const tourFi: Record<keyof typeof tourEn, string> = {
   tourOfferTitle: "Kaksi minuuttia, yksi kursori?",
   tourOfferBody:
-    "Kursori ajaa projektin puolestasi: avaa ikkunoita, käyttää työkaluja ja vähän Pythonia, ja kertoo mitä kukin luku tarkoittaa. Klikkaa sitä mihin se osoittaa, niin homma etenee nopeammin.",
+    "Kursori ajaa projektin puolestasi: avaa ikkunoita, käyttää työkaluja ja kertoo mitä kukin luku tarkoittaa. Klikkaa sitä mihin se osoittaa, niin homma etenee nopeammin.",
   tourOfferPlay: "Katso esittely",
   tourOfferSkip: "Tutustun itse",
   tourLabel: "Esittely",
@@ -177,13 +173,8 @@ export const tourFi: Record<keyof typeof tourEn, string> = {
   tourResDetector: "Tunnistin: mitä live-hälytykset olisivat nostaneet esiin tällä jaksolla tavallisilla kynnyksillään.",
   tourResCode:
     "Jokaisella tuloksella on koodinsa. Tämä on tunnistimen, valmiina kopioitavaksi pidempään skriptiin tai avattavaksi Toista-ikkunassa.",
-  tourResNew: "Python toimii myös tässä selaimessa samalla aineistolla. Plus lisää solun.",
-  tourResType: "Lyhyt skripti: viikkomäärät leikkauspäivään asti, ESBL sataa viljelyä kohti, kuvaajana.",
-  tourResRun: "Aja käynnistää Pythonin sivun sisällä. Ensimmäinen ajo tuo Pythonin ja pandasin mukanaan, joten anna sille hetki.",
-  tourResOutput:
-    "Taulukko ja kuva tulevat solun alle. Sataa viljelyä kohti, ei potilasta kohti, ja ohuet viikot hyppivät: siksi työkalut näyttävät välit.",
   tourResReproduce:
-    "Toista antaa jäädytetyn aineiston ja täsmälleen saman koodin Pythonina tai R:nä, jotta arvioija voi tarkistaa läksysi.",
+    "Avaa Toista-ikkunassa antaa jäädytetyn aineiston ja täsmälleen saman koodin Pythonina tai R:nä omassa välilehdessään, jotta arvioija voi tarkistaa läksysi.",
   tourResInfer:
     "Reilu päätelmä: ylittääkö nousu sattuman, milloin se alkoi ja missä. Ei pelkästään tästä aineistosta: syy, tai että yksi kanta levisi. Siihen tarvitaan tyypitys.",
   tourResOutro:

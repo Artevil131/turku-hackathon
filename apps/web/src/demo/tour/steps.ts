@@ -1,5 +1,4 @@
 import type { Locale } from "@aei/i18n";
-import { apiOrigin } from "../../components/research/notebook/kernel.ts";
 import type { DemoId } from "../demos.ts";
 
 // The guided tours (one per demo file): what the cursor points at, what it does there, and the caption it shows.
@@ -128,24 +127,7 @@ function control(): TourStep[] {
   ];
 }
 
-/** The script the researcher's tour types: weekly ESBL per 100 cultures on the unit, plotted. */
-export function researcherScript(origin: string): string {
-  return [
-    "import aei, matplotlib.pyplot as plt",
-    `c = aei.connect("${origin}")`,
-    'w = c.weekly(**{"from": "2024-11-01", "to": "2025-04-30"})',
-    "# whole weeks before the 30 April cut, Internal medicine A",
-    'w = w[(w.ward == "MED-A") & (w.week < "2025-04-28")].copy()',
-    'w["esbl_per_100"] = 100 * w["esbl"] / w["cultures"]',
-    'w.plot(x="week", y="esbl_per_100", legend=False, figsize=(6, 2.4))',
-    'plt.ylabel("ESBL per 100 cultures")',
-    'plt.xticks(rotation=30, ha="right")',
-    'w[["week", "cultures", "esbl", "esbl_per_100"]].tail(6)',
-  ].join("\n");
-}
-
 function researcher(): TourStep[] {
-  const cells = cellTracker();
   const codeCell = first('.nb-cell[data-kind="code"]');
   return [
     { say: "tourResIntro", at: first(".project-frozen") },
@@ -156,27 +138,10 @@ function researcher(): TourStep[] {
     { say: "tourResCompare", at: nth('.nb-cell[data-kind="analysis"]', 1) },
     { say: "tourResBeta", at: nth('.nb-cell[data-kind="analysis"]', 2) },
     { say: "tourResDetector", at: nth('.nb-cell[data-kind="analysis"]', 3) },
-    // The detector's code is a fragment of a longer script (it needs that script's records), so the tour shows it
-    // and runs a cell of its own instead.
+    // Python in the page (Pyodide) and the embedded notebook are off for now to keep the site quick: the tour shows
+    // the code and where Reproduce opens it, and runs nothing.
     { say: "tourResCode", at: codeCell },
-    markThen(cells.mark, {
-      say: "tourResNew",
-      at: first(".nb-slot:has(.nb-cell[data-kind='code']) .nb-plus"),
-      act: "click",
-      waitFor: ".nb-menu",
-    }),
-    { say: "tourResNew", at: '.nb-menu [data-add="code"]', act: "click", waitFor: cells.added("textarea") },
-    { say: "tourResType", at: cells.added("textarea"), act: "type", text: researcherScript(apiOrigin()) },
-    {
-      say: "tourResRun",
-      at: cells.added("[data-run]"),
-      act: "click",
-      waitFor: cells.added("[data-output], .nb-out-err"),
-      wait: 45000,
-      show: cells.added(),
-    },
-    { say: "tourResOutput", at: cells.added("[data-output]") },
-    { say: "tourResReproduce", at: win("reproduce") },
+    { say: "tourResReproduce", at: first('.nb-cell[data-kind="code"] [data-open-reproduce]') },
     { say: "tourResInfer" },
     { say: "tourResOutro" },
   ];

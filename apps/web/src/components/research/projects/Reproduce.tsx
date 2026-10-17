@@ -47,7 +47,8 @@ export function Reproduce({
           {t(locale, "reproduceNewTab")}
         </a>
       </div>
-      <div className="reproduce-slot" data-reproduce-slot />
+      {/* The notebook (JupyterLite, tens of megabytes) is no longer embedded: it loads only in its own tab, on a click. */}
+      <p className="reproduce-empty">{t(locale, "reproduceInTab")}</p>
     </div>
   );
 }
