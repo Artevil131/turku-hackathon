@@ -20,6 +20,7 @@
     "@aei/quality": "workspace:*",
     "@aei/relations": "workspace:*",
     "@aei/replay": "workspace:*",
+    "@aei/sites": "workspace:*",
     "@aei/viz": "workspace:*"
   }
 }

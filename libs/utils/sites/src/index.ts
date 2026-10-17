@@ -299,3 +299,92 @@ export function qualifyResult(
   });
   return { result: { ...result, cultures, warnings }, unregistered };
 }
+
+// ---------- per-site views of rows the server holds ----------
+
+type SiteOf = (code: WardCode) => SiteId;
+
+/** The site an alert is about: its unit's, or for a hospital-wide trend the site it carries (the home site if none). */
+export function alertSite(a: { ward: WardCode | null; site?: SiteId }, siteOf: SiteOf = (c) => siteOfCode(c)): SiteId {
+  return a.ward !== null ? siteOf(a.ward) : (a.site ?? HOME_SITE.id);
+}
+
+/** Flows or trail links with either end at the site: moves within it and between it and another hospital. */
+export function touchingSite<T extends { from: WardCode; to: WardCode }>(
+  items: readonly T[],
+  site: SiteId,
+  siteOf: SiteOf = (c) => siteOfCode(c),
+): T[] {
+  return items.filter((x) => siteOf(x.from) === site || siteOf(x.to) === site);
+}
+
+interface Rows {
+  patients: readonly { patientId: string }[];
+  cultures: readonly { cultureId: string; patientId: string; ward: WardCode }[];
+  isolates: readonly { isolateId: string; cultureId: string }[];
+  susceptibility: readonly { isolateId: string }[];
+}
+
+/** One site's rows: its cultures, their isolates and results, and the patients they belong to. */
+export function rowsOfSite<R extends Rows>(rows: R, site: SiteId, siteOf: SiteOf = (c) => siteOfCode(c)): R {
+  const cultures = rows.cultures.filter((c) => siteOf(c.ward) === site);
+  const cultureIds = new Set(cultures.map((c) => c.cultureId));
+  const patientIds = new Set(cultures.map((c) => c.patientId));
+  const isolates = rows.isolates.filter((i) => cultureIds.has(i.cultureId));
+  const isolateIds = new Set(isolates.map((i) => i.isolateId));
+  return {
+    ...rows,
+    patients: rows.patients.filter((p) => patientIds.has(p.patientId)),
+    cultures,
+    isolates,
+    susceptibility: rows.susceptibility.filter((s) => isolateIds.has(s.isolateId)),
+  };
+}
+
+/** What a site's feed has sent since the server started (wall-clock times). */
+export interface FeedStatus {
+  messages: number;
+  lastAt: string | null;
+  lastFormat: "hl7v2" | "fhir" | "csv" | null;
+  lastAccepted: number;
+  warnings: number;
+  unregistered: number;
+  rejected: number;
+}
+
+export interface FeedLog {
+  /** One message: its format (null if not recognised), cultures accepted, warnings and unregistered units. */
+  record(
+    site: SiteId,
+    message: { format: FeedStatus["lastFormat"]; accepted: number; warnings: number; unregistered: number; at?: Date },
+  ): void;
+  status(site: SiteId): FeedStatus;
+}
+
+/** A running count of each site's messages; a message with no format or no accepted culture counts as rejected. */
+export function createFeedLog(): FeedLog {
+  const log = new Map<SiteId, FeedStatus>();
+  const empty = (): FeedStatus => ({
+    messages: 0,
+    lastAt: null,
+    lastFormat: null,
+    lastAccepted: 0,
+    warnings: 0,
+    unregistered: 0,
+    rejected: 0,
+  });
+  return {
+    record(site, m) {
+      const s = log.get(site) ?? empty();
+      s.messages++;
+      s.lastAt = (m.at ?? new Date()).toISOString();
+      s.lastFormat = m.format;
+      s.lastAccepted = m.accepted;
+      s.warnings += m.warnings;
+      s.unregistered += m.unregistered;
+      if (!m.format || m.accepted === 0) s.rejected++;
+      log.set(site, s);
+    },
+    status: (site) => ({ ...(log.get(site) ?? empty()) }),
+  };
+}

@@ -56,6 +56,9 @@ importers:
       '@aei/replay':
         specifier: workspace:*
         version: link:../../libs/utils/replay
+      '@aei/sites':
+        specifier: workspace:*
+        version: link:../../libs/utils/sites
       '@aei/viz':
         specifier: workspace:*
         version: link:../../libs/utils/viz
