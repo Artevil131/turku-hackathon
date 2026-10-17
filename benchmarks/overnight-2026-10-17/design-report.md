@@ -1,172 +1,148 @@
 # Design night, 2026-10-17: morning report
 
-Final, written 08:35–09:00 (Artem's addendum of 01:15). The build work
-ran from 00:50 to about 02:30 and then stopped on a usage limit; it
-resumed at 08:34, after the 08:30 cut-off, so nothing new was started
-and this report was finished instead. The minute-by-minute record is
-`design-log.md`; the reviews are in `design/review-wave1.md`,
-`review-wave2.md` and `review-states.md`.
+Final, written 11:00–11:55. The night ran 00:50–02:30 and stopped on a
+usage limit; it resumed at 08:34. At 08:50 Artem redirected the design
+(less text, a Mylab-like look, everything useful on screen, the timeline
+as the key element, the engine's math on screen, deadline 12:00), and the
+morning went to that redesign. The minute-by-minute record is
+`design-log.md`; reviews and audits are in `design/`.
 
-Branch `overnight/design` (pushed, not merged), built in a separate
-worktree at `/Users/artevil/turku-hackathon-design` so the main checkout
-and the experiments night were never touched. API on port 8788 and web
-on 5174, because another session held 8787 and 5173. Every screenshot is
-from the running app, taken with `design/shoot.mjs` (headless Chrome over
-the DevTools protocol: true 390 px phone emulation at 2× density, and
-1280 × 860 laptop). The "before" shots are the pre-night commit 98cfd99
-served on a spare port. Replay date in all shots: 12 May 2025, the
-default start.
+Branch `overnight/design` (pushed, never merged), built in a separate
+worktree at `/Users/artevil/turku-hackathon-design`. API on 8788 and web
+on 5174 (another session held 8787 and 5173); an AI-enabled test stack
+ran on 5176 (a local fake model for the Assistant panel). Screenshots
+come from the running app through `design/shoot.mjs` (headless Chrome,
+true 390 px phone emulation at 2×, laptop 1280×860). "Before" is the
+pre-night commit 98cfd99; replay date in every shot 12 May 2025.
 
 ## 1. What changed, by surface
 
-All screenshot files are in `design/`. Before: `<surface>-before-phone.png`
-and `-laptop.png`. After: `<surface>-after-phone.png` and `-laptop.png`.
+Files in `design/`: `<surface>-before-{phone,laptop}.png` and
+`<surface>-final-{phone,laptop}.png`.
 
 | Surface | What changed | Before | After | Serves |
 |---|---|---|---|---|
-| Replay timeline (every view) | Was a date and two buttons. Now its own bar on every working page: a permanent "Replay · synthetic lab feed" label, play/pause with a state word, steps of a day and a week, a scrub track that seeks on release, four speeds, the three event dates as markers and a menu, a free date entry, keyboard shortcuts (Space, arrows, Shift+arrows); on a phone a strip with the date and play that opens a full sheet | `home-before-*` | `home-after-*` | PRODUCT principle 4 (every view is current), U7 |
-| Doctor's list (`#doctor`) | Was a form with example figures. Now the list from `/api/coverage`: one-click filters with defaults, unit remembered; each row covers %, the 95 % interval against the bar, n, the level the data came from, the result in glyph and word, a "moved down because" line, "does not cover" flags; a line where antibiotics stop clearing the bar; likely organisms beside the list; prints as one A4 page | `doctor-before-*` | `doctor-after-*` | Usability criterion; principles 1 and 5; U1, U3 |
-| Researcher's board (`#research`) | Was a table of resistant finds with example trends. Now the signal feed (incidents grouped, sentinels pinned, filters by unit, kind and phenotype, one click to the isolates behind an alert) beside one of three panels | `research-before-*` | `research-after-*` (grid) | Principles 2 and 3; detection criterion; U2 |
-| Hospital network | Units placed as before, tubes by patient flow, units lit by the last 28 days of alerts with text badges, downstream units shaded by share of patient flow with counts (labelled "not exposure"), the phenotype trail as a layer, the open incident's unit ringed | (old map was in research) | `research-panel-network-after-*` | Product mechanism 4 (units are connected) |
-| Regional map | New: THL county series as a flat stepped choropleth (rate per 100,000, and a count-certainty view), signals strong and weak, Tyks marked, month following the replay with a labelled independent browser | none | `research-panel-map-after-*` | Judges' wider-picture ask (AUDIENCE.md) |
-| Home | New: "what changed since yesterday" (isolates, resistant finds, signals, each linked), the doctor and research entries with the remembered unit and the open-signal count | `home-before-*` | `home-after-*` | Principle 2 |
-| Pitch intro (`#intro`) | New: terraced contour surface of the THL county rate (six flat steps), university and central hospitals on the referral tree with pulses, month slider, labelled "a picture of pressure, not a working view" | none | `intro-after-*` | Pitch opening (OBJECTIVES, visualisation choices) |
-| Settings | Truthful "about the data" text; language also switchable from the top bar | `settings-before-*` | `settings-after-*` | Bilingual commitment |
-| Shell | Search field (`/` or Ctrl+K) for units, antibiotics, organisms, phenotypes, alerts and pages; skip link and main landmark; URL state on every view; FI/EN switch; API origin from `VITE_AEI_API_URL`; branding tokens; research, settings and intro load on demand; 49 % of the stylesheet removed as dead | | | Item 3 of the brief; deployment shape |
+| Timeline (every page) | From a date and two buttons to the hero: a continuous weekly stream of resistant finds by phenotype with sampling volume, nine unit lanes, signal pills that name their cause ("ESBL 7/1,4", "MRSA new", "no samples") with a −log10 p bar, a week readout, the axis ending at today with nothing after it; play, steps, speeds, date entry, demo jumps; a subtle Layers popover (lines, count or per 100 cultures, stacked or overlaid, lanes, signal kinds, window) whose choices persist and travel in the URL | `home-before-*` | `home-final-*`, `research-final-*` | PRODUCT principle 4; Artem's "timeline is the key element"; U7 |
+| Doctor (`#doctor`) | From a form over example figures to a one-screen workspace from `/api/coverage`: one dense row of one-click filters (unit remembered; age group and day 3+ tagged not applied), the list as a forest plot (Wilson interval against the bar line, "94 % · n 356", result glyph and word, ⓘ per row), level ladder, likely organisms bar, unit signal chips, details on demand; prints as one A4 page | `doctor-before-*` | `doctor-final-*` | Usability criterion; principles 1 and 5; U1, U3 |
+| Researcher (`#research`) | From a table of finds with example trends to a workspace of chrome-less panels (hover reveals move, resize and close; a subtle tray reopens them; layout persists; the page may scroll): signals (unfiltered by default, each showing the units it spans with counts), one Finland map (THL county rates and signals, the referral graph), the Tyks unit graph (flows, lit units, spread arrows with share · n), the alert math (observed vs usual, −log10 p, the test in one line, isolates inline), the unit grid, and an Assistant panel that words the selected signal (local model when configured, labelled; template otherwise) | `research-before-*` | `research-final-*` | Principles 2 and 3; detection criterion; Artem's points on multi-unit signals, one map, windows, the LLM; U2 |
+| Method (`#method`) | New: the live rules drawn with live numbers (coverage as Beta(k+1, n−k+1) with the Wilson interval; the detector's Poisson tail, its −log10 p against α, the weekly window) beside the experiment figures 0012–0020; the discounted Beta-binomial and every live rule typeset in MathML (formula section by the experiments session at Artem's request) | none | `method-final-*` | Artem's "show the engine's math"; demonstrated understanding |
+| Home | "What changed since yesterday" as three dated numbers and two role cards; the doctor card names the unit it opens | `home-before-*` | `home-final-*` | Principle 2 |
+| Pitch intro (`#intro`) | Terraced contour surface of the THL county rate, hospitals on the referral tree, month slider, labelled a picture | none | `intro-final-*` | Pitch opening |
+| Shell | Mylab-derived look (Inter, Bricolage Grotesque titles, violet accent, flat panels), search field (`/`), FI/EN switch, skip link, URL state everywhere, offline banner in clinical words with recovery, one live stream, API origin from `VITE_AEI_API_URL`, branding tokens, lazy pages, half the stylesheet removed | | | Item 3 of the brief; deployment shape |
 
 ## 2. The doctor's list and the researcher's board as they stand
 
-**Doctor's list.** Opening `#doctor` shows the list at once for the
-remembered unit with defaults already chosen: urine, any sex, mild
-infection (80 % bar), the last year. One-click filters: specimen, sex,
-age group, inpatient day 3 or later, severity (80 % or 90 % bar), period
-(last year or last four weeks). Age group and day 3 or later are shown
-but tagged "not applied yet", with a banner naming only what was chosen,
-because the coverage API has no such filter. The header states the
-level the figures come from ("own unit data", or similar units, or the
-whole hospital when the unit has too few) and the pool ("365 first
-isolates, own unit, since 13 May 2024"). Rows that clear the bar sit
-above a line; below it each row says why it moved down. Not-assessable
-rows show no figure, only the reason. Wording stays within "covers",
-"clears the bar", "moved down because"; nothing says give or recommend.
-The footer names the rules in plain words.
+**Doctor.** `#doctor` opens on the remembered unit with defaults chosen
+(urine, any sex, mild 80 % bar, last year): zero input. The forest plot
+shows every antibiotic's interval against the bar; rows that clear sit
+above a labelled line, the rest say why they moved down. The ladder says
+whether the unit's own results were enough or a wider pool was used.
+Age group and inpatient day 3+ are shown and tagged "not applied yet",
+because the API cannot filter by them. Wording stays within "covers",
+"clears the bar", "moved down because".
 
-**Researcher's board.** The signal feed is always on the left on a
-laptop (first tab on a phone): 13 signals in the 365 days to the replay
-date at the default start, sentinels pinned on top, each incident card
-naming its kind, unit, counts against the usual level and p, and opening
-in one click to the isolates behind it (resistant antibiotics named),
-then the member alerts, the explanation and a first step labelled as a
-template. On the right, the unit grid (ESBL per unit per week, counts),
-the network and the map, linked through the URL.
+**Researcher.** The timeline shows weekly resistant finds since the data
+began, one lane per unit, with every signal named on its lane; today is
+the right edge. Below it the panels: the signal list (13 in the 365 days
+to 12 May 2025 at the demo start) where each row shows the units the
+signal spans ("MED-A → ED 31 % · n 41"); the map; the unit graph with the
+spread; the alert math; the Assistant.
 
-**A judge's first two minutes.** Home shows what arrived today and one
-open signal → Doctor: the list for the remembered unit is already there
-(1 click) → F, 65+, severe: 3 more clicks, the 90 % bar moves and rows
-fall below the line with their reasons → Research: the MED-A ESBL
-cluster, one click shows its 7 isolates → Network: MED-A ringed, where
-its patients go next with counts → Map: the county picture around Tyks →
-Timeline, Events, "ICU MRSA" (10 Feb 2026): every panel moves to the new
-as-of date.
+**A judge's first two minutes.** Home: what arrived today → Doctor: the
+list is already there → F, 65+, severe: the bar moves to 90 % and rows
+fall below the line with reasons → Research: the timeline's lanes show
+MED-A's ESBL rise → click the signal: its first 3 of 7 isolates inline, observed 7
+against usual 1.4, −log10 p 3.1, its patients went on to ED and PHC-S →
+the unit graph lights the spread → Method: the same signal's Poisson
+tail and the formulas → Demo jumps → "ICU MRSA" (10 Feb 2026): every
+panel moves to the new date, and still nothing after it is shown.
 
 ## 3. U metrics, before and after
 
-From `design/u-metrics.md` (clock times and commits there). Before is the
-pre-night commit measured cleanly; after is wave 2 (2b12f36) with the
-wave-3 items noted.
+From `design/u-metrics.md` (clock times and commits there). Before =
+98cfd99/ec23f01; after = c202c03/6364306.
 
 | Metric | Target | Before | After |
 |---|---|---|---|
-| U1 clicks and seconds to the doctor's list for Urology, urine, F, 65+, severe | ≤ 3 clicks, ≤ 10 s laptop, ≤ 15 s phone | Not reachable (sex, age, onset could not be set; figures were examples) | 4 clicks, about 8 s laptop, about 10 s phone (the list itself is 1 click; the three filters are one each). Above the 3-click target because the named context has three non-default filters |
-| U2 clicks from the feed to the isolates behind an alert | 1 | Not reachable | 1, no scroll at 1280 × 860 (wave 3) |
-| U3 count and as-of on every number | all views yes | No | Yes on doctor list, feed, grid, network (counts added in wave 3), map, settings, home (badge fixed in wave 3). Still missing: the as-of on the doctor's organisms rail and signals block (states audit) |
-| U4 Lighthouse accessibility home / doctor / research; contrast; never colour alone | ≥ 95; pass; pass | 100 / 96 / 100; doctor contrast fails | 100 / 100 / 100; contrast passes; results and alerts carry a glyph and a word |
-| U5 missing i18n keys | 0 | 0 (213 keys) | 0 |
-| U6 LCP, 4G phone, production build | ≤ 2.5 s | 3.6 / 3.6 / 3.6 s | 3.3 / 3.9 / 6.9 s; home first paint 2.3 → 1.4 s. Not met. Noisy tonight (CPU shared with the experiments night), recorded and not acted on per the addendum |
-| U7 timeline: scrub, play, pause, jump to a date, per-panel as-of | all present | 2 of 5 | 5 of 5 |
+| U1 to the doctor's list for Urology, urine, F, 65+, severe | ≤ 3 clicks; ≤ 10 s laptop, ≤ 15 s phone | not reachable | 4 clicks, about 7 s laptop; 5 taps, about 12 s phone. The list itself is 1 click; the named context has three non-default filters, so the 3-click target is missed by one |
+| U2 feed → isolates behind an alert | 1 | not reachable | 1 |
+| U3 count and as-of on every number | all views | no | yes on every panel after the final-review fixes |
+| U4 Lighthouse accessibility home / doctor / research; contrast | ≥ 95; pass | 100 / 96 / 100; doctor contrast fails | 100 / 95 / 100; contrast passes; the last doctor finding (list divider) fixed after the measurement |
+| U5 missing i18n keys | 0 | 0 | 0 (239 keys) |
+| U6 LCP, 4G phone, production build | ≤ 2.5 s | 3.6 / 3.6 / 3.6 s | 3.5 / 3.5 / 4.7 s. Not met; noisy (CPU shared), recorded only per the addendum |
+| U7 scrub, play, pause, jump to a date, per-panel as-of | all present | 2 of 5 | 4 of 5: scrub dropped, because with today as the right edge (Artem's instruction) dragging would rescale the axis; date entry, steps and demo jumps move the clock |
 
-No change was reverted: the one regression (U4 on home after wave 1, 100
-→ 95) was fixed instead within the same hour and measured back at 100.
+Regressions and what happened: U4 fell twice (home 95 after wave 1;
+doctor 92 and research 97 after the redesign) and was fixed within the
+hour both times; U7 fell from 5 to 4 on Artem's instruction and was kept.
+Performance (research page, 1440×900): the page grew to 1219 px at 900
+because screen-reader text escaped its scroll boxes; fixed (900 / 900).
+Live streams 2 → 1; relation requests deduplicated.
 
 ## 4. Design decisions and alternatives rejected
 
-- Timeline borrows a video player's transport (YouTube), chart event flags (TradingView) and a monitoring time picker's as-of readout (Grafana); a plain date picker was rejected because scrubbing and jumping to the three events is the demo.
-- Seeking happens on release of the track, not while dragging, so a drag does not hammer the shared server clock.
-- Doctor's list borrows the patient-header strip (Epic storyboard), the "best / other" divider (Google Flights) and the antibiogram row (hospital antibiogram apps); the left-hand form was rejected because the doctor types nothing.
-- No organism input on the doctor's page (Artem's addendum); likely organisms are shown beside the list instead.
-- Age group and day 3 or later are shown and tagged "not applied yet" rather than hidden, because the doctor expects them and the API gap must be visible; silently filtering in the browser was rejected as statistics in the app.
-- Hospital onset does not raise the bar automatically: the 90 % rule for it is undecided (ENGINE 2.6).
-- The certainty badge is a lookup on the level the data came from; cut-offs on n were rejected because the team has not chosen them.
-- Researcher's board is one page with the feed always visible (PagerDuty incidents) beside one of grid (Grafana status history), network (Datadog service map) or map (Our World in Data choropleth); four equal tabs were rejected because signals come first.
-- The grid shades counts and says so; shading by surprise waits for weekly expected counts from the API.
-- Network shading is the share of patient flow with counts, labelled "not exposure"; computing exposure in the browser was rejected.
-- County polygons come through a new optional API route rather than a copy in the web app, because the data folder is git-ignored and the app reaches the backend only through the contract.
-- The pitch intro draws flat terraces, not a smooth field, and is labelled a picture; pulses stay in the intro only.
-- WHO AWaRe tier names stay "Access" and "Watch" in Finnish, as Finnish materials use them.
+- Mylab's site for type, colour and flatness (Inter, Bricolage Grotesque standing in for the commercial Nohemi, violet #635BF1, navy ink), via the branding tokens; Mylab's logo and assets not used.
+- Patterns borrowed: Bloomberg terminal (density, tabular numbers, detail on demand), Grafana (annotation band on a shared time axis), Epic's patient banner (one dense filter row), PagerDuty (incident list), Our World in Data (choropleth with a month).
+- Timeline as a continuous stream with unit lanes; the earlier discrete seismograph was rejected by Artem as saying nothing about the metrics.
+- The axis ends at today and nothing later is drawn; scrubbing the band was given up for it.
+- Panels without window chrome; explicit windows with title bars were built and rejected by Artem the same hour.
+- Network and regional map merged into one geographic view, then the Tyks unit graph given its own panel so both stay readable.
+- The doctor types nothing: no organism input, age group and day 3+ shown but not applied rather than filtered in the browser.
+- Certainty as the level reached, not n cut-offs the team has not chosen; hospital onset does not raise the bar on its own (ENGINE 2.6 open).
+- The Assistant only words existing alerts through `/api/explain`; numbers never come from the model (D-019, D-029).
+- The math drawn from fields the API already returns (the Poisson tail equals each alert's p to 1e-9 in tests); Beta posteriors with a team prior, CUSUM paths and funnel limits left as proposals.
+- Per 100 cultures offered as a plain ratio of the same raw counts (D-039), not a model.
+- AWaRe tier names kept as "Access" and "Watch" in Finnish.
 
 ## 5. Accessibility and bilingual results
 
-- Lighthouse accessibility 100 on home, doctor and research; colour contrast passes (`--ink-3` darkened from #5f7381 to #566a78); the last zero-weight audit (a button name not containing its visible text) was fixed.
-- Results and alert states always have a glyph and a word; data-quality weeks are hatched and marked "!".
-- A skip link is the first tab stop on every page; the timeline's speed control is one radio group and its steps one toolbar, so the content is reached in a few stops; focus is visible everywhere (2 px accent ring).
-- Phone: 44 px targets, no sideways scrolling at 390 px on any board tab (the grid scrolls inside its own box).
-- The doctor's list prints as one A4 page with the context line (all filters, as-of, "replay of a synthetic laboratory dataset; supports the decision, the doctor decides").
-- Finnish and English: 0 missing keys. Copy is kept per surface in `libs/utils/i18n/src/surfaces/`. Fixed during the night: Finnish plurals, decimal commas, p-values in plain decimals, "löydökset" used consistently for isolates, N/M for sex in Finnish, THL region names as given. Not checked by a native reader.
-- Open (states audit): the developer-facing offline text ("Start it with pnpm dev") is still shown to users; the organisms rail and the signals block have no loading or error state.
+- Lighthouse accessibility 100 / 95 / 100 at the final measurement, contrast passing everywhere; `--ink-3` darkened twice (#5f7381 → #566a78 → #5c6080 in the new palette); the list divider no longer a separate item.
+- Glyph and word for every result and alert kind; patterns on the timeline's phenotype streams; data-quality weeks hatched.
+- Skip link first on every page, visible focus rings, timeline speed as a radio group and steps as a toolbar, panels movable and resizable by keyboard.
+- Finnish and English: 0 missing keys (239); copy per surface in `libs/utils/i18n/src/surfaces/`; Finnish plurals, decimal commas, plain p-values, THL series names in Finnish. Not read by a native speaker.
 
 ## 6. Contract fields and routes proposed
 
-Collected here rather than in DECISIONS.md (addendum point 4); D-040 was
-written before the addendum and stays as it is.
+Collected here (addendum point 4); D-040 stays as written.
 
 | Proposal | View that needs it | State |
 |---|---|---|
-| `GET /api/counties`, county polygons (DECISIONS.md D-040) | Regional map, pitch intro | built (contract, client, API wiring, test), pending Artem |
-| `THRESHOLDS` re-exported from `@aei/contract` | Doctor's list bar labels, so they come from the gear and are not copied | built (additive) |
-| `CoverageQuery.ageGroup` and `onset` | Doctor's list: age group and day 3 or later are shown but not applied | proposed; needs the rule for which filter is dropped first when the pool is thin (D-033 has it for sex) |
-| `AntibioticCoverage.newest` | Doctor's list row, newest result date (today "results to {as-of}") | proposed |
-| `CoverageQuery.patientId` → prior resistant findings | Doctor's list flag | proposed; a privacy question first |
-| `Alert.severity` | Signal feed | proposed |
-| `Alert.firstStep` | Signal feed (today a per-kind template, labelled) | proposed |
-| `RelationsResponse.exposure` (ENGINE 4) | Network downstream shading (today flow share) | proposed |
-| `RegionalSeries.interval` | Map uncertainty view (today count-based) | proposed |
-| `GET /api/weekly`, observed and expected per unit-week with a quality flag | Unit grid shade by surprise (today counts) | proposed |
+| `GET /api/counties`, county polygons (D-040) | Map, pitch intro | built, pending Artem |
+| `GET /api/weekly`, raw weekly counts per unit (patients per phenotype, cultures), cut at the clock; `@aei/viz` `weeklySeries` | Timeline stream and lanes | built, pending Artem |
+| `THRESHOLDS` re-exported from `@aei/contract` | Doctor's bar labels | built (additive) |
+| `RelationsQuery.from` / `to` | Spanned units of older signals (today the window always ends at today, so shares include later movement) | proposed |
+| `CoverageQuery.ageGroup`, `onset` | Doctor filters shown but not applied | proposed; needs the rule for which filter drops first (D-033 has it for sex) |
+| `AntibioticCoverage.newest` | Doctor row date | proposed |
+| `CoverageQuery.patientId` → prior findings | Doctor flag | proposed; privacy first |
+| `Alert.severity`, `Alert.firstStep` | Signals | proposed |
+| `RelationsResponse.exposure` (ENGINE 4) | Unit graph spread (today flow share) | proposed |
+| `RegionalSeries.interval` | Map uncertainty | proposed |
+| Weekly expected counts, CUSUM path, funnel limits, Beta posterior with the team's prior, experiment results served by the API | Method page and alert math | proposed |
+| An explain route over a whole incident (several alerts, units) | Assistant | proposed; today it words each member alert |
 
-Blocked on decisions (QUESTIONS.md items not opened tonight): the bar
-for hospital-onset infections (ENGINE 2.6, τ per syndrome); n cut-offs
-for a certainty word; the choropleth's step breaks (the map uses zero
-plus quartiles of non-zero months, the grid five steps over visible
-cells; both are drawing choices to confirm).
+Blocked on decisions: the bar for hospital onset (ENGINE 2.6); n cut-offs
+for certainty; colour breaks of the map and grid.
 
 ## 7. Where branding attaches
 
-- Tokens: the first `:root` block of `apps/web/src/styles.css`:
-  `--brand-accent`, `--brand-accent-soft`, `--brand-accent-ink`,
-  `--brand-font-ui`, `--brand-font-data`, `--brand-radius`. The working
-  accent (`--live`), fonts and panel radius read from them; everything
-  else is neutral or a reserved status colour (alert red, watch amber,
-  ok green, resistance orange).
-- Slots: the mark and name in the top bar (`TopBar.tsx`, `.mark`), the
-  favicon (`apps/web/public/favicon.svg`), the intro's title block.
-- Copy voice: plain and clinical, in `libs/utils/i18n`; no brand voice
-  was written.
+The `--brand-*` block at the top of `apps/web/src/styles.css` (accent,
+soft, ink, display and UI fonts, radius) carries the Mylab-derived values
+now; everything else is neutral or a status colour. Slots: the "AEI" mark
+in the top bar, the favicon, the intro title. Copy voice plain and
+clinical; no brand voice written.
 
-## 8. What I would do with another night
+## 8. With another night
 
-1. The states audit's list (`design/review-states.md`): loading, empty,
-   error and as-of on the organisms rail and the signals block; clinical
-   offline copy with the last good as-of; recovery in `live.ts` (retry,
-   online and offline events); stale data with a visible "updating" on
-   grid, network and map; the grid's week window in the URL; the board
-   tabs as a roving tab list.
-2. The Ask field on the research board with its chips, tested against a
-   local fake model.
-3. One Impeccable pass per surface, then the two final Fable UX reviews
-   (doctor journey, researcher journey), which did not run.
-4. U6: the research page's first meaningful content waits for a year of
-   alerts; a smaller first request would bring it toward 2.5 s.
-5. A Finnish reader through every surface, and a timed test on someone
-   outside the team, as AUDIENCE.md asks.
-6. Move reusable pieces out of the app into `libs/utils` as AGENTS.md
-   asks: the search matcher, the number formatting helpers, the map
-   projection.
+1. Bring `origin/main` in: teammates pushed new screens, a data-quality
+   route and a pitch film overnight (37 commits); this branch has not
+   been merged with them.
+2. The proposed routes above, starting with relations by window and
+   weekly expected counts, so the lanes can show surprise rather than
+   counts.
+3. The Assistant over a whole incident, tested against the real local
+   model in its container.
+4. Artem's math engine in `libs/utils`, drawn through `@aei/viz`.
+5. U6: the first meaningful content on the research page waits for a
+   year of alerts and the weekly series; serve a smaller first response.
+6. A Finnish reader through every surface; a timed test with someone
+   outside the team.
