@@ -113,6 +113,7 @@ Needs Node 22 or newer and pnpm. Unzip the organiser's dataset into
     pnpm install
     pnpm dev          # API on :8787 and the website on :5173
     pnpm demo         # the demo: data up to 1 June 2025, then a live HL7 lab feed (DEMO.md)
+    AEI_SITES=deploy/container/config/sites.example.json pnpm dev:api   # a second hospital on the same server (deploy/integration.md)
     pnpm test         # unit tests (Vitest)
     pnpm typecheck
     pnpm check        # lint and format (Biome)
