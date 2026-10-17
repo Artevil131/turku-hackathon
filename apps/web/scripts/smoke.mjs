@@ -221,8 +221,9 @@ async function watching(cdp, body) {
     }
     if (m.method === "Network.responseReceived") {
       const u = p.response.url;
-      // /api/regional answers 404 when no THL file is mounted (D-037): the app shows an empty state, so a warning.
-      const optional = p.response.status === 404 && u.includes("/api/regional");
+      // /api/regional (D-037) and /api/counties (D-043) answer 404 when their files are not mounted, as in CI
+      // where data/ is not in git: the app shows an empty state, so a warning, not a failure.
+      const optional = p.response.status === 404 && (u.includes("/api/regional") || u.includes("/api/counties"));
       if (p.response.status >= 400)
         (u.includes("/api/") && !optional ? problems.api : problems.other).push(`${p.response.status} ${u.replace(base, "")}`);
     }
