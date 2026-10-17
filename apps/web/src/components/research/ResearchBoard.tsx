@@ -18,7 +18,7 @@ import { ProjectControls } from "./projects/ProjectControls.tsx";
 import { type NotebookLanguage, Reproduce, ReproduceHost } from "./projects/Reproduce.tsx";
 import { useProject } from "./projects/useProject.ts";
 import { SignalFeed } from "./SignalFeed.tsx";
-import type { Cell } from "./tools/model.ts";
+import type { Cell, Slice } from "./tools/model.ts";
 import { ToolsWindow } from "./tools/ToolsWindow.tsx";
 import { UnitGrid } from "./UnitGrid.tsx";
 import type { WinId } from "./workspace/layout.ts";
@@ -26,10 +26,11 @@ import { type ChartRequest, Workspace } from "./workspace/Workspace.tsx";
 import "./ResearchBoard.css";
 
 // The researcher's workspace (spec-v2 5, with Artem's corrections): the
-// incident list on the left, the geographic panel or the unit grid in the
-// centre, the alert math on the right, all linked through one state that
-// lives in the URL. Under 1100 px the three stack: list, math, panel.
-// Choosing a signal opens the alert math again if it was closed.
+// Signals window large on the left, with the signal card as a layer inside it
+// (a selected row goes one level deeper in the same window), the geographic
+// panel in the centre, the unit graph on the right, all linked through one
+// state that lives in the URL. The card's own window and the assistant stay
+// in the tray as pop-outs. Under 1100 px the windows stack.
 
 type Props = Omit<FeedProps, "state" | "onChange">;
 
@@ -46,7 +47,7 @@ export function ResearchBoard(props: Props) {
   const [explain, setExplain] = useState(0);
   const onChange = useCallback((patch: Partial<BoardState>) => {
     if (patch.incident !== undefined && patch.incident !== null && patch.incident === incidentRef.current) {
-      setReveal({ id: "math", key: `math-${Date.now()}` });
+      setReveal({ id: "signals", key: `signals-${Date.now()}` });
       setExplain((n) => n + 1);
     }
     setState((s) => ({ ...s, ...patch }));
@@ -69,12 +70,19 @@ export function ResearchBoard(props: Props) {
   // "Show on map" (the signal card): reveal the map window and select the site's county in it. The county is
   // cleared when another incident is chosen, so the next click selects it again.
   const [mapCounty, setMapCounty] = useState<string | null>(null);
-  const [reveal, setReveal] = useState<{ id: WinId; key: string | null }>({ id: "math", key: state.incident });
+  const [reveal, setReveal] = useState<{ id: WinId; key: string | null }>({ id: "signals", key: state.incident });
   const mapClicks = useRef(0);
+  // "Open in Tools" (the card): the Tools window takes the signal's slice; cleared with the next selection.
+  const [toolsPreset, setToolsPreset] = useState<Slice | null>(null);
   useEffect(() => {
-    setReveal({ id: "math", key: state.incident });
+    setReveal({ id: "signals", key: state.incident });
     setMapCounty(null);
+    setToolsPreset(null);
   }, [state.incident]);
+  const openTools = useCallback((slice: Slice) => {
+    setToolsPreset(slice);
+    setReveal({ id: "tools", key: `tools-${slice.unit}|${slice.phenotype}|${slice.from}` });
+  }, []);
   const showMap = useCallback((county: string) => {
     setMapCounty(county);
     setReveal({ id: "map", key: `map-${++mapClicks.current}` });
@@ -108,15 +116,15 @@ export function ResearchBoard(props: Props) {
   const panelProps = { ...props, state, onChange, kin, hasSelection: explicit };
   const loading = load.status === "loading";
 
-  // The reading order for a selected signal: the card first, the flow and the map answer it, the rest step
-  // back. Each window opens with one line saying what it answers for this signal.
-  const primary: WinId | null = explicit ? "math" : null;
+  // The reading order for a selected signal: the Signals window (its card layer) first, the flow and the map
+  // answer it, the rest step back. Each window opens with one line saying what it answers for this signal.
+  const primary: WinId | null = explicit ? "signals" : null;
   const lead = useMemo<Partial<Record<WinId, string>> | undefined>(() => {
     if (!explicit || !selected) return undefined;
     const unit = unitLabel(locale, selected.ward);
     return {
       math: t(locale, "wsLeadMath"),
-      signals: t(locale, "wsLeadSignals"),
+      signals: t(locale, "wsLeadMath"),
       map: t(locale, "wsLeadMap", { hospital: currentHospitalName(locale) }),
       graph: t(locale, "wsLeadGraph", { unit }),
       grid: t(locale, "wsLeadGrid", { unit }),
@@ -124,7 +132,8 @@ export function ResearchBoard(props: Props) {
     };
   }, [explicit, selected, locale]);
 
-  // The Tools window's frame follows the selected signal: the window its relations cover.
+  // The Tools window's frame follows the selected signal: the window its relations cover, or, after
+  // "Open in Tools", the signal's own slice.
   const selectedSpans = explicit && selected ? spansOf(selected) : null;
   const signalWindow = selectedSpans?.from && selectedSpans.to ? { from: selectedSpans.from, to: selectedSpans.to } : null;
 
@@ -137,11 +146,49 @@ export function ResearchBoard(props: Props) {
   const [picked, setPicked] = useState<{ from: string; to: string } | null>(null);
   // biome-ignore lint/correctness/useExhaustiveDependencies: a new signal replaces a picked period.
   useEffect(() => setPicked(null), [state.incident]);
-  const toolsWindow = picked ?? signalWindow;
+  const toolsWindow = toolsPreset
+    ? {
+        from: toolsPreset.from,
+        to: toolsPreset.to,
+        unit: toolsPreset.unit,
+        phenotype: toolsPreset.phenotype,
+        organism: toolsPreset.organism,
+      }
+    : (picked ?? signalWindow);
+  const back = useCallback(() => onChange({ incident: null }), [onChange]);
+
+  const card = (layer: boolean) => (
+    <AlertMath
+      client={client}
+      locale={locale}
+      incident={selected}
+      spans={selected ? spansOf(selected) : null}
+      findings={findings}
+      onChange={onChange}
+      acknowledge={acknowledge}
+      asOf={asOf}
+      command={command}
+      onShowMap={showMap}
+      onOpenTools={openTools}
+      explain={explain}
+      onBack={layer ? back : undefined}
+      empty={loading ? "loading" : "pick"}
+    />
+  );
 
   const content: Record<WinId, ReactNode> = {
     signals: (
-      <SignalFeed {...panelProps} load={load} incidents={incidents} retry={retry} spansOf={spansOf} selected={selected?.key ?? null} />
+      <SignalFeed
+        {...panelProps}
+        load={load}
+        incidents={incidents}
+        retry={retry}
+        spansOf={spansOf}
+        selected={explicit && selected ? selected.key : null}
+        card={card(true)}
+        layer={explicit}
+        onBack={back}
+      />
     ),
     reproduce: (
       <Reproduce locale={locale} project={project.response?.project} language={notebookLanguage} onLanguage={setNotebookLanguage} />
@@ -149,22 +196,7 @@ export function ResearchBoard(props: Props) {
     map: <GeoMap {...panelProps} focusCounty={mapCounty} />,
     graph: <UnitGraph {...panelProps} />,
     grid: <UnitGrid {...panelProps} />,
-    math: (
-      <AlertMath
-        client={client}
-        locale={locale}
-        incident={selected}
-        spans={selected ? spansOf(selected) : null}
-        findings={findings}
-        onChange={onChange}
-        acknowledge={acknowledge}
-        asOf={asOf}
-        command={command}
-        onShowMap={showMap}
-        explain={explain}
-        empty={loading ? "loading" : "pick"}
-      />
-    ),
+    math: card(false),
     assistant: (
       <Assistant client={client} locale={locale} incident={selected} spans={selected ? spansOf(selected) : null} waiting={loading} />
     ),

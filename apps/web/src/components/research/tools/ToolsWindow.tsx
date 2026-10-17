@@ -34,7 +34,7 @@ import "./tools.css";
 
 export interface ToolsProps extends PanelProps {
   /** The selected signal's window; null falls back to the last 12 weeks to the clock. */
-  window: { from: string; to: string } | null;
+  window: { from: string; to: string; unit?: string; phenotype?: Phenotype | ""; organism?: string } | null;
   /** A slice handed over by another window (the signal's "Open in Tools"): it overrides the signal's own defaults. */
   preset?: Partial<Slice>;
   /** Adds a chart window (the Add as chart buttons). */
@@ -52,10 +52,10 @@ function initialSlice(w: ToolsProps["window"], asOf: string | null, state: Panel
   return {
     from: w?.from ?? shift(to, 1 - DEFAULT_WEEKS * 7),
     to,
-    unit: w ? (state.unit ?? state.focus ?? "") : "",
-    organism: "",
+    unit: w ? (w.unit ?? state.unit ?? state.focus ?? "") : "",
+    organism: w?.organism ?? "",
     specimen: "",
-    phenotype: w ? (state.phenotype ?? "") : "",
+    phenotype: w ? (w.phenotype ?? state.phenotype ?? "") : "",
     firstOnly: true,
     ...preset,
   };

@@ -3,6 +3,7 @@
 export const timelineEn = {
   tlToday: "Today",
   tlFound: "Found so far · {n}",
+  tlNewSince: "New since {date} · {n}",
   tlFoundNone: "Nothing yet: signals appear here as the detectors raise them.",
   tlFoundMore: "{n} more in the list",
   tlTitle: "{hospital} · {n} units",
@@ -86,6 +87,7 @@ export const timelineEn = {
 export const timelineFi: Record<keyof typeof timelineEn, string> = {
   tlToday: "Tänään",
   tlFound: "Löydetty tähän mennessä · {n}",
+  tlNewSince: "Uutta {date} jälkeen · {n}",
   tlFoundNone: "Ei vielä mitään: signaalit ilmestyvät tähän, kun tunnistimet nostavat ne.",
   tlFoundMore: "{n} lisää listassa",
   tlTitle: "{hospital} · {n} yksikköä",

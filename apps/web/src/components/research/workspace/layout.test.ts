@@ -32,18 +32,25 @@ describe("compactLayout", () => {
     expect(compactLayout(l).wins).toEqual(l.wins);
   });
   it("floats windows up into a gap", () => {
-    const l = patchWin(defaultLayout(), "graph", { open: false });
+    const l = patchWin(patchWin(defaultLayout(), "graph", { open: false }), "math", { open: true });
     expect(compactLayout(l).wins.math.y).toBe(0);
   });
+  it("opens with the Signals window large and the card and the assistant in the tray", () => {
+    const d = defaultLayout();
+    expect(d.wins.signals.w).toBeGreaterThanOrEqual(5);
+    expect(d.wins.math.open).toBe(false);
+    expect(d.wins.assistant.open).toBe(false);
+    expect(WIN_IDS.filter((id) => d.wins[id].open)).toEqual(["signals", "map", "graph"]);
+  });
   it("pushes the windows a moved one lands on down, with no overlaps", () => {
-    const l = patchWin(defaultLayout(), "assistant", { y: 0 });
+    const l = patchWin(defaultLayout(), "assistant", { y: 0, open: true });
     const c = compactLayout(l, "assistant");
     noOverlap(c);
     expect(c.wins.assistant.y).toBe(0);
     expect(c.wins.graph.y).toBeGreaterThanOrEqual(8);
   });
   it("resolves a stored layout that overlaps", () => {
-    const l = patchWin(patchWin(defaultLayout(), "graph", { y: 2 }), "math", { y: 0 });
+    const l = patchWin(patchWin(defaultLayout(), "graph", { y: 2 }), "math", { y: 0, open: true });
     noOverlap(compactLayout(l));
   });
 });
@@ -60,17 +67,17 @@ describe("focusLayout", () => {
     const d = defaultLayout();
     const f = focusLayout(d, "signals", 20);
     expect(f.wins.signals.h).toBe(40);
-    expect(d.wins.math.open).toBe(true);
-    expect(d.wins.signals.w).toBe(3);
+    expect(d.wins.map.open).toBe(true);
+    expect(d.wins.signals.w).toBe(5);
   });
 });
 
 describe("chart windows in the layout", () => {
   const spec = defaultSpec({ unit: "ICU", window: { from: "2026-09-01", to: "2026-09-28" } });
-  const saved = (extra: object) => JSON.stringify({ v: 1, ...defaultLayout(), ...extra });
+  const saved = (extra: object) => JSON.stringify({ v: 2, ...defaultLayout(), ...extra });
 
   it("migrates a layout saved before charts existed to an empty charts record", () => {
-    const old = { v: 1, wins: defaultLayout().wins, order: [...defaultLayout().order] };
+    const old = { v: 2, wins: defaultLayout().wins, order: [...defaultLayout().order] };
     const l = parseLayout(JSON.stringify(old));
     expect(l?.charts).toEqual({});
     expect(l?.order).toEqual(defaultLayout().order);
@@ -89,7 +96,7 @@ describe("chart windows in the layout", () => {
   });
   it("keeps charts through save and load, with the chart's spec", () => {
     const { layout } = addChart(defaultLayout(), spec);
-    const back = parseLayout(JSON.stringify({ v: 1, ...layout }));
+    const back = parseLayout(JSON.stringify({ v: 2, ...layout }));
     expect(back?.charts["chart:1"]).toMatchObject({ ...spec, open: true });
     expect(back?.order).toContain("chart:1");
   });

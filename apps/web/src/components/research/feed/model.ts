@@ -62,6 +62,18 @@ export function groupIncidents(alerts: readonly Alert[]): Incident[] {
   return out.sort((a, b) => b.date.localeCompare(a.date) || a.key.localeCompare(b.key));
 }
 
+/** The list's time groups, relative to the clock: the last 7 days, the last 28 days (the engine's window), the rest. */
+export type TimeGroup = "week" | "month" | "earlier";
+export const TIME_GROUPS: readonly TimeGroup[] = ["week", "month", "earlier"];
+
+export function groupByTime<T extends { date: string }>(incidents: readonly T[], asOf: string): Record<TimeGroup, T[]> {
+  const week = shift(asOf, -6);
+  const month = shift(asOf, -27);
+  const out: Record<TimeGroup, T[]> = { week: [], month: [], earlier: [] };
+  for (const i of incidents) out[i.date >= week ? "week" : i.date >= month ? "month" : "earlier"].push(i);
+  return out;
+}
+
 export interface Filters {
   unit: WardCode | null;
   kinds: readonly SignalKind[];

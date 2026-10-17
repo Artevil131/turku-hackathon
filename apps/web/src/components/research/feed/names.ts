@@ -1,10 +1,12 @@
 import type { Alert } from "@aei/contract";
 import { ANTIBIOTICS } from "@aei/domain";
-import { antibioticName, formatDate, type Locale, phenotypeName, specimenName, t, wardName } from "@aei/i18n";
+import { antibioticName, type Locale, phenotypeName, t, wardName } from "@aei/i18n";
 import type { SignalKind } from "../board.ts";
-import { formatP, type Incident, oneDecimal } from "./model.ts";
+import type { Incident } from "./model.ts";
 
-// Names and one-line facts of alerts, from the feed templates.
+// One voice for a signal (signals-redesign.md §2.1): the strip tile, the list row and the
+// card all show `signalTitle`, "{kind in plain words} · {what} · {unit}", and under it
+// `measureLine`, the one measure in the alert's own unit. The engine's kind ids stay in code.
 
 const KIND_LABEL = {
   sentinel: "feedKindSentinel",
@@ -14,58 +16,65 @@ const KIND_LABEL = {
   data: "feedKindData",
 } as const;
 
+/** The kind in plain words: "Cluster", "New carrier", "Rising", "Sampling gap". */
 export const kindLabel = (locale: Locale, kind: SignalKind) => t(locale, KIND_LABEL[kind]);
 
 export function unitLabel(locale: Locale, ward: string | null): string {
   return ward ? wardName(locale, ward as never) : t(locale, "hospitalWide");
 }
 
-/** At most six words: what the alert is about, without the unit. */
+/** The unit as the title's last part: the ward's name, or "hospital" for a hospital-wide signal. */
+const unitPart = (locale: Locale, ward: string | null) => (ward ? wardName(locale, ward as never) : t(locale, "feedUnitHospital"));
+
+/** What the alert is about, without the kind and the unit: "ESBL", "MRSA", "rare Escherichia coli profile"; empty for a sampling gap. */
 export function shortTitle(locale: Locale, a: Alert): string {
   switch (a.kind) {
     case "cpe":
-      return `CPE · ${a.organism}`;
+      return `CPE ${a.organism}`;
     case "new-in-unit":
-      return `${t(locale, "feedNewTitle", { phenotype: phenotypeName(a.phenotype) }).replace(/ (in the unit|yksikössä)$/, "")} · ${a.organism}`;
+      // MRSA names its organism; VRE and the rest do not.
+      return a.phenotype === "mrsa" ? phenotypeName(a.phenotype) : `${phenotypeName(a.phenotype)} ${a.organism}`;
     case "carrier":
-      return unitLabel(locale, a.ward);
+      return "";
     case "detector":
-      if (a.detector === "sampling-drop" || a.detector === "empty-run") return t(locale, "feedKindData");
+      if (a.detector === "sampling-drop" || a.detector === "empty-run") return "";
       if (a.detector === "rising-trend")
-        return [a.antibiotic ? antibioticName(locale, a.antibiotic) : "", a.organism ?? ""].filter(Boolean).join(" · ");
-      if (a.phenotype) return [phenotypeName(a.phenotype), a.organism].filter(Boolean).join(" · ");
+        return t(locale, "feedTrendWhat", {
+          antibiotic: a.antibiotic ? antibioticName(locale, a.antibiotic) : "",
+          organism: a.organism ?? "",
+        });
+      if (a.phenotype) return [phenotypeName(a.phenotype), a.organism].filter(Boolean).join(" ");
       return a.profile ? t(locale, "feedRareProfile", { organism: a.organism ?? "" }) : (a.organism ?? "");
   }
 }
 
-/** The sentence of the full title, for the explanation and the aria label. */
-export function incidentTitle(locale: Locale, a: Alert): string {
-  const unit = unitLabel(locale, a.ward);
-  switch (a.kind) {
-    case "cpe":
-      return t(locale, "feedCpeTitle", { organism: a.organism });
-    case "new-in-unit":
-      return t(locale, "feedNewTitle", { phenotype: phenotypeName(a.phenotype) });
-    case "carrier":
-      return unit;
-    case "detector": {
-      if (a.detector === "sampling-drop" || a.detector === "empty-run")
-        return t(locale, "feedDataTitle", { unit, observed: a.observed, expected: oneDecimal(locale, a.expected ?? 0) });
-      if (a.detector === "rising-trend")
-        return t(locale, "feedTrendTitle", {
-          antibiotic: a.antibiotic ? antibioticName(locale, a.antibiotic) : "",
-          organism: a.organism ?? "",
-          observed: `${Math.round(a.observed * 100)}\u00a0%`,
-        });
-      return t(locale, "feedClusterTitle", {
-        what: a.phenotype ? phenotypeName(a.phenotype) : (a.organism ?? ""),
-        unit,
-        observed: a.observed,
-        expected: oneDecimal(locale, a.expected ?? 0),
-      });
-    }
+/** The one title every surface shows: "Cluster · ESBL · Internal medicine A", "Sampling gap · Health centre South". */
+export function signalTitle(locale: Locale, kind: SignalKind, a: Alert): string {
+  return [kindLabel(locale, kind), shortTitle(locale, a), unitPart(locale, a.ward)].filter(Boolean).join(" · ");
+}
+
+/** The one measure under the title, in the alert's own unit: "7 patients · usual 1.4", "0 cultures · usual 52", "1 patient", "15 % → 20 %". */
+export function measureLine(locale: Locale, a: Alert): string {
+  if (a.kind !== "detector") return t(locale, "feedEvidenceOne");
+  const pct = (x: number) => `${Math.round(x * 100)} %`;
+  const usual = a.expected === undefined ? "" : atMostOneDecimal(locale, a.expected);
+  switch (a.detector) {
+    case "rising-trend":
+      return a.expected === undefined ? pct(a.observed) : `${pct(a.expected)} → ${pct(a.observed)}`;
+    case "sampling-drop":
+      return t(locale, "feedMeasureCultures", { observed: a.observed, expected: usual });
+    case "empty-run":
+      return t(locale, "feedMeasureEmptyRun", { observed: a.observed, expected: usual });
+    default:
+      return a.observed === 1 && a.expected === undefined
+        ? t(locale, "feedEvidenceOne")
+        : t(locale, "feedEvidenceShort", { observed: a.observed, expected: usual });
   }
 }
+
+/** "52", "1.4", "0.2": whole numbers stay whole, the rest keep one decimal. */
+const atMostOneDecimal = (locale: Locale, n: number) =>
+  new Intl.NumberFormat(locale === "fi" ? "fi-FI" : "en-GB", { maximumFractionDigits: 1 }).format(n);
 
 /** −log10 p of a detector alert; null for rules (no p). A p of 0 reads as the cap. */
 export function surpriseOf(a: Alert): number | null {
@@ -78,24 +87,6 @@ export function surpriseShare(i: Incident): number | null {
   if (i.kind === "sentinel") return 1;
   const s = i.members.map(surpriseOf).filter((x): x is number => x !== null);
   return s.length === 0 ? null : Math.min(Math.max(...s), 6) / 6;
-}
-
-/** One line of counts for an alert (observed, usual, p). */
-export function baselineLine(locale: Locale, a: Alert): string {
-  if (a.kind === "cpe") return t(locale, "feedCpeCounts", { organism: a.organism, specimen: specimenName(locale, a.specimen) });
-  if (a.kind === "new-in-unit")
-    return a.previous ? t(locale, "feedNoneSince", { date: formatDate(locale, a.previous, "long") }) : t(locale, "feedNoneBefore");
-  if (a.kind !== "detector") return "";
-  const parts: string[] = [];
-  if (a.detector === "rising-trend") {
-    parts.push(t(locale, "feedObserved", { n: `${Math.round(a.observed * 100)}\u00a0%` }));
-    if (a.expected !== undefined) parts.push(t(locale, "feedExpected", { n: `${Math.round(a.expected * 100)}\u00a0%` }));
-  } else {
-    parts.push(t(locale, "feedObserved", { n: a.observed }));
-    if (a.expected !== undefined) parts.push(t(locale, "feedExpected", { n: oneDecimal(locale, a.expected) }));
-  }
-  if (a.p !== undefined) parts.push(t(locale, "feedP", { p: formatP(locale, a.p) }));
-  return parts.join(" · ");
 }
 
 /** The drugs a profile string ("RSS.RR.SRRS..", one character per antibiotic in the domain's order) marks resistant. */

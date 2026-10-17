@@ -56,8 +56,8 @@ describe("explanation controls", () => {
     expect(html).toContain("responsible doctor for Urology");
     expect(html).toContain("2 patients");
     expect(html).toContain("0.3 usual");
-    // The how-section and its evidence come first, the explanation next, the reach and isolates after.
-    expect(html.indexOf("responsible doctor")).toBeLessThan(html.indexOf("Explain"));
-    expect(html.indexOf("Explain")).toBeLessThan(html.indexOf("Isolates behind it"));
+    // The method block holds the explanation under "In plain words"; the isolates follow the how-section.
+    expect(html.indexOf("In plain words")).toBeLessThan(html.indexOf("Explain"));
+    expect(html.indexOf("responsible doctor")).toBeLessThan(html.indexOf("Isolates behind it"));
   });
 });

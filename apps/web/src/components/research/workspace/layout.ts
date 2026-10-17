@@ -65,17 +65,18 @@ export function clampRect(r: Rect, id: string, rows: number): Rect {
 }
 
 /**
- * Generous natural heights (the page may scroll): signals left, the map large in the middle, the signal card
- * first on the right (it is what a selected row opens), the unit graph and the assistant under it; the unit
- * grid waits in the tray.
+ * Generous natural heights (the page may scroll): the Signals window large on the left (a selected row opens
+ * the signal card as a layer inside it, signals-redesign.md), the map in the middle, the unit graph on the
+ * right. The card's own window and the assistant stay available from the tray as pop-outs, closed by default;
+ * the unit grid, the notebook and the tools wait there too.
  */
 export function defaultLayout(): Layout {
   const wins: Record<WinId, WinState> = {
-    signals: { x: 0, y: 0, w: 3, h: 40, open: true },
-    map: { x: 3, y: 0, w: 4, h: 40, open: true },
-    math: { x: 7, y: 0, w: 5, h: 14, open: true },
-    graph: { x: 7, y: 14, w: 5, h: 18, open: true },
-    assistant: { x: 7, y: 32, w: 5, h: 8, open: true },
+    signals: { x: 0, y: 0, w: 5, h: 40, open: true },
+    map: { x: 5, y: 0, w: 4, h: 40, open: true },
+    graph: { x: 9, y: 0, w: 3, h: 22, open: true },
+    math: { x: 9, y: 22, w: 3, h: 14, open: false },
+    assistant: { x: 9, y: 36, w: 3, h: 8, open: false },
     grid: { x: 0, y: 0, w: 12, h: 30, open: false },
     reproduce: { x: 0, y: 0, w: 12, h: 32, open: false },
     tools: { x: 0, y: 40, w: 12, h: 36, open: false },
@@ -97,36 +98,28 @@ export function presetLayout(preset: Preset): Layout {
     case "map":
       return w({
         map: { x: 0, y: 0, w: 8, h: 40, open: true },
-        signals: { x: 8, y: 0, w: 4, h: 18, open: true },
-        math: { x: 8, y: 18, w: 4, h: 14, open: true },
-        assistant: { x: 8, y: 32, w: 4, h: 8, open: true },
+        signals: { x: 8, y: 0, w: 4, h: 40, open: true },
         graph: { x: 8, y: 40, w: 4, h: 12, open: false },
       });
     case "signals":
       return w({
-        signals: { x: 0, y: 0, w: 6, h: 40, open: true },
-        math: { x: 6, y: 0, w: 6, h: 16, open: true },
-        map: { x: 6, y: 16, w: 6, h: 24, open: true },
-        graph: { open: false },
-        assistant: { open: false },
+        signals: { x: 0, y: 0, w: 7, h: 40, open: true },
+        map: { x: 7, y: 0, w: 5, h: 24, open: true },
+        graph: { x: 7, y: 24, w: 5, h: 16, open: true },
       });
     case "units":
       return w({
         grid: { x: 0, y: 0, w: 12, h: 26, open: true },
-        signals: { x: 0, y: 26, w: 4, h: 18, open: true },
-        math: { x: 4, y: 26, w: 4, h: 14, open: true },
-        graph: { x: 8, y: 26, w: 4, h: 18, open: true },
+        signals: { x: 0, y: 26, w: 6, h: 24, open: true },
+        graph: { x: 6, y: 26, w: 6, h: 18, open: true },
         map: { open: false },
-        assistant: { open: false },
       });
     case "analysis":
       return w({
-        signals: { x: 0, y: 0, w: 3, h: 40, open: true },
-        tools: { x: 3, y: 0, w: 6, h: 40, open: true },
-        math: { x: 9, y: 0, w: 3, h: 16, open: true },
+        signals: { x: 0, y: 0, w: 4, h: 40, open: true },
+        tools: { x: 4, y: 0, w: 8, h: 40, open: true },
         map: { open: false },
         graph: { open: false },
-        assistant: { open: false },
       });
     default:
       return d;
@@ -269,7 +262,8 @@ export function parseLayout(raw: string | null): Layout | null {
       charts?: Record<string, Partial<WinState> & Record<string, unknown>>;
       order?: unknown;
     };
-    if (v.v !== 1 || !v.wins || !Array.isArray(v.order)) return null;
+    // v2 (2026-10-17): the card moved into the Signals window; layouts saved with it open as a window start over.
+    if (v.v !== 2 || !v.wins || !Array.isArray(v.order)) return null;
     const wins = {} as Record<WinId, WinState>;
     for (const id of WIN_IDS) {
       const w = v.wins[id];
@@ -303,7 +297,7 @@ export function loadLayout(): Layout | null {
 export function saveLayout(layout: Layout | null): void {
   try {
     if (layout === null) localStorage.removeItem(STORAGE_KEY);
-    else localStorage.setItem(STORAGE_KEY, JSON.stringify({ v: 1, ...layout }));
+    else localStorage.setItem(STORAGE_KEY, JSON.stringify({ v: 2, ...layout }));
   } catch {
     // Private mode or blocked storage: the layout simply does not persist.
   }

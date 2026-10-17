@@ -232,8 +232,8 @@ export function Workspace({
   };
   const toggleFocus = (id?: string) => {
     if (focus && (!id || id === focus)) return setFocusTo(null);
-    const active = (document.activeElement as HTMLElement | null)?.closest<HTMLElement>(".ws-win")?.dataset.win;
-    const target = id ?? (primary && base.wins[primary].open ? primary : (active ?? primary ?? "math"));
+    const active = (document.activeElement as HTMLElement | null)?.closest<HTMLElement>(".ws-win")?.dataset.win as WinId | undefined;
+    const target = id ?? (primary && base.wins[primary].open ? primary : (active ?? primary ?? "signals"));
     setFocusTo(target);
   };
   useEffect(() => {
