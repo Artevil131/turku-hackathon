@@ -62,6 +62,14 @@ export const boardEn = {
   assistUnits: "Units: {units}",
   assistPhenotype: "Phenotype: {phenotype}",
   assistNote: "A reading of the signals, not a diagnosis.",
+  boardNotebook: "Notebook",
+  nbEmpty: "Open a project to run its notebook",
+  nbEmptyHint: "The notebook runs on the data cut of a saved project. Paste this line into Python to load the same cut:",
+  nbCutFrozen: "frozen at {date}",
+  nbCutContinuous: "continuous data",
+  nbOpenTab: "Open in a tab",
+  nbCopy: "Copy",
+  nbCopied: "Copied",
 } as const;
 
 export const boardFi: Record<keyof typeof boardEn, string> = {
@@ -126,4 +134,12 @@ export const boardFi: Record<keyof typeof boardEn, string> = {
   assistUnits: "Yksiköt: {units}",
   assistPhenotype: "Fenotyyppi: {phenotype}",
   assistNote: "Tulkinta signaaleista, ei diagnoosi.",
+  boardNotebook: "Muistikirja",
+  nbEmpty: "Avaa projekti, jonka muistikirja ajetaan",
+  nbEmptyHint: "Muistikirja ajaa tallennetun projektin datarajauksen. Liitä tämä rivi Pythoniin, niin sama rajaus latautuu:",
+  nbCutFrozen: "jäädytetty {date}",
+  nbCutContinuous: "jatkuva data",
+  nbOpenTab: "Avaa uudessa välilehdessä",
+  nbCopy: "Kopioi",
+  nbCopied: "Kopioitu",
 };

@@ -11,6 +11,7 @@ import { useIncidents } from "./feed/useIncidents.ts";
 import { GeoMap } from "./geo/GeoMap.tsx";
 import { UnitGraph } from "./geo/UnitGraph.tsx";
 import { AlertMath } from "./math/AlertMath.tsx";
+import { NotebookWindow } from "./notebook/NotebookWindow.tsx";
 import { ProjectControls } from "./projects/ProjectControls.tsx";
 import { useProject } from "./projects/useProject.ts";
 import { SignalFeed } from "./SignalFeed.tsx";
@@ -113,6 +114,7 @@ export function ResearchBoard(props: Props) {
     map: <GeoMap {...panelProps} focusCounty={mapCounty} />,
     graph: <UnitGraph {...panelProps} />,
     grid: <UnitGrid {...panelProps} />,
+    notebook: <NotebookWindow locale={locale} projectId={project.id} project={project.response?.project ?? null} />,
     math: (
       <AlertMath
         client={client}
