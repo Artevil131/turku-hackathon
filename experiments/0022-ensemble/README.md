@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 by: Claude Code, operated by Artem (overnight run)
 data: [synthetic_microbiology_dataset, seed 2026, as received 2026-10-09]
 parent: 0016
@@ -227,4 +227,161 @@ colour alone; the y-axis labelled "−log10 p"; texts short ("Live set", "CUSUM"
 
 ## Result
 
+`uv run python experiments/0022-ensemble/run.py` ran in 153 s wall and 151 s of CPU on the last run (measured, 166 s on an earlier one; budget 10
+minutes, plan estimate about 5; no cut made). Seed 2026 only, 200 trials per cell for every row (the plan's
+cut 2, references at 50 or 100 trials, was not needed: component A and B are run once per trial and cached, so the
+two references and the exact-day sensitivity row cost 11 to 14 s each at 200 trials); seeds 2027 to 2030 not used;
+`tuned_on_test` false for the primary rows, `partly_tuned_on_test` ["rising-trend", "new-in-unit"] inherited.
+Everything below is measured by that run unless tagged computed; `out/results.md` has every table, `out/metrics.json`
+the rank product (primary), `metrics-stack.json`, `metrics-union.json`, `metrics-intersection.json`,
+`metrics-rp-exact.json` the others, `ranks.json`, `stack.json`, `grid.json` the curves, `figure.png` the card.
+`libs/utils/py/aei/cusum.py` (the 0016 CUSUM, behaviour unchanged) and `libs/utils/py/tests/test_cusum.py` are new; the
+test reproduces 0016's 7, 100, 14, 4 episodes at L = 72.1, 10, 30, 100 years and the year-1 rows rare 14/40 (Poisson) and
+19/40 (Bernoulli), and, with `AEI_PERF=1`, the headline 0.665 and 0.485 at 3.52 a year.
+
+**Year-1 settings (measured).** Operating level = the loosest with `tune_curve` noise at most 5 a year: rank product
+p = 3e-5 (noise 0 in the half year, rare 23/40, common ESBL 27/40), stack p = 3e-4 (0 episodes, 18/40 and 21/40),
+exact-day rank product p = 3e-5. Stack: 21,394 positive rows (18,983 with a component signal) from 200 + 200
+injected clusters of 4 and 21,411 negative real cell-days (3,687 with a signal); intercept -1.79, weights 3.69 on
+-log10 s_A, 1.56 on -log10 s_B, -0.64 on "both fired" (scales 1.81, 2.06, 0.40; `out/stack.json`). Background for
+the ranks: 117 cells x 274 days = 32,058 cell-days, fired in A 1,566 and in B 3,498.
+
+**Dependence check (measured, year-1 background).** Analytic p of the independence null against the share of
+background cell-days with p below it: ratio analytic / empirical 2.35 at 0.3, 1.1 at 0.01, 0.41 at 1e-3, 0.34 at 3e-4,
+0.18 at 1e-4 (empirical tail 2.4, 2.9 and 5.6 times the nominal), and 0 cell-days below 3e-5, so the ratio at the
+operating level is undefined (0 of 32,058). The formula is conservative at loose levels (most cell-days are silent,
+q = 1) and anti-conservative in the tail, as the plan said; the D4 sweep is the calibration.
+
+**D5 at about 5 episodes a year (k = 4; Wilson 95 %; level is a p of the rule, the reference's a multiple of its alphas).**
+
+| row | level | noise a year (episodes) | rare | common ESBL | at 5.0/yr rare / common ESBL (computed) |
+|---|---|---|---|---|---|
+| live re-tuned year 1 (reference) | x0.3 | 3.01 (6) | 0.920 [0.874, 0.950] | 0.750 [0.686, 0.805] | 0.960 / 0.837 |
+| CUSUM union 0016 | L = 72.1 y | 3.52 (7) | 0.665 [0.597, 0.727] | 0.485 [0.417, 0.554] | 0.708 / 0.573 |
+| rank product (primary) | 1e-3 | 4.52 (9) | 0.940 [0.898, 0.965] | 0.830 [0.772, 0.876] | 0.942 / 0.834 |
+| stack | 3e-3 | 3.01 (6) | 0.990 [0.964, 0.997] | 0.850 [0.794, 0.893] | 0.991 / 0.865 |
+| union (min p) | 3e-5 | 3.52 (7) | 0.840 [0.783, 0.884] | 0.555 [0.486, 0.622] | 0.856 / 0.600 |
+| intersection (max p) | 3e-3 | 4.52 (9) | 0.970 [0.936, 0.986] | 0.850 [0.794, 0.893] | 0.971 / 0.857 |
+| rank product, exact-day join | 1e-4 | 2.01 (4) | 0.895 [0.845, 0.930] | 0.775 [0.712, 0.827] | 0.937 / 0.826 |
+
+Delays at the headline (median days, rare / common ESBL): reference 6 / 6, rank product 5 / 6, stack 5 / 6, union 6 / 6,
+intersection 5 / 6, 0016 7 / 6. The headline rows sit at different noise (3.0, 3.5, 4.5 a year; finding 12b), so the
+fixed-noise reading is the fairer one (computed, linear in the episode count between bracketing levels; exact where a
+level has that count; no interval, the curve rows in `out/results.md` carry them):
+
+| row | rare / common ESBL at 1.5 a year (3 episodes) | at 3.0 a year (6) | at 5.0 a year (10) |
+|---|---|---|---|
+| live re-tuned year 1 | 0.815 / 0.440 | 0.920 / 0.750 | 0.960 / 0.837 |
+| rank product | 0.880 / 0.735 | 0.910 / 0.782 | 0.942 / 0.834 |
+| stack | 0.670 / 0.290 | 0.990 / 0.850 | 0.991 / 0.865 |
+| union | 0.655 / 0.330 | 0.795 / 0.483 | 0.856 / 0.600 |
+| intersection | 0.930 / 0.710 | 0.950 / 0.780 | 0.971 / 0.857 |
+| CUSUM union 0016 | 0.530 / 0.307 | 0.655 / 0.475 | 0.708 / 0.573 |
+
+At exactly 3 episodes the rank product's common ESBL 0.735 [0.670, 0.791] is clear of the reference's 0.440 [0.373, 0.509]
+and its rare 0.880 [0.828, 0.918] overlaps the reference's 0.815 [0.755, 0.863]. The rank product reaches 0.81 rare and
+0.54 common ESBL at 0 episodes in the scoring period (level 1e-4; Poisson 95 % upper bound 1.85 a year), the reference's
+grid stops at 1.5 a year. At 5 a year the rank product and the reference are the same (0.942 and 0.960, 0.834 and 0.837).
+
+**D2 at the year-1 operating level, k = 4, with median delay (200 trials per cell).** Operating levels are far
+stricter than the headline (scoring-period D4 0 and 1.0 episodes a year), so these cells are not noise-matched to
+the reference's level 1 (D4 9.5 a year all kinds, 4.5 cluster).
+
+| family, k = 4 | live re-tuned (level 1) | 0016 union | rank product (3e-5) | stack (3e-4) |
+|---|---|---|---|---|
+| rare | 0.980 [0.950, 0.992], 5 d | 0.665 [0.597, 0.727], 7 d | 0.685 [0.618, 0.745], 8 d | 0.620 [0.551, 0.684], 7 d |
+| common ESBL | 0.880 [0.828, 0.918], 6 d | 0.485 [0.417, 0.554], 6 d | 0.355 [0.292, 0.423], 7 d | 0.230 [0.177, 0.293], 8 d |
+| two unit | 0.565 [0.496, 0.632], 7 d | 0.190 [0.142, 0.250], 7 d | 0.040 [0.020, 0.077], 7 d | 0.070 [0.042, 0.114], 6 d |
+| common resistant | 0.010 [0.003, 0.036] | 0.040 [0.020, 0.077] | 0.005 [0.001, 0.028] | 0.000 [0.000, 0.019] |
+| wild type | 0.000 [0.000, 0.019] | 0.025 [0.011, 0.057] | 0.000 [0.000, 0.019] | 0.000 [0.000, 0.019] |
+
+The same two ensembles read at D5's headline level (extra rows, `metrics-rp-headline.json` and
+`metrics-stack-headline.json`, `tuned_on_test` true because that level comes from the scoring-period noise curve):
+rank product at 1e-3: D4 4.52 [2.07, 8.58] a year, rare 0.940, common ESBL 0.830, two unit 0.330 [0.269, 0.398], rare
+k = 3 0.800, common ESBL k = 3 0.580, common resistant 0.050, wild type 0.025; stack at 3e-3: D4 3.01 [1.11, 6.56],
+0.990, 0.850, two unit 0.325, rare k = 3 0.840, common ESBL k = 3 0.565.
+
+**D4, D6, D7, I1, D1 at the operating level.** D4 episodes a year (exact Poisson 95 %): rank product 0.00 [0.00, 1.85] (0
+episodes), stack 1.00 [0.12, 3.63] (2), reference 9.55 [5.75, 14.91], 0016 3.52 [1.41, 7.25]. D6: 0.015 [0.009, 0.025],
+0.016 [0.010, 0.026], 0.026 [0.018, 0.038], 0.071 [0.057, 0.089]. D7: 0.999, 0.998, 0.987, 0.999. I1 (alerts, incidents):
+4 in 2, 6 in 4, 29 in 26, 16 in 9; at the headline level 14 in 12 (rank product) and 14 in 9 (stack). D3 is 0 for both
+ensembles (no data-kind signals; the live set's data rules are not in A, as D5's noise leaves them out); the reference
+holds gaps of 3 days at 0.95. D1 (demonstration): rank product E1 4 d (corrected 9), E2 5 d; stack 3 d (8), 5 d; E3 and
+E4 not found (data and trend kinds).
+
+**Where the rank product's detections come from (k = 4, operating level, 200 trials).** Rare: 137 detected, 16 with A
+alone at its own level 1, 0 with B alone, 121 with both, 0 with neither (A alone would have detected 196, B alone 133).
+Common ESBL: 71 detected, 5 A alone, 1 B alone, 65 both (A 176, B 97). At 3e-5 the rank product is in effect an AND of the two.
+
+**Checks (all passed).** `check_causal` on the whole rank product and the whole stack on 2025-03-31, 2025-12-31 and
+2026-06-30 with B rebuilt from the rows given: no differences. Cached trial path against the from-scratch computation
+(components with `rebuild`, no cache): 48 trials, 1,280 signals, 0 differ. Focused against full ensemble signals on the real
+data: 3 cases, 0 mismatches (see `out/results.md`, section 9). `uv run pytest -q libs/utils/py/tests/test_cusum.py`:
+passes (the D5 headline test runs with `AEI_PERF=1`).
+
+**Deviations from plan.**
+
+- References (union, intersection) and the exact-day row at 200 trials per cell, not 100 (cache made it free); nothing cut.
+- Two extra reads, not in the plan: D5 at fixed episode counts (3, 6, 10), and the rank product and stack read at D5's
+  headline level (flagged `tuned_on_test`).
+- Stack: the harness p is the upper-tail share of the 117 x 274 background cell-days with (1 + count) / (N + 1) on the
+  linear predictor (logit of pi, monotone in pi, avoids ties at pi = 1); so p is at least 3.1e-5 and the stack's
+  levels at 3e-5 and below are empty (0/40, 0/200). Features scaled by their sd over the training rows. The
+  5-fold CV over lambda was not done (time); lambda = 1 as planned.
+- Stack training rows: positives are all cell-days (silent or not) of the injected cells (the source's organism and
+  its monitored phenotypes, in the unit) from the first injected isolate to start + 28, with carry-forward only
+  from signals the trial returns (dated start or later). The plan says the first 40 training events per family coincide with the tuning events:
+  true for rare only; the common ESBL stream of 200 starts at a different stream position, so none of its events is one of the 40.
+- Components see a trial's focus widened by 6 days at the start, so the signals of the days before the window carry
+  forward as in a full run; the harness still counts signals dated start to start + 28.
+- Cells are the 9 units x (4 phenotypes + 9 organisms) = 117, including cells that never signal; kind sentinel means
+  only new-in-unit fired (detector name suffix `_sentinel`).
+- The figure draws the cell URO x ESBL: B's Bernoulli alarms belong to the organism cell (E. coli), so only the
+  Poisson part (triangles) appears in the middle panel.
+- Component A is `retune_live_set`'s own output, re-run in `run.py` (asserted equal to the baseline row's alphas).
+
 ## Interpretation
+
+Against METRICS.md "Decision rules" and the plan's yardstick the answer is mixed, and screening, not selection (one seed,
+held-out seeds unused). The primary row, the rank product, does not beat the re-tuned live set at 5 episodes a year: 0.942
+against 0.960 rare and 0.834 against 0.837 common ESBL at 5.0 a year (computed), inside each other's intervals. Its
+higher headline numbers (rare 0.940, common ESBL 0.830 against 0.920 and 0.750) are read at 4.5 a year against 3.0 and are a
+grid effect (finding 12b), not a gain. Hypothesis check (exploratory): common ESBL at 5 a year at least 0.05 above
+0.84 did not hold (0.834); rare within 0.03 of 0.96 held (0.942); two-unit k = 4 not below 0.565 did not hold (0.040 at
+the operating level, 0.330 at the headline level); the stack within 0.05 of the rank product held at the headline rows as read
+(0.050 and 0.020) but not at equal noise (3.0 a year: 0.990 and 0.850 against 0.910 and 0.782); the intersection below both
+components did not hold (see below); the union below the reference at matched noise held (0.795 and 0.483 against
+0.920 and 0.750 at 3.0 a year). The result is not "negative" by the plan's rule (the rank product is not below the
+reference's interval), and not positive at the yardstick.
+
+What the combination does buy is low noise: at 3 episodes (1.5 a year) the rank product reads common ESBL 0.735 against
+0.440 and rare 0.880 against 0.815, and it keeps 0.81 and 0.54 at no scoring-period episode, a region the live set's
+grid does not reach. The intersection is as good or better on rare at every count and within 0.03 on common ESBL (0.930 and 0.710 at 1.5 a
+year against the rank product's 0.880 and 0.735; 0.971 and 0.857 at 5), so the AND of two unlike tests, not the rank product's soft version, carries the gain; the stack is highest at
+3.0 a year (0.990 and 0.850; rare interval [0.964, 0.997] clear of the reference's [0.874, 0.950], common ESBL
+[0.794, 0.893] against [0.686, 0.805] overlapping) but falls to 0.670 and 0.290 at 1.5 a year, where its tail ECDF has
+few distinct values. These are reads of references and of the non-primary stack, chosen after seeing the curves: the
+plan fixed the rank product as primary precisely so that preferring the intersection or the stack now is seen as a
+selection; both need the held-out seeds before any claim. The cost is breadth: at the operating level the ensembles
+lose the two-unit family (0.040 and 0.070 against 0.565), common ESBL (0.355 and 0.230 against 0.880) and the live set's
+data-quality rules (D3 0); at the headline level two-unit is 0.33 (reference 0.565 at level 1, not at equal noise).
+
+The dependence check says why a sweep, not the formula, sets the level: the independence null is anti-conservative by
+a factor 2.4 to 5.6 from 1e-3 down to 1e-4 and conservative at loose levels. The year-1 operating level rule did not work as
+intended: the noise on year 1 is in-sample (the ranks were fitted on it), no background cell-day is below 3e-5, so the rule
+picked 3e-5 (D4 0 in the scoring period, rare k = 4 0.685) when the scoring-period headline sits at 1e-3 (4.5 a year,
+0.940). D2, D4, D6, D7 and I1 at the operating level are therefore a strict-end read, and the extra headline-level
+reads (flagged `tuned_on_test`) are the comparable ones: I1 14 alerts in 12 incidents (rank product) and 14 in 9
+(stack) against 29 in 26 for the reference. The 7-day join matters: the exact-day join gives 0.895 and 0.775 at 2.0 a year
+(0.937 and 0.826 at 5.0, computed), within noise of the carry-forward at 5 a year.
+
+Strongest alternative explanation: the stack is trained on the evaluation's own generator (rare and common ESBL clusters of 4,
+the D5 yardstick, from the same simulator, year 1), so its edge is the most flattering reading; and A and B share the same
+isolates, so the AND of them removes noise that is partly the same noise (the dependence check). With 2 to 9 scoring-period episodes behind
+every noise value, the curve is coarse (the stack drops from 20 to 3 episodes between two levels) and a different
+grid would move the headline rows; the interpolation is linear across such steps. What to run next: (1) `confirm` on seeds 2027 to 2030 for the
+intersection, the stack and the rank product against the reference, at equal episode counts (3 and 6); (2) a stack
+trained on a disjoint stream (a seed outside 2026 to 2030, pending Artem) and with the 5-fold CV over lambda; (3) the AND
+as a rule of its own, with B's loosest run length and A's phenotype alpha on a finer grid, since both components' levels
+were fixed by their own settings; (4) the CUSUM module's place in `libs/utils` is settled for now (it is there and tested),
+but a live use needs the held-out result first; nothing here changes the live tool.

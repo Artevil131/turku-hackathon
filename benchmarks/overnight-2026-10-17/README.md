@@ -33,7 +33,7 @@ D5 is a property of the detector's threshold sweep; rows whose sweeps overlap ca
 | [0016-cusum](../../experiments/0016-cusum/) |  | 3.80e-05 | 3.52 | 0.665 (0.597–0.727) | – | 0.485 (0.417–0.554) | – | 7 | **0.345** (0.283–0.413) | 0.665 (0.597–0.727) | **0.485** (0.417–0.554) | **0.190** (0.142–0.250) | 3.52 (1.41–7.25) | 3.52 (1.41–7.25) | – | **0.0710** (0.0567–0.0886) | **0.999** (0.994–1.000) | 1.78 | 4 / 4 / n/a / n/a | 77 | 71 | Poisson CUSUM (theta 8, weekly, guard 0 wk) and Bernoulli CUSUM (theta 8, guard 4 wk) per unit x series, limits from Siegmund's run length, operating level by simulation on year 1 |
 | [0017-farrington-noufaily](../../experiments/0017-farrington-noufaily/) |  | 0.001 | 4.52 | 0.310 (0.250–0.377) | – | 0.240 (0.186–0.304) | – | 6 | 0.0550 (0.0310–0.0958) | 0.180 (0.133–0.239) | 0.105 (0.0697–0.155) | 0.0100 (0.00275–0.0357) | 0.502 (0.0127–2.80) | 0.502 (0.0127–2.80) | – | 0.004 (0.00156–0.0102) | 0.995 (0.974–0.999) | **1** | 18 / 5 / n/a / n/a | 50.9 | 50.4 | Improved Farrington (Noufaily 2013) on weekly unit series, trailing 26 wk, guard 4, plain |
 | [0018-bocpd](../../experiments/0018-bocpd/) |  | 0.500 | 1.51 | 0.140 (0.0987–0.195) | – | 0.135 (0.0945–0.189) | – | **3** | 0.0950 (0.0617–0.144) | 0.140 (0.0987–0.195) | 0.135 (0.0945–0.189) | 0.105 (0.0697–0.155) | 1.51 (0.311–4.40) | 6.53 (3.48–11.2) | – | 0.0120 (0.00688–0.0209) | 0.171 (0.137–0.211) | **1** | n/a / 4 / n/a / n/a | 249 | 246 | Bayesian online change-point detection (Adams and MacKay 2007), counts and %R, H = 1/26, w = 2, p < 0.5 |
-| [0022-ensemble](../../experiments/0022-ensemble/) |  | 0.001 | 4.52 | **0.940** (0.898–0.965) | – | **0.830** (0.772–0.876) | – | 5 | 0.270 (0.213–0.335) | **0.685** (0.618–0.745) | 0.355 (0.292–0.423) | 0.0400 (0.0204–0.0769) | **0** (0–1.85) | **0** (0–1.85) | **0** (0–0.0188) | 0.0150 (0.00911–0.0246) | 0.999 (0.993–1.000) | 2 | 4 / 5 / n/a / n/a | 168 | 166 | rank product (live set A, CUSUM B, 7-day join) |
+| [0022-ensemble](../../experiments/0022-ensemble/) |  | 0.001 | 4.52 | **0.940** (0.898–0.965) | – | **0.830** (0.772–0.876) | – | 5 | 0.270 (0.213–0.335) | **0.685** (0.618–0.745) | 0.355 (0.292–0.423) | 0.0400 (0.0204–0.0769) | **0** (0–1.85) | **0** (0–1.85) | **0** (0–0.0188) | 0.0150 (0.00911–0.0246) | 0.999 (0.993–1.000) | 2 | 4 / 5 / n/a / n/a | 153 | 151 | rank product (live set A, CUSUM B, 7-day join) |
 
 ### Prediction
 
@@ -51,7 +51,7 @@ P2 skill is against persistence (MAE: 1 - MAE / MAE of persistence; log: differe
 
 | Row | Mark | I1 alerts per incident ↓ | I1 incidents | I1 alerts | D7 named right ↑ | D6 attribution ↑ | runtime_s | cpu_s | Method |
 |---|---|---|---|---|---|---|---|---|---|
-| [0021-naming-step](../../experiments/0021-naming-step/) | tuned on test, proposed | 1.20 | 15 (8.40–24.7) | 18 | 0.974 (0.966–0.980) | 0.0120 (0.00688–0.0209) | 75.2 | 74.6 | Naming step: a decision list over alert fields gives the kind and the sentence; D7 and D6 on planted and injected events, I1 under incident rules R1 to R7 |
+| [0021-naming-step](../../experiments/0021-naming-step/) | tuned on test, proposed | 1.20 | 15 (8.40–24.7) | 18 | 0.974 (0.966–0.980) | 0.0120 (0.00688–0.0209) | 77.5 | 77.1 | Naming step: a decision list over alert fields gives the kind and the sentence; D7 and D6 on planted and injected events, I1 under incident rules R1 to R7 |
 <!-- leaderboard:end -->
 
 ## Morning report
