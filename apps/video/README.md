@@ -2,7 +2,7 @@
 
 The pitch film (about 62 s, 1920×1080), made with Remotion as React code.
 Every number on screen comes from the running AEI server, read into
-`src/data/snapshot.json` by `scripts/snapshot.mjs`, or from the experiment
+`src/snapshot.json` by `scripts/snapshot.mjs`, or from the experiment
 records (the closing card cites each experiment).
 
     pnpm --filter @aei/video dev          # Remotion Studio: preview and scrub

@@ -1,0 +1,3735 @@
+{
+  "source": "AEI server http://localhost:8797, read 2026-10-16",
+  "outbreak": {
+    "asOf": "2025-06-08",
+    "alert": {
+      "date": "2025-06-04",
+      "organism": "Escherichia coli",
+      "observed": 4,
+      "expected": 0.167129372570794,
+      "en": "On 2025-06-04, 4 patients in Urology shared one resistance profile of Escherichia coli within 28 days, where about 0.2 were expected.",
+      "fi": "2025-06-04: osastolla Urologia 4 potilaalla oli sama Escherichia coli-resistenssiprofiili 28 päivän sisällä, kun odotettu määrä oli noin 0,2."
+    },
+    "incidents": 3,
+    "dots": [
+      {
+        "day": "2025-05-12",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-12",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-12",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-12",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-12",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-12",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-12",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-12",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-12",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-12",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-12",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-12",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-12",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-12",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-12",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-12",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-12",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-12",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-12",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-12",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-12",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-12",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-12",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-12",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-12",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-12",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-12",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-12",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-12",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-13",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-13",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-13",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-13",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-13",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-13",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-13",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-13",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-13",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-13",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-13",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-13",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-13",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-13",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-13",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-13",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-13",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-13",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-13",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-13",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-13",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-13",
+        "ward": "ICU",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-13",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-13",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-14",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-14",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-14",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-14",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-14",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-14",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-14",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-14",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-14",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-14",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-14",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-14",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-14",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-14",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-14",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-14",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-14",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-14",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-14",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-14",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-14",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-14",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-15",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-15",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-15",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-15",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-15",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-15",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-15",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-15",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-15",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-15",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-15",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-15",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-15",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-15",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-15",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-15",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-15",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-15",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-15",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-15",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-15",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-15",
+        "ward": "ICU",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-15",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-15",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-16",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-16",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-16",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-16",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-16",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-16",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-16",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-16",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-16",
+        "ward": "ICU",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-16",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-16",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-16",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-16",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-16",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-16",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-16",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-17",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-17",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-17",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-17",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-17",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-17",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-17",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-17",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-17",
+        "ward": "ICU",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-17",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-17",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-17",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-17",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-17",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-17",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-17",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-17",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-17",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-17",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-17",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-17",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-17",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-18",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-18",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-18",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-18",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-18",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-18",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-18",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-18",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-18",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-18",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-18",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-18",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-18",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-18",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-18",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-18",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-18",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-18",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-18",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-19",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-19",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-19",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-19",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-19",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-19",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-19",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-19",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-19",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-19",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-19",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-19",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-19",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-19",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-19",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-19",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-19",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-19",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-19",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-19",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-19",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-19",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-19",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-19",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-19",
+        "ward": "ICU",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-19",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-19",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-19",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-19",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-20",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-20",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-20",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-20",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-20",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-20",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-20",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-20",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-20",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-20",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-20",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-20",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-20",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-20",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-20",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-20",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-20",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-20",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-20",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-20",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-20",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-20",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-20",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-20",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-20",
+        "ward": "ICU",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-21",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-21",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-21",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-21",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-21",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-21",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-21",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-21",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-21",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-21",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-21",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-21",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-21",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-21",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-21",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-21",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-21",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-21",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-21",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-21",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-21",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-21",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-21",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-22",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-22",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-22",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-22",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-22",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-22",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-22",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-22",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-22",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-22",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-22",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-22",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-22",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-22",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-22",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-22",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-22",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-22",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-22",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-22",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-22",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-22",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-22",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-22",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-22",
+        "ward": "ICU",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-22",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-22",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-23",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-23",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-23",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-23",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-23",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-23",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-23",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-23",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-23",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-23",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-23",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-23",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-23",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-23",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-23",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-23",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-23",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-23",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-23",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-23",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-23",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-23",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-23",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-23",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-23",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-23",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-23",
+        "ward": "ICU",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-23",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-23",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-24",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-24",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-24",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-24",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-24",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-24",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-24",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-24",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-24",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-24",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-24",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-24",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-24",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-24",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-24",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-24",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-24",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-24",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-24",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-24",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-24",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-24",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-24",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-24",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-24",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-24",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-24",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-24",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-25",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-25",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-25",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-25",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-25",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-25",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-25",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-25",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-25",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-25",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-25",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-25",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-25",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-25",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-25",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-25",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-25",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-25",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-25",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-25",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-25",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-25",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-25",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-25",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-26",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-26",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-26",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-26",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-26",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-26",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-26",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-26",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-26",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-26",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-26",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-26",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-26",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-26",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-26",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-26",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-26",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-26",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-26",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-26",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-26",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-26",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-26",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-26",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-26",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-26",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-26",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-27",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-27",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-27",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-27",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-27",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-27",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-27",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-27",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-27",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-27",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-27",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-27",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-27",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-27",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-27",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-27",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-27",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-27",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-27",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-27",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-27",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-27",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-27",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-28",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-28",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-28",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-28",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-28",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-28",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-28",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-28",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-28",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-28",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-28",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-28",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-28",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-28",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-28",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-28",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-28",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-28",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-29",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-29",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-29",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-29",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-29",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-29",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-29",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-29",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-29",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-29",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-29",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-29",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-29",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-29",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-29",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-29",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-29",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-29",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-29",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-29",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-30",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-30",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-30",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-30",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-30",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-30",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-30",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-30",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-30",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-30",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-30",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-30",
+        "ward": "URO",
+        "cluster": true
+      },
+      {
+        "day": "2025-05-30",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-30",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-30",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-30",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-30",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-30",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-30",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-30",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-31",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-31",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-31",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-31",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-31",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-31",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-31",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-31",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-31",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-31",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-31",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-31",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-31",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-31",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-31",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-31",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-31",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-31",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-31",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-31",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-31",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-31",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-31",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-31",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-31",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-31",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-31",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-31",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-31",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-31",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-31",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-31",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-31",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-31",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-31",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-31",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-31",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-05-31",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-01",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-01",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-01",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-01",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-01",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-01",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-01",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-01",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-01",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-01",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-01",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-01",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-01",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-01",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-01",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-01",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-01",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-01",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-01",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-01",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-01",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-01",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-01",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-02",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-02",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-02",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-02",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-02",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-02",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-02",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-02",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-02",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-02",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-02",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-02",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-02",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-02",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-02",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-02",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-02",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-02",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-02",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-02",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-02",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-02",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-02",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-02",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-02",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-02",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-02",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-02",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-02",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-03",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-03",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-03",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-03",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-03",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-03",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-03",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-03",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-03",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-03",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-03",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-03",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-03",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-03",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-03",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-03",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-03",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-03",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-03",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-03",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-03",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-03",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-03",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-04",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-04",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-04",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-04",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-04",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-04",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-04",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-04",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-04",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-04",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-04",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-04",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-04",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-04",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-04",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-04",
+        "ward": "ICU",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-04",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-04",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-04",
+        "ward": "URO",
+        "cluster": true
+      },
+      {
+        "day": "2025-06-04",
+        "ward": "URO",
+        "cluster": true
+      },
+      {
+        "day": "2025-06-04",
+        "ward": "URO",
+        "cluster": true
+      },
+      {
+        "day": "2025-06-05",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-05",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-05",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-05",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-05",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-05",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-05",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-05",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-05",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-05",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-05",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-05",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-05",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-05",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-05",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-05",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-06",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-06",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-06",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-06",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-06",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-06",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-06",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-06",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-06",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-06",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-06",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-06",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-06",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-06",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-06",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-06",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-06",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-06",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-06",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-06",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-06",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-06",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-07",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-07",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-07",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-07",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-07",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-07",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-07",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-07",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-07",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-07",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-07",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-07",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-07",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-07",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-07",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-07",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-07",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-07",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-07",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-07",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-07",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-07",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-07",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-07",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-07",
+        "ward": "ICU",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-07",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-07",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-07",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-07",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-07",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-07",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-07",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-07",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-07",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-07",
+        "ward": "URO",
+        "cluster": true
+      },
+      {
+        "day": "2025-06-08",
+        "ward": "MED-A",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-08",
+        "ward": "MED-B",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-08",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-08",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-08",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-08",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-08",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-08",
+        "ward": "PHC-N",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-08",
+        "ward": "URO",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-08",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-08",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-08",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-08",
+        "ward": "ICU",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-08",
+        "ward": "ED",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-08",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-08",
+        "ward": "PHC-S",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-08",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-08",
+        "ward": "SURG",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-08",
+        "ward": "GER",
+        "cluster": false
+      },
+      {
+        "day": "2025-06-08",
+        "ward": "URO",
+        "cluster": true
+      }
+    ]
+  },
+  "treat": {
+    "mild": {
+      "level": "unit",
+      "isolates": 563,
+      "from": "2024-06-09",
+      "suggestions": [
+        {
+          "antibiotic": "MEC",
+          "aware": "Access",
+          "standing": "clears",
+          "share": 0.9518348623853211,
+          "interval": [0.9274932429927695, 0.9682840695918825],
+          "allOrganisms": 0.7371225577264654
+        },
+        {
+          "antibiotic": "NIT",
+          "aware": "Access",
+          "standing": "clears",
+          "share": 0.8646616541353384,
+          "interval": [0.832965317895279, 0.8911294559769176],
+          "allOrganisms": 0.8170515097690941
+        },
+        {
+          "antibiotic": "CIP",
+          "aware": "Watch",
+          "standing": "clears",
+          "share": 0.8969957081545065,
+          "interval": [0.8660738730766783, 0.9214258100738445],
+          "allOrganisms": 0.8969957081545065
+        },
+        {
+          "antibiotic": "TMP",
+          "aware": "Access",
+          "standing": "below",
+          "share": 0.75,
+          "interval": [0.7102363261901139, 0.7859515035194287],
+          "allOrganisms": 0.6660746003552398
+        },
+        {
+          "antibiotic": "CXM",
+          "aware": "Watch",
+          "standing": "below",
+          "share": 0.7027522935779816,
+          "interval": [0.6630697545884706, 0.7395966191407745],
+          "allOrganisms": 0.7027522935779816
+        }
+      ]
+    },
+    "severe": {
+      "level": "unit",
+      "isolates": 563,
+      "from": "2024-06-09",
+      "suggestions": [
+        {
+          "antibiotic": "TZP",
+          "aware": "Watch",
+          "standing": "clears",
+          "share": 0.9504587155963303,
+          "interval": [0.9288800039186818, 0.9657317132806817],
+          "allOrganisms": 0.9504587155963303
+        },
+        {
+          "antibiotic": "CIP",
+          "aware": "Watch",
+          "standing": "below",
+          "share": 0.8969957081545065,
+          "interval": [0.8660738730766783, 0.9214258100738445],
+          "allOrganisms": 0.8969957081545065
+        },
+        {
+          "antibiotic": "MEM",
+          "aware": "Watch",
+          "standing": "below",
+          "share": 0.8788990825688073,
+          "interval": [0.8488245079039141, 0.9036696656263041],
+          "allOrganisms": 0.8788990825688073
+        },
+        {
+          "antibiotic": "NIT",
+          "aware": "Access",
+          "standing": "below",
+          "share": 0.8170515097690941,
+          "interval": [0.7830026370948389, 0.846803095013335],
+          "allOrganisms": 0.8170515097690941
+        },
+        {
+          "antibiotic": "CRO",
+          "aware": "Watch",
+          "standing": "below",
+          "share": 0.7743119266055046,
+          "interval": [0.7373659725173042, 0.8074179448810862],
+          "allOrganisms": 0.7743119266055046
+        }
+      ]
+    }
+  },
+  "quality": {
+    "checked": {
+      "patients": 10000,
+      "cultures": 46792,
+      "isolates": 24571,
+      "results": 172381
+    },
+    "findings": 0
+  },
+  "region": {
+    "asOf": "2025-10-03",
+    "tested": 8250,
+    "signals": [
+      {
+        "group": "CPE carriage, E. coli",
+        "region": "Varsinais-Suomen hyvinvointialue",
+        "month": "2025-09",
+        "cases": 8,
+        "expected": 0.573,
+        "strong": true
+      },
+      {
+        "group": "MRSA carriage",
+        "region": "Keski-Suomen hyvinvointialue",
+        "month": "2025-07",
+        "cases": 12,
+        "expected": 2.109,
+        "strong": true
+      },
+      {
+        "group": "MRSA carriage",
+        "region": "Päijät-Hämeen hyvinvointialue",
+        "month": "2024-02",
+        "cases": 10,
+        "expected": 2.064,
+        "strong": false
+      },
+      {
+        "group": "ESBL carriage, K. pneumoniae",
+        "region": "Itä-Uudenmaan hyvinvointialue",
+        "month": "2024-02",
+        "cases": 5,
+        "expected": 0.498,
+        "strong": false
+      },
+      {
+        "group": "ESBL carriage, E. coli",
+        "region": "Pohjois-Karjalan hyvinvointialue",
+        "month": "2025-08",
+        "cases": 23,
+        "expected": 10.092,
+        "strong": false
+      },
+      {
+        "group": "MRSA blood/CSF",
+        "region": "Varsinais-Suomen hyvinvointialue",
+        "month": "2025-06",
+        "cases": 5,
+        "expected": 0.559,
+        "strong": false
+      },
+      {
+        "group": "MRSA carriage",
+        "region": "Keski-Suomen hyvinvointialue",
+        "month": "2025-08",
+        "cases": 18,
+        "expected": 5.039,
+        "strong": false
+      }
+    ],
+    "home": {
+      "region": "Varsinais-Suomen hyvinvointialue",
+      "group": "CPE carriage, E. coli",
+      "months": [
+        "2023-10",
+        "2023-11",
+        "2023-12",
+        "2024-01",
+        "2024-02",
+        "2024-03",
+        "2024-04",
+        "2024-05",
+        "2024-06",
+        "2024-07",
+        "2024-08",
+        "2024-09",
+        "2024-10",
+        "2024-11",
+        "2024-12",
+        "2025-01",
+        "2025-02",
+        "2025-03",
+        "2025-04",
+        "2025-05",
+        "2025-06",
+        "2025-07",
+        "2025-08",
+        "2025-09"
+      ],
+      "cases": [0, 0, 0, 1, 0, 1, 0, 0, 2, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 3, 1, 8]
+    }
+  },
+  "hl7": [
+    "MSH|^~\\&|MYPLUS|TYKSLAB|AEI|VARHA|20250604080000||ORU^R01^ORU_R01|C0026110|P|2.5.1",
+    "PID|1||PSEUDO-0001^^^VARHA^PI||||19560101|F",
+    "PV1|1|I|URO^^^TYKS|||||||||||||||||||||||||||||||||||||||||20250528",
+    "OBR|1|PL-C0026110|C0026110|BAKTVI^Bakteeriviljely^L|||202506040800|||||||||||||||202506040800||MB|F",
+    "SPM|1|||UR^Urine^HL70487|||||||||||||202506040800",
+    "OBX|1|CWE|BAKTVI^Bakteeriviljely^L|1|7640-22^Escherichia coli^1.2.246.537.6.241||||||F",
+    "OBX|2|CWE|ESBL^ESBL^L|1|POS^Positive^L||||||F",
+    "OBR|2|PL-C0026110|C0026110-1|AST^Herkkyys^L|||202506040800||||G|||||||||||202506040800||MB|F|BAKTVI&Bakteeriviljely&L^1^Escherichia coli|||PL-C0026110&C0026110",
+    "OBX|1|ST|2^Ampisilliini^1.2.246.537.6.249|1||||R|||F",
+    "OBX|2|ST|17^Mesillinaami^1.2.246.537.6.249|1||||S|||F",
+    "OBX|3|ST|27^Piperasilliini-tatsobaktaami^1.2.246.537.6.249|1||||S|||F",
+    "OBX|4|ST|13^Kefuroksiimi^1.2.246.537.6.249|1||||R|||F",
+    "OBX|5|ST|12^Keftriaksoni^1.2.246.537.6.249|1||||R|||F",
+    "OBX|6|ST|16^Meropeneemi^1.2.246.537.6.249|1||||S|||F",
+    "OBX|7|ST|29^Siprofloksasiini^1.2.246.537.6.249|1||||R|||F",
+    "OBX|8|ST|33^Trimetopriimi^1.2.246.537.6.249|1||||R|||F",
+    "OBX|9|ST|21^Nitrofurantoiini^1.2.246.537.6.249|1||||S|||F"
+  ],
+  "map": {
+    "width": 516,
+    "height": 1000,
+    "counties": [
+      {
+        "name": "Itä-Uudenmaan hyvinvointialue",
+        "en": "East Uusimaa wellbeing services county",
+        "d": "M299.0,948.2L301.2,946.8L299.3,945.4L296.6,944.0L296.2,945.7L299.0,948.2ZM287.9,951.7L290.2,951.0L288.7,948.0L287.0,948.0L287.9,951.7ZM283.3,955.5L285.5,954.6L284.6,952.0L281.9,952.9L281.8,954.3L283.3,955.5ZM268.6,957.1L271.5,955.1L272.9,954.7L274.8,956.6L274.5,953.0L274.1,949.7L275.1,949.5L276.5,952.1L277.3,954.6L279.0,953.9L278.5,949.9L281.2,950.5L283.4,949.6L280.9,945.0L278.7,939.6L277.8,935.0L280.3,937.3L285.0,942.2L286.9,946.1L288.8,943.9L289.5,939.9L290.4,938.7L291.8,938.9L294.0,942.7L297.8,939.7L298.9,937.8L300.0,930.1L301.4,927.4L297.8,919.2L293.0,917.1L293.0,917.1L293.0,917.1L291.0,908.5L287.1,907.7L287.4,911.7L282.9,914.6L275.4,912.7L275.4,912.7L274.6,909.8L267.4,912.5L257.8,912.9L253.7,916.9L257.6,925.0L253.3,928.7L256.9,937.2L255.3,940.6L245.2,932.6L243.3,936.6L243.0,946.7L242.8,951.1L247.2,952.4L246.0,956.9L251.3,955.2L254.6,955.6L257.0,955.5L258.0,954.6L258.6,954.0L259.3,950.1L261.7,948.8L263.4,948.5L264.3,950.0L265.7,954.2L268.6,957.1ZM251.0,959.8L254.1,958.5L253.6,956.5L250.3,957.2L249.2,958.5L251.0,959.8ZM262.5,962.0L264.2,961.2L264.8,957.6L263.6,955.0L261.7,951.6L261.1,954.6L261.7,957.2L262.5,962.0ZM274.9,962.8L276.7,961.0L274.2,958.2L271.7,959.3L270.8,961.7L271.9,962.7L274.9,962.8ZM258.4,963.3L260.0,961.3L259.3,957.0L258.0,957.7L257.8,962.7L258.4,963.3Z"
+      },
+      {
+        "name": "Keski-Uudenmaan hyvinvointialue",
+        "en": "Central Uusimaa wellbeing services county",
+        "d": "M233.7,949.0L238.0,944.8L243.2,938.5L242.8,932.1L251.1,941.9L257.4,938.6L254.0,934.4L257.0,927.2L254.5,919.5L255.7,914.0L257.0,907.2L251.9,908.1L244.5,899.6L242.2,905.7L241.8,911.7L237.1,914.8L224.5,918.4L217.2,919.9L220.6,931.1L219.7,946.4L230.0,942.4L233.7,949.0Z"
+      },
+      {
+        "name": "Länsi-Uudenmaan hyvinvointialue",
+        "en": "West Uusimaa wellbeing services county",
+        "d": "M189.4,986.5L193.8,983.7L194.6,981.7L191.3,980.9L187.7,985.2L187.8,985.9L189.4,986.5ZM166.7,995.4L170.2,993.8L172.4,992.1L170.1,991.2L167.4,992.4L165.9,994.4L166.7,995.4ZM148.0,1000.0L151.8,998.1L156.2,997.6L159.9,996.8L162.1,994.7L163.3,991.8L164.1,989.0L165.1,988.3L167.6,987.3L170.9,989.4L173.5,988.7L176.7,988.7L179.8,987.7L179.4,984.8L179.9,983.6L182.6,984.0L185.0,982.9L187.0,981.6L194.4,977.7L200.8,977.5L203.2,976.6L205.1,975.3L206.2,975.0L208.4,973.7L208.0,977.5L208.4,979.3L211.7,977.1L213.3,977.9L213.0,979.3L210.3,983.4L211.7,984.0L216.5,978.0L220.1,970.3L219.7,966.9L221.2,967.5L223.1,968.4L228.0,965.8L228.4,956.7L224.9,948.1L215.4,935.0L217.6,924.4L211.0,927.6L207.8,921.8L203.1,921.3L191.8,919.3L189.6,922.4L187.5,932.0L181.9,936.9L184.1,943.7L181.4,949.4L176.8,962.5L165.8,966.8L156.7,971.6L151.0,976.7L150.9,981.5L149.0,982.3L145.6,981.4L144.2,982.5L145.7,986.4L147.5,989.1L150.9,988.9L153.5,988.0L153.6,984.2L154.2,981.9L155.4,982.0L156.3,984.7L155.8,989.3L154.2,991.9L148.0,995.1L145.5,997.6L148.0,1000.0Z"
+      },
+      {
+        "name": "Vantaan ja Keravan hyvinvointialue",
+        "en": "Vantaa and Kerava wellbeing services county",
+        "d": "M241.4,958.3L241.7,955.1L242.8,951.1L243.0,946.7L237.8,940.0L237.2,948.1L230.0,942.4L226.4,957.9L236.5,953.2L239.1,957.8L241.4,958.3Z"
+      },
+      {
+        "name": "Varsinais-Suomen hyvinvointialue",
+        "en": "Southwest Finland wellbeing services county",
+        "d": "M77.6,924.4L79.5,922.6L76.6,916.9L75.1,918.2L75.0,920.5L77.6,924.4ZM78.1,933.3L79.6,932.3L77.7,927.1L75.0,925.1L75.1,927.4L76.8,932.9L78.1,933.3ZM84.0,934.7L85.8,933.8L86.3,930.5L83.5,925.9L80.3,926.2L80.5,930.4L84.0,934.7ZM73.7,943.1L75.3,940.5L74.3,937.9L73.0,939.1L72.7,941.5L73.7,943.1ZM89.3,942.5L92.2,940.9L92.4,936.2L89.8,938.0L89.3,942.5ZM82.4,944.8L83.7,943.3L83.4,938.9L81.4,939.0L80.6,940.4L81.9,944.4L82.4,944.8ZM80.2,947.5L79.6,943.8L77.4,943.6L77.4,947.2L80.2,947.5ZM96.3,949.5L98.9,947.9L98.0,945.1L93.8,944.2L93.8,946.7L96.3,949.5ZM105.8,952.8L107.6,951.5L108.8,946.4L104.6,938.9L104.0,938.1L103.5,937.2L101.6,934.6L99.6,935.5L99.3,939.2L101.4,944.0L104.5,946.7L103.7,950.1L104.6,952.5L105.8,952.8ZM82.8,958.2L84.1,957.1L84.7,953.1L83.2,952.7L80.7,957.1L82.8,958.2ZM89.9,960.9L92.9,959.3L92.8,957.0L89.6,952.6L88.4,958.1L89.4,960.4L89.9,960.9ZM82.2,964.1L85.2,963.0L85.6,959.3L84.8,958.2L81.0,959.0L77.6,957.7L76.8,961.8L79.2,963.5L82.2,964.1ZM118.3,962.0L121.4,960.3L124.1,957.3L126.9,952.5L128.9,949.4L127.5,947.8L126.0,947.3L123.0,947.9L120.4,949.5L114.1,949.1L112.5,954.0L116.1,957.1L116.4,958.9L116.8,961.3L118.3,962.0ZM107.9,966.0L111.5,964.7L112.6,960.7L110.5,960.3L107.3,962.6L106.7,965.0L107.9,966.0ZM97.0,969.8L98.7,969.3L100.9,965.8L104.0,963.8L104.8,961.8L103.1,960.6L98.5,960.5L97.0,962.8L97.0,969.8ZM88.5,971.0L92.1,970.2L94.0,965.2L93.5,961.4L90.3,962.8L86.9,968.3L87.3,970.3L88.5,971.0ZM107.6,970.6L108.9,968.9L106.7,967.4L103.3,966.7L101.1,968.8L101.3,970.1L104.6,970.7L107.6,970.6ZM118.6,969.8L120.7,968.0L122.5,964.0L121.4,962.8L118.6,963.8L115.8,968.2L118.6,969.8ZM151.8,971.9L163.4,963.0L174.0,961.7L175.4,956.2L181.2,945.5L183.8,937.6L181.8,933.7L186.4,927.3L188.7,918.2L171.8,909.0L162.2,912.2L160.2,901.1L156.1,895.5L162.9,888.5L156.7,881.1L142.9,874.3L137.6,885.4L132.7,890.1L114.6,896.6L107.1,893.8L101.1,883.2L93.5,884.5L88.6,882.2L79.6,875.5L78.6,875.9L78.1,877.8L83.0,887.2L83.1,889.4L82.7,889.4L80.0,885.2L78.7,884.3L77.0,884.0L76.2,886.3L77.7,888.1L77.3,890.6L73.8,891.8L75.2,893.9L78.1,895.3L79.1,896.4L78.0,897.7L78.2,901.4L80.0,908.1L80.2,911.9L82.6,917.9L83.7,920.8L84.8,923.4L87.5,925.4L89.6,929.7L92.9,932.3L93.8,930.9L94.4,925.2L96.2,923.3L97.1,922.4L99.4,921.0L100.8,921.6L100.9,923.6L100.7,926.0L98.9,927.6L96.9,928.5L95.5,932.6L96.5,934.2L98.6,932.7L100.3,932.6L103.6,931.5L104.9,931.3L106.7,931.5L108.0,932.7L109.1,935.2L107.5,936.1L105.9,937.2L107.2,938.8L109.4,939.8L110.5,938.5L111.9,938.1L112.7,939.4L112.1,944.0L112.9,945.5L114.9,945.7L118.0,947.2L120.8,945.6L121.9,945.2L124.3,944.6L126.6,944.1L128.4,943.8L130.5,943.9L131.8,945.9L131.6,947.4L128.8,954.3L129.4,955.8L134.2,956.7L138.6,956.8L142.9,954.2L145.3,951.7L151.1,946.2L152.2,946.9L151.5,951.4L149.0,955.7L146.0,962.2L145.8,966.1L148.8,967.9L151.0,969.2L151.8,971.2L151.8,971.9ZM147.0,973.6L149.3,972.5L149.3,970.8L147.3,969.9L145.7,972.1L147.0,973.6ZM145.3,980.1L147.6,978.2L146.0,974.4L144.8,974.4L143.3,977.4L145.3,980.1ZM137.9,981.4L140.5,979.4L140.3,976.6L143.0,972.0L144.3,969.5L142.4,964.3L145.1,958.3L143.0,957.6L131.2,961.8L127.8,960.5L126.8,961.9L125.5,965.6L127.0,967.1L127.1,970.1L124.0,973.0L122.8,975.2L124.3,981.5L126.8,982.1L131.2,980.3L135.9,981.5L137.9,981.4ZM99.5,990.1L100.0,984.8L98.0,983.8L96.8,986.7L97.2,989.3L99.5,990.1ZM123.3,989.4L125.7,988.8L126.1,985.7L124.7,983.8L123.0,984.5L121.9,987.3L123.3,989.4ZM135.2,988.6L136.3,987.6L135.4,985.4L132.2,983.6L130.1,984.8L131.2,987.5L135.2,988.6ZM125.0,996.6L128.9,995.5L130.9,992.8L130.0,991.3L126.4,992.6L124.5,995.2L125.0,996.6ZM90.4,1000.0L92.9,998.4L93.0,995.5L89.3,997.1L88.5,998.9L89.2,1000.0L90.4,1000.0Z"
+      },
+      {
+        "name": "Satakunnan hyvinvointialue",
+        "en": "Satakunta wellbeing services county",
+        "d": "M83.6,825.7L86.8,824.9L87.4,822.6L85.3,820.0L83.7,818.1L83.0,818.6L81.7,822.9L83.6,825.7ZM80.8,867.4L82.1,866.5L82.3,865.4L80.8,862.6L79.5,863.7L79.6,865.5L80.8,867.4ZM114.6,896.6L132.7,890.1L137.6,885.4L142.9,874.3L150.1,876.5L147.6,864.2L135.2,860.1L131.6,851.9L126.2,836.6L137.4,825.8L138.6,821.4L135.3,816.4L137.3,812.4L143.0,804.9L141.3,799.5L135.3,791.5L141.0,781.0L144.5,770.1L134.8,757.6L130.1,766.4L123.7,773.0L116.2,776.8L106.7,788.9L92.7,785.0L79.3,790.1L79.8,791.4L82.0,793.3L84.4,799.5L86.7,803.1L86.8,805.2L83.6,806.3L85.8,809.1L88.0,812.4L88.6,817.6L89.3,820.9L92.8,827.3L92.0,828.7L87.7,825.8L86.3,826.9L87.4,830.5L90.3,833.6L90.6,835.1L86.4,833.7L84.8,834.7L85.7,836.4L88.6,837.8L90.1,840.6L88.6,841.1L87.6,841.1L84.8,842.7L87.8,849.2L87.8,854.0L87.0,857.2L88.1,859.7L85.6,859.8L84.2,860.2L83.9,862.2L84.1,863.0L83.7,866.6L83.7,868.1L83.6,873.4L82.9,875.5L81.6,876.1L81.0,876.0L79.6,875.5L88.6,882.2L93.5,884.5L101.1,883.2L107.1,893.8L114.6,896.6Z"
+      },
+      {
+        "name": "Kanta-Hämeen hyvinvointialue",
+        "en": "Kanta-Häme wellbeing services county",
+        "d": "M211.0,927.6L217.6,924.4L219.2,916.5L228.6,916.6L240.4,917.0L238.1,910.9L240.3,901.8L239.6,892.0L236.8,881.1L245.8,873.0L244.3,860.7L235.2,857.4L231.9,852.5L224.2,853.3L217.4,854.6L205.7,865.5L191.2,874.2L184.1,881.7L186.9,886.9L180.7,883.2L170.6,887.7L161.4,882.3L162.9,888.5L156.1,895.5L160.2,901.1L162.2,912.2L171.8,909.0L188.7,918.2L195.0,918.9L205.2,926.4L210.2,923.5L211.0,927.6Z"
+      },
+      {
+        "name": "Pirkanmaan hyvinvointialue",
+        "en": "Pirkanmaa wellbeing services county",
+        "d": "M186.1,890.0L185.1,884.1L182.6,878.6L203.0,869.4L205.9,861.5L223.2,857.6L228.2,857.3L229.6,837.8L254.3,836.8L257.0,818.3L253.2,810.7L236.2,808.7L233.9,822.8L224.4,816.7L228.0,809.2L215.4,795.7L224.1,784.6L214.2,767.7L207.3,770.5L196.4,760.0L189.8,748.9L186.0,738.8L171.8,746.6L164.8,745.6L156.5,755.8L143.2,760.5L140.6,771.9L130.0,787.1L139.2,795.6L141.9,801.8L141.3,810.7L137.2,815.8L137.1,818.5L137.8,823.5L132.6,830.8L132.2,845.5L133.3,854.8L144.2,861.2L147.1,870.3L149.0,879.9L158.7,884.0L165.8,882.7L173.8,885.0L186.1,890.0Z"
+      },
+      {
+        "name": "Päijät-Hämeen hyvinvointialue",
+        "en": "Päijät-Häme wellbeing services county",
+        "d": "M261.7,916.1L267.4,912.5L274.6,909.8L275.4,912.7L279.4,911.7L287.4,911.7L287.1,907.7L291.0,908.5L291.0,908.5L294.4,903.0L301.5,895.4L294.7,881.4L289.6,883.0L291.5,873.8L294.7,865.8L300.1,857.5L295.3,852.8L289.5,842.7L291.7,825.0L286.4,820.9L280.5,812.3L274.9,807.6L268.5,817.5L261.6,817.9L256.9,824.0L234.4,840.3L231.9,852.5L235.2,857.4L244.3,860.7L245.8,873.0L236.8,881.1L239.6,892.0L240.3,901.8L248.3,908.2L254.1,904.0L257.8,912.9L261.7,916.1Z"
+      },
+      {
+        "name": "Kymenlaakson hyvinvointialue",
+        "en": "Kymenlaakso wellbeing services county",
+        "d": "M317.5,939.6L319.3,939.0L320.5,937.0L320.8,931.0L323.3,928.5L325.3,927.9L331.3,930.7L332.3,930.7L337.8,931.9L339.3,935.5L340.8,935.9L342.4,933.4L345.6,933.4L350.7,932.9L353.9,929.5L353.9,929.5L356.6,925.1L358.8,921.8L359.3,913.7L357.2,907.0L351.9,907.2L346.7,903.0L339.1,899.4L330.0,893.5L331.2,886.7L327.3,878.1L329.6,868.3L317.1,866.3L314.6,856.5L306.8,860.4L300.1,857.5L294.7,865.8L291.5,873.8L289.6,883.0L294.7,881.4L301.5,895.4L294.4,903.0L291.0,908.5L293.0,917.0L293.0,917.1L293.0,917.1L297.8,919.2L301.3,925.5L299.6,928.3L297.3,933.5L299.0,938.8L300.4,938.0L303.4,937.7L305.8,936.3L309.9,938.0L312.7,935.7L314.1,936.8L316.5,939.3L317.5,939.6ZM303.7,943.8L307.1,940.9L306.1,938.8L302.9,940.3L301.5,942.3L303.7,943.8ZM324.4,944.6L324.2,937.2L323.2,936.8L322.3,939.6L322.3,941.6L323.4,944.4L324.4,944.6ZM311.8,948.2L313.6,947.4L313.3,945.3L310.1,945.9L310.3,947.3L311.8,948.2ZM328.7,954.9L330.7,954.1L331.5,952.8L329.7,951.4L327.6,951.8L326.9,953.9L328.7,954.9Z"
+      },
+      {
+        "name": "Etelä-Karjalan hyvinvointialue",
+        "en": "South Karelia wellbeing services county",
+        "d": "M363.1,916.3L370.9,905.7L374.5,902.6L383.3,891.6L391.4,889.0L393.9,879.8L397.8,875.0L401.2,870.3L405.5,867.2L409.7,863.7L419.9,850.3L427.6,839.3L431.3,835.9L437.7,828.1L440.7,822.3L450.4,809.7L454.9,801.3L430.0,813.9L423.4,820.5L417.3,829.9L398.1,832.0L392.7,837.8L382.3,834.4L374.2,847.2L354.7,848.9L348.4,850.7L345.5,858.5L337.0,863.3L329.6,868.3L327.3,878.1L331.2,886.7L330.0,893.5L339.1,899.4L346.7,903.0L351.9,907.2L357.2,907.0L359.3,913.7L363.1,916.3Z"
+      },
+      {
+        "name": "Etelä-Savon hyvinvointialue",
+        "en": "South Savo wellbeing services county",
+        "d": "M322.2,869.3L336.0,867.3L339.2,857.7L346.1,853.9L353.0,852.1L360.6,850.1L381.7,839.7L386.7,837.8L397.2,837.7L404.3,831.6L419.4,824.9L429.1,817.6L434.9,807.1L432.3,795.3L426.7,781.4L424.5,763.9L418.7,749.3L413.2,749.3L406.3,755.0L395.6,759.0L391.3,764.4L385.0,767.3L365.6,764.0L364.6,770.3L360.4,778.9L357.8,783.0L354.7,788.1L347.8,772.3L344.3,766.5L347.8,759.4L338.3,737.9L330.5,740.2L325.8,739.7L318.7,740.6L311.9,743.2L307.3,747.6L306.8,753.6L305.1,760.0L301.4,761.1L291.7,767.4L292.4,783.3L292.3,792.7L294.4,798.3L293.9,805.6L300.7,815.6L294.3,820.2L290.1,831.9L291.8,848.1L298.8,852.7L305.3,856.2L306.4,864.0L317.5,862.2L322.2,869.3Z"
+      },
+      {
+        "name": "Pohjois-Savon hyvinvointialue",
+        "en": "North Savo wellbeing services county",
+        "d": "M354.7,788.1L357.8,783.0L360.4,778.9L364.6,770.3L365.6,764.0L385.0,767.3L391.3,764.4L382.2,756.1L376.9,752.4L375.7,740.9L380.6,732.5L383.4,730.2L391.4,723.0L390.5,714.5L395.2,707.9L403.2,711.6L410.3,704.7L404.9,693.7L400.2,684.1L393.3,671.8L394.9,659.4L391.9,648.5L389.2,638.4L389.4,633.7L387.0,621.5L378.8,616.3L370.7,620.1L343.9,596.6L326.0,593.3L302.1,595.9L290.7,632.3L285.3,642.9L285.8,647.0L283.7,657.5L285.2,675.3L292.5,686.2L292.4,691.2L287.7,694.1L279.9,695.9L285.3,702.0L293.4,714.2L303.8,727.5L305.2,743.1L311.9,743.2L318.7,740.6L325.8,739.7L330.5,740.2L338.3,737.9L347.8,759.4L344.3,766.5L347.8,772.3L354.7,788.1Z"
+      },
+      {
+        "name": "Pohjois-Karjalan hyvinvointialue",
+        "en": "North Karelia wellbeing services county",
+        "d": "M430.0,813.9L454.9,801.3L457.8,797.3L461.6,793.2L461.8,790.3L465.1,787.1L469.3,780.7L475.9,770.0L476.8,766.6L482.4,762.5L483.3,760.6L489.0,757.1L488.9,754.5L497.3,743.9L499.3,738.9L506.1,724.3L507.6,719.8L510.8,709.4L512.8,690.0L511.1,687.3L507.9,684.8L503.0,679.2L502.2,672.3L501.6,668.4L497.2,663.9L492.3,660.2L488.6,655.1L482.3,650.2L465.1,636.6L459.2,630.6L443.4,616.8L436.9,616.9L412.9,607.3L401.2,608.4L378.8,616.3L387.0,621.5L389.4,633.7L389.2,638.4L391.9,648.5L394.9,659.4L393.3,671.8L400.2,684.1L404.9,693.7L410.3,704.7L403.2,711.6L395.2,707.9L390.5,714.5L391.4,723.0L383.4,730.2L380.6,732.5L375.7,740.9L376.9,752.4L382.2,756.1L391.3,764.4L395.6,759.0L406.3,755.0L413.2,749.3L418.7,749.3L424.5,763.9L426.7,781.4L432.3,795.3L434.9,807.1L430.0,813.9Z"
+      },
+      {
+        "name": "Keski-Suomen hyvinvointialue",
+        "en": "Central Finland wellbeing services county",
+        "d": "M291.7,825.0L300.2,823.2L297.5,808.7L294.8,801.1L292.1,798.6L295.9,789.5L287.7,775.4L296.9,765.5L304.4,765.8L307.4,757.0L311.3,752.5L308.5,742.8L298.8,735.1L297.3,710.1L284.7,704.5L281.2,700.4L283.5,694.2L289.9,696.9L287.7,687.1L287.6,680.9L284.3,662.9L281.2,655.1L285.4,645.4L273.7,646.9L256.2,637.9L246.1,630.3L239.1,644.2L231.5,647.7L227.2,662.8L225.9,676.7L208.3,678.3L205.8,690.8L207.6,697.6L212.1,702.2L214.5,717.8L217.8,722.2L216.9,729.9L211.9,739.8L205.1,743.0L193.5,751.6L202.0,762.4L211.2,772.0L216.9,768.8L219.5,787.6L221.4,800.2L223.9,811.3L227.6,819.9L231.9,815.4L251.5,814.8L258.4,808.3L261.6,817.9L268.5,817.5L274.9,807.6L280.5,812.3L286.4,820.9L291.7,825.0Z"
+      },
+      {
+        "name": "Etelä-Pohjanmaan hyvinvointialue",
+        "en": "South Ostrobothnia wellbeing services county",
+        "d": "M106.7,788.9L116.2,776.8L123.7,773.0L130.1,766.4L134.8,757.6L150.1,758.8L159.6,754.4L170.2,749.3L178.7,747.2L188.2,742.2L193.5,751.6L205.1,743.0L211.9,739.8L216.9,729.9L217.8,722.2L214.5,717.8L212.1,702.2L207.6,697.6L205.8,690.8L208.3,678.3L203.0,673.0L187.1,662.7L173.5,644.2L161.6,643.9L154.8,654.8L148.0,657.7L134.0,662.2L133.2,668.9L135.5,674.7L118.1,683.4L118.3,701.3L116.3,713.8L98.0,702.9L98.8,719.4L90.3,728.0L88.7,745.6L94.4,752.3L97.8,765.2L92.7,785.0L106.7,788.9Z"
+      },
+      {
+        "name": "Pohjanmaan hyvinvointialue",
+        "en": "Ostrobothnia wellbeing services county",
+        "d": "M132.6,616.2L134.4,614.6L134.1,610.2L131.7,609.7L131.1,613.7L132.6,616.2ZM99.2,648.7L101.8,647.4L101.1,645.1L99.2,644.4L97.6,646.3L98.4,648.2L99.2,648.7ZM72.4,657.6L74.9,655.9L75.5,651.5L71.6,655.7L71.6,657.2L72.4,657.6ZM80.5,658.8L82.2,655.7L81.1,653.5L77.0,655.2L77.8,658.9L80.5,658.8ZM106.1,657.6L108.3,655.6L111.6,654.2L111.0,652.1L107.3,652.5L104.8,656.6L105.0,657.6L106.1,657.6ZM93.1,664.7L94.3,662.6L96.4,662.6L97.7,663.0L97.2,659.9L94.1,658.4L92.4,661.2L93.1,664.7ZM114.9,663.2L116.9,661.7L117.2,657.5L114.7,658.5L111.6,657.4L107.5,659.1L107.2,661.6L110.5,662.3L112.5,663.0L114.9,663.2ZM78.3,674.3L80.1,670.9L83.6,671.3L84.2,669.7L82.9,664.9L80.7,663.5L78.7,666.1L75.7,666.2L74.7,664.9L76.1,662.6L74.8,659.5L73.1,660.3L69.6,660.6L68.5,661.8L70.0,668.0L72.6,672.1L74.3,672.3L78.3,674.3ZM57.5,693.6L59.6,693.0L59.9,689.8L58.0,688.9L56.5,691.7L57.5,693.6ZM73.8,694.3L74.0,689.4L72.6,688.0L70.8,688.5L70.6,692.3L71.3,693.5L73.8,694.3ZM70.5,707.8L73.4,705.1L73.7,703.1L71.4,702.8L68.6,705.7L69.2,707.4L70.5,707.8ZM67.4,718.3L69.5,717.3L68.7,714.9L66.7,713.8L66.5,716.9L67.4,718.3ZM67.9,735.5L69.8,733.5L68.3,730.9L66.9,731.7L67.2,734.8L67.9,735.5ZM79.3,790.1L92.7,785.0L97.8,765.2L94.4,752.3L88.7,745.6L90.3,728.0L98.8,719.4L98.0,702.9L116.3,713.8L118.3,701.3L118.1,683.4L135.5,674.7L133.2,668.9L134.0,662.2L148.0,657.7L154.8,654.8L161.6,643.9L173.5,644.2L178.4,642.7L171.3,632.6L170.3,625.3L182.1,624.0L169.3,618.0L160.9,619.9L147.0,614.3L142.2,603.1L141.4,603.6L139.0,607.7L136.3,610.0L137.9,614.5L137.5,618.2L136.9,618.5L135.2,620.1L133.9,622.3L133.9,623.7L131.2,624.9L129.1,627.5L129.2,628.3L128.2,629.8L126.3,631.2L126.1,635.8L124.2,636.6L122.6,633.8L121.0,635.4L120.3,639.6L119.7,642.3L116.6,643.8L117.7,646.2L121.4,652.0L123.2,656.0L123.4,658.2L119.5,659.8L118.0,664.3L117.0,665.4L113.1,665.8L106.0,664.1L101.6,663.7L97.5,665.1L91.8,667.2L90.5,664.0L89.4,662.8L88.0,666.0L87.2,673.0L86.0,675.8L86.6,677.8L90.2,681.0L90.0,683.8L87.1,683.5L84.2,683.9L82.6,682.1L80.9,682.6L80.7,684.8L82.4,685.8L83.7,687.3L84.1,689.1L85.2,690.7L84.9,693.5L82.2,697.0L82.7,700.4L80.7,701.8L78.5,701.1L77.3,700.4L75.7,701.9L74.8,708.0L71.8,709.6L70.0,709.9L70.0,711.1L71.8,715.9L69.2,719.2L68.8,721.1L68.2,726.6L69.1,727.6L71.0,726.3L73.2,727.1L72.7,729.8L70.8,738.0L71.4,740.6L72.3,743.2L71.7,749.3L72.3,750.4L75.9,751.7L77.2,751.6L79.4,751.5L79.5,754.0L78.9,755.9L78.4,757.3L77.5,761.1L78.6,762.3L82.7,764.0L82.3,766.7L80.2,769.3L79.8,773.1L78.1,782.0L77.0,786.5L78.6,788.5L79.3,790.1Z"
+      },
+      {
+        "name": "Keski-Pohjanmaan hyvinvointialue",
+        "en": "Central Ostrobothnia wellbeing services county",
+        "d": "M208.3,678.3L225.9,676.7L227.2,662.8L231.5,647.7L227.9,632.6L211.1,608.0L198.4,594.1L191.7,583.1L182.2,595.0L174.7,587.3L171.7,586.4L168.7,584.2L165.9,585.7L166.2,594.9L167.1,598.6L166.1,600.1L162.1,600.3L160.3,600.8L159.7,600.7L153.6,601.7L151.5,602.8L149.7,605.5L146.9,602.8L144.1,602.3L145.5,610.6L150.8,612.7L164.7,615.6L170.7,613.9L175.2,626.5L168.4,629.7L175.4,634.2L180.1,652.7L195.2,664.5L200.3,675.3L208.3,678.3Z"
+      },
+      {
+        "name": "Pohjois-Pohjanmaan hyvinvointialue",
+        "en": "North Ostrobothnia wellbeing services county",
+        "d": "M245.9,486.2L245.8,484.0L242.8,483.0L242.1,484.4L243.8,486.2L245.9,486.2ZM226.4,499.9L228.8,499.5L230.2,497.5L228.3,492.6L229.5,489.8L232.7,491.0L234.9,492.1L238.0,491.2L239.0,488.4L235.2,488.3L231.6,487.1L227.3,485.4L220.9,487.4L217.8,489.7L217.5,492.0L219.3,497.9L222.4,498.7L224.5,498.1L226.4,499.9ZM174.9,575.3L177.1,574.8L177.8,573.9L178.2,571.6L175.3,571.4L175.1,572.4L174.5,573.6L174.9,575.3ZM278.0,647.9L285.3,642.9L290.7,632.3L302.1,595.9L311.5,586.9L311.0,566.6L318.4,560.6L328.9,562.2L328.8,548.1L334.0,532.5L331.7,520.9L336.0,513.4L337.3,499.1L334.9,486.3L349.3,483.4L363.3,473.7L389.4,467.3L404.2,451.7L415.2,444.7L429.5,446.0L443.0,440.7L436.9,433.2L454.7,430.1L451.7,408.1L448.6,400.0L445.5,385.6L430.5,355.8L417.1,358.2L386.4,365.6L395.5,373.2L389.3,385.5L396.1,393.7L391.3,399.2L380.1,398.3L385.2,408.6L373.0,417.3L348.8,401.8L338.2,403.9L313.4,427.0L285.1,415.2L269.3,423.1L241.1,436.1L239.9,437.5L240.3,440.3L242.9,438.9L244.4,439.2L247.7,445.2L249.6,448.1L250.0,452.1L246.9,455.6L247.1,460.5L247.3,465.5L247.6,469.2L247.5,472.9L247.7,475.5L245.5,478.5L246.0,481.4L249.1,482.8L251.6,486.4L252.0,488.1L253.4,493.6L256.6,497.9L255.1,498.4L249.6,496.2L246.5,494.3L244.5,494.8L245.0,499.5L251.3,504.6L252.0,506.8L251.4,510.2L249.0,510.6L248.6,509.8L247.8,507.9L243.6,504.5L235.8,503.7L235.4,504.1L233.8,505.4L225.8,506.5L222.7,510.4L219.4,511.4L217.1,512.5L216.8,515.4L216.9,519.7L215.1,522.1L212.4,523.3L210.3,526.0L208.8,533.8L205.6,539.8L204.2,541.1L199.3,546.6L192.3,555.7L189.1,561.5L189.6,565.1L187.5,565.6L186.1,564.1L183.9,565.5L181.1,570.8L179.1,574.7L177.2,578.1L175.4,579.9L175.7,585.1L182.2,595.0L191.7,583.1L198.4,594.1L211.1,608.0L227.9,632.6L239.1,644.2L246.1,630.3L256.2,637.9L273.7,646.9L278.0,647.9Z"
+      },
+      {
+        "name": "Kainuun hyvinvointialue",
+        "en": "Kainuu wellbeing services county",
+        "d": "M375.2,624.6L384.8,603.8L410.9,607.3L435.2,604.2L439.2,621.3L447.6,616.0L462.4,601.2L471.3,587.7L468.6,572.5L469.3,566.9L464.1,565.0L457.7,558.3L450.7,553.3L449.8,545.4L448.2,540.5L451.1,532.6L454.3,530.7L451.0,523.1L452.6,518.0L450.6,515.3L435.4,512.8L433.6,508.1L432.5,499.1L432.9,489.3L441.5,486.2L442.5,482.8L444.2,476.4L438.7,472.9L431.8,469.9L438.0,461.4L437.4,449.2L429.5,446.0L415.2,444.7L404.2,451.7L389.4,467.3L363.3,473.7L349.3,483.4L334.9,486.3L337.3,499.1L336.0,513.4L331.7,520.9L334.0,532.5L328.8,548.1L328.9,562.2L318.4,560.6L311.0,566.6L311.5,586.9L326.0,593.3L343.9,596.6L370.7,620.1L375.2,624.6Z"
+      },
+      {
+        "name": "Lapin hyvinvointialue",
+        "en": "Lapland wellbeing services county",
+        "d": "M239.8,437.4L253.7,423.0L275.7,419.9L285.0,424.6L323.9,424.2L343.3,405.5L353.3,414.7L385.4,412.9L379.4,401.8L386.7,397.1L395.4,397.7L390.1,391.0L394.0,384.7L388.8,371.9L393.1,350.7L417.1,355.8L428.3,349.7L423.6,341.2L421.5,335.8L411.2,320.0L407.5,307.9L409.2,301.1L428.4,270.5L432.2,268.9L432.6,266.5L436.7,262.5L445.8,249.9L434.2,222.6L420.1,196.2L383.9,158.1L393.6,132.2L391.7,117.2L381.2,114.4L403.1,101.1L397.8,95.4L398.9,84.4L420.5,59.7L411.8,38.6L377.6,23.6L370.3,16.6L361.8,0.0L352.6,2.7L347.0,1.7L343.3,6.7L335.9,9.9L332.7,11.1L326.7,15.5L319.6,14.9L314.4,12.8L308.9,14.3L301.8,14.0L297.6,16.9L295.9,20.7L288.5,27.2L282.8,35.2L273.6,41.5L277.2,46.9L271.6,52.7L271.9,57.8L269.9,65.4L268.0,74.0L266.9,80.4L265.2,87.2L266.5,97.1L268.7,104.5L263.5,115.2L258.2,117.1L247.9,120.2L245.4,123.2L240.3,135.4L238.0,142.8L232.1,144.6L229.5,148.8L218.9,137.1L199.5,130.2L196.2,127.6L187.5,122.1L181.5,130.4L169.1,136.1L152.3,136.4L130.6,131.0L122.3,123.0L115.2,110.4L77.0,75.9L65.5,84.6L67.5,94.3L67.6,102.7L46.0,100.4L53.7,102.4L59.7,107.9L58.5,112.4L65.1,116.3L77.9,129.3L82.4,130.4L91.7,139.2L95.6,145.8L107.1,151.2L114.4,157.6L122.5,156.5L125.3,158.1L131.7,161.8L135.2,162.9L140.7,165.6L143.4,167.9L152.9,174.1L156.5,179.5L157.6,190.4L166.9,198.8L174.7,206.0L178.7,209.2L172.8,214.4L170.7,228.5L173.9,240.1L170.0,245.9L167.1,253.5L171.5,257.3L179.9,257.5L180.9,263.1L181.1,273.2L173.6,278.8L173.9,284.0L179.1,294.4L183.8,301.0L187.2,308.5L192.8,318.1L189.2,320.8L188.7,328.4L187.3,334.3L186.8,343.8L184.3,347.2L180.4,351.9L177.8,356.8L179.2,361.7L181.4,378.9L188.4,381.6L189.6,385.1L190.7,391.1L195.1,398.4L196.4,403.9L198.1,408.0L199.4,416.1L198.5,419.5L201.5,419.8L204.4,415.6L207.8,418.7L213.3,421.6L215.5,423.0L214.7,428.4L216.2,430.3L219.6,428.3L221.1,431.5L221.7,432.4L226.1,430.6L230.4,430.7L233.8,433.6L238.9,435.4L239.8,437.4Z"
+      },
+      {
+        "name": "Helsingin kaupunki",
+        "en": "City of Helsinki",
+        "d": "M238.0,968.7L240.2,967.0L240.1,962.7L242.0,962.6L243.8,961.9L245.5,957.1L246.3,954.8L243.7,953.6L242.4,957.2L239.1,957.8L236.5,953.2L228.6,965.8L229.6,965.8L230.4,966.3L233.7,967.8L236.9,965.0L237.3,966.2L238.0,968.7Z"
+      },
+      {
+        "name": "Ahvenanmaa",
+        "en": "Åland",
+        "d": "M69.7,937.8L70.6,933.9L68.8,929.0L66.6,927.3L66.2,929.7L67.2,936.5L69.7,937.8ZM63.1,941.3L65.1,938.4L63.8,933.5L61.6,933.7L61.0,937.1L62.2,940.5L63.1,941.3ZM38.2,949.5L41.1,948.7L40.7,947.6L38.8,946.6L35.5,946.2L35.4,948.5L38.2,949.5ZM69.1,947.9L67.7,939.4L65.5,942.5L66.6,946.3L69.1,947.9ZM62.0,949.6L62.3,946.8L60.5,944.8L58.8,947.5L60.4,949.6L62.0,949.6ZM54.1,950.6L56.1,949.5L56.5,946.4L55.2,945.5L53.3,949.4L54.1,950.6ZM56.3,959.3L58.2,957.9L58.4,954.5L56.8,952.8L54.5,954.9L55.5,958.9L56.3,959.3ZM38.6,962.2L41.0,959.8L41.0,956.5L40.2,954.9L40.6,952.2L39.0,952.1L37.0,954.6L37.2,956.7L38.6,958.0L38.0,960.8L38.6,962.2ZM52.1,963.4L53.8,962.0L52.9,958.3L50.2,959.1L51.3,962.6L52.1,963.4ZM47.5,973.4L46.2,970.5L43.5,970.1L43.2,972.4L45.3,973.5L47.5,973.4ZM33.4,975.3L35.2,974.6L35.2,969.2L33.6,966.6L31.7,970.0L31.8,972.6L33.4,975.3ZM51.8,973.5L54.1,972.1L52.9,968.5L51.8,966.3L50.1,964.9L48.7,966.0L49.3,969.1L51.8,973.5ZM40.7,982.7L45.1,980.9L47.7,978.6L47.0,976.3L43.9,975.6L41.0,976.4L37.2,979.7L36.1,982.0L36.6,982.7L40.7,982.7ZM30.7,983.9L32.4,981.8L31.4,978.3L32.0,975.6L29.8,972.2L27.2,971.5L24.5,973.1L23.0,971.9L24.7,966.9L23.4,963.7L22.5,961.7L23.3,960.1L24.0,960.1L26.5,962.1L29.2,963.3L32.8,962.0L34.0,958.4L32.9,953.5L31.3,951.1L31.0,950.2L28.0,947.4L25.1,944.4L23.4,944.2L21.1,942.9L17.4,940.2L14.9,941.9L12.7,945.9L12.6,947.1L15.1,947.9L17.6,949.3L17.2,953.7L14.9,955.1L14.4,949.8L10.9,951.9L8.6,952.6L5.8,952.4L2.7,955.1L0.1,957.0L0.7,958.9L2.1,960.5L1.8,964.4L3.3,967.4L5.4,964.6L7.0,964.6L9.2,964.5L10.1,965.0L11.7,968.6L12.6,971.0L16.5,972.3L17.7,972.7L18.2,972.8L19.4,977.5L22.1,976.4L23.9,976.6L27.4,980.3L29.7,981.6L30.3,983.7L30.7,983.9ZM61.2,991.3L63.0,990.1L64.7,988.9L65.6,987.3L64.9,985.3L61.7,985.0L59.0,987.3L58.7,988.8L61.2,991.3Z"
+      }
+    ]
+  }
+}

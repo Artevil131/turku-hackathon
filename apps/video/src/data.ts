@@ -1,4 +1,4 @@
-import snapshot from "./data/snapshot.json";
+import snapshot from "./snapshot.json";
 
 // The server's numbers (scripts/snapshot.mjs) plus the experiment results the close quotes.
 export const S = snapshot;

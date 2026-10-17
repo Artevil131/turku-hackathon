@@ -1,12 +1,12 @@
 // Every number in the pitch video comes from here: the running AEI server read at two clock dates, a real
-// HL7 v2 message built from the dataset (aei.messages), and the county polygons. Writes src/data/snapshot.json.
+// HL7 v2 message built from the dataset (aei.messages), and the county polygons. Writes src/snapshot.json.
 //
 //     AEI_URL=http://localhost:8787 pnpm --filter @aei/video snapshot
 //
 // The server needs the full dataset and data/external/thl/regional.json; the polygons come from
 // `uv run python scripts/fetch_county_geometry.py`. The server's clock is put back afterwards.
 import { spawnSync } from "node:child_process";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -152,8 +152,7 @@ try {
     hl7,
     map: { width: W, height: H, counties },
   };
-  mkdirSync(join(HERE, "../src/data"), { recursive: true });
-  writeFileSync(join(HERE, "../src/data/snapshot.json"), `${JSON.stringify(snapshot, null, 1)}\n`);
+  writeFileSync(join(HERE, "../src/snapshot.json"), `${JSON.stringify(snapshot, null, 1)}\n`);
   console.log(
     `snapshot: ${dots.length} isolates, alert ${cluster.date} (${cluster.observed} vs ${cluster.expected}), ${regional.signals.length} county signals, ${counties.length} counties, ${hl7.length} HL7 segments`,
   );
