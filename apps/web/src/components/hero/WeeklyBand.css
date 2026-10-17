@@ -238,6 +238,57 @@
   stroke: var(--ink-2, #1d204e);
 }
 
+/* The chosen weeks: a soft shade under the data, thin grab edges and the dates over it. */
+.hs-range {
+  fill: var(--brand-accent, #635bf1);
+  opacity: 0.09;
+  pointer-events: none;
+}
+.hs-range-marks {
+  pointer-events: none;
+}
+.hs-range-edge {
+  fill: var(--brand-accent, #635bf1);
+  opacity: 0.75;
+}
+.hs-range-edge[data-clip] {
+  opacity: 0.3;
+}
+.hs-range-label-bg {
+  fill: var(--brand-accent, #635bf1);
+}
+.hs-range-label-text {
+  font-size: 9.5px;
+  font-weight: 600;
+  fill: #fff;
+}
+.hs-range-x {
+  pointer-events: auto;
+  cursor: pointer;
+  outline: none;
+}
+.hs-range-x-hit {
+  fill: transparent;
+}
+.hs-range-x-glyph {
+  stroke: #fff;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  opacity: 0.85;
+}
+.hs-range-x:hover .hs-range-x-glyph,
+.hs-range-x:focus-visible .hs-range-x-glyph {
+  opacity: 1;
+  stroke-width: 1.8;
+}
+.hs-range-x:focus-visible .hs-range-x-hit {
+  stroke: var(--brand-accent, #635bf1);
+  stroke-width: 1.5;
+}
+.hs-range-marks[data-live] .hs-range-edge {
+  opacity: 1;
+}
+
 /* Crosshair and the keyboard slider. */
 .hs-slider {
   fill: transparent;

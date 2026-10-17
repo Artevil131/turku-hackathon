@@ -6,12 +6,13 @@ import { createPortal } from "react-dom";
 import { type LiveAlerts, useAlertsSinceStart } from "../alertsSince.ts";
 import type { Connection } from "../live.ts";
 import { currentHospitalName, siteWards } from "../sites.ts";
-import { hashPage, sharedQuery, useHashParam } from "../url.ts";
+import { hashPage, patchHashParams, sharedQuery, useHashParam } from "../url.ts";
 import { EventsStrip } from "./EventsStrip.tsx";
 import { Gloss } from "./Gloss.tsx";
 import { compactDate, dayNumber, isoFromDay } from "./hero/geometry.ts";
 import { useLayers } from "./hero/layers.ts";
 import { unitOfIncident } from "./hero/selection.ts";
+import { type BandRange, parseRange, rangeSentence } from "./hero/useBandRange.ts";
 import { useWeekly } from "./hero/useWeekly.ts";
 import { WeeklyBand } from "./hero/WeeklyBand.tsx";
 import { Chevron, Pause, Play, StepDay, StepWeek } from "./Icons.tsx";
@@ -151,6 +152,11 @@ export function Timeline({
   const [inc, setInc] = useHashParam("inc");
   const [unit, setUnit] = useHashParam("unit");
   const focusUnit: WardCode | null = unit && isWardCode(unit) ? unit : null;
+  // The chosen weeks (`from`, `to`, both or neither) are what the research tools work on.
+  const [fromParam] = useHashParam("from");
+  const [toParam] = useHashParam("to");
+  const range = useMemo(() => parseRange(fromParam, toParam), [fromParam, toParam]);
+  const setRange = useCallback((r: BandRange | null) => patchHashParams({ from: r?.from ?? null, to: r?.to ?? null }), []);
   const selectedUnit = unitOfIncident(alerts, inc);
   const focusOn = (ward: WardCode | null) => {
     setUnit(ward);
@@ -242,6 +248,20 @@ export function Timeline({
   ) : (
     <h2 className="tl-title">{t(locale, "tlTitle", { hospital, n: siteWards().length })}</h2>
   );
+  const rangeLine = range ? (
+    <p className="tl-range">
+      <span className="num">{rangeSentence(locale, range)}</span>
+      <button
+        type="button"
+        className="tl-title-clear"
+        onClick={() => setRange(null)}
+        aria-label={t(locale, "tlRangeClear")}
+        title={t(locale, "tlRangeClear")}
+      >
+        ×
+      </button>
+    </p>
+  ) : null;
 
   // Keyboard shortcuts, like a video player.
   useEffect(() => {
@@ -448,6 +468,8 @@ export function Timeline({
         onSelect={setInc}
         onFocusUnit={focusOn}
         onClear={() => setInc(null)}
+        range={range}
+        onRange={setRange}
       />
     ) : (
       <div className="tl-band-empty" />
@@ -518,6 +540,7 @@ export function Timeline({
         {sheet ? (
           <Sheet locale={locale} onClose={() => setSheet(false)} still={reducedMotion}>
             {title}
+            {rangeLine}
             <div className="tl-sheet-read">
               <b className="tl-readout num">{readout}</b>
               {status}
@@ -569,6 +592,7 @@ export function Timeline({
     <div className="timeline" ref={rootRef} aria-busy={seekingTo ? true : undefined} data-running={running || undefined}>
       <div className="tl-left">
         {title}
+        {rangeLine}
         <div className="tl-ctl">
           {transport(false)}
           {ctlGroups}
@@ -579,6 +603,7 @@ export function Timeline({
             <p>{note}</p>
             {arrivals ? <p>{arrivals}</p> : null}
             <p>{t(locale, "tlShortcuts")}</p>
+            <p>{t(locale, "tlRangeHint")}</p>
           </InfoPopover>
           {status}
           {collapsible ? (
