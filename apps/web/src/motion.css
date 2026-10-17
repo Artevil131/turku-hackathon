@@ -1,0 +1,136 @@
+/* One place for how things arrive: a short fade and rise, the same curve everywhere. Durations come from the
+   --mo-* tokens in styles.css, which are 0 (and the animations near-instant) under prefers-reduced-motion. */
+
+@keyframes appear {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+@keyframes appear-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes appear-pop {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.97);
+  }
+}
+@keyframes appear-backdrop {
+  from {
+    opacity: 0;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Hover, focus and press glide instead of jumping. :where() keeps the specificity at zero, so a component's own transition wins. */
+:where(button, a, select, input, textarea, summary, [role="button"], [role="menuitem"], [role="tab"]) {
+  transition:
+    background-color var(--mo-1) var(--mo-ease),
+    border-color var(--mo-1) var(--mo-ease),
+    color var(--mo-1) var(--mo-ease),
+    box-shadow var(--mo-2) var(--mo-ease),
+    opacity var(--mo-1) var(--mo-ease),
+    filter var(--mo-1) var(--mo-ease);
+}
+
+/* A page fades in when you move to it (opacity only: a transform here would trap fixed-position children). */
+.app-main > .page > * {
+  animation: appear-fade var(--mo-3) var(--mo-ease) both;
+}
+
+/* The start page: sections rise one after the other, cards within a section follow. */
+.start-heading,
+.start-main > section {
+  animation: appear var(--mo-3) var(--mo-ease) both;
+}
+.start-main > section:nth-of-type(1) {
+  animation-delay: 60ms;
+}
+.start-main > section:nth-of-type(2) {
+  animation-delay: 120ms;
+}
+.start-main > section:nth-of-type(3) {
+  animation-delay: 180ms;
+}
+.start-card {
+  animation: appear var(--mo-3) var(--mo-ease) both;
+}
+.start-card:nth-child(2) {
+  animation-delay: 40ms;
+}
+.start-card:nth-child(3) {
+  animation-delay: 80ms;
+}
+.start-card:nth-child(4) {
+  animation-delay: 120ms;
+}
+.start-card:nth-child(n + 5) {
+  animation-delay: 160ms;
+}
+
+/* The research board: a window's frame fades in when it opens, the buttons on the board float in. */
+.ws-frame {
+  animation: appear var(--mo-3) var(--mo-ease) both;
+}
+.ws-add-float,
+.ws-toolbar,
+.ws-dock,
+.ws-traydock {
+  animation: appear-fade var(--mo-3) var(--mo-ease) both;
+}
+.ws-plus {
+  animation: appear-pop var(--mo-2) var(--mo-ease) both;
+}
+.ws-picker {
+  transform-origin: top left;
+  animation: appear-pop var(--mo-2) var(--mo-ease) both;
+}
+
+/* Menus, popovers and flyouts. */
+.sb-pop:popover-open,
+.ws-pop,
+.tl-menu,
+.tl-pop,
+.q-pop,
+.ws-rail-menu,
+.feed-pop {
+  animation: appear-pop var(--mo-2) var(--mo-ease) both;
+}
+
+/* Dialogs and sheets: the scrim fades, the panel rises. */
+dialog[open] {
+  animation: appear-pop var(--mo-2) var(--mo-ease) both;
+}
+dialog[open]::backdrop {
+  animation: appear-backdrop var(--mo-2) var(--mo-ease) both;
+}
+.tl-backdrop {
+  animation: appear-backdrop var(--mo-2) var(--mo-ease) both;
+}
+.tl-sheet {
+  animation: appear var(--mo-3) var(--mo-ease) both;
+}
+
+/* Notices. */
+.toast,
+.banner {
+  animation: appear var(--mo-3) var(--mo-ease) both;
+}
+
+/* Lists that fill in: rows fade in as they arrive. */
+.feed-list > li,
+.cl-row {
+  animation: appear-fade var(--mo-2) var(--mo-ease) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
