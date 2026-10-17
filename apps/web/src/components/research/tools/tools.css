@@ -1,0 +1,203 @@
+/* The Tools window (D-069). Tokens only; the workspace supplies the frame. */
+.tl {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pad);
+  padding: var(--pad);
+  color: var(--ink);
+  font-size: var(--t-s);
+}
+.tl-h {
+  margin: 0 0 var(--gap);
+  font: 600 var(--t-m) var(--font-display);
+}
+.tl-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap);
+  margin-bottom: var(--gap);
+}
+.tl-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 120px;
+  flex: 1 1 120px;
+}
+.tl-field > span {
+  font-size: var(--t-xs);
+  color: var(--ink-3);
+}
+.tl-field select,
+.tl-field input {
+  height: var(--control-h);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control);
+  background: var(--glass-3);
+  color: var(--ink);
+  padding: 0 8px;
+  font: inherit;
+}
+.tl-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: var(--gap);
+}
+.tl-warn {
+  margin: 0;
+  color: var(--st-alert);
+}
+.tl-empty,
+.tl-hint,
+.tl-slice,
+.tl-method {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--t-xs);
+}
+.tl-results {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+.tl-cell {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--glass-1);
+  padding: var(--pad);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  animation: tl-in var(--mo-2, 200ms) var(--mo-ease, ease-out);
+}
+@keyframes tl-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tl-cell {
+    animation: none;
+  }
+}
+.tl-cell-head {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--gap);
+}
+.tl-cell-head h3,
+.tl-tool h3 {
+  margin: 0;
+  font: 600 var(--t-m) var(--font-ui);
+}
+.tl-x {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--ink-3);
+  font-size: 18px;
+  cursor: pointer;
+}
+.tl-x:hover {
+  background: var(--live-soft);
+  color: var(--ink);
+}
+.tl-nums {
+  margin: 0;
+  display: grid;
+  gap: 4px;
+}
+.tl-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--gap);
+  align-items: baseline;
+}
+.tl-row dt {
+  color: var(--ink-2);
+}
+.tl-row dd {
+  margin: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.tl-ci {
+  color: var(--ink-3);
+  font-size: var(--t-xs);
+}
+.tl-words {
+  margin: 0;
+}
+.tl-badge {
+  margin: 0;
+  padding: 2px 8px;
+  align-self: flex-start;
+  border-radius: var(--radius-control);
+  background: var(--st-watch-bg);
+  color: var(--st-watch);
+  font-size: var(--t-xs);
+}
+.tl-cell-foot {
+  display: flex;
+  gap: var(--gap);
+  flex-wrap: wrap;
+}
+.tl-tool {
+  border-top: 1px solid var(--line);
+  padding: var(--pad) 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+.tl-run {
+  align-self: flex-start;
+}
+.tl-fig {
+  max-width: 100%;
+  height: auto;
+}
+.tl-grid {
+  stroke: var(--line);
+}
+.tl-tick {
+  fill: var(--ink-3);
+  font-size: 10px;
+}
+.tl-band {
+  fill: var(--live-soft);
+}
+.tl-line {
+  stroke: var(--live);
+  stroke-width: 2;
+}
+.tl-line-alt {
+  stroke: var(--ink-2);
+  stroke-dasharray: 4 3;
+}
+.tl-dot {
+  fill: var(--live);
+}
+.tl-mean {
+  stroke: var(--ink-3);
+  stroke-dasharray: 2 3;
+}
+.tl-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.tl-table th,
+.tl-table td {
+  text-align: left;
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--line);
+}
+.tl-table th {
+  color: var(--ink-3);
+  font-weight: 500;
+  font-size: var(--t-xs);
+}

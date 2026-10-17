@@ -18,6 +18,7 @@ import { projectsFi } from "./surfaces/projects.ts";
 import { qualityFi } from "./surfaces/quality.ts";
 import { sitesFi } from "./surfaces/sites.ts";
 import { timelineFi } from "./surfaces/timeline.ts";
+import { toolsFi } from "./surfaces/tools.ts";
 
 export const fi: Record<keyof typeof en, string> = {
   askSubmit: "Kysy",
@@ -262,6 +263,7 @@ export const fi: Record<keyof typeof en, string> = {
   ...doctorFi,
   ...qualityFi,
   ...mathFi,
+  ...toolsFi,
   ...methodFi,
   ...connectFi,
   ...sitesFi,
