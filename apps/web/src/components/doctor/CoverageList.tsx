@@ -2,7 +2,7 @@ import type { CoverageResponse } from "@aei/contract";
 import { antibioticName, type Locale, specimenName, t, wardName } from "@aei/i18n";
 import { cloneElement, isValidElement, type ReactNode, useMemo, useRef } from "react";
 import "./CoverageList.css";
-import { BAR, type DoctorFilters, dmy, num, pct } from "./filters.ts";
+import { BAR, barOf, type DoctorFilters, dmy, num, pct } from "./filters.ts";
 import { InfoIcon, Popover } from "./Popover.tsx";
 import { PrintSheet } from "./PrintSheet.tsx";
 import { type Item, STANDING } from "./reason.ts";
@@ -57,7 +57,7 @@ export function itemsOf(data: CoverageResponse, locale: Locale): { singles: Item
 /** The forest plot: one row per antibiotic, its 95 % interval against the bar line, one glance per row. */
 export function CoverageList({ locale, filters, asOf, status, data, signals, selected, onSelect, onRetry, source }: Props) {
   const headRef = useRef<HTMLElement>(null);
-  const bar = BAR[filters.sev];
+  const bar = barOf(data, filters);
   const unit = wardName(locale, filters.unit);
   const site = specimenName(locale, filters.site);
   const cov = data?.coverage;
@@ -188,7 +188,10 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
             <>
               <p>{t(locale, "drForestInfo", { period: t(locale, filters.period === 365 ? "drPeriodYear" : "drPeriodMonth") })}</p>
               {ready && filters.sex !== "any" && !cov.sexApplied ? <p>{t(locale, "drSexDropped")}</p> : null}
-              <p>{t(locale, "drFoot", { mild: BAR.mild, severe: BAR.severe })}</p>
+              {ready && filters.onset && !cov.onsetApplied ? <p>{t(locale, "drOnsetDropped", { bar })}</p> : null}
+              <p>
+                {t(locale, "drFoot", { mild: BAR.mild, severe: BAR.severe })} {t(locale, "drFootOnset", { bar: BAR.severe })}
+              </p>
             </>
           }
         >

@@ -1,6 +1,6 @@
 import type { CoverageResponse } from "@aei/contract";
 import { type Locale, type MessageKey, specimenName, t } from "@aei/i18n";
-import { BAR, type DoctorFilters, dmy, num, pct, type Row, rowN } from "./filters.ts";
+import { barOf, type DoctorFilters, dmy, num, pct, type Row, rowN } from "./filters.ts";
 
 /** What the coverage list shows for each standing: glyph, one word, and the full phrase for `title`. */
 export const STANDING: Record<Row["standing"], { glyph: string; short: MessageKey; long: MessageKey }> = {
@@ -20,7 +20,7 @@ export const levelKey = (level: keyof typeof LEVEL_KEYS): MessageKey => LEVEL_KE
 
 /** The sentence that says why a row stands where it does ("clears the 80 % bar on …", "moved down because …"). */
 export function reasonOf(locale: Locale, row: Row, data: CoverageResponse, filters: DoctorFilters): string {
-  const bar = BAR[filters.sev];
+  const bar = barOf(data, filters);
   const lo = row.interval ? pct(row.interval[0]) : 0;
   const hi = row.interval ? pct(row.interval[1]) : 0;
   if (row.standing === "clears") {

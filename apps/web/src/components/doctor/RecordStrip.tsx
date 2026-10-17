@@ -2,7 +2,7 @@ import type { Severity } from "@aei/contract";
 import type { Sex, Specimen, WardCode } from "@aei/domain";
 import { type Locale, type MessageKey, specimenName, t, wardName } from "@aei/i18n";
 import { type ReactNode, useState } from "react";
-import { AGE_GROUPS, AGE_KEYS, type AgeGroup, type DoctorFilters, type Period, SITES, sexWord, unitGroups } from "./filters.ts";
+import { barOf, type DoctorFilters, type Period, SITES, sexWord, unitGroups } from "./filters.ts";
 import { useMedia } from "./useMedia.ts";
 import "./RecordStrip.css";
 
@@ -51,7 +51,6 @@ function Choices<T extends string | number>(props: {
 /** The patient record as a row of one-click filters, each with its default already chosen. The doctor types nothing. */
 export function RecordStrip({ locale, filters, onChange }: Props) {
   const tr = (key: MessageKey) => t(locale, key);
-  const notApplied = tr("drNotApplied");
   const wide = useMedia("(min-width: 960px)");
   const [more, setMore] = useState(false);
   const change = onChange;
@@ -60,6 +59,7 @@ export function RecordStrip({ locale, filters, onChange }: Props) {
     specimenName(locale, filters.site),
     sexWord(locale, filters.sex),
     tr(filters.sev === "mild" ? "drSevMildShort" : "drSevSevereShort"),
+    filters.onset ? tr("drOnsetShort") : null,
     tr(filters.period === 365 ? "drPeriodYear" : "drPeriodMonth"),
   ]
     .filter(Boolean)
@@ -112,8 +112,8 @@ export function RecordStrip({ locale, filters, onChange }: Props) {
     <Group label={tr("drSeverity")} inline>
       <Choices<Severity>
         options={[
-          ["mild", tr("drSevMild")],
-          ["severe", tr("drSevSevere")],
+          ["mild", t(locale, "drSevMild", { bar: barOf(null, { sev: "mild", onset: filters.onset }) })],
+          ["severe", t(locale, "drSevSevere", { bar: barOf(null, { sev: "severe", onset: filters.onset }) })],
         ]}
         value={filters.sev}
         onPick={(v) => onChange({ sev: v })}
@@ -132,31 +132,13 @@ export function RecordStrip({ locale, filters, onChange }: Props) {
       />
     </Group>
   );
-  const age = (
-    <Group label={tr("drAge")} tag={notApplied}>
-      <Choices<AgeGroup>
-        disabled
-        options={AGE_GROUPS.map(
-          (a) =>
-            [
-              a,
-              wide && a === "any" ? tr("drAgeLabel") : tr(AGE_KEYS[a]),
-              a === "any" ? `${tr("drAge")}: ${tr(AGE_KEYS.any)}` : undefined,
-            ] as const,
-        )}
-        value={filters.age}
-        onPick={(v) => onChange({ age: v })}
-      />
-    </Group>
-  );
   const onset = (
-    <Group label={tr("drOnset")} tag={notApplied}>
+    <Group label={tr("drOnset")}>
       <button
         type="button"
         className="rs-choice rs-toggle"
-        title={tr("drOnset")}
-        disabled
-        aria-pressed={false}
+        title={t(locale, "drOnsetTitle", { bar: barOf(null, { sev: "severe", onset: true }) })}
+        aria-pressed={filters.onset}
         onClick={() => change({ onset: !filters.onset })}
       >
         {wide ? tr("drOnsetShort") : tr("drOnsetPhone")}
@@ -187,7 +169,6 @@ export function RecordStrip({ locale, filters, onChange }: Props) {
           {site}
           {sex}
           {severity}
-          {age}
           {onset}
           {period}
         </div>
@@ -210,7 +191,6 @@ export function RecordStrip({ locale, filters, onChange }: Props) {
           {site}
           {sex}
           {severity}
-          {age}
           {period}
           {onset}
           <button

@@ -10,7 +10,7 @@ import { DataQuality } from "../DataQuality.tsx";
 import { CoverageList, itemsOf, type ListStatus } from "./CoverageList.tsx";
 import { Details } from "./Details.tsx";
 import "./DoctorPage.css";
-import { type DoctorFilters, filtersFromUrl, filtersToParams, storeUnit } from "./filters.ts";
+import { coverageQuery, type DoctorFilters, filtersFromUrl, filtersToParams, storeUnit } from "./filters.ts";
 import { RecordStrip } from "./RecordStrip.tsx";
 import { unitSignals } from "./signals.ts";
 import { UnitContext } from "./UnitContext.tsx";
@@ -34,8 +34,8 @@ export interface DoctorPageProps {
   onOpenSignals: (ward: WardCode) => void;
 }
 
-/** The part of the filters the coverage API understands; age group and onset are shown but not sent. */
-const queryKey = (f: DoctorFilters) => [f.unit, f.site, f.sex, f.sev, f.period].join("|");
+/** The part of the filters the coverage API understands. */
+const queryKey = (f: DoctorFilters) => [f.unit, f.site, f.sex, f.sev, f.period, f.onset].join("|");
 
 export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetryAlerts, onOpenSignals }: DoctorPageProps) {
   const [filters, setFilters] = useState<DoctorFilters>(() => filtersFromUrl(hashParams()));
@@ -67,13 +67,7 @@ export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetry
     let stale = false;
     setStatus("loading");
     client
-      .coverage({
-        ward: filters.unit,
-        specimen: filters.site,
-        severity: filters.sev,
-        windowDays: filters.period,
-        ...(filters.sex === "any" ? {} : { sex: filters.sex }),
-      })
+      .coverage(coverageQuery(filters))
       .then((response) => {
         if (stale) return;
         setData({ key, response });

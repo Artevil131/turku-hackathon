@@ -435,7 +435,7 @@ async function main() {
         if (initial.unavailableInSummary) reasons.push("unavailable filters appear active");
         await evaluate(cdp, `document.querySelector('.rs-sumrow')?.click()`);
         const unavailable = await evaluate(cdp, `document.querySelectorAll('.rs-choice:disabled').length`);
-        if (unavailable !== 6) reasons.push(`expected 6 unavailable controls, saw ${unavailable}`);
+        if (unavailable !== 0) reasons.push(`expected no disabled filter controls, saw ${unavailable}`);
         const shortcut = await evaluate(
           cdp,
           `(() => { const b = document.querySelector('.rs-quick'); const r = b?.getBoundingClientRect(); if (!b || r.height < 44) return false; b.click(); return true; })()`,

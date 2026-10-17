@@ -5,7 +5,7 @@ import { type Locale, specimenName, t, wardName } from "@aei/i18n";
 import { AlertExplanation } from "../AlertExplanation.tsx";
 import { AlertTri } from "../Icons.tsx";
 import type { ListStatus } from "./CoverageList.tsx";
-import { certaintyOf, type DoctorFilters, dmy, num, pct } from "./filters.ts";
+import { barOf, certaintyOf, type DoctorFilters, dmy, num, pct } from "./filters.ts";
 import { Popover } from "./Popover.tsx";
 import { signalDate, type UnitSignal } from "./signals.ts";
 import "./UnitContext.css";
@@ -29,7 +29,8 @@ interface Props {
 const STEPS: readonly Level[] = ["unit", "ward type", "hospital"];
 
 /** The level ladder (D-033): the step the figures come from is filled with its n; earlier steps had under 30, later ones were not needed. */
-function Ladder({ locale, filters, cov }: { locale: Locale; filters: DoctorFilters; cov: CoverageResponse["coverage"] }) {
+function Ladder({ locale, filters, data }: { locale: Locale; filters: DoctorFilters; data: CoverageResponse }) {
+  const cov = data.coverage;
   const at = STEPS.indexOf(cov.level);
   return (
     <ol className="uc-ladder">
@@ -49,6 +50,9 @@ function Ladder({ locale, filters, cov }: { locale: Locale; filters: DoctorFilte
         );
       })}
       {filters.sex !== "any" && !cov.sexApplied ? <li className="uc-chip">{t(locale, "drSexDroppedChip")}</li> : null}
+      {filters.onset && !cov.onsetApplied ? (
+        <li className="uc-chip">{t(locale, "drOnsetDroppedChip", { bar: barOf(data, filters) })}</li>
+      ) : null}
     </ol>
   );
 }
@@ -82,8 +86,8 @@ export function UnitContext({
           <span>{t(locale, "drLadder")}</span>
           {date && cov ? <span className="num uc-date">{dmy(date)}</span> : null}
         </h3>
-        {orgState === "ready" && cov ? (
-          <Ladder locale={locale} filters={filters} cov={cov} />
+        {orgState === "ready" && data ? (
+          <Ladder locale={locale} filters={filters} data={data} />
         ) : orgState === "loading" ? (
           <Skeleton text={t(locale, "drLoading", { unit })} />
         ) : (

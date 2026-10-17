@@ -1,39 +1,38 @@
-import { type CoverageResponse, type Level, type Severity, THRESHOLDS } from "@aei/contract";
+import { barFor, type CoverageQuery, type CoverageResponse, type Level, type Severity, THRESHOLDS } from "@aei/contract";
 import { isWardCode, type Sex, type Specimen, WARDS, type WardCode } from "@aei/domain";
 import { type Locale, type MessageKey, t } from "@aei/i18n";
 
 // The doctor's one-click filters, their defaults, and how they travel in the URL
-// (`#doctor?unit=URO&site=urine&sex=F&sev=severe&period=28`) and in localStorage (`aei.unit`).
+// (`#doctor?unit=URO&site=urine&sex=F&sev=severe&onset=hospital&period=28`) and in localStorage (`aei.unit`).
 
-export const AGE_GROUPS = ["any", "child", "adult", "older", "veryold"] as const;
-export type AgeGroup = (typeof AGE_GROUPS)[number];
 export type Period = 365 | 28;
 
 export interface DoctorFilters {
   unit: WardCode;
   site: Specimen;
   sex: Sex | "any";
-  /** Disabled, not applied: the coverage API has no age filter. */
-  age: AgeGroup;
-  /** Disabled, not applied: the API has no onset filter and the bar it implies is undecided (ENGINE 2.6). */
+  /** Hospital onset, inpatient day 3 or later (D-049): sends `onset: "hospital"`, which also sets the 90 % bar. Off sends nothing. */
   onset: boolean;
   sev: Severity;
   period: Period;
 }
 
 export const DEFAULT_UNIT: WardCode = "MED-A";
-export const DEFAULTS: Omit<DoctorFilters, "unit"> = { site: "urine", sex: "any", age: "any", onset: false, sev: "mild", period: 365 };
+export const DEFAULTS: Omit<DoctorFilters, "unit"> = { site: "urine", sex: "any", onset: false, sev: "mild", period: 365 };
 export const SITES: readonly Specimen[] = ["urine", "blood", "wound"];
 /** The bar a severity is judged against, in percent (D-026, D-027), from the contract. */
 export const BAR: Record<Severity, number> = { mild: THRESHOLDS.mild * 100, severe: THRESHOLDS.severe * 100 };
 
-export const AGE_KEYS: Record<AgeGroup, MessageKey> = {
-  any: "drAgeAny",
-  child: "drAgeChild",
-  adult: "drAgeAdult",
-  older: "drAgeOlder",
-  veryold: "drAgeVeryOld",
-};
+/**
+ * The bar the list is judged against, in percent: the response's own `bar` when it gives one (D-049: 90 for
+ * hospital onset whatever the severity), else what `barFor` gives for the response's query, else for the filters.
+ */
+export function barOf(data: CoverageResponse | null, filters: Pick<DoctorFilters, "sev" | "onset">): number {
+  const fraction = data
+    ? (data.bar ?? barFor(data.coverage.query, data.severity))
+    : barFor({ onset: filters.onset ? "hospital" : "any" }, filters.sev);
+  return Math.round(fraction * 100);
+}
 
 const UNIT_KEY = "aei.unit";
 
@@ -54,6 +53,18 @@ export function storeUnit(unit: WardCode): void {
   }
 }
 
+/** What the coverage API is asked for these filters: sex and onset only when set (D-049: hospital onset or nothing). */
+export function coverageQuery(f: DoctorFilters): CoverageQuery {
+  return {
+    ward: f.unit,
+    specimen: f.site,
+    severity: f.sev,
+    windowDays: f.period,
+    ...(f.sex === "any" ? {} : { sex: f.sex }),
+    ...(f.onset ? { onset: "hospital" as const } : {}),
+  };
+}
+
 /** URL first, then the remembered unit, then the default. */
 export function filtersFromUrl(params: URLSearchParams): DoctorFilters {
   const unit = params.get("unit");
@@ -64,8 +75,7 @@ export function filtersFromUrl(params: URLSearchParams): DoctorFilters {
     unit: unit && isWardCode(unit) ? unit : (readStoredUnit() ?? DEFAULT_UNIT),
     site: SITES.find((s) => s === site) ?? DEFAULTS.site,
     sex: sex === "F" || sex === "M" ? sex : DEFAULTS.sex,
-    age: DEFAULTS.age,
-    onset: DEFAULTS.onset,
+    onset: params.get("onset") === "hospital",
     sev: sev === "severe" ? "severe" : "mild",
     period: params.get("period") === "28" ? 28 : 365,
   };
@@ -78,7 +88,7 @@ export function filtersToParams(f: DoctorFilters): Record<string, string | null>
     site: f.site === DEFAULTS.site ? null : f.site,
     sex: f.sex === "any" ? null : f.sex,
     age: null,
-    onset: null,
+    onset: f.onset ? "hospital" : null,
     sev: f.sev === "mild" ? null : f.sev,
     period: f.period === 365 ? null : String(f.period),
   };

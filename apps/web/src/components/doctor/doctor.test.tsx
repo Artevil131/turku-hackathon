@@ -4,8 +4,9 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { coverage, suggest, suggestCombinations } from "../../../../../libs/utils/coverage/src/index.ts";
 import { CoverageList, itemsOf } from "./CoverageList.tsx";
-import { DEFAULTS, filtersFromUrl, filtersToParams } from "./filters.ts";
+import { barOf, coverageQuery, DEFAULTS, filtersFromUrl, filtersToParams } from "./filters.ts";
 import { RecordStrip } from "./RecordStrip.tsx";
+import { UnitContext } from "./UnitContext.tsx";
 
 const filters = { ...DEFAULTS, unit: "URO" as const };
 const record = (i: number, patch: Partial<IsolateRecord> = {}): IsolateRecord => ({
@@ -112,25 +113,55 @@ describe("doctor list disclosure", () => {
   });
 });
 
-describe("available filters", () => {
-  it("discards legacy unavailable URL selections and never writes them back", () => {
-    const parsed = filtersFromUrl(new URLSearchParams("age=older&onset=1"));
-    expect(parsed.age).toBe("any");
-    expect(parsed.onset).toBe(false);
-    expect(filtersToParams({ ...filters, age: "older", onset: true })).toMatchObject({ age: null, onset: null });
+describe("onset (D-049)", () => {
+  it("travels in the URL as onset=hospital and in the query only when on", () => {
+    expect(filtersFromUrl(new URLSearchParams("onset=hospital")).onset).toBe(true);
+    expect(filtersFromUrl(new URLSearchParams("onset=1")).onset).toBe(false);
+    expect(filtersToParams({ ...filters, onset: true }).onset).toBe("hospital");
+    expect(filtersToParams(filters)).toMatchObject({ onset: null, age: null });
+    expect(coverageQuery({ ...filters, onset: true })).toMatchObject({ onset: "hospital" });
+    expect("onset" in coverageQuery(filters)).toBe(false);
   });
+  it("labels the list with the bar the response used", () => {
+    const data = response(Array.from({ length: 40 }, (_, i) => record(i)));
+    expect(barOf(data, filters)).toBe(80);
+    const hospital = { ...data, bar: 0.9 };
+    expect(barOf(hospital, { ...filters, onset: true })).toBe(90);
+    expect(list(hospital)).toContain("raja 90 %");
+    expect(barOf(null, { sev: "mild", onset: true })).toBe(90);
+  });
+  it("chips the ladder when the onset filter was dropped", () => {
+    const data = response(Array.from({ length: 40 }, (_, i) => record(i)));
+    const dropped = { ...data, bar: 0.9, coverage: { ...data.coverage, onsetApplied: false } };
+    const html = renderToStaticMarkup(
+      <UnitContext
+        client={{} as never}
+        locale="en"
+        filters={{ ...filters, onset: true }}
+        asOf={data.asOf}
+        data={dropped}
+        signals={[]}
+        status="ready"
+        onRetry={() => {}}
+        onOpenSignals={() => {}}
+      />,
+    );
+    expect(html).toContain("onset filter dropped to keep the unit&#x27;s data; bar still 90 %");
+  });
+});
+
+describe("available filters", () => {
   it("keeps the severe blood shortcut visible outside collapsed phone filters", () => {
     vi.stubGlobal("window", { matchMedia: () => ({ matches: false }) });
-    const html = renderToStaticMarkup(<RecordStrip locale="fi" filters={{ ...filters, age: "older", onset: true }} onChange={() => {}} />);
+    const html = renderToStaticMarkup(<RecordStrip locale="fi" filters={filters} onChange={() => {}} />);
     expect(html).toContain("Vaikea veri-infektio");
-    expect(html).not.toContain("65+");
-    expect(html).not.toContain("Hoitopäivä 3 tai myöhemmin");
   });
-  it("disables and labels every unavailable control on desktop", () => {
+  it("offers onset live and no control that is not applied", () => {
     vi.stubGlobal("window", { matchMedia: () => ({ matches: true }) });
-    const html = renderToStaticMarkup(<RecordStrip locale="en" filters={{ ...filters, age: "older", onset: true }} onChange={() => {}} />);
-    expect(html.match(/disabled=""/g)).toHaveLength(6);
-    expect(html.match(/not applied yet/g)).toHaveLength(2);
-    expect(html).not.toMatch(/aria-pressed="true"[^>]*>65\+/);
+    const html = renderToStaticMarkup(<RecordStrip locale="en" filters={{ ...filters, onset: true }} onChange={() => {}} />);
+    expect(html).not.toContain("disabled");
+    expect(html).not.toContain("not applied");
+    expect(html).toMatch(/aria-pressed="true"[^>]*>Day 3\+/);
+    expect(html).toContain("mild 90");
   });
 });

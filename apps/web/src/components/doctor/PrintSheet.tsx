@@ -1,7 +1,7 @@
 import type { CoverageResponse } from "@aei/contract";
 import { shortOrganism } from "@aei/domain";
 import { type Locale, specimenName, t, wardName } from "@aei/i18n";
-import { AGE_KEYS, BAR, certaintyOf, type DoctorFilters, dmy, num, pct, sexWord } from "./filters.ts";
+import { BAR, barOf, certaintyOf, type DoctorFilters, dmy, num, pct, sexWord } from "./filters.ts";
 import { flagsOf, type Item, levelKey, reasonOf, STANDING } from "./reason.ts";
 import { signalDate, type UnitSignal } from "./signals.ts";
 
@@ -21,14 +21,12 @@ export function PrintSheet({ locale, filters, data, asOf, signals, singles, pair
   const level = certaintyOf(cov.level);
   const unit = wardName(locale, filters.unit);
   const site = specimenName(locale, filters.site);
-  const ageChosen = filters.age !== "any";
   const record = [
     unit,
     site,
     filters.sex === "any" ? `${t(locale, "drSex").toLowerCase()} ${sexWord(locale, "any")}` : sexWord(locale, filters.sex),
-    ageChosen ? `${t(locale, "drPrintAge", { age: t(locale, AGE_KEYS[filters.age]) })} (${t(locale, "drNotApplied")})` : null,
-    filters.onset ? `${t(locale, "drOnset")} (${t(locale, "drNotApplied")})` : null,
-    t(locale, filters.sev === "mild" ? "drSevMild" : "drSevSevere"),
+    filters.onset ? t(locale, "drOnset") : null,
+    `${t(locale, filters.sev === "mild" ? "drSevMildShort" : "drSevSevereShort")}, ${t(locale, "drBarName", { bar: barOf(data, filters) })}`,
     t(locale, filters.period === 365 ? "drPeriodYear" : "drPeriodMonth"),
     t(locale, "drPrintAsOf", { date: dmy(data.asOf) }),
   ]
@@ -90,9 +88,7 @@ export function PrintSheet({ locale, filters, data, asOf, signals, singles, pair
         })}
       </p>
       {filters.sex !== "any" && !cov.sexApplied ? <p>{t(locale, "drSexDropped")}</p> : null}
-      {ageChosen || filters.onset ? (
-        <p>{t(locale, ageChosen && filters.onset ? "drNotAppliedBoth" : ageChosen ? "drNotAppliedAge" : "drNotAppliedDay3")}</p>
-      ) : null}
+      {filters.onset && !cov.onsetApplied ? <p>{t(locale, "drOnsetDropped", { bar: barOf(data, filters) })}</p> : null}
       {signals.slice(0, 2).map((s) => (
         <p key={s.alert.id}>
           {s.feeder
@@ -105,7 +101,9 @@ export function PrintSheet({ locale, filters, data, asOf, signals, singles, pair
         {pairs.length > 0 ? <li className="pr-div">{t(locale, "drTwoTogether")}</li> : null}
         {pairs.map(line)}
       </ul>
-      <p className="pr-foot">{t(locale, "drFoot", { mild: BAR.mild, severe: BAR.severe })}</p>
+      <p className="pr-foot">
+        {t(locale, "drFoot", { mild: BAR.mild, severe: BAR.severe })} {t(locale, "drFootOnset", { bar: BAR.severe })}
+      </p>
       {asOf ? <p className="pr-foot">{t(locale, "drPrinted", { date: dmy(asOf) })}</p> : null}
     </div>
   );
