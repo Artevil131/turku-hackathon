@@ -1,0 +1,227 @@
+/* Right column: level ladder, likely organisms, unit signals. */
+.uc-block {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: none;
+}
+
+.uc-title {
+  margin: 0;
+}
+
+.uc-date {
+  font-weight: 400;
+}
+
+.uc-open {
+  margin-left: auto;
+  font-size: var(--d-xs);
+}
+
+.uc-sub {
+  margin: 0;
+  color: var(--d-ink-3);
+  font-size: var(--d-xs);
+}
+
+/* Ladder: unit -> ward type -> hospital. */
+.uc-ladder {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.uc-ladder li:not(.uc-chip) {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px 8px;
+  border: 1px solid var(--d-line-strong);
+  border-radius: 6px;
+  font-size: var(--d-xs);
+  min-width: 0;
+  position: relative;
+}
+
+.uc-ladder li[data-state="here"] {
+  background: var(--d-acc);
+  border-color: var(--d-acc);
+  color: var(--d-acc-ink);
+}
+
+.uc-ladder li[data-state="under"] {
+  background: var(--d-panel);
+  color: var(--d-ink-2);
+}
+
+.uc-ladder li[data-state="later"] {
+  border-style: dashed;
+  border-color: var(--d-line);
+  color: var(--d-ink-3);
+}
+
+.uc-step-name {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.uc-step-n {
+  font-size: var(--d-s);
+  font-weight: 600;
+}
+
+.uc-step-from {
+  font-size: var(--d-xs);
+}
+
+.uc-ladder .uc-chip {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+
+.uc-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  padding: 2px 8px;
+  border: 1px solid var(--d-line-strong);
+  border-radius: 999px;
+  background: var(--d-panel);
+  color: var(--d-ink-2);
+  font-size: var(--d-xs);
+}
+
+/* Organisms: one stacked bar, seven legend rows of 20 px. */
+.uc-stack {
+  display: flex;
+  height: 12px;
+  border-radius: 3px;
+  overflow: hidden;
+  gap: 1px;
+  background: var(--d-panel);
+}
+
+.uc-stack i {
+  display: block;
+  height: 100%;
+  min-width: 1px;
+}
+
+.uc-orgs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.uc-orgs li {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  height: 20px;
+  font-size: var(--d-s);
+}
+
+.uc-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  border: 1px solid color-mix(in srgb, var(--d-ink-2) 30%, transparent);
+}
+
+.uc-org-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.uc-org-n {
+  color: var(--d-ink-2);
+  white-space: nowrap;
+}
+
+/* Signal chips. */
+.uc-signals {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-height: 96px;
+  overflow-y: auto;
+}
+
+.uc-signals li {
+  display: contents;
+}
+
+.uc-sigchip {
+  cursor: pointer;
+  min-height: 24px;
+  border-color: var(--d-alert);
+}
+
+.uc-sigchip svg {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  color: var(--d-alert);
+}
+
+.uc-sigchip:hover,
+.uc-sigchip[aria-expanded="true"] {
+  background: var(--d-acc-soft);
+}
+
+.uc-sigchip:focus-visible {
+  outline: 2px solid var(--d-acc);
+  outline-offset: 2px;
+}
+
+.uc-sig-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 14rem;
+}
+
+.uc-sig-date {
+  color: var(--d-ink-3);
+  white-space: nowrap;
+}
+
+.uc-skel ul {
+  list-style: none;
+  margin: 0 0 4px;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.uc-skel li {
+  height: 14px;
+  border-radius: 4px;
+  background: var(--d-line);
+}
+
+.uc-fail {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+@media print {
+  .uc-block {
+    display: none;
+  }
+}

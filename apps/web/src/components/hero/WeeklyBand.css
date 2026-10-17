@@ -1,0 +1,557 @@
+/* The hero band: weekly stream and unit lanes. Phenotypes are told apart by pattern first, colour second. */
+
+.hs {
+  --ph-esbl: var(--brand-accent, #635bf1);
+  --ph-mrsa: var(--ink-2, #1d204e);
+  --ph-vre: var(--st-watch, #94590a);
+  --ph-cpe: var(--st-alert, #d0004b);
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.hs-svg {
+  display: block;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: pan-y;
+  overflow: visible;
+}
+
+.hs[data-disabled] .hs-svg {
+  opacity: 0.6;
+}
+
+.hs-fill-esbl {
+  fill: var(--ph-esbl);
+}
+.hs-fill-mrsa {
+  fill: var(--ph-mrsa);
+}
+.hs-fill-vre {
+  fill: var(--ph-vre);
+}
+.hs-fill-cpe {
+  fill: var(--ph-cpe);
+}
+.hs-pat-light {
+  fill: var(--glass-1, #fff);
+  opacity: 0.85;
+}
+.hs-pat-line {
+  stroke: var(--glass-1, #fff);
+  stroke-width: 1;
+  fill: none;
+  opacity: 0.85;
+}
+.hs-part-bg {
+  fill: var(--glass-1, #fff);
+  opacity: 0.55;
+}
+.hs-part-line {
+  fill: var(--ink-3, #6f7292);
+  opacity: 0.6;
+}
+
+.hs-layer {
+  stroke: var(--glass-1, #fff);
+  stroke-width: 0.6;
+}
+.hs-top {
+  fill: none;
+  stroke: var(--ink-2, #1d204e);
+  stroke-width: 1;
+  opacity: 0.55;
+}
+.hs-base,
+.hs-lane-line {
+  stroke: var(--line-strong, #aebecb);
+  stroke-width: 1;
+}
+.hs-lane-line {
+  opacity: 0.4;
+}
+.hs-base {
+  stroke: var(--line-strong, #aebecb);
+}
+
+.hs-cult-halo {
+  fill: none;
+  stroke: var(--glass-1, #fff);
+  stroke-width: 3;
+  stroke-linejoin: round;
+  opacity: 0.8;
+}
+.hs-cult {
+  fill: none;
+  stroke: var(--ink, #07081c);
+  stroke-width: 1;
+  stroke-dasharray: 3 2;
+}
+.hs-cult-dot {
+  fill: var(--ink, #07081c);
+  stroke: var(--glass-1, #fff);
+  stroke-width: 1;
+}
+.hs-cult-dot[data-hollow] {
+  fill: var(--glass-1, #fff);
+  stroke: var(--ink, #07081c);
+}
+
+.hs-partial-bar {
+  stroke: var(--ink-2, #1d204e);
+  stroke-width: 0.5;
+}
+.hs-partial {
+  stroke: var(--ink-3, #6f7292);
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+}
+
+.hs-ribbon {
+  fill: var(--ink-2, #1d204e);
+}
+.hs-lane-label,
+.hs-ylab {
+  font: 500 11px var(--brand-font-ui, system-ui, sans-serif);
+  fill: var(--ink-2, #1d204e);
+}
+.hs-yaxis {
+  stroke: var(--line-strong, #aebecb);
+  stroke-width: 1;
+}
+.hs-grid {
+  stroke: var(--line-strong, #aebecb);
+  stroke-width: 1;
+  stroke-dasharray: 1 3;
+  opacity: 0.8;
+}
+.hs-legend {
+  font: 500 11px var(--brand-font-ui, system-ui, sans-serif);
+  fill: var(--ink-2, #1d204e);
+}
+.hs-swatch {
+  stroke: var(--ink-3, #6f7292);
+  stroke-width: 0.5;
+}
+.hs-axis-text {
+  font: 500 11px var(--brand-font-ui, system-ui, sans-serif);
+  fill: var(--ink-3, #6f7292);
+}
+.hs-tick {
+  stroke: var(--line-strong, #aebecb);
+}
+.hs-tick[data-year] {
+  stroke: var(--ink-3, #6f7292);
+}
+
+/* The right edge is today: nothing after it is drawn. */
+.hs-today {
+  stroke: var(--brand-accent, #635bf1);
+  stroke-width: 3;
+}
+.hs-partial-rule {
+  stroke: var(--brand-accent, #635bf1);
+  stroke-width: 3;
+}
+.hs-today-bg {
+  fill: var(--brand-accent, #635bf1);
+}
+.hs-today-text {
+  font: 700 11px var(--brand-font-ui, system-ui, sans-serif);
+  fill: #fff;
+}
+
+/* Alert pills: shape and glyph carry the kind, colour is secondary. */
+.hs-pill {
+  cursor: pointer;
+  outline: none;
+}
+.hs-pill-hit {
+  fill: transparent;
+}
+.hs-pill-bg {
+  filter: drop-shadow(0 1px 1.5px rgb(7 8 28 / 0.25));
+}
+.hs-pill-text {
+  font: 600 11px var(--brand-font-ui, system-ui, sans-serif);
+  fill: #fff;
+  pointer-events: none;
+}
+.hs-pill-glyph {
+  fill: #fff;
+  pointer-events: none;
+}
+.hs-pill-track {
+  fill: #fff;
+  opacity: 0.3;
+}
+.hs-pill-bar {
+  fill: #fff;
+}
+.hs-pill[data-kind="sentinel"] .hs-pill-bg {
+  fill: var(--st-alert, #d0004b);
+}
+.hs-pill[data-kind="cluster"] .hs-pill-bg {
+  fill: var(--ink-2, #1d204e);
+}
+.hs-pill[data-kind="trend"] .hs-pill-bg {
+  fill: var(--brand-accent, #635bf1);
+}
+.hs-pill[data-kind="data"] .hs-pill-bg {
+  fill: var(--glass-1, #fff);
+  stroke: var(--ink-2, #1d204e);
+  stroke-dasharray: 2 1.5;
+  stroke-width: 1;
+}
+.hs-pill[data-kind="data"] .hs-pill-text {
+  fill: var(--ink, #07081c);
+}
+.hs-pill[data-kind="data"] .hs-pill-track {
+  fill: var(--ink-3, #6f7292);
+}
+.hs-pill[data-kind="data"] .hs-pill-bar {
+  fill: var(--ink-2, #1d204e);
+}
+.hs-pill:hover .hs-pill-bg,
+.hs-pill:focus-visible .hs-pill-bg {
+  stroke: var(--brand-accent, #635bf1);
+  stroke-width: 2;
+  stroke-dasharray: none;
+}
+.hs-pill:focus-visible .hs-pill-bg {
+  stroke: var(--ink, #07081c);
+}
+
+.hs-dot {
+  fill: var(--ink-2, #1d204e);
+}
+.hs-dot[data-kind="sentinel"] {
+  fill: var(--st-alert, #d0004b);
+}
+.hs-dot[data-kind="trend"] {
+  fill: var(--brand-accent, #635bf1);
+}
+.hs-dot[data-kind="data"] {
+  fill: var(--glass-1, #fff);
+  stroke: var(--ink-2, #1d204e);
+}
+
+/* Crosshair and the keyboard slider. */
+.hs-slider {
+  fill: transparent;
+  pointer-events: none;
+  outline: none;
+}
+.hs-slider:focus-visible {
+  stroke: var(--brand-accent, #635bf1);
+  stroke-width: 2;
+}
+.hs-cross {
+  pointer-events: none;
+}
+.hs-cross-week {
+  fill: var(--brand-accent, #635bf1);
+  opacity: 0.1;
+}
+.hs-cross-line {
+  stroke: var(--brand-accent, #635bf1);
+  stroke-width: 1;
+}
+
+.hs-read {
+  position: absolute;
+  top: calc(100% + 8px);
+  z-index: 45;
+  padding: 8px 10px;
+  border: 1px solid var(--line, #e4e6ee);
+  border-radius: 8px;
+  background: var(--glass-1, #fff);
+  box-shadow: var(--pop-shadow, 0 4px 16px rgb(7 8 28 / 0.12));
+  font-size: var(--t-xs, 12px);
+  color: var(--ink, #07081c);
+  pointer-events: none;
+}
+.hs-read-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.hs-read-partial {
+  color: var(--ink-3, #6f7292);
+}
+.hs-read-grid {
+  display: grid;
+  gap: 2px 8px;
+  padding: 4px 0;
+  border-top: 1px solid var(--line, #e4e6ee);
+}
+.hs-read-ph {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.hs-read-units {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  color: var(--ink-2, #1d204e);
+}
+.hs-read-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.hs-read-item b {
+  font-weight: 600;
+}
+.hs-read-alerts {
+  padding-top: 4px;
+  border-top: 1px solid var(--line, #e4e6ee);
+}
+.hs-read-alerts ul {
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.hs-read-label {
+  color: var(--ink-3, #6f7292);
+}
+
+.hs[data-compact] .hs-svg {
+  cursor: pointer;
+}
+
+/* Overlaid lines: dash pattern as well as colour tells the phenotypes apart. */
+.hs-line {
+  fill: none;
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+}
+.hs-ln-esbl {
+  stroke: var(--ph-esbl);
+}
+.hs-ln-mrsa {
+  stroke: var(--ph-mrsa);
+  stroke-dasharray: 6 2.5;
+}
+.hs-ln-vre {
+  stroke: var(--ph-vre);
+  stroke-dasharray: 1.5 2.5;
+  stroke-linecap: round;
+}
+.hs-ln-cpe {
+  stroke: var(--ph-cpe);
+  stroke-dasharray: 7 2 1.5 2;
+}
+.hs-speck {
+  fill: var(--ink-2, #1d204e);
+}
+
+/* Legend entries are the line toggles. */
+.hs-leg {
+  cursor: pointer;
+  outline: none;
+}
+.hs-leg-hit {
+  fill: transparent;
+}
+.hs-leg[data-off] {
+  opacity: 0.65;
+}
+.hs-leg-strike {
+  stroke: var(--ink-2, #1d204e);
+  stroke-width: 1;
+}
+.hs-leg:hover .hs-legend {
+  text-decoration: underline;
+}
+.hs-leg:focus-visible .hs-leg-hit {
+  stroke: var(--ink, #07081c);
+  stroke-width: 1.5;
+  rx: 3;
+}
+.hs-legend-tag {
+  font-weight: 600;
+}
+
+/* Layers: a quiet ghost button at the right of the legend row, and a small popover. */
+.ly {
+  position: absolute;
+  top: -3px;
+  right: 8px;
+  z-index: 35;
+}
+.ly-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+  color: var(--ink-3, #5c6080);
+  font: 500 11px var(--brand-font-ui, system-ui, sans-serif);
+  cursor: pointer;
+}
+.ly-btn:hover,
+.ly-btn[aria-expanded="true"] {
+  color: var(--ink, #07081c);
+  background: color-mix(in srgb, var(--ink-3, #5c6080) 12%, transparent);
+}
+.ly-btn:focus-visible,
+.ly-chip input:focus-visible + span,
+.ly-bulk button:focus-visible,
+.ly-reset:focus-visible {
+  outline: 2px solid var(--ink, #07081c);
+  outline-offset: 1px;
+}
+.ly-btn[data-changed]::after {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.ly-panel {
+  position: absolute;
+  top: 24px;
+  right: 0;
+  width: min(300px, calc(100vw - 32px));
+  max-height: min(70vh, 460px);
+  overflow-y: auto;
+  padding: 8px 10px 10px;
+  border: 1px solid var(--line, #e4e6ee);
+  border-radius: 8px;
+  background: var(--glass-1, #fff);
+  box-shadow: var(--pop-shadow, 0 4px 16px rgb(7 8 28 / 0.12));
+  color: var(--ink, #07081c);
+  font: 400 11px / 1.4 var(--brand-font-ui, system-ui, sans-serif);
+}
+.ly-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin: 0 0 6px;
+  padding: 0;
+  border: 0;
+}
+.ly-group legend {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 2px;
+  padding: 0;
+  color: var(--ink-3, #5c6080);
+  font-weight: 600;
+}
+.ly-bulk {
+  display: inline-flex;
+  gap: 8px;
+}
+.ly-bulk button,
+.ly-reset {
+  border: 0;
+  background: none;
+  color: var(--ink-2, #1d204e);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.ly-chip {
+  position: relative;
+  display: inline-flex;
+}
+.ly-chip input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  margin: 0;
+  cursor: pointer;
+}
+.ly-chip span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 22px;
+  padding: 0 7px;
+  border: 1px solid var(--line, #e4e6ee);
+  border-radius: 11px;
+  color: var(--ink-3, #5c6080);
+}
+.ly-chip input:checked + span {
+  border-color: var(--ink-3, #5c6080);
+  color: var(--ink, #07081c);
+}
+.ly-chip[data-type="checkbox"] input:checked + span::before {
+  content: "✓";
+}
+.ly-chip[data-type="radio"] input:checked + span::before {
+  content: "●";
+  font-size: 8px;
+}
+.ly-note {
+  flex-basis: 100%;
+  margin: 2px 0 0;
+  color: var(--ink-3, #5c6080);
+}
+.ly-reset {
+  display: block;
+  margin-top: 2px;
+}
+@media (max-width: 760px), (pointer: coarse) {
+  .ly-btn::after {
+    /* a 44 px target around the small icon */
+    content: "";
+    position: absolute;
+    inset: -12px -8px;
+  }
+  .ly-btn[data-changed]::after {
+    position: static;
+    inset: auto;
+  }
+  .ly-chip span,
+  .ly-bulk button,
+  .ly-reset {
+    min-height: 44px;
+    padding-inline: 12px;
+    border-radius: 22px;
+  }
+  .ly-bulk button,
+  .ly-reset {
+    display: inline-flex;
+    align-items: center;
+    padding-inline: 8px;
+    border-radius: 0;
+  }
+}
+
+/* The week readout sits below the popovers and menus, and flips when there is no room below. */
+.hs-read {
+  z-index: 30;
+}
+.hs-read[data-place="above"] {
+  top: auto;
+  bottom: calc(100% + 8px);
+}
+.hs-read[data-place="inside"] {
+  top: 22px;
+}
+.hs-read-raw {
+  color: var(--ink-3, #5c6080);
+}
+
+/* The legend's ⓘ: one line per series, compact. */
+.ly .info {
+  margin-right: 2px;
+}
+.ly-info {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+  max-width: 340px;
+  font-size: 12px;
+  line-height: 1.4;
+}

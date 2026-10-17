@@ -24,6 +24,7 @@ import { asResult, type CodeMaps, DEFAULT_CODE_MAPS, detectFormat, extendCodeMap
 import { checkRows, type Finding, summarize } from "@aei/quality";
 import { countFlows, patientMoves, phenotypeTrails, trailLinks } from "@aei/relations";
 import { addDays, createReleaseIndex, createReplayClock } from "@aei/replay";
+import { type WeeklySeries, weeklySeries } from "@aei/viz";
 
 // Development server for the AEI contract (libs/utils/contract). It loads
 // the synthetic dataset, replays it day by day and pushes arrivals to
@@ -54,6 +55,8 @@ const config = {
   guideline: env.AEI_GUIDELINE ?? "",
   // THL county series and signals, written by scripts/fetch_thl_ttr.py (D-037); read on each request, so a re-fetch shows at once.
   regionalFile: resolve(env.AEI_REGIONAL ?? "../../data/external/thl/regional.json"),
+  // County polygons for the regional map, written by scripts/fetch_county_geometry.py.
+  countiesFile: resolve(env.AEI_COUNTIES ?? "../../data/external/statfi/counties.geojson"),
 };
 const codeMaps: CodeMaps = config.codeMapFile
   ? extendCodeMaps(JSON.parse(readFileSync(resolve(config.codeMapFile), "utf8")) as Partial<CodeMaps>)
@@ -89,6 +92,7 @@ function derive(d: Dataset) {
   };
 }
 let state = derive(dataset);
+const weeklyCache = new Map<string, WeeklySeries>();
 const DEFAULT_RELATION_DAYS = 28;
 
 function relations(asOf: string, days: number): RelationsResponse {
@@ -342,6 +346,25 @@ export const server = createServer(async (req, res) => {
       const data = JSON.parse(readFileSync(config.regionalFile, "utf8")) as RegionalData;
       const query: RegionalQuery = { group: url.searchParams.get("group") ?? "", region: url.searchParams.get("region") ?? "" };
       return send(res, 200, regionalUpTo(data, clock.state().asOf, query));
+    }
+    if (url.pathname === ROUTES.weekly) {
+      const asOf = clock.state().asOf;
+      const from = url.searchParams.get("from") || datasetStart;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(from)) return send(res, 400, { error: "from must be YYYY-MM-DD" });
+      const key = `${asOf}|${from}`;
+      let series = weeklyCache.get(key);
+      if (!series) {
+        if (weeklyCache.size > 50) weeklyCache.clear();
+        // Only released rows: the series ends at the clock and never shows later days.
+        series = weeklySeries(state.released.upTo(asOf), dataset.cultures, from, asOf);
+        weeklyCache.set(key, series);
+      }
+      return send(res, 200, { asOf, ...series });
+    }
+    if (url.pathname === ROUTES.counties) {
+      if (!existsSync(config.countiesFile))
+        return send(res, 404, { error: "No county geometry; run `uv run python scripts/fetch_county_geometry.py`" });
+      return send(res, 200, JSON.parse(readFileSync(config.countiesFile, "utf8")));
     }
     if (url.pathname === ROUTES.meta) return send(res, 200, meta);
     if (url.pathname === ROUTES.clock && req.method === "GET") return send(res, 200, clock.state());

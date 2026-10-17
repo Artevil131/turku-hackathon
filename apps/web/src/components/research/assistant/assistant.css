@@ -1,0 +1,63 @@
+.assist {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  font-size: var(--t-s, 13px);
+  color: var(--ink);
+}
+.assist-title {
+  margin: 0;
+  font-size: var(--t-m, 15px);
+  font-weight: 600;
+}
+.assist-empty,
+.assist-state,
+.assist-note {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--t-xs, 12px);
+}
+.assist-who,
+.assist-spans {
+  margin: 0;
+  font-size: var(--t-xs, 12px);
+  color: var(--ink-2);
+}
+.assist-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.assist-item {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--line-strong);
+  border-radius: var(--radius-control, 6px);
+  background: #fff;
+}
+.assist-item-title {
+  margin: 0 0 4px;
+  font-size: var(--t-xs, 12px);
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.assist-text {
+  margin: 0 0 6px;
+  max-width: 64ch;
+  line-height: 1.55;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+.assist-source {
+  margin: 0;
+  font-size: var(--t-xs, 12px);
+  color: var(--ink-3);
+}
+.assist-source[data-source="model"] {
+  color: var(--live);
+  font-weight: 500;
+}
+.assist-item:has(.assist-source[data-source="model"]) {
+  border-left-color: var(--live);
+}

@@ -1,0 +1,511 @@
+/* HospitalNetwork panel styles (spec-research.md). Flat service map: one accent (--live),
+   amber (--st-watch) for resistance signals, dashed outline for data problems. */
+
+.hnet {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--radius-panel);
+  background: var(--glass-2);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-shadow);
+  min-width: 0;
+}
+
+.hnet-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hnet-titleline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 12px;
+}
+
+.hnet-title {
+  margin: 0;
+  font-size: var(--step-1);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.hnet .asof,
+.hnet-note,
+.hnet-hint,
+.hnet-faint {
+  color: var(--ink-2);
+  font-size: var(--step--1);
+}
+
+.hnet-note,
+.hnet-hint {
+  margin: 0;
+}
+
+.hnet-faint {
+  margin: 4px 0 0;
+}
+
+.hnet-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.hnet-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: var(--glass-3);
+  color: var(--ink-2);
+  font: inherit;
+  font-size: var(--step--1);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.hnet-chip[aria-pressed="true"] {
+  background: var(--live);
+  border-color: var(--live);
+  color: var(--live-ink);
+}
+
+.hnet-chip:focus-visible,
+.hnet-filter:focus-visible {
+  outline: 2px solid var(--live);
+  outline-offset: 2px;
+}
+
+.hnet-state {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: var(--step--1);
+  color: var(--ink-2);
+}
+
+.hnet-state p {
+  margin: 0;
+}
+
+.hnet-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  border-radius: var(--radius-control);
+  background: #fff;
+  border: 1px solid var(--line);
+}
+
+.hnet-tube {
+  fill: none;
+  stroke: var(--ink-3);
+  stroke-opacity: 0.3;
+  stroke-linecap: round;
+}
+
+.hnet-tube[data-active="true"] {
+  stroke: var(--live);
+  stroke-opacity: 0.7;
+}
+
+.hnet-trail {
+  fill: none;
+  stroke: var(--resist);
+  stroke-dasharray: 12 7;
+  stroke-linecap: round;
+}
+
+.hnet-trail-tag {
+  fill: #fff;
+  stroke: var(--resist);
+  stroke-width: 1.5;
+}
+
+.hnet-trail-text {
+  font-size: 16px;
+  font-weight: 600;
+  fill: #8a3608;
+  font-variant-numeric: tabular-nums;
+}
+
+.hnet-node {
+  cursor: pointer;
+  outline: none;
+}
+
+.hnet-box {
+  fill: #fff;
+  stroke: var(--line-strong);
+  stroke-width: 2;
+}
+
+.hnet-node[data-lit="true"] .hnet-box {
+  stroke: var(--st-watch);
+  stroke-width: 5;
+}
+
+.hnet-node[data-lit="false"][data-data="true"] .hnet-box {
+  stroke: var(--st-watch);
+  stroke-width: 3;
+}
+
+.hnet-node[data-selected="true"] .hnet-box,
+.hnet-node:hover .hnet-box {
+  stroke: var(--live);
+  stroke-width: 5;
+}
+
+.hnet-node[data-selected="true"][data-lit="true"] .hnet-box {
+  stroke: var(--st-watch);
+}
+
+.hnet-ring {
+  fill: none;
+  stroke: var(--live);
+  stroke-width: 4;
+  opacity: 0;
+}
+
+.hnet-node[data-focus="true"] .hnet-ring {
+  opacity: 1;
+  stroke-dasharray: 14 8;
+  stroke-width: 6;
+}
+
+.hnet-node[data-selected="true"] .hnet-ring,
+.hnet-node:focus-visible .hnet-ring {
+  opacity: 1;
+}
+
+.hnet-node:focus-visible .hnet-ring {
+  stroke-dasharray: none;
+  stroke-width: 5;
+}
+
+.hnet-code {
+  font-size: 28px;
+  font-weight: 700;
+  fill: var(--live);
+}
+
+.hnet-name {
+  font-size: 18px;
+  font-weight: 550;
+  fill: var(--ink);
+}
+
+.hnet-share {
+  font-size: 16px;
+  font-weight: 600;
+  fill: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.hnet-pill {
+  fill: var(--st-watch-bg);
+  stroke: var(--st-watch);
+  stroke-width: 1.6;
+}
+
+.hnet-pill[data-kind="data"] {
+  fill: #fff;
+  stroke-dasharray: 5 3;
+}
+
+.hnet-pill-text,
+.hnet-more {
+  font-size: 16px;
+  font-weight: 600;
+  fill: var(--st-watch);
+}
+
+.hnet-more {
+  fill: var(--ink-2);
+  font-weight: 550;
+}
+
+.hnet-lower {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 760px) {
+  .hnet-lower {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  }
+}
+
+.hnet-card,
+.hnet-signals,
+.hnet-legend {
+  padding: 12px;
+  border-radius: var(--radius-control);
+  background: var(--glass-3);
+  border: 1px solid var(--line);
+  min-width: 0;
+}
+
+.hnet-h3 {
+  margin: 0 0 6px;
+  font-size: var(--step--1);
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.hnet-card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.hnet-card-code {
+  font-size: var(--step-2);
+  font-weight: 700;
+  color: var(--live);
+}
+
+.hnet-card-name {
+  font-size: var(--step-1);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.hnet-card-alerts {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+  font-size: var(--step--1);
+  color: var(--ink);
+}
+
+.hnet-card-date {
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.hnet-card-share {
+  margin: 0 0 8px;
+  font-size: var(--step--1);
+  color: var(--ink);
+}
+
+.hnet-card-flows {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  margin-top: 6px;
+}
+
+.hnet-flowlist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+  font-size: var(--step--1);
+}
+
+.hnet-flowlist li {
+  display: grid;
+  grid-template-columns: 4.2em 1fr auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.hnet-flowlist li:not(:has(.hnet-bar)) {
+  grid-template-columns: 4.2em auto;
+}
+
+.hnet-flow-unit {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.hnet-flow-n {
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.hnet-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.hnet-bar i {
+  display: block;
+  height: 100%;
+  background: var(--live);
+}
+
+.hnet-filter {
+  margin-top: 12px;
+}
+
+.hnet-filter[aria-pressed="true"] {
+  border-color: var(--live);
+  color: var(--live);
+}
+
+.hnet-sigs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.hnet-sigs li {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: var(--step--1);
+}
+
+.hnet-sig-unit {
+  flex: none;
+  min-width: 3.6em;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.hnet-sig-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.hnet-pill-html {
+  display: inline-flex;
+  gap: 4px;
+  padding: 1px 8px;
+  border-radius: 8px;
+  border: 1.5px solid var(--st-watch);
+  background: var(--st-watch-bg);
+  color: var(--st-watch);
+  font-weight: 600;
+}
+
+.hnet-pill-html[data-kind="data"] {
+  border-style: dashed;
+  background: #fff;
+}
+
+.hnet-legend ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  font-size: var(--step--1);
+  color: var(--ink-2);
+}
+
+.hnet-legend li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hnet-legend svg,
+.hnet-sw {
+  flex: none;
+}
+
+.hnet-sw {
+  width: 44px;
+  height: 16px;
+  border-radius: 5px;
+  border: 2px solid var(--line-strong);
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.hnet-sw-lit {
+  border: 3px solid var(--st-watch);
+}
+
+.hnet-sw-data {
+  border: 2px dashed var(--st-watch);
+}
+
+.hnet-sw-shade {
+  background: color-mix(in oklab, var(--live) 34%, #fff);
+}
+
+.hnet-sw-sel {
+  border: 3px solid var(--live);
+}
+
+@media (max-width: 759px) {
+  .hnet {
+    padding: 12px;
+  }
+}
+
+.hnet-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.hnet-down {
+  padding: 12px;
+  border-radius: var(--radius-control);
+  background: var(--glass-3);
+  border: 1px solid var(--line);
+  min-width: 0;
+}
+
+.hnet-down-list {
+  list-style: none;
+  margin: 0 0 6px;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  font-size: var(--step-0);
+  color: var(--ink);
+}
+
+.hnet-down-list li {
+  padding-left: 10px;
+  border-left: 3px solid var(--line);
+}
+
+.hnet-down-list li[data-active="true"] {
+  border-left-color: var(--live);
+}
+
+.hnet-down-share {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 759px) {
+  .hnet-down-list {
+    font-size: 1.0625rem;
+  }
+}

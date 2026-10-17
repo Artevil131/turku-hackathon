@@ -1,0 +1,381 @@
+/* UnitGrid panel styles (spec-research.md). One hue (--live) in five steps; zero is white. */
+
+.ugrid {
+  --cell: 30px;
+  --head: 76px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border-radius: var(--radius-panel);
+  background: var(--glass-2);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-shadow);
+  min-width: 0;
+}
+
+.ugrid-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ugrid-titleline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 12px;
+}
+
+.ugrid-title {
+  margin: 0;
+  font-size: var(--step-1);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.ugrid .asof,
+.ugrid-window {
+  color: var(--ink-2);
+  font-size: var(--step--1);
+}
+
+.ugrid-note,
+.ugrid-window {
+  margin: 0;
+  font-size: var(--step--1);
+  color: var(--ink-2);
+}
+
+.ugrid-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin-top: 6px;
+}
+
+.ugrid-seg {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--line);
+  background: var(--glass-1);
+}
+
+.ugrid-segbtn {
+  min-height: 32px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: var(--step--1);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ugrid-segbtn:hover {
+  color: var(--ink);
+}
+
+.ugrid-segbtn[aria-pressed="true"] {
+  background: var(--live);
+  color: var(--live-ink);
+}
+
+.ugrid-segbtn:focus-visible,
+.ugrid-cell:focus-visible {
+  outline: 2px solid var(--live);
+  outline-offset: 2px;
+}
+
+.ugrid-scroll {
+  overflow: auto;
+  max-height: min(68vh, 720px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: #fff;
+}
+
+.ugrid-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  font-size: var(--step--1);
+  font-variant-numeric: tabular-nums;
+}
+
+.ugrid-table th,
+.ugrid-table td {
+  padding: 0;
+  text-align: center;
+}
+
+.ugrid-colhead,
+.ugrid-corner,
+.ugrid-total {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  height: 32px;
+  min-width: 46px;
+  padding: 0 4px;
+  white-space: nowrap;
+  background: var(--glass-3);
+  color: var(--ink-2);
+  font-weight: 600;
+  border-bottom: 1px solid var(--line-strong);
+}
+
+.ugrid-name {
+  display: none;
+}
+
+@media (min-width: 760px) {
+  .ugrid-colhead {
+    height: 52px;
+    min-width: 54px;
+    white-space: normal;
+    line-height: 1.15;
+    vertical-align: bottom;
+    padding-bottom: 4px;
+  }
+  .ugrid-code {
+    display: none;
+  }
+  .ugrid-name {
+    display: block;
+    font-size: 11px;
+    hyphens: manual;
+  }
+}
+
+.ugrid-colhead[data-selected="true"] {
+  background: var(--live-soft);
+  color: var(--live);
+  box-shadow: inset 0 -3px 0 var(--live);
+}
+
+.ugrid-table .ugrid-corner,
+.ugrid-table .ugrid-rowhead {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  min-width: var(--head);
+  padding: 0 8px;
+  text-align: left;
+  white-space: nowrap;
+  background: var(--glass-3);
+  color: var(--ink-2);
+  font-weight: 550;
+  border-right: 1px solid var(--line-strong);
+}
+
+.ugrid-rowhead {
+  z-index: 1;
+}
+
+.ugrid-wk {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.ugrid-partial {
+  color: var(--ink-2);
+  font-weight: 700;
+}
+
+.ugrid-td {
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.ugrid-td[data-selected="true"] {
+  border-inline: 2px solid var(--live);
+}
+
+.ugrid-cell {
+  display: block;
+  width: 100%;
+  min-width: var(--cell);
+  height: var(--cell);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  position: relative;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  line-height: var(--cell);
+  cursor: pointer;
+}
+
+.ugrid-cell:hover {
+  filter: brightness(0.94);
+}
+
+/* Shade steps: a single hue, light to dark. Zero is white. */
+.ugrid [data-step="0"] {
+  background: #fff;
+}
+.ugrid [data-step="1"] {
+  background: color-mix(in oklab, var(--live) 10%, white);
+}
+.ugrid [data-step="2"] {
+  background: color-mix(in oklab, var(--live) 26%, white);
+}
+.ugrid [data-step="3"] {
+  background: color-mix(in oklab, var(--live) 44%, white);
+}
+.ugrid [data-step="4"] {
+  background: color-mix(in oklab, var(--live) 64%, white);
+}
+.ugrid [data-step="5"] {
+  background: color-mix(in oklab, var(--live) 90%, black 6%);
+  color: #fff;
+}
+
+/* Data-quality week: grey and hatched, so a sampling gap reads as a grey run. */
+.ugrid [data-quality="true"] {
+  background: repeating-linear-gradient(135deg, #cfd5da 0 4px, #eef1f3 4px 8px);
+  color: var(--ink);
+}
+
+/* Cluster signal: a dark ring inside the cell. */
+.ugrid-cell[data-cluster="true"],
+.ugrid-sw-c {
+  box-shadow:
+    inset 0 0 0 2px var(--ink),
+    inset 0 0 0 4px #fff,
+    inset 0 0 0 5px var(--ink);
+}
+
+.ugrid-table .ugrid-sum {
+  min-width: 42px;
+  padding: 0 6px;
+  color: var(--ink-2);
+  font-weight: 600;
+  background: var(--glass-1);
+  border-bottom: 1px solid var(--line);
+}
+
+.ugrid-sum[data-selected="true"] {
+  color: var(--live);
+  box-shadow: inset 0 3px 0 var(--live);
+}
+
+.ugrid-total {
+  min-width: 66px;
+}
+
+tfoot .ugrid-sum,
+tfoot .ugrid-rowhead {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  background: var(--glass-3);
+  border-top: 1px solid var(--line-strong);
+  border-bottom: 0;
+  height: 32px;
+}
+
+tfoot .ugrid-rowhead {
+  z-index: 3;
+}
+
+.ugrid-grand {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.ugrid-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--ink-2);
+  font-size: var(--step--1);
+}
+
+.ugrid-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ugrid-legend-count {
+  flex-wrap: wrap;
+}
+
+.ugrid-swatches {
+  display: inline-flex;
+  border: 1px solid var(--line-strong);
+}
+
+.ugrid-sw {
+  display: inline-block;
+  min-width: 30px;
+  height: 22px;
+  padding: 0 5px;
+  line-height: 22px;
+  text-align: center;
+  font-weight: 600;
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+
+.ugrid-sw[data-step="5"] {
+  color: #fff;
+}
+
+.ugrid-sw-q,
+.ugrid-sw-c {
+  width: 30px;
+  padding: 0;
+  background-color: #fff;
+}
+
+.ugrid-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 0;
+  color: var(--ink-2);
+}
+
+.ugrid-state p,
+.ugrid-slow {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--step--1);
+}
+
+.ugrid-skeleton {
+  width: 100%;
+  height: 240px;
+  border-radius: var(--radius-control);
+  background: repeating-linear-gradient(135deg, #e3e8ec 0 6px, #f3f6f8 6px 12px);
+}
+
+@media (max-width: 759px) {
+  .ugrid {
+    padding: 12px;
+    --head: 70px;
+  }
+  .ugrid-cell {
+    min-width: 46px;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ugrid-cell {
+    transition: filter 0.12s;
+  }
+}

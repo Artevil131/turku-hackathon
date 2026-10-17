@@ -1,0 +1,330 @@
+/* Method page: compact panels, live rule left, experiment candidates right; one column below 960 px. */
+.method {
+  --m-ink: var(--ink, #07081c);
+  --m-ink-3: var(--ink-3, #6f7292);
+  --m-line: var(--line, #e4e6ee);
+  --m-acc: var(--brand-accent, #635bf1);
+  --m-acc-soft: var(--brand-accent-soft, #ecebfc);
+  display: grid;
+  gap: 12px;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 12px 16px 32px;
+  color: var(--m-ink);
+  font-size: var(--t-s, 13px);
+}
+
+.mt-top h1 {
+  margin: 0;
+  font-family: var(--brand-font-display, inherit);
+  font-size: var(--t-l, 22px);
+  font-weight: 600;
+}
+
+.mt-top p {
+  margin: 4px 0 0;
+  color: var(--m-ink-3);
+}
+
+.mt-step {
+  background: var(--glass-3, #fff);
+  border: 1px solid var(--m-line);
+  border-radius: var(--brand-radius, 10px);
+  padding: 12px;
+  min-width: 0;
+}
+
+.mt-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin-bottom: 12px;
+}
+
+.mt-head h2 {
+  margin: 0;
+  font-size: var(--t-m, 15px);
+  font-weight: 600;
+}
+
+.mt-head p {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--m-ink-3);
+}
+
+.mt-num {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--m-acc-soft);
+  color: var(--m-ink);
+  font-size: var(--t-xs, 12px);
+  font-weight: 600;
+}
+
+.mt-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+.mt-live,
+.mt-cands {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  min-width: 0;
+}
+
+.mt-live > * {
+  max-width: 480px;
+}
+
+@media (min-width: 960px) {
+  .mt-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .mt-grid-cand .mt-cands {
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+.mt-label {
+  margin: 0 0 4px;
+  font-size: var(--t-xs, 12px);
+  font-weight: 600;
+  color: var(--m-ink-3);
+}
+
+.mt-line,
+.mt-note {
+  margin: 0;
+  font-size: var(--t-xs, 12px);
+  color: var(--m-ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.mt-fig {
+  margin: 0;
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.mt-fig img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px dashed var(--line-strong, #aebecb);
+  border-radius: 6px;
+  background: #fff;
+}
+
+.mt-tag {
+  justify-self: start;
+  padding: 0 8px;
+  border: 1px dashed var(--line-strong, #aebecb);
+  border-radius: 6px;
+  font-size: var(--t-xs, 12px);
+  font-weight: 500;
+  color: var(--m-ink);
+}
+
+.mt-fig figcaption {
+  font-size: var(--t-xs, 12px);
+  color: var(--m-ink-3);
+}
+
+/* Formulas: native MathML in a math font. The filter as three numbered steps on a soft panel; each live rule a card. */
+.mt-mathrow {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--m-line);
+  min-width: 0;
+}
+
+.mt-mathrow math {
+  font-family: "STIX Two Math", "Latin Modern Math", "Cambria Math", math;
+  math-style: normal;
+  color: var(--m-ink);
+}
+
+.mt-math {
+  display: grid;
+  gap: 10px;
+  padding: 16px 18px;
+  background: color-mix(in srgb, var(--m-acc-soft) 55%, #fff);
+  border: 1px solid var(--m-line);
+  border-radius: var(--brand-radius, 10px);
+  min-width: 0;
+}
+
+.mt-math-title {
+  margin: 0;
+  font-size: var(--t-m, 15px);
+  font-weight: 600;
+}
+
+.mt-math-lead {
+  margin: 0;
+  max-width: 78ch;
+  line-height: 1.5;
+}
+
+.mt-eqs {
+  display: grid;
+  gap: 8px;
+  margin: 2px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mt-eqrow {
+  display: grid;
+  grid-template-columns: 24px minmax(150px, 240px) minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--glass-3, #fff);
+  border: 1px solid var(--m-line);
+  border-radius: 8px;
+}
+
+.mt-eqnum {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--m-acc);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.mt-eqtag {
+  color: var(--m-ink-3);
+  line-height: 1.35;
+}
+
+.mt-eq {
+  overflow-x: auto;
+  min-width: 0;
+}
+
+.mt-eq math {
+  font-size: 1.35em;
+}
+
+.mt-math-foot {
+  margin: 0;
+  max-width: 78ch;
+  color: var(--m-ink-3);
+  line-height: 1.5;
+}
+
+.mt-status {
+  margin: 2px 0 0;
+  max-width: 78ch;
+  padding: 6px 0 6px 12px;
+  border-left: 3px solid var(--m-acc);
+  line-height: 1.5;
+}
+
+.mt-rules {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-flow: dense;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mt-rule {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 8px;
+  padding: 12px 14px;
+  background: var(--glass-3, #fff);
+  border: 1px solid var(--m-line);
+  border-radius: 8px;
+  min-width: 0;
+}
+
+.mt-rule-wide {
+  grid-column: span 2;
+}
+
+.mt-rule-full {
+  grid-column: 1 / -1;
+}
+
+.mt-rule-name {
+  font-weight: 600;
+}
+
+.mt-rule-eq {
+  display: grid;
+  place-items: center;
+  min-height: 64px;
+  padding: 8px;
+  background: color-mix(in srgb, var(--m-acc-soft) 45%, #fff);
+  border-radius: 6px;
+  overflow-x: auto;
+}
+
+.mt-rule-eq math {
+  font-size: 1.2em;
+}
+
+.mt-rule-note {
+  color: var(--m-ink-3);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.mt-result {
+  display: block;
+  margin-top: 2px;
+  color: var(--m-ink);
+}
+
+@media (max-width: 900px) {
+  .mt-rules {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .mt-rules {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mt-rule-wide,
+  .mt-rule-full {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .mt-eqrow {
+    grid-template-columns: 24px minmax(0, 1fr);
+  }
+
+  .mt-eq {
+    grid-column: 1 / -1;
+  }
+
+  .mt-eq math,
+  .mt-rule-eq math {
+    font-size: 1.05em;
+  }
+}

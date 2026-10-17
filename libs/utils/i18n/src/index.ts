@@ -53,6 +53,12 @@ export function formatDate(locale: Locale, iso: string, style: "short" | "long" 
   }).format(date);
 }
 
+/** The numeric date used in panel headers and figures: 12.5.2025 (day.month.year, no leading zeros). */
+export function formatDateNumeric(iso: string): string {
+  const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
+  return `${d}.${m}.${y}`;
+}
+
 export function formatPercent(locale: Locale, value: number): string {
   return new Intl.NumberFormat(locale === "fi" ? "fi-FI" : "en-GB", { maximumFractionDigits: 0 }).format(value);
 }

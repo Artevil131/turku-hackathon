@@ -1,0 +1,454 @@
+.print-only {
+  display: none;
+}
+
+/* The forest plot panel. */
+.cl {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.cl:focus {
+  outline: none;
+}
+
+.cl[data-stale] {
+  opacity: 0.6;
+}
+
+.cl-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 4px 4px 12px;
+  border-bottom: 1px solid var(--d-line);
+  min-height: 40px;
+}
+
+.cl-head:focus {
+  outline: none;
+}
+
+.cl-head h1 {
+  margin: 0;
+  font-family: var(--brand-font-display, inherit);
+  font-size: var(--d-m);
+  font-weight: 600;
+}
+
+.cl-date {
+  font-size: var(--d-xs);
+  color: var(--d-ink-3);
+}
+
+.cl-where {
+  font-size: var(--d-xs);
+  color: var(--d-ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.cl-status {
+  margin-left: auto;
+  font-size: var(--d-xs);
+  color: var(--d-ink-3);
+}
+
+.cl-status:empty + .info-btn,
+.cl-head .info-btn {
+  margin-left: auto;
+}
+
+.cl-status:not(:empty) + .info-btn {
+  margin-left: 0;
+}
+
+.cl-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* One grid for header and rows so the columns line up. */
+.cl-cols,
+.cl-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 230px) minmax(110px, 1fr) 100px minmax(78px, 100px);
+  align-items: center;
+  column-gap: 8px;
+}
+
+.cl-cols {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  height: 28px;
+  padding: 0 40px 0 12px;
+  background: var(--d-panel);
+  border-bottom: 1px solid var(--d-line);
+  font-size: var(--d-xs);
+  color: var(--d-ink-3);
+}
+
+.cl-axis-head {
+  position: relative;
+  height: 100%;
+}
+
+.cl-axis-head > span,
+.cl-axis-head > b {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+}
+
+.cl-axis-head > span:first-child {
+  transform: translate(0, -50%);
+}
+
+.cl-axis-head > span:last-child {
+  transform: translate(-100%, -50%);
+}
+
+.cl-tau-label {
+  color: var(--d-ink);
+  font-weight: 600;
+}
+
+.cl-r {
+  text-align: right;
+}
+
+.cl-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.cl-li {
+  position: relative;
+}
+
+.cl-row {
+  height: 36px;
+  padding: 0 40px 0 12px;
+  border-bottom: 1px solid var(--d-line);
+  cursor: pointer;
+  position: relative;
+}
+
+.cl-row:hover {
+  background: color-mix(in srgb, var(--d-acc-soft) 50%, transparent);
+}
+
+.cl-row[data-selected] {
+  background: var(--d-acc-soft);
+  box-shadow: inset 0 0 0 1px var(--brand-accent-line, var(--d-acc));
+}
+
+.cl-row:focus-visible {
+  outline: 2px solid var(--d-acc);
+  outline-offset: -2px;
+}
+
+.cl-info {
+  position: absolute;
+  right: 6px;
+  top: 4px;
+}
+
+.cl-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.cl-name b {
+  font-weight: 600;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.cl-tier {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--d-line-strong);
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--d-ink-2);
+}
+
+.cl-tier[data-tier="Watch"] {
+  color: var(--d-watch);
+  border-color: var(--d-watch);
+}
+
+/* Plot area: axis 50-100 %, interval bar, point, dashed bar line. */
+.cl-plot {
+  position: relative;
+  height: 100%;
+}
+
+.cl-axis {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: var(--d-line);
+}
+
+.cl-tau {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 1px dashed var(--d-ink-2);
+}
+
+.cl-band {
+  position: absolute;
+  top: calc(50% - 2px);
+  height: 4px;
+  border-radius: 2px;
+  background: var(--d-ink-3);
+}
+
+.cl-point {
+  position: absolute;
+  top: calc(50% - 5px);
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  border-radius: 50%;
+  background: var(--d-ink);
+}
+
+.cl-row[data-standing="below"] .cl-point {
+  background: var(--d-panel);
+  box-shadow: inset 0 0 0 2px var(--d-ink);
+}
+
+.cl-num {
+  text-align: right;
+  white-space: nowrap;
+  color: var(--d-ink-2);
+}
+
+.cl-num b {
+  color: var(--d-ink);
+  font-weight: 600;
+}
+
+.cl-res {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.cl-glyph {
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  font-weight: 600;
+}
+
+.cl-res[data-standing="clears"] {
+  color: var(--d-ok);
+}
+
+.cl-res[data-standing="borderline"] {
+  color: var(--d-watch);
+}
+
+.cl-res[data-standing="below"] {
+  color: var(--d-alert);
+}
+
+.cl-res[data-standing="not assessable"] {
+  color: var(--d-ink-3);
+}
+
+.cl-divider {
+  display: flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 12px;
+  background: color-mix(in srgb, var(--d-line) 40%, var(--d-panel));
+  border-bottom: 1px solid var(--d-line);
+  font-size: var(--d-xs);
+  font-weight: 600;
+  color: var(--d-ink-3);
+}
+
+.cl-state {
+  padding: 16px 12px;
+  margin: 0;
+  color: var(--d-ink-2);
+}
+
+.cl-state .btn {
+  margin-top: 8px;
+}
+
+.cl-skeleton {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.cl-skeleton li {
+  height: 36px;
+  margin: 0 12px;
+  border-bottom: 1px solid var(--d-line);
+  background: linear-gradient(90deg, transparent 0 10%, var(--d-line) 10% 11%, transparent 11%);
+}
+
+@media (max-width: 959px) {
+  .cl {
+    overflow: visible;
+  }
+  .cl-scroll {
+    overflow: visible;
+  }
+  .cl-cols,
+  .cl-row {
+    grid-template-columns: minmax(110px, 1.9fr) minmax(40px, 1fr) 52px 64px;
+    column-gap: 6px;
+  }
+  .cl-name {
+    flex-wrap: wrap;
+    gap: 2px 4px;
+  }
+  .cl-name b {
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+  .cl-axis-head > span {
+    display: none;
+  }
+  .cl-num {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.15;
+  }
+  .cl-num .cl-dot {
+    display: none;
+  }
+  .cl-num .cl-n {
+    font-size: var(--d-xs);
+  }
+  .cl-tau-label {
+    transform: translate(-50%, -50%);
+  }
+  .cl-cols {
+    padding-left: 8px;
+    padding-right: 36px;
+    position: static;
+  }
+  .cl-row {
+    padding-left: 8px;
+    padding-right: 36px;
+    height: auto;
+    min-height: 44px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+  .cl-info {
+    top: 8px;
+  }
+  .cl-where {
+    display: none;
+  }
+}
+
+@media print {
+  .print-only {
+    display: block;
+  }
+  .cl {
+    display: block;
+    overflow: visible;
+    color: #000;
+    font-size: 8.5pt;
+    line-height: 1.25;
+  }
+  .cl * {
+    color: #000 !important;
+  }
+  .pr h2 {
+    margin: 0 0 3px;
+    font-size: 14pt;
+  }
+  .pr p {
+    margin: 0 0 3px;
+  }
+  .pr-rows {
+    list-style: none;
+    margin: 6px 0 0;
+    padding: 0;
+  }
+  .pr-row {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2.4fr) minmax(0, 2.4fr);
+    column-gap: 8px;
+    padding: 3px 0;
+    border-bottom: 0.5pt solid #000;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .pr-name {
+    font-size: 9pt;
+  }
+  .pr-why {
+    grid-column: 1 / -1;
+  }
+  .pr-div {
+    padding: 4px 0 2px;
+    font-weight: 700;
+  }
+  .pr-foot {
+    margin-top: 6px;
+    font-size: 8pt;
+  }
+}
+
+/* The bar's divider: a label above the first row that does not clear it (no separate list item). */
+.cl-rows > li[data-divider] {
+  position: relative;
+  margin-top: 28px;
+}
+
+.cl-rows > li[data-divider]::before {
+  content: attr(data-divider);
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  background: color-mix(in srgb, var(--d-line) 40%, var(--d-panel));
+  border-bottom: 1px solid var(--d-line);
+  font-size: var(--d-xs);
+  font-weight: 600;
+  color: var(--d-ink-3);
+  pointer-events: none;
+}

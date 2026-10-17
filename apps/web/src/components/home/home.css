@@ -1,0 +1,210 @@
+/* Home: one stat row, two role cards. Flat white panels on the 4 px grid. */
+
+.hm {
+  display: grid;
+  align-content: start;
+  gap: var(--gap);
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 0 0 16px;
+}
+
+.hm .hm-since {
+  display: grid;
+  gap: var(--gap);
+  padding: 4px 0 0;
+  min-width: 0;
+  /* The three figures are the panels; no card around cards. */
+  background: none;
+  border: 0;
+}
+
+.hm-head {
+  padding: 0 2px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 16px;
+}
+
+.hm-head h1 {
+  margin: 0;
+  font-size: var(--t-m);
+  font-weight: 600;
+}
+
+.asof {
+  font-family: var(--font-display);
+  font-size: var(--t-m);
+  font-weight: 600;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.asof-next {
+  color: var(--ink-3);
+}
+
+.hm-note {
+  margin: 0;
+  color: var(--ink-2);
+}
+
+.hm-offline {
+  padding: 8px 12px;
+  border: 1px solid var(--st-watch);
+  border-radius: var(--radius-control);
+  background: var(--st-watch-bg, #fdf3e2);
+  color: var(--ink);
+}
+
+.hm-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hm-stats li {
+  display: grid;
+  min-width: 0;
+}
+
+.hm-stat {
+  display: grid;
+  gap: 2px;
+  min-height: 96px;
+  padding: var(--pad);
+  align-content: start;
+  border: 1px solid var(--line);
+  border-radius: var(--brand-radius, 10px);
+  background: var(--glass-3, #fff);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.hm-stat:focus-visible,
+.hm-role:focus-visible {
+  outline: 2px solid var(--live);
+  outline-offset: 2px;
+}
+
+.hm-stat:hover {
+  border-color: var(--live);
+  background: var(--live-soft);
+}
+
+.hm-n {
+  font-family: var(--font-display);
+  font-size: var(--t-l);
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.hm-stat[data-zero="true"] .hm-n {
+  color: var(--ink-3);
+}
+
+.hm-label {
+  font-size: var(--t-s);
+  font-weight: 500;
+  color: var(--ink-2);
+  margin-bottom: 2px;
+}
+
+.hm-date {
+  font-size: var(--t-xs);
+  color: var(--ink-3);
+}
+
+.hm-roles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--gap);
+  min-width: 0;
+}
+
+.hm-role {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: var(--pad);
+  min-height: 56px;
+  padding: 12px;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.hm-role:hover {
+  border-color: var(--live);
+}
+
+.hm-role[data-last="true"] {
+  border-color: var(--live);
+}
+
+.hm-role-icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-control);
+  background: var(--live-soft);
+  color: var(--live);
+}
+
+.hm-role-body {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.hm-role-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  font-size: var(--t-m);
+  font-weight: 600;
+}
+
+.hm-role-detail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 8px;
+  font-size: var(--t-xs);
+  color: var(--ink-3);
+}
+
+.hm-role-detail .asof {
+  font-family: var(--font-ui);
+  font-size: var(--t-xs);
+  font-weight: 400;
+  color: var(--ink-3);
+}
+
+.hm-role-action {
+  color: var(--live);
+}
+
+@media (max-width: 860px) {
+  .hm-roles {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .hm-stat {
+    min-height: 80px;
+    padding: 8px;
+  }
+  .hm-label {
+    font-size: var(--t-xs);
+  }
+}

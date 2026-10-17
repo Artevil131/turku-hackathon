@@ -5,6 +5,7 @@ import type { Antibiotic, IsoDate, IsolateRecord, Organism, Sex, Specimen, Ward,
 import type { CheckSummary } from "@aei/quality";
 import type { Flow, TrailLink } from "@aei/relations";
 import type { ClockState } from "@aei/replay";
+import type { WeeklySeries } from "@aei/viz";
 
 // The contract between the AEI server and its clients (web, later the
 // phone app). The current server is apps/api in TypeScript; a Rust server
@@ -24,6 +25,16 @@ export const ROUTES = {
   ingest: "/api/ingest",
   /** THL county series of MRSA, ESBL, VRE and CPE and their regional signals (D-025, D-037). */
   regional: "/api/regional",
+  /**
+   * Wellbeing services county polygons (Statistics Finland, CC BY 4.0) for the regional map, as
+   * GeoJSON. Optional: 404 when the server has no geometry file. Proposed by Claude Code, pending Artem (D-043).
+   */
+  counties: "/api/counties",
+  /**
+   * Raw weekly counts per unit up to the clock: distinct patients per resistant phenotype and
+   * cultures sampled (D-042). Optional; proposed by Claude Code, pending Artem.
+   */
+  weekly: "/api/weekly",
   /** Plausibility checks over the rows the server holds (D-038). */
   quality: "/api/quality",
 } as const;
@@ -60,6 +71,8 @@ export interface IsolateQuery {
 }
 
 export type { AntibioticCoverage, CombinationSuggestion, Counts, CoverageResult, Level, Severity, Suggestion } from "@aei/coverage";
+/** The bar each severity is judged against (D-026, D-027), so clients label it from the same source. */
+export { THRESHOLDS } from "@aei/coverage";
 
 /** The doctor's coverage list (D-023). The server sets the as-of date from its clock. */
 export type CoverageQuery = Omit<GearCoverageQuery, "asOf" | "minTested"> & {
@@ -204,6 +217,30 @@ export function regionalUpTo(data: RegionalData, asOf: IsoDate, query: RegionalQ
   };
 }
 
+/** One county polygon as `scripts/fetch_county_geometry.py` writes it; `name` matches `RegionalSeries.region`. */
+export interface CountyFeature {
+  type: "Feature";
+  id?: string | number;
+  properties: { hyvinvointialue: string; nimi: string; namn?: string; name: string };
+  geometry: { type: "Polygon"; coordinates: number[][][] } | { type: "MultiPolygon"; coordinates: number[][][][] };
+}
+
+export interface CountiesResponse {
+  type: "FeatureCollection";
+  features: CountyFeature[];
+}
+
+export type { UnitWeeks, WeeklySeries } from "@aei/viz";
+
+/** Weeks from `from` (default: the dataset start) up to the clock's as-of date, never later. */
+export interface WeeklyQuery {
+  from?: IsoDate;
+}
+
+export interface WeeklyResponse extends WeeklySeries {
+  asOf: IsoDate;
+}
+
 export type { CheckName, CheckSummary, Finding, Severity as FindingSeverity } from "@aei/quality";
 
 /** Every check run over every row the server holds, grouped by check; no findings means every check passed. */
@@ -256,6 +293,10 @@ export interface AeiClient {
   alerts(query: AlertsQuery): Promise<AlertsResponse>;
   /** 404 when the server has no regional file. */
   regional(query: RegionalQuery): Promise<RegionalResponse>;
+  /** County polygons for the regional map; 404 when the server has no geometry file. */
+  counties(): Promise<CountiesResponse>;
+  /** Weekly raw counts per unit up to the clock (optional route). */
+  weekly(query: WeeklyQuery): Promise<WeeklyResponse>;
   quality(): Promise<QualityResponse>;
   /** Opens the live stream; returns a function that closes it. */
   live(onEvent: (event: LiveEvent) => void, onError?: (error: Event) => void): () => void;
@@ -302,6 +343,8 @@ export function createAeiClient(options: AeiClientOptions): AeiClient {
     relations: (query) => json<RelationsResponse>(withQuery(ROUTES.relations, query)),
     alerts: (query) => json<AlertsResponse>(withQuery(ROUTES.alerts, query)),
     regional: (query) => json<RegionalResponse>(withQuery(ROUTES.regional, query)),
+    counties: () => json<CountiesResponse>(ROUTES.counties),
+    weekly: (query) => json<WeeklyResponse>(withQuery(ROUTES.weekly, query)),
     quality: () => json<QualityResponse>(ROUTES.quality),
     live(onEvent, onError) {
       const source = new ES(url(ROUTES.live));

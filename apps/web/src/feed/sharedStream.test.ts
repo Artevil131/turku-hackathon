@@ -9,7 +9,9 @@ class FakeSource {
   listeners = new Map<string, (e: MessageEvent<string>) => void>();
   onerror: ((e: Event) => void) | null = null;
   closed = false;
-  constructor(readonly url: string) {
+  readonly url: string;
+  constructor(url: string) {
+    this.url = url;
     FakeSource.opened.push(this);
   }
   addEventListener(type: string, fn: EventListener) {
@@ -27,7 +29,9 @@ function bus() {
   const members = new Set<{ name: string; onmessage: ((e: MessageEvent) => void) | null }>();
   return class FakeChannel {
     onmessage: ((e: MessageEvent) => void) | null = null;
-    constructor(readonly name: string) {
+    readonly name: string;
+    constructor(name: string) {
+      this.name = name;
       members.add(this);
     }
     postMessage(data: unknown) {

@@ -1,0 +1,345 @@
+/* The pitch intro (#intro): full screen, no chrome. A calm, light opening slide around one canvas. */
+
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  grid-template-columns: minmax(300px, 38rem) 1fr;
+  grid-template-rows: auto auto 1fr auto;
+  grid-template-areas:
+    "copy stage"
+    "cta stage"
+    "space stage"
+    "dock stage";
+  gap: 0 clamp(8px, 2vw, 32px);
+  padding: clamp(20px, 4vh, 44px) clamp(20px, 4vw, 56px);
+  overflow: auto;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  background: var(--chassis);
+}
+
+.intro-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  touch-action: none;
+  cursor: grab;
+  outline-offset: -4px;
+}
+
+.intro-canvas.is-dragging {
+  cursor: grabbing;
+}
+
+.intro-canvas:focus-visible {
+  outline: 3px solid var(--live);
+}
+
+.intro-copy,
+.intro-cta,
+.intro-dock {
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.intro-copy {
+  grid-area: copy;
+  align-self: end;
+  padding-top: clamp(0px, 6vh, 56px);
+}
+
+.intro-title {
+  margin: 0;
+  font-size: clamp(2.2rem, 4.6vw, 3.6rem);
+  line-height: 1.04;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.intro-sub {
+  margin: 14px 0 0;
+  max-width: 30rem;
+  font-size: clamp(1rem, 1.5vw, 1.2rem);
+  line-height: 1.45;
+  color: var(--ink-2);
+  text-wrap: pretty;
+}
+
+.intro-cta {
+  grid-area: cta;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin-top: 28px;
+  pointer-events: auto;
+}
+
+.intro-enter {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 0 28px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--live);
+  color: var(--live-ink);
+  font: inherit;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow:
+    0 10px 28px -10px var(--live-glow),
+    0 2px 6px rgb(16 42 67 / 0.2);
+  transition:
+    transform 0.2s var(--ease-out),
+    box-shadow 0.2s var(--ease-out);
+}
+
+.intro-enter:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 14px 30px -10px rgb(10 99 168 / 0.5),
+    0 2px 6px rgb(16 42 67 / 0.2);
+}
+
+.intro-enter:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 3px;
+}
+
+.intro-enter-arrow {
+  font-size: 1.3em;
+  line-height: 1;
+}
+
+.intro-enter-key {
+  font-size: var(--step--1);
+  color: var(--ink-3);
+}
+
+.intro-copy,
+.intro-cta,
+.intro-dock,
+.intro-stage {
+  min-width: 0;
+}
+
+.intro-stage {
+  grid-area: stage;
+  position: relative;
+  z-index: 0;
+  pointer-events: none;
+  min-height: 320px;
+}
+
+.intro-state {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  padding: 10px 16px;
+  max-width: 26rem;
+  text-align: center;
+  font-size: var(--step-0);
+  line-height: 1.4;
+  color: var(--ink-2);
+  background: var(--glass-3);
+  border: 1px solid var(--glass-edge);
+  border-radius: var(--radius-control);
+  box-shadow: var(--glass-shadow);
+}
+
+.intro-state-note {
+  top: auto;
+  bottom: 8px;
+  transform: translate(-50%, 0);
+}
+
+.intro-drag {
+  position: absolute;
+  right: 4px;
+  bottom: 2px;
+  margin: 0;
+  font-size: var(--step--1);
+  color: var(--ink-3);
+}
+
+.intro-dock {
+  grid-area: dock;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 24px;
+  padding: 14px 16px;
+  border-radius: var(--radius-panel);
+  background: var(--glass-2);
+  border: 1px solid var(--line);
+  pointer-events: auto;
+}
+
+.intro-picture {
+  margin: 0;
+  font-size: var(--step-1);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.intro-month-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2px 12px;
+}
+
+.intro-series {
+  font-weight: 600;
+}
+
+.intro-label {
+  font-weight: 400;
+  color: var(--ink-3);
+  margin-right: 4px;
+}
+
+.intro-month-now {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.intro-latest {
+  font-weight: 400;
+  color: var(--ink-3);
+}
+
+.intro-slider {
+  width: 100%;
+  min-height: 32px;
+  margin: 4px 0 0;
+  accent-color: var(--live);
+}
+
+.intro-slider:focus-visible {
+  outline: 3px solid var(--live);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.intro-swatches {
+  display: flex;
+  height: 12px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+}
+
+.intro-swatch {
+  flex: 1;
+}
+
+.intro-swatch[data-step="0"] {
+  background: rgb(226 238 247);
+}
+.intro-swatch[data-step="1"] {
+  background: rgb(190 216 236);
+}
+.intro-swatch[data-step="2"] {
+  background: rgb(150 192 224);
+}
+.intro-swatch[data-step="3"] {
+  background: rgb(108 166 208);
+}
+.intro-swatch[data-step="4"] {
+  background: rgb(52 128 185);
+}
+.intro-swatch[data-step="5"] {
+  background: rgb(8 82 140);
+}
+
+.intro-swatch-ends {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2px;
+  font-size: var(--step--1);
+  color: var(--ink-3);
+}
+
+.intro-legend-text,
+.intro-note {
+  margin: 0;
+  font-size: var(--step--1);
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+
+.intro-note {
+  color: var(--ink-3);
+}
+
+/* Laptop and below: a single column, the picture between the title and the dock. */
+@media (max-width: 860px) {
+  .intro {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(300px, 1fr) auto auto;
+    grid-template-areas:
+      "copy"
+      "stage"
+      "cta"
+      "dock";
+    padding: 18px 16px 16px;
+  }
+
+  .intro-copy {
+    padding-top: 0;
+  }
+
+  .intro-title {
+    font-size: clamp(1.9rem, 8vw, 2.6rem);
+  }
+
+  .intro-sub {
+    margin-top: 8px;
+    font-size: 0.95rem;
+  }
+
+  .intro-cta {
+    margin-top: 10px;
+  }
+
+  .intro-enter {
+    flex: 1 1 100%;
+    justify-content: center;
+    min-height: 52px;
+  }
+
+  .intro-enter-key {
+    display: none;
+  }
+
+  .intro-dock {
+    margin-top: 12px;
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .intro-picture {
+    font-size: var(--step-0);
+  }
+
+  .intro-drag {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-enter {
+    transition: none;
+  }
+}

@@ -1,0 +1,471 @@
+import type { CountiesResponse, RegionalResponse, RegionalSeries, RegionalSignal } from "@aei/contract";
+import { formatMonth, type Locale, t } from "@aei/i18n";
+import { useMemo, useState } from "react";
+import { AsOf } from "../../AsOf.tsx";
+import { HOSPITALS, LINKS } from "../../intro/surface.ts";
+import type { PanelProps } from "../board.ts";
+import { centroidOf, pathOf } from "../map/geo.ts";
+import "./geo.css";
+import { type Layout, MAP_LAYOUT, mapPoint } from "./layout.ts";
+import { useLoad } from "./useLoad.ts";
+
+// One geographic panel (redesign D2): Finland's wellbeing counties filled by
+// the THL rate of the replay month, the referral tree of the university and
+// central hospitals as a graph on top, and Tyks magnified into an inset with
+// its nine units, patient flow, the last 28 days of alerts, where the patients
+// of a lit unit go next, and the phenotype trail.
+
+const DEFAULT_GROUP = "MRSA carriage";
+const NATIONAL = "Finland (all counties)";
+
+/** The API's series name stays the key; the label is translated. */
+const SERIES_KEY = {
+  "CPE carriage, E. cloacae": "mapSeriesCpeEcl",
+  "CPE carriage, E. coli": "mapSeriesCpeEco",
+  "CPE carriage, K. pneumoniae": "mapSeriesCpeKpn",
+  "ESBL blood/CSF, E. coli": "mapSeriesEsblBloodEco",
+  "ESBL blood/CSF, K. pneumoniae": "mapSeriesEsblBloodKpn",
+  "ESBL carriage, E. coli": "mapSeriesEsblCarrEco",
+  "ESBL carriage, K. pneumoniae": "mapSeriesEsblCarrKpn",
+  "MRSA blood/CSF": "mapSeriesMrsaBlood",
+  "MRSA carriage": "mapSeriesMrsaCarr",
+  "VRE blood/CSF": "mapSeriesVreBlood",
+  "VRE carriage": "mapSeriesVreCarr",
+} as const;
+const seriesLabel = (locale: Locale, group: string) =>
+  group in SERIES_KEY ? t(locale, SERIES_KEY[group as keyof typeof SERIES_KEY]) : group;
+
+const shortName = (region: string) => region.replace(/ hyvinvointialue$/, "");
+const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
+const fmt = (locale: Locale, v: number, digits = 1) =>
+  new Intl.NumberFormat(locale === "fi" ? "fi-FI" : "en-GB", { maximumFractionDigits: digits }).format(v);
+const fmtP = (locale: Locale, p: number) => (p < 0.001 ? `< ${fmt(locale, 0.001, 3)}` : fmt(locale, p, 3));
+
+/** Five steps: zero, then quarters of the non-zero county-months of the series. */
+function stepEdges(series: RegionalSeries[]): number[] {
+  const vals: number[] = [];
+  for (const s of series) for (const v of s.incidencePer100k ?? []) if (v !== null && v > 0) vals.push(v);
+  vals.sort((a, b) => a - b);
+  if (vals.length === 0) return [0, 0, 0];
+  const q = (p: number) => vals[Math.min(vals.length - 1, Math.floor(p * vals.length))] as number;
+  return [q(0.25), q(0.5), q(0.75)];
+}
+
+function stepOf(v: number, edges: number[]): number {
+  if (v === 0) return 0;
+  if (v <= (edges[0] as number)) return 1;
+  if (v <= (edges[1] as number)) return 2;
+  if (v <= (edges[2] as number)) return 3;
+  return 4;
+}
+
+interface CountyShape {
+  name: string;
+  d: string;
+  cx: number;
+  cy: number;
+}
+
+function Glyph({ strong, size = 16 }: { strong: boolean; size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" aria-hidden="true" className="geo-glyph-svg">
+      <circle cx="8" cy="8" r="5.2" className={strong ? "geo-glyph geo-glyph-strong" : "geo-glyph geo-glyph-weak"} />
+    </svg>
+  );
+}
+
+/** Cases per month for a county, signal months as filled or hollow dots with the expected count as a tick. */
+function Spark({
+  locale,
+  series,
+  months,
+  signals,
+}: {
+  locale: Locale;
+  series: RegionalSeries;
+  months: string[];
+  signals: RegionalSignal[];
+}) {
+  const W = 220;
+  const H = 44;
+  const cases = series.cases;
+  const top = Math.max(1, ...cases, ...signals.map((s) => s.expected));
+  const x = (i: number) => 4 + (i / Math.max(1, months.length - 1)) * (W - 8);
+  const y = (v: number) => H - 4 - (v / top) * (H - 10);
+  const label = t(locale, "geoSparkAria", {
+    from: formatMonth(locale, `${months[0]}-01`, true),
+    to: formatMonth(locale, `${months[months.length - 1]}-01`, true),
+  });
+  return (
+    <svg className="geo-spark" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label}>
+      <title>{label}</title>
+      <line x1="4" x2={W - 4} y1={H - 4} y2={H - 4} className="geo-spark-base" />
+      <polyline points={cases.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ")} className="geo-spark-line" />
+      {signals.map((s) => {
+        const i = months.indexOf(s.month);
+        if (i < 0) return null;
+        return (
+          <g key={s.month}>
+            <line x1={x(i) - 5} x2={x(i) + 5} y1={y(s.expected)} y2={y(s.expected)} className="geo-spark-tick" />
+            <circle cx={x(i)} cy={y(s.cases)} r="4" className={s.strong ? "geo-glyph geo-glyph-strong" : "geo-glyph geo-glyph-weak"}>
+              <title>
+                {formatMonth(locale, `${s.month}-01`, true)}:{" "}
+                {t(locale, "mapSignalDetail", { cases: s.cases, expected: fmt(locale, s.expected), p: fmtP(locale, s.p) })}
+              </title>
+            </circle>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+export function GeoMap({ client, locale, asOf, reducedMotion }: PanelProps) {
+  const [group, setGroup] = useState(DEFAULT_GROUP);
+  const [chosen, setChosen] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
+
+  const L: Layout = MAP_LAYOUT;
+
+  const counties = useLoad<CountiesResponse>(() => client.counties(), [client], attempt);
+  const regional = useLoad<RegionalResponse>(() => client.regional({ group }), [client, group, asOf], attempt);
+  const shapes: CountyShape[] = useMemo(() => {
+    if (counties.state !== "ok") return [];
+    return counties.data.features.map((f) => {
+      const [cx, cy] = centroidOf(f.geometry);
+      return { name: f.properties.nimi, d: pathOf(f.geometry), cx, cy };
+    });
+  }, [counties]);
+
+  const data = regional.state === "ok" ? regional.data : null;
+  const months = data?.months ?? [];
+  const idx = months.length - 1;
+  const month = months[idx] ?? null;
+  const monthLong = (m: string) => formatMonth(locale, `${m}-01`, true);
+  const byRegion = useMemo(() => new Map((data?.series ?? []).map((s) => [s.region, s])), [data]);
+  const edges = useMemo(() => stepEdges((data?.series ?? []).filter((s) => s.region !== NATIONAL)), [data]);
+  const signalsAll = useMemo(() => (data && month ? data.signals.filter((s) => s.month <= month) : []), [data, month]);
+  const signalOf = useMemo(() => {
+    const m = new Map<string, RegionalSignal>();
+    for (const s of [...signalsAll].sort((a, b) => Number(b.strong) - Number(a.strong) || a.p - b.p))
+      if (!m.has(s.region)) m.set(s.region, s);
+    return m;
+  }, [signalsAll]);
+  const casesAt = (r: string) => byRegion.get(r)?.cases[idx] ?? null;
+  const rateAt = (r: string) => byRegion.get(r)?.incidencePer100k?.[idx] ?? null;
+  const rateText = (r: string) => {
+    const v = rateAt(r);
+    return v === null ? t(locale, "mapNoRate") : t(locale, "mapRateValue", { rate: fmt(locale, v) });
+  };
+  const fillOf = (r: string) => {
+    if (!data || !byRegion.has(r)) return "none";
+    const v = rateAt(r);
+    return v === null ? "norate" : `s${stepOf(v, edges)}`;
+  };
+
+  const hospitals = useMemo(() => new Map(HOSPITALS.map((h) => [h.id, { ...h, p: mapPoint(L, h.lon, h.lat) }])), []);
+  const tyks = hospitals.get("Tyks")?.p ?? [0, 0];
+
+  const retry = () => setAttempt((n) => n + 1);
+
+  const loading = counties.state === "loading" || regional.state === "loading";
+  const updating = (regional.fetching && data !== null) || (!!asOf && !!data && asOf !== data.asOf);
+  const hasError = counties.state === "error" || regional.state === "error";
+  const edgeMax = (edges[2] as number) ?? 0;
+  const steps = [
+    { cls: "s0", label: "0" },
+    { cls: "s1", label: `≤${fmt(locale, edges[0] as number)}` },
+    { cls: "s2", label: `≤${fmt(locale, edges[1] as number)}` },
+    { cls: "s3", label: `≤${fmt(locale, edgeMax)}` },
+    { cls: "s4", label: `>${fmt(locale, edgeMax)}` },
+  ];
+
+  const legendScale = (
+    <div className="geo-legend">
+      <div className="geo-legend-row">
+        <span className="geo-legend-title">{t(locale, "geoLegendCases")}</span>
+        <ul className="geo-steps">
+          {steps.map((s) => (
+            <li key={s.cls}>
+              <span className={`geo-swatch geo-fill-${s.cls}`} aria-hidden="true" />
+              {s.label}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+
+  const legendKeys = (
+    <div className="geo-legend geo-legend-keys">
+      <ul className="geo-keys">
+        <li>
+          <Glyph strong />
+          {t(locale, "mapGlyphStrong")}
+        </li>
+        <li>
+          <Glyph strong={false} />
+          {t(locale, "mapGlyphWeak")}
+        </li>
+        <li>
+          <svg width="22" height="12" viewBox="0 0 22 12" aria-hidden="true">
+            <line x1="1" x2="21" y1="6" y2="6" className="geo-ref" />
+            <circle cx="11" cy="6" r="3" className="geo-hosp" />
+          </svg>
+          {t(locale, "geoLegendRef")}
+        </li>
+      </ul>
+    </div>
+  );
+
+  const fs = chosen ? byRegion.get(chosen) : undefined;
+  const card = (
+    <div className="geo-card" aria-live="polite">
+      {chosen && month ? (
+        <>
+          <p className="geo-card-name">
+            <strong>{shortName(chosen)}</strong>
+            {signalOf.has(chosen) ? <Glyph strong={(signalOf.get(chosen) as RegionalSignal).strong} /> : null}
+          </p>
+          {fs ? (
+            <>
+              <p className="geo-card-figs">
+                {t(locale, "geoMonthCases", { cases: fmt(locale, casesAt(chosen) ?? 0, 0), month: monthLong(month) })} · {rateText(chosen)}
+              </p>
+              <p className="geo-card-figs">
+                {t(locale, "mapFocusTwelve", {
+                  n: fmt(locale, sum(fs.cases.slice(Math.max(0, idx - 11), idx + 1)), 0),
+                  month: monthLong(month),
+                })}
+              </p>
+              {signalOf.has(chosen) ? (
+                <p className="geo-card-figs">
+                  {t(locale, (signalOf.get(chosen) as RegionalSignal).strong ? "mapSignalStrong" : "mapSignalWeak")} ·{" "}
+                  {t(locale, "mapSignalDetail", {
+                    cases: (signalOf.get(chosen) as RegionalSignal).cases,
+                    expected: fmt(locale, (signalOf.get(chosen) as RegionalSignal).expected),
+                    p: fmtP(locale, (signalOf.get(chosen) as RegionalSignal).p),
+                  })}
+                </p>
+              ) : null}
+              <Spark locale={locale} series={fs} months={months} signals={signalsAll.filter((s) => s.region === chosen)} />
+              <p className="geo-faint">{t(locale, "geoExpectedTick")}</p>
+            </>
+          ) : (
+            <p className="geo-faint">{t(locale, "geoNoRegional")}</p>
+          )}
+        </>
+      ) : (
+        <p className="geo-faint">{t(locale, "geoPick")}</p>
+      )}
+    </div>
+  );
+
+  const rows = shapes
+    .map((c) => ({ ...c, rate: rateAt(c.name), cases: casesAt(c.name) }))
+    .sort((x, y) => (y.rate ?? -1) - (x.rate ?? -1) || x.name.localeCompare(y.name));
+
+  return (
+    <section
+      className="board-panel geo"
+      aria-labelledby="geo-title"
+      aria-busy={loading || updating}
+      data-stale={updating}
+      data-reduced={reducedMotion}
+    >
+      <header className="geo-head">
+        <h2 id="geo-title" className="geo-title">
+          {t(locale, "geoTitle")}
+        </h2>
+        {data ? (
+          <span className="geo-asof">
+            <AsOf locale={locale} date={data.asOf} pending={updating} clockDate={asOf ?? undefined} />
+            {month ? <span className="geo-month">{monthLong(month)}</span> : null}
+          </span>
+        ) : null}
+        <label className="geo-field">
+          <span className="visually-hidden">{t(locale, "mapGroup")}</span>
+          <select value={group} onChange={(e) => setGroup(e.target.value)} aria-label={t(locale, "mapGroup")}>
+            {(data?.groups ?? [DEFAULT_GROUP]).map((g) => (
+              <option key={g} value={g}>
+                {seriesLabel(locale, g)}
+              </option>
+            ))}
+          </select>
+        </label>
+      </header>
+
+      {hasError ? (
+        <div className="geo-state" role="alert">
+          <span>{t(locale, "mapError")}</span>
+          <button type="button" className="geo-chip" onClick={retry}>
+            {t(locale, "mapRetry")}
+          </button>
+        </div>
+      ) : null}
+      {loading ? (
+        <p className="geo-state" role="status">
+          {t(locale, "mapLoading")}
+        </p>
+      ) : null}
+      {counties.state === "404" || regional.state === "404" ? (
+        <p className="geo-state" role="status">
+          {[counties.state === "404" ? t(locale, "geoNoCounties") : null, regional.state === "404" ? t(locale, "geoNoRegional") : null]
+            .filter(Boolean)
+            .join(" · ")}
+        </p>
+      ) : null}
+
+      <div className="geo-stage">
+        <svg viewBox={`0 0 ${L.w} ${L.h}`} className="geo-svg" role="group" aria-label={t(locale, "geoTitle")}>
+          <defs>
+            <marker id="geo-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+              <path d="M1 1 L9 5 L1 9 Z" className="geo-spread-head" />
+            </marker>
+            <marker id="geo-arrow-trail" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+              <path d="M1 1 L9 5 L1 9 Z" className="geo-trail-head" />
+            </marker>
+          </defs>
+
+          <g transform={`scale(${L.s})`}>
+            {shapes.map((c) => (
+              <path
+                key={c.name}
+                d={c.d}
+                className={`geo-county geo-fill-${fillOf(c.name)}`}
+                data-selected={chosen === c.name}
+                vectorEffect="non-scaling-stroke"
+                role="button"
+                tabIndex={-1}
+                aria-label={shortName(c.name)}
+                aria-pressed={chosen === c.name}
+                onClick={() => setChosen((cur) => (cur === c.name ? null : c.name))}
+                onKeyDown={(e) => e.key === "Enter" && setChosen((cur) => (cur === c.name ? null : c.name))}
+              >
+                <title>
+                  {data && month
+                    ? t(locale, "mapCountyLabel", {
+                        region: shortName(c.name),
+                        cases: casesAt(c.name) ?? 0,
+                        month: monthLong(month),
+                        rate: rateText(c.name),
+                      })
+                    : shortName(c.name)}
+                </title>
+              </path>
+            ))}
+          </g>
+
+          <g className="geo-refs">
+            {LINKS.map(([a, b, w]) => {
+              const pa = hospitals.get(a)?.p;
+              const pb = hospitals.get(b)?.p;
+              if (!pa || !pb) return null;
+              const isTyks = a === "Tyks" || b === "Tyks";
+              return (
+                <line
+                  key={`${a}|${b}`}
+                  x1={pa[0]}
+                  y1={pa[1]}
+                  x2={pb[0]}
+                  y2={pb[1]}
+                  className="geo-ref"
+                  data-uni={w < 1}
+                  data-tyks={isTyks}
+                />
+              );
+            })}
+            {[...hospitals.values()].map((h) => {
+              const tipKind = t(locale, h.uni ? "geoUniHospital" : "geoCentralHospital");
+              const tip = h.to ? t(locale, "geoCentralTo", { name: h.name, kind: tipKind, to: h.to }) : `${h.name}, ${tipKind}`;
+              return (
+                <g key={h.id}>
+                  <circle
+                    cx={h.p[0]}
+                    cy={h.p[1]}
+                    r={h.id === "Tyks" ? 7 : h.uni ? 5.5 : 3.2}
+                    className="geo-hosp"
+                    data-uni={!!h.uni}
+                    data-tyks={h.id === "Tyks"}
+                  >
+                    <title>{tip}</title>
+                  </circle>
+                  {h.uni ? (
+                    <text
+                      x={h.id === "Tyks" ? h.p[0] - 11 : h.p[0] + 9}
+                      y={h.p[1] + 4.5}
+                      textAnchor={h.id === "Tyks" ? "end" : "start"}
+                      className="geo-hosp-label"
+                      data-tyks={h.id === "Tyks"}
+                    >
+                      {h.id}
+                    </text>
+                  ) : null}
+                </g>
+              );
+            })}
+          </g>
+
+          <g className="geo-sigs" pointerEvents="none">
+            {shapes
+              .filter((c) => signalOf.has(c.name))
+              .map((c) => {
+                const s = signalOf.get(c.name) as RegionalSignal;
+                let x = c.cx * L.s;
+                const y = c.cy * L.s - 9;
+                for (const h of hospitals.values()) if (Math.hypot(h.p[0] - x, h.p[1] - y) < 12) x += 14;
+                return (
+                  <circle key={c.name} cx={x} cy={y} r={6} className={s.strong ? "geo-glyph geo-glyph-strong" : "geo-glyph geo-glyph-weak"}>
+                    <title>
+                      {shortName(c.name)}:{" "}
+                      {t(locale, "mapSignalDetail", { cases: s.cases, expected: fmt(locale, s.expected), p: fmtP(locale, s.p) })}
+                    </title>
+                  </circle>
+                );
+              })}
+          </g>
+
+          <circle cx={tyks[0]} cy={tyks[1]} r={11} className="geo-anchor" />
+        </svg>
+
+        {edgeMax > 0 ? <div className="geo-overlay-legend">{legendScale}</div> : null}
+        {chosen ? <div className="geo-overlay-card">{card}</div> : null}
+      </div>
+
+      {legendKeys}
+
+      <details className="geo-lists">
+        <summary className="geo-h3">{t(locale, "geoCounties")}</summary>
+        <section aria-label={t(locale, "geoCounties")}>
+          {rows.length === 0 ? (
+            <p className="geo-faint">
+              {counties.state === "404" ? t(locale, "geoNoCounties") : loading ? t(locale, "mapLoading") : t(locale, "geoNoCases")}
+            </p>
+          ) : (
+            <ul className="geo-list geo-list-counties">
+              {rows.map((c) => (
+                <li key={c.name}>
+                  <button
+                    type="button"
+                    className="geo-row"
+                    aria-pressed={chosen === c.name}
+                    onClick={() => setChosen(c.name)}
+                    title={c.name}
+                  >
+                    <span className="geo-row-glyphs" aria-hidden="true">
+                      {signalOf.has(c.name) ? <Glyph strong={(signalOf.get(c.name) as RegionalSignal).strong} size={14} /> : null}
+                    </span>
+                    <span className="geo-row-name">{shortName(c.name)}</span>
+                    <span className="geo-row-figs">
+                      {c.rate === null ? "–" : fmt(locale, c.rate)} · n {c.cases ?? 0}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </details>
+    </section>
+  );
+}

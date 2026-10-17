@@ -1,0 +1,244 @@
+/* The banner: one dense row of one-click filters (Epic-style patient banner), defaults already chosen. */
+.rs {
+  min-width: 0;
+  background: var(--glass-3, #fff);
+  border: 1px solid var(--line, #e4e6ee);
+  border-radius: var(--brand-radius, 10px);
+  padding: 0 8px;
+}
+
+.rs-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.rs-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.rs-label {
+  font-size: var(--t-xs, 12px);
+  font-weight: 500;
+  color: var(--ink-3, #6f7292);
+  white-space: nowrap;
+}
+
+.rs-tag {
+  font-weight: 500;
+  font-size: var(--t-xs, 12px);
+  color: var(--st-watch, #94590a);
+  background: var(--st-watch-bg, #fdf3e2);
+  border-radius: 999px;
+  padding: 0 6px;
+  white-space: nowrap;
+}
+
+.rs-choices {
+  display: inline-flex;
+  gap: 0;
+  border-radius: 6px;
+  border: 1px solid var(--line-strong, #aebecb);
+  overflow: hidden;
+  max-width: 100%;
+}
+
+.rs-choice {
+  height: 26px;
+  min-width: 32px;
+  padding: 0 10px;
+  border: 0;
+  background: var(--glass-3, #fff);
+  color: var(--ink-2, #1d204e);
+  font-size: var(--t-s, 13px);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.rs-choice + .rs-choice {
+  border-left: 1px solid var(--line, #e4e6ee);
+}
+
+.rs-choice:hover {
+  background: var(--brand-accent-soft, #ecebfc);
+}
+
+.rs-choice[aria-pressed="true"] {
+  background: var(--brand-accent, #635bf1);
+  color: var(--brand-accent-ink, #fff);
+}
+
+.rs-choice:focus-visible,
+.rs-select:focus-visible,
+.rs-sumrow:focus-visible {
+  outline: 2px solid var(--brand-accent, #635bf1);
+  outline-offset: 2px;
+  position: relative;
+  z-index: 1;
+}
+
+.rs-toggle {
+  border: 1px solid var(--line-strong, #aebecb);
+  border-radius: 6px;
+}
+
+.rs-select {
+  height: 28px;
+  min-width: 9rem;
+  padding: 0 8px;
+  border-radius: 6px;
+  border: 1px solid var(--line-strong, #aebecb);
+  background: var(--glass-3, #fff);
+  color: var(--ink, #07081c);
+  font-size: var(--t-s, 13px);
+  font-weight: 600;
+}
+
+/* Wide: a single 40 px row, labels only as titles. */
+.rs[data-wide] {
+  display: flex;
+  align-items: center;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.rs[data-wide] .rs-body {
+  flex-wrap: nowrap;
+  gap: 6px;
+}
+
+.rs[data-wide] .rs-choice {
+  padding: 0 8px;
+}
+
+.rs[data-wide] .rs-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.rs[data-wide] .rs-group:last-child {
+  margin-left: auto;
+}
+
+/* Narrow: a summary line, the patient's own filters open, the rest behind "More filters". */
+.rs:not([data-wide]) {
+  padding: 4px 12px;
+}
+
+.rs-sum {
+  margin: 0;
+  font-weight: 600;
+  font-size: var(--t-xs, 12px);
+  line-height: 1.3;
+}
+
+.rs-sum-label {
+  color: var(--ink-3, #6f7292);
+  margin-right: 4px;
+}
+
+.rs:not([data-wide]) .rs-body {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  padding: 6px 0;
+}
+
+.rs-more {
+  border-top: 1px solid var(--line, #e4e6ee);
+}
+
+.rs:not([data-wide]) .rs-group {
+  flex-wrap: wrap;
+}
+
+.rs:not([data-wide]) .rs-label {
+  width: 5.4rem;
+  flex: none;
+}
+
+.rs:not([data-wide]) .rs-choices {
+  flex: 1;
+  min-width: 0;
+}
+
+.rs-break {
+  display: none;
+}
+
+.rs:not([data-wide]) .rs-break {
+  display: block;
+  flex: 1 1 100%;
+  height: 0;
+}
+
+.rs:not([data-wide]) .rs-tag {
+  flex: 0 0 auto;
+  margin-left: calc(5.4rem + 6px);
+}
+
+.rs-done {
+  height: 40px;
+  border: 1px solid var(--line-strong, #aebecb);
+  border-radius: 6px;
+  background: var(--glass-3, #fff);
+  color: var(--ink, #07081c);
+  font-size: var(--t-s, 13px);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.rs-done:focus-visible {
+  outline: 2px solid var(--brand-accent, #635bf1);
+  outline-offset: 2px;
+}
+
+.rs:not([data-wide]) .rs-choice {
+  height: 40px;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0 6px;
+  white-space: normal;
+  line-height: 1.2;
+}
+
+.rs:not([data-wide]) .rs-select {
+  flex: 1;
+  height: 40px;
+}
+
+.rs-sumrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  border: 0;
+  background: none;
+  color: var(--ink, #07081c);
+  text-align: left;
+  cursor: pointer;
+}
+
+.rs-sumrow:focus-visible {
+  outline: 2px solid var(--brand-accent, #635bf1);
+  outline-offset: 2px;
+}
+
+@media print {
+  .rs {
+    display: none;
+  }
+}

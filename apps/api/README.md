@@ -18,6 +18,7 @@ Configuration (environment):
 | `AEI_DAYS_PER_TICK` | 1 | Days the clock moves per tick |
 
 | `AEI_REGIONAL` | `../../data/external/thl/regional.json` | THL county series and signals for `/api/regional`, written by `scripts/fetch_thl_ttr.py` (D-037) |
+| `AEI_COUNTIES` | `../../data/external/statfi/counties.geojson` | County polygons for `/api/counties` (the regional map), written by `scripts/fetch_county_geometry.py`; 404 without it. Proposed by Claude Code, pending Artem |
 | `AEI_LLM_URL` | unset | Optional llama-server URL; unset disables Ask |
 | `AEI_LLM_MODEL` | empty | Served model name |
 | `AEI_LLM_ACCESS_ID` | unset | Cloudflare Access service-token client ID |

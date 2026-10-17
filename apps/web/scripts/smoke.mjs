@@ -6,14 +6,16 @@
 //   SMOKE_URL=http://localhost:5173 pnpm smoke   # test an app that is already running
 //
 // Options: --data DIR, --as-of YYYY-MM-DD, --api-port 8798, --web-port 5176, --out DIR (default
-// apps/web/smoke-out), --routes treat,alerts,... , --headed. Chrome comes from $CHROME, else google-chrome,
+// apps/web/smoke-out), --routes home,doctor,... (home is the empty hash), --headed. Chrome comes from $CHROME, else google-chrome,
 // google-chrome-stable, chromium or chromium-browser on the PATH.
 //
 // Per route and viewport it checks: no uncaught exception or console error, no /api request that failed or
-// answered 400 or more, a main heading (h1) with text, the header and tab bar present, no horizontal page
-// overflow, at least one visible control, and the page finished loading. Interactions cover navigation,
-// stepping the simulation, language switching, expanded data checks, the county jump, the previous Alerts
-// visit and eight concurrent tabs. Writes a PNG per check and report.md / report.json to
+// answered 400 or more, exactly one visible main heading (h1) with text, the header (header.topbar) and the
+// tab bar (nav.sections) present, no horizontal page overflow, at least one visible control, and the page
+// finished loading. The pitch intro (#intro) is full screen, so it is checked without the header and tabs.
+// Interactions cover navigation between the tabs, stepping the replay clock one day from the timeline, language
+// switching, opening a signal on the research page (its isolates appear), the search ("/" then "uro") and
+// eight concurrent tabs. Writes a PNG per check and report.md / report.json to
 // the output directory, and exits 1 if anything failed.
 
 import { spawn, spawnSync } from "node:child_process";
@@ -39,12 +41,15 @@ const asOf = opt("as-of", fixture ? "2025-05-22" : "2025-06-10");
 const apiPort = Number(opt("api-port", "8798"));
 const webPort = Number(opt("web-port", "5176"));
 const outDir = resolve(opt("out", join(WEB, "smoke-out")));
-const ROUTES = opt("routes", "treat,alerts,report,timeline,settings").split(",");
+const ROUTES = opt("routes", "home,doctor,research,method,settings,intro").split(",");
 const VIEWPORTS = [
   { name: "desktop", width: 1440, height: 1000, mobile: false },
   { name: "phone", width: 390, height: 844, mobile: true },
 ];
 const external = process.env.SMOKE_URL?.replace(/\/$/, "");
+// A route name is its hash; home is the empty hash.
+const hashOf = (route) => (route === "home" ? "" : `#${route}`);
+const urlOf = (route) => `${base}/${hashOf(route)}`;
 const base = external ?? `http://localhost:${webPort}`;
 
 // ---------- processes ----------
@@ -216,8 +221,9 @@ async function watching(cdp, body) {
     }
     if (m.method === "Network.responseReceived") {
       const u = p.response.url;
-      // /api/regional answers 404 when no THL file is mounted (D-037): the app shows an empty state, so a warning.
-      const optional = p.response.status === 404 && u.includes("/api/regional");
+      // /api/regional (D-037) and /api/counties (D-043) answer 404 when their files are not mounted, as in CI
+      // where data/ is not in git: the app shows an empty state, so a warning, not a failure.
+      const optional = p.response.status === 404 && (u.includes("/api/regional") || u.includes("/api/counties"));
       if (p.response.status >= 400)
         (u.includes("/api/") && !optional ? problems.api : problems.other).push(`${p.response.status} ${u.replace(base, "")}`);
     }
@@ -257,15 +263,18 @@ async function watching(cdp, body) {
   return problems;
 }
 
+// "Busy" is any aria-busy region in the page: the pages mark their lists and panels while they fetch.
+const READY = `(() => {
+  const root = document.querySelector("main, .intro");
+  return !!root && !root.querySelector("[aria-busy=true]") && !!root.querySelector("h1")?.textContent.trim();
+})()`;
+
 async function load(cdp, url, idle) {
   await cdp.send("Page.navigate", { url });
-  // Ready when the app has stopped saying it is busy and the network is quiet.
+  // Ready when the page has its heading, nothing in it says it is busy and the network is quiet.
   const until = Date.now() + 25_000;
   while (Date.now() < until) {
-    const ready = await evaluate(
-      cdp,
-      `!!document.querySelector("main") && document.querySelector("main").getAttribute("aria-busy") !== "true"`,
-    ).catch(() => false);
+    const ready = await evaluate(cdp, READY).catch(() => false);
     if (ready) break;
     await sleep(150);
   }
@@ -275,13 +284,15 @@ async function load(cdp, url, idle) {
 
 const CHECKS = `(() => {
   const vis = (el) => { const r = el.getBoundingClientRect(); const s = getComputedStyle(el); return r.width > 0 && r.height > 0 && s.visibility !== "hidden" && s.display !== "none"; };
-  const h1 = document.querySelector("main h1");
-  const controls = [...document.querySelectorAll("main button, main a[href], main input, main select, main [role=radio], main [role=tab]")].filter(vis);
+  const root = document.querySelector("main") ?? document.querySelector(".intro");
+  const h1s = [...(root ? root.querySelectorAll("h1") : [])].filter(vis);
+  const controls = [...(root ? root.querySelectorAll("button, a[href], input, select, [role=radio], [role=tab]") : [])].filter(vis);
   return {
-    heading: h1 ? h1.textContent.trim().replace(/\\s+/g, " ") : "",
-    header: !!document.querySelector("header") && !!document.querySelector(".app-brand"),
-    tabs: !!document.querySelector("nav.app-tabs"),
-    busy: document.querySelector("main")?.getAttribute("aria-busy") === "true",
+    heading: h1s[0] ? h1s[0].textContent.trim().replace(/\\s+/g, " ") : "",
+    headings: h1s.length,
+    header: !!document.querySelector("header.topbar"),
+    tabs: !!document.querySelector("nav.sections"),
+    busy: !!root?.querySelector("[aria-busy=true]"),
     overflow: document.documentElement.scrollWidth - window.innerWidth,
     controls: controls.length,
     hash: location.hash,
@@ -322,7 +333,7 @@ async function main() {
       join(WEB, "node_modules/.bin/vite"),
       ["--port", String(webPort), "--strictPort"],
       WEB,
-      { AEI_FEED_URL: `http://localhost:${apiPort}` },
+      { AEI_API_URL: `http://localhost:${apiPort}` },
       "web",
     );
     await waitFor(`http://localhost:${apiPort}/api/meta`, "API");
@@ -341,22 +352,26 @@ async function main() {
       const file = join(outDir, `${route}-${vp.name}.png`);
       const cdp = await browser.newPage(vp);
       const problems = await watching(cdp, async (idle) => {
-        await load(cdp, `${base}/#${route}`, idle);
+        await load(cdp, urlOf(route), idle);
         info = await evaluate(cdp, CHECKS);
         await screenshot(cdp, file);
       });
       await cdp.close();
       const extra = [];
-      if (!info.heading) extra.push("no main heading (main h1)");
-      if (!info.header) extra.push("header or brand missing");
-      if (!info.tabs) extra.push("tab bar missing");
-      if (info.busy) extra.push("still loading (main aria-busy) after 25 s");
+      if (!info.heading) extra.push("no visible main heading (h1)");
+      if (info.headings > 1) extra.push(`${info.headings} visible h1 headings, expected one`);
+      if (route !== "intro") {
+        if (!info.header) extra.push("header.topbar missing");
+        if (!info.tabs) extra.push("tab bar (nav.sections) missing");
+      }
+      if (info.busy) extra.push("still loading (aria-busy) after 25 s");
       if (info.overflow > 1) extra.push(`page ${info.overflow}px wider than the viewport`);
-      if (info.controls === 0) extra.push("no visible control in main");
-      if (info.hash !== `#${route}`) extra.push(`landed on ${info.hash}`);
+      if (info.controls === 0) extra.push("no visible control in the page");
+      // A page may add its own params to the hash (#doctor?unit=MED-A); only the page part is compared.
+      if (info.hash.split("?")[0] !== hashOf(route)) extra.push(`landed on ${info.hash || "(home)"}`);
       const reasons = judge(problems, extra);
       rows.push({
-        check: `#${route}`,
+        check: route === "home" ? "home" : `#${route}`,
         viewport: vp.name,
         ok: reasons.length === 0,
         heading: info.heading,
@@ -364,7 +379,7 @@ async function main() {
         warnings: problems.other,
         file,
       });
-      console.log(`${reasons.length ? "FAIL" : "ok  "} #${route} ${vp.name}${reasons.length ? `: ${reasons.join("; ")}` : ""}`);
+      console.log(`${reasons.length ? "FAIL" : "ok  "} ${route} ${vp.name}${reasons.length ? `: ${reasons.join("; ")}` : ""}`);
     }
   }
 
@@ -396,291 +411,127 @@ async function main() {
     return false;
   };
 
+  const tabRoutes = ["doctor", "research", "method", "home"];
   await interaction("tabs", async (idle, reasons) => {
-    await load(cdp, `${base}/#treat`, idle);
-    for (const route of ["alerts", "report", "timeline", "treat"]) {
+    await load(cdp, urlOf("home"), idle);
+    for (const route of tabRoutes) {
+      const label = route === "home" ? 0 : tabRoutes.indexOf(route) + 1;
+      // The tabs are buttons in nav.sections, in the order home, doctor, research, method.
       const clicked = await evaluate(
         cdp,
-        `(() => { const a = document.querySelector('nav.app-tabs a[href="#${route}"]'); if (!a) return false; a.click(); return true; })()`,
+        `(() => { const b = document.querySelectorAll("nav.sections button.section-tab")[${label}]; if (!b) return false; b.click(); return true; })()`,
       );
       if (!clicked) {
-        reasons.push(`no tab link to #${route}`);
+        reasons.push(`no tab for ${route}`);
         continue;
       }
-      const ok = await waitIn(`location.hash === "#${route}" && !!document.querySelector("main h1")?.textContent.trim()`, 15_000);
+      const ok = await waitIn(
+        `location.hash.split("?")[0] === ${JSON.stringify(hashOf(route))} && document.querySelectorAll("nav.sections button.section-tab")[${label}]?.getAttribute("aria-current") === "page" && !!document.querySelector("main h1")?.textContent.trim()`,
+        15_000,
+      );
       if (!ok) {
         const seen = await evaluate(
           cdp,
-          `location.hash + " | h1: " + (document.querySelector("main h1")?.textContent ?? "none") + " | main: " + (document.querySelector("main")?.innerText ?? "").slice(0, 120).replace(/s+/g, " ")`,
+          `location.hash + " | h1: " + (document.querySelector("main h1")?.textContent ?? "none") + " | main: " + (document.querySelector("main")?.innerText ?? "").slice(0, 120).replace(/\\s+/g, " ")`,
         );
-        reasons.push(`tab #${route}: no heading 15 s after the click (${seen})`);
+        reasons.push(`tab ${route}: no heading 15 s after the click (${seen})`);
       }
       await idle();
     }
   });
 
+  // The replay clock is shared by a running app; the run puts it back at the end (see "seek" below).
   await interaction("step-one-day", async (idle, reasons) => {
-    await load(cdp, `${base}/#treat`, idle);
-    const before = await evaluate(cdp, `document.querySelector(".app-fresh-text")?.textContent ?? ""`);
-    if (!before) reasons.push("no date chip (.app-fresh-text)");
+    await load(cdp, urlOf("home"), idle);
+    const readout = `document.querySelector(".timeline .tl-readout")?.textContent ?? ""`;
+    const before = await evaluate(cdp, readout);
+    if (!before || before === "–") reasons.push("no as-of date in the timeline readout");
     const clicked = await evaluate(
       cdp,
       `(() => {
-      const b = [...document.querySelectorAll(".app-sim button")].find((x) => /\\+\\s?1\\b/.test(x.textContent) && !x.disabled);
-      if (!b) return false; b.click(); return true; })()`,
+      const b = document.querySelector('.timeline .tl-steps button[data-stop="2"]');
+      if (!b || b.disabled) return false; b.click(); return true; })()`,
     );
     if (!clicked) {
-      reasons.push("no enabled +1 day button in the simulation bar");
+      reasons.push("no enabled step-one-day button in the timeline");
       return;
     }
-    const changed = await waitIn(`(document.querySelector(".app-fresh-text")?.textContent ?? "") !== ${JSON.stringify(before)}`, 15_000);
-    if (!changed) reasons.push(`date chip still "${before}" 15 s after +1 day`);
+    const changed = await waitIn(`(${readout}) !== ${JSON.stringify(before)} && !document.querySelector(".timeline[aria-busy]")`, 15_000);
+    if (!changed) reasons.push(`as-of date still "${before}" 15 s after stepping one day`);
     await idle();
   });
 
   await interaction("language", async (idle, reasons) => {
-    await load(cdp, `${base}/#settings`, idle);
-    const before = await evaluate(cdp, `document.querySelector("nav.app-tabs")?.textContent ?? ""`);
+    await load(cdp, urlOf("home"), idle);
+    const before = await evaluate(cdp, `document.documentElement.lang`);
+    const nav = await evaluate(cdp, `document.querySelector("nav.sections")?.textContent ?? ""`);
     const clicked = await evaluate(
       cdp,
       `(() => {
-      const r = [...document.querySelectorAll("main [role=radio]")].find((x) => x.querySelector("[lang]") && x.getAttribute("aria-checked") !== "true");
-      if (!r) return false; r.click(); return r.querySelector("[lang]").getAttribute("lang"); })()`,
+      const b = document.querySelector(".top-tools button[lang]");
+      if (!b) return false; b.click(); return b.getAttribute("lang"); })()`,
     );
     if (!clicked) {
-      reasons.push("no language choice in Settings");
+      reasons.push("no FI/EN button in the header");
       return;
     }
-    const changed = await waitIn(`(document.querySelector("nav.app-tabs")?.textContent ?? "") !== ${JSON.stringify(before)}`);
-    if (!changed) reasons.push(`tab labels unchanged after choosing "${clicked}"`);
+    if (clicked === before) reasons.push(`the language button offers "${clicked}", the page is already in it`);
+    const changed = await waitIn(`document.documentElement.lang === ${JSON.stringify(clicked)}`);
+    if (!changed) reasons.push(`html lang still "${before}" after choosing "${clicked}"`);
+    if (!(await waitIn(`(document.querySelector("nav.sections")?.textContent ?? "") !== ${JSON.stringify(nav)}`)))
+      reasons.push(`tab labels unchanged after choosing "${clicked}"`);
     await idle();
   });
 
-  await interaction(
-    "treat-first-use",
-    async (idle, reasons) => {
-      const { identifier } = await cdp.send("Page.addScriptToEvaluateOnNewDocument", { source: `localStorage.removeItem('aei.ward')` });
-      await load(cdp, `${base}/#treat`, idle);
-      await cdp.send("Page.removeScriptToEvaluateOnNewDocument", { identifier });
-      if (!(await evaluate(cdp, `!!document.querySelector('.treat-first-use') && !document.querySelector('.treat-result')`)))
-        reasons.push("fresh Treat must ask for a unit, without an answer");
-      await evaluate(cdp, `document.querySelector('.treat-first-use .k-pick-trigger').click()`);
-      await waitIn(`!!document.querySelector('.k-pick-opt')`);
-      await evaluate(
+  await interaction("research-signal-isolates", async (idle, reasons) => {
+    await load(cdp, urlOf("research"), idle);
+    if (!(await waitIn(`!!document.querySelector(".feed-row")`, 15_000))) {
+      reasons.push("no signal in the research feed");
+      return;
+    }
+    await evaluate(cdp, `document.querySelector(".feed-row").click()`);
+    const shown = await waitIn(`document.querySelectorAll(".feed-isolates li").length > 0`, 15_000);
+    if (!shown) {
+      const seen = await evaluate(
         cdp,
-        `(() => {
-      const unit = [...document.querySelectorAll('.k-pick-opt')].find(x => /Urologia|Urology/.test(x.textContent));
-      if (!unit) throw new Error('Urology option missing');
-      unit.click();
-    })()`,
+        `(document.querySelector(".math")?.innerText ?? "no signal panel").slice(0, 160).replace(/\\s+/g, " ")`,
       );
-      await idle();
-      if (
-        !(await evaluate(
-          cdp,
-          `JSON.parse(localStorage.getItem('aei.ward')) === 'URO' && !document.querySelector('.treat-first-use') && !!document.querySelector('.treat-context')`,
-        ))
-      )
-        reasons.push("choosing a unit must remember it and dismiss the prompt");
-      await load(cdp, `${base}/#treat`, idle);
-      if (await evaluate(cdp, `!!document.querySelector('.treat-first-use')`))
-        reasons.push("remembered unit must skip the prompt after reload");
-      const equal = await evaluate(
-        cdp,
-        `(() => {
-      const figures = [...document.querySelectorAll('.treat-answer-percent')];
-      if (figures.length !== 2) return false;
-      const [a,b] = figures.map(x => ({r:x.getBoundingClientRect(), s:getComputedStyle(x)}));
-      return a.r.y === b.r.y && a.s.fontSize === b.s.fontSize && a.s.fontWeight === b.s.fontWeight;
-    })()`,
-      );
-      if (!equal) reasons.push("mild answer must show two equal-weight figures side by side");
-    },
-    VIEWPORTS[1],
-  );
+      reasons.push(`no isolates 15 s after opening a signal (${seen})`);
+    }
+    await idle();
+  });
 
-  await interaction(
-    "treat-phone-context",
-    async (idle, reasons) => {
-      // This check exercises a returning clinician. Other route checks accept first use.
-      await cdp.send("Page.addScriptToEvaluateOnNewDocument", {
-        source: `localStorage.setItem('aei.ward', JSON.stringify('MED-A'))`,
-      });
-      await load(cdp, `${base}/#treat`, idle);
-      const initial = await evaluate(
-        cdp,
-        `(() => {
-      const bar = document.querySelector(".app-tabs.is-bottom").getBoundingClientRect();
-      const fits = (selector) => {
-        const r = document.querySelector(selector)?.getBoundingClientRect();
-        return !!r && r.height > 0 && r.top >= 0 && r.bottom <= bar.top;
-      };
-      return [".treat-context .k-pick-trigger", ".treat-context [role=radiogroup]", ".treat-context .k-field:last-child", ".treat-top-name", ".treat-top .treat-answer-percent, .treat-top .k-share-pct"].every(fits);
-    })()`,
-      );
-      if (!initial) reasons.push("unit, site, severity, answer name and figure must fit above the phone tabs");
-      await cdp.send("Emulation.setTouchEmulationEnabled", { enabled: true });
-      const requests = [];
-      const onRequest = (m) => {
-        if (m.method === "Network.requestWillBeSent" && m.params.request.url.includes("/api/coverage?"))
-          requests.push(m.params.request.url);
-      };
-      cdp.on(onRequest);
-      for (const labels of [
-        ["Veri", "Blood"],
-        ["Vaikea", "Severe"],
-      ]) {
-        const label = labels.join(" / ");
-        const point = await evaluate(
-          cdp,
-          `(() => {
-        const el = [...document.querySelectorAll(".treat-context [role=radio]")].find(x => ${JSON.stringify(labels)}.includes(x.textContent.trim()));
-        if (!el) return null;
-        const r = el.getBoundingClientRect(), x = r.x + r.width / 2, y = r.y + r.height / 2;
-        return el.contains(document.elementFromPoint(x, y)) ? { x, y } : null;
-      })()`,
-        );
-        if (!point) throw new Error(`${label} is missing or covered`);
-        await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [point] });
-        await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
-        if (
-          !(await waitIn(
-            `!![...document.querySelectorAll('.treat-context [role=radio][aria-checked=true]')].find(x => ${JSON.stringify(labels)}.includes(x.textContent.trim()))`,
-          ))
-        )
-          reasons.push(`${label} did not select with one tap`);
-      }
-      await idle();
-      cdp.off(onRequest);
-      if (!requests.some((url) => url.includes("specimen=blood") && url.includes("severity=severe")))
-        reasons.push("context did not refresh the coverage answer");
-      if (!(await evaluate(cdp, `location.hash === '#treat' && window.scrollY === 0`))) reasons.push("context taps scrolled or left Treat");
-      const combinationFits = await evaluate(
-        cdp,
-        `(() => {
-        const first = document.querySelector('.treat-result > article');
-        const range = first?.querySelector('.k-share-meta')?.getBoundingClientRect();
-        const tabs = document.querySelector('.app-tabs.is-bottom').getBoundingClientRect();
-        return first?.classList.contains('treat-pairs') && !!range && range.bottom <= tabs.top;
-      })()`,
-      );
-      if (!combinationFits) reasons.push("MED-A blood severe must lead with the combination and its range above phone tabs");
-      const clear = await evaluate(
-        cdp,
-        `(() => {
-      const b = [...document.querySelectorAll('main button')].at(-1);
-      b.scrollIntoView({ block: 'end', behavior: 'instant' });
-      return b.getBoundingClientRect().bottom <= document.querySelector('.app-tabs.is-bottom').getBoundingClientRect().top;
-    })()`,
-      );
-      if (!clear) reasons.push("last Treat control scrolls under the tab bar");
-      await evaluate(cdp, `window.scrollTo({ top: 0, behavior: 'instant' })`);
-    },
-    VIEWPORTS[1],
-  );
-
-  await interaction("report-unit-to-treat", async (idle, reasons) => {
-    await load(cdp, `${base}/#report`, idle);
-    await evaluate(cdp, `document.querySelector('.report-filters-row .k-pick-trigger').click()`);
-    await waitIn(`!!document.querySelector('.k-pick-opt')`);
-    const unit = await evaluate(
-      cdp,
-      `(() => {
-      const options = [...document.querySelectorAll('.k-pick-opt')];
-      const next = options.find(x => /Urologia|Urology/.test(x.textContent));
-      if (!next) throw new Error('Urologia option missing');
-      next.click(); return 'URO';
-    })()`,
-    );
-    await idle();
-    if (!(await evaluate(cdp, `JSON.parse(localStorage.getItem('aei.ward')) === ${JSON.stringify(unit)}`)))
-      reasons.push("Report did not remember its unit");
-    await evaluate(cdp, `document.querySelector('nav.app-tabs a[href="#treat"]').click()`);
-    await idle();
-    if (!(await evaluate(cdp, `/Urologia|Urology/.test(document.querySelector('.treat-patient .k-pick-value').textContent)`)))
-      reasons.push("Treat did not inherit Report's unit");
-    await evaluate(cdp, `document.querySelector('nav.app-tabs a[href="#report"]').click()`);
-    await idle();
-    await evaluate(cdp, `document.querySelector('.report-treat').click()`);
-    await idle();
+  await interaction("search", async (idle, reasons) => {
+    await load(cdp, urlOf("home"), idle);
+    // "/" is typed as a key press; the search field takes focus, then the letters go into it.
+    await cdp.send("Input.dispatchKeyEvent", { type: "keyDown", key: "/", code: "Slash", text: "/" });
+    await cdp.send("Input.dispatchKeyEvent", { type: "keyUp", key: "/", code: "Slash" });
+    if (!(await waitIn(`document.activeElement?.classList.contains("cmd-input")`))) reasons.push('"/" did not focus the search field');
+    await cdp.send("Input.insertText", { text: "uro" });
     if (
-      !(await evaluate(
-        cdp,
-        `location.hash === '#treat' && /Urologia|Urology/.test(document.querySelector('.treat-patient .k-pick-value').textContent)`,
+      !(await waitIn(
+        `document.querySelector(".cmd-input")?.value === "uro" && document.querySelectorAll(".cmd-list [role=option]").length > 0`,
       ))
     )
-      reasons.push("Report's Open Treat link lost its unit");
-  });
-
-  await interaction("data-check-details", async (idle, reasons) => {
-    await load(cdp, `${base}/#settings`, idle);
-    await evaluate(cdp, `document.querySelector(".k-quality-list")?.closest(".k-disc")?.querySelector("button")?.click()`);
-    const expanded = await waitIn(
-      `document.querySelector(".k-quality-list")?.closest(".k-disc")?.querySelector("button")?.getAttribute("aria-expanded") === "true"`,
-    );
-    if (!expanded) reasons.push("data-check disclosure did not expand");
-    const checks = await evaluate(
-      cdp,
-      `[...document.querySelectorAll(".k-quality-list li")].filter(el => el.getBoundingClientRect().height > 0).length`,
-    );
-    if (checks !== 15) reasons.push(`expected fifteen visible data checks after expanding, got ${checks}`);
-  });
-
-  await interaction("regional-jump", async (idle, reasons) => {
-    await load(cdp, `${base}/#timeline`, idle);
-    const jump = await evaluate(
-      cdp,
-      `(() => {
-      document.querySelector(".timeline-region-jump")?.click();
-      const panel = document.getElementById("timeline-region");
-      return {
-        focused: document.activeElement === panel,
-        top: panel?.getBoundingClientRect().top ?? -1,
-        headerBottom: document.querySelector(".app-top")?.getBoundingClientRect().bottom ?? 0,
-        hash: location.hash,
-      };
-    })()`,
-    );
-    if (!jump.focused || jump.hash !== "#timeline") reasons.push("county jump did not focus the panel on Timeline");
-    if (jump.top < jump.headerBottom - 1) reasons.push("county panel scrolled behind the sticky header");
-  });
-
-  await interaction("alerts-last-visit", async (idle, reasons) => {
-    await load(cdp, `${base}/#settings`, idle);
-    await evaluate(
-      cdp,
-      `localStorage.setItem("aei.alertsLastOpened", JSON.stringify("2026-10-14T14:00:00.000Z"));
-      document.querySelector('nav.app-tabs a[href="#alerts"]')?.click();`,
-    );
-    const previous = await waitIn(
-      `!!document.querySelector(".alerts-head") && /14.*2026/.test(document.querySelector(".alerts-head").textContent)`,
-    );
-    if (!previous) reasons.push("Alerts did not show the previous browser visit");
-    const stored = await evaluate(cdp, `JSON.parse(localStorage.getItem("aei.alertsLastOpened"))`);
-    if (!stored || stored === "2026-10-14T14:00:00.000Z" || !Number.isFinite(Date.parse(stored))) {
-      reasons.push("opening Alerts did not record a new browser timestamp");
-    }
+      reasons.push('typing "uro" in the search showed no result');
     await idle();
   });
 
   // Eight tabs at once in one browser: HTTP/1.1 allows six connections per host, so the app must share one
   // live stream across tabs (src/feed) or the seventh tab never loads.
   await interaction("eight-tabs", async (idle, reasons) => {
-    await load(cdp, `${base}/#alerts`, idle);
+    await load(cdp, urlOf("research"), idle);
     const extra = [];
     try {
       for (let i = 0; i < 7; i++) {
         const p = await browser.newPage(VIEWPORTS[0]);
         extra.push(p);
-        await p.send("Page.navigate", { url: `${base}/#${ROUTES[i % ROUTES.length]}` });
+        await p.send("Page.navigate", { url: urlOf(ROUTES[i % ROUTES.length]) });
       }
       const loaded = async (p) => {
         const until = Date.now() + 25_000;
         while (Date.now() < until) {
-          const ok = await evaluate(
-            p,
-            `!!document.querySelector("main h1")?.textContent.trim() && document.querySelector("main").getAttribute("aria-busy") !== "true"`,
-          ).catch(() => false);
+          const ok = await evaluate(p, READY).catch(() => false);
           if (ok) return true;
           await sleep(250);
         }
@@ -688,7 +539,7 @@ async function main() {
       };
       const results = await Promise.all(extra.map(loaded));
       results.forEach((ok, i) => {
-        if (!ok) reasons.push(`tab ${i + 2} of 8 (#${ROUTES[i % ROUTES.length]}) did not finish loading in 25 s`);
+        if (!ok) reasons.push(`tab ${i + 2} of 8 (${ROUTES[i % ROUTES.length]}) did not finish loading in 25 s`);
       });
     } finally {
       for (const p of extra) await p.close();

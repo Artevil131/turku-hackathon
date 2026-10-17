@@ -1,0 +1,253 @@
+/* The alert-math panel: a white column, numbers first, actions pinned below. */
+
+.math {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel, 10px);
+  background: var(--glass-1, #fff);
+  /* Visible so the ⓘ popover is not clipped; the scrolling body clips itself. */
+  overflow: visible;
+}
+
+.math-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 12px 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+.math-head h2 {
+  margin: 0;
+  font-size: var(--t-m, 15px);
+  font-weight: 600;
+}
+
+.math-scroll {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  padding: 12px;
+  overflow-y: auto;
+}
+
+.math-empty {
+  margin: 12px;
+  color: var(--ink-2);
+}
+
+.math-who {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.math-kind {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--t-xs, 12px);
+  color: var(--ink-2);
+}
+
+.math[data-kind="sentinel"] .math-kind {
+  color: var(--st-alert);
+}
+
+.math-name {
+  font-size: var(--t-m, 15px);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.math-meta {
+  font-size: var(--t-xs, 12px);
+  color: var(--ink-2);
+}
+
+.math-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.math-big {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.math-bignum {
+  font-family: var(--font-display, inherit);
+  font-size: var(--t-l, 22px);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.math-biglabel {
+  font-size: var(--t-xs, 12px);
+  color: var(--ink-2);
+}
+
+.math-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.math-bar {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) 36px;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--t-xs, 12px);
+}
+
+.math-bar-label {
+  color: var(--ink-2);
+}
+
+.math-bar-track {
+  height: 10px;
+  border-radius: 3px;
+  background: var(--chassis, #f8f8f8);
+  border: 1px solid var(--line);
+}
+
+.math-bar-track i {
+  display: block;
+  height: 100%;
+}
+
+.math-bar[data-tone="obs"] i {
+  background: var(--ink-2);
+}
+
+/* "usual" is a dashed outline, so it differs from "observed" without colour. */
+.math-bar[data-tone="usual"] i {
+  background: var(--line);
+  border: 1px dashed var(--ink-2);
+  box-sizing: border-box;
+}
+
+.math-bar-value {
+  text-align: right;
+  font-weight: 600;
+}
+
+.math-line,
+.math-rule {
+  margin: 0;
+  font-size: var(--t-xs, 12px);
+  color: var(--ink-2);
+}
+
+.math-rule {
+  font-size: var(--t-m, 15px);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.math-sub {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 0 4px;
+  font-size: var(--t-s, 13px);
+  font-weight: 600;
+}
+
+.math-members {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--t-xs, 12px);
+}
+
+.math-members li {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr) auto;
+  gap: 6px;
+  padding: 3px 0;
+  border-top: 1px solid var(--line);
+}
+
+.math-members li[aria-current="true"] {
+  font-weight: 600;
+}
+
+.math-mem-what {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.math-mem-n {
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+.math-explain {
+  font-size: var(--t-xs, 12px);
+}
+
+.math-back {
+  align-self: flex-start;
+  height: var(--control-h, 28px);
+  padding: 0 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control, 6px);
+  background: var(--glass-1, #fff);
+  font-size: var(--t-s, 13px);
+}
+
+.math-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 12px 12px;
+  border-top: 1px solid var(--line);
+}
+
+.math-primary,
+.math-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--control-h, 28px);
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control, 6px);
+  background: var(--glass-1, #fff);
+  color: var(--ink);
+  font-size: var(--t-s, 13px);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.math-primary {
+  flex: 1 1 100%;
+  background: var(--live);
+  border-color: var(--live);
+  color: var(--live-ink, #fff);
+  font-weight: 600;
+}
+
+.math-btn {
+  flex: 1 1 0;
+  padding: 0 6px;
+}
+
+.math-btn:hover:not(:disabled) {
+  border-color: var(--live);
+}
+
+.math-btn:disabled {
+  color: var(--ink-3);
+  border-style: dashed;
+}

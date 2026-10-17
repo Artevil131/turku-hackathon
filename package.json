@@ -11,13 +11,13 @@
     "dev:web": "pnpm --filter @aei/web dev",
     "dev:api": "pnpm --filter @aei/api dev",
     "demo": "bash scripts/demo.sh",
-    "smoke": "pnpm --filter @aei/web smoke",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "test": "vitest run && uv run pytest -q libs/utils/py/tests",
     "check": "biome check .",
     "format": "biome check --write .",
-    "test:ts": "vitest run"
+    "test:ts": "vitest run",
+    "smoke": "pnpm --filter @aei/web smoke"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",
