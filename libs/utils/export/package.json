@@ -1,0 +1,16 @@
+{
+  "name": "@aei/export",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@aei/domain": "workspace:*",
+    "docx": "^9.12.0"
+  }
+}
