@@ -616,22 +616,25 @@ async function main() {
       await cleanWorkspace(idle);
       const columns = `document.querySelectorAll('.ws-column').length`;
       const empty = `[...document.querySelectorAll('.ws-column')].some(c => !c.querySelector('.ws-win'))`;
+      // What the fitted default shows depends on the board's measured height, so each
+      // expectation is read from the page: a window alone in its column takes the column with it.
+      let collapsed = 0;
       for (const id of ["math", "map"]) {
         const before = await evaluate(cdp, columns);
-        // In the fitted 1440x900 default, Alert math and Map are each alone in their column.
         const alone = await evaluate(
           cdp,
           `document.querySelector('#ws-win-${id}')?.closest('.ws-column')?.querySelectorAll('.ws-win').length === 1`,
         );
-        if (!alone) reasons.push(`${id} is not alone in its column in the fitted default`);
         await click(`#ws-win-${id} .ws-close`);
         if (!(await waitIn(`!document.querySelector('#ws-win-${id}')`, 1000)))
           reasons.push(`${id} not dismissed by its first real close click`);
-        // Closing a column's only window removes the column; the others take its width.
-        if (alone && !(await waitIn(`${columns} === ${before - 1}`, 1000)))
-          reasons.push(`closing ${id}, alone in its column, left ${await evaluate(cdp, columns)} columns (was ${before})`);
+        const expected = alone ? before - 1 : before;
+        if (!(await waitIn(`${columns} === ${expected}`, 1000)))
+          reasons.push(`closing ${id} (${alone ? "alone" : "stacked"}) left ${await evaluate(cdp, columns)} columns, expected ${expected}`);
+        if (alone) collapsed++;
         if (await evaluate(cdp, empty)) reasons.push(`an empty column remains after closing ${id}`);
       }
+      if (!collapsed) reasons.push("neither Alert math nor Map was alone in its column: column removal went untested");
       const fill = await evaluate(
         cdp,
         `(() => { const a = document.querySelector('.ws-area').getBoundingClientRect(); const c = [...document.querySelectorAll('.ws-column')];
@@ -711,20 +714,60 @@ async function main() {
       await key("Escape");
       await mouse("mouseReleased", target, { button: "left", buttons: 0, clickCount: 1 });
       if ((await evaluate(cdp, `localStorage.getItem('aei.research.layout.v2')`)) !== before) reasons.push("Esc did not cancel the move");
-      // Drop into the map column (its own emptied column is removed), then move left using only the keyboard.
+      // Drop into the map column (its own column is removed only if Alert math was alone in it),
+      // then move one column left using only the keyboard.
+      const shape = JSON.parse(initial);
+      const mathAlone = shape.find((c) => c.includes("math"))?.length === 1;
+      const expectColumns = shape.length - (mathAlone ? 1 : 0);
       await mouse("mousePressed", source, { button: "left", buttons: 1, clickCount: 1 });
       await mouse("mouseMoved", target, { buttons: 1 });
       await mouse("mouseReleased", target, { button: "left", buttons: 0, clickCount: 1 });
+      const mathColumn = `Number(document.querySelector('#ws-win-math')?.closest('.ws-column')?.dataset.columnIndex)`;
       if (
         !(await waitIn(
-          `document.querySelector('#ws-win-math')?.closest('.ws-column')?.querySelector('#ws-win-map') && document.querySelectorAll('.ws-column').length === 2`,
+          `document.querySelector('#ws-win-math')?.closest('.ws-column')?.querySelector('#ws-win-map') && document.querySelectorAll('.ws-column').length === ${expectColumns}`,
         ))
       )
-        reasons.push("drop did not insert into target column");
+        reasons.push(`drop did not insert into target column: ${await evaluate(cdp, order)}, expected ${expectColumns} columns`);
+      const dropped = await evaluate(cdp, mathColumn);
       await evaluate(cdp, `document.querySelector('#ws-title-math').focus()`);
       await key("ArrowLeft", 1);
-      if (!(await waitIn(`document.querySelector('#ws-win-math')?.closest('.ws-column')?.dataset.columnIndex === '0'`)))
-        reasons.push("Alt + arrow did not move the window");
+      if (!(await waitIn(`${mathColumn} === ${dropped - 1}`)))
+        reasons.push(`Alt + arrow did not move the window one column left: ${await evaluate(cdp, order)}`);
+      // A stack splitter dragged far past either neighbour stops at that window's own minimum
+      // (checked on the stored fractions, not only on the CSS floor that would hide a bad clamp).
+      const mathStack = `document.querySelector('#ws-win-math').closest('.ws-column')`;
+      // Stored heights in px against each window's minimum (body + 42 px chrome), for Alert math's stack.
+      const stackHeights = `(() => {
+        const col = ${mathStack};
+        const stored = JSON.parse(localStorage.getItem('aei.research.layout.v2')).columns.find(c => c.windows.some(w => w.id === 'math'));
+        const span = col.clientHeight - (stored.windows.length - 1) * 8;
+        const rows = stored.windows.map(w => ({ id: w.id, px: Math.round(w.size * span), min: Number(col.querySelector('#ws-win-' + w.id).dataset.minBody) + 42 }));
+        return JSON.stringify({ fits: rows.reduce((s, r) => s + r.min, 0) <= span, rows });
+      })()`;
+      for (const edge of ["bottom", "top"]) {
+        const handle = await evaluate(
+          cdp,
+          `(() => { const s = ${mathStack}.querySelector('.ws-splitter-row'); s.scrollIntoView({ block: 'nearest' });
+            const r = s.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`,
+        );
+        // Drag to the board's edge, far past the neighbour's floor but still inside the viewport,
+        // so the release reaches the page and ends the gesture.
+        const far = await evaluate(cdp, `document.querySelector('.ws-area').getBoundingClientRect().${edge}`);
+        const dy = far + (edge === "bottom" ? -2 : 2) - handle.y;
+        await mouse("mousePressed", handle, { button: "left", buttons: 1, clickCount: 1 });
+        await mouse("mouseMoved", { x: handle.x, y: handle.y + dy / 2 }, { buttons: 1 });
+        await mouse("mouseMoved", { x: handle.x, y: handle.y + dy }, { buttons: 1 });
+        await mouse("mouseReleased", { x: handle.x, y: handle.y + dy }, { button: "left", buttons: 0, clickCount: 1 });
+        const { fits, rows } = JSON.parse(await evaluate(cdp, stackHeights));
+        const pinned = edge === "bottom" ? rows.at(-1) : rows[0];
+        if (rows.length < 2) reasons.push(`Alert math's column has no stack splitter to test: ${await evaluate(cdp, order)}`);
+        else if (
+          (await evaluate(cdp, squashed)) !== "[]" ||
+          (fits && (rows.some((r) => r.px < r.min - 2) || Math.abs(pinned.px - pinned.min) > 6))
+        )
+          reasons.push(`stack splitter dragged ${Math.round(dy)} px did not stop at the window minimum: ${JSON.stringify(rows)}`);
+      }
       // Focusable splitters change the fraction, reset equally on double click/Enter.
       await evaluate(cdp, `document.querySelector('.ws-splitter-col').focus()`);
       const width = await evaluate(cdp, `document.querySelector('.ws-splitter-col').getAttribute('aria-valuenow')`);
@@ -751,25 +794,29 @@ async function main() {
         1000,
       );
       if (!clamped) reasons.push("column pointer drag did not clamp at its minimum");
-      // Signals over Alert math needs a tall board to fit; on a short one the column scrolls and the splitter rests.
+      // On a tall board Alert math's stack fits without scrolling, so a pointer drag moves the splitter.
       await cdp.send("Emulation.setDeviceMetricsOverride", { width: 1440, height: 1400, deviceScaleFactor: 1, mobile: false });
-      await waitIn(`document.querySelector('.ws-column').scrollHeight <= document.querySelector('.ws-column').clientHeight + 1`, 2000);
-      const row = await pointOf(".ws-splitter-row");
-      const stackBefore = await evaluate(cdp, `document.querySelector('.ws-splitter-row').getAttribute('aria-valuenow')`);
+      await waitIn(`${mathStack}.scrollHeight <= ${mathStack}.clientHeight + 1`, 2000);
+      const rowSplitter = `${mathStack}.querySelector('.ws-splitter-row')`;
+      const row = await evaluate(
+        cdp,
+        `(() => { const r = ${rowSplitter}.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`,
+      );
+      const stackBefore = await evaluate(cdp, `${rowSplitter}.getAttribute('aria-valuenow')`);
       await mouse("mousePressed", row, { button: "left", buttons: 1, clickCount: 1 });
       await mouse("mouseMoved", { x: row.x, y: row.y + 40 }, { buttons: 1 });
       await mouse("mouseReleased", { x: row.x, y: row.y + 40 }, { button: "left", buttons: 0, clickCount: 1 });
-      if ((await evaluate(cdp, `document.querySelector('.ws-splitter-row').getAttribute('aria-valuenow')`)) === stackBefore)
+      if ((await evaluate(cdp, `${rowSplitter}.getAttribute('aria-valuenow')`)) === stackBefore)
         reasons.push("pointer stack resize did not change the fraction");
-      await evaluate(cdp, `document.querySelector('.ws-splitter-row').focus()`);
+      await evaluate(cdp, `${rowSplitter}.focus()`);
       await key("ArrowDown");
       await key("Enter");
-      const heights = await evaluate(cdp, `JSON.parse(localStorage.getItem('aei.research.layout.v2')).columns[0].windows.map(w=>w.size)`);
-      if (heights.some((h) => Math.abs(h - 1 / heights.length) > 0.001)) reasons.push("Enter did not equalize stack heights");
-      const floors = await evaluate(
+      const heights = await evaluate(
         cdp,
-        `[...document.querySelectorAll('.ws-column')][0].querySelectorAll('.ws-win').length === 2 && ${squashed} === "[]"`,
+        `JSON.parse(localStorage.getItem('aei.research.layout.v2')).columns.find(c => c.windows.some(w => w.id === 'math')).windows.map(w=>w.size)`,
       );
+      if (heights.some((h) => Math.abs(h - 1 / heights.length) > 0.001)) reasons.push("Enter did not equalize stack heights");
+      const floors = await evaluate(cdp, `${mathStack}.querySelectorAll('.ws-win').length === 2 && ${squashed} === "[]"`);
       if (!floors) reasons.push("stack splitter let a window below its minimum");
       await cdp.send("Emulation.setDeviceMetricsOverride", { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
       // Presets and reset must change visible geometry, and a fresh load must keep the new model.
