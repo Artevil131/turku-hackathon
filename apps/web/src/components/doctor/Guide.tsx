@@ -52,7 +52,7 @@ export function GuideSummary({
   const g = guide();
   const { lines, also } = guideLines(locale, syndrome, singles, bar);
   return (
-    <div className="cl-guide-sum" aria-label={syndrome.name[locale]}>
+    <section className="cl-guide-sum" aria-label={syndrome.name[locale]}>
       <p className="cl-guide-legend">
         <span className="cl-guide">{t(locale, "drGuideMark")}</span>{" "}
         {t(locale, "drGuideLegend", { syndrome: syndrome.name[locale].toLowerCase() })}
@@ -67,7 +67,7 @@ export function GuideSummary({
         {t(locale, "drGuideOpen")} <span className="dp-sr">{t(locale, "drGuideNewTab")}</span>
         <span aria-hidden="true">↗</span>
       </a>
-    </div>
+    </section>
   );
 }
 
