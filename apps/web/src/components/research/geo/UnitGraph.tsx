@@ -142,7 +142,7 @@ export function UnitGraph({ client, locale, asOf, state, onChange, reducedMotion
   const ZONE = 46;
   const ROW = 60;
   const CH = 88;
-  const H = narrow ? ZONE + BAR + ROW + CH + ROW + BAR + ZONE + 4 : Math.min(Math.max(size.h, 250), 420);
+  const H = narrow ? ZONE + BAR + ROW + CH + ROW + BAR + ZONE + 4 : Math.min(Math.max(size.h, 160), 480);
   const geom = useMemo(() => {
     if (!view) return null;
     const lay = narrow
@@ -403,8 +403,11 @@ export function UnitGraph({ client, locale, asOf, state, onChange, reducedMotion
         ) : view && geom && centre && (view.ins.length > 0 || view.outs.length > 0) ? (
           <svg
             viewBox={`0 0 ${W} ${H}`}
-            width={W}
-            height={H}
+            // The drawing is laid out at the stage's measured size and then scales with the box, so a window
+            // smaller than the layout's minimums shrinks the figure instead of cropping it.
+            width="100%"
+            height={narrow ? H : "100%"}
+            preserveAspectRatio="xMidYMid meet"
             className="ug-svg"
             data-hover={hover !== null}
             role="group"

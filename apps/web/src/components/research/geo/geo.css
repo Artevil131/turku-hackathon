@@ -569,7 +569,7 @@
 .ug-stage {
   position: relative;
   flex: 1 1 auto;
-  min-height: 250px;
+  min-height: 160px;
   overflow: hidden;
 }
 .ug-stage[data-narrow="true"] {
@@ -578,7 +578,13 @@
 }
 .ug-svg {
   display: block;
+  width: 100%;
   max-width: 100%;
+}
+.ug-stage:not([data-narrow="true"]) .ug-svg {
+  position: absolute;
+  inset: 0;
+  height: 100%;
 }
 .ug-empty {
   margin: 0;
