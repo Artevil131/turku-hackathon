@@ -1,0 +1,130 @@
+/* The one filter control: a button in the workspace toolbar, a compact popover under it. */
+.feed-filter-wrap {
+  position: relative;
+  flex: none;
+}
+
+.feed-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: var(--control-h, 28px);
+  padding: 0 9px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control, 6px);
+  background: var(--glass-1, #fff);
+  color: var(--ink-2);
+  font: inherit;
+  font-size: var(--t-xs, 12px);
+  font-weight: 500;
+  white-space: nowrap;
+  transition:
+    border-color var(--mo-1, 120ms) var(--mo-ease, ease-out),
+    background-color var(--mo-1, 120ms) var(--mo-ease, ease-out);
+}
+
+.feed-filter:hover,
+.feed-filter[aria-expanded="true"] {
+  border-color: var(--live);
+  color: var(--ink);
+}
+
+.feed-filter[data-active="true"] {
+  border-color: var(--live);
+  background: var(--brand-accent-soft, #ecebfc);
+  color: var(--ink);
+}
+
+.feed-pop {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(280px, calc(100vw - 32px));
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel, 10px);
+  background: var(--glass-1, #fff);
+  box-shadow: 0 8px 24px -8px rgb(7 8 28 / 0.18);
+  font-size: var(--t-s, 13px);
+}
+
+.feed-pop-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.feed-pop-field > span,
+.feed-pop-kinds > legend {
+  font-size: var(--t-xs, 12px);
+  font-weight: 600;
+  color: var(--ink-3);
+}
+
+.feed-select {
+  height: var(--control-h, 28px);
+  min-width: 0;
+  max-width: 100%;
+  padding: 0 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control, 6px);
+  background: var(--glass-1, #fff);
+  font: inherit;
+  font-size: var(--t-s, 13px);
+}
+
+.feed-pop-kinds {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.feed-pop-kinds > legend {
+  padding: 0;
+  margin-bottom: 4px;
+}
+
+.feed-pop-kind {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  padding: 0 4px;
+  border-radius: var(--radius-control, 6px);
+  cursor: pointer;
+}
+
+.feed-pop-kind:hover {
+  background: var(--chassis, #f8f8f8);
+}
+
+.feed-pop-kind input {
+  margin: 0;
+  accent-color: var(--live);
+}
+
+.feed-pop-kind svg {
+  color: var(--ink-2);
+}
+
+.feed-pop-kind-name {
+  flex: 1 1 auto;
+}
+
+.feed-pop-count {
+  font-size: var(--t-xs, 12px);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-3);
+}
+
+.feed-pop-done {
+  align-self: flex-end;
+}

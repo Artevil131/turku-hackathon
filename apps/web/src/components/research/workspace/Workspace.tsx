@@ -225,6 +225,7 @@ export function Workspace({
   chartContent,
   chartMenu,
   rail,
+  toolbarExtra,
   revealRail,
 }: {
   /** The project open in this tab (null: the browser's own layout). */
@@ -257,6 +258,8 @@ export function Workspace({
   chartMenu?: (done: () => void) => ReactNode;
   /** The tool rail, docked on the left of the board; the toolbar's Tools button, T and a double-click on the empty board toggle it. */
   rail?: ReactNode;
+  /** Controls the project adds to the toolbar (the board's filters); on a narrow screen they stand above the stack beside Add. */
+  toolbarExtra?: ReactNode;
   /** Each new value shows the rail (the card's "Open in Tools" sends the slice there). */
   revealRail?: number;
 }) {
@@ -842,12 +845,18 @@ export function Workspace({
       data-selection={primary !== null}
     >
       {wide ? null : <div className="ws-tray-row">{tray}</div>}
-      {wide ? null : <div className="ws-narrow-bar">{addButton}</div>}
+      {wide ? null : (
+        <div className="ws-narrow-bar">
+          {addButton}
+          {toolbarExtra}
+        </div>
+      )}
       {wide ? (
         <div className="ws-toolbar">
           {focusBar ?? layouts}
           {addButton}
           {toolsButton}
+          {toolbarExtra}
         </div>
       ) : null}
       {rail ? (

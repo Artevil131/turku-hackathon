@@ -1,12 +1,9 @@
-import { PHENOTYPES, type Phenotype } from "@aei/domain";
 import { formatDate, phenotypeName, t, wardName } from "@aei/i18n";
-import { type ReactNode, useEffect, useId, useRef, useState } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
 import { useAiStatus, useQuestion } from "../../ai.ts";
-import { networkUnits } from "../../sites.ts";
 import { Ask, AskedResults } from "../Ask.tsx";
 import { AsOf } from "../AsOf.tsx";
-import { type FeedProps, KINDS, type SignalKind } from "./board.ts";
-import { KindGlyph } from "./feed/glyphs.tsx";
+import type { FeedProps, SignalKind } from "./board.ts";
 import { IncidentRow } from "./feed/IncidentRow.tsx";
 import { applyFilters, groupByTime, type Incident, TIME_GROUPS, type TimeGroup } from "./feed/model.ts";
 import { kindLabel } from "./feed/names.ts";
@@ -39,8 +36,6 @@ const GROUP_KEY: Record<TimeGroup, "feedGroupWeek" | "feedGroupMonth" | "feedGro
   month: "feedGroupMonth",
   earlier: "feedGroupEarlier",
 };
-
-const SHOWN_KINDS = KINDS.filter((k) => k !== "divergence");
 
 export function SignalFeed(props: Props) {
   const {
@@ -109,14 +104,6 @@ export function SignalFeed(props: Props) {
   const readyAsOf = load.status === "ready" ? load.asOf : null;
   const groups = readyAsOf ? groupByTime(shown, readyAsOf) : null;
 
-  // Facet counts: each choice counts the incidents the other filters leave.
-  const unitCounts = countBy(applyFilters(incidents, filters, "unit"), (i) => (i.ward ? [i.ward] : []));
-  const kindCounts = countBy(applyFilters(incidents, filters, "kind"), (i) => [i.kind]);
-  const phenoCounts = countBy(applyFilters(incidents, filters, "phenotype"), (i) => i.phenotypes);
-  const units = networkUnits([]).filter((c) => unitCounts.has(c) || state.unit === c);
-  const phenotypes = [...new Set<Phenotype>([...phenoCounts.keys(), ...(state.phenotype ? [state.phenotype] : [])])]
-    .filter((p) => PHENOTYPES.includes(p))
-    .sort();
   const toggleKind = (k: SignalKind) =>
     onChange({ kinds: state.kinds.includes(k) ? state.kinds.filter((x) => x !== k) : [...state.kinds, k] });
 
@@ -152,52 +139,7 @@ export function SignalFeed(props: Props) {
             <div className="feed-headline">
               <h1 id="feed-title">{t(locale, "feedTitle")}</h1>
               {readyAsOf ? (
-                <>
-                  <AsOf locale={locale} date={readyAsOf} pending={asOf !== null && asOf !== readyAsOf} clockDate={asOf ?? undefined} />
-                  <FilterButton locale={locale} count={active.length}>
-                    <label className="feed-pop-field">
-                      <span>{t(locale, "feedFilterUnit")}</span>
-                      <select
-                        className="feed-select"
-                        value={state.unit ?? ""}
-                        onChange={(e) => onChange({ unit: (e.target.value || null) as typeof state.unit })}
-                      >
-                        <option value="">{t(locale, "feedAllUnits")}</option>
-                        {units.map((c) => (
-                          <option key={c} value={c}>
-                            {wardName(locale, c)} · {unitCounts.get(c) ?? 0}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <fieldset className="feed-pop-kinds">
-                      <legend>{t(locale, "feedFilterKind")}</legend>
-                      {SHOWN_KINDS.map((k) => (
-                        <label key={k} className="feed-pop-kind">
-                          <input type="checkbox" checked={state.kinds.includes(k)} onChange={() => toggleKind(k)} />
-                          <KindGlyph kind={k} />
-                          <span className="feed-pop-kind-name">{kindLabel(locale, k)}</span>
-                          <span className="feed-pop-count">{kindCounts.get(k) ?? 0}</span>
-                        </label>
-                      ))}
-                    </fieldset>
-                    <label className="feed-pop-field">
-                      <span>{t(locale, "feedFilterPhenotype")}</span>
-                      <select
-                        className="feed-select"
-                        value={state.phenotype ?? ""}
-                        onChange={(e) => onChange({ phenotype: (e.target.value || null) as Phenotype | null })}
-                      >
-                        <option value="">{t(locale, "feedAllPhenotypes")}</option>
-                        {phenotypes.map((p) => (
-                          <option key={p} value={p}>
-                            {phenotypeName(p)} · {phenoCounts.get(p) ?? 0}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  </FilterButton>
-                </>
+                <AsOf locale={locale} date={readyAsOf} pending={asOf !== null && asOf !== readyAsOf} clockDate={asOf ?? undefined} />
               ) : null}
             </div>
             {question.available || question.offline || question.active || question.error ? (
@@ -295,80 +237,4 @@ export function SignalFeed(props: Props) {
       </div>
     </section>
   );
-}
-
-/**
- * The one filter control: a button that opens a compact popover. Enter or Space opens it, Escape or an
- * outside click closes it and focus returns to the button; the fields inside are ordinary form controls.
- */
-function FilterButton({ locale, count, children }: { locale: FeedProps["locale"]; count: number; children: ReactNode }) {
-  const [open, setOpen] = useState(false);
-  const id = useId();
-  const root = useRef<HTMLDivElement>(null);
-  const button = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    root.current?.querySelector<HTMLElement>("select, input, button")?.focus();
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "Escape") return;
-      e.stopPropagation();
-      setOpen(false);
-      button.current?.focus();
-    };
-    const onPointer = (e: PointerEvent) => {
-      if (root.current && !root.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("keydown", onKey, true);
-    document.addEventListener("pointerdown", onPointer);
-    return () => {
-      document.removeEventListener("keydown", onKey, true);
-      document.removeEventListener("pointerdown", onPointer);
-    };
-  }, [open]);
-  return (
-    <div className="feed-filter-wrap" ref={root}>
-      <button
-        type="button"
-        ref={button}
-        className="feed-filter"
-        data-active={count > 0}
-        aria-expanded={open}
-        aria-controls={open ? id : undefined}
-        aria-haspopup="dialog"
-        onClick={() => setOpen((o) => !o)}
-      >
-        <FilterGlyph />
-        {count > 0 ? t(locale, "feedFilterN", { n: count }) : t(locale, "feedFilter")}
-      </button>
-      {open ? (
-        <div className="feed-pop" id={id} role="dialog" aria-label={t(locale, "feedFilters")}>
-          {children}
-          <button
-            type="button"
-            className="feed-btn feed-pop-done"
-            onClick={() => {
-              setOpen(false);
-              button.current?.focus();
-            }}
-          >
-            {t(locale, "feedFilterDone")}
-          </button>
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-function FilterGlyph() {
-  return (
-    <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false">
-      <path d="M2.5 4h11M4.5 8h7M6.5 12h3" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function countBy<T extends string>(list: readonly Incident[], keys: (i: Incident) => T[]): Map<T, number> {
-  const m = new Map<T, number>();
-  for (const i of list) for (const k of new Set(keys(i))) m.set(k, (m.get(k) ?? 0) + 1);
-  return m;
 }
