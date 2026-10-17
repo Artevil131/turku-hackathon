@@ -18,7 +18,7 @@ export const methodEn = {
   methodInfo3:
     "Live test (D-020): the count over 28 days against a Poisson mean from the 365 days before, raised at the detector's level. It reads raw weekly counts (D-042). Experiments 0015, 0016 and 0018 are candidates. The p value is a model-based surprise score for one look, not the probability that this is a real outbreak.",
   methodInfo4:
-    "Experiment 0019 ranks units by exposure on the patient-flow graph against rewired graphs. Experiment 0020's county forecast ships (D-045) and shows in the region view: a smoothed next-month level with a predictive range, not an epidemic forecast. Regional \"strong\" means the signal survives the Bonferroni correction under the fitted model.",
+    'Experiment 0019 ranks units by exposure on the patient-flow graph against rewired graphs. Experiment 0020\'s county forecast ships (D-045) and shows in the region view: a smoothed next-month level with a predictive range, not an epidemic forecast. Regional "strong" means the signal survives the Bonferroni correction under the fitted model.',
   methodLiveRule: "the live rule (D-023, D-033)",
   methodLiveTest: "the live test (D-020)",
   methodCandidate: "experiment, candidate — not the live estimate",
@@ -82,8 +82,10 @@ export const methodEn = {
   methodResult0013:
     "Brier +0.0001 (−0.0000 to +0.0002); counting two-organism cultures as one episode lowers the top severe pick by 0.5 points.",
   methodResult0014: "The first year picks the hospital pool; no finer pool beats it.",
-  methodResult0015: "Four-patient rare clusters: 21 % found at 1 episode a year (live set at 3 episodes a year: 92 %, an alternative operating point, not the shipped setting).",
-  methodResult0016: "Four-patient rare clusters: 67 % at 3.5 episodes a year, 66 % on held-out seeds (live set at 3 episodes a year: 92 %, an alternative operating point, not the shipped setting).",
+  methodResult0015:
+    "Four-patient rare clusters: 21 % found at 1 episode a year (live set at 3 episodes a year: 92 %, an alternative operating point, not the shipped setting).",
+  methodResult0016:
+    "Four-patient rare clusters: 67 % at 3.5 episodes a year, 66 % on held-out seeds (live set at 3 episodes a year: 92 %, an alternative operating point, not the shipped setting).",
   methodResult0018: "Four-patient rare clusters: 14 % at 1.5 episodes a year.",
   methodResult0019: "Pooled AUC 0.63 over 24 real episodes, not above rewired graphs (p 0.22).",
   methodResult0020: "Log score +0.40 (0.31 to 0.48) and MAE +0.14 against last month's count.",
@@ -173,7 +175,8 @@ export const methodFi: Record<keyof typeof methodEn, string> = {
   methodResult0013:
     "Brier +0,0001 (−0,0000…+0,0002); kahden bakteerin viljelyn laskeminen yhdeksi jaksoksi laskee vakavan infektion kärkivalintaa 0,5 prosenttiyksikköä.",
   methodResult0014: "Ensimmäinen vuosi valitsee sairaalan joukon; mikään tarkempi joukko ei voita sitä.",
-  methodResult0015: "Neljän potilaan harvinaiset rypäät: 21 % löydetty, 1 jakso vuodessa (käytössä oleva joukko 3 jaksolla vuodessa: 92 %, vaihtoehtoinen toimintapiste, ei käytössä oleva asetus).",
+  methodResult0015:
+    "Neljän potilaan harvinaiset rypäät: 21 % löydetty, 1 jakso vuodessa (käytössä oleva joukko 3 jaksolla vuodessa: 92 %, vaihtoehtoinen toimintapiste, ei käytössä oleva asetus).",
   methodResult0016:
     "Neljän potilaan harvinaiset rypäät: 67 % 3,5 jaksolla vuodessa, 66 % erillisillä siemenillä (käytössä oleva joukko 3 jaksolla vuodessa: 92 %, vaihtoehtoinen toimintapiste, ei käytössä oleva asetus).",
   methodResult0018: "Neljän potilaan harvinaiset rypäät: 14 % 1,5 jaksolla vuodessa.",
