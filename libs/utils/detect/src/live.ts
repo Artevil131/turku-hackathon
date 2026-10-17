@@ -33,6 +33,8 @@ export const SURVEILLANCE_PAIRS: readonly Pair[] = [
   { organism: "Proteus mirabilis", antibiotic: "CIP" },
 ];
 
+export const LIVE_PHENOTYPES = ["esbl", "mrsa", "vre", "cpe"] as const;
+
 export const LIVE_SETTINGS = {
   profileExcess: { windowDays: 28, baselineDays: 365, alpha: 0.0001, minObserved: 3, sameSpecimen: true },
   phenotypeExcess: { windowDays: 28, baselineDays: 365, alpha: 0.001, minObserved: 2 },
@@ -77,7 +79,7 @@ function siteSignals(records: readonly IsolateRecord[], cultures: readonly Cultu
 export function clusterSignals(records: readonly IsolateRecord[]): Signal[] {
   return [
     ...profileExcess(records, LIVE_SETTINGS.profileExcess),
-    ...phenotypeExcess(records, ["esbl", "mrsa", "vre", "cpe"], LIVE_SETTINGS.phenotypeExcess),
+    ...phenotypeExcess(records, LIVE_PHENOTYPES, LIVE_SETTINGS.phenotypeExcess),
   ];
 }
 

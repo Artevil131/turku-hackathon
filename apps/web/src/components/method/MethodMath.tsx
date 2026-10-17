@@ -1,4 +1,5 @@
 import { type Locale, type MessageKey, t } from "@aei/i18n";
+import { fillSentence, type MethodId, methods, parameterDefaults } from "@aei/methods";
 import type { ReactNode } from "react";
 
 // Formulas for the Method page, typeset as native MathML (no library). Each block states the rule the tool runs or
@@ -215,6 +216,14 @@ export function LiveRulesMath({
   );
   const z = <I>z</I>;
   const n = <I>n</I>;
+  const ruleMethods: Record<string, MethodId[]> = {
+    wilson: ["coverage"],
+    poisson: ["profileExcess", "phenotypeExcess"],
+    drop: ["samplingDrop"],
+    empty: ["emptyRun"],
+    trend: ["risingTrend"],
+    sentinel: ["cpeAlerts", "newInUnitAlerts"],
+  };
   const formulas: Record<string, ReactNode> = {
     wilson: (
       <math aria-label="Wilson interval">
@@ -313,7 +322,7 @@ export function LiveRulesMath({
             <Row>
               <I>c</I>
               <O>+</O>
-              <Frac n={<N>1</N>} d={<N>2</N>} />
+              <N>{parameterDefaults.profileExcess.smoothing}</N>
             </Row>
           }
           d={
@@ -340,30 +349,18 @@ export function LiveRulesMath({
         <mspace width="0.6em" />
         <I>α</I>
         <O>=</O>
-        <msup>
-          <N>10</N>
-          <Row>
-            <O>−</O>
-            <N>4</N>
-          </Row>
-        </msup>
+        <N>{parameterDefaults.profileExcess.alpha}</N>
         <O>/</O>
-        <msup>
-          <N>10</N>
-          <Row>
-            <O>−</O>
-            <N>3</N>
-          </Row>
-        </msup>
+        <N>{parameterDefaults.phenotypeExcess.alpha}</N>
       </math>
     ),
     drop: (
       <math aria-label="Sampling drop">
-        <Sub b={<I>X</I>} s={<N>7</N>} />
+        <Sub b={<I>X</I>} s={<N>{parameterDefaults.samplingDrop.windowDays}</N>} />
         <O>∼</O>
         <mi mathvariant="normal">Poisson</mi>
         <O>(</O>
-        <N>7</N>
+        <N>{parameterDefaults.samplingDrop.windowDays}</N>
         <Sub
           b={
             <mover accent="true">
@@ -371,25 +368,19 @@ export function LiveRulesMath({
               <O>¯</O>
             </mover>
           }
-          s={<N>56</N>}
+          s={<N>{parameterDefaults.samplingDrop.baselineDays}</N>}
         />
         <O>)</O>
         <O>,</O>
         <mspace width="0.6em" />
         <I>P</I>
         <O>(</O>
-        <Sub b={<I>X</I>} s={<N>7</N>} />
+        <Sub b={<I>X</I>} s={<N>{parameterDefaults.samplingDrop.windowDays}</N>} />
         <O>≤</O>
         <I>x</I>
         <O>)</O>
         <O>&lt;</O>
-        <msup>
-          <N>10</N>
-          <Row>
-            <O>−</O>
-            <N>4</N>
-          </Row>
-        </msup>
+        <N>{parameterDefaults.samplingDrop.alpha}</N>
       </math>
     ),
     empty: (
@@ -403,13 +394,7 @@ export function LiveRulesMath({
           </Row>
         </msup>
         <O>&lt;</O>
-        <msup>
-          <N>10</N>
-          <Row>
-            <O>−</O>
-            <N>3</N>
-          </Row>
-        </msup>
+        <N>{parameterDefaults.emptyRun.alpha}</N>
       </math>
     ),
     trend: (
@@ -490,13 +475,7 @@ export function LiveRulesMath({
           <O>)</O>
         </Row>
         <O>&lt;</O>
-        <msup>
-          <N>10</N>
-          <Row>
-            <O>−</O>
-            <N>3</N>
-          </Row>
-        </msup>
+        <N>{parameterDefaults.risingTrend.alpha}</N>
       </math>
     ),
     sentinel: (
@@ -510,7 +489,7 @@ export function LiveRulesMath({
         <O>(</O>
         <I>t</I>
         <O>−</O>
-        <N>180</N>
+        <N>{parameterDefaults.newInUnitAlerts.lookbackDays}</N>
         <O>,</O>
         <I>t</I>
         <O>)</O>
@@ -525,7 +504,7 @@ export function LiveRulesMath({
         <li key={r} className={FULL.has(r) ? "mt-rule mt-rule-full" : WIDE.has(r) ? "mt-rule mt-rule-wide" : "mt-rule"}>
           <span className="mt-rule-name">{t(locale, `methodRule_${r}` as MessageKey)}</span>
           <div className="mt-rule-eq">{formulas[r]}</div>
-          <span className="mt-rule-note">{t(locale, `methodRuleNote_${r}` as MessageKey)}</span>
+          <span className="mt-rule-note">{ruleMethods[r]?.map((id) => fillSentence(methods[id], {}, locale)).join(" ")}</span>
         </li>
       ))}
     </ul>

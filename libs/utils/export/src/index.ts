@@ -15,3 +15,5 @@ export const exportFormats: { id: "zip" | "csv" | "json" | "md" | "tex" | "docx"
   { id: "docx", label: "Word (.docx)" },
   { id: "py", label: "Python" },
 ];
+
+export { methodNumber, methodsNumbers, toMethodsParagraph } from "./methods.ts";

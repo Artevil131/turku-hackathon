@@ -11,6 +11,7 @@
     "typecheck": "tsc -p ."
   },
   "dependencies": {
+    "@aei/methods": "workspace:*",
     "@aei/contract": "workspace:*",
     "@aei/domain": "workspace:*",
     "@aei/projects": "workspace:*",

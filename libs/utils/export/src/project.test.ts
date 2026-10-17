@@ -86,7 +86,7 @@ describe("saved project bundle", () => {
       sourceNote: labels.frozenNote,
       figures: [],
     });
-    expect(bundle.numbers).toEqual([
+    expect(bundle.numbers.map(({ methodId: _id, decisions: _decisions, ...number }) => number)).toEqual([
       { id: "isolates", label: labels.isolates, value: 2, method: labels.isolateMethod, recipe: { op: "count", table: "isolates" } },
       {
         id: "patients",
@@ -98,7 +98,10 @@ describe("saved project bundle", () => {
       { id: "alerts", label: labels.alerts, value: 1, method: labels.alertMethod, recipe: { op: "count", table: "alerts" } },
     ]);
     const files = Object.fromEntries(packageFiles(bundle).map((file) => [file.path, file.data]));
-    expect(JSON.parse(String(files["methods.json"]))).toEqual(bundle.numbers);
+    expect(
+      JSON.parse(String(files["methods.json"])).map(({ definition: _definition, ...number }: { definition: unknown }) => number),
+    ).toEqual(bundle.numbers);
+    expect(bundle.numbers.map((number) => number.methodId)).toEqual(["isolates", "patients", "alerts"]);
     const fields = JSON.parse(String(files["datapackage.json"])).resources[0].schema.fields;
     expect(fields.filter((field: { role?: string }) => field.role === "result").map((field: { name: string }) => field.name)).toEqual([
       "AMP",

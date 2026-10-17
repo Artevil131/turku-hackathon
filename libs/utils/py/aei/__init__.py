@@ -2,5 +2,6 @@
 
 from aei.client import AeiApiError, Client, Project, connect
 from aei.package import Package, VerifyResult, read_package, reproduce
+from aei.registry import methods_registry
 
-__all__ = ["read_package", "reproduce", "connect", "Package", "VerifyResult", "Client", "Project", "AeiApiError"]
+__all__ = ["read_package", "reproduce", "methods_registry", "connect", "Package", "VerifyResult", "Client", "Project", "AeiApiError"]

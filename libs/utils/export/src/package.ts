@@ -1,5 +1,6 @@
 import JSZip from "jszip";
 import type { ExportBundle, ExportFile } from "./bundle.ts";
+import { methodsNumbers, toMethodsParagraph } from "./methods.ts";
 import { type NotebookTarget, pythonAnalysis, pythonNotebook, rAnalysis, rNotebook } from "./notebooks.ts";
 import { csv, metadata, slug } from "./text.ts";
 import { figurePngFile, figureSvgFile, toDocx } from "./word.ts";
@@ -13,6 +14,8 @@ function readme(bundle: ExportBundle): string {
     "## Data cut",
     ...metadata(bundle).map(([key, value]) => `- ${key}: ${value}`),
     "The fingerprint records the saved data cut when supplied. Check it before interpreting reproduced numbers; missing fingerprints cannot prove the same rows. Figures may have their own displayed filters and date ranges.",
+    "## Methods",
+    toMethodsParagraph(bundle),
     "## Load in Python",
     '```python\nimport aei\npkg = aei.read_package(".")\n```',
     "Requires the aei Python package. Without it, load a CSV directly with pandas (consult datapackage.json for types, descriptions and units):",
@@ -66,7 +69,7 @@ export function packageFiles(
   const files: { path: string; data: string | Uint8Array }[] = [
     { path: "datapackage.json", data: `${JSON.stringify(descriptor, null, 2)}\n` },
     ...bundle.tables.map((table) => ({ path: `${slug(table.name)}.csv`, data: csv(table, false) })),
-    { path: "methods.json", data: `${JSON.stringify(bundle.numbers, null, 2)}\n` },
+    { path: "methods.json", data: `${JSON.stringify(methodsNumbers(bundle), null, 2)}\n` },
     { path: "README.md", data: readme(bundle) },
     { path: "analysis.py", data: pythonAnalysis(bundle) },
     { path: "analysis.R", data: rAnalysis(bundle) },

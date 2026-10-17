@@ -11,6 +11,7 @@
     "smoke": "node scripts/smoke.mjs"
   },
   "dependencies": {
+    "@aei/methods": "workspace:*",
     "@aei/ask": "workspace:*",
     "@aei/contract": "workspace:*",
     "@aei/detect": "workspace:*",
