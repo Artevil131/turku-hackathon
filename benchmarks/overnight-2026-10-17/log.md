@@ -47,3 +47,4 @@ Code, Opus 5.5, operated by Artem).
 | 09:08 | 0014 | result committed | Sonnet 5.5 | 60–73 s CPU | TUNE chose the hospital pool (= hospital-365); in/out pool C1 −0.00005 (−0.00011 to +0.00001), unit +0.00036; no row passes the replacement rule (all fail C8); no Fable review |
 | 09:08 | 0017 Farrington-Noufaily (m11) | plan start | Sonnet 5.5 | | plan then implement; unit series added so D2 can match |
 | 09:10 | 0016 | result committed | Sonnet 5.5 | 71 s CPU | year 1 chose θ 8 (not C5's 2.5); D5 rare 0.665 (0.597–0.727), common ESBL 0.485 at 3.52 episodes/yr vs live set 0.92 / 0.75; Siegmund/simulation ARL ratio 0.91; Bernoulli part carries 123 of 133 rare hits; no Fable review |
+| 09:11 | 0022 ensemble (m21) | plan start | Fable 5.1 | | the two best by D5: live set (re-tuned) and the 0016 CUSUM union |
