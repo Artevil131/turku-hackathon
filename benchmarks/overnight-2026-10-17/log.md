@@ -43,3 +43,4 @@ Code, Opus 5.5, operated by Artem).
 | 08:43 | 0020 review | finish | Fable 5.1 | 6 min | stands with caveats: pooled skill robust (+0.378 at persistence's best floor 0.25); VRE log skill mostly the floor (+0.06 at floor 0.1), VRE/CPE MAE skill is forecasting zero; ship rule should not fire for VRE; method line and data field corrected by the orchestrator, one rounding slip fixed |
 | 08:43 | 0014 pooling levels (m6) | plan start | Sonnet 5.5 | | plan then implement |
 | 08:49 | 0016 | plan committed | Sonnet 5.5 | 9 min | Poisson θ {2.5,4,8} × daily/weekly × guard {0,4}; Bernoulli θ {2.5,4,8} × guard; p = 1/ARL(S_t) per series |
+| 08:52 | 0014 | plan committed | Sonnet 5.5 | 9 min | 4 levels × {unsplit, onset-split, folded}; chosen on TUNE |
