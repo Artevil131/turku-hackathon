@@ -1,7 +1,7 @@
 import type { Alert } from "@aei/alerts";
 import type { AgeGroup } from "@aei/ask";
 import type { CombinationSuggestion, CoverageResult, CoverageQuery as GearCoverageQuery, Severity, Suggestion } from "@aei/coverage";
-import type { Antibiotic, IsoDate, IsolateRecord, Organism, Sex, Specimen, Ward, WardCode } from "@aei/domain";
+import type { Antibiotic, IsoDate, IsolateRecord, Organism, Sex, Site, SiteId, Specimen, Ward, WardCode } from "@aei/domain";
 import type { CheckSummary } from "@aei/quality";
 import type { Flow, TrailLink } from "@aei/relations";
 import type { ClockState } from "@aei/replay";
@@ -37,6 +37,8 @@ export const ROUTES = {
   weekly: "/api/weekly",
   /** Plausibility checks over the rows the server holds (D-038). */
   quality: "/api/quality",
+  /** The hospitals connected to this server, each with its units, counts and feed status (D-051). */
+  sites: "/api/sites",
 } as const;
 
 export interface Meta {
@@ -47,6 +49,41 @@ export interface Meta {
   antibiotics: readonly Antibiotic[];
   organisms: readonly Organism[];
   specimens: readonly { code: Specimen; en: string; fi: string }[];
+  /** Every site, home first; each `wards` entry names its site (D-051). Absent from servers older than D-051. */
+  sites?: readonly Site[];
+}
+
+/** One site's feed of lab messages since the server started (wall-clock time, not the replay clock). */
+export interface SiteFeed {
+  /** Messages received on POST /api/ingest under this site, accepted or not. */
+  messages: number;
+  /** When the last message arrived, ISO 8601 wall-clock; null before the first. */
+  lastAt: string | null;
+  lastFormat: "hl7v2" | "fhir" | "csv" | null;
+  /** Cultures accepted from the last message. */
+  lastAccepted: number;
+  /** Warnings over every message, including units the site did not register. */
+  warnings: number;
+  /** Cultures kept with a unit the site did not register. */
+  unregistered: number;
+  /** Messages refused (unknown format, nothing usable). */
+  rejected: number;
+}
+
+export interface SiteStatus extends Site {
+  home: boolean;
+  /** The site's registered units, qualified. */
+  wards: WardCode[];
+  /** "home": the dataset's hospital; "connected": a site that has sent at least one message; "awaiting": none yet. */
+  status: "home" | "connected" | "awaiting";
+  /** Rows of the site up to the clock. */
+  counts: { cultures: number; isolates: number; patients: number };
+  feed: SiteFeed;
+}
+
+export interface SitesResponse {
+  asOf: IsoDate;
+  sites: SiteStatus[];
 }
 
 export type { ClockState } from "@aei/replay";
@@ -68,6 +105,8 @@ export interface IsolateQuery {
   sex?: Sex;
   ageMin?: number;
   ageMax?: number;
+  /** Only this site's units (D-051). */
+  site?: SiteId;
 }
 
 export type { AntibioticCoverage, CombinationSuggestion, Counts, CoverageResult, Level, Severity, Suggestion } from "@aei/coverage";
@@ -78,6 +117,8 @@ export { THRESHOLDS } from "@aei/coverage";
 export type CoverageQuery = Omit<GearCoverageQuery, "asOf" | "minTested"> & {
   /** How suggestions are judged (D-026, D-027); "mild" when omitted. */
   severity?: Severity;
+  /** The site `ward` belongs to; a bare ward code is then that site's unit (D-051). */
+  site?: SiteId;
 };
 
 export interface CoverageResponse {
@@ -116,6 +157,8 @@ export type { Flow, TrailLink } from "@aei/relations";
 /** Relation layers for the `days` days up to the clock's as-of date (D-011 to D-013). */
 export interface RelationsQuery {
   days?: number;
+  /** Only flows and links that touch this site's units: moves within it and to or from it (D-051). */
+  site?: SiteId;
 }
 
 export interface RelationsResponse {
@@ -130,6 +173,8 @@ export interface RelationsResponse {
 /** Alerts dated from `from` (inclusive) up to the clock's as-of date. */
 export interface AlertsQuery {
   from?: IsoDate;
+  /** Only this site's alerts; all sites when omitted (D-051). */
+  site?: SiteId;
 }
 
 export interface AlertsResponse {
@@ -264,6 +309,8 @@ export type { UnitWeeks, WeeklySeries } from "@aei/viz";
 /** Weeks from `from` (default: the dataset start) up to the clock's as-of date, never later. */
 export interface WeeklyQuery {
   from?: IsoDate;
+  /** One series per unit of this site; the home site when omitted (D-051). */
+  site?: SiteId;
 }
 
 export interface WeeklyResponse extends WeeklySeries {
@@ -272,7 +319,12 @@ export interface WeeklyResponse extends WeeklySeries {
 
 export type { CheckName, CheckSummary, Finding, Severity as FindingSeverity } from "@aei/quality";
 
-/** Every check run over every row the server holds, grouped by check; no findings means every check passed. */
+/** Which site's rows the checks summarise; the home site when omitted (D-051). */
+export interface QualityQuery {
+  site?: SiteId;
+}
+
+/** Every check run over every row of one site, grouped by check; no findings means every check passed. */
 export interface QualityResponse {
   checked: { patients: number; cultures: number; isolates: number; results: number };
   summary: CheckSummary[];
@@ -326,7 +378,10 @@ export interface AeiClient {
   counties(): Promise<CountiesResponse>;
   /** Weekly raw counts per unit up to the clock (optional route). */
   weekly(query: WeeklyQuery): Promise<WeeklyResponse>;
-  quality(): Promise<QualityResponse>;
+  /** The checks over one site's rows; the home site's when `site` is omitted (D-051). */
+  quality(query?: QualityQuery): Promise<QualityResponse>;
+  /** The connected hospitals with their status (D-051). */
+  sites(): Promise<SitesResponse>;
   /** Opens the live stream; returns a function that closes it. */
   live(onEvent: (event: LiveEvent) => void, onError?: (error: Event) => void): () => void;
 }
@@ -374,7 +429,8 @@ export function createAeiClient(options: AeiClientOptions): AeiClient {
     regional: (query) => json<RegionalResponse>(withQuery(ROUTES.regional, query)),
     counties: () => json<CountiesResponse>(ROUTES.counties),
     weekly: (query) => json<WeeklyResponse>(withQuery(ROUTES.weekly, query)),
-    quality: () => json<QualityResponse>(ROUTES.quality),
+    quality: (query = {}) => json<QualityResponse>(withQuery(ROUTES.quality, query)),
+    sites: () => json<SitesResponse>(ROUTES.sites),
     live(onEvent, onError) {
       const source = new ES(url(ROUTES.live));
       for (const type of LIVE_EVENT_TYPES) {
