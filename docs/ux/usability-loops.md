@@ -20,3 +20,7 @@ see overwhelm-analysis.md cuts 1, 2, 3, 4), no test with a real user.
 Added at the user's request (no judge run):
 
 | `ux-loop-5` | Windows grow to fit their content instead of scrolling inside (not saved; Notebook, Timeline, Signals and Assistant keep their own scroll) | "I don't like scrolling inside the windows" |
+
+| `ux-loop-6` | Start page asks "I work as…" (7 professions: ward doctor, infection control, stewardship, microbiology lab, researcher, regional surveillance, management). The choice (kept in the browser) reorders templates, picks the example questions and the suggested demo. Recent projects, demos and templates stay for everyone | the page serves one reader at a time without hiding anything; doctors keep their projects |
+
+Not checked: the chips for stewardship, lab, surveillance and management open existing views (antibiogram, unit grid, map, data page) rather than purpose-made answers; no real user from those professions has said these are their questions.

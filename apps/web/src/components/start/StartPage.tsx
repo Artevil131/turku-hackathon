@@ -10,17 +10,13 @@ import { QUICK_STARTS, TEMPLATE_KEYS, type Template } from "../research/workspac
 import { openSearch } from "../shell/Sidebar.tsx";
 import type { Audience } from "./audience.ts";
 import { NewProjectDialog } from "./NewProjectDialog.tsx";
+import { CHIPS, type ChipAction, ROLE_DEMO, ROLE_LABEL, ROLES, type Role, storedRole, storeRole, TEMPLATE_ORDER } from "./roles.ts";
 import { ShareDialog } from "./ShareDialog.tsx";
 import { TemplateArt } from "./TemplateArt.tsx";
 import "../home/home.css";
 import "../research/SignalFeed.css";
 import "./start.css";
 
-const ORDER: Record<Audience, Template[]> = {
-  clinician: ["patient", "antibiogram", "outbreak", "regional", "blank"],
-  control: ["outbreak", "antibiogram", "patient", "regional", "blank"],
-  researcher: ["blank", "regional", "outbreak", "antibiogram", "patient"],
-};
 function ago(locale: Locale, date: string) {
   const minutes = Math.max(0, Math.floor((Date.now() - new Date(date).getTime()) / 60_000));
   return minutes < 1
@@ -117,6 +113,20 @@ export function StartPage({
   onDemo: (demo: DemoSpec) => void;
   onTour: () => void;
 }) {
+  // The profession chosen on the page decides the order and the example questions; the audience preset is the fallback.
+  const [chosen, setChosen] = useState<Role | null>(storedRole);
+  const role: Role = chosen ?? audience;
+  const pick = (r: Role) => {
+    setChosen(r);
+    storeRole(r);
+  };
+  const run = (action: ChipAction) => {
+    if (action.kind === "demo") {
+      const d = DEMOS.find((x) => x.id === action.id);
+      if (d) onDemo(d);
+    } else if (action.kind === "view") shell.openView(action.template, action.params);
+    else location.hash = action.href.slice(1);
+  };
   const [projects, setProjects] = useState<Project[] | null>(null);
   const [failed, setFailed] = useState(false);
   const [revision, setRevision] = useState(0);
@@ -159,7 +169,7 @@ export function StartPage({
       stale = true;
     };
   }, [client, revision]);
-  const templates = ORDER[audience];
+  const templates = TEMPLATE_ORDER[role];
   return (
     <div className="start-page">
       <div className="start-main">
@@ -182,6 +192,15 @@ export function StartPage({
             </div>
           </div>
         </header>
+        <div className="start-role" data-first={chosen === null || undefined} role="group" aria-label={t(locale, "roleAsk")}>
+          <span className="start-role-label">{t(locale, "roleAsk")}</span>
+          {ROLES.map((r) => (
+            <button type="button" key={r} data-role={r} aria-pressed={chosen === r} onClick={() => pick(r)}>
+              {t(locale, ROLE_LABEL[r])}
+            </button>
+          ))}
+          {chosen === null ? <span className="start-role-note">{t(locale, "roleAskNote")}</span> : null}
+        </div>
         <div className="start-ask" role="search">
           <button type="button" className="start-ask-field" data-start-ask onClick={openSearch}>
             <svg
@@ -201,21 +220,11 @@ export function StartPage({
             <kbd>/</kbd>
           </button>
           <div className="start-ask-chips">
-            <button
-              type="button"
-              onClick={() => {
-                const control = DEMOS.find((d) => d.id === "control");
-                if (control) onDemo(control);
-              }}
-            >
-              {t(locale, "startAskQ1")}
-            </button>
-            <button type="button" onClick={() => shell.openView("patient", { "cov.site": "urine" })}>
-              {t(locale, "startAskQ2")}
-            </button>
-            <button type="button" onClick={() => shell.openView(null, { unit: "MED-A", ph: "esbl" })}>
-              {t(locale, "startAskQ3")}
-            </button>
+            {CHIPS[role].map((c) => (
+              <button type="button" key={c.label} onClick={() => run(c.action)}>
+                {t(locale, c.label)}
+              </button>
+            ))}
           </div>
         </div>
         <section id="start-recent" tabIndex={-1}>
@@ -232,7 +241,7 @@ export function StartPage({
           ) : projects.length === 0 ? (
             // Nothing yet: the demo for this audience, which opens with its guided tour.
             (() => {
-              const demo = DEMOS.find((d) => d.id === audience) ?? DEMOS[0];
+              const demo = DEMOS.find((d) => d.id === ROLE_DEMO[role]) ?? DEMOS[0];
               return demo ? (
                 <div className="start-empty">
                   <TemplateArt demo={demo.id} />

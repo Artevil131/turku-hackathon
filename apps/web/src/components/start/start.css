@@ -864,3 +864,59 @@
   color: var(--live);
   font-size: var(--t-s);
 }
+
+/* "I work as…": the profession decides the order of this page and its example questions; nothing is hidden. */
+.start-role {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px;
+}
+.start-role-label {
+  margin-right: 4px;
+  color: var(--ink-2);
+  font-size: var(--t-s);
+  font-weight: 600;
+}
+.start-role button {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: var(--t-s);
+  cursor: pointer;
+}
+.start-role button:hover,
+.start-role button:focus-visible {
+  border-color: var(--live);
+  color: var(--live);
+}
+.start-role button[aria-pressed="true"] {
+  border-color: var(--live);
+  background: var(--live-soft);
+  color: var(--live);
+  font-weight: 600;
+}
+/* The first visit: bigger buttons and a line saying what the choice does. */
+.start-role[data-first] {
+  padding: 16px;
+  border: 1px solid var(--live);
+  border-radius: 14px;
+  background: var(--live-soft);
+}
+.start-role[data-first] button {
+  min-height: 44px;
+  padding: 0 18px;
+  background: #fff;
+  color: var(--ink);
+  font-size: var(--t-m);
+}
+.start-role-note {
+  flex-basis: 100%;
+  color: var(--ink-2);
+  font-size: var(--t-s);
+}
