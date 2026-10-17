@@ -1,11 +1,11 @@
-import type { AeiClient, CoverageResponse, Level } from "@aei/contract";
+import type { AeiClient, CoverageResponse } from "@aei/contract";
 import type { WardCode } from "@aei/domain";
 import { shortOrganism } from "@aei/domain";
 import { type Locale, specimenName, t, wardName } from "@aei/i18n";
 import { AlertExplanation } from "../AlertExplanation.tsx";
 import { AlertTri } from "../Icons.tsx";
 import type { ListStatus } from "./CoverageList.tsx";
-import { barOf, certaintyOf, type DoctorFilters, dmy, droppedFilters, num, pct } from "./filters.ts";
+import { barOf, type DoctorFilters, dmy, droppedFilters, num, pct } from "./filters.ts";
 import { Popover } from "./Popover.tsx";
 import { signalDate, type UnitSignal } from "./signals.ts";
 import "./UnitContext.css";
@@ -24,43 +24,6 @@ interface Props {
   alertsStatus?: ListStatus;
   onRetryAlerts?: () => void;
   onOpenSignals: (ward: WardCode) => void;
-}
-
-const STEPS: readonly Level[] = ["unit", "ward type", "hospital"];
-
-/** The level ladder (D-033): the step the figures come from is filled with its n; earlier steps had under 30, later ones were not needed. */
-function Ladder({ locale, filters, data }: { locale: Locale; filters: DoctorFilters; data: CoverageResponse }) {
-  const cov = data.coverage;
-  const at = STEPS.indexOf(cov.level);
-  return (
-    <ol className="uc-ladder">
-      {STEPS.map((step, i) => {
-        const c = certaintyOf(step);
-        const state = i === at ? "here" : i < at ? "under" : "later";
-        return (
-          <li key={step} data-state={state} aria-current={state === "here" ? "step" : undefined} title={t(locale, c.label)}>
-            <span className="uc-step-name">
-              <span aria-hidden="true">{c.glyph}</span> {t(locale, c.short)}
-            </span>
-            <span className="uc-step-n num">
-              {state === "here"
-                ? `n ${num(locale, cov.isolates)}`
-                : state === "under"
-                  ? t(locale, "drLadderUnder30")
-                  : t(locale, "drLadderNotNeeded")}
-            </span>
-            {state === "here" ? <span className="uc-step-from num">{t(locale, "drLadderFrom", { date: dmy(cov.from) })}</span> : null}
-          </li>
-        );
-      })}
-      <li className="uc-hint">{t(locale, "drLadderHint")}</li>
-      {droppedFilters(filters, cov).map((d) => (
-        <li key={d.chip} className="uc-chip">
-          {t(locale, d.chip, { bar: barOf(data, filters) })}
-        </li>
-      ))}
-    </ol>
-  );
 }
 
 /** Level ladder, likely organisms and the unit's own signals: context for the list, never a filter on it. */
@@ -87,20 +50,15 @@ export function UnitContext({
   const date = data?.asOf ?? asOf;
   return (
     <>
-      <section className="uc-block dp-panel" aria-labelledby="uc-lad">
-        <h3 id="uc-lad" className="uc-title">
-          <span>{t(locale, "drLadder")}</span>
-          {date && cov ? <span className="num uc-date">{dmy(date)}</span> : null}
-        </h3>
-        {orgState === "ready" && data ? (
-          <Ladder locale={locale} filters={filters} data={data} />
-        ) : orgState === "loading" ? (
-          <Skeleton text={t(locale, "drLoading", { unit })} />
-        ) : (
-          <Failure text={t(locale, "drError")} retry={t(locale, "drRetry")} onRetry={onRetry} />
-        )}
-      </section>
-
+      {data && droppedFilters(filters, data.coverage).length ? (
+        <ul className="uc-ladder">
+          {droppedFilters(filters, data.coverage).map((d) => (
+            <li key={d.chip} className="uc-chip">
+              {t(locale, d.chip, { bar: barOf(data, filters) })}
+            </li>
+          ))}
+        </ul>
+      ) : null}
       <section className="uc-block dp-panel" aria-labelledby="uc-org" aria-label={t(locale, "drLikely", { specimen: site, unit })}>
         <h3 id="uc-org" className="uc-title">
           <span>{t(locale, "drOrganisms")}</span>
