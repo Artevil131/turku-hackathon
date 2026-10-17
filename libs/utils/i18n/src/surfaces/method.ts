@@ -16,12 +16,17 @@ export const methodEn = {
     "Live rule (D-023, D-033): the unit's last 365 days if it has 30 isolates, else its ward type, else the hospital. Experiments 0012 and 0014 test other estimates; the list does not use them.",
   methodInfo2: "Experiment 0013 multiplies each organism's share by its susceptibility. The live list pools all organisms.",
   methodInfo3:
-    "Live test (D-020): the count over 28 days against a Poisson mean from the 365 days before, raised at the detector's level. It reads raw weekly counts (D-042). Experiments 0015, 0016 and 0018 are candidates.",
+    "Live test (D-020): the count over 28 days against a Poisson mean from the 365 days before, raised at the detector's level. It reads raw weekly counts (D-042). Experiments 0015, 0016 and 0018 are candidates. The p value is a model-based surprise score for one look, not the probability that this is a real outbreak.",
   methodInfo4:
-    "Experiment 0019 ranks units by exposure on the patient-flow graph against rewired graphs. Experiment 0020 forecasts county counts a month ahead against last month's count.",
+    "Experiment 0019 ranks units by exposure on the patient-flow graph against rewired graphs. Experiment 0020's county forecast ships (D-045) and shows in the region view: a smoothed next-month level with a predictive range, not an epidemic forecast. Regional \"strong\" means the signal survives the Bonferroni correction under the fitted model.",
   methodLiveRule: "the live rule (D-023, D-033)",
   methodLiveTest: "the live test (D-020)",
   methodCandidate: "experiment, candidate — not the live estimate",
+  methodShipped: "experiment, shipped (D-045) — shown in the region view",
+  methodShippedFigures:
+    "Shipped setting: for four-patient injections of a rare, identical resistance profile into this synthetic dataset, 89 % found (95 % interval 84 to 93), median delay 6 days, about 4.5 signal episodes a year, about 1.0 of them cluster episodes (overnight benchmark, 2026-10-17).",
+  methodPNote:
+    "p is a model-based surprise score for one look, not the probability that this is a real outbreak. Regional strong means it survives the Bonferroni correction under the fitted model.",
   methodHospital: "inside the hospital",
   methodRegional: "regional",
   methodCaption: "Experiment {n} · {name} · branch overnight/experiments · experiment record",
@@ -77,8 +82,8 @@ export const methodEn = {
   methodResult0013:
     "Brier +0.0001 (−0.0000 to +0.0002); counting two-organism cultures as one episode lowers the top severe pick by 0.5 points.",
   methodResult0014: "The first year picks the hospital pool; no finer pool beats it.",
-  methodResult0015: "Four-patient rare clusters: 21 % found at 1 episode a year (live set: 92 % at 3).",
-  methodResult0016: "Four-patient rare clusters: 67 % at 3.5 episodes a year, 66 % on held-out seeds (live set: 92 %).",
+  methodResult0015: "Four-patient rare clusters: 21 % found at 1 episode a year (live set at 3 episodes a year: 92 %, an alternative operating point, not the shipped setting).",
+  methodResult0016: "Four-patient rare clusters: 67 % at 3.5 episodes a year, 66 % on held-out seeds (live set at 3 episodes a year: 92 %, an alternative operating point, not the shipped setting).",
   methodResult0018: "Four-patient rare clusters: 14 % at 1.5 episodes a year.",
   methodResult0019: "Pooled AUC 0.63 over 24 real episodes, not above rewired graphs (p 0.22).",
   methodResult0020: "Log score +0.40 (0.31 to 0.48) and MAE +0.14 against last month's count.",
@@ -101,12 +106,17 @@ export const methodFi: Record<keyof typeof methodEn, string> = {
     "Käytössä oleva sääntö (D-023, D-033): yksikön viimeiset 365 päivää, jos löydöksiä on 30, muuten osastotyyppi, muuten sairaala. Kokeet 0012 ja 0014 kokeilevat muita arvioita; lista ei käytä niitä.",
   methodInfo2: "Koe 0013 kertoo kunkin bakteerin osuuden sen herkkyydellä. Käytössä oleva lista yhdistää kaikki bakteerit.",
   methodInfo3:
-    "Käytössä oleva testi (D-020): 28 päivän määrä verrattuna edeltävien 365 päivän Poisson-keskiarvoon, hälytys tunnistimen tasolla. Se lukee raakoja viikkomääriä (D-042). Kokeet 0015, 0016 ja 0018 ovat ehdokkaita.",
+    "Käytössä oleva testi (D-020): 28 päivän määrä verrattuna edeltävien 365 päivän Poisson-keskiarvoon, hälytys tunnistimen tasolla. Se lukee raakoja viikkomääriä (D-042). Kokeet 0015, 0016 ja 0018 ovat ehdokkaita. P-arvo on mallipohjainen yllätyspisteluku yhdelle tarkastelulle, ei todennäköisyys sille, että kyseessä on todellinen epidemia.",
   methodInfo4:
-    "Koe 0019 järjestää yksiköt altistuksen mukaan potilasvirtaverkossa suhteessa satunnaistettuihin verkkoihin. Koe 0020 ennustaa maakuntien määrät kuukauden eteenpäin ja vertaa edellisen kuun määrään.",
+    "Koe 0019 järjestää yksiköt altistuksen mukaan potilasvirtaverkossa suhteessa satunnaistettuihin verkkoihin. Kokeen 0020 maakuntaennuste on käytössä (D-045) ja näkyy aluenäkymässä: tasoitettu ensi kuun taso ennustevälillä, ei epidemiaennuste. Alueellinen vahva tarkoittaa, että signaali kestää Bonferroni-korjauksen sovitetussa mallissa.",
   methodLiveRule: "käytössä oleva sääntö (D-023, D-033)",
   methodLiveTest: "käytössä oleva testi (D-020)",
   methodCandidate: "koe, ehdokas — ei käytössä oleva arvio",
+  methodShipped: "koe, käytössä (D-045) — näkyy aluenäkymässä",
+  methodShippedFigures:
+    "Käytössä oleva asetus: neljän potilaan, harvinaisen ja identtisen resistenssiprofiilin pistotesteissä tähän synteettiseen aineistoon löytyi 89 % (95 %:n väli 84–93), mediaaniviive 6 päivää, noin 4,5 signaalijaksoa vuodessa, joista noin 1,0 on rypäsjaksoja (yöbenchmark, 17.10.2026).",
+  methodPNote:
+    "p on mallipohjainen yllätyspisteluku yhdelle tarkastelulle, ei todennäköisyys sille, että kyseessä on todellinen epidemia. Alueellinen vahva tarkoittaa, että se kestää Bonferroni-korjauksen sovitetussa mallissa.",
   methodHospital: "sairaalan sisällä",
   methodRegional: "alueellinen",
   methodCaption: "Koe {n} · {name} · haara overnight/experiments · koetiedot",
@@ -163,9 +173,9 @@ export const methodFi: Record<keyof typeof methodEn, string> = {
   methodResult0013:
     "Brier +0,0001 (−0,0000…+0,0002); kahden bakteerin viljelyn laskeminen yhdeksi jaksoksi laskee vakavan infektion kärkivalintaa 0,5 prosenttiyksikköä.",
   methodResult0014: "Ensimmäinen vuosi valitsee sairaalan joukon; mikään tarkempi joukko ei voita sitä.",
-  methodResult0015: "Neljän potilaan harvinaiset rypäät: 21 % löydetty, 1 jakso vuodessa (käytössä oleva joukko: 92 %, 3 jaksoa).",
+  methodResult0015: "Neljän potilaan harvinaiset rypäät: 21 % löydetty, 1 jakso vuodessa (käytössä oleva joukko 3 jaksolla vuodessa: 92 %, vaihtoehtoinen toimintapiste, ei käytössä oleva asetus).",
   methodResult0016:
-    "Neljän potilaan harvinaiset rypäät: 67 % 3,5 jaksolla vuodessa, 66 % erillisillä siemenillä (käytössä oleva joukko: 92 %).",
+    "Neljän potilaan harvinaiset rypäät: 67 % 3,5 jaksolla vuodessa, 66 % erillisillä siemenillä (käytössä oleva joukko 3 jaksolla vuodessa: 92 %, vaihtoehtoinen toimintapiste, ei käytössä oleva asetus).",
   methodResult0018: "Neljän potilaan harvinaiset rypäät: 14 % 1,5 jaksolla vuodessa.",
   methodResult0019: "Yhdistetty AUC 0,63 24 todellisessa jaksossa, ei satunnaistettuja verkkoja parempi (p 0,22).",
   methodResult0020: "Log-pistemäärä +0,40 (0,31…0,48) ja MAE +0,14 edellisen kuun määrään verrattuna.",

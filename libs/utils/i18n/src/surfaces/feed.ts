@@ -108,8 +108,10 @@ export const feedEn = {
   feedMathTitle: "Alert math",
   feedNoSpan: "no connected units",
   feedWho: "Unit, kind, phenotype",
+  feedEmptyRun:
+    "No cultures for {days} days; this unit usually sends about {rate} a day, so a gap this long has probability {p} under the usual rate.",
   feedMathHelp:
-    "Observed is the count in the 28-day window; usual is the unit's baseline. The big number is the surprise, −log10 of p, before any correction.",
+    "Observed is the count in the 28-day window; usual is the unit's baseline. The big number is the surprise, −log10 of p, before any correction. p is a model-based surprise score for this one look, not the probability that this is a real outbreak.",
 } as const;
 
 export const feedFi: Record<keyof typeof feedEn, string> = {
@@ -220,6 +222,8 @@ export const feedFi: Record<keyof typeof feedEn, string> = {
   feedMathTitle: "Hälytyksen laskenta",
   feedNoSpan: "ei yhteyksiä muihin yksiköihin",
   feedWho: "Yksikkö, laji, fenotyyppi",
+  feedEmptyRun:
+    "Ei viljelyjä {days} päivään; yksikkö lähettää tavallisesti noin {rate} päivässä, joten näin pitkän tauon todennäköisyys on {p} tavallisella tahdilla.",
   feedMathHelp:
-    "Havaittu on määrä 28 päivän ikkunassa; tavallisesti on yksikön perustaso. Iso luku on yllätys, p:n −log10, ennen korjauksia.",
+    "Havaittu on määrä 28 päivän ikkunassa; tavallisesti on yksikön perustaso. Iso luku on yllätys, p:n −log10, ennen korjauksia. p on mallipohjainen yllätyspisteluku yhdelle tarkastelulle, ei todennäköisyys sille, että kyseessä on todellinen epidemia.",
 };
