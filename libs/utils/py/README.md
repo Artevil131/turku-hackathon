@@ -81,7 +81,51 @@ Continuous projects cannot be verified. API failures raise
 uses only the Python standard library; pandas is imported when a table is
 actually requested, not by `import aei`.
 
+## Methods
+
+`from aei import methods`: each public method below is tested to give the
+app's numbers on the same input (D-061; TypeScript is the reference,
+D-024). They accept plain records in the TypeScript gear's shape, not exported
+CSV rows or DataFrames: isolate records have camelCase keys (`isolateId`,
+`patientId`, `sampleDate`, `admissionDate`, `ward`, `specimen`, `organism`,
+`sex`, `ageYears`, `homeArea`, `cultureId`), lower-case `phenotypes`, and
+`results={"AMP": "S", ...}`. Culture records use the domain's `Culture` fields.
+Dates are ISO `YYYY-MM-DD`; `admissionDate` may be `None`. Outputs are
+JSON-compatible records with the app's field names, ordering and nulls.
+Docstrings specify every parameter, default and result shape.
+
+- `methods.profile_excess`: same-profile patient excess within specimen (D-020, D-044).
+- `methods.phenotype_excess`: ESBL/MRSA/VRE/CPE patient excess (D-020, D-044).
+- `methods.sampling_drop`: daily seven-day culture-count drop (D-020, D-044).
+- `methods.empty_run`: consecutive days without cultures (D-031, D-044).
+- `methods.rising_trend`: raw resistance trend over the 22 surveillance pairs (D-020, D-022, D-044).
+- `methods.live_signals`: the five detectors together, per hospital, excluding detected clusters from trends (D-022, D-051).
+- `methods.cpe_alerts`: one sentinel alert per CPE isolate (D-014).
+- `methods.new_in_unit_alerts`: MRSA/VRE after 180 quiet days in an inpatient unit (D-021, D-034).
+- `methods.coverage`: annual first-isolate coverage, 95 % Wilson intervals, fallback pool and pairs (D-023, D-033, D-044, D-049, D-051, D-053).
+- `methods.suggest`: mild/severe standings and ordering, without an AWaRe tier (D-026, D-027, D-033, D-049, D-056).
+- `methods.suggest_combinations`: useful severe-infection pairs, at most five by default (D-028, D-033, D-056).
+
+```python
+result = methods.coverage(records, as_of="2025-06-30", ward="URO", specimen="urine")
+print(result["level"], result["isolates"])
+print(methods.suggest(result, "mild"))
+signals = methods.live_signals(records, cultures)  # signals, not merged incident alerts
+```
+
+The individual statistical detectors are low-level gears over the supplied
+pool; `live_signals` applies the app's hospital splitting and causal cluster
+exclusion. CPE and new-in-unit are separate sentinel rules (ENGINE.md A3).
+Experimental estimators and detectors are not exported by `aei.methods`.
+`tests/test_methods_parity.py` runs every public method against the actual
+TypeScript gear using JSON fixtures, including a `mulberry32`-seeded series,
+without the organiser's data. Counts/flags match exactly, floats to 1e-12
+relative; these parity tests skip when Node is unavailable.
+
 ## Analysis helpers
+
+The modules below are internal analysis interfaces, not the stable public
+method surface above.
 
 The root uv workspace keeps the experiment dependencies (D-024):
 

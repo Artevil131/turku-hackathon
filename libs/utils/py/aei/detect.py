@@ -23,7 +23,7 @@ from scipy import special, stats
 
 from aei.dataset import Culture, IsolateRecord
 from aei.dates import add_days, days_between
-from aei.domain import ANTIBIOTICS, WARD_TYPE
+from aei.domain import ANTIBIOTICS, WARD_TYPE, by_site
 from aei.eucast import is_intrinsic
 
 PROFILE_ANTIBIOTICS = ANTIBIOTICS
@@ -44,11 +44,12 @@ class Signal:
     profile: str | None = None
     expected: float | None = None
     p: float | None = None
+    site: str | None = None
 
     def as_dict(self) -> dict[str, object]:
         """The fields the TypeScript Signal has set (it leaves unset ones out; ward is always there)."""
         d: dict[str, object] = {"detector": self.detector, "key": self.key, "date": self.date, "ward": self.ward}
-        for k in ("organism", "antibiotic", "phenotype", "profile"):
+        for k in ("organism", "antibiotic", "phenotype", "profile", "site"):
             v = getattr(self, k)
             if v is not None:
                 d[k] = v
@@ -600,6 +601,22 @@ def in_detected_cluster(clusters: Sequence[Signal]) -> DetectedClusters:
 def live_signals(records: Sequence[IsolateRecord], cultures: Sequence[Culture]) -> list[Signal]:
     """Every signal of the live detector set over a history; cluster isolates are left out of the trend test
     from the day their cluster was detected."""
+    records_by_site = by_site(records)
+    cultures_by_site = by_site(cultures)
+    sites = list(dict.fromkeys([*records_by_site, *cultures_by_site]))
+    if len(sites) <= 1:
+        return _site_signals(records, cultures)
+    out = []
+    for site in sites:
+        for signal in _site_signals(records_by_site.get(site, []), cultures_by_site.get(site, [])):
+            if signal.ward is None and site != "tyks":
+                signal.site = site
+                signal.key = f"{site}/{signal.key}"
+            out.append(signal)
+    return out
+
+
+def _site_signals(records: Sequence[IsolateRecord], cultures: Sequence[Culture]) -> list[Signal]:
     clusters = cluster_signals(records)
     return [
         *clusters,

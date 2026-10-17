@@ -1,6 +1,6 @@
 """The doctor's coverage list: a Python mirror of `@aei/coverage` (`coverage`, `suggest`, `suggestCombinations`).
 
-D-023, D-026 to D-028, D-033 and D-049 (onset) define the list; libs/utils/coverage/src/index.ts is the source this
+D-023, D-026 to D-028, D-033, D-049 (onset), D-051, D-053 and D-056 define the list; libs/utils/coverage/src/index.ts is the source this
 file copies, with the same orderings and the same ties (JavaScript's sort is stable, so is Python's). The overnight scoring
 harness (benchmarks/overnight-2026-10-17/harness-spec.md) uses it to rank another estimator's shares by the shipped
 rules (C3(b), C4):
@@ -29,7 +29,7 @@ from aei.counting import first_isolates
 from aei.coverage import wilson
 from aei.dataset import IsolateRecord
 from aei.dates import add_days, days_between
-from aei.domain import ANTIBIOTICS, SPECIMENS, UNITS, WARD_TYPE
+from aei.domain import ANTIBIOTICS, SPECIMENS, UNITS, WARD_TYPE, in_age_group, site_of_ward
 from aei.eucast import Effective, effective_result, suits_specimen
 
 # --- constants of the shipped list -------------------------------------------------------------------------------
@@ -159,6 +159,7 @@ class CoverageResult:
     combinations: list[CombinationCoverage] = field(default_factory=list)
     #: False when the onset filter was dropped to keep the unit's own data (or an onset was not asked for), D-049.
     onset_applied: bool = False
+    age_group_applied: bool = False
 
 
 # --- coverage -----------------------------------------------------------------------------------------------------
@@ -207,33 +208,49 @@ def coverage(
     ward: str,
     specimen: str,
     sex: str | None = None,
+    age_group: str | None = None,
     onset: str = "any",
     window_days: int = 365,
     min_tested: int = 30,
     codes: Sequence[str] | None = None,
+    wards: Sequence[dict] | None = None,
 ) -> CoverageResult:
-    """`coverage(records, { asOf, ward, specimen, sex?, onset?, windowDays?, minTested? })` of `@aei/coverage`. `codes` is an
+    """`coverage(records, query, wards?)` of `@aei/coverage`, including ageGroup and site-local fallback. `codes` is an
     extension for scoring: the antibiotics to compute (default: the ones the list offers for the specimen, as the
     TypeScript does); it changes no figure of the others, but adds pairs."""
     from_ = add_days(as_of, 1 - window_days)
-    all_ = first_isolates([r for r in records if from_ <= r.sample_date <= as_of and r.specimen == specimen], (from_, as_of))
-    ward_type = WARD_TYPE[ward]
+    site = site_of_ward(ward)
+    all_ = first_isolates(
+        [r for r in records if from_ <= r.sample_date <= as_of and r.specimen == specimen and site_of_ward(r.ward) == site],
+        (from_, as_of),
+    )
+    ward_types = {w["code"]: w["type"] for w in wards} if wards is not None else WARD_TYPE
+    ward_type = ward_types.get(ward)
     in_level = {
         "unit": lambda r: r.ward == ward,
-        "ward type": lambda r: WARD_TYPE[r.ward] == ward_type,
+        "ward type": lambda r: ward_types.get(r.ward) == ward_type,
         "hospital": lambda r: True,
     }
-    # The onset filter is dropped before the sex filter, both before the unit is (D-049, D-033): onset and sex, then
-    # sex alone, then neither, while the unit keeps `min_tested` isolates; when it never does, both stay on.
-    by_onset = all_ if onset == "any" else [r for r in all_ if onset_of(r) == onset]
-    unit_with_both = sum(1 for r in by_onset if in_level["unit"](r) and (not sex or r.sex == sex))
-    onset_applied = onset != "any" and (unit_with_both >= min_tested or sum(1 for r in all_ if in_level["unit"](r)) < min_tested)
-    scoped = by_onset if onset_applied else all_
-    # The sex filter is dropped before the unit is (D-033).
-    by_sex = [r for r in scoped if r.sex == sex] if sex else scoped
-    unit_with_sex = sum(1 for r in by_sex if in_level["unit"](r))
-    sex_applied = bool(sex) and (unit_with_sex >= min_tested or sum(1 for r in scoped if in_level["unit"](r)) < min_tested)
-    base = by_sex if sex_applied else scoped
+    # D-053: drop age group, then onset, then sex before widening the unit.
+    tests = {}
+    if age_group:
+        tests["ageGroup"] = lambda r: in_age_group(r.age_years, age_group)
+    if onset and onset != "any":
+        tests["onset"] = lambda r: onset_of(r) == onset
+    if sex:
+        tests["sex"] = lambda r: r.sex == sex
+    asked = list(tests)
+    kept = asked
+    if sum(1 for r in all_ if in_level["unit"](r)) >= min_tested:
+        for dropped in range(len(asked) + 1):
+            kept = asked[dropped:]
+            if sum(1 for r in all_ if in_level["unit"](r) and all(tests[f](r) for f in kept)) >= min_tested:
+                break
+    def applied(r):
+        return all(tests[f](r) for f in kept)
+    sex_applied = "sex" in kept
+    onset_applied = "onset" in kept
+    base = [r for r in all_ if applied(r)]
     level = "hospital"
     for lv in ("unit", "ward type"):
         if sum(1 for r in base if in_level[lv](r)) >= min_tested:
@@ -248,8 +265,7 @@ def coverage(
             if recent_from <= r.sample_date <= as_of
             and r.specimen == specimen
             and r.ward == ward
-            and (not sex_applied or r.sex == sex)
-            and (not onset_applied or onset_of(r) == onset)
+            and applied(r)
         ],
         (recent_from, as_of),
     )
@@ -307,7 +323,7 @@ def coverage(
     organisms.sort(key=lambda t: -t[1])
     antibiotics.sort(key=lambda c: -(c.share if c.share is not None else -1))
     return CoverageResult(
-        query={"asOf": as_of, "ward": ward, "specimen": specimen, "sex": sex, "onset": onset, "windowDays": window_days, "minTested": min_tested},
+        query={"asOf": as_of, "ward": ward, "specimen": specimen, "sex": sex, "ageGroup": age_group, "onset": onset, "windowDays": window_days, "minTested": min_tested},
         level=level,
         isolates=n,
         sex_applied=sex_applied,
@@ -316,6 +332,7 @@ def coverage(
         antibiotics=antibiotics,
         combinations=combinations,
         onset_applied=onset_applied,
+        age_group_applied="ageGroup" in kept,
     )
 
 
@@ -366,8 +383,6 @@ def _suggestion_order(a: Suggestion, b: Suggestion) -> float:
     c = _RANK[a.standing] - _RANK[b.standing]
     if c:
         return c
-    if a.standing == "clears" and a.aware != b.aware:
-        return -1 if a.aware == "Access" else 1
     return _neg1(b.share) - _neg1(a.share)
 
 
@@ -375,8 +390,9 @@ def suggest_rows(rows: Sequence[Row], severity: str, threshold: float | None = N
     """`suggest` for any estimator's shares. The rows are first put in the order `coverage` gives its antibiotics (all-
     organism share, largest first, ties in input order), because that order breaks the ties of the suggestion sort.
 
-    Antibiotics whose whole 95 % interval clears the threshold first, Access before Watch, then by coverage; then those
-    whose estimate clears it but whose interval does not; then the rest. "Not assessable" when there is no estimate or
+    Antibiotics whose whole 95 % interval clears the threshold first, then by coverage; then those
+    whose estimate clears it but whose interval does not; then the rest. No AWaRe tier (D-056).
+    "Not assessable" when there is no estimate or
     over a fifth of the level's pool is untested. Mild infections are judged within each antibiotic's intended spectrum
     and leave out drugs given only by injection; severe ones over all organisms (D-027, D-033). `threshold` defaults to
     the severity's; `suggest` passes `bar_for` (90 % for a hospital-acquired query, D-049)."""
@@ -436,7 +452,7 @@ def suggest_combinations(result: CoverageResult, severity: str, limit: int = 5) 
     """Pairs worth considering when no single antibiotic clears the threshold (D-028, D-033), over all organisms: the
     partner covers at least two points more than the better antibiotic alone, not two beta-lactams, neither a urine-only
     agent. Not assessable when over a fifth of the pool lacks a result for either. Clears before borderline, then by
-    coverage, then Access count. Severe infections only."""
+    coverage, without an AWaRe tie-break (D-056). Severe infections only."""
     if severity != "severe" or any(s.standing == "clears" for s in suggest(result, severity)):
         return []
     threshold = bar_for(result.query.get("onset"), severity)
@@ -451,7 +467,7 @@ def suggest_combinations(result: CoverageResult, severity: str, limit: int = 5) 
             out.append(CombinationSuggestion(c.antibiotics, sum(1 for x in c.antibiotics if AWARE[x] == "Access"), standing, gain, c))
 
     def order(x: CombinationSuggestion, y: CombinationSuggestion) -> float:
-        return _RANK[x.standing] - _RANK[y.standing] or _neg1(y.coverage.share) - _neg1(x.coverage.share) or y.access - x.access
+        return _RANK[x.standing] - _RANK[y.standing] or _neg1(y.coverage.share) - _neg1(x.coverage.share)
 
     out.sort(key=cmp_to_key(order))
     return out[:limit]
