@@ -411,3 +411,81 @@ rank product's common ESBL (0.772) is below it. The headline rows still differ i
 held-out interval of an ensemble overlaps the live set's. The screening edge of the stack at 3.0 a year (common ESBL 0.850 against 0.750)
 shrinks to 0.800 against 0.695 with overlapping intervals ([0.739, 0.850] and [0.628, 0.755]); the low-noise reads at 1.5 a year
 were not re-scored. Nothing is established beyond the screening conclusion: the rank product does not beat the live set at 5 a year.
+
+## Notes from review (overnight)
+
+Reviewer: Claude Code (Fable 5.1), review agent of the overnight run, operated by Artem. Read against agent-rules.md, METRICS.md
+(D5, Decision rules), harness-spec.md (Choices 3 and 5), the code, `out/*.json`, `out/heldout.md` and the reference row. Small
+recomputations in the scratchpad; no file but this one edited, nothing above this heading changed.
+
+**Causality and year-1-only maps: passes (no finding).** `Background` takes the components' real-data signals and keeps only
+cell-days dated 2024-01-01 to 2024-09-30 (`score_map` with `lo`, `hi`), so the quantile knots (`ranks.json`: N = 32,058 cell-days,
+1,566 fired in A, 3,498 in B; measured) are frozen at the end of the tuning year; the stack's ECDF reads the same background,
+its weights come from year-1 injections (positives from a stream whose detector sees no row after 2024-09-30,
+`training_stream`) and year-1 real cell-days (negatives, 2024-04-01 to 2024-09-30). `RankProduct.score` is p = RP² (1 − 2 ln RP)
+as stated, monotone; `Stack.score` is a monotone upper-tail share. `check_causal` on three cut dates passed (measured, section
+Checks). The components themselves were run once over all data and cut by date, which is causal only because each component is
+(both passed `check_causal` in their own records); no new check was run here. Severity: none.
+
+**Stack trained on the yardstick's own generator: stated, but the headline table does not carry the flag.** The stack's positives
+are 200 rare and 200 common ESBL clusters of 4 (`training_stream`, `base.sources` and `common_group("common ESBL E. coli")`),
+the two D5 families at D5's k, from the same `cluster_hits` path as the scoring trials, under the same seed 2026 (a different
+draw order, so not the same events; measured, `stack.json`). No other family is in the training set. So the stack is the one row
+built to maximise exactly the two numbers D5 reports; its screening edge at 3.0 a year (0.990 / 0.850 against the live set's
+0.920 / 0.750; measured) is the most flattering reading, and it is the row that fell most on the held-out seeds (rare 0.990 to
+0.965, common ESBL 0.850 to 0.800; computed). The record says this under "Strongest alternative explanation" and the stack is
+not the primary row, so the claim is not misled, but a reader of the D5 table alone sees `tuned_on_test` false for the stack.
+Suggested reading: treat the stack's D5 as a within-generator result until a stack trained on a disjoint stream (seed outside
+2026 to 2030, pending Artem) and on more than two families exists. Severity: medium for any pitch that names the stack; low
+for the record as written.
+
+**Matched-noise comparison and the 5-a-year interpolation: correct, with one asymmetry to say aloud.** `at_noise` interpolates
+linearly in episodes a year between the two bracketing levels and recomputes to the record's values (rank product 0.942 /
+0.834, stack 0.991 / 0.865, intersection 0.971 / 0.857, live set 0.960 / 0.836; held-out rank product 0.966 / 0.772, live set
+0.960 / 0.817; computed). Two small inconsistencies: the Result's first table prints the live set's common ESBL at 5.0 a year
+as 0.837, which is `at_count(10)` (10 episodes = 5.02 a year, 0.8367), while `out/results.md` and the held-out table print
+`at_noise(5.0)` = 0.836 (9.95 episodes); and the second table's header "at 5.0 a year (10)" treats the two as one. The
+difference is 0.001 and changes nothing. The asymmetry: the live set's 5-a-year value sits 66 % of the way from its 3.01 point
+to its 6.03 point (common ESBL 0.750 to 0.880, a 0.13 step), while the rank product's sits 5 % of the way from 4.52 to 14.07, so
+at 5 a year a nearly measured ensemble number is compared with a mostly interpolated live-set number, and a convex curve
+would put the live set lower. Read the other way, at the rank product's own 4.52 a year the live set interpolates to
+0.950 / 0.815 (screening) and 0.955 / 0.788 (held-out) against the rank product's measured 0.940 / 0.830 and 0.965 / 0.765 and
+the intersection's 0.970 / 0.805 (computed): every gap is inside the Wilson intervals whichever noise point is matched, so the
+conclusion does not hang on the interpolation. Noise is matched on the total of cluster and sentinel episodes (Choices 3); note
+the live set's total always holds 1.5 a year of new-in-unit sentinel episodes that no multiplier removes, while the rank
+product at 1e-3 passes no sentinel signal at all (`metrics-rp-headline.json` D4 sentinel 0.0; measured), so the ensemble buys
+its noise budget entirely with cluster signals and gives up the sentinel route. Severity: low.
+
+**Held-out numbers support the conclusion at 5 a year; at 3 a year they do not support "none is above".** On seeds 2027 to 2030
+at 5 a year the live set reads 0.960 / 0.817 and the ensembles 0.966 / 0.772, 0.971 / 0.816, 0.969 / 0.822 (computed): nothing
+above by more than 0.01 on rare, nothing above on common ESBL, the rank product below, all inside intervals; the record's
+sentence is right. But the stack's headline level and the live set's happen to sit at the same noise, 3.01 a year (6 episodes
+each; measured), a genuinely matched comparison with no interpolation, and there the held-out stack is above on both families:
+rare 193/200 against 188/200, common ESBL 160/200 against 139/200 (0.800 [0.739, 0.850] against 0.695 [0.628, 0.755]; measured).
+An unpaired two-proportion z on common ESBL is 2.4 (computed; the trials share injections, so this is indicative, not a test),
+and it is a post-hoc selected row trained on the D5 generator (previous note), so it is not a claim; the record reports it with
+overlapping intervals and says so. The 1.5-a-year reads (rank product 0.880 / 0.735 against 0.815 / 0.440; measured, screening)
+were not re-scored on the held-out seeds, so the "low-noise gain" paragraph in Interpretation rests on seed 2026 alone.
+Severity: medium for the one-line reading, see the last note.
+
+**Tuned-on-test flags: honest.** `metrics.json`, `metrics-stack.json`, `metrics-intersection.json`, `metrics-union.json` and
+`metrics-rp-exact.json` carry `tuned_on_test` false with D2, D4, D6, D7 and I1 read at a level chosen on year-1 noise (rank
+product 3e-5, stack 3e-4; measured) and the D5 headline chosen by the harness's sweep as for every row. The two headline-level
+reads (`metrics-rp-headline.json`, `metrics-stack-headline.json`) and `heldout.json` carry `tuned_on_test` true because their
+level comes from the scoring-period noise curve; that is stricter than the harness applies to the reference's own D5 headline
+(same rule, no flag), so the flag is conservative rather than missing. The year-1 operating-level rule failed in substance (the
+background is in-sample, 0 of 32,058 cell-days below 3e-5), which the record says plainly; a reader should take the
+operating-level D2 and I1 rows as a strict-end read, not as the ensembles' comparable performance. Severity: low.
+
+**On the pitch line "none of the alternatives beat the shipped set".** Two qualifiers are needed. (a) "Shipped" against
+"re-tuned": the reference row is the year-1 re-tuned live set, one grid step looser than shipped on both cluster alphas; for D5
+this does not matter, since the shipped row's D5 curve is the same curve read at a different "level 1" (`out/results.md`
+table 1: identical rows for shipped and re-tuned at 3.01 a year, 0.920 / 0.750, and at 5 a year; measured), so a D5 statement
+about the re-tuned set holds for the shipped set. (b) The noise point: the sentence is fair at 5 episodes a year, the yardstick
+METRICS.md "Decision rules" fixes, on the screening seed and on the four held-out seeds, for every combination rule tried
+(rank product, stack, union, intersection, exact-day join). It is not fair as a blanket "at matched noise": at 3 a year the
+stack is above the live set on held-out seeds on both families with overlapping intervals (previous note), and at 1.5 a year
+the rank product and the intersection are above on seed 2026 only. The defensible one line is: "at the 5-a-year yardstick
+no combination of the live set and the CUSUM beats the live set, on the screening seed or the held-out seeds; the
+combinations' gains appear only at lower noise, from one seed or from a stack trained on the yardstick's own generator, and
+are not claims". Nothing here changes the record's verdict; nothing was done beyond writing these notes.
