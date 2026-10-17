@@ -1,8 +1,12 @@
-import type { ClockCommand, ClockState } from "@aei/contract";
-import { formatDate, type Locale, t } from "@aei/i18n";
-import { type KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
+import type { AeiClient, ClockCommand, ClockState } from "@aei/contract";
+import { type Locale, t } from "@aei/i18n";
+import { type KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useAlertsSinceStart } from "../alertsSince.ts";
 import type { Connection } from "../live.ts";
+import { compactDate, dayNumber, isoFromDay } from "./hero/geometry.ts";
+import { useWeekly } from "./hero/useWeekly.ts";
+import { WeeklyBand } from "./hero/WeeklyBand.tsx";
 import { Chevron, Pause, Play, StepDay, StepWeek } from "./Icons.tsx";
 import "./timeline.css";
 
@@ -13,11 +17,10 @@ interface TimelineProps {
   lastArrivals: { to: string; count: number } | null;
   command: (c: ClockCommand) => void;
   reducedMotion: boolean;
+  /** The API client, for the alert history; the band shows no marks without it. */
+  client?: AeiClient;
 }
 
-const DAY_MS = 86_400_000;
-const dayNumber = (iso: string) => Math.round(Date.parse(`${iso}T00:00:00Z`) / DAY_MS);
-const isoFromDay = (n: number) => new Date(n * DAY_MS).toISOString().slice(0, 10);
 const clampDate = (iso: string, start: string, end: string) => (iso < start ? start : iso > end ? end : iso);
 
 type EventKey = "tlEventUro" | "tlEventGap" | "tlEventIcu";
@@ -68,38 +71,43 @@ function roveFocus(e: ReactKeyboardEvent<HTMLElement>): HTMLElement | null {
   return next;
 }
 
-export function Timeline({ locale, clock, connection, lastArrivals, command, reducedMotion }: TimelineProps) {
+const Info = () => (
+  <svg
+    viewBox="0 0 24 24"
+    width="16"
+    height="16"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    aria-hidden="true"
+  >
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 11v5.5M12 7.5h.01" />
+  </svg>
+);
+
+export function Timeline({ locale, clock, connection, lastArrivals, command, reducedMotion, client }: TimelineProps) {
   const phone = useMediaQuery("(max-width: 760px)");
   const rootRef = useRef<HTMLDivElement>(null);
-  const rangeRef = useRef<HTMLInputElement>(null);
-  const [preview, setPreview] = useState<string | null>(null);
   const [seekingTo, setSeekingTo] = useState<string | null>(null);
   const [sheet, setSheet] = useState(false);
   const [menu, setMenu] = useState(false);
   const [stepStop, setStepStop] = useState(1);
-  const previewRef = useRef<string | null>(null);
-  const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const ready = connection === "open" && clock !== null;
   const start = clock?.start ?? "";
   const end = clock?.end ?? "";
-  const days = clock ? Math.max(1, dayNumber(end) - dayNumber(start)) : 1;
   const atEnd = clock ? clock.asOf >= clock.end : false;
-  const dayIndex = (iso: string) => (clock ? dayNumber(clampDate(iso, start, end)) - dayNumber(start) : 0);
-  const shown = preview ?? seekingTo ?? clock?.asOf ?? null;
+  const shown = seekingTo ?? clock?.asOf ?? null;
+  const alerts = useAlertsSinceStart(client, clock?.start, clock?.asOf);
+  const weekly = useWeekly(client, clock?.start, clock?.asOf);
 
   // A new clock state (or reset) from the server ends "seeking".
   // biome-ignore lint/correctness/useExhaustiveDependencies: the clock object identity is the trigger
   useEffect(() => {
     setSeekingTo(null);
   }, [clock]);
-
-  useEffect(
-    () => () => {
-      if (debounce.current) clearTimeout(debounce.current);
-    },
-    [],
-  );
 
   const seek = useCallback(
     (date: string) => {
@@ -125,23 +133,6 @@ export function Timeline({ locale, clock, connection, lastArrivals, command, red
     },
     [clock, command, seek, seekingTo],
   );
-
-  // Commit a drag once, on release.
-  useEffect(() => {
-    const el = rangeRef.current;
-    if (!el) return;
-    const onChange = () => {
-      if (debounce.current) clearTimeout(debounce.current);
-      debounce.current = setTimeout(() => {
-        const date = previewRef.current;
-        previewRef.current = null;
-        setPreview(null);
-        if (date) seek(date);
-      }, 250);
-    };
-    el.addEventListener("change", onChange);
-    return () => el.removeEventListener("change", onChange);
-  });
 
   const jumpToEvent = (date: string) => {
     command({ action: "pause" });
@@ -178,40 +169,9 @@ export function Timeline({ locale, clock, connection, lastArrivals, command, red
     return () => document.removeEventListener("keydown", onKey);
   }, [ready, clock, command, stepBy, seek]);
 
-  const date = (iso: string) => formatDate(locale, iso, "long");
   const running = ready && Boolean(clock?.running) && !atEnd;
-  const stateWord =
-    connection === "offline"
-      ? t(locale, "offlineShort")
-      : !clock || connection === "connecting"
-        ? t(locale, "connecting")
-        : atEnd
-          ? t(locale, "tlAtEnd")
-          : clock.running
-            ? t(locale, "tlPlaying")
-            : t(locale, "livePaused");
-  const stateKind = connection === "offline" ? "offline" : !ready ? "connecting" : atEnd ? "end" : running ? "playing" : "paused";
-
-  const readout = !clock
-    ? t(locale, "connecting")
-    : seekingTo && !preview
-      ? t(locale, "tlSeeking", { date: date(seekingTo) })
-      : date(shown ?? clock.asOf);
-
-  const StateGlyph = (
-    <span className="tl-state" data-kind={stateKind}>
-      {stateKind === "playing" ? (
-        <span className="tl-pulse" data-still={reducedMotion || undefined} aria-hidden="true" />
-      ) : stateKind === "paused" ? (
-        <Pause className="tl-glyph" />
-      ) : stateKind === "end" ? (
-        <StepDay className="tl-glyph" />
-      ) : (
-        <span className="tl-dot" aria-hidden="true" />
-      )}
-      <span className="tl-state-word">{stateWord}</span>
-    </span>
-  );
+  const readout = clock && shown ? compactDate(shown) : "–";
+  const offline = connection === "offline";
 
   const playButton = (
     <button
@@ -226,31 +186,34 @@ export function Timeline({ locale, clock, connection, lastArrivals, command, red
     </button>
   );
 
-  const steps = (
+  const steps = (weeks: boolean) => (
     <div
       className="tl-steps"
       role="toolbar"
       aria-label={t(locale, "tlSteps")}
+      data-weeks={weeks || undefined}
       onKeyDown={(e) => {
         const next = roveFocus(e);
         if (next) setStepStop(Number(next.dataset.stop));
       }}
     >
+      {weeks ? (
+        <button
+          type="button"
+          className="tl-btn tl-back"
+          data-stop={0}
+          tabIndex={stepStop === 0 ? 0 : -1}
+          disabled={!ready}
+          onClick={() => stepBy(-7)}
+          aria-label={t(locale, "tlStepBackWeek")}
+          title={t(locale, "tlStepBackWeek")}
+        >
+          <StepWeek />
+        </button>
+      ) : null}
       <button
         type="button"
-        className="tl-btn tl-step-back-week"
-        data-stop={0}
-        tabIndex={stepStop === 0 ? 0 : -1}
-        disabled={!ready}
-        onClick={() => stepBy(-7)}
-        aria-label={t(locale, "tlStepBackWeek")}
-        title={t(locale, "tlStepBackWeek")}
-      >
-        <StepWeek />
-      </button>
-      <button
-        type="button"
-        className="tl-btn tl-step-back"
+        className="tl-btn tl-back"
         data-stop={1}
         tabIndex={stepStop === 1 ? 0 : -1}
         disabled={!ready}
@@ -272,103 +235,69 @@ export function Timeline({ locale, clock, connection, lastArrivals, command, red
       >
         <StepDay />
       </button>
-      <button
-        type="button"
-        className="tl-btn"
-        data-stop={3}
-        tabIndex={stepStop === 3 ? 0 : -1}
-        disabled={!ready || atEnd}
-        onClick={() => stepBy(7)}
-        aria-label={t(locale, "tlStepWeek")}
-        title={t(locale, "tlStepWeek")}
-      >
-        <StepWeek />
-      </button>
+      {weeks ? (
+        <button
+          type="button"
+          className="tl-btn"
+          data-stop={3}
+          tabIndex={stepStop === 3 ? 0 : -1}
+          disabled={!ready || atEnd}
+          onClick={() => stepBy(7)}
+          aria-label={t(locale, "tlStepWeek")}
+          title={t(locale, "tlStepWeek")}
+        >
+          <StepWeek />
+        </button>
+      ) : null}
     </div>
   );
 
   const selectedSpeed = clock ? SPEEDS.findIndex((s) => s.tickMs === clock.tickMs && s.daysPerTick === clock.daysPerTick) : -1;
   const speed = (
-    <div
-      className="tl-speed"
-      role="radiogroup"
+    <select
+      className="tl-select"
       aria-label={t(locale, "tlSpeed")}
-      onKeyDown={(e) => {
-        const next = roveFocus(e);
-        if (next) next.click();
+      title={t(locale, "tlSpeed")}
+      disabled={!ready}
+      value={selectedSpeed < 0 ? "" : selectedSpeed}
+      onChange={(e) => {
+        const s = SPEEDS[Number(e.target.value)];
+        if (s) command({ action: "configure", tickMs: s.tickMs, daysPerTick: s.daysPerTick });
       }}
     >
+      {selectedSpeed < 0 ? <option value="">–</option> : null}
       {SPEEDS.map((s, i) => (
-        <button
-          key={s.key}
-          type="button"
-          role="radio"
-          className="tl-seg"
-          disabled={!ready}
-          aria-checked={selectedSpeed === i}
-          tabIndex={selectedSpeed === i || (selectedSpeed < 0 && i === 0) ? 0 : -1}
-          onClick={() => command({ action: "configure", tickMs: s.tickMs, daysPerTick: s.daysPerTick })}
-        >
+        <option key={s.key} value={i}>
           {t(locale, s.key)}
-        </button>
+        </option>
       ))}
-    </div>
+    </select>
   );
 
-  const track = (
-    <div className="tl-track" data-empty={!clock || undefined}>
-      <input
-        ref={rangeRef}
-        type="range"
-        className="tl-range"
-        min={0}
-        max={days}
-        step={1}
-        value={clock && shown ? dayIndex(shown) : 0}
+  const band = (compact: boolean) =>
+    clock ? (
+      <WeeklyBand
+        locale={locale}
+        start={clock.start}
+        asOf={clock.asOf}
+        weekly={weekly}
+        alerts={alerts}
+        compact={compact}
         disabled={!ready}
-        onInput={(e) => {
-          if (!clock) return;
-          const iso = isoFromDay(dayNumber(clock.start) + Number(e.currentTarget.value));
-          previewRef.current = iso;
-          setPreview(iso);
-        }}
-        onChange={() => {}}
-        aria-label={t(locale, "tlScrub")}
-        aria-valuemin={0}
-        aria-valuemax={days}
-        aria-valuenow={clock && shown ? dayIndex(shown) : 0}
-        aria-valuetext={shown ? date(shown) : undefined}
-        title={t(locale, "tlShortcuts")}
-        style={{ ["--f" as string]: clock && shown ? dayIndex(shown) / days : 0 }}
+        label={t(locale, "tlStream")}
+        onActivate={() => setSheet(true)}
       />
-      {preview ? (
-        <output className="tl-tip" style={{ ["--f" as string]: dayIndex(preview) / days }}>
-          {date(preview)}
-        </output>
-      ) : null}
-      {clock ? (
-        <div className="tl-markers">
-          {EVENTS.filter((ev) => ev.date >= start && ev.date <= end).map((ev) => (
-            <button
-              key={ev.key}
-              type="button"
-              className="tl-marker"
-              style={{ ["--f" as string]: dayIndex(ev.date) / days }}
-              disabled={!ready}
-              onClick={() => jumpToEvent(ev.date)}
-              aria-label={`${t(locale, ev.key)}, ${date(ev.date)}`}
-              title={`${t(locale, ev.key)}, ${date(ev.date)}`}
-            >
-              <span className="tl-diamond" aria-hidden="true" />
-              <span className="tl-marker-cap" aria-hidden="true">
-                {t(locale, ev.key)}
-              </span>
-            </button>
-          ))}
-        </div>
-      ) : null}
-    </div>
-  );
+    ) : (
+      <div className="tl-band-empty" />
+    );
+
+  const note = clock ? t(locale, "tlReplayNote", { from: compactDate(clock.start), to: compactDate(clock.end) }) : "";
+  const arrivals = lastArrivals ? t(locale, "tlArrivalsOn", { n: lastArrivals.count, date: compactDate(lastArrivals.to) }) : null;
+  const status = offline ? (
+    <span className="tl-reason" role="status">
+      {t(locale, "offlineShort")}
+    </span>
+  ) : null;
 
   const dateJump = (
     <DateJump
@@ -394,40 +323,28 @@ export function Timeline({ locale, clock, connection, lastArrivals, command, red
           <button type="button" className="tl-event" disabled={!ready} onClick={() => jumpToEvent(ev.date)}>
             <span className="tl-diamond" aria-hidden="true" />
             <span className="tl-event-text">{t(locale, ev.key)}</span>
-            <span className="tl-event-date num">{date(ev.date)}</span>
+            <span className="tl-event-date num">{compactDate(ev.date)}</span>
           </button>
         </li>
       ))}
     </ul>
   );
 
-  const chip = <span className="tl-chip">{t(locale, "tlReplayLabel")}</span>;
-
-  const arrivals = lastArrivals ? (
-    <span className="tl-arrivals">{t(locale, "tlArrivalsOn", { n: lastArrivals.count, date: date(lastArrivals.to) })}</span>
-  ) : null;
-
-  const offlineReason =
-    connection === "offline" ? (
-      <span className="tl-reason" role="status">
-        {t(locale, "tlOfflineReason")}
-      </span>
-    ) : null;
-
   if (phone) {
     return (
-      <div
-        className="timeline timeline-phone glass ply-1"
-        ref={rootRef}
-        aria-busy={seekingTo ? true : undefined}
-        data-still={reducedMotion || undefined}
-      >
+      <div className="timeline timeline-phone" ref={rootRef} aria-busy={seekingTo ? true : undefined}>
         <div className="tl-strip">
-          {StateGlyph}
-          <button type="button" className="tl-date num" onClick={() => setSheet(true)} aria-haspopup="dialog">
+          {playButton}
+          <button
+            type="button"
+            className="tl-date num"
+            onClick={() => setSheet(true)}
+            aria-haspopup="dialog"
+            aria-label={`${t(locale, "tlOpen")}: ${readout}`}
+          >
             {readout}
           </button>
-          {playButton}
+          {band(true)}
           <button
             type="button"
             className="tl-btn"
@@ -441,16 +358,17 @@ export function Timeline({ locale, clock, connection, lastArrivals, command, red
         </div>
         {sheet ? (
           <Sheet locale={locale} onClose={() => setSheet(false)} still={reducedMotion}>
-            {chip}
             <div className="tl-sheet-read">
               <b className="tl-readout num">{readout}</b>
-              {StateGlyph}
+              {status}
             </div>
-            {arrivals}
-            {offlineReason}
-            {track}
-            {steps}
-            {speed}
+            {note ? <p className="tl-note">{note}</p> : null}
+            <div className="tl-sheet-band">{band(false)}</div>
+            <div className="tl-sheet-ctl">
+              {playButton}
+              {steps(true)}
+              {speed}
+            </div>
             {eventList}
             {dateJump}
           </Sheet>
@@ -460,19 +378,23 @@ export function Timeline({ locale, clock, connection, lastArrivals, command, red
   }
 
   return (
-    <div className="timeline glass ply-1" ref={rootRef} aria-busy={seekingTo ? true : undefined} data-still={reducedMotion || undefined}>
-      {chip}
-      {playButton}
-      {steps}
-      <div className="tl-read">
-        <b className="tl-readout num">{readout}</b>
-        <div className="tl-read-sub">
-          {StateGlyph}
-          {offlineReason ?? arrivals}
+    <div className="timeline" ref={rootRef} aria-busy={seekingTo ? true : undefined}>
+      <div className="tl-left">
+        <div className="tl-ctl">
+          {playButton}
+          {steps(false)}
+          {speed}
+        </div>
+        <div className="tl-read">
+          <b className="tl-readout num">{readout}</b>
+          <InfoPopover locale={locale}>
+            <p>{note}</p>
+            {arrivals ? <p>{arrivals}</p> : null}
+          </InfoPopover>
+          {status}
         </div>
       </div>
-      {track}
-      {speed}
+      {band(false)}
       <div className="tl-menu-wrap">
         <button
           type="button"
@@ -487,7 +409,7 @@ export function Timeline({ locale, clock, connection, lastArrivals, command, red
         {menu ? (
           // biome-ignore lint/a11y/noStaticElementInteractions: Esc handling for the popup
           <div
-            className="tl-menu glass ply-3"
+            className="tl-menu"
             onKeyDown={(e: ReactKeyboardEvent) => {
               if (e.key === "Escape") {
                 e.stopPropagation();
@@ -501,6 +423,54 @@ export function Timeline({ locale, clock, connection, lastArrivals, command, red
         ) : null}
       </div>
     </div>
+  );
+}
+
+/** An ⓘ button with a popover: Enter/Space/tap opens, Esc or an outside press closes, focus returns. */
+function InfoPopover({ locale, children }: { locale: Locale; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const id = useId();
+  const wrap = useRef<HTMLSpanElement>(null);
+  const button = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: PointerEvent) => {
+      if (!wrap.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("pointerdown", onDown);
+    return () => document.removeEventListener("pointerdown", onDown);
+  }, [open]);
+  return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: Esc closes the popover from anywhere inside it
+    <span
+      className="tl-info"
+      ref={wrap}
+      onKeyDown={(e) => {
+        if (e.key === "Escape" && open) {
+          e.stopPropagation();
+          setOpen(false);
+          button.current?.focus();
+        }
+      }}
+    >
+      <button
+        type="button"
+        ref={button}
+        className="tl-info-btn"
+        aria-expanded={open}
+        aria-controls={id}
+        aria-label={t(locale, "tlReplayLabel")}
+        title={t(locale, "tlReplayLabel")}
+        onClick={() => setOpen((o) => !o)}
+      >
+        <Info />
+      </button>
+      {open ? (
+        <div className="tl-pop" id={id} role="note">
+          {children}
+        </div>
+      ) : null}
+    </span>
   );
 }
 
@@ -550,18 +520,17 @@ function DateJump({
       <button type="submit" className="tl-seg tl-jump-go" disabled={disabled || !valid}>
         {t(locale, "tlJumpGo")}
       </button>
-      <span className="tl-jump-range num">
-        {t(locale, "tlJumpRange", { from: formatDate(locale, min, "long"), to: formatDate(locale, max, "long") })}
-      </span>
     </form>
   );
 }
+
+const FOCUSABLE = "button:not(:disabled), input:not(:disabled), select:not(:disabled), [tabindex='0']";
 
 function Sheet({ locale, onClose, still, children }: { locale: Locale; onClose: () => void; still: boolean; children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
-    ref.current?.querySelector<HTMLElement>("input:not(:disabled), button:not(:disabled)")?.focus();
+    (ref.current?.querySelector<HTMLElement>(".tl-play:not(:disabled)") ?? ref.current?.querySelector<HTMLElement>(FOCUSABLE))?.focus();
     return () => previous?.focus?.();
   }, []);
   const onKeyDown = (e: ReactKeyboardEvent) => {
@@ -571,7 +540,7 @@ function Sheet({ locale, onClose, still, children }: { locale: Locale; onClose: 
       return;
     }
     if (e.key !== "Tab" || !ref.current) return;
-    const items = [...ref.current.querySelectorAll<HTMLElement>("button:not(:disabled), input:not(:disabled)")];
+    const items = [...ref.current.querySelectorAll<HTMLElement>(FOCUSABLE)];
     const first = items[0];
     const last = items[items.length - 1];
     if (!first || !last) return;
@@ -592,7 +561,7 @@ function Sheet({ locale, onClose, still, children }: { locale: Locale; onClose: 
       onKeyDown={onKeyDown}
       role="presentation"
     >
-      <div className="tl-sheet glass ply-3" ref={ref} role="dialog" aria-modal="true" aria-labelledby="tl-sheet-title">
+      <div className="tl-sheet" ref={ref} role="dialog" aria-modal="true" aria-labelledby="tl-sheet-title">
         <h2 id="tl-sheet-title" className="tl-sheet-title">
           {t(locale, "tlScrub")}
         </h2>

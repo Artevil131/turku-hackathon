@@ -1,105 +1,116 @@
-/* Clinical white: frosted white panels on a pale ward ground, one calm
-   hospital blue for selection and live state. Glass ply is the only rank:
-   ply 1 (rail, readout) frosts most, ply 2 (main view) is clearer, ply 3
-   (detail panels, popovers) is nearly opaque. Dark is a night-shift option. */
+/* Flat white panels on a pale ground, one violet accent, navy ink. No
+   glass, blur or gradients; the only shadow is on popovers. Type is four
+   sizes (--t-xs/s/m/l), weights 400/500/600. Spacing is a 4 px grid. */
 
 /* Branding slots. A hospital's identity attaches here and nowhere else:
-   one accent (and its soft and on-accent shades), the typefaces, the
-   corner radius, and the mark in TopBar (the `brand-mark` slot). Every
-   other colour is neutral or a reserved status colour. */
+   one accent (and its soft, on-accent and line shades), the typefaces, the
+   corner radius. Every other colour is neutral or a reserved status colour.
+   Accent #635BF1 on white is 4.9:1; white on the accent is the same. */
 :root {
-  --brand-accent: #0a63a8;
-  --brand-accent-soft: #e3effa;
+  --brand-accent: #635bf1;
+  --brand-accent-soft: #ecebfc;
   --brand-accent-ink: #ffffff;
-  --brand-font-ui: "Geist", "Segoe UI", system-ui, -apple-system, sans-serif;
-  --brand-font-data: "Geist", "Segoe UI", system-ui, sans-serif;
-  --brand-radius: 16px;
+  --brand-accent-line: #c6c4ed;
+  --brand-font-ui: "Inter", "Segoe UI", system-ui, sans-serif;
+  --brand-font-data: "Inter", "Segoe UI", system-ui, sans-serif;
+  --brand-font-display: "Bricolage Grotesque", "Inter", system-ui, sans-serif;
+  --brand-radius: 10px;
 }
 
 :root {
   color-scheme: light;
-  --chassis: #eef3f6;
-  --chassis-lit: #dcebf5;
-  --chassis-warm: #f3eee8;
+  --chassis: #f8f8f8;
+  --chassis-lit: var(--chassis);
+  --chassis-warm: var(--chassis);
   --grid-dot: transparent;
 
-  --glass-1: rgb(255 255 255 / 0.66);
-  --glass-2: rgb(255 255 255 / 0.78);
-  --glass-3: rgb(255 255 255 / 0.94);
-  --glass-edge: rgb(255 255 255 / 0.9);
-  --glass-edge-hi: rgb(255 255 255 / 1);
-  --glass-shadow: 0 1px 2px rgb(16 42 67 / 0.06), 0 8px 24px -12px rgb(16 42 67 / 0.18);
-  --blur-1: 22px;
-  --blur-2: 16px;
-  --blur-3: 8px;
+  --glass-1: #ffffff;
+  --glass-2: #ffffff;
+  --glass-3: #ffffff;
+  --glass-edge: var(--line);
+  --glass-edge-hi: var(--line-strong);
+  --glass-shadow: none;
+  --pop-shadow: 0 4px 16px rgb(7 8 28 / 0.12);
+  --blur-1: 0;
+  --blur-2: 0;
+  --blur-3: 0;
 
-  --ink: #10222e;
-  --ink-2: #3d5260;
-  --ink-3: #566a78;
-  --line: rgb(16 42 67 / 0.1);
-  --line-strong: rgb(16 42 67 / 0.18);
+  --ink: #07081c;
+  --ink-2: #1d204e;
+  --ink-3: #6f7292;
+  --line: #e4e6ee;
+  --line-strong: #aebecb;
 
   --live: var(--brand-accent);
   --live-soft: var(--brand-accent-soft);
   --live-ink: var(--brand-accent-ink);
-  --live-glow: rgb(10 99 168 / 0.18);
+  --live-glow: rgb(99 91 241 / 0.18);
 
-  /* Resistance shading: one hue, continuous; white means fully susceptible. */
+  /* Resistance: navy fill, susceptible stays white; the R glyph stays too. */
   --well-empty: #ffffff;
-  --resist: #d4581b;
+  --resist: #1d204e;
   --resist-ink: #ffffff;
 
   /* Status: reserved, always shipped with a word or glyph. */
-  --st-alert: #b42318;
+  --st-alert: #d0004b;
+  --st-alert-bg: #fde3e9;
   --st-watch: #94590a;
   --st-watch-bg: #fdf3e2;
   --st-ok: #17784a;
 
   --font-ui: var(--brand-font-ui);
   --font-data: var(--brand-font-data);
+  --font-display: var(--brand-font-display);
 
-  --step--1: 0.78rem;
-  --step-0: 0.9rem;
-  --step-1: 1rem;
-  --step-2: 1.2rem;
-  --step-3: 1.5rem;
-  --step-4: 1.85rem;
+  /* Four sizes. The old --step-* names alias them. */
+  --t-xs: 12px;
+  --t-s: 13px;
+  --t-m: 15px;
+  --t-l: 22px;
+  --step--1: var(--t-xs);
+  --step-0: var(--t-s);
+  --step-1: var(--t-m);
+  --step-2: var(--t-m);
+  --step-3: var(--t-l);
+  --step-4: var(--t-l);
 
   --radius-panel: var(--brand-radius);
-  --radius-control: 9px;
+  --radius-control: 6px;
+  --control-h: 28px;
+  --row-h: 32px;
+  --pad: 12px;
+  --gap: 8px;
   --well: 44px;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --chassis: #0f171d;
-  --chassis-lit: #13263a;
-  --chassis-warm: #1d1a17;
+  --brand-accent-soft: #23214f;
+  --brand-accent-line: #3d3a86;
+  --chassis: #0b0c1a;
+  --glass-1: #121328;
+  --glass-2: #121328;
+  --glass-3: #121328;
+  --pop-shadow: 0 4px 16px rgb(0 0 0 / 0.5);
 
-  --glass-1: rgb(24 34 42 / 0.7);
-  --glass-2: rgb(28 39 48 / 0.72);
-  --glass-3: rgb(34 46 56 / 0.94);
-  --glass-edge: rgb(200 220 235 / 0.1);
-  --glass-edge-hi: rgb(200 220 235 / 0.16);
-  --glass-shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 10px 28px -14px rgb(0 0 0 / 0.6);
+  --ink: #eceefa;
+  --ink-2: #c3c7ea;
+  --ink-3: #9a9ec2;
+  --line: #262845;
+  --line-strong: #4a4f78;
 
-  --ink: #e6eef3;
-  --ink-2: #b2c2cc;
-  --ink-3: #8597a3;
-  --line: rgb(200 220 235 / 0.1);
-  --line-strong: rgb(200 220 235 / 0.2);
+  --live: #9d98ff;
+  --live-soft: #23214f;
+  --live-ink: #0b0c1a;
+  --live-glow: rgb(157 152 255 / 0.25);
 
-  --live: #6cb4ee;
-  --live-soft: #16314a;
-  --live-ink: #071a2b;
-  --live-glow: rgb(108 180 238 / 0.25);
+  --well-empty: #121328;
+  --resist: #9d98ff;
+  --resist-ink: #0b0c1a;
 
-  --well-empty: #1b2731;
-  --resist: #f0894d;
-  --resist-ink: #1d0d02;
-
-  --st-alert: #ff8a7d;
+  --st-alert: #ff7aa3;
+  --st-alert-bg: #3a1020;
   --st-watch: #f0b85a;
   --st-watch-bg: #2c2414;
   --st-ok: #5fcf95;
@@ -119,22 +130,20 @@ body,
 
 body {
   margin: 0;
-  font: 400 var(--step-0) / 1.45 var(--font-ui);
+  font: 400 var(--t-s) / 1.45 var(--font-ui);
   color: var(--ink);
   background: var(--chassis);
   -webkit-font-smoothing: antialiased;
-  font-feature-settings: "ss01";
+  font-variant-numeric: tabular-nums;
 }
 
-/* The ground the glass frosts over: two soft washes of daylight. */
+/* The page ground: flat. */
 .chassis {
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background:
-    radial-gradient(60rem 40rem at 18% 8%, var(--chassis-lit), transparent 60%),
-    radial-gradient(50rem 36rem at 92% 96%, var(--chassis-warm), transparent 62%), var(--chassis);
+  background: var(--chassis);
 }
 
 ::selection {
@@ -189,74 +198,57 @@ button {
   z-index: 1;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  gap: 12px;
+  gap: var(--gap);
   height: 100%;
-  padding-block: 12px;
+  padding-block: var(--gap);
   padding-left: max(12px, env(safe-area-inset-left, 0px));
   padding-right: max(12px, env(safe-area-inset-right, 0px));
 }
 
 .glass {
-  border: 1px solid var(--glass-edge);
+  border: 1px solid var(--line);
   border-radius: var(--radius-panel);
-  box-shadow:
-    var(--glass-shadow),
-    inset 0 1px 0 var(--glass-edge-hi);
+  background: #fff;
 }
 
-.ply-1 {
+:root[data-theme="dark"] .glass {
   background: var(--glass-1);
-  backdrop-filter: blur(var(--blur-1)) saturate(150%);
-  -webkit-backdrop-filter: blur(var(--blur-1)) saturate(150%);
 }
 
-.ply-2 {
-  background: var(--glass-2);
-  backdrop-filter: blur(var(--blur-2)) saturate(140%);
-  -webkit-backdrop-filter: blur(var(--blur-2)) saturate(140%);
-}
-
+.ply-1,
+.ply-2,
 .ply-3 {
-  background: var(--glass-3);
-  backdrop-filter: blur(var(--blur-3)) saturate(130%);
-  -webkit-backdrop-filter: blur(var(--blur-3)) saturate(130%);
+  background: var(--glass-1);
 }
 
-/* ---------- Top bar ---------- */
+/* ---------- Top bar (48 px) ---------- */
 
 .topbar {
   display: flex;
   align-items: center;
-  gap: 18px;
-  padding: 10px 12px 10px 18px;
+  gap: 16px;
+  height: 48px;
+  padding: 0 8px 0 16px;
   min-width: 0;
 }
 
 .mark {
   display: flex;
   align-items: center;
-  gap: 10px;
   flex: none;
-}
-
-.mark-glyph {
-  width: 30px;
-  height: 30px;
-  color: var(--live);
+  border: 0;
+  background: none;
+  padding: 0;
+  text-align: left;
+  color: var(--ink);
 }
 
 .mark-name {
-  font-weight: 650;
-  font-size: var(--step-2);
-  letter-spacing: 0.02em;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--t-l);
+  letter-spacing: 0.01em;
   line-height: 1;
-}
-
-.mark-sub {
-  display: block;
-  color: var(--ink-3);
-  font-size: var(--step--1);
-  margin-top: 3px;
 }
 
 .ask {
@@ -270,32 +262,30 @@ button {
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--gap);
   flex: none;
 }
 
-/* Segmented control, the instrument's selector switch. */
+/* Segmented control: selected = accent fill, white text. */
 .seg {
   display: inline-flex;
-  padding: 3px;
+  padding: 2px;
   gap: 2px;
   border-radius: var(--radius-control);
-  background: color-mix(in oklab, var(--chassis) 50%, transparent);
+  background: var(--chassis);
   border: 1px solid var(--line);
 }
 
 .seg button {
   border: 0;
   background: none;
-  padding: 6px 11px;
-  border-radius: 7px;
+  height: 22px;
+  padding: 0 10px;
+  border-radius: 4px;
   color: var(--ink-2);
-  font-size: var(--step--1);
-  font-weight: 550;
+  font-size: var(--t-s);
+  font-weight: 500;
   white-space: nowrap;
-  transition:
-    background 160ms var(--ease-out),
-    color 160ms var(--ease-out);
 }
 
 .seg button:hover {
@@ -303,35 +293,41 @@ button {
 }
 
 .seg button[aria-pressed="true"] {
-  background: var(--glass-3);
-  color: var(--ink);
-  box-shadow:
-    0 1px 0 var(--glass-edge-hi) inset,
-    0 2px 8px -3px rgb(0 0 0 / 0.4);
+  background: var(--live);
+  color: var(--live-ink);
 }
 
 .icon-btn {
   display: inline-grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  min-width: var(--control-h);
+  height: var(--control-h);
   border-radius: var(--radius-control);
   border: 1px solid var(--line);
-  background: color-mix(in oklab, var(--chassis) 50%, transparent);
+  background: #fff;
   color: var(--ink-2);
-  transition:
-    color 160ms var(--ease-out),
-    border-color 160ms var(--ease-out);
+}
+
+:root[data-theme="dark"] .icon-btn {
+  background: var(--glass-1);
 }
 
 .icon-btn:hover {
   color: var(--ink);
-  border-color: var(--glass-edge-hi);
+  border-color: var(--line-strong);
 }
 
 .icon-btn svg {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
+}
+
+.icon-btn-text {
+  width: auto;
+  padding: 0 8px;
+  font-size: var(--t-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
 }
 
 /* ---------- Chips ---------- */
@@ -340,11 +336,11 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 3px 9px;
+  padding: 2px 8px;
   border-radius: 999px;
   border: 1px solid var(--line);
-  font-size: var(--step--1);
-  font-weight: 550;
+  font-size: var(--t-xs);
+  font-weight: 500;
   color: var(--ink-2);
   white-space: nowrap;
 }
@@ -408,7 +404,7 @@ button {
   border: 0;
   background: none;
   color: var(--live);
-  font-weight: 550;
+  font-weight: 500;
   text-decoration: underline;
   text-decoration-color: color-mix(in oklab, var(--live) 35%, transparent);
   text-underline-offset: 3px;
@@ -542,11 +538,6 @@ button {
   border-radius: 13px;
   border: 1px solid var(--glass-edge);
   background: var(--glass-3);
-  backdrop-filter: blur(var(--blur-3)) saturate(130%);
-  -webkit-backdrop-filter: blur(var(--blur-3)) saturate(130%);
-  box-shadow:
-    var(--glass-shadow),
-    inset 0 1px 0 var(--glass-edge-hi);
   text-align: left;
   color: var(--ink);
   transition:
@@ -571,13 +562,13 @@ button {
 
 .node-code {
   font-size: var(--step--1);
-  font-weight: 650;
+  font-weight: 600;
   color: var(--live);
 }
 
 .node-name {
   font-size: var(--step--1);
-  font-weight: 550;
+  font-weight: 500;
   line-height: 1.25;
   color: var(--ink);
 }
@@ -704,55 +695,44 @@ button {
 
 /* ---------- Sections (order-entry layout) ---------- */
 
-.topbar {
-  gap: 22px;
-}
-
 .sections {
   display: flex;
   gap: 4px;
-  padding: 4px;
-  border-radius: 12px;
-  background: color-mix(in oklab, var(--chassis) 70%, transparent);
-  border: 1px solid var(--line);
 }
 
 .section-tab {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  height: 38px;
-  padding: 0 18px;
+  gap: 6px;
+  height: var(--control-h);
+  padding: 0 12px;
   border: 0;
-  border-radius: 9px;
+  border-radius: var(--radius-control);
   background: none;
-  font-size: var(--step-1);
-  font-weight: 600;
+  font-size: var(--t-m);
+  font-weight: 500;
   color: var(--ink-2);
-  transition:
-    background 160ms var(--ease-out),
-    color 160ms var(--ease-out);
 }
 
 .section-tab:hover {
+  background: var(--chassis);
   color: var(--ink);
 }
 
 .section-tab[aria-current="page"] {
-  background: var(--glass-3);
-  color: var(--live);
-  box-shadow: var(--glass-shadow);
+  background: var(--live);
+  color: var(--live-ink);
 }
 
 .badge {
   min-width: 22px;
-  height: 20px;
-  padding: 0 6px;
-  border-radius: 10px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
   display: inline-grid;
   place-items: center;
-  font-size: 0.72rem;
-  font-weight: 700;
+  font-size: var(--t-xs);
+  font-weight: 600;
   background: var(--st-watch);
   color: #fff;
 }
@@ -794,11 +774,12 @@ button {
 
 .banner {
   margin: 0;
-  padding: 10px 16px;
-  border-radius: 12px;
+  padding: 8px 16px;
+  border-radius: var(--radius-panel);
+  border: 1px solid var(--st-watch);
   background: var(--st-watch-bg);
   color: var(--st-watch);
-  font-weight: 550;
+  font-weight: 500;
 }
 
 .section {
@@ -818,10 +799,13 @@ button {
 }
 
 .field-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   margin: 0;
   padding: 0;
-  font-size: var(--step--1);
-  font-weight: 600;
+  font-size: var(--t-s);
+  font-weight: 500;
   color: var(--ink-2);
 }
 
@@ -832,13 +816,13 @@ button {
 }
 
 .select {
-  height: 42px;
-  padding: 0 12px;
+  height: var(--control-h);
+  padding: 0 8px;
   border-radius: var(--radius-control);
   border: 1px solid var(--line-strong);
   background: var(--glass-3);
-  font-size: var(--step-1);
-  font-weight: 550;
+  font-size: var(--t-s);
+  font-weight: 500;
 }
 
 .select:focus-visible {
@@ -853,12 +837,13 @@ button {
 }
 
 .choice {
-  height: 38px;
-  padding: 0 14px;
+  height: var(--control-h);
+  padding: 0 12px;
   border-radius: var(--radius-control);
   border: 1px solid var(--line-strong);
   background: var(--glass-3);
-  font-weight: 550;
+  font-size: var(--t-s);
+  font-weight: 500;
   color: var(--ink);
   transition:
     background 160ms var(--ease-out),
@@ -887,10 +872,10 @@ button {
 
 .result-title {
   margin: 0;
-  font-size: var(--step-4);
-  font-weight: 650;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
+  font-family: var(--font-display);
+  font-size: var(--t-l);
+  font-weight: 600;
+  line-height: 1.2;
 }
 
 .result-sub {
@@ -956,7 +941,7 @@ button {
   align-items: center;
   gap: 5px;
   font-size: var(--step--1);
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .status svg {
@@ -995,7 +980,7 @@ button {
 
 .signal[data-seen="false"] td {
   background: color-mix(in oklab, var(--st-watch-bg) 70%, transparent);
-  font-weight: 550;
+  font-weight: 500;
 }
 
 .signal[data-open="true"] td {
@@ -1013,17 +998,18 @@ button {
 }
 
 .btn {
+  text-decoration: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 7px;
-  height: 36px;
-  padding: 0 14px;
+  height: var(--control-h);
+  padding: 0 12px;
   border-radius: var(--radius-control);
   border: 1px solid var(--line-strong);
   background: var(--glass-3);
-  font-size: var(--step--1);
-  font-weight: 600;
+  font-size: var(--t-s);
+  font-weight: 500;
   color: var(--ink);
 }
 
@@ -1043,7 +1029,7 @@ button {
 }
 
 .btn-primary:hover {
-  background: color-mix(in oklab, var(--live) 88%, black);
+  background: color-mix(in oklab, var(--live) 90%, black);
 }
 
 /* Network (home) */
@@ -1083,14 +1069,9 @@ button {
   }
   .topbar {
     flex-wrap: wrap;
-  }
-  .top-tools {
-    margin-left: 0;
-    width: 100%;
-    justify-content: space-between;
-  }
-  .mark-sub {
-    display: none;
+    height: auto;
+    gap: 4px 8px;
+    padding: 6px 8px 6px 12px;
   }
 }
 
@@ -1211,18 +1192,23 @@ button {
 
 .settings {
   display: grid;
-  gap: 22px;
+  gap: 16px;
   align-content: start;
   max-width: 640px;
   width: 100%;
   margin: 0 auto;
-  padding: 26px;
+  padding: 16px;
   overflow: auto;
 }
 
 .setting {
-  padding-top: 18px;
+  padding-top: 16px;
   border-top: 1px solid var(--line);
+}
+
+fieldset.setting {
+  border-top: 0;
+  padding-top: 0;
 }
 
 .setting .btn {
@@ -1270,7 +1256,7 @@ button {
   left: 50%;
   bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   transform: translateX(-50%);
-  box-shadow: var(--glass-shadow);
+  box-shadow: var(--pop-shadow);
 }
 
 @media (max-width: 860px) {
@@ -1289,6 +1275,7 @@ button {
     flex: 1;
     justify-content: center;
     padding: 0 8px;
+    font-size: var(--t-s);
   }
 }
 
@@ -1322,4 +1309,53 @@ button {
 
 .skip-link:focus {
   transform: none;
+}
+
+/* ---------- The ⓘ button and its popover ---------- */
+
+.info {
+  position: relative;
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+.info-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--ink-3);
+}
+
+.info-btn:hover,
+.info-btn[aria-expanded="true"] {
+  color: var(--live);
+}
+
+.info-pop {
+  position: absolute;
+  z-index: 60;
+  top: calc(100% + 4px);
+  left: 0;
+  width: max-content;
+  max-width: min(320px, calc(100vw - 24px));
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--glass-1);
+  box-shadow: var(--pop-shadow);
+  color: var(--ink);
+  font-size: var(--t-s);
+  font-weight: 400;
+  line-height: 1.4;
+  text-align: left;
+}
+
+.info-pop[data-align="end"] {
+  left: auto;
+  right: 0;
 }

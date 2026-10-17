@@ -17,9 +17,7 @@
   overflow: auto;
   color: var(--ink);
   font-family: var(--font-ui);
-  background:
-    radial-gradient(ellipse 70% 60% at 68% 46%, #ffffff 0%, rgb(255 255 255 / 0) 70%),
-    linear-gradient(160deg, var(--chassis-lit) 0%, var(--chassis) 55%, var(--chassis-warm) 130%);
+  background: var(--chassis);
 }
 
 .intro-canvas {
@@ -182,9 +180,7 @@
   padding: 14px 16px;
   border-radius: var(--radius-panel);
   background: var(--glass-2);
-  border: 1px solid var(--glass-edge);
-  box-shadow: var(--glass-shadow);
-  backdrop-filter: blur(var(--blur-2));
+  border: 1px solid var(--line);
   pointer-events: auto;
 }
 

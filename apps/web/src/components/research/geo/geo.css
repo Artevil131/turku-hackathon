@@ -91,8 +91,8 @@
   position: absolute;
   top: 0;
   right: 0;
-  width: 49%;
-  max-height: 44%;
+  width: 46%;
+  max-height: 38%;
   overflow: auto;
   display: flex;
   flex-direction: column;
@@ -102,7 +102,7 @@
 /* county fills: five steps of the accent, no-data hatched grey */
 .geo-county {
   stroke: #fff;
-  stroke-width: 1;
+  stroke-width: 0.8;
   cursor: pointer;
 }
 .geo-county[data-selected="true"] {
@@ -113,13 +113,13 @@
   fill: #f1f1f6;
 }
 .geo-fill-s1 {
-  fill: color-mix(in oklab, var(--geo-accent) 16%, #fff);
+  fill: color-mix(in oklab, var(--geo-accent) 9%, #f1f1f6);
 }
 .geo-fill-s2 {
-  fill: color-mix(in oklab, var(--geo-accent) 34%, #fff);
+  fill: color-mix(in oklab, var(--geo-accent) 20%, #f1f1f6);
 }
 .geo-fill-s3 {
-  fill: color-mix(in oklab, var(--geo-accent) 56%, #fff);
+  fill: color-mix(in oklab, var(--geo-accent) 34%, #f1f1f6);
 }
 .geo-fill-s4 {
   fill: color-mix(in oklab, var(--geo-accent) 80%, #1d204e);
@@ -141,13 +141,13 @@
   background: #f1f1f6;
 }
 .geo-swatch.geo-fill-s1 {
-  background: color-mix(in oklab, var(--geo-accent) 16%, #fff);
+  background: color-mix(in oklab, var(--geo-accent) 9%, #f1f1f6);
 }
 .geo-swatch.geo-fill-s2 {
-  background: color-mix(in oklab, var(--geo-accent) 34%, #fff);
+  background: color-mix(in oklab, var(--geo-accent) 20%, #f1f1f6);
 }
 .geo-swatch.geo-fill-s3 {
-  background: color-mix(in oklab, var(--geo-accent) 56%, #fff);
+  background: color-mix(in oklab, var(--geo-accent) 34%, #f1f1f6);
 }
 .geo-swatch.geo-fill-s4 {
   background: color-mix(in oklab, var(--geo-accent) 80%, #1d204e);
@@ -173,16 +173,16 @@
 /* referral graph */
 .geo-ref {
   stroke: var(--geo-ink2);
-  stroke-width: 1.1;
-  stroke-opacity: 0.55;
+  stroke-width: 0.8;
+  stroke-opacity: 0.4;
 }
 .geo-ref[data-uni="true"] {
-  stroke-width: 2;
-  stroke-opacity: 0.8;
+  stroke-width: 1.2;
+  stroke-opacity: 0.5;
 }
 .geo-ref[data-tyks="true"] {
   stroke: var(--geo-accent);
-  stroke-opacity: 0.9;
+  stroke-opacity: 0.6;
 }
 .geo-hosp {
   fill: var(--geo-ink2);
@@ -238,7 +238,7 @@
 .geo-tube {
   fill: none;
   stroke: var(--geo-ink3);
-  stroke-opacity: 0.4;
+  stroke-opacity: 0.28;
   stroke-linecap: round;
 }
 .geo-tube[data-active="true"] {
@@ -263,12 +263,22 @@
 }
 .geo-tag {
   fill: #fff;
-  stroke: var(--brand-accent-line, #c6c4ed);
+  stroke: var(--geo-accent);
+  stroke-width: 1.5;
+}
+.geo-leader {
+  stroke: var(--geo-accent);
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
 }
 .geo-tag-text {
   font-size: 12px;
+  font-weight: 600;
   fill: var(--geo-ink);
   font-variant-numeric: tabular-nums;
+}
+.geo-trails .geo-tag-text {
+  font-weight: 400;
   paint-order: stroke;
   stroke: #fff;
   stroke-width: 3px;
@@ -280,11 +290,11 @@
 }
 .geo-box.geo-lit {
   stroke: var(--geo-alert);
-  stroke-width: 3;
+  stroke-width: 3.5;
   fill: var(--st-alert-bg, #fde3e9);
 }
 .geo-code {
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 600;
   fill: var(--geo-ink);
   pointer-events: none;
@@ -292,10 +302,10 @@
 .geo-badge {
   fill: #fff;
   stroke: var(--geo-alert);
-  stroke-width: 1.2;
+  stroke-width: 1.5;
 }
 .geo-badge-text {
-  font-size: 11px;
+  font-size: 12px;
   fill: var(--geo-alert);
   font-weight: 600;
   letter-spacing: 1px;
@@ -328,6 +338,10 @@
 }
 
 /* legend, card, lists */
+.geo-legend-keys {
+  padding-top: 2px;
+  color: var(--geo-ink2);
+}
 .geo-legend {
   display: flex;
   flex-direction: column;

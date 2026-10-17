@@ -2,7 +2,7 @@ import type { WardCode } from "@aei/domain";
 import { type Locale, t, wardName } from "@aei/i18n";
 import { AsOf } from "../AsOf.tsx";
 import type { Role } from "../Home.tsx";
-import { Doctor, Microscope } from "../Icons.tsx";
+import { ArrowRight, Doctor, Microscope } from "../Icons.tsx";
 
 interface Props {
   locale: Locale;
@@ -24,7 +24,6 @@ export function Roles({ locale, lastRole, unit, asOf, signals, onRole }: Props) 
       lastLabel={t(locale, "homeLast")}
       icon={<Doctor />}
       title={t(locale, "homeDoctor")}
-      lead={t(locale, "homeDoctorLead")}
       detail={unit ? t(locale, "homeDoctorUnit", { unit: wardName(locale, unit) }) : t(locale, "homeDoctorNoUnit")}
       action={t(locale, "homeDoctorOpen")}
       onRole={onRole}
@@ -38,7 +37,6 @@ export function Roles({ locale, lastRole, unit, asOf, signals, onRole }: Props) 
       lastLabel={t(locale, "homeLast")}
       icon={<Microscope />}
       title={t(locale, "homeResearch")}
-      lead={t(locale, "homeResearchLead")}
       detail={
         signals === null
           ? t(locale, "homeResearchWait")
@@ -67,7 +65,6 @@ function RoleLink(props: {
   lastLabel: string;
   icon: React.ReactNode;
   title: string;
-  lead: string;
   detail: string;
   asOf?: React.ReactNode;
   action: string;
@@ -75,8 +72,9 @@ function RoleLink(props: {
 }) {
   return (
     <a
-      className="hm-role"
+      className="hm-role glass"
       data-last={props.last}
+      title={props.action}
       href={`#${props.kind}`}
       onClick={(e) => {
         if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
@@ -92,13 +90,14 @@ function RoleLink(props: {
           {props.title}
           {props.last ? <span className="chip">{props.lastLabel}</span> : null}
         </span>
-        <span className="hm-role-lead">{props.lead}</span>
         <span className="hm-role-detail">
           <span>{props.detail}</span>
           {props.asOf}
         </span>
       </span>
-      <span className="hm-role-action">{props.action}</span>
+      <span className="hm-role-action" aria-hidden="true">
+        <ArrowRight />
+      </span>
     </a>
   );
 }

@@ -8,7 +8,9 @@ import { homeFi } from "./surfaces/home.ts";
 import { introFi } from "./surfaces/intro.ts";
 import { mapFi } from "./surfaces/map.ts";
 import { mathFi } from "./surfaces/math.ts";
+import { methodFi } from "./surfaces/method.ts";
 import { networkFi } from "./surfaces/network.ts";
+import { timelineFi } from "./surfaces/timeline.ts";
 
 export const fi: Record<keyof typeof en, string> = {
   askSubmit: "Kysy",
@@ -238,7 +240,7 @@ export const fi: Record<keyof typeof en, string> = {
   tlSpeedDay: "1 pv / s",
   tlSpeedWeek: "1 vk / s",
   tlSpeedMonth: "1 kk / s",
-  tlEvents: "Tapahtumat",
+  tlEvents: "Demohypyt",
   tlEventUro: "Urologian epidemia alkaa",
   tlEventGap: "Näytekatko Terveysasema Etelässä",
   tlEventIcu: "Teho-osaston MRSA",
@@ -258,6 +260,7 @@ export const fi: Record<keyof typeof en, string> = {
   ...boardFi,
   ...doctorFi,
   ...mathFi,
+  ...methodFi,
   ...feedFi,
   ...gridFi,
   ...networkFi,
@@ -265,4 +268,5 @@ export const fi: Record<keyof typeof en, string> = {
   ...homeFi,
   ...introFi,
   ...commandFi,
+  ...timelineFi,
 };

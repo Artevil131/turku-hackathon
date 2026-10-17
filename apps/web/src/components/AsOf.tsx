@@ -1,4 +1,4 @@
-import { formatDate, type Locale, t } from "@aei/i18n";
+import { formatDate, formatDateNumeric, type Locale, t } from "@aei/i18n";
 
 interface Props {
   locale: Locale;
@@ -9,12 +9,19 @@ interface Props {
   clockDate?: string;
 }
 
-/** "as of 12 May 2025", plus "updating to ..." while the panel lags the clock. */
+/** The panel's as-of date, date only (12.5.2025), in the display face; "→ date" while it lags the clock. */
 export function AsOf({ locale, date, pending, clockDate }: Props) {
+  const full = t(locale, "asOfShort", { date: formatDate(locale, date, "long") });
   return (
-    <span className="asof">
-      {t(locale, "asOfShort", { date: formatDate(locale, date, "long") })}
-      {pending && clockDate ? ` · ${t(locale, "asOfUpdating", { date: formatDate(locale, clockDate, "long") })}` : null}
+    <span className="asof" title={full}>
+      <span className="visually-hidden">{full}</span>
+      <span aria-hidden="true">{formatDateNumeric(date)}</span>
+      {pending && clockDate ? (
+        <span className="asof-next" title={t(locale, "asOfUpdating", { date: formatDate(locale, clockDate, "long") })}>
+          {" → "}
+          {formatDateNumeric(clockDate)}
+        </span>
+      ) : null}
     </span>
   );
 }

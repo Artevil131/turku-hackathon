@@ -1,116 +1,85 @@
-/* The researcher's board shell: feed left (5/12), one panel right (7/12) at
-   1100 px and up; four tabs below that. Panels style themselves. */
+/* The researcher's workspace: incidents 340 px, the centre view, the math
+   300 px, one screen under the top bar and the timeline. Under 1100 px the
+   three stack: list, math, panel. */
 
 .board {
   display: grid;
-  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-columns: 340px minmax(0, 1fr) 300px;
   gap: 12px;
+  height: var(--board-h, calc(100dvh - 200px));
   min-height: 0;
 }
 
-.board-tabs {
-  grid-column: 2;
-  display: flex;
-  gap: 4px;
-  padding: 4px;
-  border-radius: var(--radius-control);
-  background: var(--glass-1);
-  border: 1px solid var(--line);
-  justify-self: start;
+.board-feed,
+.board-main,
+.board-math {
+  min-width: 0;
+  min-height: 0;
 }
 
-/* Wide: the feed is not a tab, it is always there. */
-.board-tab[data-panel="feed"] {
-  display: none;
+.board-main {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.board-tabs {
+  display: inline-flex;
+  gap: 4px;
+  align-self: flex-start;
 }
 
 .board-tab {
-  min-height: 36px;
-  padding: 0 14px;
-  border: 0;
-  border-radius: 7px;
-  background: none;
+  height: var(--control-h, 28px);
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control, 6px);
+  background: var(--glass-1, #fff);
   color: var(--ink-2);
-  font-weight: 600;
+  font-size: var(--t-s, 13px);
+  font-weight: 500;
 }
 
 .board-tab:hover {
   color: var(--ink);
+  border-color: var(--live);
 }
 
 .board-tab[aria-selected="true"] {
-  background: var(--glass-3);
-  color: var(--live);
-  box-shadow: var(--glass-shadow);
+  background: var(--live);
+  border-color: var(--live);
+  color: var(--live-ink, #fff);
 }
 
-.board-feed,
-.board-main {
-  min-width: 0;
-}
-
-.board-feed {
-  grid-column: 1;
-  grid-row: 1 / span 2;
+.board-view {
+  flex: 1 1 auto;
   min-height: 0;
   overflow: auto;
 }
 
-.board-main {
-  grid-column: 2;
-  grid-row: 2;
-  min-height: 0;
-  overflow: auto;
+/* Panels fill the view and scroll themselves. */
+.board-view > .board-panel {
+  min-height: 100%;
 }
 
 @media (max-width: 1099px) {
   .board {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto auto;
+    display: flex;
+    flex-direction: column;
+    height: auto;
   }
-  .board-tabs {
-    grid-column: 1;
-    justify-self: stretch;
-    overflow-x: auto;
+  .board-feed {
+    order: 1;
+    height: min(60dvh, 520px);
   }
-  .board-tab {
-    flex: 1 0 auto;
-    min-height: 44px;
+  .board-math {
+    order: 2;
   }
-  .board-tab[data-panel="feed"] {
-    display: inline-block;
-  }
-  .board-feed,
   .board-main {
-    grid-column: 1;
-    grid-row: 2;
+    order: 3;
+    min-height: 480px;
+  }
+  .board-view {
     overflow: visible;
-  }
-  .board-feed[data-shown="false"],
-  .board-main[data-shown="false"] {
-    display: none;
-  }
-}
-
-.board-tab-short {
-  display: none;
-}
-
-/* Phones: short names so the four tabs fit without scrolling sideways. */
-@media (max-width: 560px) {
-  .board-tab {
-    padding: 0 10px;
-  }
-  .board-tab-long {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
-  .board-tab-short {
-    display: inline;
   }
 }

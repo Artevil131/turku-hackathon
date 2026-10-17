@@ -3,9 +3,9 @@ import { formatDate, type Locale, t } from "@aei/i18n";
 import type { ReactNode } from "react";
 import { CommandField } from "./command/CommandField.tsx";
 import { openSignals } from "./home/changes.ts";
-import { Gear, Mark } from "./Icons.tsx";
+import { Gear } from "./Icons.tsx";
 
-export type Page = "home" | "doctor" | "research" | "settings" | "intro";
+export type Page = "home" | "doctor" | "research" | "method" | "settings" | "intro";
 
 interface Props {
   locale: Locale;
@@ -37,13 +37,9 @@ export function TopBar(props: Props) {
     </button>
   );
   return (
-    <header className="topbar glass ply-1">
+    <header className="topbar glass">
       <button type="button" className="mark" onClick={() => props.onPage("home")} title={t(locale, "home")}>
-        <Mark className="mark-glyph" />
-        <span>
-          <span className="mark-name">{t(locale, "appName")}</span>
-          <span className="mark-sub">{t(locale, "appTagline")}</span>
-        </span>
+        <span className="mark-name">{t(locale, "appName")}</span>
       </button>
 
       <nav className="sections" aria-label={t(locale, "sections")}>
@@ -58,6 +54,7 @@ export function TopBar(props: Props) {
             </span>
           ) : null,
         )}
+        {tab("method", t(locale, "methodNav"))}
       </nav>
 
       <div className="top-tools">
@@ -65,8 +62,7 @@ export function TopBar(props: Props) {
         {props.onLocale ? (
           <button
             type="button"
-            className="icon-btn"
-            style={{ width: "auto", minWidth: 36, padding: "0 8px", fontSize: "0.78rem", fontWeight: 700, letterSpacing: "0.04em" }}
+            className="icon-btn icon-btn-text"
             lang={other}
             onClick={() => props.onLocale?.(other)}
             title={t(locale, "switchLanguage")}

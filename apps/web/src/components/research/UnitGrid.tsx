@@ -51,6 +51,8 @@ interface Cell {
 export function UnitGrid({ client, locale, asOf, state, onChange }: PanelProps) {
   const phenotype: Phenotype = state.phenotype ?? "esbl";
   const weeks = state.weeks;
+  // The unit lit in the grid: the selected incident's, else the unit filter.
+  const lit = state.focus ?? state.unit;
   const [data, setData] = useState<Loaded | null>(null);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -240,8 +242,8 @@ export function UnitGrid({ client, locale, asOf, state, onChange }: PanelProps) 
                       scope="col"
                       title={w[locale]}
                       className="ugrid-colhead"
-                      data-selected={state.unit === w.code}
-                      aria-label={state.unit === w.code ? `${w[locale]}, ${t(locale, "gridSelectedUnit")}` : w[locale]}
+                      data-selected={lit === w.code}
+                      aria-label={lit === w.code ? `${w[locale]}, ${t(locale, "gridSelectedUnit")}` : w[locale]}
                     >
                       <span className="ugrid-code" aria-hidden="true">
                         {w.code}
@@ -277,7 +279,7 @@ export function UnitGrid({ client, locale, asOf, state, onChange }: PanelProps) 
                           .filter(Boolean)
                           .join(", ");
                         return (
-                          <td key={cell.ward} className="ugrid-td" data-selected={state.unit === cell.ward}>
+                          <td key={cell.ward} className="ugrid-td" data-selected={lit === cell.ward}>
                             <button
                               type="button"
                               className="ugrid-cell"
@@ -313,7 +315,7 @@ export function UnitGrid({ client, locale, asOf, state, onChange }: PanelProps) 
                     {t(locale, "gridTotal")}
                   </th>
                   {model.colTotals.map((n, c) => (
-                    <td key={WARDS[c]?.code} className="ugrid-sum" data-selected={state.unit === WARDS[c]?.code}>
+                    <td key={WARDS[c]?.code} className="ugrid-sum" data-selected={lit === WARDS[c]?.code}>
                       {n}
                     </td>
                   ))}

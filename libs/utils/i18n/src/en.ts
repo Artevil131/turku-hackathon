@@ -7,7 +7,9 @@ import { homeEn } from "./surfaces/home.ts";
 import { introEn } from "./surfaces/intro.ts";
 import { mapEn } from "./surfaces/map.ts";
 import { mathEn } from "./surfaces/math.ts";
+import { methodEn } from "./surfaces/method.ts";
 import { networkEn } from "./surfaces/network.ts";
+import { timelineEn } from "./surfaces/timeline.ts";
 
 export const en = {
   askSubmit: "Ask",
@@ -236,7 +238,7 @@ export const en = {
   tlSpeedDay: "1 day / s",
   tlSpeedWeek: "1 week / s",
   tlSpeedMonth: "1 month / s",
-  tlEvents: "Events",
+  tlEvents: "Demo jumps",
   tlEventUro: "Urology outbreak arriving",
   tlEventGap: "Sampling gap at Health centre South",
   tlEventIcu: "ICU MRSA",
@@ -256,6 +258,7 @@ export const en = {
   ...boardEn,
   ...doctorEn,
   ...mathEn,
+  ...methodEn,
   ...feedEn,
   ...gridEn,
   ...networkEn,
@@ -263,4 +266,5 @@ export const en = {
   ...homeEn,
   ...introEn,
   ...commandEn,
+  ...timelineEn,
 } as const;

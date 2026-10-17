@@ -1,4 +1,5 @@
 import { type Locale, t } from "@aei/i18n";
+import { InfoButton } from "./Info.tsx";
 
 // Settings: things a user sets once. Kept off the working pages.
 
@@ -10,8 +11,10 @@ interface Props {
 
 export function Settings({ locale, onLocale, onResetRole }: Props) {
   return (
-    <main className="settings glass ply-2">
-      <h1 className="result-title">{t(locale, "settings")}</h1>
+    <section className="settings glass" aria-labelledby="settings-title">
+      <h1 id="settings-title" className="result-title">
+        {t(locale, "settings")}
+      </h1>
 
       <fieldset className="field setting">
         <legend className="field-label">{t(locale, "language")}</legend>
@@ -37,17 +40,27 @@ export function Settings({ locale, onLocale, onResetRole }: Props) {
       </fieldset>
 
       <div className="field setting">
-        <span className="field-label">{t(locale, "roleSetting")}</span>
-        <p className="field-hint">{t(locale, "roleSettingHint")}</p>
+        <span className="field-label">
+          {t(locale, "roleSetting")}
+          <InfoButton locale={locale}>{t(locale, "roleSettingHint")}</InfoButton>
+        </span>
         <button type="button" className="btn" onClick={onResetRole}>
           {t(locale, "forgetRole")}
         </button>
       </div>
 
       <div className="field setting">
-        <span className="field-label">{t(locale, "aboutData")}</span>
-        <p className="field-hint">{t(locale, "aboutDataText")}</p>
+        <span className="field-label">
+          {t(locale, "aboutData")}
+          <InfoButton locale={locale}>{t(locale, "aboutDataText")}</InfoButton>
+        </span>
       </div>
-    </main>
+
+      <div className="field setting">
+        <a className="btn" href="#intro">
+          {t(locale, "homeIntro")}
+        </a>
+      </div>
+    </section>
   );
 }

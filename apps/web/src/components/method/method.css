@@ -1,0 +1,141 @@
+/* Method page: compact panels, live rule left, experiment candidates right; one column below 960 px. */
+.method {
+  --m-ink: var(--ink, #07081c);
+  --m-ink-3: var(--ink-3, #6f7292);
+  --m-line: var(--line, #e4e6ee);
+  --m-acc: var(--brand-accent, #635bf1);
+  --m-acc-soft: var(--brand-accent-soft, #ecebfc);
+  display: grid;
+  gap: 12px;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 12px 16px 32px;
+  color: var(--m-ink);
+  font-size: var(--t-s, 13px);
+}
+
+.mt-top h1 {
+  margin: 0;
+  font-family: var(--brand-font-display, inherit);
+  font-size: var(--t-l, 22px);
+  font-weight: 600;
+}
+
+.mt-top p {
+  margin: 4px 0 0;
+  color: var(--m-ink-3);
+}
+
+.mt-step {
+  background: var(--glass-3, #fff);
+  border: 1px solid var(--m-line);
+  border-radius: var(--brand-radius, 10px);
+  padding: 12px;
+  min-width: 0;
+}
+
+.mt-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin-bottom: 12px;
+}
+
+.mt-head h2 {
+  margin: 0;
+  font-size: var(--t-m, 15px);
+  font-weight: 600;
+}
+
+.mt-head p {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--m-ink-3);
+}
+
+.mt-num {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--m-acc-soft);
+  color: var(--m-ink);
+  font-size: var(--t-xs, 12px);
+  font-weight: 600;
+}
+
+.mt-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+.mt-live,
+.mt-cands {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  min-width: 0;
+}
+
+.mt-live > * {
+  max-width: 480px;
+}
+
+@media (min-width: 960px) {
+  .mt-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .mt-grid-cand .mt-cands {
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+.mt-label {
+  margin: 0 0 4px;
+  font-size: var(--t-xs, 12px);
+  font-weight: 600;
+  color: var(--m-ink-3);
+}
+
+.mt-line,
+.mt-note {
+  margin: 0;
+  font-size: var(--t-xs, 12px);
+  color: var(--m-ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.mt-fig {
+  margin: 0;
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.mt-fig img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px dashed var(--line-strong, #aebecb);
+  border-radius: 6px;
+  background: #fff;
+}
+
+.mt-tag {
+  justify-self: start;
+  padding: 0 8px;
+  border: 1px dashed var(--line-strong, #aebecb);
+  border-radius: 6px;
+  font-size: var(--t-xs, 12px);
+  font-weight: 500;
+  color: var(--m-ink);
+}
+
+.mt-fig figcaption {
+  font-size: var(--t-xs, 12px);
+  color: var(--m-ink-3);
+}

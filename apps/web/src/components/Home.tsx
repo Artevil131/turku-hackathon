@@ -34,14 +34,10 @@ export function Home({ locale, clock, findings, lastRole, onRole, connection, al
   const state = asOf === null ? (connection === "offline" ? "offline" : "connecting") : connection === "offline" ? "offline" : "ready";
 
   return (
-    <main className="hm">
+    <div className="hm">
       <h1 className="visually-hidden">{t(locale, "home")}</h1>
       <Since locale={locale} asOf={asOf} changes={changes} state={state} />
       <Roles locale={locale} lastRole={lastRole} unit={unit} asOf={asOf} signals={signals} onRole={onRole} />
-      <p className="hm-intro">
-        <a href="#intro">{t(locale, "homeIntro")}</a>
-        <span>{t(locale, "homeIntroNote")}</span>
-      </p>
-    </main>
+    </div>
   );
 }

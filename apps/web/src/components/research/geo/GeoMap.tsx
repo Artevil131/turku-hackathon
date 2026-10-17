@@ -10,7 +10,19 @@ import type { PanelProps } from "../board.ts";
 import { centroidOf, pathOf } from "../map/geo.ts";
 import { badgeText, KIND_GLYPH, shiftDays, signalsOf } from "../network/model.ts";
 import "./geo.css";
-import { arc, bendPath, cone, type Layout, layoutFor, mapPoint, NODE_HALF_H, NODE_HALF_W, unitPoint } from "./layout.ts";
+import {
+  arc,
+  bendPath,
+  cone,
+  type Layout,
+  layoutFor,
+  mapPoint,
+  NODE_HALF_H,
+  NODE_HALF_W,
+  nodeRect,
+  placeTags,
+  unitPoint,
+} from "./layout.ts";
 import { useLoad } from "./useLoad.ts";
 
 // One geographic panel (redesign D2): Finland's wellbeing counties filled by
@@ -25,6 +37,7 @@ const WINDOW_DAYS = 28;
 const MAX_SPREAD = 3;
 
 const shortName = (region: string) => region.replace(/ hyvinvointialue$/, "");
+const pct = (v: number) => Math.round(v * 100);
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 const fmt = (locale: Locale, v: number, digits = 1) =>
   new Intl.NumberFormat(locale === "fi" ? "fi-FI" : "en-GB", { maximumFractionDigits: digits }).format(v);
@@ -203,7 +216,6 @@ export function GeoMap({ client, locale, asOf, state, onChange, reducedMotion }:
 
   const hospitals = useMemo(() => new Map(HOSPITALS.map((h) => [h.id, { ...h, p: mapPoint(L, h.lon, h.lat) }])), [L]);
   const tyks = hospitals.get("Tyks")?.p ?? [0, 0];
-  const pct = (v: number) => Math.round(v * 100);
   const retry = () => setAttempt((n) => n + 1);
 
   const chooseUnit = (code: WardCode) => {
@@ -217,6 +229,23 @@ export function GeoMap({ client, locale, asOf, state, onChange, reducedMotion }:
     }
   };
 
+  const spreadTags = useMemo(() => {
+    const list = [...spread]
+      .sort((x, y) => x.from.localeCompare(y.from) || x.to.localeCompare(y.to))
+      .map((sp) => {
+        const g = arc(unitPoint(L, sp.from), unitPoint(L, sp.to), -0.22);
+        const label = t(locale, "geoSpread", { share: pct(sp.share), n: sp.n });
+        return { sp, g, label, w: Math.round(label.length * 6.6 + 16) };
+      });
+    const obstacles = WARDS.map((w) => nodeRect(unitPoint(L, w.code)));
+    const spots = placeTags(
+      list.map((x) => ({ id: `${x.sp.from}|${x.sp.to}`, w: x.w, at: x.g.at, tan: x.g.tan })),
+      obstacles,
+      L.circle,
+    );
+    return list.map((x) => ({ ...x, spot: spots.get(`${x.sp.from}|${x.sp.to}`) as NonNullable<ReturnType<typeof spots.get>> }));
+  }, [spread, L, locale]);
+
   const loading = counties.state === "loading" || regional.state === "loading" || net.state === "loading";
   const updating = (regional.fetching && data !== null) || (net.fetching && rel !== null) || (!!asOf && !!data && asOf !== data.asOf);
   const hasError = counties.state === "error" || regional.state === "error" || net.state === "error";
@@ -229,7 +258,7 @@ export function GeoMap({ client, locale, asOf, state, onChange, reducedMotion }:
     { cls: "s4", label: `>${fmt(locale, edgeMax)}` },
   ];
 
-  const legend = (
+  const legendScale = (
     <div className="geo-legend">
       <div className="geo-legend-row">
         <span className="geo-legend-title">{t(locale, "geoLegendCases")}</span>
@@ -242,6 +271,11 @@ export function GeoMap({ client, locale, asOf, state, onChange, reducedMotion }:
           ))}
         </ul>
       </div>
+    </div>
+  );
+
+  const legendKeys = (
+    <div className="geo-legend geo-legend-keys">
       <ul className="geo-keys">
         <li>
           <Glyph strong />
@@ -395,7 +429,7 @@ export function GeoMap({ client, locale, asOf, state, onChange, reducedMotion }:
         </p>
       ) : null}
 
-      {!L.wide ? legend : null}
+      {!L.wide ? legendScale : null}
 
       <div className="geo-stage" ref={wrapRef} data-wide={L.wide}>
         <svg viewBox={`0 0 ${L.w} ${L.h}`} className="geo-svg" role="group" aria-label={t(locale, "geoTitle")}>
@@ -562,20 +596,17 @@ export function GeoMap({ client, locale, asOf, state, onChange, reducedMotion }:
           ) : null}
 
           <g className="geo-spreads">
-            {spread.map((sp) => {
-              const g = arc(unitPoint(L, sp.from), unitPoint(L, sp.to), -0.22);
-              const label = t(locale, "geoSpread", { share: pct(sp.share), n: sp.n });
-              return (
-                <g key={`${sp.from}|${sp.to}`} data-active={sel === sp.from || sel === sp.to}>
-                  <title>{t(locale, "geoSpreadTitle", { share: pct(sp.share), from: sp.from, n: sp.n, total: sp.total, to: sp.to })}</title>
-                  <path d={g.d} className="geo-spread" strokeWidth={1.4 + sp.share * 6} markerEnd="url(#geo-arrow)" />
-                  <rect x={g.mx - 33} y={g.my - 9} width="66" height="18" rx="4" className="geo-tag" />
-                  <text x={g.mx} y={g.my + 4} textAnchor="middle" className="geo-tag-text">
-                    {label}
-                  </text>
-                </g>
-              );
-            })}
+            {spreadTags.map(({ sp, g, label, w, spot }) => (
+              <g key={`${sp.from}|${sp.to}`} data-active={sel === sp.from || sel === sp.to}>
+                <title>{t(locale, "geoSpreadTitle", { share: pct(sp.share), from: sp.from, n: sp.n, total: sp.total, to: sp.to })}</title>
+                <path d={g.d} className="geo-spread" strokeWidth={2 + sp.share * 7} markerEnd="url(#geo-arrow)" />
+                {spot.from ? <line x1={spot.from[0]} y1={spot.from[1]} x2={spot.x} y2={spot.y} className="geo-leader" /> : null}
+                <rect x={spot.x - w / 2} y={spot.y - 9} width={w} height="18" rx="9" className="geo-tag" />
+                <text x={spot.x} y={spot.y + 4} textAnchor="middle" className="geo-tag-text">
+                  {label}
+                </text>
+              </g>
+            ))}
           </g>
 
           {WARDS.map((w) => {
@@ -637,15 +668,15 @@ export function GeoMap({ client, locale, asOf, state, onChange, reducedMotion }:
                 {kinds.length > 0 ? (
                   <g>
                     <rect
-                      x={x + NODE_HALF_W - 6 - kinds.length * 10}
+                      x={x + NODE_HALF_W - 6 - kinds.length * 12}
                       y={y - NODE_HALF_H - 11}
-                      width={kinds.length * 10 + 8}
+                      width={kinds.length * 12 + 8}
                       height="16"
                       rx="8"
                       className="geo-badge"
                     />
                     <text
-                      x={x + NODE_HALF_W - 2 - (kinds.length * 10) / 2}
+                      x={x + NODE_HALF_W - 2 - (kinds.length * 12) / 2}
                       y={y - NODE_HALF_H + 1}
                       textAnchor="middle"
                       className="geo-badge-text"
@@ -661,13 +692,14 @@ export function GeoMap({ client, locale, asOf, state, onChange, reducedMotion }:
 
         {L.wide ? (
           <div className="geo-overlay">
-            {legend}
+            {legendScale}
             {card}
           </div>
         ) : null}
       </div>
 
       {!L.wide ? card : null}
+      {legendKeys}
 
       <div className="geo-lists">
         <section aria-labelledby="geo-units-h">

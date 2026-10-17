@@ -1,47 +1,54 @@
 import { t } from "@aei/i18n";
-import { type KeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
-import { hashParams, writeHashParams } from "../../url.ts";
+import { type KeyboardEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { writeHashParams } from "../../url.ts";
 import { type BoardState, boardFromUrl, boardToParams, type FeedProps, PANELS, type Panel } from "./board.ts";
-import { HospitalNetwork } from "./HospitalNetwork.tsx";
-import { RegionalMap } from "./RegionalMap.tsx";
+import { applyFilters } from "./feed/model.ts";
+import { computeSpans, useRelations } from "./feed/spans.ts";
+import { useIncidents } from "./feed/useIncidents.ts";
+import { GeoMap } from "./geo/GeoMap.tsx";
+import { AlertMath } from "./math/AlertMath.tsx";
 import { SignalFeed } from "./SignalFeed.tsx";
 import { UnitGrid } from "./UnitGrid.tsx";
 import "./ResearchBoard.css";
 
-// The researcher's board (spec-research.md): the signal feed always on the
-// left, one of grid / network / map on the right, linked through one state
-// that lives in the URL. Under 1100 px the feed becomes the first of four
-// tabs and stays mounted so an open incident survives a tab switch.
-
-type Tab = "feed" | Panel;
+// The researcher's workspace (spec-v2 5, with Artem's corrections): the
+// incident list on the left, the geographic panel or the unit grid in the
+// centre, the alert math on the right, all linked through one state that
+// lives in the URL. Under 1100 px the three stack: list, math, panel.
 
 type Props = Omit<FeedProps, "state" | "onChange">;
 
-const PANEL_LABEL = { grid: "boardGrid", network: "boardNetwork", map: "boardMap" } as const;
-const PANEL_SHORT = { grid: "boardGridShort", network: "boardNetworkShort", map: "boardMapShort" } as const;
+const PANEL_LABEL = { geo: "boardGeo", grid: "boardGrid" } as const;
 
-const WIDE = "(min-width: 1100px)";
-
-function useWide(): boolean {
-  const [wide, setWide] = useState(() => window.matchMedia(WIDE).matches);
-  useEffect(() => {
-    const mql = window.matchMedia(WIDE);
-    const onChange = () => setWide(mql.matches);
-    mql.addEventListener("change", onChange);
-    return () => mql.removeEventListener("change", onChange);
-  }, []);
-  return wide;
+/** One screen: the board takes what is left under the top bar and the timeline (which changes height), less the page gutter. */
+function useFitHeight(ref: React.RefObject<HTMLElement | null>) {
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const fit = () => {
+      if (!window.matchMedia("(min-width: 1100px)").matches) return el.style.removeProperty("--board-h");
+      el.style.setProperty(
+        "--board-h",
+        `${Math.max(420, Math.floor(window.innerHeight - el.getBoundingClientRect().top - 12 + window.scrollY))}px`,
+      );
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(document.documentElement);
+    ro.observe(document.body);
+    window.addEventListener("resize", fit);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", fit);
+    };
+  }, [ref]);
 }
 
 export function ResearchBoard(props: Props) {
-  const { locale } = props;
+  const { locale, client, asOf, findings, acknowledge } = props;
   const [state, setState] = useState<BoardState>(boardFromUrl);
-  // Narrow screens only: which tab is showing. Wide screens show the feed and `state.panel`.
-  // Narrow screens open the panel a link names, unless it also names an incident (that lives in the feed).
-  const [tab, setTab] = useState<Tab>(() => {
-    const p = hashParams();
-    return p.has("panel") && !p.has("inc") ? boardFromUrl().panel : "feed";
-  });
+  const boardRef = useRef<HTMLDivElement>(null);
+  useFitHeight(boardRef);
   const onChange = useCallback((patch: Partial<BoardState>) => setState((s) => ({ ...s, ...patch })), []);
   useEffect(() => writeHashParams(boardToParams(state)), [state]);
   // A link followed inside the app (or the back button) changes the hash without remounting.
@@ -51,85 +58,88 @@ export function ResearchBoard(props: Props) {
     return () => removeEventListener("hashchange", onHash);
   }, []);
 
-  const wide = useWide();
-  const panelProps = { ...props, state, onChange };
-  const tabs: Tab[] = ["feed", ...PANELS];
-  const label = (x: Tab) => t(locale, x === "feed" ? "boardFeed" : PANEL_LABEL[x]);
-  const choose = (x: Tab) => {
-    setTab(x);
-    if (x !== "feed") onChange({ panel: x });
-  };
+  const { load, incidents, retry } = useIncidents(client, asOf);
+  const shown = useMemo(
+    () => applyFilters(incidents, { unit: state.unit, kinds: state.kinds, phenotype: state.phenotype }),
+    [incidents, state.unit, state.kinds, state.phenotype],
+  );
+  // The named incident, else the newest one in the list; the list never leaves the math panel blank.
+  const selected = useMemo(
+    () => incidents.find((i) => i.key === state.incident && shown.includes(i)) ?? shown[0] ?? null,
+    [incidents, shown, state.incident],
+  );
+  const relationsOf = useRelations(client, asOf, shown);
+  const spansOf = useCallback((i: (typeof incidents)[number]) => computeSpans(i, incidents, relationsOf(i)), [incidents, relationsOf]);
 
-  const selected: Tab = wide ? state.panel : tab;
-  const tabRefs = useRef(new Map<Tab, HTMLButtonElement>());
+  // The selected incident's unit is lit in the panels; it follows the selection.
+  const selectedWard = selected?.ward ?? null;
+  const ready = load.status === "ready";
+  useEffect(() => {
+    if (!ready) return;
+    setState((s) => (s.focus === selectedWard ? s : { ...s, focus: selectedWard }));
+  }, [ready, selectedWard]);
+
+  const panelProps = { ...props, state, onChange };
+  const tabRefs = useRef(new Map<Panel, HTMLButtonElement>());
   // Roving tabindex: one tab stop; arrows, Home and End move and select (the panel swap is instant).
-  const onTabKey = (e: KeyboardEvent, x: Tab) => {
-    const order = wide ? PANELS : tabs;
-    const i = order.indexOf(x as Panel);
+  const onTabKey = (e: KeyboardEvent, x: Panel) => {
+    const i = PANELS.indexOf(x);
     let next: number | null = null;
-    if (e.key === "ArrowRight") next = (i + 1) % order.length;
-    else if (e.key === "ArrowLeft") next = (i - 1 + order.length) % order.length;
+    if (e.key === "ArrowRight") next = (i + 1) % PANELS.length;
+    else if (e.key === "ArrowLeft") next = (i - 1 + PANELS.length) % PANELS.length;
     else if (e.key === "Home") next = 0;
-    else if (e.key === "End") next = order.length - 1;
-    const to = next === null ? undefined : order[next];
+    else if (e.key === "End") next = PANELS.length - 1;
+    const to = next === null ? undefined : PANELS[next];
     if (to === undefined) return;
     e.preventDefault();
-    choose(to);
+    onChange({ panel: to });
     tabRefs.current.get(to)?.focus();
   };
 
   return (
-    <div className="section board">
-      <div className="board-tabs" role="tablist" aria-label={t(locale, "boardPanels")}>
-        {tabs.map((x) => (
-          <button
-            key={x}
-            type="button"
-            role="tab"
-            id={`board-tab-${x}`}
-            className="board-tab"
-            data-panel={x}
-            aria-selected={selected === x}
-            aria-controls={x === "feed" ? "board-panel-feed" : "board-panel-main"}
-            tabIndex={selected === x ? 0 : -1}
-            ref={(el) => {
-              if (el) tabRefs.current.set(x, el);
-              else tabRefs.current.delete(x);
-            }}
-            onKeyDown={(e) => onTabKey(e, x)}
-            onClick={() => choose(x)}
-          >
-            {x === "feed" ? (
-              label(x)
-            ) : (
-              <>
-                <span className="board-tab-long">{label(x)}</span>
-                <span className="board-tab-short" aria-hidden="true">
-                  {t(locale, PANEL_SHORT[x])}
-                </span>
-              </>
-            )}
-          </button>
-        ))}
+    <div className="section board" ref={boardRef}>
+      <div className="board-feed">
+        <SignalFeed {...panelProps} load={load} incidents={incidents} retry={retry} spansOf={spansOf} selected={selected?.key ?? null} />
       </div>
-      <div
-        className="board-feed"
-        id="board-panel-feed"
-        {...(wide ? {} : { role: "tabpanel", "aria-labelledby": "board-tab-feed" })}
-        data-shown={wide || tab === "feed"}
-      >
-        <SignalFeed {...panelProps} />
+      <div className="board-main">
+        <div className="board-tabs" role="tablist" aria-label={t(locale, "boardPanels")}>
+          {PANELS.map((x) => (
+            <button
+              key={x}
+              type="button"
+              role="tab"
+              id={`board-tab-${x}`}
+              className="board-tab"
+              data-panel={x}
+              aria-selected={state.panel === x}
+              aria-controls="board-panel-main"
+              tabIndex={state.panel === x ? 0 : -1}
+              ref={(el) => {
+                if (el) tabRefs.current.set(x, el);
+                else tabRefs.current.delete(x);
+              }}
+              onKeyDown={(e) => onTabKey(e, x)}
+              onClick={() => onChange({ panel: x })}
+            >
+              {t(locale, PANEL_LABEL[x])}
+            </button>
+          ))}
+        </div>
+        <div className="board-view" id="board-panel-main" role="tabpanel" aria-labelledby={`board-tab-${state.panel}`}>
+          {state.panel === "geo" ? <GeoMap {...panelProps} /> : <UnitGrid {...panelProps} />}
+        </div>
       </div>
-      <div
-        className="board-main"
-        id="board-panel-main"
-        role="tabpanel"
-        aria-labelledby={`board-tab-${state.panel}`}
-        data-shown={wide || tab !== "feed"}
-      >
-        {state.panel === "grid" ? <UnitGrid {...panelProps} /> : null}
-        {state.panel === "network" ? <HospitalNetwork {...panelProps} /> : null}
-        {state.panel === "map" ? <RegionalMap {...panelProps} /> : null}
+      <div className="board-math">
+        <AlertMath
+          client={client}
+          locale={locale}
+          incident={selected}
+          spans={selected ? spansOf(selected) : null}
+          findings={findings}
+          onChange={onChange}
+          acknowledge={acknowledge}
+          empty={load.status === "loading" ? "loading" : "pick"}
+        />
       </div>
     </div>
   );

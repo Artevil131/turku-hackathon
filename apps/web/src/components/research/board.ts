@@ -8,8 +8,9 @@ import { hashParams } from "../../url.ts";
 // shell (ResearchBoard.tsx) owns the state and the URL; panels only read it
 // and ask for changes through `onChange`.
 
-export type Panel = "grid" | "network" | "map";
-export const PANELS: readonly Panel[] = ["grid", "network", "map"];
+/** The centre view: the geographic panel (default) or the unit grid. Old links to `network` and `map` open the geographic panel. */
+export type Panel = "geo" | "grid";
+export const PANELS: readonly Panel[] = ["geo", "grid"];
 
 /** The five kinds of ENGINE.md 3.6; naming is a lookup on the alert. */
 export type SignalKind = "sentinel" | "cluster" | "trend" | "divergence" | "data";
@@ -42,7 +43,7 @@ export interface BoardState {
   unit: WardCode | null;
   kinds: SignalKind[];
   phenotype: Phenotype | null;
-  /** The open incident in the feed (its `incident` id, or the alert id). */
+  /** The selected incident (its `incident` id, or the alert id); `#research?inc=` or `?incident=`. */
   incident: string | null;
   /** The unit of the open incident: highlighted by panels, never filters the feed. */
   focus: WardCode | null;
@@ -57,11 +58,11 @@ export function boardFromUrl(): BoardState {
   const weeks = Number(p.get("weeks"));
   return {
     weeks: GRID_WEEKS.find((w) => w === weeks) ?? DEFAULT_WEEKS,
-    panel: PANELS.includes(panel as Panel) ? (panel as Panel) : "grid",
+    panel: panel === "grid" ? "grid" : "geo",
     unit: unit && isWardCode(unit) ? unit : null,
     kinds: (p.get("kind") ?? "").split(",").filter((k): k is SignalKind => KINDS.includes(k as SignalKind)),
     phenotype: PHENOTYPES.includes(ph as Phenotype) ? (ph as Phenotype) : null,
-    incident: p.get("inc"),
+    incident: p.get("inc") ?? p.get("incident"),
     focus: focus && isWardCode(focus) ? focus : null,
   };
 }
@@ -69,7 +70,7 @@ export function boardFromUrl(): BoardState {
 export function boardToParams(s: BoardState): Record<string, string | null> {
   // The default panel stays out of the URL, so a link that names one is a deliberate choice.
   return {
-    panel: s.panel === "grid" ? null : s.panel,
+    panel: s.panel === "geo" ? null : s.panel,
     weeks: s.weeks === DEFAULT_WEEKS ? null : String(s.weeks),
     unit: s.unit,
     kind: s.kinds.join(",") || null,
