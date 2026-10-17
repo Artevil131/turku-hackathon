@@ -852,3 +852,15 @@
   background: var(--live-soft);
   color: var(--live);
 }
+
+/* The way back to the full tour: a bluish box first among the demo files. */
+.start-tour {
+  justify-content: center;
+  border-color: var(--live);
+  background: var(--live-soft);
+  color: var(--live);
+}
+.start-tour span {
+  color: var(--live);
+  font-size: var(--t-s);
+}

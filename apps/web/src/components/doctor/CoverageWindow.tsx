@@ -251,6 +251,7 @@ export function CoverageWindow({
             items={items}
             bar={barOf(current, filters)}
             loading={status2 === "loading" && !current}
+            failed={status2 === "error" && !current}
             editing={editing}
             onEdit={() => setEditing((v) => !v)}
           />

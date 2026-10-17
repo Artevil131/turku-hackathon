@@ -10,7 +10,7 @@ import { PHONE } from "./components/shell/Menu.tsx";
 import { Sidebar, tabName } from "./components/shell/Sidebar.tsx";
 import { type Audience, storedAudience } from "./components/start/audience.ts";
 import { StartPage } from "./components/start/StartPage.tsx";
-import type { DemoId, DemoSpec } from "./demo/demos.ts";
+import type { DemoSpec, TourId } from "./demo/demos.ts";
 import { openDemo } from "./demo/openDemo.ts";
 import { DemoTour } from "./demo/tour/Tour.tsx";
 import { useLive } from "./live.ts";
@@ -135,7 +135,17 @@ export function App() {
   const [drawer, setDrawer] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   // The guided tour offered when a demo file opens; leaving the project ends it.
-  const [tour, setTour] = useState<{ demo: DemoId; key: number } | null>(null);
+  const [tour, setTour] = useState<{ demo: TourId; key: number } | null>(null);
+  // First visit: the full tour is offered once; "Not now" leaves a way back on the start page and in the sidebar.
+  useEffect(() => {
+    if (page === "home" && stored("yl.welcomed", "", () => true) === "") setTour({ demo: "overview", key: Date.now() });
+    // biome-ignore lint/correctness/useExhaustiveDependencies: only on first load
+  }, []);
+  const startTour = () => {
+    setPage("home");
+    history.pushState(null, "", "#home");
+    setTour({ demo: "overview", key: Date.now() });
+  };
   const [slots, setSlots] = useState<Slots>({ actions: null, windows: null });
   const setActionsSlot = useCallback((el: HTMLElement | null) => setSlots((s) => (s.actions === el ? s : { ...s, actions: el })), []);
   const setWindowsSlot = useCallback((el: HTMLElement | null) => setSlots((s) => (s.windows === el ? s : { ...s, windows: el })), []);
@@ -344,7 +354,8 @@ export function App() {
     openDemo(client, locale, demo)
       .then((project) => {
         shell.openProject(project);
-        setTour({ demo: demo.id, key: Date.now() });
+        // The full tour opens demo files itself and keeps playing; any other tour starts with the file.
+        setTour((current) => (current?.demo === "overview" ? current : { demo: demo.id, key: Date.now() }));
       })
       .catch(() => setNotice(t(locale, "demoOpenError")));
   };
@@ -372,6 +383,7 @@ export function App() {
                 onTab={activate}
                 onCloseTab={(tab) => close(tab.key)}
                 onDemo={openDemoFile}
+                onTour={startTour}
                 onNew={() => {
                   launchTemplate(client, locale, "blank")
                     .then(shell.openProject)
@@ -443,6 +455,7 @@ export function App() {
                         clock={live.clock?.asOf ?? null}
                         audience={audience}
                         onDemo={openDemoFile}
+                        onTour={startTour}
                       />
                     ) : null}
                     <Suspense fallback={<div className="section" aria-busy="true" />}>
@@ -484,8 +497,17 @@ export function App() {
                 </button>
               </p>
             ) : null}
-            {tour && page === "project" ? (
-              <DemoTour key={tour.key} locale={locale} demo={tour.demo} reducedMotion={reducedMotion} onClose={() => setTour(null)} />
+            {tour && (page === "project" || tour.demo === "overview") ? (
+              <DemoTour
+                key={tour.key}
+                locale={locale}
+                demo={tour.demo}
+                reducedMotion={reducedMotion}
+                onClose={() => {
+                  if (tour.demo === "overview") store("yl.welcomed", "1");
+                  setTour(null);
+                }}
+              />
             ) : null}
             {live.connection === "offline" ? (
               <p className="banner" role="status">

@@ -1,6 +1,6 @@
 import { type Locale, t } from "@aei/i18n";
 import { type CSSProperties, useEffect, useRef, useState } from "react";
-import type { DemoId } from "../demos.ts";
+import type { TourId } from "../demos.ts";
 import { type Target, type TourStep, tourFor } from "./steps.ts";
 import "./tour.css";
 
@@ -84,7 +84,7 @@ function controller() {
 
 export interface DemoTourProps {
   locale: Locale;
-  demo: DemoId;
+  demo: TourId;
   reducedMotion: boolean;
   onClose: () => void;
 }
@@ -253,14 +253,14 @@ export function DemoTour({ locale, demo, reducedMotion, onClose }: DemoTourProps
     return (
       <div className="tour-offer" role="dialog" aria-labelledby="tour-offer-title" aria-describedby="tour-offer-body">
         <p className="tour-kicker">{t(locale, "tourLabel")}</p>
-        <h2 id="tour-offer-title">{t(locale, "tourOfferTitle")}</h2>
-        <p id="tour-offer-body">{t(locale, "tourOfferBody")}</p>
+        <h2 id="tour-offer-title">{t(locale, demo === "overview" ? "tourOvOfferTitle" : "tourOfferTitle")}</h2>
+        <p id="tour-offer-body">{t(locale, demo === "overview" ? "tourOvOfferBody" : "tourOfferBody")}</p>
         <div className="tour-actions">
           <button ref={playButton} type="button" className="btn btn-primary" onClick={() => setPhase("play")}>
-            {t(locale, "tourOfferPlay")}
+            {t(locale, demo === "overview" ? "tourOvOfferPlay" : "tourOfferPlay")}
           </button>
           <button type="button" className="btn" onClick={onClose}>
-            {t(locale, "tourOfferSkip")}
+            {t(locale, demo === "overview" ? "tourOvOfferSkip" : "tourOfferSkip")}
           </button>
         </div>
       </div>

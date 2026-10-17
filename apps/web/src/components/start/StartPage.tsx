@@ -108,12 +108,14 @@ export function StartPage({
   clock,
   audience,
   onDemo,
+  onTour,
 }: {
   client: AeiClient;
   locale: Locale;
   clock: string | null;
   audience: Audience;
   onDemo: (demo: DemoSpec) => void;
+  onTour: () => void;
 }) {
   const [projects, setProjects] = useState<Project[] | null>(null);
   const [failed, setFailed] = useState(false);
@@ -317,6 +319,10 @@ export function StartPage({
         <section id="start-demos" tabIndex={-1}>
           <h2>{t(locale, "demoSection")}</h2>
           <div className="start-demo-grid">
+            <button type="button" className="start-demo start-tour" data-tour onClick={onTour}>
+              <strong>{t(locale, "tourOvBoxTitle")}</strong>
+              <span>{t(locale, "tourOvBoxNote")}</span>
+            </button>
             {DEMOS.map((demo) => (
               <button type="button" className="start-demo" key={demo.id} data-demo={demo.id} onClick={() => onDemo(demo)}>
                 <TemplateArt demo={demo.id} />

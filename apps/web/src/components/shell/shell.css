@@ -254,8 +254,18 @@
   align-items: center;
 }
 
+.sb-tab {
+  min-width: 0;
+}
+
 .sb-tab .sb-item {
+  flex: 1;
+  min-width: 0;
   padding-right: 34px;
+}
+
+.sb-tab .sb-label {
+  min-width: 0;
 }
 
 .sb-tab-name {
@@ -282,7 +292,7 @@
   right: 4px;
   width: 24px;
   height: 24px;
-  opacity: 0;
+  opacity: 0.75;
 }
 
 .sb-tab:hover .sb-tab-close,
@@ -922,4 +932,8 @@
 .sb-demo-label small {
   color: var(--ink-3);
   font-size: var(--t-xs);
+}
+
+.sb-tour {
+  color: var(--live);
 }

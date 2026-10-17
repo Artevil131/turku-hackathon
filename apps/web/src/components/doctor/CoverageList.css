@@ -662,3 +662,28 @@
 .cl-checks summary {
   cursor: pointer;
 }
+
+.dr-answer-case {
+  flex-wrap: wrap;
+}
+.dr-answer-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dr-answer-chips li {
+  padding: 3px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--glass-1);
+  color: var(--ink);
+  font-weight: 600;
+}
+.dr-answer-change {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}

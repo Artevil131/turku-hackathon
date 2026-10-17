@@ -25,6 +25,7 @@ export function DoctorAnswer({
   items,
   bar,
   loading,
+  failed,
   editing,
   onEdit,
 }: {
@@ -34,6 +35,8 @@ export function DoctorAnswer({
   /** The bar the list is judged against, in percent. */
   bar: number;
   loading: boolean;
+  /** The coverage call failed and there is nothing to show: say so instead of claiming an answer. */
+  failed: boolean;
   editing: boolean;
   onEdit: () => void;
 }) {
@@ -41,16 +44,36 @@ export function DoctorAnswer({
   const clears = singles.filter((i) => i.standing === "clears");
   const below = singles.filter((i) => i.standing === "below");
   const first = clears[0] ?? null;
-  const where = [wardName(locale, filters.unit as never), specimenName(locale, filters.site).toLowerCase()].join(" · ");
+  const chips = [
+    wardName(locale, filters.unit as never),
+    specimenName(locale, filters.site).toLowerCase(),
+    t(locale, filters.sev === "severe" ? "drSevSevereShort" : "drSevMildShort"),
+  ];
   return (
     <section className="dr-answer" aria-label={t(locale, "drAnswerLabel")} aria-busy={loading || undefined}>
-      <p className="dr-answer-case">
-        {t(locale, "drAnswerCase", { where })}
+      <div className="dr-answer-case">
+        <span className="dr-answer-for">{t(locale, "drAnswerFor")}</span>
+        <ul className="dr-answer-chips" aria-label={t(locale, "drAnswerParams")}>
+          {chips.map((chip) => (
+            <li key={chip}>{chip}</li>
+          ))}
+        </ul>
         <button type="button" className="dr-answer-change" aria-expanded={editing} onClick={onEdit}>
+          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false">
+            <path
+              d="M2.5 13.5l.7-3L11 2.7l2.3 2.3-7.8 7.8zM9.7 4l2.3 2.3"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.4"
+              strokeLinejoin="round"
+            />
+          </svg>
           {t(locale, editing ? "drAnswerDone" : "drAnswerChange")}
         </button>
-      </p>
-      {loading ? (
+      </div>
+      {failed ? (
+        <p className="dr-answer-head">{t(locale, "drAnswerFailed")}</p>
+      ) : loading ? (
         <p className="dr-answer-head">…</p>
       ) : first ? (
         <>

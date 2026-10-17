@@ -38,6 +38,7 @@ const DOC = "M7 3.5h7l4 4V20a.5.5 0 0 1-.5.5h-10.5A.5.5 0 0 1 6.5 20V4a.5.5 0 0 
 const VIEW = "M3.5 12S6.5 6 12 6s8.5 6 8.5 6-3 6-8.5 6-8.5-6-8.5-6ZM12 14.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z";
 const FROZEN = "M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5";
 const PLUS = "M12 5v14M5 12h14";
+const PLAY = "M8 5.5v13l10.5-6.5z";
 const DEMO = "M5 4.5h10l4 4v11h-14zM15 4.5v4h4M8.5 13h7M8.5 16h5";
 
 /** Opens the command palette (the search over units, antibiotics, signals and pages). */
@@ -70,6 +71,7 @@ export function Sidebar({
   onCloseTab,
   onNew,
   onDemo,
+  onTour,
   onPage,
   onLocale,
   setActionsSlot,
@@ -89,6 +91,8 @@ export function Sidebar({
   onNew: () => void;
   /** Opens a demo file (creating its project the first time). */
   onDemo: (demo: DemoSpec) => void;
+  /** Starts the full presentation. */
+  onTour: () => void;
   onPage: (page: "data" | "settings") => void;
   onLocale: (locale: Locale) => void;
   setActionsSlot: (el: HTMLElement | null) => void;
@@ -280,6 +284,14 @@ export function Sidebar({
               {t(locale, "demoSection")}
             </h2>
             <ul className="sb-list">
+              <li>
+                <button type="button" className="sb-item sb-demo sb-tour" data-tour onClick={onTour}>
+                  <span className="sb-icon">
+                    <Svg d={PLAY} />
+                  </span>
+                  <span className="sb-label">{t(locale, "tourOvBoxTitle")}</span>
+                </button>
+              </li>
               {DEMOS.map((demo) => (
                 <li key={demo.id}>
                   <button type="button" className="sb-item sb-demo" data-demo={demo.id} onClick={() => onDemo(demo)}>

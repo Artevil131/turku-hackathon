@@ -2,9 +2,11 @@
 
 export const doctorEn = {
   drAnswerLabel: "What to start with",
-  drAnswerCase: "For {where}",
-  drAnswerChange: "Change the case",
-  drAnswerDone: "Hide the case",
+  drAnswerFailed: "No answer yet: the coverage could not be loaded. Retry below.",
+  drAnswerFor: "For",
+  drAnswerParams: "The case",
+  drAnswerChange: "Change ward, sample or severity",
+  drAnswerDone: "Done",
   drAnswerStart: "Start with {name}",
   drAnswerCovers: "Covers {share} % of the likely bacteria (n {n}).",
   drAnswerAlsoHead: "Also good enough (at least {bar} %)",
@@ -200,9 +202,11 @@ export const doctorEn = {
 
 export const doctorFi: Record<keyof typeof doctorEn, string> = {
   drAnswerLabel: "Mistä aloittaa",
-  drAnswerCase: "Tapaukselle {where}",
-  drAnswerChange: "Muuta tapausta",
-  drAnswerDone: "Piilota tapaus",
+  drAnswerFailed: "Ei vastausta vielä: kattavuutta ei voitu ladata. Yritä uudelleen alta.",
+  drAnswerFor: "Tapaukselle",
+  drAnswerParams: "Tapaus",
+  drAnswerChange: "Muuta yksikköä, näytettä tai vaikeusastetta",
+  drAnswerDone: "Valmis",
   drAnswerStart: "Aloita lääkkeellä {name}",
   drAnswerCovers: "Kattaa {share} % todennäköisistä bakteereista (n {n}).",
   drAnswerAlsoHead: "Myös riittävä (vähintään {bar} %)",

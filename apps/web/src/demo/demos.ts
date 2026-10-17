@@ -10,6 +10,8 @@ import { gridLayout } from "../components/research/workspace/templates.ts";
 // The slices use fixed dates, so a demo reads the same whenever it is opened.
 
 export type DemoId = "clinician" | "control" | "researcher";
+/** A tour: one per demo file, and the full presentation. */
+export type TourId = DemoId | "overview";
 
 export interface DemoSpec {
   id: DemoId;
@@ -110,7 +112,7 @@ export const DEMOS: readonly DemoSpec[] = [
         analysis("rate", s),
         analysis("compare", s, { bMode: "previous" }),
         analysis("beta", s),
-        analysis("detector", s, { detector: "profile" }),
+        analysis("detector", s, { detector: "phenotype" }),
         { id: newId(), kind: "code", lang: "python", code: "", edited: false },
         {
           id: newId(),

@@ -36,7 +36,7 @@ export const demoEn = {
   demoNoteResearcherQuestion:
     "## Question\n\nDid ESBL-producing isolates on Internal medicine A rise above their usual rate in spring 2025, and is the rise larger than week-to-week noise?\n\nThe slice below is frozen: every number on this page comes from the same cut of the data and can be reproduced in Python or R.",
   demoNoteResearcherRead:
-    "## Reading\n\nThe rate is well above what the weeks before would give, and the comparison with the previous 61 days agrees. The detector flagged the cluster on the same dates. Next step for the paper: describe the isolates (specimen, age group) and repeat for Internal medicine B as a control unit.",
+    "## Reading\n\nThe share alone does not separate the two periods: 7 of 108 tested isolates were ESBL (6.5 %) against 6 of 111 (5.4 %) in the 61 days before, a difference of 1.1 points whose interval includes zero. The count says more: the detector flags Internal medicine A on 30 April, seven ESBL isolates in 28 days against about 1.4 expected. Next: check whether sampling changed (the rate per 100 cultures) and repeat for Internal medicine B as a control unit.",
 };
 
 export const demoFi: Record<keyof typeof demoEn, string> = {
@@ -75,5 +75,5 @@ export const demoFi: Record<keyof typeof demoEn, string> = {
   demoNoteResearcherQuestion:
     "## Kysymys\n\nNousivatko ESBL-tuottajat Sisätaudit A:lla tavallista korkeammalle keväällä 2025, ja onko nousu suurempi kuin viikoittainen vaihtelu?\n\nAlla oleva otanta on jäädytetty: jokainen luku tällä sivulla tulee samasta aineistoleikkauksesta ja on toistettavissa Pythonilla tai R:llä.",
   demoNoteResearcherRead:
-    "## Tulkinta\n\nIlmaantuvuus on selvästi korkeampi kuin edellisten viikkojen perusteella odottaisi, ja vertailu edelliseen 61 päivään on samaa mieltä. Tunnistin nosti klusterin esiin samoina päivinä. Artikkelia varten seuraavaksi: kuvaile löydökset (näytetyyppi, ikäryhmä) ja toista Sisätaudit B:lle verrokkiyksikkönä.",
+    "## Tulkinta\n\nPelkkä osuus ei erota jaksoja: 7 testatusta 108 löydöksestä oli ESBL (6,5 %), edeltävien 61 päivän 111:stä 6 (5,4 %), eli 1,1 prosenttiyksikön ero, jonka luottamusväli sisältää nollan. Lukumäärä kertoo enemmän: tunnistin nostaa Sisätaudit A:n esiin 30. huhtikuuta, seitsemän ESBL-löydöstä 28 päivässä, odotettu noin 1,4. Seuraavaksi: tarkista, muuttuiko näytteenotto (ilmaantuvuus sataa viljelyä kohti) ja toista Sisätaudit B:lle verrokkiyksikkönä.",
 };

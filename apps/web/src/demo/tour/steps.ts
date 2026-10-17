@@ -1,5 +1,5 @@
 import type { Locale } from "@aei/i18n";
-import type { DemoId } from "../demos.ts";
+import type { TourId } from "../demos.ts";
 
 // The guided tours (one per demo file): what the cursor points at, what it does there, and the caption it shows.
 // Targets are the app's own DOM, so a tour drives the real tool; a step whose target never appears just shows
@@ -74,15 +74,14 @@ function clinician(): TourStep[] {
     // The coverage list's own source line: synthetic demo data, and the data checks it passed.
     { say: "tourYourData", at: first(`${win("coverage")} .data-quality`) },
     ...band(),
-    { say: "tourClinRecord", at: first(".rs") },
+    // The case controls wait behind this button; the tour opens them for the next steps.
+    { say: "tourClinRecord", at: first(".dr-answer-change"), act: "click", waitFor: ".rs", show: ".dr-case" },
     { say: "tourClinRow", at: first(".cl-row .cl-num") },
     { say: "tourClinPlot", at: first(".cl-row .cl-plot") },
     { say: "tourClinN", at: first(".cl-row .cl-n") },
     // Severe before the details: in a narrow window the details cover the list and its record strip.
     { say: "tourClinSevere", at: first('.rs-choice[data-value="severe"]'), act: "click", show: "#dr-list" },
     { say: "tourClinDetails", at: first(".cl-row"), act: "click", waitFor: "#dr-details", show: "#dr-details" },
-    { say: "tourClinSignals", at: win("signals") },
-    { say: "tourClinSignalOpen", at: first(`${win("signals")} .feed-row-main`), act: "click", show: win("signals") },
     { say: "tourClinAdd", at: "[data-add-window]", act: "click", waitFor: ".ws-picker" },
     { say: "tourClinMath", at: '.ws-picker [data-add="math"]', act: "click", waitFor: win("math"), show: win("math") },
     { say: "tourClinTools", at: '.ws-rail-btn[data-tool="stats"]', act: "click", waitFor: "#ws-rail-menu" },
@@ -104,7 +103,6 @@ function control(): TourStep[] {
     { say: "tourCtrlShares", at: nth('.nb-cell[data-kind="analysis"]', 0) },
     { say: "tourCtrlDetector", at: nth('.nb-cell[data-kind="analysis"]', 1) },
     { say: "tourCtrlGraph", at: win("graph") },
-    { say: "tourCtrlMap", at: win("map") },
     markThen(cells.mark, {
       say: "tourCtrlAdd",
       at: last(".nb-slot:has(.nb-cell[data-kind='analysis']) .nb-plus"),
@@ -147,6 +145,36 @@ function researcher(): TourStep[] {
   ];
 }
 
-export function tourFor(id: DemoId, _locale: Locale): TourStep[] {
-  return id === "clinician" ? clinician() : id === "control" ? control() : researcher();
+/** The full presentation: start page, data, a project with its windows and tools, and the doctor's view. */
+function overview(): TourStep[] {
+  return [
+    { say: "tourOvWelcome" },
+    { say: "tourOvAsk", at: ".start-ask" },
+    { say: "tourOvDemos", at: "#start-demos" },
+    { say: "tourOvTemplates", at: "#start-templates" },
+    { say: "tourOvDataGo", at: "[data-page-data]", act: "click", waitFor: ".data-page" },
+    { say: "tourOvImport", at: ".cx-try", waitFor: ".cx-try", wait: 4000 },
+    { say: "tourOvSources", at: first(".cx-source") },
+    { say: "tourOvChecks", at: "#data-tab-quality", act: "click", waitFor: ".data-quality", wait: 4000 },
+    { say: "tourOvOpen", at: '.sb-demo[data-demo="control"]', act: "click", waitFor: win("answer"), wait: 15000, show: win("answer") },
+    { say: "tourOvWindows", at: ".ws-area" },
+    { say: "tourOvGuide", at: first(".ws-guide") },
+    { say: "tourOvAdd", at: "[data-add-window]", act: "click", waitFor: ".ws-picker" },
+    { say: "tourOvPick", at: '.ws-picker [data-add="grid"]', act: "click", waitFor: win("grid"), show: win("grid") },
+    { say: "tourOvTools", at: '.ws-rail-btn[data-tool="stats"]', act: "click", waitFor: "#ws-rail-menu" },
+    { say: "tourOvNotebook", at: win("notebook") },
+    {
+      say: "tourOvDoctor",
+      at: '.sb-demo[data-demo="clinician"]',
+      act: "click",
+      waitFor: win("coverage"),
+      wait: 15000,
+      show: win("coverage"),
+    },
+    { say: "tourOvOutro" },
+  ];
+}
+
+export function tourFor(id: TourId, _locale: Locale): TourStep[] {
+  return id === "overview" ? overview() : id === "clinician" ? clinician() : id === "control" ? control() : researcher();
 }
