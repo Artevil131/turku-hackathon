@@ -37,6 +37,8 @@ export const ROUTES = {
   weekly: "/api/weekly",
   /** Plausibility checks over the rows the server holds (D-038). */
   quality: "/api/quality",
+  /** National reference per genus, antibiotic and specimen from THL's Finres cube (D-048); 404 without the file. */
+  national: "/api/national",
 } as const;
 
 export interface Meta {
@@ -278,6 +280,64 @@ export interface QualityResponse {
   summary: CheckSummary[];
 }
 
+/** The genera Finres reports (D-048); Finres has no species. */
+export type FinresGenus = "Escherichia" | "Klebsiella" | "Staphylococcus" | "Enterococcus" | "Pseudomonas";
+
+/** Our antibiotic codes as Finres reports them, plus its three phenotype flags; the cefoxitin screen is the MRSA flag. */
+export type NationalAntibiotic = Exclude<Antibiotic["code"], "FOX"> | "ESBL" | "MRSA" | "VRE";
+
+/** One Finres cell; null where the cube has no figure (for example tested but %R not published). */
+export interface NationalCell {
+  genus: FinresGenus;
+  antibiotic: NationalAntibiotic;
+  specimen: Specimen;
+  tests: number | null;
+  resistant: number | null;
+  /** Percent resistant, 0 to 100. */
+  pctR: number | null;
+  /** 95 % interval of `pctR`, in percent. */
+  interval: [number, number] | null;
+}
+
+/** The file `scripts/fetch_finres.py` writes (`aei.finres`): the latest year with figures. */
+export interface NationalResponse {
+  source: string;
+  licence: string;
+  fetched: IsoDate;
+  year: number;
+  cells: NationalCell[];
+}
+
+/** The dataset's species to the Finres genus (D-048, mirrors `aei.finres.SPECIES_GENUS`); others have no national line. */
+export const FINRES_GENUS: Partial<Record<Organism, FinresGenus>> = {
+  "Escherichia coli": "Escherichia",
+  "Klebsiella pneumoniae": "Klebsiella",
+  "Klebsiella oxytoca": "Klebsiella",
+  "Enterococcus faecalis": "Enterococcus",
+  "Staphylococcus aureus": "Staphylococcus",
+  "Pseudomonas aeruginosa": "Pseudomonas",
+};
+
+/** Our specimens to the Finres spec_type labels (mirrors `aei.finres.SPECIMEN_LABELS`). */
+export const FINRES_SPECIMEN: Record<Specimen, string> = {
+  urine: "virtsa",
+  blood: "veri",
+  wound: "märkä- ja muut löydökset",
+};
+
+/** The national cell for one of our species, antibiotics (or a flag) and specimens; undefined means no national line. */
+export function nationalCell(
+  response: NationalResponse,
+  organism: Organism,
+  antibiotic: Antibiotic["code"] | NationalAntibiotic,
+  specimen: Specimen,
+): NationalCell | undefined {
+  const genus = FINRES_GENUS[organism];
+  if (!genus) return undefined;
+  const code = antibiotic === "FOX" ? "MRSA" : antibiotic;
+  return response.cells.find((c) => c.genus === genus && c.antibiotic === code && c.specimen === specimen);
+}
+
 /** Server-sent events on ROUTES.live. The event name is the `type`. */
 export type LiveEvent =
   | { type: "clock"; clock: ClockState }
@@ -327,6 +387,8 @@ export interface AeiClient {
   /** Weekly raw counts per unit up to the clock (optional route). */
   weekly(query: WeeklyQuery): Promise<WeeklyResponse>;
   quality(): Promise<QualityResponse>;
+  /** Finres national reference (D-048); 404 when the server has no file. */
+  national(): Promise<NationalResponse>;
   /** Opens the live stream; returns a function that closes it. */
   live(onEvent: (event: LiveEvent) => void, onError?: (error: Event) => void): () => void;
 }
@@ -375,6 +437,7 @@ export function createAeiClient(options: AeiClientOptions): AeiClient {
     counties: () => json<CountiesResponse>(ROUTES.counties),
     weekly: (query) => json<WeeklyResponse>(withQuery(ROUTES.weekly, query)),
     quality: () => json<QualityResponse>(ROUTES.quality),
+    national: () => json<NationalResponse>(ROUTES.national),
     live(onEvent, onError) {
       const source = new ES(url(ROUTES.live));
       for (const type of LIVE_EVENT_TYPES) {

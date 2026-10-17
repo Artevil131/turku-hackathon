@@ -9,6 +9,7 @@ import {
   type IsolateQuery,
   type LiveEvent,
   type Meta,
+  type NationalResponse,
   type QualityResponse,
   type RegionalData,
   type RegionalQuery,
@@ -57,6 +58,8 @@ const config = {
   regionalFile: resolve(env.AEI_REGIONAL ?? "../../data/external/thl/regional.json"),
   // County polygons for the regional map, written by scripts/fetch_county_geometry.py.
   countiesFile: resolve(env.AEI_COUNTIES ?? "../../data/external/statfi/counties.geojson"),
+  // THL Finres national reference, written by scripts/fetch_finres.py (D-048); read on each request.
+  nationalFile: resolve(env.AEI_NATIONAL ?? "../../data/external/thl/finres.json"),
 };
 const codeMaps: CodeMaps = config.codeMapFile
   ? extendCodeMaps(JSON.parse(readFileSync(resolve(config.codeMapFile), "utf8")) as Partial<CodeMaps>)
@@ -346,6 +349,11 @@ export const server = createServer(async (req, res) => {
       const data = JSON.parse(readFileSync(config.regionalFile, "utf8")) as RegionalData;
       const query: RegionalQuery = { group: url.searchParams.get("group") ?? "", region: url.searchParams.get("region") ?? "" };
       return send(res, 200, regionalUpTo(data, clock.state().asOf, query));
+    }
+    if (url.pathname === ROUTES.national) {
+      if (!existsSync(config.nationalFile))
+        return send(res, 404, { error: "No national data; run `uv run python scripts/fetch_finres.py`" });
+      return send(res, 200, JSON.parse(readFileSync(config.nationalFile, "utf8")) as NationalResponse);
     }
     if (url.pathname === ROUTES.weekly) {
       const asOf = clock.state().asOf;
