@@ -357,7 +357,8 @@ Where exports attach: the timeline band (SVG/PNG of what is on screen, CSV
 of `weeklyRows`), the signal card (results JSON for the incident with the
 detector's parameters from `LIVE_SETTINGS` and its D-number; CSV of the
 isolates behind it), the tools panel (CSV of filtered rows; results JSON of
-a run), the project menu (the Word report, the project JSON).
+a run), the project menu (the Word report, the project JSON), and the
+bundle from any view or tool run (section 5, "Reproducible bundle").
 
 ### Word report
 
@@ -386,6 +387,41 @@ export interface ReportInput {
 The web builds `sections` from what is on screen (the card's sentence via
 the same i18n keys, the timeline PNG via `svgToPng`, tables via the CSV
 column definitions), so report copy and screen copy never diverge.
+
+### Reproducible bundle (the fourth export)
+
+A bundle is what a researcher takes away to run the numbers again. It is
+the export of a view or a tool run, not of the whole project. The builder is
+pure, so Node and the browser share it, in `@aei/export/bundle`:
+
+```ts
+// "./bundle"
+export interface BundleFile { path: string; text: string; }
+export interface BundleInput {
+  locale: Locale;
+  tool: string;                                  // the engine-A tool's id in the menu (D-057)
+  data: { rows: readonly Record<string, string | number | null>[]; columns: CsvColumn<Record<string, string | number | null>>[] }; // cut at the screen's floors
+  parameters: Record<string, unknown>;           // the tool's inputs, with their D-numbers
+  results: ResultsDocument;
+  generatedAt: string; version: string; commit?: string;
+}
+/** Returns data.csv, analysis.R, analysis.py, analysis.ipynb, method.tex, results.json. */
+export function buildBundle(input: BundleInput): BundleFile[];
+```
+
+- **Files.** `data.csv` (the rows behind the screen, through `toCsv`, cut at
+  the same floors the screen uses); `analysis.R` (first, for statistics:
+  base R and `stats` only, nothing to install); `analysis.py` and
+  `analysis.ipynb` (the same steps for pipelines, using the `aei` package in
+  `libs/utils/py`); `method.tex` (the method in LaTeX, constants and their
+  D-numbers); `results.json` (`resultsDocument`, the numbers as produced).
+- **Generated from a template, per engine-A tool.** Each tool in the menu
+  (D-057) has one template for its R and Python scripts and its LaTeX; the
+  builder fills in the tool's parameters. Nothing in a script is typed by
+  hand, and no script contains a number the tool did not compute.
+- **Zipped in the app.** `apps/web/src/export.ts` packs the files and saves
+  them with `download`; the builder itself never touches a file.
+- **Engine B** (D-057) gets the same bundle once its tools have templates.
 
 ## 6. Tools layer, minimal
 
@@ -472,6 +508,14 @@ import and one spread each; agree the surface file names now: `project.ts`,
    answered by D-051's `Meta.sites`.)
 10. The computation cell's engine (section 9.3) and what a researcher's own
     table may contain and join on (section 9.4).
+11. Bundle contents and floors (section 5): the files above, and which
+    reporting floor and minimum counts cut `data.csv` so it matches the
+    screen.
+12. `aei` as a public package (`libs/utils/py`): its version and licence,
+    and when an R mirror of the same functions follows.
+13. The model's rule: a local model may draft code against `aei` for the
+    researcher to read and run, but never supplies a number or a test. This
+    extends D-019's rule to every export.
 
 DECISIONS.md numbering: main is at D-056; the first entry from this work
 is D-057.
