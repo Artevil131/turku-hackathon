@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "apps/web/src/components/research/geo/geo.css"
+        ],
+        "createdAt": "2026-10-17T09:38:00.040Z",
+        "reason": "Agent: .geo-row[aria-pressed=\"true\"] is an interactive map-list selection indicator, not decorative card trim; preserve the existing selection affordance."
+      }
+    ]
+  }
+}
