@@ -1,8 +1,9 @@
 import { type Alert, createAeiClient } from "@aei/contract";
+import { METHODS } from "@aei/method";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { groupIncidents } from "../feed/model.ts";
-import { AlertMath, howSentence, oddsPhrase } from "./AlertMath.tsx";
+import { AlertMath, howSentence, MethodEntry, oddsPhrase } from "./AlertMath.tsx";
 
 const client = createAeiClient({ baseUrl: "http://localhost" });
 
@@ -40,6 +41,8 @@ const cluster: Alert = {
   p: 2e-5,
 };
 
+const cpe = { kind: "cpe", id: "s2", date: "2025-06-09", ward: "ICU", organism: "Klebsiella pneumoniae", specimen: "urine" } as Alert;
+
 describe("the signal card", () => {
   it("states the cluster method with its numbers, the surprise and the odds", () => {
     const html = card(cluster);
@@ -69,7 +72,6 @@ describe("the signal card", () => {
     expect(sentence(html)).toBe("A rule, no test: the first MRSA on this inpatient unit in 180 days.");
     expect(html).not.toContain("sig-bars");
     expect(html).not.toContain("sig-surprise");
-    const cpe = { kind: "cpe", id: "s2", date: "2025-06-09", ward: "ICU", organism: "Klebsiella pneumoniae", specimen: "urine" } as Alert;
     expect(sentence(card(cpe))).toContain("every CPE is an alert");
   });
 
@@ -89,6 +91,24 @@ describe("the signal card", () => {
     expect(s).toContain("(14.3)");
     expect(s).toContain("feed or sampling problem");
     expect(html).not.toContain("sig-isolates");
+  });
+
+  it("renders the registry entry: formula, constants with decisions, code line, notebook copy", () => {
+    const html = renderToStaticMarkup(
+      <MethodEntry
+        locale="en"
+        method={METHODS["profile-excess"]}
+        values={{ ward: "URO", organism: "Escherichia coli", from: "2025-05-12", to: "2025-06-09" }}
+      />,
+    );
+    expect(html).toContain('<code class="sig-formula">');
+    expect(html).toContain('alpha = 0.0001 <span class="sig-decision">(D-020)</span>');
+    expect(html).toContain("TypeScript: libs/utils/detect/src/detectors.ts · Python: aei.detect.profile_excess");
+    expect(html).toContain("Copy to notebook");
+    const noPy = renderToStaticMarkup(
+      <MethodEntry locale="en" method={METHODS.cpe} values={{ ward: "ICU", organism: "", from: "a", to: "b" }} />,
+    );
+    expect(noPy).toContain("no Python function yet");
   });
 
   it("caps the odds under one in a million and speaks Finnish", () => {

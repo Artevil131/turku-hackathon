@@ -48,3 +48,55 @@
   color: var(--ink-2);
   max-width: 48ch;
 }
+
+/* The registry entry inside the ⓘ (D-070): formula, constants, code line, notebook copy. */
+.sig-method {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line, #e4e4e4);
+  font-size: var(--t-xs, 12px);
+  color: var(--ink-2);
+  max-width: 48ch;
+}
+.sig-method-plain,
+.sig-method-decisions,
+.sig-code,
+.sig-note {
+  margin: 0;
+  line-height: 1.5;
+}
+.sig-method-label {
+  margin: 4px 0 0;
+  color: var(--ink-3);
+  font-weight: 600;
+}
+.sig-formula {
+  display: block;
+  overflow-x: auto;
+  padding: 6px 8px;
+  border-radius: 4px;
+  background: var(--surface-2, #f4f4f4);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  white-space: pre;
+}
+.sig-constants {
+  margin: 0;
+  padding-left: 16px;
+}
+.sig-decision,
+.sig-code {
+  color: var(--ink-3);
+}
+.sig-snippet {
+  margin: 0;
+  padding: 8px;
+  overflow-x: auto;
+  border-radius: 4px;
+  background: var(--surface-2, #f4f4f4);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  white-space: pre;
+  user-select: all;
+}
