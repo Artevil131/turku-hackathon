@@ -61,22 +61,28 @@ function render(filters = state) {
 }
 
 describe("research incident feed", () => {
-  it("opens with priority-sorted open incidents and keeps older incidents below them", () => {
+  it("groups by time relative to the clock, newest first, one title and one measure per row", () => {
     const html = render();
-    expect(html).toContain("Open incidents · 2");
-    expect(html.indexOf('data-key="priority"')).toBeLessThan(html.indexOf('data-key="recent"'));
-    expect(html.indexOf('data-key="recent"')).toBeLessThan(html.indexOf("Earlier incidents"));
-    expect(html.indexOf("Earlier incidents")).toBeLessThan(html.indexOf('data-key="history"'));
-    expect(html).toContain("Escherichia coli");
-    expect(html).toContain("Urology");
+    expect(html).toContain("This week · 2");
+    expect(html.indexOf("This week · 2")).toBeLessThan(html.indexOf('data-key="recent"'));
+    expect(html.indexOf('data-key="recent"')).toBeLessThan(html.indexOf('data-key="priority"'));
+    expect(html.indexOf('data-key="priority"')).toBeLessThan(html.indexOf("Earlier · 1"));
+    expect(html.indexOf("Earlier · 1")).toBeLessThan(html.indexOf('data-key="history"'));
+    expect(html).toContain("Cluster · Escherichia coli · Urology");
     expect(html).toContain("3 patients · usual 0.2");
+    // high priority is a dot with the ownership sentence as its tooltip, never a word in the row
+    expect(html).toContain('class="feed-dot" title="Inform: infection control and the responsible doctor for Urology"');
+    expect(html).not.toContain(">High priority<");
+    expect(html).not.toContain("Open incidents");
     // detail waits for the selection
-    expect(html).not.toContain("responsible doctor");
     expect(html).not.toContain("One incident");
   });
-  it("keeps the open summary consistent with unit filters", () => {
+  it("shows an active filter as a removable chip and keeps the groups consistent with it", () => {
     const html = render({ ...state, unit: "MED-A" });
-    expect(html).toContain("Open incidents · 0");
+    expect(html).toContain("Filter · 1");
+    expect(html).toContain('aria-label="Remove Internal medicine A"');
+    expect(html).toContain("Earlier · 1");
+    expect(html).not.toContain("This week");
     expect(html).toContain('data-key="history"');
     expect(html).not.toContain('data-key="priority"');
   });

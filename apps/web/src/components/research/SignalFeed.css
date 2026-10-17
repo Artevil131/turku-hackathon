@@ -43,84 +43,176 @@
   color: var(--ink-2);
 }
 
-.feed-filters {
-  display: flex;
-  flex-wrap: wrap;
+/* The one filter control: a button at the header's right, a compact popover under it. */
+.feed-filter-wrap {
+  position: relative;
+  flex: none;
+}
+
+.feed-filter {
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 5px;
+  height: var(--control-h, 28px);
+  padding: 0 9px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control, 6px);
+  background: var(--glass-1, #fff);
+  color: var(--ink-2);
+  font: inherit;
+  font-size: var(--t-xs, 12px);
+  font-weight: 500;
+  white-space: nowrap;
+  transition:
+    border-color var(--mo-1, 120ms) var(--mo-ease, ease-out),
+    background-color var(--mo-1, 120ms) var(--mo-ease, ease-out);
+}
+
+.feed-filter:hover,
+.feed-filter[aria-expanded="true"] {
+  border-color: var(--live);
+  color: var(--ink);
+}
+
+.feed-filter[data-active="true"] {
+  border-color: var(--live);
+  background: var(--brand-accent-soft, #ecebfc);
+  color: var(--ink);
+}
+
+.feed-pop {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(280px, calc(100vw - 32px));
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel, 10px);
+  background: var(--glass-1, #fff);
+  box-shadow: 0 8px 24px -8px rgb(7 8 28 / 0.18);
+  font-size: var(--t-s, 13px);
+}
+
+.feed-pop-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.feed-pop-field > span,
+.feed-pop-kinds > legend {
+  font-size: var(--t-xs, 12px);
+  font-weight: 600;
+  color: var(--ink-3);
 }
 
 .feed-select {
   height: var(--control-h, 28px);
   min-width: 0;
   max-width: 100%;
-  flex: 1 1 110px;
   padding: 0 6px;
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-control, 6px);
   background: var(--glass-1, #fff);
+  font: inherit;
   font-size: var(--t-s, 13px);
 }
 
-.feed-kinds {
+.feed-pop-kinds {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.feed-pop-kinds > legend {
+  padding: 0;
+  margin-bottom: 4px;
+}
+
+.feed-pop-kind {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  padding: 0 4px;
+  border-radius: var(--radius-control, 6px);
+  cursor: pointer;
+}
+
+.feed-pop-kind:hover {
+  background: var(--chassis, #f8f8f8);
+}
+
+.feed-pop-kind input {
+  margin: 0;
+  accent-color: var(--live);
+}
+
+.feed-pop-kind svg {
+  color: var(--ink-2);
+}
+
+.feed-pop-kind-name {
+  flex: 1 1 auto;
+}
+
+.feed-pop-count {
+  font-size: var(--t-xs, 12px);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-3);
+}
+
+.feed-pop-done {
+  align-self: flex-end;
+}
+
+/* Active filters: removable chips in one row under the header. */
+.feed-active {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.feed-chip {
+.feed-active-chip {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  height: var(--control-h, 28px);
+  gap: 6px;
+  height: 24px;
   padding: 0 8px;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-control, 6px);
-  background: var(--glass-1, #fff);
-  color: var(--ink-2);
-  font-size: var(--t-xs, 12px);
-}
-
-.feed-chip {
-  position: relative;
-}
-
-/* A 44 px hit area around the 28 px chip. */
-.feed-chip::after {
-  content: "";
-  position: absolute;
-  inset: -8px -2px;
-}
-
-.feed-chip-name {
-  white-space: nowrap;
-}
-
-.feed-chip:hover {
-  border-color: var(--live);
-}
-
-.feed-chip[aria-pressed="true"] {
-  background: var(--live);
-  border-color: var(--live);
-  color: var(--live-ink, #fff);
-}
-
-.feed-chip-count {
-  font-variant-numeric: tabular-nums;
-}
-
-.feed-unitbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin: 0;
-  padding: 4px 8px;
-  border-radius: var(--radius-control, 6px);
+  border: 1px solid var(--live);
+  border-radius: 12px;
   background: var(--brand-accent-soft, #ecebfc);
-  font-size: var(--t-s, 13px);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--t-xs, 12px);
   font-weight: 500;
+}
+
+.feed-active-chip span {
+  color: var(--ink-3);
+  font-size: 14px;
+  line-height: 1;
+}
+
+.feed-active-chip:hover span {
+  color: var(--ink);
+}
+
+.feed-active-clear {
+  font-size: var(--t-xs, 12px);
+  margin-left: 4px;
 }
 
 .feed-scroll {
@@ -141,19 +233,31 @@
   border-top: 1px solid var(--line);
 }
 
-/* A row: two lines, name and date over units and surprise. */
+/* A row: one line, glyph · title · date, the measure under it in ink-3. The article takes the click
+   for the smoke; the button inside is the keyboard path. */
 .feed-row {
   display: flex;
   flex-direction: column;
-  gap: 4px;
   width: 100%;
-  min-height: 52px;
-  padding: 8px 12px;
-  border: 0;
   border-left: 1px solid transparent;
   background: none;
-  text-align: left;
   color: var(--ink);
+  cursor: pointer;
+}
+
+.feed-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 0;
+  background: none;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
 }
 
 .feed-row:hover {
@@ -165,8 +269,26 @@
   border-left-color: var(--live);
 }
 
-.feed-row:focus-visible {
+.feed-row-main:focus-visible {
   outline-offset: -2px;
+}
+
+/* High priority: a red dot before the title, the ownership sentence as its tooltip. */
+.feed-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin: 0 6px 1px 0;
+  border-radius: 50%;
+  background: var(--st-alert, #c8102e);
+  vertical-align: middle;
+}
+
+.feed-measure {
+  padding-left: 24px;
+  font-size: var(--t-xs, 12px);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-3);
 }
 
 .feed-row-top,
@@ -189,9 +311,14 @@
 .feed-more-in {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   min-height: 0;
+  padding: 0 12px 0 36px;
   overflow: hidden;
+}
+
+.feed-more[data-open="true"] .feed-more-in {
+  padding-bottom: 10px;
 }
 @media (prefers-reduced-motion: reduce) {
   .feed-more {
@@ -325,20 +452,26 @@
   color: var(--ink-2);
 }
 
-.feed-section-title {
-  margin: 16px 12px 4px;
-  font-size: var(--t-s, 13px);
-  font-weight: 600;
+/* Time groups: a plain heading with its count; it never animates. */
+.feed-group + .feed-group {
+  margin-top: 8px;
 }
 
-.feed-brief {
+.feed-group-title {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0;
+  padding: 10px 12px 4px;
+  background: var(--glass-1, #fff);
   font-size: var(--t-xs, 12px);
+  font-weight: 600;
+  letter-spacing: 0.01em;
   color: var(--ink-3);
 }
 
-.feed-unit {
-  font-weight: 400;
-  color: var(--ink-2);
+.feed-group .feed-list > li:first-child {
+  border-top: 1px solid var(--line);
 }
 
 .feed-section-note {
@@ -347,43 +480,27 @@
   font-size: var(--t-xs, 12px);
 }
 
-.feed-summary,
-.feed-evidence,
-.feed-owner,
-.feed-open {
-  font-size: var(--t-xs, 12px);
+.feed-summary {
+  font-size: 11px;
+  color: var(--ink-3);
   overflow-wrap: anywhere;
 }
 
-.feed-summary {
-  color: var(--ink-2);
-}
-
-.feed-owner {
-  font-weight: 500;
-}
-
 .feed-open {
-  color: var(--live);
-  margin-top: 4px;
-}
-
-.feed-members {
-  margin: 0 12px 10px;
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
   font-size: var(--t-xs, 12px);
-  color: var(--ink-2);
-}
-
-.feed-members summary {
-  padding: 6px 0;
+  font-weight: 500;
+  color: var(--live);
   cursor: pointer;
 }
 
-.feed-members ul {
-  display: grid;
-  gap: 8px;
-  padding-left: 20px;
-  margin: 4px 0 0;
+.feed-open:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .feed-note {
@@ -610,7 +727,7 @@
 
 .feed-row .feed-kind,
 .feed-row .feed-name,
-.feed-row .feed-n,
+.feed-row .feed-measure,
 .feed-row .feed-date,
 .feed-row .feed-bar,
 .feed-row .feed-surp-n {
@@ -634,7 +751,7 @@
 
 /* Dimmed: text steps back, backgrounds stay so the list still scans. */
 .feed.has-selection .feed-row:not([aria-current="true"]):not(.is-kin) .feed-name,
-.feed.has-selection .feed-row:not([aria-current="true"]):not(.is-kin) .feed-n,
+.feed.has-selection .feed-row:not([aria-current="true"]):not(.is-kin) .feed-measure,
 .feed.has-selection .feed-row:not([aria-current="true"]):not(.is-kin) .feed-date,
 .feed.has-selection .feed-row:not([aria-current="true"]):not(.is-kin) .sp-line {
   color: var(--ink-3);

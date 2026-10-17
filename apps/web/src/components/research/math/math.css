@@ -11,8 +11,85 @@
   color: var(--ink-2);
 }
 
-.sig-isolates[open] > summary {
+.sig-isolates[open] > summary,
+.sig-reach[open] > summary {
   margin-bottom: 8px;
+}
+
+/* The title line: the kind's glyph, the priority dot, the one title (signals-redesign.md). */
+.sig-title {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  outline-offset: 4px;
+}
+.sig-title-glyph {
+  display: inline-flex;
+  flex: none;
+  align-self: center;
+  color: var(--ink-2);
+}
+.sig[data-kind="sentinel"] .sig-title-glyph {
+  color: var(--st-alert);
+}
+.sig[data-kind="data"] .sig-title-glyph {
+  color: var(--ink-3);
+}
+.sig-title .feed-dot {
+  flex: none;
+  align-self: center;
+  margin: 0;
+}
+
+/* What it means, in words: the one sentence between the numbers and the sections. */
+.sig-means {
+  margin: 0;
+  font-size: var(--t-s, 13px);
+  line-height: 1.5;
+  color: var(--ink);
+  max-width: 48ch;
+  text-wrap: pretty;
+}
+
+/* The collapsed sections share one look: a bold summary with a chevron, a hairline above. */
+.sig-reach {
+  display: block;
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+.sig-reach > summary,
+.sig-how > summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: var(--t-s, 13px);
+  font-weight: 600;
+  list-style: none;
+}
+.sig-reach > summary::-webkit-details-marker {
+  display: none;
+}
+.sig-reach > summary::before,
+.sig-how > summary::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  margin-right: 0;
+  border-right: 1.6px solid currentColor;
+  border-bottom: 1.6px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform var(--mo-1, 120ms) var(--mo-ease, ease-out);
+  font-size: inherit;
+  color: inherit;
+}
+.sig-reach[open] > summary::before,
+.sig-how[open] > summary::before {
+  transform: rotate(45deg);
+}
+.sig-how {
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
 }
 
 .sig-surprise .info-btn,
@@ -27,15 +104,6 @@
 }
 .sig-how > summary::-webkit-details-marker {
   display: none;
-}
-.sig-how > summary::before {
-  content: "▸";
-  margin-right: 4px;
-  color: var(--ink-3);
-  font-size: 11px;
-}
-.sig-how[open] > summary::before {
-  content: "▾";
 }
 .sig-how-text .info {
   vertical-align: middle;

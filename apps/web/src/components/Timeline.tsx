@@ -486,6 +486,7 @@ export function Timeline({
       onPick={pickIncident}
       onMore={openList}
       compact={compact}
+      since={clock?.start ?? null}
     />
   );
 

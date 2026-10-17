@@ -107,8 +107,8 @@ describe("incident summaries", () => {
     for (const locale of ["fi", "en"] as const) {
       const html = renderToStaticMarkup(<IncidentRow locale={locale} incident={first} selected spans={null} onSelect={() => {}} />);
       expect(html).toContain(locale === "fi" ? "Yksi tapahtuma · 2" : "One incident · 2");
-      expect(html).toContain(locale === "fi" ? "Havaittu 2 potilasta" : "2 patients observed");
-      expect(html).toContain('dateTime="2025-06-06"');
+      expect(html).toContain(locale === "fi" ? "2 potilasta · tavallisesti 0,3" : "2 patients · usual 0.3");
+      expect(html).toContain('dateTime="2025-06-07"');
       expect(html).toContain('type="button"');
       expect(html).toContain('aria-current="true"');
     }

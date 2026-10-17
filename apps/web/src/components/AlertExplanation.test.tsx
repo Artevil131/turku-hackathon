@@ -56,8 +56,8 @@ describe("explanation controls", () => {
     expect(html).toContain("responsible doctor for Urology");
     expect(html).toContain("2 patients");
     expect(html).toContain("0.3 usual");
-    // The how-section and its evidence come first, the explanation next, the reach and isolates after.
-    expect(html.indexOf("responsible doctor")).toBeLessThan(html.indexOf("Explain"));
-    expect(html.indexOf("Explain")).toBeLessThan(html.indexOf("Isolates behind it"));
+    // The how-section and its evidence come first, then the isolates, the explanation last (signals-redesign.md 2.6).
+    expect(html.indexOf("responsible doctor")).toBeLessThan(html.indexOf("Isolates behind it"));
+    expect(html.indexOf("Isolates behind it")).toBeLessThan(html.indexOf("Explain"));
   });
 });

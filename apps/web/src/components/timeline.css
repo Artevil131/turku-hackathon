@@ -857,7 +857,7 @@
   display: inline-flex;
   align-items: center;
   height: 24px;
-  max-width: 28ch;
+  max-width: 44ch;
   padding: 0 8px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -921,20 +921,36 @@
   cursor: pointer;
 }
 
-/* A tile: glyph and date on the first line, the unit on the second, the title on the third. */
+/* A tile: glyph and the one-line title (two lines at most), the measure under it, the date at the right. */
 .tl-ev {
   grid-template-columns: auto minmax(0, 1fr);
   grid-template-areas:
-    "code when"
-    "unit unit"
-    "name name";
+    "code name"
+    "what what"
+    "when when";
+  gap: 2px 6px;
+  align-items: start;
+  min-width: 170px;
+  max-width: 230px;
+}
+.tl-ev-code {
+  padding-top: 1px;
+}
+.tl-ev-name {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.tl-ev-what {
+  grid-area: what;
+  padding-left: 20px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-3, #6f7292);
 }
 .tl-ev-when {
+  grid-area: when;
+  padding-left: 20px;
   white-space: nowrap;
-}
-.tl-ev-unit {
-  min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
 }

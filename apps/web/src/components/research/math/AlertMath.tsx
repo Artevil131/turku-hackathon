@@ -1,33 +1,41 @@
 import { NEW_IN_UNIT_DAYS } from "@aei/alerts";
 import type { AeiClient, Alert, ClockCommand } from "@aei/contract";
 import { LIVE_SETTINGS } from "@aei/detect";
-import { alertEvidence, formatDate, type GlossTerm, incidentResponsibility, type Locale, phenotypeName, t } from "@aei/i18n";
+import {
+  alertEvidence,
+  antibioticName,
+  formatDate,
+  incidentPriority,
+  incidentResponsibility,
+  type Locale,
+  phenotypeName,
+  t,
+} from "@aei/i18n";
 import { fillSnippet, type Method, methodOf } from "@aei/method";
 import { formatNum } from "@aei/viz";
 import { type ReactNode, useMemo, useState } from "react";
 import type { Finding } from "../../../live.ts";
 import { allSites, currentSite, homeSite } from "../../../sites.ts";
 import { AlertExplanation } from "../../AlertExplanation.tsx";
-import { Gloss } from "../../Gloss.tsx";
 import { InfoButton } from "../../Info.tsx";
 import { PoissonTail, SurpriseScale } from "../../math/index.ts";
 import type { BoardState } from "../board.ts";
 import { KindGlyph } from "../feed/glyphs.tsx";
+import { GlossedTitle } from "../feed/IncidentRow.tsx";
 import { IsolateList, useIsolates } from "../feed/Isolates.tsx";
 import { type Incident, oneDecimal, windowOf } from "../feed/model.ts";
-import { kindLabel, shortTitle, surpriseOf, unitLabel } from "../feed/names.ts";
+import { signalTitle, surpriseOf } from "../feed/names.ts";
 import { SpanGroups } from "../feed/SpanChips.tsx";
 import type { Spans } from "../feed/spans.ts";
 import "./math.css";
 
-// The signal card (research-unified.md section 3): what, where, when; how much
-// against usual; how sure; how we know; what it touches; the evidence; what next.
+// The signal card (research-unified.md section 3, signals-redesign.md section 2.6): the one
+// title every surface shows, the window; the two bars and the surprise; one sentence in words;
+// then the collapsed sections (how we calculate it, reaches, isolates, explain) and the actions.
 // The root keeps the `math` class for the workspace's window rules.
 
 /** The detectors whose sentence and ⓘ figure rest on a Poisson count (D-020). */
 const COUNT_DETECTORS = ["phenotype-excess", "profile-excess", "sampling-drop", "empty-run"];
-
-const GLOSSED: readonly GlossTerm[] = ["ESBL", "MRSA", "VRE", "CPE"];
 
 interface Props {
   client: AeiClient;
@@ -111,20 +119,29 @@ export function howSentence(locale: Locale, a: Alert): string {
   }
 }
 
-/** The title in words: "ESBL Escherichia coli in Urology", the first abbreviation glossed. */
-function Title({ locale, lead, ward }: { locale: Locale; lead: Alert; ward: string | null }) {
-  const what = shortTitle(locale, lead);
-  const unit = unitLabel(locale, ward);
-  const named = lead.kind === "detector" && lead.detector === "rising-trend" ? what : what.replace(" · ", " ");
-  const text = t(locale, ward ? "cardTitleIn" : "cardTitleWide", { what: named, unit });
-  const term = GLOSSED.find((g) => text.startsWith(g));
-  if (!term) return <>{text}</>;
-  return (
-    <>
-      <Gloss term={term} locale={locale} first />
-      {text.slice(term.length)}
-    </>
-  );
+/** What the signal means, in one plain sentence; it adds no claim the audited how-sentence does not make. */
+export function meaningSentence(locale: Locale, a: Alert): string {
+  if (a.kind === "cpe") return t(locale, "cardMeansCpe");
+  if (a.kind === "new-in-unit") return t(locale, "cardMeansSentinel", { phenotype: phenotypeName(a.phenotype), days: NEW_IN_UNIT_DAYS });
+  if (a.kind !== "detector") return "";
+  switch (a.detector) {
+    case "profile-excess":
+      return t(locale, "cardMeansProfile", { organism: a.organism ?? "", days: LIVE_SETTINGS.profileExcess.windowDays });
+    case "phenotype-excess":
+      return t(locale, "cardMeansPhenotype", {
+        phenotype: a.phenotype ? phenotypeName(a.phenotype) : (a.organism ?? ""),
+        days: LIVE_SETTINGS.phenotypeExcess.windowDays,
+      });
+    case "sampling-drop":
+      return t(locale, "cardMeansData");
+    case "empty-run":
+      return t(locale, "cardMeansEmpty", { n: a.observed });
+    case "rising-trend":
+      return t(locale, "cardMeansTrend", {
+        antibiotic: a.antibiotic ? antibioticName(locale, a.antibiotic) : "",
+        organism: a.organism ?? "",
+      });
+  }
 }
 
 export function AlertMath({
@@ -194,17 +211,24 @@ export function AlertMath({
         onAnimationEnd={(e) => (e.target === e.currentTarget ? setEntered(key) : undefined)}
       >
         <div>
-          <span className="sig-kind">
-            <KindGlyph kind={inc.kind} />
-            {kindLabel(locale, inc.kind)}
-          </span>
-          <h3 className="sig-title">
-            <Title locale={locale} lead={lead} ward={inc.ward} />
+          {/* The same title as the row and the tile, the kind's glyph before it, the red dot for high priority. */}
+          <h3 className="sig-title" tabIndex={-1}>
+            <span className="sig-title-glyph" aria-hidden="true">
+              <KindGlyph kind={inc.kind} />
+            </span>
+            {incidentPriority(inc.members) === "high" ? (
+              <span className="feed-dot" title={incidentResponsibility(locale, inc.members)}>
+                <span className="visually-hidden">{t(locale, "feedSeverityHigh")}. </span>
+              </span>
+            ) : null}
+            <GlossedTitle locale={locale} title={signalTitle(locale, inc.kind, lead)} />
           </h3>
           <p className="sig-where">{whereLine(locale, inc, win)}</p>
         </div>
 
         <Numbers locale={locale} alert={lead} />
+
+        <p className="sig-means">{meaningSentence(locale, lead)}</p>
 
         {/* Concise first: the method opens on request (Artem, 2026-10-17: detail only when the researcher asks). */}
         <details className="sig-how">
@@ -215,15 +239,11 @@ export function AlertMath({
           <p className="feed-owner">{incidentResponsibility(locale, inc.members)}</p>
         </details>
 
-        <div className="math-explain">
-          <AlertExplanation client={client} id={lead.id} locale={locale} />
-        </div>
-
         {spans ? (
-          <div className="sig-reach">
-            <span className="sig-reach-label">{t(locale, "cardReach")}</span>
+          <details className="sig-reach">
+            <summary>{t(locale, "cardReachCount", { n: spans.next.length + spans.trail.length + spans.also.length })}</summary>
             <SpanGroups locale={locale} spans={spans} onUnit={(u) => onChange({ focus: u as BoardState["focus"] })} />
-          </div>
+          </details>
         ) : null}
 
         {inc.kind !== "data" ? (
@@ -232,6 +252,10 @@ export function AlertMath({
             <IsolateList locale={locale} status={iso.status} matched={iso.matched} retry={iso.retry} window={win} dataNote={dataNote} />
           </details>
         ) : null}
+
+        <div className="math-explain">
+          <AlertExplanation client={client} id={lead.id} locale={locale} />
+        </div>
       </div>
 
       <footer className="sig-actions">
@@ -268,12 +292,10 @@ export function AlertMath({
   );
 }
 
-/** "5 patients · 2 Jun – 29 Jun · fired 9 Jun": the count and window where the alert has them. */
+/** "2 Jun – 29 Jun · fired 9 Jun": the window where the alert has one, and the day it fired. The count is on the bars. */
 function whereLine(locale: Locale, inc: Incident, win: { from: string; to: string }): string {
   const a = inc.lead;
   const parts: string[] = [];
-  if (a.kind === "detector" && (a.detector === "profile-excess" || a.detector === "phenotype-excess"))
-    parts.push(t(locale, a.observed === 1 ? "cardPatientOne" : "cardPatients", { n: a.observed }));
   if (a.kind === "detector" && a.detector !== "rising-trend") parts.push(`${formatDate(locale, win.from)} – ${formatDate(locale, win.to)}`);
   parts.push(t(locale, "cardFired", { date: formatDate(locale, a.date) }));
   return parts.join(" · ");

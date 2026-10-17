@@ -1,22 +1,24 @@
-import { alertEvidence, alertEvidenceShort, formatDateNumeric, incidentPriority, incidentResponsibility, type Locale, t } from "@aei/i18n";
+import { formatDateNumeric, incidentPriority, incidentResponsibility, type Locale, t } from "@aei/i18n";
+import type { MouseEvent } from "react";
 import { Gloss } from "../../Gloss.tsx";
 import { KindGlyph } from "./glyphs.tsx";
 import type { Incident } from "./model.ts";
-import { kindLabel, shortTitle, unitLabel } from "./names.ts";
+import { measureLine, signalTitle } from "./names.ts";
 import { SpanLine } from "./SpanChips.tsx";
 import type { Spans } from "./spans.ts";
 
-const TITLE_TERM = /^(ESBL|MRSA|VRE|CPE)(?=\W|$)/;
+const TITLE_TERM = /\b(ESBL|MRSA|VRE|CPE)\b/;
 
-/** A feed title with a leading resistance abbreviation glossed; the rest stays plain text. */
-function GlossedTitle({ locale, title }: { locale: Locale; title: string }) {
+/** A title with its first resistance abbreviation glossed; the rest stays plain text. */
+export function GlossedTitle({ locale, title }: { locale: Locale; title: string }) {
   const m = TITLE_TERM.exec(title);
-  const term = m?.[1] as "ESBL" | "MRSA" | "VRE" | "CPE" | undefined;
-  if (!term) return <>{title}</>;
+  if (!m || m.index === undefined) return <>{title}</>;
+  const term = m[1] as "ESBL" | "MRSA" | "VRE" | "CPE";
   return (
     <>
+      {title.slice(0, m.index)}
       <Gloss term={term} locale={locale} />
-      {title.slice(term.length)}
+      {title.slice(m.index + term.length)}
     </>
   );
 }
@@ -29,74 +31,75 @@ interface Props {
   kin?: boolean;
   spans: Spans | null;
   onSelect: (key: string) => void;
+  /** "Open the card": brings the signal card into view. Without it the link is not shown. */
+  onOpenCard?: () => void;
 }
 
-/** Task summary first; the calculation and the dated member explanations are one action away. */
-export function IncidentRow({ locale, incident: inc, selected, kin = false, spans, onSelect }: Props) {
-  const priority = incidentPriority(inc.members);
+/**
+ * One line per signal (signals-redesign.md §2.2): glyph · title · date, and the measure under it.
+ * Selected, the row adds only the reach chips and "Open the card"; the card holds the rest.
+ * The article takes the click, so a click anywhere on the row (or the smoke's `.feed-row.click()`) selects.
+ */
+export function IncidentRow({ locale, incident: inc, selected, kin = false, spans, onSelect, onOpenCard }: Props) {
+  const high = incidentPriority(inc.members) === "high";
+  const title = signalTitle(locale, inc.kind, inc.lead);
+  const owner = incidentResponsibility(locale, inc.members);
+  const onClick = (e: MouseEvent<HTMLElement>) => {
+    if ((e.target as HTMLElement).closest(".feed-open")) return;
+    onSelect(inc.key);
+  };
   return (
-    <article className="feed-incident">
-      <button
-        type="button"
-        className={`feed-row${kin ? " is-kin" : ""}`}
-        data-kind={inc.kind}
-        aria-current={selected ? "true" : undefined}
-        data-key={inc.key}
-        onClick={() => onSelect(inc.key)}
-        aria-label={`${t(locale, "feedMathOpen")}: ${shortTitle(locale, inc.lead)}, ${unitLabel(locale, inc.ward)}, ${formatDateNumeric(inc.date)}`}
-      >
+    // biome-ignore lint/a11y/useSemanticElements: the row holds a button and a link, so it cannot be one button itself
+    // biome-ignore lint/a11y/noStaticElementInteractions: the click is delegated from the row's own button
+    // biome-ignore lint/a11y/useKeyWithClickEvents: Enter and Space reach the button inside, whose click bubbles here
+    <article
+      className={`feed-row${kin ? " is-kin" : ""}`}
+      data-kind={inc.kind}
+      data-key={inc.key}
+      aria-current={selected ? "true" : undefined}
+      onClick={onClick}
+    >
+      <button type="button" className="feed-row-main" aria-expanded={selected} aria-label={`${title}, ${formatDateNumeric(inc.date)}`}>
         <span className="feed-row-top">
-          <span className="feed-kind" title={kindLabel(locale, inc.kind)}>
+          <span className="feed-kind" aria-hidden="true">
             <KindGlyph kind={inc.kind} />
-            <span className="visually-hidden">{kindLabel(locale, inc.kind)}</span>
           </span>
           <span className="feed-name">
-            <GlossedTitle locale={locale} title={shortTitle(locale, inc.lead)} />
-            <span className="feed-unit"> · {unitLabel(locale, inc.ward)}</span>
+            {high ? (
+              <span className="feed-dot" title={owner}>
+                <span className="visually-hidden">{t(locale, "feedSeverityHigh")}. </span>
+              </span>
+            ) : null}
+            <GlossedTitle locale={locale} title={title} />
           </span>
           <time className="feed-date" dateTime={inc.date}>
             {formatDateNumeric(inc.date)}
           </time>
         </span>
-        <span className="feed-brief">
-          {t(locale, priority === "high" ? "feedSeverityHigh" : "feedSeverityMedium")} · {alertEvidenceShort(locale, inc.lead)}
-        </span>
-        {/* The details ease open: the wrapper is always there, its row grows from 0fr to 1fr. */}
-        <span className="feed-more" data-open={selected}>
-          <span className="feed-more-in">
-            {selected ? (
-              <>
-                <span className="feed-summary">
-                  {t(locale, inc.members.length === 1 ? "feedIncidentOne" : "feedIncidentMany", { n: inc.members.length })}
-                </span>
-                <span className="feed-evidence">{t(locale, "feedLatestEvidence", { evidence: alertEvidence(locale, inc.lead) })}</span>
-                <span className="feed-owner">{incidentResponsibility(locale, inc.members)}</span>
-                {spans ? (
-                  <span className="feed-row-bottom">
-                    <SpanLine locale={locale} spans={spans} ward={inc.ward} />
-                  </span>
-                ) : null}
-                <span className="feed-open">{t(locale, "feedMathOpen")} →</span>
-              </>
-            ) : null}
-          </span>
-        </span>
+        <span className="feed-measure">{measureLine(locale, inc.lead)}</span>
       </button>
-      {selected ? (
-        <details className="feed-members">
-          <summary>{t(locale, "feedMembers")}</summary>
-          <p>{t(locale, "feedMembersNote")}</p>
-          <ul>
-            {inc.members.map((a) => (
-              <li key={a.id}>
-                <time dateTime={a.date}>{formatDateNumeric(a.date)}</time>
-                {" · "}
-                <GlossedTitle locale={locale} title={shortTitle(locale, a)} /> · {alertEvidence(locale, a)}
-              </li>
-            ))}
-          </ul>
-        </details>
-      ) : null}
+      {/* The details ease open: the wrapper is always there, its row grows from 0fr to 1fr. */}
+      <div className="feed-more" data-open={selected}>
+        <div className="feed-more-in">
+          {selected ? (
+            <>
+              <span className="feed-summary">
+                {t(locale, inc.members.length === 1 ? "feedIncidentOne" : "feedIncidentMany", { n: inc.members.length })}
+              </span>
+              {spans ? (
+                <span className="feed-row-bottom">
+                  <SpanLine locale={locale} spans={spans} ward={inc.ward} />
+                </span>
+              ) : null}
+              {onOpenCard ? (
+                <button type="button" className="feed-open" onClick={onOpenCard}>
+                  {t(locale, "feedOpenCard")} →
+                </button>
+              ) : null}
+            </>
+          ) : null}
+        </div>
+      </div>
     </article>
   );
 }

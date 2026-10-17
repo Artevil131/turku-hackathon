@@ -1,13 +1,14 @@
-import { alertEvidence, type Locale, t } from "@aei/i18n";
+import { formatDateNumeric, type Locale, t } from "@aei/i18n";
 import { useRef } from "react";
 import { compactDate } from "./hero/geometry.ts";
 import { KindGlyph } from "./research/feed/glyphs.tsx";
 import type { Incident } from "./research/feed/model.ts";
-import { shortTitle, unitLabel } from "./research/feed/names.ts";
+import { measureLine, signalTitle } from "./research/feed/names.ts";
 
-// What the detectors have found so far, as the replay runs: the newest incidents
-// as tiles, each appearing when its alert arrives. Nothing here is known before
-// the clock reaches it; a tile selects its signal and never moves the clock.
+// What the detectors have found since the replay started: the newest incidents
+// as tiles, each appearing when its alert arrives, each with the one title and the
+// one measure every signal surface shows (signals-redesign.md). Nothing here is known
+// before the clock reaches it; a tile selects its signal and never moves the clock.
 
 const SHOWN = 4;
 
@@ -23,9 +24,11 @@ interface Props {
   onMore: () => void;
   /** Folded bar: a count and the newest find as one chip. */
   compact?: boolean;
+  /** The replay's first day: the label reads "New since {date}". */
+  since?: string | null;
 }
 
-export function EventsStrip({ locale, incidents, selected, disabled, onPick, onMore, compact }: Props) {
+export function EventsStrip({ locale, incidents, selected, disabled, onPick, onMore, compact, since = null }: Props) {
   // Keys seen in an earlier render: a tile that is new gets its entrance.
   const seen = useRef<Set<string> | null>(null);
   const first = seen.current === null;
@@ -35,7 +38,9 @@ export function EventsStrip({ locale, incidents, selected, disabled, onPick, onM
 
   const newest = incidents.slice(0, SHOWN);
   const more = incidents.length - newest.length;
-  const label = t(locale, "tlFound", { n: incidents.length });
+  const label = since
+    ? t(locale, "tlNewSince", { date: formatDateNumeric(since), n: incidents.length })
+    : t(locale, "tlFound", { n: incidents.length });
 
   if (compact) {
     const lead = newest[0];
@@ -48,11 +53,11 @@ export function EventsStrip({ locale, incidents, selected, disabled, onPick, onM
             className={`tl-seg tl-ev-chip${lead.key === selected ? " is-current" : ""}${entering(lead.key) ? " is-entering" : ""}`}
             disabled={disabled}
             aria-pressed={lead.key === selected}
-            title={`${shortTitle(locale, lead.lead)} · ${unitLabel(locale, lead.ward)} · ${compactDate(lead.date)}`}
+            title={`${signalTitle(locale, lead.kind, lead.lead)} · ${measureLine(locale, lead.lead)} · ${compactDate(lead.date)}`}
             onClick={() => onPick(lead.key)}
           >
             <KindGlyph kind={lead.kind} />
-            {shortTitle(locale, lead.lead)}
+            {signalTitle(locale, lead.kind, lead.lead)}
           </button>
         ) : null}
       </span>
@@ -73,6 +78,8 @@ export function EventsStrip({ locale, incidents, selected, disabled, onPick, onM
       <ul className="tl-events-list">
         {newest.map((i) => {
           const current = i.key === selected;
+          const title = signalTitle(locale, i.kind, i.lead);
+          const measure = measureLine(locale, i.lead);
           return (
             <li key={i.key}>
               <button
@@ -80,16 +87,16 @@ export function EventsStrip({ locale, incidents, selected, disabled, onPick, onM
                 className={`tl-ev${current ? " is-current" : ""}${entering(i.key) ? " is-entering" : ""}`}
                 disabled={disabled}
                 aria-pressed={current}
-                aria-label={`${shortTitle(locale, i.lead)}, ${unitLabel(locale, i.ward)}, ${compactDate(i.date)}`}
-                title={alertEvidence(locale, i.lead)}
+                aria-label={`${title}, ${measure}, ${compactDate(i.date)}`}
+                title={`${title} · ${measure}`}
                 onClick={() => onPick(i.key)}
               >
                 <span className="tl-ev-code">
                   <KindGlyph kind={i.kind} />
                 </span>
+                <span className="tl-ev-name">{title}</span>
+                <span className="tl-ev-what">{measure}</span>
                 <span className="tl-ev-when">{compactDate(i.date)}</span>
-                <span className="tl-ev-unit">{unitLabel(locale, i.ward)}</span>
-                <span className="tl-ev-name">{shortTitle(locale, i.lead)}</span>
               </button>
             </li>
           );
