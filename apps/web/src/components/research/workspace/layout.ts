@@ -10,7 +10,7 @@ export const MAX_ROWS = 160;
 
 import { type ChartSpec, parseSpec } from "../charts/spec.ts";
 
-export const WIN_IDS = ["signals", "map", "graph", "math", "assistant", "grid", "reproduce"] as const;
+export const WIN_IDS = ["signals", "map", "graph", "math", "assistant", "grid", "reproduce", "notebook"] as const;
 export type WinId = (typeof WIN_IDS)[number];
 
 export interface Rect {
@@ -48,6 +48,7 @@ export const MIN_SIZE: Record<WinId, { w: number; h: number }> = {
   assistant: { w: 3, h: 5 },
   grid: { w: 4, h: 8 },
   reproduce: { w: 5, h: 14 },
+  notebook: { w: 3, h: 10 },
 };
 
 export const CHART_MIN_SIZE = { w: 4, h: 10 };
@@ -67,19 +68,21 @@ export function clampRect(r: Rect, id: string, rows: number): Rect {
  * Generous natural heights (the page may scroll): the Signals window large on the left (a selected row opens
  * the signal card as a layer inside it, signals-redesign.md), the map in the middle, the unit graph on the
  * right. The card's own window and the assistant stay available from the tray as pop-outs, closed by default;
- * the unit grid, the notebook and the tools wait there too.
+ * the unit grid and Reproduce wait there too. The notebook is open, wide, beside Signals.
  */
 export function defaultLayout(): Layout {
   const wins: Record<WinId, WinState> = {
-    signals: { x: 0, y: 0, w: 5, h: 40, open: true },
-    map: { x: 5, y: 0, w: 4, h: 40, open: true },
-    graph: { x: 9, y: 0, w: 3, h: 22, open: true },
+    signals: { x: 0, y: 0, w: 5, h: 56, open: true },
+    map: { x: 5, y: 0, w: 4, h: 24, open: true },
+    graph: { x: 9, y: 0, w: 3, h: 24, open: true },
+    // The notebook, wide, right of Signals and under the map and the flow.
+    notebook: { x: 5, y: 24, w: 7, h: 32, open: true },
     math: { x: 9, y: 22, w: 3, h: 14, open: false },
     assistant: { x: 9, y: 36, w: 3, h: 8, open: false },
     grid: { x: 0, y: 0, w: 12, h: 30, open: false },
     reproduce: { x: 0, y: 0, w: 12, h: 32, open: false },
   };
-  return { wins, charts: {}, order: ["signals", "map", "graph", "math", "assistant", "grid", "reproduce"] };
+  return { wins, charts: {}, order: ["signals", "map", "graph", "math", "assistant", "grid", "reproduce", "notebook"] };
 }
 
 export type Preset = "default" | "map" | "signals" | "units" | "analysis";
@@ -95,12 +98,14 @@ export function presetLayout(preset: Preset): Layout {
   switch (preset) {
     case "map":
       return w({
+        notebook: { open: false },
         map: { x: 0, y: 0, w: 8, h: 40, open: true },
         signals: { x: 8, y: 0, w: 4, h: 40, open: true },
         graph: { x: 8, y: 40, w: 4, h: 12, open: false },
       });
     case "signals":
       return w({
+        notebook: { open: false },
         signals: { x: 0, y: 0, w: 7, h: 40, open: true },
         map: { x: 7, y: 0, w: 5, h: 24, open: true },
         graph: { x: 7, y: 24, w: 5, h: 16, open: true },
@@ -111,13 +116,15 @@ export function presetLayout(preset: Preset): Layout {
         signals: { x: 0, y: 26, w: 6, h: 24, open: true },
         graph: { x: 6, y: 26, w: 6, h: 18, open: true },
         map: { open: false },
+        notebook: { open: false },
       });
     case "analysis":
       return w({
-        // The tools are on the rail (it opens with this layout); the signal card beside the list, the flow under it.
+        // The tools are on the rail (it opens with this layout); the notebook beside the list, the card and the flow under it.
         signals: { x: 0, y: 0, w: 4, h: 40, open: true },
-        math: { x: 4, y: 0, w: 8, h: 18, open: true },
-        graph: { x: 4, y: 18, w: 8, h: 22, open: true },
+        notebook: { x: 4, y: 0, w: 8, h: 32, open: true },
+        math: { x: 4, y: 32, w: 8, h: 18, open: true },
+        graph: { x: 4, y: 50, w: 8, h: 22, open: true },
         map: { open: false },
         assistant: { open: false },
       });
@@ -265,8 +272,10 @@ export function parseLayout(raw: string | null): Layout | null {
     // v2 (2026-10-17): the card moved into the Signals window; layouts saved with it open as a window start over.
     if (v.v !== 2 || !v.wins || !Array.isArray(v.order)) return null;
     const wins = {} as Record<WinId, WinState>;
+    const fallback = defaultLayout().wins;
     for (const id of WIN_IDS) {
-      const w = v.wins[id];
+      // A window added after the layout was saved (the notebook) takes its default place.
+      const w = v.wins[id] ?? fallback[id];
       if (!w || !isInt(w.x) || !isInt(w.y) || !isInt(w.w) || !isInt(w.h) || typeof w.open !== "boolean") return null;
       wins[id] = { x: w.x, y: w.y, w: w.w, h: w.h, open: w.open };
     }

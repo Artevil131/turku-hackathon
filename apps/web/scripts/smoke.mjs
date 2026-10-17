@@ -638,7 +638,7 @@ async function main() {
         reasons.push("the Map layout did not widen the map window");
       if (!(await evaluate(cdp, `localStorage.getItem('aei.research.layout') !== null`))) reasons.push("the layout was not saved");
       await click('[data-preset="default"]');
-      if (!(await waitIn(`${open} === 'graph,map,signals'`, 1500)))
+      if (!(await waitIn(`${open} === 'graph,map,notebook,signals'`, 1500)))
         reasons.push(`default layout: open windows ${await evaluate(cdp, open)}`);
       // A selected row opens the card as a layer inside the Signals window (the primary window); Back returns.
       await evaluate(cdp, `document.querySelector('.feed-row')?.click()`);
@@ -654,7 +654,7 @@ async function main() {
       if (!(await waitIn(`!!document.querySelector('[data-focus-leave]') && !!document.querySelector('[data-focus-win="map"]')`, 1500)))
         reasons.push("focus mode shows no rail of the other windows");
       await key("Escape");
-      if (!(await waitIn(`${open} === 'graph,map,signals'`, 1500)))
+      if (!(await waitIn(`${open} === 'graph,map,notebook,signals'`, 1500)))
         reasons.push(`Esc did not restore the layout (open: ${await evaluate(cdp, open)})`);
       await click("#ws-win-signals .sig-back");
       if (!(await waitIn(`!location.hash.includes('inc=') && !document.querySelector('#ws-win-signals .feed-pane-card .math')`, 1500)))
@@ -676,6 +676,46 @@ async function main() {
       if (!(await waitIn(`!!document.querySelector('.ws-dock[hidden]')`, 1500))) reasons.push("the Tools button did not hide the rail");
       await key("t");
       if (!(await waitIn(`!!document.querySelector('.ws-dock:not([hidden])')`, 1500))) reasons.push("T did not show the rail again");
+      await idle();
+    },
+    { name: "desktop-900", width: 1440, height: 900, mobile: false },
+  );
+
+  // The notebook: its window is open by default, "+" adds a Note, what is typed is saved and survives a reload.
+  await interaction(
+    "research-notebook",
+    async (idle, reasons) => {
+      await cleanWorkspace(idle);
+      await evaluate(cdp, `localStorage.removeItem('aei.research.notebook')`);
+      await load(cdp, urlOf("research"), idle);
+      if (!(await waitIn(`!!document.querySelector('#ws-win-notebook .nb')`, 5000))) {
+        reasons.push("the Notebook window is not open by default");
+        return;
+      }
+      await evaluate(cdp, `document.querySelector('#ws-win-notebook .nb-plus').scrollIntoView({ block: 'center' })`);
+      await click("#ws-win-notebook .nb-plus");
+      if (!(await waitIn(`!!document.querySelector('#ws-win-notebook [role=menu] [data-add="note"]')`, 1500))) {
+        reasons.push('"+" opened no menu with a Note');
+        return;
+      }
+      await click('#ws-win-notebook [data-add="note"]');
+      if (!(await waitIn(`document.activeElement?.classList.contains('nb-note-edit')`, 1500))) {
+        reasons.push("a new Note did not open its editor");
+        return;
+      }
+      const text = "Smoke note: two frames, slice 1 against slice 2";
+      await cdp.send("Input.insertText", { text });
+      if (!(await waitIn(`(localStorage.getItem('aei.research.notebook') ?? '').includes(${JSON.stringify(text)})`, 1500)))
+        reasons.push("the typed note was not saved");
+      await cdp.send("Page.navigate", { url: "about:blank" });
+      await load(cdp, urlOf("research"), idle);
+      if (
+        !(await waitIn(
+          `[...document.querySelectorAll('#ws-win-notebook .nb-cell[data-kind="note"] .nb-note')].some(n => n.textContent.includes(${JSON.stringify(text)}))`,
+          5000,
+        ))
+      )
+        reasons.push("the note did not survive a reload");
       await idle();
     },
     { name: "desktop-900", width: 1440, height: 900, mobile: false },

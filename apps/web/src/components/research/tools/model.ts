@@ -48,7 +48,7 @@ export function prepare(records: readonly IsolateRecord[], frame: Frame, firstOn
   return firstOnly ? firstIsolates(inFrame, { from: frame.from, to: frame.to }) : inFrame;
 }
 
-const Z_TAIL = 0.025;
+export const Z_TAIL = 0.025;
 
 /** Exact (Garwood) 95 % interval of a Poisson mean given k, by bisection on the detector gear's tails. */
 export function poissonInterval(k: number): Interval {
@@ -126,8 +126,8 @@ export interface CompareResult {
   excludesZero: boolean;
 }
 
-const TREND_PERIOD_DAYS = 7;
-const MIN_TREND_PERIODS = 3;
+export const TREND_PERIOD_DAYS = 7;
+export const MIN_TREND_PERIODS = 3;
 
 function countsOf(rows: readonly IsolateRecord[], frame: Frame, event: EventSpec): FrameCounts {
   const tested = rows.filter(isTested(event));
