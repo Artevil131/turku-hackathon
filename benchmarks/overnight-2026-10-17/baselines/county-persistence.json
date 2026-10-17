@@ -129,7 +129,7 @@
   "seeds": [
     2026
   ],
-  "data": "synthetic_microbiology_dataset, seed 2026, as received 2026-10-09",
+  "data": "thl-ttr-cases fetched 2026-10-17 by scripts/fetch_thl_ttr.py, months 2021-01 to 2026-09",
   "notes": "THL series as fetched 2026-10-17, final values for every target month, so not strictly as-of; the last two months (2026-08, 2026-09) are still incomplete at fetch time (see the _no_last2 keys). Skill is against persistence unless named; a baseline scored against itself has skill 0 by construction. Bootstrap: 1,000 resamples of target months, seed 2026.",
   "detail": [
     {

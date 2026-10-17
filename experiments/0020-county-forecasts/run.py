@@ -427,9 +427,11 @@ def main() -> None:
         OUT / "metrics.json",
         experiment="0020-county-forecasts",
         method=(
-            "County one-month-ahead forecast: rolling Poisson GLM with annual harmonics per series, negative binomial predictive, "
-            f"cell chosen on targets 2024-01 to 2024-09 ({chosen.label()}); 4 phenotypes x 23 counties + national, targets 2024-10 to 2026-09"
+            "County one-month-ahead forecast: Poisson GLM per series from a grid with and without annual harmonics; the cell chosen on "
+            f"targets 2024-01 to 2024-09 has none, a rolling mean ({chosen.label()}), negative binomial predictive; 4 phenotypes x 23 counties "
+            "+ national, targets 2024-10 to 2026-09"
         ),
+        data="thl-ttr-cases fetched 2026-10-17 by scripts/fetch_thl_ttr.py, months 2021-01 to 2026-09",
         family="prediction",
         metrics={"P2": ev1.metrics},
         intervals={"P2": ev1.intervals},

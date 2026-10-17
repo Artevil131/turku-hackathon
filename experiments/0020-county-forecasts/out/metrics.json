@@ -1,6 +1,6 @@
 {
   "experiment": "0020-county-forecasts",
-  "method": "County one-month-ahead forecast: rolling Poisson GLM with annual harmonics per series, negative binomial predictive, cell chosen on targets 2024-01 to 2024-09 (W24 K0 trend=off rho=0 quasi_pooled floor=0.1); 4 phenotypes x 23 counties + national, targets 2024-10 to 2026-09",
+  "method": "County one-month-ahead forecast: Poisson GLM per series from a grid with and without annual harmonics; the cell chosen on targets 2024-01 to 2024-09 has none, a rolling mean (W24 K0 trend=off rho=0 quasi_pooled floor=0.1), negative binomial predictive; 4 phenotypes x 23 counties + national, targets 2024-10 to 2026-09",
   "family": "prediction",
   "tuned_on_test": false,
   "tuned_on": "targets 2024-01 to 2024-09 (windows from 2021-01); no scoring-period number used",
@@ -124,12 +124,12 @@
       "log_skill_no_last2": 2024
     }
   },
-  "runtime_s": 2.4,
-  "cpu_s": 2.3,
+  "runtime_s": 2.1,
+  "cpu_s": 2.1,
   "seeds": [
     2026
   ],
-  "data": "synthetic_microbiology_dataset, seed 2026, as received 2026-10-09",
+  "data": "thl-ttr-cases fetched 2026-10-17 by scripts/fetch_thl_ttr.py, months 2021-01 to 2026-09",
   "notes": "THL series as fetched 2026-10-17, final values for every target month, so not strictly as-of; the last two months (2026-08, 2026-09) are incomplete at fetch time (see the _no_last2 keys). Skill is against persistence unless named. Bootstrap: 1,000 resamples of target months, seed 2026. The model is deterministic.",
   "detail": [
     {

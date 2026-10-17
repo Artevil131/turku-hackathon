@@ -506,7 +506,7 @@ against persistence; persistence is 0 by construction.
 | national | 96 | −0.126 (−0.489 to +0.134) | +1.548 (+0.809 to +2.335) | −0.397 (−0.887 to −0.071) | −1.972 (−3.126 to −0.872) |
 | pooled without 2026-08 and 2026-09 | 2,024 | +0.150 (+0.064 to +0.226) | +0.408 (+0.313 to +0.501) | −0.065 (−0.150 to +0.010) | −0.370 (−0.550 to −0.207) |
 
-R1 against seasonal naive, pooled: MAE skill +0.219 (+0.158 to +0.272),
+R1 against seasonal naive, pooled: MAE skill +0.219 (+0.159 to +0.272),
 log-score skill +0.793 (+0.660 to +0.933). Raw scores (MAE of the
 predictive median; mean log score per series-month), R1 against the two
 baselines:
@@ -678,3 +678,121 @@ is a question for Artem). Also worth one run: the harness's persistence
 baseline replaced by a trailing mean of the previous 12 months, so that
 "beats last month" and "beats a rolling mean" are separated by the
 scoring, not by an ablation.
+
+## Notes from review (overnight)
+
+Review agent: Claude Code (Fable 5.1), operated by Artem (overnight run),
+2026-10-17. Numbers marked "computed" were recomputed outside `run.py` from
+the same series, `glm_forecast.GLMForecaster(Spec(24, 0, False, 0, "quasi_pooled", 0.1))`
+and `score_prediction.persistence`; everything else is read from `out/` or
+the code. Verdict: stands with caveats. Nothing below invalidates the
+pooled result; one digit changes; the reading of the VRE rows changes.
+
+**Code against the Mathematical foundation (verified, nothing to change).**
+`NBPredictive` is scipy's `nbinom(n = μ*/(φ−1), p = 1/φ)`, whose variance is
+φ·μ* (checked at μ* = 3.7, φ = 2.4: variance/mean 2.40, computed); the
+scalar `logpmf` is the stated pmf term by term; `ppf(0.5)` is the smallest
+m with F(m) ≥ 0.5 (checked against a direct CDF scan); `dispersions()`
+pools max(1, Σχ²/Σ(W−p)) over the phenotype's non-empty county windows and
+keeps the national series' own φ̂; the floor is applied after the fit and
+never enters χ². For R1 (p = 1) the fit is the window mean with W−1 degrees
+of freedom, as the foundation says. A fresh forecaster outside `run.py`
+reproduces the pooled log skill +0.4021 and MAE skill +0.1445 (computed).
+
+**Strictly one month ahead (verified).** The forecaster reads only
+`History.values[:, −W:]`, the W months before the target; φ̂ comes from the
+same window; `audit_strict` poisons every month from the target on and
+passed. The tuning stage scores targets 2024-01 to 2024-09 only (history
+for the last ends 2024-08) and `select()` implements the plan's
+one-standard-error rule and tie order exactly. Goal, Hypothesis and
+Experiment are unchanged between the plan commit 9d66293 and the result
+commit a27a898 (only the status line changed above Result). The plan commit
+holds the README alone; `run.py` and `glm_forecast.py` were written after
+it, so the grid and the rule were fixed in prose before any number, not in
+code. `tuned_on_test = false` is honest as far as record and code show.
+
+**Numbers against `out/` (changes a digit).** Every number in Result and
+Interpretation matches `results.md`, `metrics.json`, `tuning.csv` and the
+two baseline rows, with one exception: "R1 against seasonal naive, pooled:
+MAE skill +0.219 (+0.158 to +0.272)" should read +0.159; `metrics.json`
+has 0.158742 and `results.md` prints 0.159. The blanket tag "every number
+below is computed by this run" is acceptable; the Hypothesis numbers are
+tagged assumed or derived.
+
+**Persistence's floor does not manufacture the pooled result, but it makes
+the VRE one (caveat pooled; changes the reading for VRE).** Persistence's
+pooled log score is −2.153 at floor 0.1, −2.106 at 0.25, −2.130 at 0.5 and
+−2.264 at 1.0 (computed), so 0.5 is near its best floor, not a handicap.
+Against persistence at its best floor (0.25) R1's pooled skill is +0.378
+(+0.285 to +0.468, 1,000 bootstraps over months, seed 2026, computed),
+inside the record's interval. 43.9 % of county series-months follow a zero
+count; they contribute +0.133 of the +0.402 and months after a non-zero
+count +0.269 (computed). For VRE, where 88 % of series-months follow a
+zero, the skill is +0.060 (−0.014 to +0.127) at floor 0.1, +0.100 (+0.028 to
++0.171) at 0.25 and +0.250 (+0.165 to +0.332) at 0.5 (computed): the VRE
+log-score row says "a 24-month mean near zero beats Poisson(0.5)", nothing
+more, and the ship rule should not fire for VRE on it. CPE is robust
+(+0.223, +0.163, +0.219 at the three floors). MRSA and ESBL rise as the
+floor falls (+0.885 and +0.533 at 0.1). What should be done: Artem decides
+whether the harness reports a persistence-floor sensitivity beside P2;
+until then the VRE and CPE rows carry this note.
+
+**What the +0.402 is made of (caveat).** By phenotype, MRSA contributes
++0.155, ESBL +0.130, VRE +0.063 and CPE +0.055 of the pooled +0.402
+(sums of per-series-month differences over 2,208, computed); MRSA and ESBL
+alone give +0.57. The differences are heavy-tailed: the top 5 % of
+series-months (110) contribute +0.264 and the top 10 % +0.374 of +0.402,
+while the median difference is +0.35 and R1 is better in 67 % of
+series-months; winsorised at ±5 nats the skill is +0.364 (computed).
+Persistence's worst log scores are −32, −19 and −16 (a jump after a low
+month). This is what log-scoring a plug-in Poisson does; the result is not
+a few months (22 of 24 target months are positive, 2024-10 −0.07 and
+2025-01 −0.09), but the percentile bootstrap over 24 months with such tails
+may under-cover, so the interval should be read as rough.
+
+**VRE and CPE MAE skill is the skill of forecasting zero (caveat; changes
+the reading of the ship rule for VRE).** R1's predictive median is 0 in
+98.7 % of VRE and 89.3 % of CPE series-months (computed). A constant-zero
+forecast has MAE 0.219 (VRE) and 0.418 (CPE), against R1's 0.217 and 0.362
+and persistence's 0.272 and 0.507. The VRE row "+0.200" is therefore the
+skill of "0", and a VRE map layer would read "0 (0 to 1)" in nearly every
+county. CPE's +0.286 is somewhat better than zero. Interpretation's
+sentence that the layer is better than last month's count "for MRSA and CPE
+on both measures, and on the log score for ESBL and VRE" should be read
+with this and the floor note above: for VRE neither measure shows a
+forecast worth drawing.
+
+**Method line misdescribes the chosen cell (caveat; should be fixed).**
+`metrics.json`'s `method` says "rolling Poisson GLM with annual harmonics
+per series", and the leaderboard reads that string, but R1 has K = 0 and no
+trend: a 24-month rolling mean with a pooled negative-binomial width.
+Interpretation says so plainly ("Not the harmonics"); the leaderboard will
+not. The title is frozen by the plan. The `method` argument in `run.py`
+should name the selected cell as a 24-month mean (grid with harmonics,
+none selected) and `metrics.json` be regenerated; no value changes. The
+`data` field of `metrics.json` says "synthetic_microbiology_dataset, seed
+2026", the harness default, for a row that uses THL only (the two baseline
+rows share this); the `notes` field names THL. For the orchestrator, since
+`run.py` is outside this review's write set.
+
+**THL's incomplete last month (caveat; already in the record, sharper
+here).** In the fetched file the national totals for 2026-09 are MRSA 103
+against a mean of 184 over 2025-08 to 2026-07, ESBL 413 against 491, VRE 0
+against 6.1, CPE 2 against 11.6 (computed); 2026-08 looks near-complete
+(MRSA 175, ESBL 481). So "the last two months are incomplete" is really one
+month, and it is about half-reported for MRSA and nearly empty for VRE and
+CPE. 2026-09 is the last target and never enters any window, so the fits
+are clean; both forecasters over-predict that month. The `_no_last2` keys
+(+0.408, +0.313 to +0.501) carry the result and should stand beside the
+headline on the leaderboard until the next fetch. The broader point stands
+as written: every scored month is THL's final value, which a real
+forecaster would not have had.
+
+**Dispersion as fitted (information).** Pooled φ̂ used by R1: MRSA 1.4 to
+1.7, ESBL 1.8 to 2.5, VRE 1.0 to 1.4, CPE 1.0 to 1.1 over the scoring
+months; national ESBL 6 to 12, national MRSA about 5 (computed). The
+national log skill of +1.55 is persistence's Poisson(≈450) with sd 21
+against month-to-month swings about three times that; the record's warning
+that the national rows are 4 series over 24 months is right.
+
+Corrections made by the orchestrator after this review: the lower bound above is now +0.159 in the Result; `metrics.json`'s method line names the chosen cell (a rolling mean, no harmonics) and its `data` field names the THL fetch, as do the two county baseline rows. No other number changed (rerun and verified).

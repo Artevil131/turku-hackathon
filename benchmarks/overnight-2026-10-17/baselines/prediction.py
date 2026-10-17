@@ -41,6 +41,7 @@ def run_p2() -> None:
             experiment=f"baseline-{name}",
             method=method,
             family="prediction",
+            data="thl-ttr-cases fetched 2026-10-17 by scripts/fetch_thl_ttr.py, months 2021-01 to 2026-09",
             metrics={"P2": ev.metrics},
             intervals={"P2": ev.intervals},
             n={"P2": ev.n},

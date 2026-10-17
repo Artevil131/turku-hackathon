@@ -2,9 +2,9 @@
 
 One-month-ahead forecasts of THL's MRSA, ESBL, VRE and CPE series, 23 counties and the national totals, scoring targets 2024-10 to 2026-09 (24 months), THL as fetched 2026-10-17 (final values, not strictly as-of; the last two months are incomplete, see the `no_last2` rows). Every number is computed by this run unless it is labelled as a committed baseline row.
 
-Run time 2.4 s (wall)
+Run time 2.1 s (wall)
 
-Run time 2.3 s (CPU)
+Run time 2.1 s (CPU)
 
 ## Tuning, targets 2024-01 to 2024-09 only
 

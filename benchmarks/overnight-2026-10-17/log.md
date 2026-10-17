@@ -40,3 +40,4 @@ Code, Opus 5.5, operated by Artem).
 | 08:34 | 0019 | result committed | Sonnet 5.5 | 87 s CPU | 24 real ESBL/MRSA episodes, 7 with a positive unit: pooled AUC share 0.627, raw 0.657, permutation p 0.22 and 0.14; E1 and E2 undefined (no positive unit); flow-partner control 0.511/0.584, uniform control 0.455/0.493; no Fable review (does not beat the null) |
 | 08:36 | harness fixes | finish | Sonnet 5.5 | | additive; 112 tests pass; baselines and 0012 metrics regenerated |
 | 08:36 | 0020 review | start | Fable 5.1 | | beats its baseline (P2 log skill +0.40) |
+| 08:43 | 0020 review | finish | Fable 5.1 | 6 min | stands with caveats: pooled skill robust (+0.378 at persistence's best floor 0.25); VRE log skill mostly the floor (+0.06 at floor 0.1), VRE/CPE MAE skill is forecasting zero; ship rule should not fire for VRE; method line and data field corrected by the orchestrator, one rounding slip fixed |
