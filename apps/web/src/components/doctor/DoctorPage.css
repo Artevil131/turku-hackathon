@@ -36,9 +36,9 @@
   --d-ok: var(--st-ok, #17784a);
   --d-watch: var(--st-watch, #94590a);
   --d-alert: var(--st-alert, #d0004b);
-  --d-xs: var(--t-xs, 12px);
-  --d-s: var(--t-s, 13px);
-  --d-m: var(--t-m, 15px);
+  --d-xs: 14px;
+  --d-s: 15px;
+  --d-m: 17px;
   min-height: 0;
   height: 100%;
   overflow: auto;

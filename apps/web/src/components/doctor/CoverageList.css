@@ -687,3 +687,264 @@
   align-items: center;
   gap: 6px;
 }
+
+/* ---- Answer first, case beside it ---------------------------------------------------------------------------- */
+.dr-top {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr);
+}
+@container coverage (min-width: 960px) {
+  .dr-top {
+    grid-template-columns: minmax(0, 1.25fr) minmax(340px, 0.75fr);
+    align-items: stretch;
+  }
+  .dr-top .dr-answer {
+    border-bottom: 0;
+  }
+}
+.dr-case {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--glass-1, #fff);
+}
+.dr-case-title {
+  margin: 0;
+  font-size: var(--t-m);
+  font-weight: 700;
+}
+.dr-case .rs {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.dr-case .rs[data-wide] .rs-body {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+.dr-case .rs[data-wide] .rs-group {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+.dr-case .rs[data-wide] .rs-choices {
+  flex-wrap: wrap;
+}
+.dr-case .rs-select,
+.dr-case .rs-input {
+  width: 100%;
+  height: 36px;
+}
+.dr-case .rs-choice {
+  min-height: 36px;
+}
+.dr-case .syn {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+.rs-more-wide {
+  margin-top: 12px;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+.rs-more-wide summary {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  color: var(--live);
+  font-size: var(--t-s);
+}
+.rs-more-wide summary span {
+  color: var(--ink-3);
+  font-size: var(--t-xs);
+}
+
+/* The answer: what works is the loudest thing on the card. */
+.dr-answer-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  margin: 0;
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--st-ok, #17784a) 14%, transparent);
+  color: var(--st-ok, #17784a);
+  font-size: var(--t-s);
+  font-weight: 700;
+}
+.dr-answer-head {
+  font-size: 32px;
+  letter-spacing: -0.01em;
+}
+.dr-answer-head[data-good] {
+  color: var(--st-ok, #17784a);
+}
+.dr-answer-line {
+  font-size: 18px;
+}
+.dr-answer-sub {
+  font-size: var(--t-m);
+  color: var(--st-ok, #17784a);
+}
+.dr-answer-sub.dr-answer-low {
+  color: var(--ink-3);
+  font-weight: 500;
+}
+.dr-answer-rows {
+  max-width: 560px;
+}
+.dr-answer-rows li {
+  grid-template-columns: 24px minmax(0, 1fr) 120px 56px;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in oklab, var(--st-ok, #17784a) 28%, transparent);
+  border-radius: 10px;
+  background: color-mix(in oklab, var(--st-ok, #17784a) 7%, transparent);
+  font-size: 18px;
+}
+.dr-answer-rows .dr-mark {
+  color: var(--st-ok, #17784a);
+  font-weight: 700;
+}
+.dr-answer-rows b {
+  text-align: right;
+  color: var(--st-ok, #17784a);
+}
+/* The share as a bar, with the bar the list is judged against drawn as a tick. */
+.dr-bar {
+  position: relative;
+  height: 8px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--ink-3) 18%, transparent);
+}
+.dr-bar i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--w);
+  border-radius: inherit;
+  background: var(--st-ok, #17784a);
+}
+.dr-bar::after {
+  content: "";
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  left: var(--bar);
+  width: 2px;
+  background: var(--ink-2);
+}
+/* What does not clear the bar is plainly quieter: grey, no tint. */
+.dr-answer-low + .dr-answer-rows li {
+  border-color: var(--line);
+  background: transparent;
+  font-size: var(--t-m);
+}
+.dr-answer-low + .dr-answer-rows .dr-mark,
+.dr-answer-low + .dr-answer-rows b {
+  color: var(--ink-3);
+}
+.dr-answer-low + .dr-answer-rows .dr-bar i {
+  background: var(--ink-3);
+}
+.dr-answer-note {
+  font-size: var(--t-xs);
+}
+/* "Edit case": an obvious button, for the narrow layout where the case is folded away. */
+.dr-answer-change {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 2px solid var(--live);
+  background: var(--live-soft);
+  font-size: var(--t-s);
+}
+.dr-answer-chips li {
+  font-size: var(--t-s);
+}
+
+/* Only the antibiotic that works is green: its name in the headline and in the "also good enough" rows. Everything else stays in ink. */
+.dr-answer-card [hidden],
+.dr-answer-case[hidden] {
+  display: none;
+}
+.dr-answer-kicker {
+  background: var(--glass-1);
+  border: 1px solid var(--line);
+  color: var(--ink-2);
+}
+.dr-answer-head[data-good],
+.dr-answer-head {
+  color: var(--ink);
+}
+.dr-good {
+  color: var(--st-ok, #17784a);
+}
+.dr-answer-sub {
+  color: var(--ink-2);
+}
+.dr-answer-rows li {
+  border-color: var(--line);
+  background: transparent;
+}
+.dr-answer-rows .dr-mark,
+.dr-answer-rows b {
+  color: var(--ink);
+}
+.dr-answer-rows .dr-name {
+  color: var(--st-ok, #17784a);
+  font-weight: 600;
+}
+.dr-answer-rows .dr-bar i {
+  background: var(--ink-2);
+}
+.dr-answer-low + .dr-answer-rows .dr-name {
+  color: var(--ink-3);
+  font-weight: 400;
+}
+.dr-answer-low + .dr-answer-rows .dr-bar i {
+  background: var(--ink-3);
+}
+/* The case panel shows its labels (the one-row banner hid them). */
+.dr-case .rs[data-wide] .rs-label {
+  position: static;
+  width: auto;
+  height: auto;
+  clip: auto;
+  overflow: visible;
+  font-weight: 600;
+}
+.dr-case .rs[data-wide] {
+  display: block;
+  overflow: visible;
+}
+.dr-case .rs[data-wide] .rs-body {
+  flex-wrap: nowrap;
+}
+.dr-case .rs[data-wide] .rs-group:last-child {
+  margin-left: 0;
+}
+.dr-case .rs[data-wide] .rs-choices {
+  display: flex;
+}
+.dr-case .rs[data-wide] .rs-choice {
+  flex: 1 1 auto;
+  padding: 0 10px;
+}
+.dr-case .syn-row {
+  flex-direction: column;
+  gap: 8px;
+  overflow: visible;
+}
+.dr-case .syn-group {
+  flex-wrap: wrap;
+  row-gap: 6px;
+}

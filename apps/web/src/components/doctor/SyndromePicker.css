@@ -7,7 +7,7 @@
 }
 
 .syn-label {
-  font-size: var(--t-xs, 12px);
+  font-size: 14px;
   font-weight: 600;
   color: var(--ink-3, #6f7292);
   white-space: nowrap;
@@ -45,7 +45,7 @@
 }
 
 .syn-site {
-  font-size: var(--t-xs, 12px);
+  font-size: 14px;
   color: var(--ink-3, #6f7292);
   white-space: nowrap;
   margin-right: 2px;
@@ -59,7 +59,7 @@
   background: var(--glass-3, #fff);
   color: var(--ink-2, #1d204e);
   font: inherit;
-  font-size: var(--t-s, 13px);
+  font-size: 15px;
   font-weight: 500;
   white-space: nowrap;
   cursor: pointer;

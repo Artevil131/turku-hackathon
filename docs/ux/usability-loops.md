@@ -28,3 +28,7 @@ Not checked: the chips for stewardship, lab, surveillance and management open ex
 | `ux-loop-7` | "Add a window" menu names what each window shows, with one line under it ("Which antibiotic to start", "Alerts and clusters", "Finnish county map"…) instead of internal names ("Treat a patient", "Signal", "Summary") | the names told a new user nothing |
 
 Only the add-a-window picker and the Windows tray use the new names; the window titles themselves are unchanged.
+
+| `ux-loop-8` | Doctor's Treat-a-patient window: only the working antibiotic's name is green (headline and the "also good enough" rows), the rest in ink, with a share bar and the bar's tick per row; the case (syndrome, unit, specimen, severity, "More about the patient") sits in a panel beside the answer instead of an empty right side, "Edit case" is a clear button on narrow screens; the data level is three readable rows ("not needed" instead of a dash); doctor text 14 to 17 px | judge: cluttered, small, hard to read; user: emphasise non-resistant drugs, structure the filters, use the empty right side |
+
+Checked in the browser on a narrow pane only (the narrow layout and the data-level rows); the wide two-column layout was seen once before the last tweaks and not re-checked.

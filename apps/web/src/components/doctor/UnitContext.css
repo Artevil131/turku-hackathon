@@ -234,3 +234,47 @@
     display: none;
   }
 }
+
+/* The data level as three readable rows (name left, n right), not three cramped tiles. */
+.uc-ladder {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+}
+.uc-ladder li:not(.uc-chip):not(.uc-hint) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  column-gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: var(--d-s);
+}
+.uc-step-name {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+.uc-step-n {
+  text-align: right;
+  font-size: var(--d-s);
+}
+.uc-step-from {
+  grid-column: 1 / -1;
+  font-size: var(--d-xs);
+  opacity: 0.9;
+}
+.uc-ladder li[data-state="later"] .uc-step-n {
+  font-weight: 400;
+}
+.uc-hint {
+  grid-column: 1 / -1;
+  margin: 2px 2px 0;
+  color: var(--d-ink-3);
+  font-size: var(--d-xs);
+  list-style: none;
+}
+.uc-ladder li.uc-hint {
+  padding: 0;
+  border: 0;
+  background: none;
+}

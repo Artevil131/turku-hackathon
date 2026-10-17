@@ -25,7 +25,7 @@
 }
 
 .rs-label {
-  font-size: var(--t-xs, 12px);
+  font-size: 14px;
   font-weight: 500;
   color: var(--ink-3, #6f7292);
   white-space: nowrap;
@@ -33,7 +33,7 @@
 
 .rs-tag {
   font-weight: 500;
-  font-size: var(--t-xs, 12px);
+  font-size: 14px;
   color: var(--st-watch, #94590a);
   background: var(--st-watch-bg, #fdf3e2);
   border-radius: 999px;
@@ -57,7 +57,7 @@
   border: 0;
   background: var(--glass-3, #fff);
   color: var(--ink-2, #1d204e);
-  font-size: var(--t-s, 13px);
+  font-size: 15px;
   font-weight: 500;
   white-space: nowrap;
   cursor: pointer;
@@ -98,7 +98,7 @@
   border: 1px solid var(--line-strong, #aebecb);
   background: var(--glass-3, #fff);
   color: var(--ink, #07081c);
-  font-size: var(--t-s, 13px);
+  font-size: 15px;
   font-weight: 600;
 }
 
@@ -111,7 +111,7 @@
   background: var(--glass-3, #fff);
   color: var(--ink, #07081c);
   font: inherit;
-  font-size: var(--t-s, 13px);
+  font-size: 15px;
 }
 
 .rs-input::placeholder {
@@ -160,7 +160,7 @@
 .rs-sum {
   margin: 0;
   font-weight: 600;
-  font-size: var(--t-xs, 12px);
+  font-size: 14px;
   line-height: 1.3;
 }
 
@@ -215,7 +215,7 @@
   border-radius: 6px;
   background: var(--glass-3, #fff);
   color: var(--ink, #07081c);
-  font-size: var(--t-s, 13px);
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
 }

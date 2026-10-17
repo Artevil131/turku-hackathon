@@ -245,28 +245,32 @@ export function CoverageWindow({
           {t(locale, "drSkip")}
         </button>
         <div className="doctor-main" hidden={embedded && !wide && !!current && !!item}>
-          <DoctorAnswer
-            locale={locale}
-            filters={filters}
-            items={items}
-            bar={barOf(current, filters)}
-            loading={status2 === "loading" && !current}
-            failed={status2 === "error" && !current}
-            editing={editing}
-            onEdit={() => setEditing((v) => !v)}
-          />
-          {/* The controls that describe the case wait behind "Change the case"; the answer above is what you read first. */}
-          <div className="dr-case" data-open={editing || undefined}>
-            <SyndromePicker locale={locale} value={filters.syn} onPick={onSyndrome} />
-            <RecordStrip
+          <div className="dr-top">
+            <DoctorAnswer
               locale={locale}
-              wide={wide}
               filters={filters}
-              onChange={onChange}
-              patientId={patientId}
-              onPatientId={setPatientId}
-              onPatientCommit={commitPatient}
+              items={items}
+              bar={barOf(current, filters)}
+              loading={status2 === "loading" && !current}
+              failed={status2 === "error" && !current}
+              editing={editing}
+              onEdit={() => setEditing((v) => !v)}
+              showCase={!wide}
             />
+            {/* Wide: the case sits beside the answer, always open. Narrow: it waits behind "Edit case". */}
+            <div className="dr-case" data-open={editing || wide || undefined}>
+              <h2 className="dr-case-title">{t(locale, "drCaseTitle")}</h2>
+              <SyndromePicker locale={locale} value={filters.syn} onPick={onSyndrome} />
+              <RecordStrip
+                locale={locale}
+                wide={wide}
+                filters={filters}
+                onChange={onChange}
+                patientId={patientId}
+                onPatientId={setPatientId}
+                onPatientCommit={commitPatient}
+              />
+            </div>
           </div>
           <div className="doctor-body">
             <CoverageList

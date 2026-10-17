@@ -43,12 +43,17 @@ function Ladder({ locale, filters, data }: { locale: Locale; filters: DoctorFilt
               <span aria-hidden="true">{c.glyph}</span> {t(locale, c.short)}
             </span>
             <span className="uc-step-n num">
-              {state === "here" ? `n ${num(locale, cov.isolates)}` : state === "under" ? t(locale, "drLadderUnder30") : "–"}
+              {state === "here"
+                ? `n ${num(locale, cov.isolates)}`
+                : state === "under"
+                  ? t(locale, "drLadderUnder30")
+                  : t(locale, "drLadderNotNeeded")}
             </span>
             {state === "here" ? <span className="uc-step-from num">{t(locale, "drLadderFrom", { date: dmy(cov.from) })}</span> : null}
           </li>
         );
       })}
+      <li className="uc-hint">{t(locale, "drLadderHint")}</li>
       {droppedFilters(filters, cov).map((d) => (
         <li key={d.chip} className="uc-chip">
           {t(locale, d.chip, { bar: barOf(data, filters) })}

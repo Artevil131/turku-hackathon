@@ -197,13 +197,21 @@ export function RecordStrip({ locale, filters, onChange, patientId = "", onPatie
         <div className="rs-body">
           {unit}
           {site}
-          {sex}
           {severity}
-          {age}
-          {onset}
-          {period}
-          {patient}
         </div>
+        <details className="rs-more-wide">
+          <summary>
+            <strong>{tr("drCaseMore")}</strong>
+            <span>{tr("drCaseMoreHint")}</span>
+          </summary>
+          <div className="rs-body">
+            {sex}
+            {age}
+            {onset}
+            {period}
+            {patient}
+          </div>
+        </details>
       </form>
     );
   }

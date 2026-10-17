@@ -1,17 +1,23 @@
 import { type Locale, specimenName, t, wardName } from "@aei/i18n";
+import type React from "react";
 import { type DoctorFilters, num, pct } from "./filters.ts";
 import type { Item } from "./reason.ts";
 
 // The top of the coverage window, before any control: what to start with, then the others in rows of one shape
 // (glyph, name, share). The list below is the evidence.
 
-function Rows({ items, mark }: { items: readonly Item[]; mark: string }) {
+function Rows({ items, mark, bar }: { items: readonly Item[]; mark: string; bar: number }) {
   return (
     <ul className="dr-answer-rows">
       {items.map((i) => (
         <li key={i.id}>
-          <span aria-hidden="true">{mark}</span>
-          <span>{i.name}</span>
+          <span className="dr-mark" aria-hidden="true">
+            {mark}
+          </span>
+          <span className="dr-name">{i.name}</span>
+          <span className="dr-bar" aria-hidden="true" style={{ "--w": `${pct(i.share ?? 0)}%`, "--bar": `${bar}%` } as React.CSSProperties}>
+            <i />
+          </span>
           <b>{pct(i.share ?? 0)}&nbsp;%</b>
         </li>
       ))}
@@ -28,6 +34,7 @@ export function DoctorAnswer({
   failed,
   editing,
   onEdit,
+  showCase = true,
 }: {
   locale: Locale;
   filters: DoctorFilters;
@@ -39,6 +46,8 @@ export function DoctorAnswer({
   failed: boolean;
   editing: boolean;
   onEdit: () => void;
+  /** The case summary and its change button; off when the case panel is already open beside the answer. */
+  showCase?: boolean;
 }) {
   const singles = items.filter((i) => i.row !== null);
   const clears = singles.filter((i) => i.standing === "clears");
@@ -51,7 +60,7 @@ export function DoctorAnswer({
   ];
   return (
     <section className="dr-answer" aria-label={t(locale, "drAnswerLabel")} aria-busy={loading || undefined}>
-      <div className="dr-answer-case">
+      <div className="dr-answer-case" hidden={!showCase}>
         <span className="dr-answer-for">{t(locale, "drAnswerFor")}</span>
         <ul className="dr-answer-chips" aria-label={t(locale, "drAnswerParams")}>
           {chips.map((chip) => (
@@ -77,18 +86,34 @@ export function DoctorAnswer({
         <p className="dr-answer-head">…</p>
       ) : first ? (
         <>
-          <p className="dr-answer-head">{t(locale, "drAnswerStart", { name: first.name })}</p>
+          <p className="dr-answer-kicker">
+            <span aria-hidden="true">✓</span> {t(locale, "drAnswerKicker", { bar })}
+          </p>
+          <p className="dr-answer-head">
+            {t(locale, "drAnswerStart", { name: "\u0000" })
+              .split("\u0000")
+              .flatMap((part, i) =>
+                i === 0
+                  ? [part]
+                  : [
+                      <span key="name" className="dr-good">
+                        {first.name}
+                      </span>,
+                      part,
+                    ],
+              )}
+          </p>
           <p className="dr-answer-line">{t(locale, "drAnswerCovers", { share: pct(first.share ?? 0), n: num(locale, first.n) })}</p>
           {clears.length > 1 ? (
             <>
               <h3 className="dr-answer-sub">{t(locale, "drAnswerAlsoHead", { bar })}</h3>
-              <Rows items={clears.slice(1)} mark="✓" />
+              <Rows items={clears.slice(1)} mark="✓" bar={bar} />
             </>
           ) : null}
           {below.length ? (
             <>
               <h3 className="dr-answer-sub dr-answer-low">{t(locale, "drAnswerBelowHead", { bar })}</h3>
-              <Rows items={below} mark="✕" />
+              <Rows items={below} mark="✕" bar={bar} />
             </>
           ) : null}
         </>
