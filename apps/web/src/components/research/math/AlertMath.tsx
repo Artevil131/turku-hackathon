@@ -181,6 +181,7 @@ export function AlertMath({
       ? t(locale, "feedNoIsolatesData", { observed: lead.observed, expected: oneDecimal(locale, lead.expected ?? 0) })
       : "";
   const onDay = asOf === lead.date;
+  const method = methodOf(lead);
   const snippetValues = {
     ward: inc.ward ?? "",
     organism: "organism" in lead ? (lead.organism ?? "") : "",
@@ -218,15 +219,35 @@ export function AlertMath({
         {/* Concise first: the method opens on request (Artem, 2026-10-17: detail only when the researcher asks). */}
         <details className="sig-how" ref={how}>
           <summary className="sig-how-head">{t(locale, "cardHow")}</summary>
-          <p className="sig-how-text">{howSentence(locale, lead)}</p>
-          <HowFigure locale={locale} alert={lead} values={snippetValues} />
+          {method ? (
+            <MethodEntry
+              locale={locale}
+              method={method}
+              values={snippetValues}
+              alert={lead}
+              plain={
+                <>
+                  <p className="sig-how-text">{howSentence(locale, lead)}</p>
+                  {howDetail(locale, lead) ? <p className="sig-detail">{howDetail(locale, lead)}</p> : null}
+                </>
+              }
+              explain={
+                <div className="math-explain">
+                  <AlertExplanation client={client} id={lead.id} locale={locale} openKey={explain} />
+                </div>
+              }
+            />
+          ) : (
+            <>
+              <p className="sig-how-text">{howSentence(locale, lead)}</p>
+              <div className="math-explain">
+                <AlertExplanation client={client} id={lead.id} locale={locale} openKey={explain} />
+              </div>
+            </>
+          )}
           <p className="feed-evidence">{t(locale, "feedLatestEvidence", { evidence: alertEvidence(locale, lead) })}</p>
           <p className="feed-owner">{incidentResponsibility(locale, inc.members)}</p>
         </details>
-
-        <div className="math-explain">
-          <AlertExplanation client={client} id={lead.id} locale={locale} openKey={explain} />
-        </div>
 
         {spans ? (
           <div className="sig-reach">
@@ -289,68 +310,182 @@ function whereLine(locale: Locale, inc: Incident, win: { from: string; to: strin
 }
 
 /** The ⓘ of the how-section: the Poisson tail for the count detectors; sentinels and trends have none. The registry entry follows (D-075). */
-function HowFigure({ locale, alert: a, values }: { locale: Locale; alert: Alert; values: SnippetValues }): ReactNode {
-  const detail = howDetail(locale, a);
-  if (!detail) return null;
-  const figure = a.kind === "detector" && COUNT_DETECTORS.includes(a.detector) && a.p !== undefined && a.expected !== undefined;
-  const method = methodOf(a);
-  return (
-    <InfoButton locale={locale} align="end" label={t(locale, "cardHowInfo")}>
-      <p className="sig-detail">{detail}</p>
-      {figure && a.kind === "detector" ? (
-        <PoissonTail observed={a.observed} expected={a.expected as number} p={a.p as number} detector={a.detector} locale={locale} />
-      ) : null}
-      {method ? <MethodEntry locale={locale} method={method} values={values} /> : null}
-    </InfoButton>
-  );
-}
-
 /** What the notebook snippet fills in: this card's unit, organism and window. */
 type SnippetValues = Record<"ward" | "organism" | "from" | "to", string>;
 
-/** The registry entry (@aei/method): formula, constants with their decisions, code location, and the notebook snippet. */
-export function MethodEntry({ locale, method, values }: { locale: Locale; method: Method; values: SnippetValues }) {
+/** Copies text; the state tells the button what to say. */
+function useCopy(): [state: "idle" | "copied" | "manual", copy: (text: string) => void] {
   const [state, setState] = useState<"idle" | "copied" | "manual">("idle");
-  const snippet = fillSnippet(method, values);
-  const copy = () => {
+  const copy = (text: string) => {
     const clip = typeof navigator === "undefined" ? undefined : navigator.clipboard;
-    if (!clip) {
-      setState("manual");
-      return;
-    }
-    clip.writeText(snippet).then(
-      () => setState("copied"),
+    if (!clip) return setState("manual");
+    clip.writeText(text).then(
+      () => {
+        setState("copied");
+        setTimeout(() => setState("idle"), 1600);
+      },
       () => setState("manual"),
     );
   };
+  return [state, copy];
+}
+
+/** A p-value as a × 10^b in MathML; 1 and 0 stay plain. */
+function PValue({ p }: { p: number }) {
+  if (p >= 0.01) return <mn>{p.toPrecision(2)}</mn>;
+  const [m, e] = p.toExponential(1).split("e");
+  return (
+    <mrow>
+      <mn>{m}</mn>
+      <mo>×</mo>
+      <msup>
+        <mn>10</mn>
+        <mn>{Number(e)}</mn>
+      </msup>
+    </mrow>
+  );
+}
+
+/** The signal's own numbers in the formula's letters: y, μ and the tail (or the share and p for a trend). */
+function WithThisSignal({ locale, alert: a }: { locale: Locale; alert: Alert }) {
+  if (a.kind !== "detector" || a.p === undefined) return null;
+  const trend = a.detector === "rising-trend";
+  const lower = a.detector === "sampling-drop";
+  const gap = a.detector === "empty-run";
+  return (
+    <p className="sig-with">
+      <span className="sig-method-label">{t(locale, "cardMethodWith")}</span>
+      <math xmlns="http://www.w3.org/1998/Math/MathML">
+        <mrow>
+          {trend ? (
+            <>
+              <mtext>share now</mtext>
+              <mo>=</mo>
+              <mn>{Math.round(a.observed * 100)}</mn>
+              <mo>%</mo>
+            </>
+          ) : (
+            <>
+              <mi>{gap ? "L" : "y"}</mi>
+              <mo>=</mo>
+              <mn>{a.observed}</mn>
+              {a.expected !== undefined ? (
+                <>
+                  <mo>,</mo>
+                  <mspace width="0.6em" />
+                  <mi>{gap ? "λ" : "μ"}</mi>
+                  <mo>=</mo>
+                  <mn>{a.expected < 0.05 && a.expected > 0 ? a.expected.toPrecision(2) : oneDecimal(locale, a.expected)}</mn>
+                </>
+              ) : null}
+            </>
+          )}
+          <mo>,</mo>
+          <mspace width="0.6em" />
+          {trend || gap ? (
+            <mi>p</mi>
+          ) : (
+            <mrow>
+              <mi>P</mi>
+              <mo>(</mo>
+              <mi>Y</mi>
+              <mo>{lower ? "≤" : "≥"}</mo>
+              <mn>{a.observed}</mn>
+              <mo>)</mo>
+            </mrow>
+          )}
+          <mo>=</mo>
+          <PValue p={a.p} />
+        </mrow>
+      </math>
+    </p>
+  );
+}
+
+/**
+ * The method block under "How we calculate it": the test's name, the formula (MathML, LaTeX one click away),
+ * this signal's numbers in it, the constants with their decisions, the code that runs it in TypeScript and
+ * Python with copy, and the figure. The prose waits in "In plain words".
+ */
+export function MethodEntry({
+  locale,
+  method,
+  values,
+  alert: a,
+  plain,
+  explain,
+}: {
+  locale: Locale;
+  method: Method;
+  values: SnippetValues;
+  alert?: Alert;
+  /** The sentence and detail in words, shown under "In plain words". */
+  plain?: ReactNode;
+  /** The plain explanation component (the server's template), also under "In plain words". */
+  explain?: ReactNode;
+}) {
+  const [latexState, copyLatex] = useCopy();
+  const [codeState, copyCode] = useCopy();
+  const [lang, setLang] = useState<"py" | "ts">("py");
+  const snippet = fillSnippet(method, values);
+  const tsLine = `${method.code.fn}()  // ${method.code.ts}`;
+  const figure = a?.kind === "detector" && COUNT_DETECTORS.includes(a.detector) && a.p !== undefined && a.expected !== undefined;
+  const said = (s: "idle" | "copied" | "manual", idle: string) =>
+    s === "copied" ? t(locale, "cardRegistryCopied") : s === "manual" ? t(locale, "cardRegistryManual") : idle;
   return (
     <div className="sig-method">
-      <p className="sig-method-plain">{method.plain[locale]}</p>
-      <p className="sig-method-label">{t(locale, "cardRegistryFormula")}</p>
-      <code className="sig-formula">{method.latex}</code>
-      <p className="sig-method-label">{t(locale, "cardRegistryConstants")}</p>
-      <ul className="sig-constants">
+      <p className="sig-method-name">{method.name[locale]}</p>
+      <div className="sig-formula-row">
+        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: the MathML is our own registry text, not user input. */}
+        <div className="sig-formula" dangerouslySetInnerHTML={{ __html: method.mathml }} />
+        <button type="button" className="sig-copy" onClick={() => copyLatex(method.latex)}>
+          {said(latexState, t(locale, "cardCopyLatex"))}
+        </button>
+      </div>
+      {a ? <WithThisSignal locale={locale} alert={a} /> : null}
+      <dl className="sig-constants">
         {method.constants.map((k) => (
-          <li key={k.name}>
-            {k.name} = {String(k.value)} <span className="sig-decision">({k.decision})</span>
-          </li>
+          <div key={k.name} title={k.decision}>
+            <dt>{k.name}</dt>
+            <dd>
+              {String(k.value)} <span className="sig-decision">{k.decision}</span>
+            </dd>
+          </div>
         ))}
-      </ul>
-      <p className="sig-method-decisions">{t(locale, "cardRegistryDecisions", { list: method.decisions.join(", ") })}</p>
-      <p className="sig-code">
-        {method.code.py
-          ? t(locale, "cardRegistryCode", { ts: method.code.ts, py: method.code.py })
-          : t(locale, "cardRegistryCodeNoPy", { ts: method.code.ts })}
-      </p>
-      <button type="button" className="sig-btn" onClick={copy}>
-        {state === "copied" ? t(locale, "cardRegistryCopied") : t(locale, "cardRegistryCopy")}
-      </button>
-      {state === "manual" ? (
-        <>
-          <p className="sig-note">{t(locale, "cardRegistryFallbackNote")}</p>
-          <p className="sig-note">{t(locale, "cardRegistryManual")}</p>
-          <pre className="sig-snippet">{snippet}</pre>
-        </>
+      </dl>
+      {figure && a?.kind === "detector" ? (
+        <PoissonTail observed={a.observed} expected={a.expected as number} p={a.p as number} detector={a.detector} locale={locale} />
+      ) : null}
+      <div className="sig-code">
+        <div className="sig-code-head">
+          <div className="sig-seg" role="group" aria-label="code">
+            <button type="button" aria-pressed={lang === "py"} onClick={() => setLang("py")}>
+              Python
+            </button>
+            <button type="button" aria-pressed={lang === "ts"} onClick={() => setLang("ts")}>
+              TypeScript
+            </button>
+          </div>
+          <button type="button" className="sig-copy" onClick={() => copyCode(lang === "py" ? snippet : tsLine)}>
+            {said(codeState, t(locale, "cardCopyCode"))}
+          </button>
+        </div>
+        <pre className="sig-snippet">{lang === "py" ? snippet : tsLine}</pre>
+        <p className="sig-code-note">
+          {lang === "ts" || method.code.py
+            ? t(locale, "cardCodeRuns", {
+                fn: lang === "py" ? method.code.py : method.code.fn,
+                path: lang === "py" ? "aei" : method.code.ts,
+              })
+            : t(locale, "cardCodeNoPy")}
+        </p>
+      </div>
+      {plain || explain ? (
+        <details className="sig-plain">
+          <summary>{t(locale, "cardPlainWords")}</summary>
+          {plain}
+          {explain}
+        </details>
       ) : null}
     </div>
   );

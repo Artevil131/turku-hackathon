@@ -11,8 +11,12 @@ export type MethodId = "profile-excess" | "phenotype-excess" | "sampling-drop" |
 
 export interface Method {
   id: MethodId;
-  /** The formula as LaTeX source. The card shows it as text; the Method page renders it as MathML. */
+  /** The test's name, as a statistician would say it. */
+  name: { en: string; fi: string };
+  /** The formula as LaTeX source, for copying into a paper or a notebook. */
   latex: string;
+  /** The same formula as MathML, rendered by the browser on the card and the Method page (no library). */
+  mathml: string;
   /** One line in plain words, in each language. */
   plain: { en: string; fi: string };
   /** Constants with their values from the live settings and the decision that set them. */
@@ -47,6 +51,9 @@ const DATES = ` and "{from}" <= s.date <= "{to}"`;
 export const METHODS: Record<MethodId, Method> = {
   "profile-excess": {
     id: "profile-excess",
+    name: { en: "Poisson upper tail, hospital-wide baseline", fi: "Poisson-jakauman yläpää, koko sairaalan perustaso" },
+    mathml:
+      '<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><mi>μ</mi><mo>=</mo><msub><mi>n</mi><mtext>unit</mtext></msub><mo>·</mo><mfrac><mrow><msub><mi>B</mi><mtext>profile</mtext></msub><mo>+</mo><mfrac><mn>1</mn><mn>2</mn></mfrac></mrow><mrow><msub><mi>B</mi><mtext>all</mtext></msub><mo>+</mo><mn>1</mn></mrow></mfrac><mo>,</mo><mspace width="1em"/><mi>P</mi><mo>(</mo><mi>Y</mi><mo>≥</mo><mi>y</mi><mo>∣</mo><mi>Y</mi><mo>∼</mo><mi mathvariant="normal">Poisson</mi><mo>(</mo><mi>μ</mi><mo>)</mo><mo>)</mo><mo>&lt;</mo><mi>α</mi></mrow></math>',
     latex:
       "y = \\#\\{\\text{patients in this unit with the profile}\\},\\quad \\mu = n_{\\text{unit}}\\cdot\\frac{B_{\\text{profile}}+\\tfrac12}{B_{\\text{all}}+1},\\quad \\text{signal if } P(Y \\ge y \\mid Y\\sim\\mathrm{Poisson}(\\mu)) < \\alpha",
     plain: {
@@ -67,6 +74,9 @@ export const METHODS: Record<MethodId, Method> = {
   },
   "phenotype-excess": {
     id: "phenotype-excess",
+    name: { en: "Poisson upper tail, the unit's own baseline", fi: "Poisson-jakauman yläpää, osaston oma perustaso" },
+    mathml:
+      '<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><mi>μ</mi><mo>=</mo><msub><mi>n</mi><mtext>unit</mtext></msub><mo>·</mo><mfrac><mrow><msub><mi>B</mi><mtext>unit</mtext></msub><mo>+</mo><mfrac><mn>1</mn><mn>2</mn></mfrac></mrow><mrow><mi>B</mi><mo>+</mo><mn>1</mn></mrow></mfrac><mo>,</mo><mspace width="1em"/><mi>P</mi><mo>(</mo><mi>Y</mi><mo>≥</mo><mi>y</mi><mo>∣</mo><mi>Y</mi><mo>∼</mo><mi mathvariant="normal">Poisson</mi><mo>(</mo><mi>μ</mi><mo>)</mo><mo>)</mo><mo>&lt;</mo><mi>α</mi></mrow></math>',
     latex:
       "y = \\#\\{\\text{patients in this unit with the phenotype}\\},\\quad \\mu = n_{\\text{unit}}\\cdot\\frac{B_{\\text{unit}}+\\tfrac12}{B+1},\\quad \\text{signal if } P(Y \\ge y \\mid Y\\sim\\mathrm{Poisson}(\\mu)) < \\alpha",
     plain: {
@@ -86,6 +96,9 @@ export const METHODS: Record<MethodId, Method> = {
   },
   "sampling-drop": {
     id: "sampling-drop",
+    name: { en: "Poisson lower tail", fi: "Poisson-jakauman alapää" },
+    mathml:
+      '<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><mi>y</mi><mo>=</mo><msub><mi>c</mi><mn>7</mn></msub><mo>,</mo><mspace width="1em"/><mi>μ</mi><mo>=</mo><mn>7</mn><mo>·</mo><mfrac><msub><mi>c</mi><mn>56</mn></msub><mn>56</mn></mfrac><mo>,</mo><mspace width="1em"/><mi>P</mi><mo>(</mo><mi>Y</mi><mo>≤</mo><mi>y</mi><mo>∣</mo><mi>Y</mi><mo>∼</mo><mi mathvariant="normal">Poisson</mi><mo>(</mo><mi>μ</mi><mo>)</mo><mo>)</mo><mo>&lt;</mo><mi>α</mi></mrow></math>',
     latex:
       "y = c_{7},\\quad \\mu = 7\\cdot\\frac{c_{56}}{56},\\quad \\text{signal if } P(Y \\le y \\mid Y\\sim\\mathrm{Poisson}(\\mu)) < \\alpha",
     plain: {
@@ -103,6 +116,9 @@ export const METHODS: Record<MethodId, Method> = {
   },
   "empty-run": {
     id: "empty-run",
+    name: { en: "Poisson gap probability", fi: "Poisson-tyhjän jakson todennäköisyys" },
+    mathml:
+      '<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><mi>λ</mi><mo>=</mo><mfrac><msub><mi>c</mi><mn>56</mn></msub><mn>56</mn></mfrac><mo>,</mo><mspace width="1em"/><msup><mi>e</mi><mrow><mo>−</mo><mi>λ</mi><mi>L</mi></mrow></msup><mo>&lt;</mo><mi>α</mi></mrow></math>',
     latex: "\\lambda = \\frac{c_{56}}{56},\\quad \\text{signal if } e^{-\\lambda L} < \\alpha",
     plain: {
       en: "L days in a row with no cultures from this unit, against its mean daily count over the 56 days before the run.",
@@ -118,6 +134,9 @@ export const METHODS: Record<MethodId, Method> = {
   },
   "rising-trend": {
     id: "rising-trend",
+    name: { en: "Cochran–Armitage trend test, one-sided", fi: "Cochran–Armitage-trenditesti, yksisuuntainen" },
+    mathml:
+      '<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><mi>p</mi><mo>=</mo><mtext>Cochran–Armitage, one-sided, </mtext><mi>k</mi><mo>≥</mo><mn>13</mn><mtext> bins of 28 d</mtext><mo>,</mo><mspace width="1em"/><mi>p</mi><mo>&lt;</mo><mi>α</mi></mrow></math>',
     latex:
       "p = \\text{one-sided Cochran–Armitage test of the resistant share over } k \\ge 13 \\text{ bins of } 28 \\text{ days},\\quad \\text{signal if } p < \\alpha",
     plain: {
@@ -136,6 +155,9 @@ export const METHODS: Record<MethodId, Method> = {
   },
   cpe: {
     id: "cpe",
+    name: { en: "Rule, no test", fi: "Sääntö, ei testiä" },
+    mathml:
+      '<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><mtext>every CPE isolate → alert on its sample date (rule)</mtext></mrow></math>',
     latex: "\\text{every CPE isolate is an alert on its sample date (no test)}",
     plain: {
       en: "A rule, not a test: every carbapenemase-producing Enterobacterales isolate is an alert on its sample date.",
@@ -154,6 +176,9 @@ export const METHODS: Record<MethodId, Method> = {
   },
   "new-in-unit": {
     id: "new-in-unit",
+    name: { en: "Rule, no test", fi: "Sääntö, ei testiä" },
+    mathml:
+      '<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><mtext>MRSA or VRE on an inpatient unit, none there in </mtext><mi>L</mi><mtext> days (rule), </mtext><mi>L</mi><mo>=</mo><mn>180</mn></mrow></math>',
     latex:
       "\\text{MRSA or VRE isolate on an inpatient unit with none there in the previous } L \\text{ days (no test)},\\quad L = " +
       String(NEW_IN_UNIT_DAYS),

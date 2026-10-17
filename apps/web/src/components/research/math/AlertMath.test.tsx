@@ -93,7 +93,7 @@ describe("the signal card", () => {
     expect(html).not.toContain("sig-isolates");
   });
 
-  it("renders the registry entry: formula, constants with decisions, code line, notebook copy", () => {
+  it("renders the method block: name, MathML formula, constants with decisions, code with copy", () => {
     const html = renderToStaticMarkup(
       <MethodEntry
         locale="en"
@@ -101,14 +101,16 @@ describe("the signal card", () => {
         values={{ ward: "URO", organism: "Escherichia coli", from: "2025-05-12", to: "2025-06-09" }}
       />,
     );
-    expect(html).toContain('<code class="sig-formula">');
-    expect(html).toContain('alpha = 0.0001 <span class="sig-decision">(D-020)</span>');
-    expect(html).toContain("TypeScript: libs/utils/detect/src/detectors.ts · Python: aei.detect.profile_excess");
-    expect(html).toContain("Copy to notebook");
+    expect(html).toContain("Poisson upper tail, hospital-wide baseline");
+    expect(html).toContain("<math ");
+    expect(html).toContain("Copy LaTeX");
+    expect(html).toContain('<dt>alpha</dt><dd>0.0001 <span class="sig-decision">D-020</span>');
+    expect(html).toContain("aei.detect.profile_excess");
+    expect(html).toContain("s.ward == &quot;URO&quot;");
     const noPy = renderToStaticMarkup(
       <MethodEntry locale="en" method={METHODS.cpe} values={{ ward: "ICU", organism: "", from: "a", to: "b" }} />,
     );
-    expect(noPy).toContain("no Python function yet");
+    expect(noPy).toContain("No Python function yet");
   });
 
   it("caps the odds under one in a million and speaks Finnish", () => {

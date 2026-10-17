@@ -67,6 +67,12 @@ export const cardEn = {
   cardRegistryCopied: "Copied",
   cardRegistryManual: "Select and copy this by hand:",
   cardRegistryFallbackNote: "The clipboard is not available here.",
+  cardMethodWith: "With this signal",
+  cardCopyLatex: "Copy LaTeX",
+  cardCopyCode: "Copy",
+  cardCodeRuns: "Runs in {fn}, {path}",
+  cardCodeNoPy: "No Python function yet: the notebook filters the records directly.",
+  cardPlainWords: "In plain words",
 } as const;
 
 export const cardFi: Record<keyof typeof cardEn, string> = {
@@ -129,4 +135,10 @@ export const cardFi: Record<keyof typeof cardEn, string> = {
   cardRegistryCopied: "Kopioitu",
   cardRegistryManual: "Valitse ja kopioi tämä käsin:",
   cardRegistryFallbackNote: "Leikepöytä ei ole käytettävissä tässä.",
+  cardMethodWith: "Tällä signaalilla",
+  cardCopyLatex: "Kopioi LaTeX",
+  cardCopyCode: "Kopioi",
+  cardCodeRuns: "Ajetaan funktiossa {fn}, {path}",
+  cardCodeNoPy: "Python-funktiota ei vielä ole: muistio suodattaa tietueet suoraan.",
+  cardPlainWords: "Selkokielellä",
 };

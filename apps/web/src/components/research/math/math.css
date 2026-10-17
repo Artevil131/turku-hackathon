@@ -100,3 +100,139 @@
   white-space: pre;
   user-select: all;
 }
+
+/* The method block (D-075) stands open under "How we calculate it": name, formula, this signal's numbers,
+   constants, the figure, the code, and the prose folded away at the end. */
+.sig-method {
+  margin-top: 8px;
+  padding-top: 0;
+  border-top: 0;
+  max-width: none;
+  gap: 8px;
+}
+.sig-method-name {
+  margin: 0;
+  font-weight: 600;
+  color: var(--ink-1, #1b1b1f);
+}
+.sig-formula-row,
+.sig-code-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 8px;
+}
+.sig-formula-row .sig-copy {
+  margin-left: auto;
+}
+.sig-formula {
+  flex: 1 1 100%;
+  min-width: 0;
+  overflow-x: auto;
+  padding: 8px 10px;
+  font-family: inherit;
+  white-space: normal;
+  color: var(--ink-1, #1b1b1f);
+}
+.sig-formula math {
+  font-size: 14px;
+}
+.sig-with {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+}
+.sig-with .sig-method-label {
+  margin: 0;
+}
+.sig-with math {
+  font-size: 13px;
+  color: var(--ink-1, #1b1b1f);
+}
+.sig-copy {
+  flex: 0 0 auto;
+  padding: 2px 8px;
+  border: 1px solid var(--line, #e4e4e4);
+  border-radius: 4px;
+  background: var(--surface-1, #fff);
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+.sig-copy:hover {
+  border-color: var(--accent, #5b5bd6);
+  color: var(--accent, #5b5bd6);
+}
+.sig-constants {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 2px 12px;
+  margin: 0;
+  padding: 0;
+}
+.sig-constants > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 2px 0;
+  border-bottom: 1px dotted var(--line, #e4e4e4);
+}
+.sig-constants dt {
+  color: var(--ink-3);
+}
+.sig-constants dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-1, #1b1b1f);
+}
+.sig-constants .sig-decision {
+  font-size: 10px;
+}
+.sig-code {
+  display: grid;
+  gap: 4px;
+  color: var(--ink-2);
+}
+.sig-seg {
+  display: inline-flex;
+  border: 1px solid var(--line, #e4e4e4);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.sig-seg button {
+  padding: 2px 8px;
+  border: 0;
+  background: var(--surface-1, #fff);
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+.sig-seg button + button {
+  border-left: 1px solid var(--line, #e4e4e4);
+}
+.sig-seg button[aria-pressed="true"] {
+  background: var(--surface-2, #f4f4f4);
+  color: var(--ink-1, #1b1b1f);
+  font-weight: 600;
+}
+.sig-snippet {
+  user-select: text;
+}
+.sig-code-note {
+  margin: 0;
+  font-size: 11px;
+  color: var(--ink-3);
+}
+.sig-plain > summary {
+  cursor: pointer;
+  color: var(--ink-3);
+  font-size: var(--t-xs, 12px);
+}
+.sig-plain[open] > summary {
+  margin-bottom: 4px;
+}
