@@ -1157,6 +1157,14 @@ async function main() {
       await cdp.send("Emulation.setDeviceMetricsOverride", { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
       if (!(await waitIn(`document.querySelector('.ws')?.dataset.docked === 'false'`))) reasons.push("Phone layout did not activate");
       if (!(await evaluate(cdp, preserved))) reasons.push("Phone layout reloaded notebook iframe/kernel");
+      await evaluate(cdp, `document.querySelector('#ws-win-reproduce').scrollIntoView({ block: 'start' })`);
+      if (
+        !(await waitIn(`(() => {
+          const slot = document.querySelector('[data-reproduce-slot]').getBoundingClientRect(), frame = ${frame}.getBoundingClientRect();
+          return Math.abs(slot.top - frame.top) < 2 && Math.abs(slot.left - frame.left) < 2;
+        })()`))
+      )
+        reasons.push("Notebook overlay lost its phone slot after scrolling");
       await screenshot(cdp, join(outDir, "reproduce-phone.png"));
       await cdp.send("Emulation.setDeviceMetricsOverride", {
         width: VIEWPORTS[0].width,
