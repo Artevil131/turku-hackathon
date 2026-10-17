@@ -126,3 +126,69 @@ Smoke: the full smoke passes (`apps/web/scripts/smoke.mjs` against the dev serve
 projects interaction that downloads each export format). The per-route wall times below are dev-server runs
 with `--interactions none`; they measure the harness and Chrome start, not the bundle, because the dev server
 does not bundle.
+
+First visit to `#home` after step 2 and 3: `rolldown-runtime` 989, `index` 154 472, `react` 218 766 and the shared
+chunk `src-A3…` 163 160, 537 387 bytes in total, against 537 566 before. The split moves bytes out of `index`
+into `react` and the shared chunk; the home page downloads the same amount. The shared chunk holds `@aei/sites`
+and `@aei/ingest` (the lab code maps, `AEI_SITES`), which the web app reads for its hospital list on every page.
+Keeping ingest out of the web bundle is the next thing to try (a follow-up: `sites.ts` is outside this change).
+
+## Step 3: memoisation in the web app (groupIncidents, useWeekly)
+
+Change: `useIncidents` keeps the alerts array the board already has when a new fetch returns the same alerts
+(compared by value), and groups incidents once per alerts array (`useMemo` on `alerts`, not on the load
+object, which changes on every clock tick because `asOf` is part of it). The `biome-ignore` comment on that
+effect was removed: Biome reported it as unused, before and after the change. `useWeekly` remembers the window it
+last asked for (`from` and `asOf`), so an effect run that does not move either one asks nothing, for example
+when the client object is rebuilt.
+
+What was measured and what was not:
+
+- Requests are not changed by this step. The alert window still moves one day per clock tick (one `/api/alerts`
+  per tick, as designed in `useIncidents`), and `/api/weekly` is still asked once per move as before. A browser
+  count of requests during three clock steps was not possible: the Vite preview server does not pass the live
+  event stream through to the page, so the page did not follow the steps (the smoke harness, which uses the dev
+  server, does). The count is therefore not in this record.
+- `groupIncidents` is no longer re-run on a tick whose alerts are the same as before. This is confirmed by reading
+  the code (the memo is keyed on the array, and the array is kept when the values match). It was not measured with
+  a profiler.
+- Smoke against the dev server after step 3: 23 of 23 passed with the default routes (settings and intro
+  included), 19 of 19 with the same four routes as the baseline.
+
+### Summary of this step against the baseline
+
+| What | Before | After |
+|---|---|---|
+| Alert grouping | recomputed on every clock tick | recomputed only when the alerts change (by reading the code) |
+| `/api/alerts` and `/api/weekly` requests per clock tick | one each, as designed | unchanged |
+
+## Measured, and what did not help (left out or reverted)
+
+- The first version of the counties cache kept the file text as it is on disk. The file is pretty-printed, so the
+  response grew from 103 120 to 111 095 bytes. It now keeps the compact JSON; the response matches the old one.
+- The API caches save well under a millisecond per request on this data (the timings are in step 1). They are kept
+  because they were asked for; they do not change anything a person can see.
+- The Method and Connect pages were already `React.lazy` in `App.tsx`; nothing changed for them.
+- Splitting React out does not reduce what Home downloads (537 kB before and after). It makes React cacheable on its
+  own, which helps only on a second visit after an app change; it is not counted as a speed-up here.
+- The per-route smoke timings are wall times of one smoke run each (both viewports, no interactions, median of
+  three), and they are dominated by starting Chrome and loading the dev server (4.1 to 4.8 s in every case, with
+  run-to-run spread of about 0.5 s). They show no change beyond that spread. The smoke prints no timing of its own.
+
+## Final table
+
+| Measure | Before (926376e) | After |
+|---|---|---|
+| `/api/alerts?from=2024-06-10`, median of 5 | 0.708 ms | 0.538 ms |
+| `/api/weekly`, median of 5 | 0.435 ms | 0.545 ms (noise: first run 29 ms; not changed) |
+| `/api/isolates?from=2024-06-10`, median of 5 | 8.374 ms | 7.063 ms (not changed) |
+| `/api/regional`, median of 5 | 1.186 ms | 0.511 ms |
+| `/api/counties`, median of 5 | 0.960 ms | 0.437 ms |
+| First JS on `#research` (decoded) | 1 217 138 B | 655 817 B |
+| First JS on `#home` (decoded) | 537 566 B | 537 387 B |
+| `ResearchBoard` chunk | 662.91 kB (195.98 kB gz) | 101.74 kB (32.05 kB gz) |
+| Largest entry chunk `index` | 365.21 kB (112.51 kB gz) | 154.47 kB (46.96 kB gz) |
+| Smoke, home / doctor / research / method (wall s, dev server) | 4.34 / 4.17 / 4.67 / 4.80 | 4.11 / 4.11 / 4.69 / 4.32 |
+| Full smoke, same four routes | 19 of 19 | 19 of 19 |
+
+Commands: `npx vitest run apps/web apps/api`, `pnpm --filter @aei/web typecheck`, `pnpm --filter @aei/api typecheck`.
