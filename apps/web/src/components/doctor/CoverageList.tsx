@@ -3,7 +3,7 @@ import type { Syndrome } from "@aei/guideline";
 import { antibioticName, type Locale, specimenName, t, wardName } from "@aei/i18n";
 import { cloneElement, isValidElement, type ReactNode, useMemo, useRef } from "react";
 import "./CoverageList.css";
-import { BAR, barOf, type DoctorFilters, dmy, num, pct } from "./filters.ts";
+import { BAR, barOf, type DoctorFilters, dmy, droppedFilters, num, pct } from "./filters.ts";
 import { GuideSummary, guideCodes } from "./Guide.tsx";
 import { priorText, withPrior } from "./Patient.tsx";
 import { InfoIcon, Popover } from "./Popover.tsx";
@@ -43,7 +43,6 @@ export function itemsOf(
   const singles = data.suggestions.map<Item>((row) => ({
     id: row.antibiotic,
     name: antibioticName(locale, row.antibiotic),
-    aware: row.aware,
     standing: row.standing,
     share: row.share,
     interval: row.interval,
@@ -54,7 +53,6 @@ export function itemsOf(
   const pairs = data.combinationSuggestions.map<Item>((p) => ({
     id: p.antibiotics.join("+"),
     name: p.antibiotics.map((a) => antibioticName(locale, a)).join(" + "),
-    aware: null,
     standing: p.standing,
     share: p.coverage.share,
     interval: p.coverage.interval,
@@ -130,11 +128,6 @@ export function CoverageList({
         >
           <span className="cl-name">
             <b title={item.name}>{item.name}</b>
-            {item.aware ? (
-              <span className="cl-tier" data-tier={item.aware} title={item.aware === "Access" ? "AWaRe Access" : "AWaRe Watch"}>
-                {item.aware[0]}
-              </span>
-            ) : null}
             {guided.has(item.id) ? <span className="cl-guide">{t(locale, "drGuideMark")}</span> : null}
           </span>
           <span className="cl-plot" aria-hidden="true">
@@ -151,13 +144,13 @@ export function CoverageList({
           <span className="cl-num num">
             <span>
               {t(locale, item.row?.basis === "spectrum" ? "drWithinSpectrum" : "drAllOrgShort")}{" "}
-              <b>{assessable && item.share !== null ? `${pct(item.share)} %` : "–"}</b>
-              {item.standing === "borderline" && range ? ` (${range} %)` : ""}
+              <b>{assessable && item.share !== null ? `${pct(item.share)}\u00a0%` : "–"}</b>
+              {item.standing === "borderline" && range ? ` (${range}\u00a0%)` : ""}
               <span className="cl-n"> · n {num(locale, item.n)}</span>
             </span>
             {item.row?.basis === "spectrum" ? (
               <span className="cl-secondary">
-                {t(locale, "drAllOrgShort")} {item.row.allOrganisms.share === null ? "–" : `${pct(item.row.allOrganisms.share)} %`}
+                {t(locale, "drAllOrgShort")} {item.row.allOrganisms.share === null ? "–" : `${pct(item.row.allOrganisms.share)}\u00a0%`}
                 <span className="cl-n"> · n {num(locale, item.row.coverage.counts.known)}</span>
               </span>
             ) : null}
@@ -214,8 +207,7 @@ export function CoverageList({
           content={
             <>
               <p>{t(locale, "drForestInfo", { period: t(locale, filters.period === 365 ? "drPeriodYear" : "drPeriodMonth") })}</p>
-              {ready && filters.sex !== "any" && !cov.sexApplied ? <p>{t(locale, "drSexDropped")}</p> : null}
-              {ready && filters.onset && !cov.onsetApplied ? <p>{t(locale, "drOnsetDropped", { bar })}</p> : null}
+              {ready ? droppedFilters(filters, cov).map((d) => <p key={d.long}>{t(locale, d.long, { bar })}</p>) : null}
               <p>
                 {t(locale, "drFoot", { mild: BAR.mild, severe: BAR.severe })} {t(locale, "drFootOnset", { bar: BAR.severe })}
               </p>
@@ -245,7 +237,7 @@ export function CoverageList({
           {bestPair.standing !== "clears" ? (
             <p>
               {t(locale, STANDING[bestPair.standing].long)}
-              {bestPair.interval ? ` · ${t(locale, "drInterval")}: ${pct(bestPair.interval[0])}–${pct(bestPair.interval[1])} %` : ""}
+              {bestPair.interval ? ` · ${t(locale, "drInterval")}: ${pct(bestPair.interval[0])}–${pct(bestPair.interval[1])}\u00a0%` : ""}
             </p>
           ) : null}
         </div>

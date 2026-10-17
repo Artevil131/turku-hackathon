@@ -1,4 +1,4 @@
-import type { AeiClient, Alert, CoverageResponse, NationalResponse } from "@aei/contract";
+import type { AeiClient, Alert, CoverageResponse, FailsTogetherResponse, NationalResponse } from "@aei/contract";
 import type { WardCode } from "@aei/domain";
 import type { Syndrome } from "@aei/guideline";
 import type { Locale } from "@aei/i18n";
@@ -10,6 +10,7 @@ import { AsOf } from "../AsOf.tsx";
 import { DataQuality } from "../DataQuality.tsx";
 import { CoverageList, itemsOf, type ListStatus } from "./CoverageList.tsx";
 import { Details } from "./Details.tsx";
+import { FailsTogether } from "./FailsTogether.tsx";
 import "./DoctorPage.css";
 import {
   chooseSyndrome,
@@ -49,8 +50,8 @@ export interface DoctorPageProps {
 /** How long typing pauses before the patient id is looked up. */
 const PATIENT_PAUSE_MS = 600;
 
-/** The part of the filters the coverage API understands. */
-const queryKey = (f: DoctorFilters) => [f.unit, f.site, f.sex, f.sev, f.period, f.onset].join("|");
+/** Every filter the coverage call sends, so a change refetches. */
+const queryKey = (f: DoctorFilters) => [f.unit, f.site, f.sex, f.age, f.onset, f.sev, f.period].join("|");
 
 export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetryAlerts, onOpenSignals }: DoctorPageProps) {
   const [filters, setFilters] = useState<DoctorFilters>(() => filtersFromUrl(hashParams()));
@@ -137,6 +138,31 @@ export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetry
       stale = true;
     };
   }, [client, asOf, key, attempt]);
+
+  // "Fails together" (D-054) for the same filters, fetched beside the coverage list.
+  const [fails, setFails] = useState<{ key: string; response: FailsTogetherResponse } | null>(null);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `key` stands for the filters it covers.
+  useEffect(() => {
+    if (!asOf) return;
+    let stale = false;
+    client
+      .failsTogether({
+        ward: filters.unit,
+        specimen: filters.site,
+        windowDays: filters.period,
+        ...(filters.sex === "any" ? {} : { sex: filters.sex }),
+        ...(filters.age === "any" ? {} : { ageGroup: filters.age }),
+        ...(filters.onset ? { onset: "hospital" as const } : {}),
+      })
+      .then((response) => {
+        if (!stale) setFails({ key, response });
+      })
+      .catch(() => {});
+    return () => {
+      stale = true;
+    };
+  }, [client, asOf, key]);
+  const currentFails = fails && fails.key === key ? fails.response : null;
 
   const onChange = useCallback((patch: Partial<DoctorFilters>) => {
     if (patch.unit !== undefined) {
@@ -228,16 +254,21 @@ export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetry
                   ) : null}
                 </h3>
                 {current && item ? (
-                  <Details
-                    client={client}
-                    locale={locale}
-                    filters={filters}
-                    data={current}
-                    item={item}
-                    signals={signals}
-                    syndrome={syndrome}
-                    national={national}
-                  />
+                  <>
+                    <Details
+                      client={client}
+                      locale={locale}
+                      filters={filters}
+                      data={current}
+                      item={item}
+                      signals={signals}
+                      syndrome={syndrome}
+                      national={national}
+                    />
+                    {item.row ? (
+                      <FailsTogether locale={locale} antibiotic={item.row.antibiotic} data={currentFails} loading={!currentFails} />
+                    ) : null}
+                  </>
                 ) : (
                   <p className="dt-empty">{t(locale, "drSelectRow")}</p>
                 )}
@@ -282,6 +313,7 @@ export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetry
             syndrome={syndrome}
             national={national}
           />
+          {item.row ? <FailsTogether locale={locale} antibiotic={item.row.antibiotic} data={currentFails} loading={!currentFails} /> : null}
         </div>
       ) : null}
     </div>

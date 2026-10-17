@@ -460,7 +460,8 @@ export function PitchIntro({ client, locale, asOf, onEnter, reducedMotion }: Pit
         <span className="intro-enter-key">{t(locale, "introEnterKey")}</span>
       </div>
       <section className="intro-dock">
-        <p className="intro-picture">{t(locale, "introPicture", { n: nFigures })}</p>
+        {/* The caption describes the picture: without county figures there is nothing for it to describe. */}
+        {noGeo || noRegional ? null : <p className="intro-picture">{t(locale, "introPicture", { n: nFigures })}</p>}
         {data && months.length > 0 ? (
           <div className="intro-month">
             <div className="intro-month-head">
@@ -501,7 +502,7 @@ export function PitchIntro({ client, locale, asOf, onEnter, reducedMotion }: Pit
             </p>
           </div>
         ) : null}
-        <p className="intro-note">{t(locale, "introHospitals")}</p>
+        {noGeo ? null : <p className="intro-note">{t(locale, "introHospitals")}</p>}
         <p className="intro-note">{t(locale, "introSource", { asOf: asOfText ? formatDate(locale, asOfText, "long") : "…" })}</p>
       </section>
     </div>

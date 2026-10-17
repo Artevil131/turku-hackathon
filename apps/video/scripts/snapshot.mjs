@@ -53,7 +53,6 @@ try {
       from: c.coverage.from,
       suggestions: c.suggestions.slice(0, 5).map((s) => ({
         antibiotic: s.antibiotic,
-        aware: s.aware,
         standing: s.standing,
         share: s.share,
         interval: s.interval,

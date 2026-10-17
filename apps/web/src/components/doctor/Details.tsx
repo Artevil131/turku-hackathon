@@ -38,11 +38,6 @@ export function Details({ client, locale, filters, data, item, signals, syndrome
     <div className="dt">
       <h3 className="dt-name">
         <span>{item.name}</span>
-        {item.aware ? (
-          <span className="cl-tier" data-tier={item.aware}>
-            {item.aware[0]}
-          </span>
-        ) : null}
         <span className="cl-res" data-standing={item.standing}>
           <span className="cl-glyph" aria-hidden="true">
             {st.glyph}
@@ -50,11 +45,7 @@ export function Details({ client, locale, filters, data, item, signals, syndrome
           {t(locale, st.long)}
         </span>
       </h3>
-      <p className="dt-why">
-        {row
-          ? reasonOf(locale, row, data, filters)
-          : `${t(locale, gain === 1 ? "drGainOne" : "drGain", { gain })} · ${t(locale, "drAccessCount", { n: item.pair?.access ?? 0 })}`}
-      </p>
+      <p className="dt-why">{row ? reasonOf(locale, row, data, filters) : t(locale, gain === 1 ? "drGainOne" : "drGain", { gain })}</p>
       {item.prior ? <p className="dt-prior">{priorText(locale, item.prior)}</p> : null}
       <p className="dt-fig num">
         {item.share !== null ? (

@@ -2,7 +2,7 @@
 
 The doctor's empirical coverage list (D-023, provisional).
 
-    coverage(records, { asOf, ward, specimen, sex?, onset = "any", windowDays = 365, minTested = 30 })
+    coverage(records, { asOf, ward, specimen, sex?, ageGroup?, onset = "any", windowDays = 365, minTested = 30 })
     wilson(k, n)   // the 95 % Wilson interval it uses, cross-checked by scripts/crosscheck-stats
 
 For each antibiotic that suits the specimen: the share of first isolates
@@ -18,7 +18,7 @@ ceftazidime (tested only on *Pseudomonas*) can be labelled.
     suggest(result, "mild" | "severe")     // ordered for an empirical choice (D-026)
 
 `suggest` puts first the antibiotics whose whole 95 % interval clears 80 %
-(mild) or 90 % (severe), WHO AWaRe Access before Watch, then those whose
+(mild) or 90 % (severe), by coverage (no WHO AWaRe tier, D-056), then those whose
 estimate clears but interval does not, then the rest; "not assessable"
 when no level has 30 results or over 20 % of the pool is untested.
 
@@ -29,6 +29,16 @@ against), severe infections over all organisms (D-027). For cystitis in
 women at PHC-N this puts mecillinam and nitrofurantoin first; for ICU
 blood nothing clears 90 % on the year's 38 results, which the screen
 should say rather than hide.
+
+Patient filters (D-033, D-047): `sex`; `ageGroup`, one of D-019's groups
+(`child` 0–17, `adult` 18–64, `older` 65+, `veryOld` 80+, from
+`AGE_GROUPS` in `@aei/domain`); `onset: "hospital"`, sampled on day 3 of
+the stay or later (`isHospitalOnset`). They apply to the first isolates.
+When the unit has fewer than `minTested` isolates with all of them but
+enough without, they are dropped one at a time in `DROP_ORDER` (age group,
+onset, sex) before the unit is; when the unit is short even without them,
+all are kept while the level widens. `sexApplied`, `ageGroupApplied` and
+`onsetApplied` say which survived, `query` echoes what was asked.
 
 Why a year and not four weeks: experiments/0004. Why sex is a filter:
 experiments/0005 (urinary *E. coli* ciprofloxacin, men OR 1.9). Informs;
@@ -44,10 +54,10 @@ An isolate is hospital-acquired when its culture was sampled at least two
 days after admission (`HOSPITAL_ONSET_DAYS`, day 3 of the stay);
 community otherwise, including cultures without an admission date (about
 60 % of isolates, QUESTIONS H5). The filter acts on the pool before the level
-is chosen. Filters are dropped to keep the unit's own data, onset first:
-onset and sex, then sex alone, then neither, the first that leaves the
-unit `minTested` isolates; when none does, both stay on and the level
-falls back to the ward type, then the hospital (D-033). `onsetApplied`
+is chosen. Patient filters are dropped one at a time to keep the unit's own
+data, in `DROP_ORDER`: age group, then onset, then sex (D-053), the first
+that leaves the unit `minTested` isolates; when none does, all stay on and
+the level falls back to the ward type, then the hospital (D-033). `ageGroupApplied`, `onsetApplied`
 and `sexApplied` say what was kept; `query.onset` what was asked.
 
 Hospital-acquired infections are judged against 90 % whatever the
@@ -57,7 +67,7 @@ when the filter was dropped. Only the bar changes: a mild query is still
 judged within the spectrum and without injection-only drugs. The API
 returns the bar as `bar`.
 
-Relies on: D-004, D-023, D-026, D-027, D-033, D-049. Tests: `src/coverage.test.ts`.
+Relies on: D-004, D-019, D-023, D-026, D-027, D-033, D-049, D-053. Tests: `src/coverage.test.ts`.
 
 ## Combinations (D-028)
 

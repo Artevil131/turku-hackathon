@@ -21,6 +21,7 @@ export const connectEn = {
   connectThlTitle: "THL communicable disease register",
   connectThlBody:
     "Monthly MRSA, ESBL, VRE and CPE cases by wellbeing services county, {from} to {to}, fetched {fetched}. Open data, CC BY 4.0.",
+  connectThlSource: "Monthly MRSA, ESBL, VRE and CPE cases by wellbeing services county. Open data, CC BY 4.0.",
   connectGeoTitle: "Statistics Finland county boundaries",
   connectGeoBody: "Wellbeing services county polygons for the regional map. Open data, CC BY 4.0.",
   connectCodesTitle: "THL code sets (Kanta code server)",
@@ -69,6 +70,7 @@ export const connectFi: Record<keyof typeof connectEn, string> = {
   connectThlTitle: "THL:n tartuntatautirekisteri",
   connectThlBody:
     "MRSA-, ESBL-, VRE- ja CPE-tapaukset kuukausittain hyvinvointialueittain, {from}–{to}, haettu {fetched}. Avoin data, CC BY 4.0.",
+  connectThlSource: "MRSA-, ESBL-, VRE- ja CPE-tapaukset kuukausittain hyvinvointialueittain. Avoin data, CC BY 4.0.",
   connectGeoTitle: "Tilastokeskuksen aluerajat",
   connectGeoBody: "Hyvinvointialueiden rajat aluekarttaa varten. Avoin data, CC BY 4.0.",
   connectCodesTitle: "THL:n koodistot (Kanta-koodistopalvelu)",

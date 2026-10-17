@@ -2,7 +2,7 @@ import type { CoverageResponse, PatientFindingsResponse } from "@aei/contract";
 import { shortOrganism } from "@aei/domain";
 import type { Syndrome } from "@aei/guideline";
 import { type Locale, specimenName, t, wardName } from "@aei/i18n";
-import { BAR, barOf, certaintyOf, type DoctorFilters, dmy, num, pct, sexWord } from "./filters.ts";
+import { AGE_KEYS, BAR, barOf, certaintyOf, type DoctorFilters, dmy, droppedFilters, num, pct, sexWord } from "./filters.ts";
 import { guideCodes, guideLines } from "./Guide.tsx";
 import { carrierLines, findingLines, priorText } from "./Patient.tsx";
 import { flagsOf, type Item, levelKey, reasonOf, STANDING } from "./reason.ts";
@@ -32,7 +32,8 @@ export function PrintSheet({ locale, filters, data, asOf, signals, singles, pair
     unit,
     site,
     filters.sex === "any" ? `${t(locale, "drSex").toLowerCase()} ${sexWord(locale, "any")}` : sexWord(locale, filters.sex),
-    filters.onset ? t(locale, "drOnset") : null,
+    filters.age === "any" ? null : t(locale, "drPrintAge", { age: t(locale, AGE_KEYS[filters.age]) }),
+    filters.onset ? t(locale, "drOnset").toLowerCase() : null,
     `${t(locale, filters.sev === "mild" ? "drSevMildShort" : "drSevSevereShort")}, ${t(locale, "drBarName", { bar: barOf(data, filters) })}`,
     t(locale, filters.period === 365 ? "drPeriodYear" : "drPeriodMonth"),
     t(locale, "drPrintAsOf", { date: dmy(data.asOf) }),
@@ -48,7 +49,6 @@ export function PrintSheet({ locale, filters, data, asOf, signals, singles, pair
       <li key={item.id} className="pr-row">
         <b className="pr-name">
           {item.name}
-          {item.aware ? ` (${item.aware})` : ""}
           {guided.has(item.id) ? ` [${t(locale, "drGuideMark")}]` : ""}
         </b>
         <span className="pr-num">
@@ -62,7 +62,9 @@ export function PrintSheet({ locale, filters, data, asOf, signals, singles, pair
           {item.prior ? `${priorText(locale, item.prior)}; ` : ""}
           {item.row
             ? reasonOf(locale, item.row, data, filters)
-            : `${t(locale, Math.round((item.pair?.gain ?? 0) * 100) === 1 ? "drGainOne" : "drGain", { gain: Math.round((item.pair?.gain ?? 0) * 100) })} · ${t(locale, "drAccessCount", { n: item.pair?.access ?? 0 })}`}
+            : t(locale, Math.round((item.pair?.gain ?? 0) * 100) === 1 ? "drGainOne" : "drGain", {
+                gain: Math.round((item.pair?.gain ?? 0) * 100),
+              })}
           {flags
             ? flags.notCovering
                 .slice(0, 2)
@@ -96,8 +98,9 @@ export function PrintSheet({ locale, filters, data, asOf, signals, singles, pair
           from: dmy(cov.from),
         })}
       </p>
-      {filters.sex !== "any" && !cov.sexApplied ? <p>{t(locale, "drSexDropped")}</p> : null}
-      {filters.onset && !cov.onsetApplied ? <p>{t(locale, "drOnsetDropped", { bar: barOf(data, filters) })}</p> : null}
+      {droppedFilters(filters, cov).map((d) => (
+        <p key={d.long}>{t(locale, d.long, { bar: barOf(data, filters) })}</p>
+      ))}
       {syndrome && guide ? (
         <p>
           {syndrome.name[locale]}: {[...guide.lines, ...(guide.also ? [guide.also] : [])].join("; ")}.

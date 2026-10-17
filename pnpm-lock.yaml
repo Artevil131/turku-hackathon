@@ -32,6 +32,9 @@ importers:
       '@aei/contract':
         specifier: workspace:*
         version: link:../../libs/utils/contract
+      '@aei/coresistance':
+        specifier: workspace:*
+        version: link:../../libs/utils/coresistance
       '@aei/coverage':
         specifier: workspace:*
         version: link:../../libs/utils/coverage
@@ -175,6 +178,9 @@ importers:
       '@aei/ask':
         specifier: workspace:*
         version: link:../ask
+      '@aei/coresistance':
+        specifier: workspace:*
+        version: link:../coresistance
       '@aei/coverage':
         specifier: workspace:*
         version: link:../coverage
@@ -193,6 +199,21 @@ importers:
       '@aei/viz':
         specifier: workspace:*
         version: link:../viz
+
+  libs/utils/coresistance:
+    dependencies:
+      '@aei/counting':
+        specifier: workspace:*
+        version: link:../counting
+      '@aei/coverage':
+        specifier: workspace:*
+        version: link:../coverage
+      '@aei/domain':
+        specifier: workspace:*
+        version: link:../domain
+      '@aei/replay':
+        specifier: workspace:*
+        version: link:../replay
 
   libs/utils/counting:
     dependencies:

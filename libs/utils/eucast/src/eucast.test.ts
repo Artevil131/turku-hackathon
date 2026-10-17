@@ -1,6 +1,6 @@
 import { ANTIBIOTICS, ORGANISMS } from "@aei/domain";
 import { describe, expect, it } from "vitest";
-import { effectiveResult, INTRINSIC, inferredResistantFrom, inferredResult, isIntrinsic, NO_BREAKPOINT, suitsSpecimen } from "./index.ts";
+import { defeatedBy, effectiveResult, INTRINSIC, inferredResistantFrom, inferredResult, isIntrinsic, NO_BREAKPOINT, suitsSpecimen } from "./index.ts";
 
 describe("rule tables", () => {
   it("name only the dataset's organisms and antibiotics, each pair once", () => {
@@ -68,4 +68,14 @@ describe("inferredResistantFrom (D-050)", () => {
     expect(inferredResistantFrom("vre")).toEqual([]);
     expect(inferredResistantFrom("cpe")).toEqual([]);
   });
+});
+
+it("defeatedBy adds EUCAST's expected resistant phenotypes to what the rules infer (D-052)", () => {
+  expect(defeatedBy("esbl")).toEqual(["AMP", "CXM", "CRO", "CAZ"]);
+  expect(defeatedBy("vre")).toEqual(["VAN"]);
+  expect(defeatedBy("cpe")).toEqual(["AMP", "TZP", "CXM", "CRO", "CAZ", "MEM"]);
+  // MRSA: what the cefoxitin screen infers, in the dataset's order; nothing added.
+  expect(defeatedBy("mrsa")).toEqual(inferredResistantFrom("mrsa"));
+  expect(defeatedBy("mrsa")).toContain("CXM");
+  expect(defeatedBy("esbl")).not.toContain("MEC");
 });

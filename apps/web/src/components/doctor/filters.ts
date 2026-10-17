@@ -1,18 +1,23 @@
 import { barFor, type CoverageQuery, type CoverageResponse, type Level, type Severity, THRESHOLDS } from "@aei/contract";
-import { isWardCode, type Sex, type Specimen, WARDS, type WardCode } from "@aei/domain";
+import { type AgeGroup as AgeBand, isAgeGroup, isWardCode, type Sex, type Specimen, WARDS, type WardCode } from "@aei/domain";
 import { guide, type Syndrome, type SyndromeId, syndromeDefaults } from "@aei/guideline";
 import { type Locale, type MessageKey, t } from "@aei/i18n";
 
 // The doctor's one-click filters, their defaults, and how they travel in the URL
-// (`#doctor?unit=URO&site=urine&sex=F&sev=severe&onset=hospital&period=28`) and in localStorage (`aei.unit`).
+// (`#doctor?unit=URO&site=urine&sex=F&age=older&onset=hospital&sev=severe&period=28`) and in localStorage (`aei.unit`).
 
+/** "any" and D-019's groups (`AGE_GROUPS` in @aei/domain), in the order the strip shows them. */
+export const AGE_GROUPS: readonly AgeGroup[] = ["any", "child", "adult", "older", "veryOld"];
+export type AgeGroup = "any" | AgeBand;
 export type Period = 365 | 28;
 
 export interface DoctorFilters {
   unit: WardCode;
   site: Specimen;
   sex: Sex | "any";
-  /** Hospital onset, inpatient day 3 or later (D-049): sends `onset: "hospital"`, which also sets the 90 % bar. Off sends nothing. */
+  /** Sent to the coverage API; the server may drop it to keep the unit's own data (D-047). */
+  age: AgeGroup;
+  /** Inpatient day 3 or later (hospital onset), sent as `onset=hospital`; may be dropped like age (D-047). */
   onset: boolean;
   sev: Severity;
   period: Period;
@@ -21,7 +26,15 @@ export interface DoctorFilters {
 }
 
 export const DEFAULT_UNIT: WardCode = "MED-A";
-export const DEFAULTS: Omit<DoctorFilters, "unit"> = { site: "urine", sex: "any", onset: false, sev: "mild", period: 365, syn: null };
+export const DEFAULTS: Omit<DoctorFilters, "unit"> = {
+  site: "urine",
+  sex: "any",
+  age: "any",
+  onset: false,
+  sev: "mild",
+  period: 365,
+  syn: null,
+};
 export const SITES: readonly Specimen[] = ["urine", "blood", "wound"];
 /** The bar a severity is judged against, in percent (D-026, D-027), from the contract. */
 export const BAR: Record<Severity, number> = { mild: THRESHOLDS.mild * 100, severe: THRESHOLDS.severe * 100 };
@@ -36,6 +49,13 @@ export function barOf(data: CoverageResponse | null, filters: Pick<DoctorFilters
     : barFor({ onset: filters.onset ? "hospital" : "any" }, filters.sev);
   return Math.round(fraction * 100);
 }
+export const AGE_KEYS: Record<AgeGroup, MessageKey> = {
+  any: "drAgeAny",
+  child: "drAgeChild",
+  adult: "drAgeAdult",
+  older: "drAgeOlder",
+  veryOld: "drAgeVeryOld",
+};
 
 const UNIT_KEY = "aei.unit";
 
@@ -87,6 +107,7 @@ export function coverageQuery(f: DoctorFilters): CoverageQuery {
     severity: f.sev,
     windowDays: f.period,
     ...(f.sex === "any" ? {} : { sex: f.sex }),
+    ...(f.age === "any" ? {} : { ageGroup: f.age }),
     ...(f.onset ? { onset: "hospital" as const } : {}),
   };
 }
@@ -97,10 +118,12 @@ export function filtersFromUrl(params: URLSearchParams): DoctorFilters {
   const site = params.get("site");
   const sex = params.get("sex");
   const sev = params.get("sev");
+  const age = params.get("age");
   return {
     unit: unit && isWardCode(unit) ? unit : (readStoredUnit() ?? DEFAULT_UNIT),
     site: SITES.find((s) => s === site) ?? DEFAULTS.site,
     sex: sex === "F" || sex === "M" ? sex : DEFAULTS.sex,
+    age: age && isAgeGroup(age) ? age : DEFAULTS.age,
     onset: params.get("onset") === "hospital",
     sev: sev === "severe" ? "severe" : "mild",
     period: params.get("period") === "28" ? 28 : 365,
@@ -114,7 +137,7 @@ export function filtersToParams(f: DoctorFilters): Record<string, string | null>
     unit: f.unit,
     site: f.site === DEFAULTS.site ? null : f.site,
     sex: f.sex === "any" ? null : f.sex,
-    age: null,
+    age: f.age === "any" ? null : f.age,
     onset: f.onset ? "hospital" : null,
     sev: f.sev === "mild" ? null : f.sev,
     period: f.period === 365 ? null : String(f.period),
@@ -160,6 +183,15 @@ export type Row = CoverageResponse["suggestions"][number];
 /** n behind a row's headline share: within-spectrum (mild) or all-organism (severe) known results. */
 export function rowN(row: Row): number {
   return row.basis === "spectrum" ? row.coverage.spectrum.counts.known : row.coverage.counts.known;
+}
+
+/** Patient filters asked for that the server dropped to keep the unit's own data (D-033, D-047): the sentence and the chip. */
+export function droppedFilters(f: DoctorFilters, cov: CoverageResponse["coverage"]): { long: MessageKey; chip: MessageKey }[] {
+  return [
+    f.sex !== "any" && !cov.sexApplied ? ({ long: "drSexDropped", chip: "drSexDroppedChip" } as const) : null,
+    f.age !== "any" && !cov.ageGroupApplied ? ({ long: "drAgeDropped", chip: "drAgeDroppedChip" } as const) : null,
+    f.onset && !cov.onsetApplied ? ({ long: "drOnsetDropped", chip: "drOnsetDroppedChip" } as const) : null,
+  ].filter((d) => d !== null);
 }
 
 /** The sex chip's label: Finnish N/M, English F/M, "any" spelled out. */

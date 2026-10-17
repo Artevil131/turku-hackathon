@@ -2,7 +2,18 @@ import type { Severity } from "@aei/contract";
 import type { Sex, Specimen, WardCode } from "@aei/domain";
 import { type Locale, type MessageKey, specimenName, t, wardName } from "@aei/i18n";
 import { type ReactNode, useState } from "react";
-import { barOf, type DoctorFilters, type Period, SITES, sexWord, unitGroups } from "./filters.ts";
+import {
+  AGE_GROUPS,
+  AGE_KEYS,
+  type AgeGroup,
+  barOf,
+  DEFAULTS,
+  type DoctorFilters,
+  type Period,
+  SITES,
+  sexWord,
+  unitGroups,
+} from "./filters.ts";
 import { useMedia } from "./useMedia.ts";
 import "./RecordStrip.css";
 
@@ -63,8 +74,9 @@ export function RecordStrip({ locale, filters, onChange, patientId = "", onPatie
     wardName(locale, filters.unit),
     specimenName(locale, filters.site),
     sexWord(locale, filters.sex),
+    filters.age === "any" ? null : t(locale, "drPrintAge", { age: tr(AGE_KEYS[filters.age]) }),
+    filters.onset ? tr("drOnsetPhone") : null,
     tr(filters.sev === "mild" ? "drSevMildShort" : "drSevSevereShort"),
-    filters.onset ? tr("drOnsetShort") : null,
     tr(filters.period === 365 ? "drPeriodYear" : "drPeriodMonth"),
   ]
     .filter(Boolean)
@@ -137,6 +149,22 @@ export function RecordStrip({ locale, filters, onChange, patientId = "", onPatie
       />
     </Group>
   );
+  const age = (
+    <Group label={tr("drAge")}>
+      <Choices<AgeGroup>
+        options={AGE_GROUPS.map(
+          (a) =>
+            [
+              a,
+              wide && a === "any" ? tr("drAgeLabel") : tr(AGE_KEYS[a]),
+              a === "any" ? `${tr("drAge")}: ${tr(AGE_KEYS.any)}` : undefined,
+            ] as const,
+        )}
+        value={filters.age}
+        onPick={(v) => onChange({ age: v })}
+      />
+    </Group>
+  );
   const onset = (
     <Group label={tr("drOnset")}>
       <button
@@ -151,13 +179,15 @@ export function RecordStrip({ locale, filters, onChange, patientId = "", onPatie
     </Group>
   );
 
+  const severeBloodOn = filters.site === "blood" && filters.sev === "severe";
   const severeBlood = (
     <button
       type="button"
       className="rs-choice rs-quick"
-      aria-pressed={filters.site === "blood" && filters.sev === "severe"}
+      aria-pressed={severeBloodOn}
       onClick={() => {
-        onChange({ site: "blood", sev: "severe" });
+        // A second tap turns the shortcut off: back to the default site and severity.
+        onChange(severeBloodOn ? { site: DEFAULTS.site, sev: DEFAULTS.sev } : { site: "blood", sev: "severe" });
         setMore(false);
       }}
     >
@@ -194,6 +224,7 @@ export function RecordStrip({ locale, filters, onChange, patientId = "", onPatie
           {site}
           {sex}
           {severity}
+          {age}
           {onset}
           {period}
           {patient}
@@ -217,6 +248,7 @@ export function RecordStrip({ locale, filters, onChange, patientId = "", onPatie
           {site}
           {sex}
           {severity}
+          {age}
           {period}
           {onset}
           {patient}

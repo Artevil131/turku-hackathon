@@ -55,14 +55,14 @@ interface Layout {
   /** Bottom of the unit lanes. */
   lanesEnd: number;
 }
-/** The full band: nine lanes make 200 px; fewer lanes make it shorter. */
+/** The full band: nine lanes make 150 px, so the expanded timeline stays about 160 px tall; fewer lanes make it shorter. */
 const fullLayout = (n: number): Layout => {
-  const lanesEnd = 68 + n * 13;
-  return { gutter: 46, height: lanesEnd + 15, legend: 14, top: 20, base: 62, lanes: 68, pitch: 13, axis: lanesEnd + 12, lanesEnd };
+  const lanesEnd = 47 + n * 10;
+  return { gutter: 46, height: lanesEnd + 13, legend: 14, top: 17, base: 44, lanes: 47, pitch: 10, axis: lanesEnd + 11, lanesEnd };
 };
 const SMALL: Layout = { gutter: 0, height: 44, legend: 0, top: 3, base: 26, lanes: 0, pitch: 0, axis: 43, lanesEnd: 26 };
 
-const PILL_H = 12;
+const PILL_H = 10;
 const READ_W = 276;
 
 interface Props {
@@ -278,15 +278,12 @@ function build(
         stack.pop();
         const members = [...prev.members, ...cur.members];
         const merged = t(locale, "tlPillSignals", { n: members.length });
-        stack[stack.length - 1] = {
-          members,
-          right: cur.right,
-          w: pillWidth(
-            merged,
-            members.some((x) => pillKind(x) === "sentinel"),
-          ),
-          label: merged,
-        };
+        const mw = pillWidth(
+          merged,
+          members.some((x) => pillKind(x) === "sentinel"),
+        );
+        // The merged label can be wider than the last pill: keep it clear of the lane labels.
+        stack[stack.length - 1] = { members, right: Math.max(L.gutter + mw, cur.right), w: mw, label: merged };
       }
       lanesAlerts.set(lane, stack);
     }
@@ -469,7 +466,7 @@ const StaticLayer = memo(function StaticLayer({
           <text className="hs-ylab" x={L.gutter - 6} y={m.yTop + 4} textAnchor="end">
             {ratioLabel(layers, m.ymax)}
           </text>
-          <text className="hs-ylab" x={L.gutter - 6} y={L.base + 4} textAnchor="end">
+          <text className="hs-ylab" x={L.gutter - 6} y={L.base + 1} textAnchor="end">
             0
           </text>
           <Legend id={id} L={L} locale={locale} right={m.right - reserve} layers={layers} onToggle={onToggle} />
@@ -527,8 +524,8 @@ const StaticLayer = memo(function StaticLayer({
           <title>{`${p.members.map((x) => pillLine(locale, x)).join("\n")}\n${t(locale, "tlOpenIncident")}`}</title>
           <rect className="hs-pill-hit" x={p.x - 2} y={p.y - 1} width={p.w + 4} height={PILL_H + 2} />
           <rect className="hs-pill-bg" x={p.x} y={p.y} width={p.w} height={PILL_H} rx={2.5} />
-          {p.kind === "sentinel" ? <path className="hs-pill-glyph" d={`M${p.x + 5} ${p.y + 2.5}l3.5 6h-7z`} /> : null}
-          <text className="hs-pill-text" x={p.x + (p.kind === "sentinel" ? 12 : 4)} y={p.y + 9}>
+          {p.kind === "sentinel" ? <path className="hs-pill-glyph" d={`M${p.x + 5} ${p.y + 2}l3.5 6h-7z`} /> : null}
+          <text className="hs-pill-text" x={p.x + (p.kind === "sentinel" ? 12 : 4)} y={p.y + 7.5}>
             {p.label}
           </text>
           {p.s !== null ? (
@@ -656,7 +653,8 @@ function Legend({
           it.name,
         ),
       )}
-      {toggle("cult", t(locale, "tlLyCultures"), x, cultW, <path className="hs-cult" d={`M${x} 7.5h13`} />, text)}
+      {/* No room for even the short label: leave the cultures toggle to the Layers menu rather than show a bare dash. */}
+      {text ? toggle("cult", t(locale, "tlLyCultures"), x, cultW, <path className="hs-cult" d={`M${x} 7.5h13`} />, text) : null}
       {ratioNote ? (
         <text className="hs-legend" x={right - 8 - tagW} y={11} textAnchor="end">
           {ratioNote}
