@@ -101,8 +101,10 @@ export function Workspace({
   onClosed,
   initiallyOpen,
   reveal,
+  toolbar,
 }: {
   locale: Locale;
+  toolbar?: ReactNode;
   content: Record<WinId, ReactNode>;
   onOpened?: (id: WinId) => void;
   onClosed?: (id: WinId) => void;
@@ -405,6 +407,7 @@ export function Workspace({
   return (
     <div className="ws" data-docked={wide}>
       <div className="ws-toolbar">
+        {toolbar}
         <Tray locale={locale} layout={layout} onToggle={(id) => (locate(layout, id) ? close(id) : open(id))} onPreset={preset} />
       </div>
       <div

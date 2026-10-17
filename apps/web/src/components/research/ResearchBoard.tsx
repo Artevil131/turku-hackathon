@@ -1,5 +1,5 @@
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { writeHashParams } from "../../url.ts";
+import { hashParams, writeHashParams } from "../../url.ts";
 import { Assistant } from "./assistant/Assistant.tsx";
 import { type BoardState, boardFromUrl, boardToParams, type FeedProps } from "./board.ts";
 import { applyFilters } from "./feed/model.ts";
@@ -8,6 +8,8 @@ import { useIncidents } from "./feed/useIncidents.ts";
 import { GeoMap } from "./geo/GeoMap.tsx";
 import { UnitGraph } from "./geo/UnitGraph.tsx";
 import { AlertMath } from "./math/AlertMath.tsx";
+import { ProjectControls } from "./projects/ProjectControls.tsx";
+import { useProject } from "./projects/useProject.ts";
 import { SignalFeed } from "./SignalFeed.tsx";
 import { UnitGrid } from "./UnitGrid.tsx";
 import type { WinId } from "./workspace/layout.ts";
@@ -24,9 +26,10 @@ type Props = Omit<FeedProps, "state" | "onChange">;
 
 export function ResearchBoard(props: Props) {
   const { locale, client, asOf, findings, acknowledge } = props;
+  const project = useProject(client, asOf);
   const [state, setState] = useState<BoardState>(boardFromUrl);
   const onChange = useCallback((patch: Partial<BoardState>) => setState((s) => ({ ...s, ...patch })), []);
-  useEffect(() => writeHashParams(boardToParams(state)), [state]);
+  useEffect(() => writeHashParams({ ...boardToParams(state), project: hashParams().get("project") }), [state]);
   // A link followed inside the app (or the back button) changes the hash without remounting.
   useEffect(() => {
     const onHash = () => setState(boardFromUrl());
@@ -89,6 +92,7 @@ export function ResearchBoard(props: Props) {
       <Workspace
         locale={locale}
         content={content}
+        toolbar={<ProjectControls client={client} locale={locale} clock={asOf} board={state} selection={project} />}
         initiallyOpen={initiallyOpen.current}
         reveal={{ id: "math", key: state.incident }}
         onOpened={(id) => (id === "grid" ? onChange({ panel: "grid" }) : id === "map" ? onChange({ panel: "geo" }) : undefined)}

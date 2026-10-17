@@ -2,14 +2,17 @@ import { spawnSync } from "node:child_process";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import type { IsolateRecord } from "@aei/domain";
 import { describe, expect, it } from "vitest";
 import {
+  alertTable,
   type ExportBundle,
   type ExportFigure,
   type ExportTable,
   exportFormats,
   figurePngFile,
   figureSvgFile,
+  isolateTable,
   toCsv,
   toCsvFiles,
   toDocx,
@@ -160,4 +163,96 @@ it("handles bundles without tables, figures or numbers", async () => {
   expect(toLatex(empty).data).toContain("\\end{document}");
   expect((await toDocx(empty)).data.length).toBeGreaterThan(0);
   expect(exportFormats.map((f) => f.id)).toEqual(["csv", "json", "md", "tex", "docx", "py"]);
+});
+
+describe("domain tables", () => {
+  const record: IsolateRecord = {
+    isolateId: "i1",
+    cultureId: "c1",
+    patientId: "p1",
+    sampleDate: "2025-05-12",
+    admissionDate: null,
+    ward: "ICU",
+    specimen: "blood",
+    organism: "Escherichia coli",
+    sex: "F",
+    ageYears: 42,
+    homeArea: "Turku",
+    phenotypes: ["esbl", "cpe"],
+    results: { AMP: "R", MEM: "S" },
+  };
+  it("exports the fixed isolate columns followed by antibiotics in caller order", () => {
+    const table = isolateTable([record], ["MEM", "AMP", "CIP"]);
+    expect(table.columns.map((c) => c.key)).toEqual([
+      "isolateId",
+      "cultureId",
+      "patientId",
+      "sampleDate",
+      "admissionDate",
+      "ward",
+      "specimen",
+      "organism",
+      "sex",
+      "ageYears",
+      "homeArea",
+      "phenotypes",
+      "MEM",
+      "AMP",
+      "CIP",
+    ]);
+    expect(table.columns.every((c) => c.label && c.description)).toBe(true);
+    expect(table.rows).toEqual([
+      {
+        isolateId: "i1",
+        cultureId: "c1",
+        patientId: "p1",
+        sampleDate: "2025-05-12",
+        admissionDate: null,
+        ward: "ICU",
+        specimen: "blood",
+        organism: "Escherichia coli",
+        sex: "F",
+        ageYears: 42,
+        homeArea: "Turku",
+        phenotypes: "esbl;cpe",
+        MEM: "S",
+        AMP: "R",
+        CIP: "",
+      },
+    ]);
+    expect(record.phenotypes).toEqual(["esbl", "cpe"]);
+    expect(isolateTable([{ ...record, phenotypes: [] }], []).rows[0]?.phenotypes).toBe("");
+  });
+  it("retains the dictionary even with no isolate or alert rows", () => {
+    expect(isolateTable([], ["AMP"]).rows).toEqual([]);
+    expect(isolateTable([], ["AMP"]).columns.at(-1)?.key).toBe("AMP");
+    expect(alertTable([]).rows).toEqual([]);
+    expect(alertTable([]).columns.every((c) => c.label && c.description)).toBe(true);
+  });
+  it("flattens all alert variants, retaining false and zero and marking absent fields null", () => {
+    const common = { id: "a", date: "2025-05-12", ward: "ICU" };
+    const alerts = [
+      { ...common, kind: "cpe", patientId: "p1", isolateId: "i1", organism: "Escherichia coli", specimen: "blood" },
+      { ...common, kind: "carrier", cultureId: "c1", phenotype: "esbl", from: "URO", foundOn: "2025-04-01", confirmed: false },
+      { ...common, kind: "new-in-unit", phenotype: "vre", previous: null },
+      {
+        ...common,
+        kind: "detector",
+        ward: null,
+        site: "tyks",
+        detector: "rising-trend",
+        profile: "SR.",
+        observed: 0,
+        expected: 0,
+        p: 0,
+        incident: "event",
+      },
+    ];
+    const result = alertTable(alerts);
+    expect(result.rows[0]).toMatchObject({ isolateId: "i1", detector: null, confirmed: null });
+    expect(result.rows[1]).toMatchObject({ cultureId: "c1", from: "URO", confirmed: false });
+    expect(result.rows[2]).toMatchObject({ previous: null, phenotype: "vre" });
+    expect(result.rows[3]).toMatchObject({ ward: null, site: "tyks", observed: 0, expected: 0, p: 0, incident: "event", profile: "SR." });
+    expect(toCsvFiles({ ...bundle, tables: [result] }).some((file) => file.filename.endsWith("-dictionary.csv"))).toBe(true);
+  });
 });
