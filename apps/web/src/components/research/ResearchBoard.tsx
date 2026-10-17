@@ -30,7 +30,11 @@ export function ResearchBoard(props: Props) {
   // A link followed inside the app (or the back button) changes the hash without remounting.
   // Also when another component (the timeline's pills and lanes) writes `inc=` or `unit=` through url.ts.
   useEffect(() => {
-    const onHash = () => setState(boardFromUrl());
+    const onHash = () =>
+      setState((s) => {
+        const next = boardFromUrl();
+        return JSON.stringify(boardToParams(s)) === JSON.stringify(boardToParams(next)) ? s : next;
+      });
     return subscribeHash(onHash);
   }, []);
 
@@ -70,8 +74,10 @@ export function ResearchBoard(props: Props) {
   }, [ready, selectedWard]);
 
   // The units the selected incident reaches (its span chips) are the kin of the grid and the flow.
-  const kin = useMemo(() => (selected ? spansOf(selected).units : []), [selected, spansOf]);
-  const panelProps = { ...props, state, onChange, kin, hasSelection: selected !== null };
+  // Only a named selection (inc= in the URL) dims the rest; the feed's default pick does not.
+  const explicit = state.incident !== null && selected?.key === state.incident;
+  const kin = useMemo(() => (explicit && selected ? spansOf(selected).units : []), [explicit, selected, spansOf]);
+  const panelProps = { ...props, state, onChange, kin, hasSelection: explicit };
   const loading = load.status === "loading";
 
   const content: Record<WinId, ReactNode> = {

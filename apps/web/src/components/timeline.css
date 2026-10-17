@@ -860,3 +860,63 @@
     transition: none;
   }
 }
+
+/* ---------- "Found so far": the live log of incidents in the strip ---------- */
+
+.tl-ev-code .kind-glyph,
+.tl-ev-code svg {
+  width: 14px;
+  height: 14px;
+  vertical-align: -2px;
+}
+
+.tl-ev-none {
+  margin: 0;
+  font-size: var(--t-xs, 12px);
+  line-height: 1.4;
+  color: var(--ink-3, #6f7292);
+  max-width: 28ch;
+}
+
+.tl-ev-more .tl-ev-name {
+  color: var(--brand-accent, #635bf1);
+  font-weight: 600;
+}
+
+.tl-ev-count {
+  font-size: var(--t-xs, 12px);
+  font-weight: 600;
+  color: var(--ink-3, #6f7292);
+  white-space: nowrap;
+}
+
+.tl-ev-chip svg {
+  width: 12px;
+  height: 12px;
+  margin-right: 4px;
+  vertical-align: -2px;
+}
+
+/* A new find slides in as its alert arrives. */
+@keyframes tl-ev-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.tl-ev.is-entering,
+.tl-ev-chip.is-entering {
+  animation: tl-ev-enter var(--mo-3, 320ms) var(--mo-ease, ease-out) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tl-ev.is-entering,
+  .tl-ev-chip.is-entering {
+    animation: none;
+  }
+}

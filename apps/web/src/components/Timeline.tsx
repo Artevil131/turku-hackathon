@@ -1,14 +1,13 @@
 import type { AeiClient, ClockCommand, ClockState } from "@aei/contract";
-import type { WardCode } from "@aei/domain";
+import { isWardCode, type WardCode } from "@aei/domain";
 import { type Locale, t, wardName } from "@aei/i18n";
 import { type KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { type LiveAlerts, useAlertsSinceStart } from "../alertsSince.ts";
 import type { Connection } from "../live.ts";
 import { currentHospitalName, siteWards } from "../sites.ts";
-import { useHashParam } from "../url.ts";
+import { hashPage, useHashParam } from "../url.ts";
 import { EventsStrip } from "./EventsStrip.tsx";
-import { type ResolvedEvent, resolveEvents } from "./events.ts";
 import { compactDate, dayNumber, isoFromDay } from "./hero/geometry.ts";
 import { useLayers } from "./hero/layers.ts";
 import { unitOfIncident } from "./hero/selection.ts";
@@ -17,6 +16,7 @@ import { WeeklyBand } from "./hero/WeeklyBand.tsx";
 import { Chevron, Pause, Play, StepDay, StepWeek } from "./Icons.tsx";
 import { QualityStatus } from "./quality/QualityStatus.tsx";
 import { useQuality } from "./quality/useQuality.ts";
+import { groupIncidents } from "./research/feed/model.ts";
 import "./timeline.css";
 
 interface TimelineProps {
@@ -148,16 +148,21 @@ export function Timeline({
   // The selected signal and focused unit live in the URL hash, shared with the research board; selecting never moves the clock.
   const [inc, setInc] = useHashParam("inc");
   const [unit, setUnit] = useHashParam("unit");
+  const focusUnit: WardCode | null = unit && isWardCode(unit) ? unit : null;
   const selectedUnit = unitOfIncident(alerts, inc);
-  // biome-ignore lint/correctness/useExhaustiveDependencies: the band scrolls only when the selection changes
+  const focusOn = (ward: WardCode | null) => {
+    setUnit(ward);
+    if (ward && selectedUnit && selectedUnit !== ward) setInc(null);
+  };
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the band scrolls when the selection changes or its pill arrives
   useEffect(() => {
     if (!inc) return;
-    const scroller = document.querySelector<HTMLElement>(".hs:not([data-compact])");
+    const scroller = rootRef.current?.querySelector<HTMLElement>(".hs:not([data-compact])");
     if (!scroller || scroller.scrollWidth <= scroller.clientWidth) return;
     scroller
       .querySelector(".hs-pill.is-selected")
       ?.scrollIntoView({ inline: "center", block: "nearest", behavior: reducedMotion ? "auto" : "smooth" });
-  }, [inc]);
+  }, [inc, alerts]);
   const quality = useQuality(client, clock?.asOf);
 
   // A new clock state (or reset) from the server ends "seeking".
@@ -191,29 +196,22 @@ export function Timeline({
     [clock, command, seek, seekingTo],
   );
 
-  const events = useMemo(() => resolveEvents(alerts), [alerts]);
-  // An event's alert may not have been raised yet when its tile is pressed (the history only runs to the
-  // clock); the tile seeks first and the selection follows once the alert arrives.
-  const [pendingEvent, setPendingEvent] = useState<ResolvedEvent["code"] | null>(null);
-  const pickEvent = (ev: ResolvedEvent) => {
-    command({ action: "pause" });
-    seek(ev.date);
-    if (ev.incident) setInc(ev.incident);
-    else setPendingEvent(ev.code);
+  // What the detectors have found up to the clock, newest first; a tile selects, it never seeks.
+  const incidents = useMemo(() => groupIncidents(alerts), [alerts]);
+  const pickIncident = (key: string) => {
+    setInc(key);
     setSheet(false);
+    if (hashPage() !== "research") location.hash = `research?inc=${encodeURIComponent(key)}`;
   };
-  useEffect(() => {
-    if (!pendingEvent) return;
-    const incident = events.find((e) => e.code === pendingEvent)?.incident;
-    if (!incident) return;
-    setInc(incident);
-    setPendingEvent(null);
-  }, [events, pendingEvent, setInc]);
+  const openList = () => {
+    setSheet(false);
+    if (hashPage() !== "research") location.hash = "research";
+  };
 
   const hospital = currentHospitalName(locale);
-  const title = unit ? (
+  const title = focusUnit ? (
     <h2 className="tl-title">
-      <span className="tl-title-unit">{t(locale, "tlTitleUnit", { hospital, unit: wardName(locale, unit as WardCode) })}</span>
+      <span className="tl-title-unit">{t(locale, "tlTitleUnit", { hospital, unit: wardName(locale, focusUnit as WardCode) })}</span>
       <button
         type="button"
         className="tl-title-clear"
@@ -429,9 +427,9 @@ export function Timeline({
         onActivate={() => setSheet(true)}
         selected={inc}
         selectedUnit={selectedUnit}
-        focusUnit={(unit as WardCode | null) ?? null}
+        focusUnit={focusUnit}
         onSelect={setInc}
-        onFocusUnit={setUnit}
+        onFocusUnit={focusOn}
         onClear={() => setInc(null)}
       />
     ) : (
@@ -465,11 +463,11 @@ export function Timeline({
   const eventsStrip = (compact = false) => (
     <EventsStrip
       locale={locale}
-      events={events}
-      asOf={clock?.asOf ?? null}
+      incidents={incidents}
       selected={inc}
       disabled={!ready}
-      onPick={pickEvent}
+      onPick={pickIncident}
+      onMore={openList}
       compact={compact}
     />
   );

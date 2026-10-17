@@ -475,28 +475,30 @@ const StaticLayer = memo(function StaticLayer({
 
       {!compact
         ? m.lanes.map((l) => (
-            <g key={l.ward} className={`hs-lane${l.ward === focusUnit ? " is-focus" : ""}`} data-ward={l.ward}>
+            // The lane group is the control (focus ring and hover styles sit on it); the hit rect is one lane
+            // pitch tall so neighbours never overlap, and the label text passes pointer events to it (CSS).
+            <g
+              key={l.ward}
+              className={`hs-lane${l.ward === focusUnit ? " is-focus" : ""}`}
+              data-ward={l.ward}
+              role="button"
+              tabIndex={disabled ? -1 : 0}
+              aria-pressed={l.ward === focusUnit}
+              aria-label={wardName(locale, l.ward)}
+              onClick={(e) => {
+                if ((e.target as Element).closest(".hs-lane-hit, .hs-lane-label")) pressLane(l.ward);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  pressLane(l.ward);
+                }
+              }}
+            >
               <line className="hs-lane-line" x1={L.gutter} x2={m.right} y1={l.mid} y2={l.mid} />
               {l.path ? <path className="hs-ribbon" d={l.path} /> : null}
-              <rect
-                className="hs-lane-hit"
-                x={0}
-                y={l.mid - 22}
-                width={L.gutter}
-                height={44}
-                role="button"
-                tabIndex={disabled ? -1 : 0}
-                aria-pressed={l.ward === focusUnit}
-                aria-label={wardName(locale, l.ward)}
-                onClick={() => pressLane(l.ward)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    pressLane(l.ward);
-                  }
-                }}
-              />
+              <rect className="hs-lane-hit" x={0} y={l.mid - L.pitch / 2} width={L.gutter} height={L.pitch} />
               <text className="hs-lane-label" x={L.gutter - 6} y={l.mid + 4} textAnchor="end">
                 <title>{wardName(locale, l.ward)}</title>
                 {currentSite() === null ? l.ward : bareWardCode(l.ward)}
@@ -761,7 +763,8 @@ export function WeeklyBand(p: Props) {
   const summary = useMemo(() => summaryText(locale, win, asOf, layers), [locale, win, asOf, layers]);
   const control = !compact && onLayers !== undefined;
   const withLabel = width >= 520;
-  const reserve = control ? (withLabel ? 30 + t(locale, "tlLayers").length * 6.2 : 30) : 0;
+  // The Layers button plus the 24 px ⓘ beside it, so the legend never runs under either.
+  const reserve = control ? 28 + (withLabel ? 30 + t(locale, "tlLayers").length * 6.2 : 30) : 0;
   const onToggle = useCallback(
     (k: LineKey) => onLayers?.({ ...layers, lines: { ...layers.lines, [k]: !layers.lines[k] } }),
     [layers, onLayers],
