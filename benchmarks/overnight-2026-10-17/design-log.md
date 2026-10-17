@@ -121,3 +121,4 @@ Screenshots come from headless Chrome through
 | 10:46 | quality (Haiku 5.5) | Final on c202c03: U4 100 / 95 / 100, contrast passes on all three; U5 0 (239 keys); U6 3.5 / 3.5 / 4.7 s (noisy, recorded) |
 | 10:46 | orchestrator (Opus 5.5) | The bar's divider is drawn on the first row below the bar, so the listbox holds only options (the last aria-required-children finding); checked visually |
 | 10:48 | Impeccable pass (Sonnet 5.5) | Researcher and timeline (impeccable-research.md): consistent panel padding and title weight, × clearance on every panel head, assistant text readability, timeline band depth with quieter lanes |
+| 10:54 | orchestrator (Opus 5.5) | Timeline legend ⓘ with one line per series (ESBL, MRSA, VRE, CPE, cultures, per 100 cultures, unit lanes), English and Finnish. Filled stacked areas are the default; the browser showed lines only because a builder's test had saved 'overlaid' in its storage |

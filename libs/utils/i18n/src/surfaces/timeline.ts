@@ -49,6 +49,14 @@ export const timelineEn = {
   tlLyToggle: "Show or hide {name}",
   tlLyEmpty: "No line chosen",
   tlYRatio: "per 100 cultures",
+  tlInfoLabel: "What the lines mean",
+  tlInfoEsbl: "ESBL · E. coli and Klebsiella that break down penicillins and most cephalosporins.",
+  tlInfoMrsa: "MRSA · S. aureus resistant to methicillin and nearly all beta-lactams.",
+  tlInfoVre: "VRE · enterococci resistant to vancomycin.",
+  tlInfoCpe: "CPE · Enterobacterales that destroy carbapenems, the last-line beta-lactams; every case is an alert.",
+  tlInfoCult: "Cultures per week · samples taken, on their own scale; a dip means fewer samples, not fewer infections.",
+  tlInfoRatio: "Per 100 cultures · patients with the finding for every 100 cultures sampled that week.",
+  tlInfoLanes: "Unit lanes · each unit's weekly resistant finds; a pill names a signal, e.g. 7/1.4 = observed/usual.",
 } as const;
 
 export const timelineFi: Record<keyof typeof timelineEn, string> = {
@@ -101,4 +109,12 @@ export const timelineFi: Record<keyof typeof timelineEn, string> = {
   tlLyToggle: "Näytä tai piilota {name}",
   tlLyEmpty: "Ei valittua viivaa",
   tlYRatio: "100 viljelyä kohti",
+  tlInfoLabel: "Mitä viivat tarkoittavat",
+  tlInfoEsbl: "ESBL · E. coli ja Klebsiella, jotka hajottavat penisilliinit ja useimmat kefalosporiinit.",
+  tlInfoMrsa: "MRSA · metisilliinille ja lähes kaikille beetalaktaameille resistentti S. aureus.",
+  tlInfoVre: "VRE · vankomysiinille resistentit enterokokit.",
+  tlInfoCpe: "CPE · karbapeneemit hajottavat enterobakteerit; jokainen löydös on hälytys.",
+  tlInfoCult: "Viljelyt viikossa · otetut näytteet omalla asteikollaan; notko tarkoittaa vähemmän näytteitä, ei vähemmän infektioita.",
+  tlInfoRatio: "100 viljelyä kohti · löydöksen potilaat jokaista viikon 100 viljelyä kohti.",
+  tlInfoLanes: "Yksikkökaistat · yksikön viikoittaiset resistentit löydökset; merkki nimeää signaalin, esim. 7/1,4 = havaittu/tavallinen.",
 };

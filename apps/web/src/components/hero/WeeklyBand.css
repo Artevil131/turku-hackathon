@@ -540,3 +540,18 @@
 .hs-read-raw {
   color: var(--ink-3, #5c6080);
 }
+
+/* The legend's ⓘ: one line per series, compact. */
+.ly .info {
+  margin-right: 2px;
+}
+.ly-info {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+  max-width: 340px;
+  font-size: 12px;
+  line-height: 1.4;
+}

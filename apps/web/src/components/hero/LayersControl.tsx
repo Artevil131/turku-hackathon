@@ -1,5 +1,6 @@
 import { type Locale, phenotypeName, t, wardName } from "@aei/i18n";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
+import { InfoButton } from "../Info.tsx";
 import { PHENOTYPE_ORDER } from "./geometry.ts";
 import { DEFAULT_LAYERS, encodeLayers, type Layers, type LineKey, PILL_KINDS, WARD_CODES, WINDOWS } from "./layers.ts";
 
@@ -93,6 +94,13 @@ export function LayersControl({ locale, layers, onChange, withLabel }: Props) {
         }
       }}
     >
+      <InfoButton locale={locale} label={t(locale, "tlInfoLabel")} align="end">
+        <ul className="ly-info">
+          {(["tlInfoEsbl", "tlInfoMrsa", "tlInfoVre", "tlInfoCpe", "tlInfoCult", "tlInfoRatio", "tlInfoLanes"] as const).map((k) => (
+            <li key={k}>{t(locale, k)}</li>
+          ))}
+        </ul>
+      </InfoButton>
       <button
         type="button"
         ref={button}
