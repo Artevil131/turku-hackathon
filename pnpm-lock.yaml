@@ -235,6 +235,12 @@ importers:
         specifier: workspace:*
         version: link:../domain
 
+  libs/utils/guideline:
+    dependencies:
+      '@aei/domain':
+        specifier: workspace:*
+        version: link:../domain
+
   libs/utils/i18n:
     dependencies:
       '@aei/domain':
