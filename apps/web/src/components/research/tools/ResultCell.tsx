@@ -71,7 +71,10 @@ function Rate({ r, locale }: { r: RateResult; locale: Locale }) {
           </span>
         </Row>
         <Row label={t(locale, "toolsRatePer100")}>
-          <b>{num(r.per100Cultures, locale)}</b> <span className="tl-ci">{t(locale, "toolsRateCultures", { n: r.cultures })}</span>
+          <b>
+            {ok(r.per100Cultures) ? r.per100Cultures.toLocaleString(locale, { maximumFractionDigits: r.per100Cultures < 10 ? 2 : 1 }) : "–"}
+          </b>{" "}
+          <span className="tl-ci">{t(locale, "toolsRateCultures", { n: r.cultures })}</span>
         </Row>
         {r.share && (
           <Row label={t(locale, "toolsRateShare", { ph: phenotypeName(r.slice.phenotype as never) })}>
@@ -131,15 +134,24 @@ function Compare({ r, locale }: { r: CompareResult; locale: Locale }) {
             </span>
           </Row>
         )}
-        {r.ratio && (
-          <Row label={t(locale, "toolsCmpRatio")}>
-            <b>{ratioNum(r.ratio.ratio, locale)}</b>{" "}
-            <span className="tl-ci">
-              {t(locale, "toolsCi", { range: span(r.ratio.interval.lo, r.ratio.interval.hi, (v) => ratioNum(v, locale)) })} · p{" "}
-              {formatP(r.ratio.p, locale)}
-            </span>
-          </Row>
-        )}
+        {r.ratio &&
+          (ok(r.ratio.ratio) ? (
+            <Row label={t(locale, "toolsCmpRatio")}>
+              <b>{ratioNum(r.ratio.ratio, locale)}</b>{" "}
+              <span className="tl-ci">
+                {t(locale, "toolsCi", { range: span(r.ratio.interval.lo, r.ratio.interval.hi, (v) => ratioNum(v, locale)) })} · p{" "}
+                {formatP(r.ratio.p, locale)}
+              </span>
+            </Row>
+          ) : (
+            // Frame B has no events: the ratio has no number, only a lower bound (and no p worth printing).
+            <Row label={t(locale, "toolsCmpRatio")}>
+              <b>{t(locale, "toolsCmpRatioUndefined")}</b>{" "}
+              <span className="tl-ci">
+                {ok(r.ratio.interval.lo) ? t(locale, "toolsCmpRatioLower", { lo: ratioNum(r.ratio.interval.lo, locale) }) : ""}
+              </span>
+            </Row>
+          ))}
         <Row label={t(locale, "toolsCmpTrend")}>
           {r.trend ? (
             <>
@@ -258,6 +270,7 @@ function Detector({ r, locale }: { r: DetectorResult; locale: Locale }) {
 export function ResultCell({
   cell,
   locale,
+  stale,
   onRemove,
   onChart,
   fresh = false,
@@ -267,6 +280,8 @@ export function ResultCell({
   cell: Cell;
   locale: Locale;
   onRemove?: (id: number) => void;
+  /** The slice this result ran on, when the inspector's slice has moved since: the cell says so. */
+  stale?: string;
   /** Adds this result as a chart window; not offered for a detector run (it is a table). */
   onChart?: (result: Cell["result"]) => void;
   /** The newest result: it gets the short entrance. */
@@ -296,7 +311,14 @@ export function ResultCell({
     }
   };
   return (
-    <article className="tl-cell" aria-label={title} data-kind={r.kind} data-fresh={fresh || undefined}>
+    <article
+      className="tl-cell"
+      aria-label={title}
+      data-kind={r.kind}
+      data-fresh={fresh || undefined}
+      data-stale={stale ? true : undefined}
+    >
+      {stale ? <p className="tl-stale">{t(locale, "toolsStale", { slice: stale })}</p> : null}
       <header className="tl-cell-head">
         <div>
           <h3>{title}</h3>

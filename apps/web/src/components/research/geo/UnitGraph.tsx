@@ -344,6 +344,7 @@ export function UnitGraph({ client, locale, asOf, state, onChange, reducedMotion
         {rel ? <AsOf locale={locale} date={rel.to} pending={updating} clockDate={asOf ?? undefined} /> : null}
         <p className="ug-caption">{t(locale, "geoTyksSource", { hospital: currentHospitalName(locale) })}</p>
         <p className="ug-caption">{t(locale, "netFlowCaption")}</p>
+        <p className="ug-caption">{t(locale, "netFlowHowTo")}</p>
         <InfoButton locale={locale} label={t(locale, "netFlowInfoLabel")} align="end">
           {t(locale, "netFlowInfo")}
         </InfoButton>

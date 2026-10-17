@@ -400,3 +400,16 @@
 .tl-cell-method[open] > summary {
   color: var(--ink-2);
 }
+
+/* A result whose slice has moved on: greyed, with the slice it ran on. */
+.tl-cell[data-stale] {
+  opacity: 0.72;
+}
+.tl-stale {
+  margin: 0 0 6px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--surface-2, #f4f4f4);
+  font-size: var(--t-xs, 12px);
+  color: var(--ink-2);
+}

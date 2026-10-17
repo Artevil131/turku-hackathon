@@ -55,8 +55,10 @@ export const networkEn = {
   netWindowNote: "Flows and signals cover 28 days.",
   netFlowCaption: "Patient flow, last 28 days · share of the unit's patients · schematic",
   netFlowInfo:
-    "Red ring and glyph: a resistance signal in this unit in the last 28 days, the word names the kind. A dashed outline with ! is a data problem, not resistance. Bands: patients sampled in one unit and later in another (not transfer records); purple bands lead to units with a signal.",
-  netFlowInfoLabel: "What the ring means",
+    "What it is: the same hospital seen from inside, one unit at a time. The box in the middle is the chosen unit. Top row: units where its patients were sampled before they were sampled here (where they came from). Bottom row: units where they were sampled next (where they went). Each band's width and the % and n above or below it say how many of the unit's patients took that route in the last 28 days; small routes are grouped as others. These are sampling records, not transfer records. A red frame and badge mean a resistance signal in that unit in the last 28 days (the badge names the kind, for example cluster · ESBL); a dashed frame with ! is a data problem, not resistance. How to use it: when a unit has a signal, the bottom row shows where its patients went next, so that is where to check or screen first; the top row shows where it may have come from. Click any unit to put it in the middle. All units shows every route as a table.",
+  netFlowHowTo:
+    "Top: where the unit's patients came from. Bottom: where they went next. Wider band: more patients. Click a unit to centre it.",
+  netFlowInfoLabel: "How to read the patient flow",
   netBackToSignal: "Back to the signal",
   netOthers: "others",
   netFlowIn: "{n} in",
@@ -137,8 +139,10 @@ export const networkFi: Record<keyof typeof networkEn, string> = {
   netWindowNote: "Virrat ja signaalit kattavat 28 päivää.",
   netFlowCaption: "Potilasvirta, viimeiset 28 päivää · osuus yksikön potilaista · kaavio",
   netFlowInfo:
-    "Punainen kehys ja merkki: yksikössä on resistenssisignaali viimeisen 28 päivän ajalta, sana kertoo lajin. Katkoviivakehys ja ! on aineisto-ongelma, ei resistenssiä. Palkit: potilaat, joilta otettiin näyte yhdessä yksikössä ja myöhemmin toisessa (ei siirtotietoja); violetit palkit johtavat yksiköihin, joissa on signaali.",
-  netFlowInfoLabel: "Mitä kehys tarkoittaa",
+    "Mikä tämä on: sama sairaala sisältä katsottuna, yksikkö kerrallaan. Keskellä oleva laatikko on valittu yksikkö. Ylärivi: yksiköt, joissa sen potilaat näytteistettiin ennen kuin täällä (mistä he tulivat). Alarivi: yksiköt, joissa heidät näytteistettiin seuraavaksi (minne he menivät). Nauhan leveys sekä sen yllä tai alla oleva % ja n kertovat, kuinka moni yksikön potilaista kulki tätä reittiä viimeisten 28 päivän aikana; pienet reitit on koottu kohtaan muut. Kyse on näytteenottotiedoista, ei siirtotiedoista. Punainen kehys ja merkki: yksikössä on resistenssisignaali viimeisten 28 päivän aikana (merkki kertoo lajin, esimerkiksi rypäs · ESBL); katkoviivakehys ja ! tarkoittavat dataongelmaa, ei resistenssiä. Käyttö: kun yksikössä on signaali, alarivi näyttää, minne sen potilaat menivät seuraavaksi, joten sieltä kannattaa tarkistaa tai seuloa ensin; ylärivi näyttää, mistä se on voinut tulla. Napsauta mitä tahansa yksikköä siirtääksesi sen keskelle. Kaikki yksiköt näyttää kaikki reitit taulukkona.",
+  netFlowHowTo:
+    "Ylhäällä: mistä yksikön potilaat tulivat. Alhaalla: minne he menivät seuraavaksi. Leveämpi nauha: enemmän potilaita. Napsauta yksikköä keskittääksesi sen.",
+  netFlowInfoLabel: "Näin luet potilasvirtaa",
   netBackToSignal: "Takaisin signaaliin",
   netOthers: "muut",
   netFlowIn: "{n} tuli",

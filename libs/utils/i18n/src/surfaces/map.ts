@@ -51,7 +51,8 @@ export const mapEn = {
   mapGeometryCredit: "County polygons: Statistics Finland, CC BY 4.0",
   geoTitle: "Regional picture · THL open data",
   geoCaption:
-    "THL notified cases per county, {month}. Colour: cases per 100 000 a year. Dots: county signals, filled when the signal survives correction.",
+    "What it is: the public picture around the hospital. Each county is coloured by THL notified cases of the chosen series in {month}, per 100 000 residents a year; the darker the purple, the more cases. Pale grey means no cases. Large black dots with names are the university hospitals (OYS, KYS, Tays, Tyks); the ringed one is this hospital. Small dots are county signals: filled when the rise survives correction for many tests, hollow when it may be chance. Dashed lines are the referral chain between hospitals, a diagram, not patient data. How to use it: pick a series above, then look for dark counties near this hospital or on its referral lines; patients referred from there can bring the same organism in. Click a county to see its numbers and signal.",
+  geoHowTo: "Darker county: more THL cases. Ringed dot: this hospital. Click a county for its numbers.",
   geoCaptionShort: "THL cases per county, {month} · colour: per 100 000 a year",
   geoCaptionSource: "Source: THL notified cases and Statistics Finland county boundaries, CC BY 4.0.",
   geoSchematic: "schematic positions",
@@ -175,7 +176,8 @@ export const mapFi: Record<keyof typeof mapEn, string> = {
   mapGeometryCredit: "Aluerajat: Tilastokeskus, CC BY 4.0",
   geoTitle: "Alueellinen tilanne · THL, avoin data",
   geoCaption:
-    "THL:n ilmoitetut tapaukset hyvinvointialueittain, {month}. Väri: tapauksia 100 000:ta kohti vuodessa. Pisteet: alueen signaalit, täytetty, kun signaali kestää korjauksen.",
+    "Mikä tämä on: julkinen tilannekuva sairaalan ympäriltä. Jokainen alue on väritetty valitun sarjan THL:lle ilmoitettujen tapausten mukaan kuukaudelta {month}, 100 000 asukasta kohti vuodessa; mitä tummempi violetti, sitä enemmän tapauksia. Vaaleanharmaa: ei tapauksia. Isot mustat pisteet nimineen ovat yliopistosairaalat (OYS, KYS, Tays, Tyks); kehystetty on tämä sairaala. Pienet pisteet ovat aluesignaaleja: täytetty, kun nousu kestää monitestikorjauksen, ontto, kun se voi olla sattumaa. Katkoviivat ovat sairaaloiden välinen hoitoketju, kaavio eikä potilasdataa. Käyttö: valitse sarja yltä ja etsi tummia alueita tämän sairaalan lähellä tai sen hoitoketjun varrella; sieltä lähetetyt potilaat voivat tuoda saman mikrobin mukanaan. Napsauta aluetta nähdäksesi sen luvut ja signaalin.",
+  geoHowTo: "Tummempi alue: enemmän THL-tapauksia. Kehystetty piste: tämä sairaala. Napsauta aluetta nähdäksesi luvut.",
   geoCaptionShort: "THL:n tapaukset alueittain, {month} · väri: 100 000:ta kohti vuodessa",
   geoCaptionSource: "Lähde: THL:n ilmoitetut tapaukset ja Tilastokeskuksen aluejako, CC BY 4.0.",
   geoSchematic: "kaaviomaiset sijainnit",

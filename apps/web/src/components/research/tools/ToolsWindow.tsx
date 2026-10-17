@@ -586,6 +586,7 @@ export function ToolInspector(props: InspectorProps) {
             cell={c}
             locale={locale}
             fresh={i === 0}
+            stale={sameSlice(c.result.slice, slice) ? undefined : sliceSentence(locale, c.result.slice)}
             onChart={addChart}
             onToNotebook={onToNotebook}
             onRemove={(id) => setCells((all) => all.filter((x) => x.id !== id))}

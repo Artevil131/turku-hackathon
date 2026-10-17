@@ -326,6 +326,7 @@ export function GeoMap({
           {t(locale, "geoCaption", { month: month ? monthLong(month) : "–" })} {t(locale, "geoCaptionSource")}
         </InfoButton>
       </p>
+      <p className="geo-caption">{t(locale, "geoHowTo")}</p>
 
       {hasError ? (
         <div className="geo-state" role="alert">
