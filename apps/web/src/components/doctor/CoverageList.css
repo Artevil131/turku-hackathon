@@ -627,6 +627,12 @@
 .dr-answer-low {
   color: var(--ink-3);
 }
+.dr-answer-when {
+  margin: 2px 0 0;
+  color: var(--ink-3);
+  font-size: var(--t-s);
+  line-height: 1.4;
+}
 .dr-answer-note {
   margin: 4px 0 0;
   color: var(--ink-3);

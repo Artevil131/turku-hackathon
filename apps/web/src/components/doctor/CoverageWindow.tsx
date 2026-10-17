@@ -301,6 +301,8 @@ export function CoverageWindow({
               loading={status2 === "loading" && !current}
               failed={status2 === "error" && !current}
               editing={editing}
+              asOf={current?.asOf ?? null}
+              windowDays={filters.period}
               onEdit={() => setEditing((v) => !v)}
               showCase={!wide}
             />
