@@ -15,6 +15,7 @@ import { ProjectControls } from "./projects/ProjectControls.tsx";
 import { type NotebookLanguage, Reproduce, ReproduceHost } from "./projects/Reproduce.tsx";
 import { useProject } from "./projects/useProject.ts";
 import { SignalFeed } from "./SignalFeed.tsx";
+import { ToolsWindow } from "./tools/ToolsWindow.tsx";
 import { UnitGrid } from "./UnitGrid.tsx";
 import type { WinId } from "./workspace/layout.ts";
 import { Workspace } from "./workspace/Workspace.tsx";
@@ -108,6 +109,10 @@ export function ResearchBoard(props: Props) {
     };
   }, [explicit, selected, locale]);
 
+  // The Tools window's frame follows the selected signal: the window its relations cover.
+  const selectedSpans = explicit && selected ? spansOf(selected) : null;
+  const toolsWindow = selectedSpans?.from && selectedSpans.to ? { from: selectedSpans.from, to: selectedSpans.to } : null;
+
   const content: Record<WinId, ReactNode> = {
     signals: (
       <SignalFeed {...panelProps} load={load} incidents={incidents} retry={retry} spansOf={spansOf} selected={selected?.key ?? null} />
@@ -136,6 +141,7 @@ export function ResearchBoard(props: Props) {
     assistant: (
       <Assistant client={client} locale={locale} incident={selected} spans={selected ? spansOf(selected) : null} waiting={loading} />
     ),
+    tools: <ToolsWindow {...panelProps} window={toolsWindow} />,
   };
 
   // The URL's `panel` follows the last of the map and the unit grid that was opened or closed.

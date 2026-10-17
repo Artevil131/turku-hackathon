@@ -62,10 +62,11 @@ const TITLE_KEY = {
   assistant: "boardAssistant",
   grid: "boardGrid",
   reproduce: "boardReproduce",
+  tools: "toolsWindow",
 } as const;
 
 /** The stacked order under 1100 px: the list first, the map last (as before). */
-const STACK_ORDER: readonly WinId[] = ["signals", "math", "assistant", "map", "graph", "grid", "reproduce"];
+const STACK_ORDER: readonly WinId[] = ["signals", "math", "assistant", "map", "graph", "grid", "reproduce", "tools"];
 
 function useWide(): boolean {
   const query = "(min-width: 1100px)";
@@ -263,8 +264,8 @@ export function Workspace({
     else if (focus && focus !== reveal.id) setFocusTo(reveal.id);
     else focusWin(reveal.id);
   });
-  const PRESETS: readonly Preset[] = ["default", "map", "signals", "units"];
-  const PRESET_KEY = { default: "wsDefault", map: "wsMap", signals: "wsSignals", units: "wsUnits" } as const;
+  const PRESETS: readonly Preset[] = ["default", "map", "signals", "units", "analysis"];
+  const PRESET_KEY = { default: "wsDefault", map: "wsMap", signals: "wsSignals", units: "wsUnits", analysis: "wsAnalysis" } as const;
   const applyPreset = (p: Preset) => {
     const l = presetLayout(p);
     setSaved(l);

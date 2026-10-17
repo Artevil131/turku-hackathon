@@ -17,6 +17,7 @@ import { projectsEn } from "./surfaces/projects.ts";
 import { qualityEn } from "./surfaces/quality.ts";
 import { sitesEn } from "./surfaces/sites.ts";
 import { timelineEn } from "./surfaces/timeline.ts";
+import { toolsEn } from "./surfaces/tools.ts";
 
 export const en = {
   askSubmit: "Ask",
@@ -260,6 +261,7 @@ export const en = {
   ...doctorEn,
   ...qualityEn,
   ...mathEn,
+  ...toolsEn,
   ...methodEn,
   ...connectEn,
   ...sitesEn,

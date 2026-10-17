@@ -13,7 +13,10 @@
   "dependencies": {
     "@aei/alerts": "workspace:*",
     "@aei/ask": "workspace:*",
+    "@aei/compare": "workspace:*",
     "@aei/contract": "workspace:*",
+    "@aei/counting": "workspace:*",
+    "@aei/coverage": "workspace:*",
     "@aei/detect": "workspace:*",
     "@aei/domain": "workspace:*",
     "@aei/export": "workspace:*",

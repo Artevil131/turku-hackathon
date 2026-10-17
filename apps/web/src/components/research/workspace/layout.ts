@@ -8,7 +8,7 @@ export const STORAGE_KEY = "aei.research.layout";
 /** The board grows downward as windows move down; this is only a sanity limit. */
 export const MAX_ROWS = 160;
 
-export const WIN_IDS = ["signals", "map", "graph", "math", "assistant", "grid", "reproduce"] as const;
+export const WIN_IDS = ["signals", "map", "graph", "math", "assistant", "grid", "reproduce", "tools"] as const;
 export type WinId = (typeof WIN_IDS)[number];
 
 export interface Rect {
@@ -35,6 +35,7 @@ export const MIN_SIZE: Record<WinId, { w: number; h: number }> = {
   assistant: { w: 3, h: 5 },
   grid: { w: 4, h: 8 },
   reproduce: { w: 5, h: 14 },
+  tools: { w: 4, h: 10 },
 };
 
 const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
@@ -61,11 +62,12 @@ export function defaultLayout(): Layout {
     assistant: { x: 7, y: 32, w: 5, h: 8, open: true },
     grid: { x: 0, y: 0, w: 12, h: 30, open: false },
     reproduce: { x: 0, y: 0, w: 12, h: 32, open: false },
+    tools: { x: 0, y: 40, w: 12, h: 36, open: false },
   };
-  return { wins, order: ["signals", "map", "graph", "math", "assistant", "grid", "reproduce"] };
+  return { wins, order: ["signals", "map", "graph", "math", "assistant", "grid", "reproduce", "tools"] };
 }
 
-export type Preset = "default" | "map" | "signals" | "units";
+export type Preset = "default" | "map" | "signals" | "units" | "analysis";
 
 /** Ready-made arrangements, one click each; the same grid as the default. */
 export function presetLayout(preset: Preset): Layout {
@@ -99,6 +101,15 @@ export function presetLayout(preset: Preset): Layout {
         math: { x: 4, y: 26, w: 4, h: 14, open: true },
         graph: { x: 8, y: 26, w: 4, h: 18, open: true },
         map: { open: false },
+        assistant: { open: false },
+      });
+    case "analysis":
+      return w({
+        signals: { x: 0, y: 0, w: 3, h: 40, open: true },
+        tools: { x: 3, y: 0, w: 6, h: 40, open: true },
+        math: { x: 9, y: 0, w: 3, h: 16, open: true },
+        map: { open: false },
+        graph: { open: false },
         assistant: { open: false },
       });
     default:
