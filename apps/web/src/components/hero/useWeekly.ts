@@ -53,9 +53,12 @@ export function useWeekly(client: AeiClient | undefined, start: string | undefin
     else if (asOf > cur.asOf) fetchNow(1200);
   }, [client, start, asOf]);
 
+  // On unmount (and React's development double-mount) the pending answer is dropped, so the window must be
+  // asked for again when the effect next runs; otherwise the band would stay empty.
   useEffect(
     () => () => {
       generation.current++;
+      asked.current = null;
       if (timer.current) clearTimeout(timer.current);
     },
     [],
