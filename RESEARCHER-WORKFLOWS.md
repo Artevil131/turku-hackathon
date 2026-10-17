@@ -139,6 +139,24 @@ Quarto is for the finished, top-to-bottom report and runs Python through a
 Jupyter kernel anyway; `quarto render analysis.ipynb` turns the same
 notebook into HTML, PDF or Word, so we keep one template, not two.
 
+### 4b. Jupyter inside the system (D-062)
+
+In this order:
+
+1. **Copy to notebook**: a project offers a ready cell for the
+   researcher's own Jupyter (`aei.connect(url).project(id)`).
+2. **`analysis.ipynb`** in the research package.
+3. **JupyterLite in the research workspace**: a Notebook window running
+   JupyterLab in the browser (Pyodide), with the open project's data loaded
+   and `aei` importable. Static files only: no code runs on our server and
+   the data stays in the browser. Costs tens of MB on first load and a build
+   step; `aei.connect` needs a Pyodide fetch backend. Notebooks are saved
+   back as project notes (§5).
+4. **Server-side Jupyter** (Jupyter Server or JupyterHub beside the API):
+   native Python with kernels that have `aei`, opened prefilled from a
+   project. Only after the API has per-user auth, since it runs users'
+   code on our server.
+
 ### 5. Back into the tool
 
 What the researcher learns returns as project notes (VISION.md §2): a
@@ -174,9 +192,11 @@ still needs:
    README and the formats we have, which mostly reuses what is built today.
 2. The installable `aei` Python package: `read_package` and `connect`
    first, then the methods with parity tests.
-3. The Jupyter notebook template.
-4. Derived columns and notes coming back in.
-5. Later: WHONET-layout export, and Excel if the team wants it.
+3. The Jupyter notebook template and the copy-to-notebook snippet.
+4. JupyterLite in the workspace, then server-side Jupyter once there is
+   auth (D-062).
+5. Derived columns and notes coming back in.
+6. Later: WHONET-layout export, and Excel if the team wants it.
 
 ## Open questions for the team
 
