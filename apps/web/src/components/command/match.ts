@@ -1,14 +1,16 @@
 import type { Alert } from "@aei/contract";
-import { ANTIBIOTICS, ORGANISMS, PHENOTYPES } from "@aei/domain";
-import { formatDate, type Locale, type MessageKey, phenotypeName, t, wardName } from "@aei/i18n";
+import { ANTIBIOTICS, ORGANISMS, PHENOTYPES, SPECIMENS } from "@aei/domain";
+import { guide, syndromeDefaults } from "@aei/guideline";
+import { formatDate, type Locale, type MessageKey, phenotypeName, specimenName, t, wardName } from "@aei/i18n";
 import { allWards, isMulti } from "../../sites.ts";
+import { hashParams } from "../../url.ts";
 import { signalLabel } from "../doctor/signals.ts";
 
 // What the search field can reach, and how a typed query ranks it. Pure: no
 // DOM, no state. Matching ignores case and diacritics ("paivystys" finds
 // "Päivystys") and searches both languages and the codes at once.
 
-export type Group = "units" | "antibiotics" | "organisms" | "phenotypes" | "alerts" | "pages";
+export type Group = "units" | "antibiotics" | "organisms" | "phenotypes" | "alerts" | "pages" | "queries";
 
 export interface Entry {
   id: string;
@@ -27,7 +29,7 @@ export interface Result extends Entry {
 
 export const ALERT_DAYS = 28;
 export const MAX_RESULTS = 8;
-const GROUP_CAP: Record<Group, number> = { units: 4, antibiotics: 3, organisms: 3, phenotypes: 2, alerts: 4, pages: 4 };
+const GROUP_CAP: Record<Group, number> = { units: 4, antibiotics: 3, organisms: 3, phenotypes: 2, alerts: 4, pages: 4, queries: 2 };
 const LOCALES: readonly Locale[] = ["fi", "en"];
 
 /** Lower case, accents and other combining marks removed (NFD, then drop the marks). */
@@ -106,7 +108,7 @@ export function buildEntries(locale: Locale, alerts: readonly Alert[], asOf: str
       group: "antibiotics",
       label: `${a[locale]} (${a.code})`,
       sub: t(locale, "cmdAbSub"),
-      href: "#doctor",
+      href: `#doctor?ab=${a.code}`,
       terms: norm([a.code, a.fi, a.en, a.class]),
     });
   }
@@ -119,7 +121,7 @@ export function buildEntries(locale: Locale, alerts: readonly Alert[], asOf: str
       group: "organisms",
       label: o,
       sub: t(locale, "cmdOrgSub"),
-      href: "#doctor",
+      href: `#doctor?org=${encodeURIComponent(o)}`,
       terms: norm([o, `${initial}. ${species}`, `${initial}.${species}`, `${initial}${species}`]),
     });
   }
@@ -202,7 +204,7 @@ export function scoreEntry(entry: Entry, tokens: string[]): number {
  * group capped), at most `MAX_RESULTS` in all. With no query it offers the
  * newest alerts and the main pages.
  */
-export function search(entries: readonly Entry[], query: string, limit = MAX_RESULTS): Result[] {
+export function search(entries: readonly Entry[], query: string, limit = MAX_RESULTS, locale: Locale = "en"): Result[] {
   const tokens = normalize(query).split(/\s+/).filter(Boolean);
   let scored: Result[];
   if (tokens.length === 0) {
@@ -213,6 +215,7 @@ export function search(entries: readonly Entry[], query: string, limit = MAX_RES
     return pick(scored, cap, limit, false);
   }
   scored = [];
+  for (const q of compoundQueries(tokens, locale)) scored.push(q);
   for (const e of entries) {
     const score = scoreEntry(e, tokens);
     if (score > 0) scored.push({ ...e, score });
@@ -230,4 +233,174 @@ function pick(scored: Result[], cap: Record<Group, number>, limit: number, bySco
   });
   if (byScore) ordered.sort((a, b) => b.top - a.top);
   return ordered.flatMap((g) => g.list).slice(0, limit);
+}
+
+// Compound queries: "urology e. coli", "icu blood severe". Each token is
+// classified on its own (unit, specimen, syndrome, severity, phenotype,
+// organism, antibiotic); when all are understood the field offers a deep link
+// that opens the right view pre-filled.
+
+export type Facet = "unit" | "site" | "syn" | "sev" | "ph" | "org" | "ab";
+
+export interface Classified {
+  facet: Facet;
+  value: string;
+  score: number;
+}
+
+/** A token must fit at least the start of a word to count as understood. */
+const MIN_CLASS_SCORE = 60;
+const SEVERE_WORDS = ["severe", "sepsis", "vaikea"];
+const QUERY_SCORE = 1000;
+
+interface Candidate {
+  value: string;
+  terms: string[];
+  /** Ties are broken in favour of the lowest rank; equal ranks make the token ambiguous. */
+  rank?: number;
+}
+
+function bestOf(token: string, list: readonly Candidate[]): { value: string; score: number } | null {
+  let best = 0;
+  let winners: Candidate[] = [];
+  for (const c of list) {
+    const score = Math.max(0, ...c.terms.map((term) => tokenScore(term, token)));
+    if (score > best) {
+      best = score;
+      winners = [c];
+    } else if (score === best && score > 0) winners.push(c);
+  }
+  if (best < MIN_CLASS_SCORE) return null;
+  const rank = Math.min(...winners.map((w) => w.rank ?? 0));
+  const top = winners.filter((w) => (w.rank ?? 0) === rank);
+  const first = top[0];
+  return top.length === 1 && first ? { value: first.value, score: best } : null;
+}
+
+let tables: Record<Exclude<Facet, "sev">, Candidate[]> | null = null;
+function lookup() {
+  tables ??= {
+    unit: allWards().map((w) => ({ value: w.code, terms: norm([w.code, w.fi, w.en]) })),
+    site: SPECIMENS.map((x) => ({ value: x.code, terms: norm([x.code, x.fi, x.en]) })),
+    syn: guide().syndromes.map((x) => ({ value: x.id, terms: norm([x.id, x.name.fi, x.name.en]), rank: x.id.length })),
+    ph: PHENOTYPES.map((p) => ({ value: p, terms: norm([p, ...both(PH_NAME[p])]) })),
+    org: ORGANISMS.map((o, rank) => {
+      const [genus = "", species = ""] = o.split(" ");
+      const i = genus.charAt(0);
+      return { value: o, terms: norm([o, `${i}.${species}`, `${i}${species}`]), rank };
+    }),
+    ab: ANTIBIOTICS.map((a) => ({ value: a.code, terms: norm([a.code, a.fi, a.en, a.class]) })),
+  };
+  return tables;
+}
+
+/** Joins an abbreviated genus with its species: "e. coli" becomes "e.coli". */
+function joinSpecies(tokens: string[]): string[] {
+  const out: string[] = [];
+  for (let i = 0; i < tokens.length; i++) {
+    const tok = tokens[i] as string;
+    const next = tokens[i + 1];
+    if (/^[a-z]\.$/.test(tok) && next) {
+      out.push(tok + next);
+      i++;
+    } else out.push(tok);
+  }
+  return out;
+}
+
+/** The best reading of each token, or null for the whole query when one token is not understood. */
+export function classifyTokens(tokens: string[]): Classified[] | null {
+  const parts = joinSpecies(tokens);
+  const out: Classified[] = [];
+  for (const token of parts) {
+    let best: Classified | null = null;
+    const consider = (c: Classified | null) => {
+      if (c && (!best || c.score > best.score)) best = c;
+    };
+    const t = lookup();
+    // the order is the tie-break: unit, specimen, syndrome, severity, phenotype, organism, antibiotic
+    for (const facet of ["unit", "site", "syn"] as const) {
+      const hit = bestOf(token, t[facet]);
+      consider(hit && { facet, ...hit });
+    }
+    const sevScore = Math.max(...SEVERE_WORDS.map((w) => tokenScore(w, token)));
+    if (sevScore >= MIN_CLASS_SCORE) consider({ facet: "sev", value: "severe", score: sevScore });
+    for (const facet of ["ph", "org", "ab"] as const) {
+      const hit = bestOf(token, t[facet]);
+      consider(hit && { facet, ...hit });
+    }
+    if (!best) return null;
+    out.push(best);
+  }
+  return out;
+}
+
+/** The unit the user is looking at, from the URL hash, when the query names none. */
+function currentUnit(): string | null {
+  if (typeof location === "undefined") return null;
+  const p = hashParams();
+  const code = p.get("unit") ?? p.get("cov.unit");
+  return allWards().some((w) => w.code === code) ? code : null;
+}
+
+function compoundQueries(tokens: string[], locale: Locale): Result[] {
+  const classes = classifyTokens(tokens);
+  if (!classes?.length) return [];
+  const get = (f: Facet) => classes.find((c) => c.facet === f)?.value;
+  const facets = new Set(classes.map((c) => c.facet));
+  const single = classes.length === 1 ? classes[0] : undefined;
+  if (facets.size < 2 && !(single && (single.facet === "ab" || single.facet === "org"))) return [];
+
+  const explicitUnit = get("unit");
+  const unit = explicitUnit ?? (single ? null : currentUnit());
+  const syn = get("syn");
+  const synDef = syn ? guide().syndromes.find((x) => x.id === syn) : undefined;
+  const def = synDef ? syndromeDefaults(synDef) : null;
+  const site = get("site") ?? def?.specimen;
+  const sev = get("sev") ?? def?.severity;
+  const ab = get("ab");
+  const org = get("org");
+  const ph = get("ph");
+  const out: Result[] = [];
+  const push = (href: string, label: string, score: number) =>
+    out.push({ id: `q:${href}`, group: "queries", label, sub: t(locale, "cmdQuerySub"), href, terms: [], score });
+
+  const unitLabel = (code: string) => wardName(locale, code);
+  if (explicitUnit || get("site") || syn || get("sev") || ab || org) {
+    const q = new Query();
+    if (unit) q.set("unit", unit);
+    if (site) q.set("site", site);
+    if (syn) q.set("syn", syn);
+    if (sev === "severe") q.set("sev", "severe");
+    if (ab) q.set("ab", ab);
+    if (org) q.set("org", org);
+    const label = [
+      unit ? unitLabel(unit) : null,
+      site ? specimenName(locale, site as never).toLowerCase() : null,
+      synDef ? synDef.name[locale] : null,
+      sev === "severe" ? t(locale, "cmdSevere") : null,
+      ab ? (ANTIBIOTICS.find((a) => a.code === ab)?.[locale] ?? ab) : null,
+      org ?? null,
+    ].filter(Boolean);
+    push(`#doctor?${q.toString()}`, t(locale, "cmdQueryDoctor", { what: label.join(" · ") }), QUERY_SCORE - (ph ? 1 : 0));
+  }
+  if (explicitUnit || ph) {
+    const q = new Query();
+    if (unit) q.set("unit", unit);
+    if (ph) q.set("ph", ph);
+    const label = [unit ? unitLabel(unit) : null, ph ? phenotypeName(ph as never) : null].filter(Boolean);
+    push(`#research?${q.toString()}`, t(locale, "cmdQuerySignals", { what: label.join(" · ") }), QUERY_SCORE - (ph ? 0 : 1));
+  }
+  return out;
+}
+
+/** Builds a hash query the way the entries do (spaces as %20), skipping the order problem of URLSearchParams. */
+class Query {
+  private parts: string[] = [];
+  set(key: string, value: string) {
+    this.parts.push(`${key}=${encodeURIComponent(value)}`);
+  }
+  toString() {
+    return this.parts.join("&");
+  }
 }
