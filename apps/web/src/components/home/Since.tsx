@@ -7,14 +7,17 @@ interface Props {
   asOf: string | null;
   changes: Changes | null;
   state: "connecting" | "offline" | "ready";
+  period: 1 | 7 | 28;
+  onPeriod: (days: 1 | 7 | 28) => void;
+  openCount: number | null;
 }
 
 /** "Since yesterday": three numbers dated the as-of day, each a link to where it is shown. */
-export function Since({ locale, asOf, changes, state }: Props) {
+export function Since({ locale, asOf, changes, state, period, onPeriod, openCount }: Props) {
   return (
     <section className="hm-since glass" aria-labelledby="hm-since-title">
       <header className="hm-head">
-        <h1 id="hm-since-title">{t(locale, "homeSinceTitle")}</h1>
+        <h1 id="hm-since-title">{openCount === null ? t(locale, "homeResearchWait") : t(locale, "feedOpen", { n: openCount })}</h1>
         {asOf ? <AsOf locale={locale} date={asOf} /> : null}
       </header>
       {state === "connecting" ? (
@@ -27,16 +30,35 @@ export function Since({ locale, asOf, changes, state }: Props) {
           {t(locale, "homeOffline")}
         </p>
       ) : null}
-      {state === "ready" && changes ? <Stats locale={locale} changes={changes} /> : null}
+      {state === "ready" && changes ? (
+        <>
+          <p className="hm-note">{t(locale, "homeOpenNote")}</p>
+          <label className="hm-period">
+            {t(locale, "homePeriod")}
+            <select value={period} onChange={(e) => onPeriod(Number(e.target.value) as 1 | 7 | 28)}>
+              <option value={1}>{t(locale, "homeSinceTitle")}</option>
+              <option value={7}>{t(locale, "homePeriod7")}</option>
+              <option value={28}>{t(locale, "homePeriod28")}</option>
+            </select>
+          </label>
+          <Stats locale={locale} changes={changes} />
+        </>
+      ) : null}
     </section>
   );
 }
 
 function Stats({ locale, changes }: { locale: Locale; changes: Changes }) {
-  const date = formatDateNumeric(changes.asOf);
-  const spoken = formatDate(locale, changes.asOf, "long");
+  const date =
+    changes.from === changes.asOf
+      ? formatDateNumeric(changes.asOf)
+      : `${formatDateNumeric(changes.from)}–${formatDateNumeric(changes.asOf)}`;
+  const spoken =
+    changes.from === changes.asOf
+      ? formatDate(locale, changes.asOf, "long")
+      : `${formatDate(locale, changes.from, "long")}–${formatDate(locale, changes.asOf, "long")}`;
   const finds = changes.finds.reduce((n, f) => n + f.count, 0);
-  const signals = changes.alerts.reduce((n, a) => n + a.count, 0);
+  const signals = changes.incidents;
   const firstFind = changes.finds[0];
   const firstAlert = changes.alerts[0];
   const stats: { key: string; label: string; n: number; href: string; title?: string }[] = [];

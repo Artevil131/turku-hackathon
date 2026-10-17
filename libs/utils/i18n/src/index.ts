@@ -2,6 +2,8 @@ import { ANTIBIOTICS, type AntibioticCode, HOME_AREAS, type Phenotype, SPECIMENS
 import { en } from "./en.ts";
 import { fi } from "./fi.ts";
 
+export { alertEvidence, alertPriority, incidentPriority, incidentResponsibility, openIncidents } from "./incidents.ts";
+
 // UI copy in Finnish and English, plus the dataset's own names for wards,
 // antibiotics and specimens. Shared by every app so wording stays the same.
 

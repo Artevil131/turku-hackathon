@@ -755,6 +755,37 @@ async function main() {
     { name: "desktop-900", width: 1440, height: 900, mobile: false },
   );
 
+  await interaction("home-incident-period", async (idle, reasons) => {
+    await load(cdp, urlOf("home"), idle);
+    if (!(await waitIn(`!!document.querySelector(".hm-period select")`, 15_000))) {
+      reasons.push("home summary has no period selector");
+      return;
+    }
+    const headline = await evaluate(cdp, `document.querySelector(".hm-head h1")?.textContent`);
+    const keys = await evaluate(cdp, `JSON.stringify([...document.querySelectorAll(".hm-incidents .feed-row")].map(b => b.dataset.key))`);
+    for (const days of [7, 28, 1]) {
+      await evaluate(
+        cdp,
+        `(() => { const s = document.querySelector(".hm-period select"); s.value = "${days}"; s.dispatchEvent(new Event("change", { bubbles: true })); })()`,
+      );
+      if (!(await waitIn(`document.querySelector(".hm-period select")?.value === "${days}"`)))
+        reasons.push(`period ${days} did not select`);
+      const stable = await evaluate(
+        cdp,
+        `document.querySelector(".hm-head h1")?.textContent === ${JSON.stringify(headline)} && JSON.stringify([...document.querySelectorAll(".hm-incidents .feed-row")].map(b => b.dataset.key)) === ${JSON.stringify(keys)}`,
+      );
+      if (!stable) reasons.push(`changing new period to ${days} hid or changed open incidents`);
+    }
+    if (
+      !(await evaluate(
+        cdp,
+        `document.querySelector(".hm-head h1")?.textContent.includes(document.documentElement.lang === "fi" ? "Avoimet tapahtumat" : "Open incidents")`,
+      ))
+    )
+      reasons.push("home headline does not name open incidents");
+    await idle();
+  });
+
   await interaction("research-signal-isolates", async (idle, reasons) => {
     await load(cdp, urlOf("research"), idle);
     if (!(await waitIn(`!!document.querySelector(".feed-row")`, 15_000))) {
@@ -770,6 +801,39 @@ async function main() {
       );
       reasons.push(`no isolates 15 s after opening a signal (${seen})`);
     }
+    if (
+      !(await evaluate(
+        cdp,
+        `document.querySelector(".feed-row")?.textContent.includes(document.documentElement.lang === "fi" ? "Yksi tapahtuma" : "One incident")`,
+      ))
+    )
+      reasons.push("incident summary does not distinguish the incident from its alerts");
+    const explain = ".math .alert-explanation > button";
+    const valid = await evaluate(
+      cdp,
+      `(() => { const b = document.querySelector(${JSON.stringify(explain)}); return b?.tagName === "BUTTON" && b.type === "button" && !!b.textContent.trim() && !!b.getAttribute("aria-controls"); })()`,
+    );
+    if (!valid) {
+      reasons.push("explain control is not a named native button linked to its panel");
+      return;
+    }
+    await evaluate(cdp, `document.querySelector(${JSON.stringify(explain)}).click()`);
+    if (!(await waitIn(`!!document.querySelector(".math .alert-explanation [aria-live] p:not(.field-hint)")`, 15_000)))
+      reasons.push("clicking explain did not load its template explanation");
+    await evaluate(cdp, `document.querySelector(${JSON.stringify(explain)}).focus()`);
+    await cdp.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
+    await cdp.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
+    if (!(await waitIn(`document.querySelector(${JSON.stringify(explain)})?.getAttribute("aria-expanded") === "false"`)))
+      reasons.push("Enter did not close the explanation");
+    await cdp.send("Input.dispatchKeyEvent", { type: "keyDown", key: " ", code: "Space", windowsVirtualKeyCode: 32 });
+    await cdp.send("Input.dispatchKeyEvent", { type: "keyUp", key: " ", code: "Space", windowsVirtualKeyCode: 32 });
+    if (
+      !(await waitIn(
+        `document.querySelector(${JSON.stringify(explain)})?.getAttribute("aria-expanded") === "true" && !!document.querySelector(".math .alert-explanation [aria-live] p:not(.field-hint)")`,
+        15_000,
+      ))
+    )
+      reasons.push("Space did not reopen the template explanation");
     await idle();
   });
 

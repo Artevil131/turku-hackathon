@@ -7,7 +7,7 @@ import { AsOf } from "../AsOf.tsx";
 import { type FeedProps, KINDS, type SignalKind } from "./board.ts";
 import { KindGlyph } from "./feed/glyphs.tsx";
 import { IncidentRow } from "./feed/IncidentRow.tsx";
-import { applyFilters, type Incident } from "./feed/model.ts";
+import { applyFilters, type Incident, openIncidents } from "./feed/model.ts";
 import { kindLabel } from "./feed/names.ts";
 import type { Spans } from "./feed/spans.ts";
 import type { IncidentLoad } from "./feed/useIncidents.ts";
@@ -50,6 +50,9 @@ export function SignalFeed(props: Props) {
   const filters = { unit: state.unit, kinds: state.kinds, phenotype: state.phenotype };
   const shown = applyFilters(incidents, filters);
   const readyAsOf = load.status === "ready" ? load.asOf : null;
+  const open = readyAsOf ? openIncidents(shown, readyAsOf) : [];
+  const openKeys = new Set(open.map((i) => i.key));
+  const history = shown.filter((i) => !openKeys.has(i.key));
 
   // Facet counts: each choice counts the incidents the other filters leave.
   const unitCounts = countBy(applyFilters(incidents, filters, "unit"), (i) => (i.ward ? [i.ward] : []));
@@ -64,7 +67,7 @@ export function SignalFeed(props: Props) {
   const filterKey = `${state.unit}|${state.kinds.join(",")}|${state.phenotype}|${load.status}`;
   // biome-ignore lint/correctness/useExhaustiveDependencies: scrolls when the filters or the selection change, not on every render.
   useEffect(() => {
-    if (!selected) return;
+    if (!selected || !state.incident) return;
     const id = requestAnimationFrame(() =>
       rootRef.current?.querySelector<HTMLElement>('.feed-row[aria-current="true"]')?.scrollIntoView({ block: "nearest" }),
     );
@@ -188,19 +191,31 @@ export function SignalFeed(props: Props) {
             {t(locale, "feedEmpty", { date: formatDate(locale, load.asOf, "long") })}
           </p>
         ) : (
-          <ul className="feed-list">
-            {shown.map((i) => (
-              <li key={i.key}>
-                <IncidentRow
-                  locale={locale}
-                  incident={i}
-                  selected={selected === i.key}
-                  spans={spansOf(i)}
-                  onSelect={(key) => onChange({ incident: key })}
-                />
-              </li>
+          <>
+            <h2 className="feed-section-title">{t(locale, "feedOpen", { n: open.length })}</h2>
+            <p className="feed-section-note">{t(locale, "feedOpenNote")}</p>
+            {[open, history].map((list, index) => (
+              <section
+                key={index === 0 ? "open" : "history"}
+                aria-label={t(locale, index === 0 ? "feedOpen" : "feedHistory", { n: open.length })}
+              >
+                {index === 1 && list.length > 0 ? <h2 className="feed-section-title">{t(locale, "feedHistory")}</h2> : null}
+                <ul className="feed-list">
+                  {list.map((i) => (
+                    <li key={i.key}>
+                      <IncidentRow
+                        locale={locale}
+                        incident={i}
+                        selected={selected === i.key}
+                        spans={spansOf(i)}
+                        onSelect={(key) => onChange({ incident: key })}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </section>
             ))}
-          </ul>
+          </>
         )}
       </div>
     </section>
