@@ -1,5 +1,5 @@
 import type { AeiClient, QualityResponse, SiteStatus, SitesResponse } from "@aei/contract";
-import { formatDate, type Locale, type MessageKey, siteName, t } from "@aei/i18n";
+import { countyName, formatDate, type Locale, type MessageKey, siteName, t } from "@aei/i18n";
 import { useEffect, useState } from "react";
 import { useSites } from "../../sites.ts";
 
@@ -16,7 +16,6 @@ const LANES = [
   { id: "fhir", label: "FHIR R4", sub: "Bundle" },
   { id: "csv", label: "CSV", sub: "WHONET-style" },
 ] as const;
-const shortCounty = (c: string) => c.replace(/n hyvinvointialue$/, "").replace(/ hyvinvointialue$/, "");
 const dayMs = 86_400_000;
 const addDays = (iso: string, n: number) => new Date(Date.parse(`${iso}T00:00:00Z`) + n * dayMs).toISOString().slice(0, 10);
 
@@ -131,7 +130,7 @@ export function IngestMap({ client, locale }: { client: AeiClient; locale: Local
               <li key={s.id} className="im-node" data-status={s.status}>
                 <span className="im-node-name">{siteName(locale, s.id)}</span>
                 <span className="im-node-sub">
-                  {shortCounty(s.county)}
+                  {countyName(locale, s.county)}
                   {s.feed.lastFormat ? ` · ${FORMAT_LABEL[s.feed.lastFormat]}` : ""}
                 </span>
                 <Tags locale={locale} tags={tagsOf(s)} />
@@ -243,7 +242,7 @@ export function SiteCards({ client, locale }: { client: AeiClient; locale: Local
                 </h3>
                 <Tags locale={locale} tags={tagsOf(s)} />
               </div>
-              <p className="cx-site-county">{shortCounty(s.county)}</p>
+              <p className="cx-site-county">{countyName(locale, s.county)}</p>
               <dl className="im-facts">
                 <div>
                   <dt>{t(locale, "connectCardUnits")}</dt>

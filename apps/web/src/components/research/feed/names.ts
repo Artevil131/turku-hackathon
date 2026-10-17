@@ -55,7 +55,7 @@ export function incidentTitle(locale: Locale, a: Alert): string {
         return t(locale, "feedTrendTitle", {
           antibiotic: a.antibiotic ? antibioticName(locale, a.antibiotic) : "",
           organism: a.organism ?? "",
-          observed: `${Math.round(a.observed * 100)} %`,
+          observed: `${Math.round(a.observed * 100)}\u00a0%`,
         });
       return t(locale, "feedClusterTitle", {
         what: a.phenotype ? phenotypeName(a.phenotype) : (a.organism ?? ""),
@@ -88,8 +88,8 @@ export function baselineLine(locale: Locale, a: Alert): string {
   if (a.kind !== "detector") return "";
   const parts: string[] = [];
   if (a.detector === "rising-trend") {
-    parts.push(t(locale, "feedObserved", { n: `${Math.round(a.observed * 100)} %` }));
-    if (a.expected !== undefined) parts.push(t(locale, "feedExpected", { n: `${Math.round(a.expected * 100)} %` }));
+    parts.push(t(locale, "feedObserved", { n: `${Math.round(a.observed * 100)}\u00a0%` }));
+    if (a.expected !== undefined) parts.push(t(locale, "feedExpected", { n: `${Math.round(a.expected * 100)}\u00a0%` }));
   } else {
     parts.push(t(locale, "feedObserved", { n: a.observed }));
     if (a.expected !== undefined) parts.push(t(locale, "feedExpected", { n: oneDecimal(locale, a.expected) }));

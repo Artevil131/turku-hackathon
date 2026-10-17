@@ -60,8 +60,8 @@ describe("doctor list disclosure", () => {
     );
     const html = list(data);
     const row = html.slice(html.indexOf('data-row="MEC"'), html.indexOf("</button>", html.indexOf('data-row="MEC"')));
-    expect(row).toMatch(/kattavuusalueella.*95 %/);
-    expect(row).toMatch(/kaikki bakteerit.*75 %/);
+    expect(row).toMatch(/kattavuusalueella.*95\u00a0%/);
+    expect(row).toMatch(/kaikki bakteerit.*75\u00a0%/);
     expect(row).toContain("Tiedot");
     expect(html).not.toContain('class="info-btn cl-info"');
     expect(itemsOf(data, "fi").singles.map((item) => item.id)).toEqual(data.suggestions.map((item) => item.antibiotic));
@@ -75,8 +75,8 @@ describe("doctor list disclosure", () => {
       Array.from({ length: 65 }, (_, i) => record(i, { specimen: "blood", results: { CIP: i < 60 ? "S" : "R" } })),
       "severe",
     );
-    expect(list(data)).toContain("92 %</b> (83–97 %)");
-    expect(list(data)).toContain("rajaa arvioidaan 95 %:n välin alapään mukaan, ja se on 83 %.");
+    expect(list(data)).toContain("92\u00a0%</b> (83–97\u00a0%)");
+    expect(list(data)).toContain("rajaa arvioidaan 95\u00a0%:n välin alapään mukaan, ja se on 83\u00a0%.");
   });
   it("leads with the first API-ranked pair when no severe single clears", () => {
     const data = response(
@@ -91,7 +91,7 @@ describe("doctor list disclosure", () => {
     expect(data.combinationSuggestions[0]?.coverage.share).toBe(1);
     const html = list(data);
     expect(html.indexOf("Yksikään antibiootti ei yksin")).toBeLessThan(html.indexOf('class="cl-scroll"'));
-    expect(html).toContain("100 %, n 65 — tiedot");
+    expect(html).toContain("100\u00a0%, n 65 — tiedot");
     expect(html).toContain("Synteettinen demoaineisto · ei potilashoitoon");
     expect(html).toContain("Tukee päätöstä; lääkäri päättää.");
     const first = data.combinationSuggestions[0];
@@ -108,7 +108,7 @@ describe("doctor list disclosure", () => {
     };
     const summary = list(borderline).split('class="cl-pair-summary"')[1]?.split('class="cl-scroll"')[0];
     expect(summary).toContain("arvio ylittää, väli ei");
-    expect(summary).toContain("83–97 %");
+    expect(summary).toContain("83–97\u00a0%");
   });
 });
 

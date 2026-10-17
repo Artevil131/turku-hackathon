@@ -68,7 +68,7 @@ describe("phenotype-total county forecasts", () => {
       expect(html).toContain(locale === "en" ? "Next month: about 11 (range 3–22)" : "Ensi kuussa: noin 11 (vaihteluväli 3–22)");
       expect(html).toContain(locale === "en" ? "ESBL total:" : "ESBL yhteensä:");
       expect(html).toContain("D-045");
-      expect(html).toContain(locale === "en" ? "90% predictive range" : "90 %:n ennusteväli");
+      expect(html).toContain(locale === "en" ? "90\u00a0% predictive range" : "90\u00a0%:n ennusteväli");
       expect(html).toContain(locale === "en" ? "Next month: about 2 (range 0–5)" : "Ensi kuussa: noin 2 (vaihteluväli 0–5)");
     }
   });
@@ -116,14 +116,14 @@ describe("visible county detail", () => {
         <GeoMap state={state} onChange={onChange} client={{} as AeiClient} locale={locale} asOf="2026-10-17" reducedMotion />,
       );
       expect(html).toContain('aria-labelledby="geo-county-title"');
-      expect(html).toContain(locale === "en" ? "County · Varsinais-Suomen" : "Alue · Varsinais-Suomen");
+      expect(html).toContain(locale === "en" ? "County · Southwest Finland" : "Alue · Varsinais-Suomi");
       expect(html).toContain(locale === "en" ? "Back to map" : "Takaisin kartalle");
       expect(html).toContain(locale === "en" ? "CPE carriage, E. coli" : "CPE-kantajuus, E. coli");
       expect(html).toContain(locale === "en" ? "August 2026" : "elokuu 2026");
       expect(html).toContain(locale === "en" ? "20 vs 2.5 expected" : "20, odotettu 2,5");
       expect(html).toContain(locale === "en" ? "Filled marker:" : "Täytetty merkki:");
       expect(html).toContain(locale === "en" ? "Forecast · phenotype totals" : "Ennuste · fenotyypit yhteensä");
-      expect(html).toContain(locale === "en" ? "90% predictive range" : "90 %:n ennusteväli");
+      expect(html).toContain(locale === "en" ? "90\u00a0% predictive range" : "90\u00a0%:n ennusteväli");
       expect(html).toContain(locale === "en" ? "VRE: no forecast" : "VRE: ei ennustetta");
       expect(html).not.toContain('class="geo-stage"');
       expect(html).not.toContain('class="geo-overlay-card"');

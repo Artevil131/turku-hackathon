@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { en } from "./en.ts";
 import { fi } from "./fi.ts";
-import { alertPriority, antibioticName, registerSites, registerWards, siteName, t, wardName } from "./index.ts";
+import { alertPriority, antibioticName, countyName, registerSites, registerWards, siteName, t, wardName } from "./index.ts";
 
 describe("i18n", () => {
   it("has a Finnish string for every English key", () => {
@@ -27,5 +27,19 @@ describe("i18n", () => {
     expect(siteName("fi", "sata")).toBe("Satasairaala");
     expect(siteName("fi", "tyks")).toBe("Tyks");
     registerWards([]);
+  });
+});
+
+describe("countyName", () => {
+  it("gives the nominative in Finnish and the English name", () => {
+    expect(countyName("fi", "Lapin hyvinvointialue")).toBe("Lappi");
+    expect(countyName("en", "Lapin hyvinvointialue")).toBe("Lapland");
+    expect(countyName("en", "Varsinais-Suomen hyvinvointialue")).toBe("Southwest Finland");
+    expect(countyName("fi", "Vantaan ja Keravan hyvinvointialue")).toBe("Vantaa ja Kerava");
+    expect(countyName("fi", "Finland (all counties)")).toBe("Suomi (kaikki alueet)");
+    expect(countyName("en", "Ahvenanmaa")).toBe("Åland");
+  });
+  it("falls back to the input without the suffix", () => {
+    expect(countyName("fi", "Jokin hyvinvointialue")).toBe("Jokin");
   });
 });

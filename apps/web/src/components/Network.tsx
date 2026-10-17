@@ -183,7 +183,7 @@ export function Network({ locale, findings, onOpenWard, reducedMotion }: Props) 
                   <span className="bar-track">
                     <i style={{ width: `${Math.round(n.share * 100)}%`, background: "var(--live)" }} />
                   </span>
-                  <span className="num">{Math.round(n.share * 100)} %</span>
+                  <span className="num">{Math.round(n.share * 100)}&nbsp;%</span>
                 </button>
               </li>
             ))}

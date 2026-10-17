@@ -315,7 +315,7 @@ export function HospitalNetwork({ client, locale, asOf, state, onChange }: Panel
             {WARDS.flatMap((w) =>
               (downstream.get(w.code) ?? []).map((d) => (
                 <li key={`${d.from}|${w.code}`} data-active={sel === w.code || sel === d.from}>
-                  <span className="hnet-down-share">{pct(d.share)} %</span>{" "}
+                  <span className="hnet-down-share">{pct(d.share)}&nbsp;%</span>{" "}
                   {t(locale, "netShareCount", { unit: d.from, n: d.n, total: d.total, dest: w.code })}
                 </li>
               )),
@@ -475,7 +475,7 @@ function FocusCard({ unit, locale, flows, signals, shares, selected, ready, onFi
                       <i style={{ width: `${Math.round(n.share * 100)}%` }} />
                     </span>
                     <span className="hnet-flow-n">
-                      {Math.round(n.share * 100)} % · {t(locale, "netPatients", { n: n.patients })}
+                      {Math.round(n.share * 100)}&nbsp;% · {t(locale, "netPatients", { n: n.patients })}
                     </span>
                   </li>
                 ))}

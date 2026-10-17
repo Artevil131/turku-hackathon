@@ -1,12 +1,10 @@
-import { type Locale, t } from "@aei/i18n";
+import { countyName, type Locale, t } from "@aei/i18n";
 import { COUNTIES } from "@aei/sites";
 import { useMemo, useState } from "react";
 import { useSites } from "../../sites.ts";
 
 // "Connect a hospital" (D-051): numbered steps that write a new site's sites.json entry with a fresh token
 // made in the browser (sent nowhere), the endpoint, curl examples and the demo-day command.
-
-const shortCounty = (c: string) => c.replace(/n hyvinvointialue$/, "").replace(/ hyvinvointialue$/, "");
 
 /** 32 random bytes as hex, from the browser's cryptographic generator. */
 function newToken(): string {
@@ -116,7 +114,7 @@ export function ConnectHospital({ locale }: { locale: Locale; site?: string }) {
           <select className="cx-input" value={county} onChange={(e) => setCounty(e.target.value)}>
             {COUNTIES.map((c) => (
               <option key={c} value={c}>
-                {shortCounty(c)}
+                {countyName(locale, c)}
               </option>
             ))}
           </select>
