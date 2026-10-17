@@ -61,8 +61,15 @@ API health check itself, since podman-compose builds OCI images, which
 drop the image's `HEALTHCHECK`; for a plain `podman build`, add
 `--format docker` to keep it.
 
+Research projects persist in the writable named volume `aei-state`, mounted
+at `/state` (`AEI_STATE_DIR=/state`): one JSON file per project under
+`/state/projects` (D-057). Outside compose, set `AEI_STATE_DIR` to a writable
+directory; unset, projects live only in memory. Frozen projects store an
+as-of date and fingerprint, not a copy of the dataset (D-058). Anyone who
+can reach the demo API can read and edit every project; there is no auth.
+
 This is demo and pilot packaging, not a hardened deployment: no
-authentication beyond the sites file's tokens, no TLS, no persistence
+authentication beyond the sites file's tokens, no TLS, no lab-result persistence
 (results posted to `/api/ingest` live in memory until restart), one API
 process. A site's token is a plain shared secret sent as `Authorization:
 Bearer`, kept in the sites file (mode 600; the server warns at startup if
