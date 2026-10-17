@@ -1,8 +1,8 @@
 # Notebook (JupyterLite)
 
-The static JupyterLite site behind the research workspace's Notebook window
-(D-062, D-063). Built by `build.sh` into `apps/web/public/notebook`, served
-beside the web app at `/notebook/`. Project folders come from the API's
+The static JupyterLite site behind the Reproduce window in the research
+workspace (D-062, D-063). Built by `build.sh` into `apps/web/public/notebook`,
+served beside the web app at `/notebook/`. Project folders come from the API's
 `/api/lite/` routes, so the build keeps no project data.
 
 ## The theme
@@ -38,7 +38,7 @@ its CDN, so it is not run in routine work; ask the operator first (AGENTS.md).
 
 ## Opening a project
 
-The Notebook window opens `lab/index.html?path=projects/<id>/reproduce.ipynb`.
-The served notebook is `reproduce.ipynb` (the research package's name for the
-Python starter, `reproduce-r.ipynb` for R); `analysis.ipynb` is the package
-name in RESEARCHER-WORKFLOWS.md and is not served by `/api/lite/`.
+The Reproduce window on main (`projects/Reproduce.tsx`) opens
+`lab/index.html?path=projects/<id>/reproduce.ipynb`, or `reproduce-r.ipynb` for R.
+`analysis.ipynb` is the research package's name in RESEARCHER-WORKFLOWS.md; the
+API does not serve it, so the window opens the reproduce notebooks instead.
