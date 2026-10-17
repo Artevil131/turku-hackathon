@@ -357,7 +357,7 @@ const StaticLayer = memo(function StaticLayer({ m, L, id, locale, compact, asOf,
             y1={compact ? L.base : lanesEnd}
             y2={(compact ? L.base : lanesEnd) + (k.year ? 5 : 3)}
           />
-          {k.label ? (
+          {k.label && (compact || k.x + 40 < m.right - 112) ? (
             <text className="hs-axis-text" x={k.x + 3} y={L.axis}>
               {k.label}
             </text>
