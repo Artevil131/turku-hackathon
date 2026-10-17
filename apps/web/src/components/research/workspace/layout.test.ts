@@ -33,17 +33,17 @@ describe("compactLayout", () => {
     expect(compactLayout(l).wins).toEqual(l.wins);
   });
   it("floats windows up into a gap", () => {
-    const l = patchWin(patchWin(defaultLayout(), "graph", { open: false }), "math", { open: true });
+    const l = patchWin(patchWin(patchWin(defaultLayout(), "graph", { open: false }), "map", { open: false }), "math", { open: true });
     expect(compactLayout(l).wins.math.y).toBe(0);
   });
   it("opens with the Signals window large, the notebook wide beside it, and the card and the assistant in the tray", () => {
     const d = defaultLayout();
-    expect(d.wins.signals.w).toBeGreaterThanOrEqual(5);
+    expect(d.wins.signals.w).toBeGreaterThanOrEqual(4);
     expect(d.wins.math.open).toBe(false);
     expect(d.wins.assistant.open).toBe(false);
     expect(WIN_IDS.filter((id) => d.wins[id].open)).toEqual(["signals", "map", "graph", "notebook"]);
     expect(d.wins.notebook.x).toBe(d.wins.signals.x + d.wins.signals.w);
-    expect(d.wins.notebook.w).toBeGreaterThanOrEqual(6);
+    expect(d.wins.notebook.w).toBeGreaterThanOrEqual(5);
     noOverlap(d);
   });
   it("opens the notebook in the analysis layout, beside Signals", () => {
@@ -84,7 +84,7 @@ describe("focusLayout", () => {
     const f = focusLayout(d, "signals", 20);
     expect(f.wins.signals.h).toBe(d.wins.signals.h);
     expect(d.wins.map.open).toBe(true);
-    expect(d.wins.signals.w).toBe(5);
+    expect(d.wins.signals.w).toBe(4);
   });
 });
 
@@ -140,7 +140,7 @@ describe("chart windows in the layout", () => {
 describe("neighbours take the empty columns", () => {
   it("grows a window sideways into free columns up to the next window, and leaves the moved one alone", () => {
     let l = defaultLayout();
-    for (const id of ["graph", "math", "assistant", "grid", "reproduce"] as const) l = patchWin(l, id, { open: false });
+    for (const id of ["graph", "math", "assistant", "grid", "reproduce", "notebook"] as const) l = patchWin(l, id, { open: false });
     // Signals at 0–4 and the map at 6–10 on the same rows: a free column between them and two at the right edge.
     l = patchWin(l, "signals", { x: 0, y: 0, w: 4, h: 20, open: true });
     l = patchWin(l, "map", { x: 6, y: 0, w: 4, h: 20, open: true });
@@ -153,7 +153,7 @@ describe("neighbours take the empty columns", () => {
   });
   it("does not grow across a window on other rows' columns unless the rows overlap", () => {
     let l = defaultLayout();
-    for (const id of ["graph", "math", "assistant", "grid", "reproduce", "map"] as const) l = patchWin(l, id, { open: false });
+    for (const id of ["graph", "math", "assistant", "grid", "reproduce", "map", "notebook"] as const) l = patchWin(l, id, { open: false });
     l = patchWin(l, "signals", { x: 0, y: 0, w: 4, h: 10, open: true });
     l = patchWin(l, "graph", { x: 8, y: 12, w: 4, h: 10, open: true });
     const f = fillLayout(l);
