@@ -245,13 +245,13 @@
   text-align: right;
 }
 .cl-fig b {
-  font-size: var(--d-m, 16px);
+  font-size: 18px;
   line-height: 1.2;
   font-variant-numeric: tabular-nums;
 }
 .cl-fig small {
   color: var(--d-ink-3);
-  font-size: var(--d-xs);
+  font-size: var(--d-s, 14px);
   white-space: nowrap;
 }
 .cl-pair {
@@ -262,7 +262,7 @@
 }
 .cl-fig-quiet b {
   color: var(--d-ink-2);
-  font-weight: 500;
+  font-weight: 600;
 }
 .cl-basis {
   margin-top: 3px;
@@ -684,7 +684,7 @@
 .dr-answer-compare-title {
   grid-column: 1 / -1;
   color: var(--ink-2);
-  font-size: var(--t-xs);
+  font-size: var(--t-s);
   font-weight: 600;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -695,21 +695,21 @@
 }
 .dr-answer-compare b {
   color: var(--ink);
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 600;
   line-height: 1.15;
   font-variant-numeric: tabular-nums;
 }
 .dr-answer-compare small {
-  color: var(--ink-3);
-  font-size: var(--t-xs);
+  color: var(--ink-2);
+  font-size: var(--t-s);
   white-space: nowrap;
 }
 .dr-answer-compare-why {
   grid-column: 1 / -1;
-  margin-top: 4px;
+  margin-top: 6px;
   color: var(--ink-3);
-  font-size: var(--t-xs);
+  font-size: var(--t-s);
 }
 /* The rest of the list as pills: a name and its share each, scanned in one look. */
 .dr-answer-pills {
@@ -731,12 +731,12 @@
   list-style: none;
 }
 .dr-answer-pills li {
-  padding: 3px 10px;
+  padding: 4px 12px;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: var(--glass-1);
   color: var(--ink);
-  font-size: var(--t-s);
+  font-size: var(--t-m);
   white-space: nowrap;
 }
 .dr-answer-pills li b {
@@ -751,7 +751,7 @@
 }
 .dr-answer-when {
   margin: 2px 0 0;
-  color: var(--ink-3);
+  color: var(--ink-2);
   font-size: var(--t-s);
   line-height: 1.4;
 }
