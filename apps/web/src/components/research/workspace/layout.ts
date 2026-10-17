@@ -175,12 +175,37 @@ export function presetLayout(preset: Preset): Layout {
 const overlaps = (a: Rect, b: Rect) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 
 /**
+ * Room beside the window just moved or sized: an open window it overlaps gives up the overlapped columns on
+ * the side it is on, when what is left is still at least its minimum width. A window that cannot narrow far
+ * enough is left as it is, and compaction pushes it below. This is what lets a window be dropped between two
+ * others.
+ */
+export function makeRoom(layout: Layout, moved?: string): Layout {
+  if (!moved || !winOf(layout, moved)?.open) return layout;
+  const m = winOf(layout, moved);
+  let next = layout;
+  for (const id of allIds(layout)) {
+    if (id === moved) continue;
+    const o = winOf(next, id);
+    if (!o.open || !overlaps(o, m)) continue;
+    const min = minSize(id).w;
+    const leftW = m.x - o.x; // what stays if it keeps its left part
+    const rightW = o.x + o.w - (m.x + m.w); // what stays if it keeps its right part
+    const keepLeft = leftW >= min && (leftW >= rightW || rightW < min);
+    if (keepLeft) next = setWin(next, id, { ...o, w: leftW });
+    else if (rightW >= min) next = setWin(next, id, { ...o, x: m.x + m.w, w: rightW });
+  }
+  return next;
+}
+
+/**
  * Vertical compaction, as in a dashboard grid. Open windows are taken in order of their top edge (then left
  * edge; the window being moved or resized wins a tie) and each floats up while the row above is free, then
  * is pushed down past anything it overlaps. No overlaps remain and no gap that a window could rise into.
  * Closed windows keep their rectangle and are left out.
  */
 export function compactLayout(layout: Layout, moved?: string): Layout {
+  layout = makeRoom(layout, moved);
   const ids = allIds(layout);
   const open = ids
     .filter((id) => winOf(layout, id).open)

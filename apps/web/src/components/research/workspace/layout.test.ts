@@ -10,6 +10,7 @@ import {
   fillLayout,
   fitLayout,
   focusLayout,
+  makeRoom,
   parseLayout,
   patchWin,
   presetLayout,
@@ -138,6 +139,31 @@ describe("chart windows in the layout", () => {
     const p = withCharts(presetLayout("map"), layout);
     expect(p.charts[id]).toBeDefined();
     expect(p.order).toContain(id);
+  });
+});
+
+describe("a window dropped between two others", () => {
+  const two = () => {
+    let l = defaultLayout();
+    for (const id of WIN_IDS) l = patchWin(l, id, { open: false });
+    l = patchWin(l, "signals", { x: 0, y: 0, w: 6, h: 20, open: true });
+    l = patchWin(l, "graph", { x: 6, y: 0, w: 6, h: 20, open: true });
+    return l;
+  };
+  it("narrows both neighbours so the dropped window sits in the middle on the same rows", () => {
+    const l = compactLayout(patchWin(two(), "map", { x: 4, y: 0, w: 4, h: 20, open: true }), "map");
+    expect(l.wins.signals).toMatchObject({ x: 0, w: 4, y: 0 });
+    expect(l.wins.map).toMatchObject({ x: 4, w: 4, y: 0 });
+    expect(l.wins.graph).toMatchObject({ x: 8, w: 4, y: 0 });
+  });
+  it("pushes a neighbour below when narrowing would take it under its minimum width", () => {
+    const l = compactLayout(patchWin(two(), "map", { x: 1, y: 0, w: 5, h: 20, open: true }), "map");
+    expect(l.wins.signals.y).toBeGreaterThanOrEqual(20);
+    expect(l.wins.graph).toMatchObject({ x: 6, w: 6, y: 0 });
+  });
+  it("leaves the layout alone with nothing moved", () => {
+    const l = two();
+    expect(makeRoom(l)).toBe(l);
   });
 });
 

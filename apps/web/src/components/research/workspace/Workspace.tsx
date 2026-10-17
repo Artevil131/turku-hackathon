@@ -6,18 +6,14 @@ import {
   type PointerEvent,
   type ReactNode,
   useCallback,
-  useContext,
   useEffect,
   useLayoutEffect,
   useRef,
   useState,
 } from "react";
-import { InSlot, SlotsContext } from "../../../shell/context.ts";
 import { hashParams } from "../../../url.ts";
-import { Menu, MenuItem, MenuLabel, MenuSeparator, useCloseMenu } from "../../shell/Menu.tsx";
 import { chartTitle } from "../charts/model.ts";
 import type { ChartSpec } from "../charts/spec.ts";
-import { SidebarIcon } from "../projects/ProjectActions.tsx";
 import {
   addChart,
   addWindow,
@@ -672,8 +668,6 @@ export function Workspace({
   const chartIds = Object.keys(layout.charts);
   const copyIds = Object.keys(layout.copies);
   const ids: readonly string[] = wide ? [...WIN_IDS, ...copyIds, ...chartIds] : [...STACK_ORDER, ...copyIds, ...chartIds];
-  // With the app's sidebar mounted, the windows menu lives there; without it, the tray stays on the board.
-  const inSidebar = useContext(SlotsContext).windows !== null;
   const tray = <Tray locale={locale} open={(id) => base.wins[id].open} onToggle={toggle} onReset={reset} chartMenu={chartMenu} />;
   const roleOf = (id: string): "primary" | "answer" | "quiet" | undefined =>
     primary === null ? undefined : id === primary ? "primary" : answers.includes((kindOf(base, id) ?? id) as WinId) ? "answer" : "quiet";
@@ -685,19 +679,7 @@ export function Workspace({
 
   return (
     <div className="ws" data-float={wide} data-animate={animate} data-focus={focused !== null} data-selection={primary !== null}>
-      <InSlot name="windows">
-        <WindowsMenu
-          locale={locale}
-          count={countOf}
-          onAdd={(kind) => add(kind)}
-          onPreset={applyPreset}
-          onReset={reset}
-          presets={PRESETS}
-          presetKey={PRESET_KEY}
-          chartMenu={chartMenu}
-        />
-      </InSlot>
-      {wide || inSidebar ? null : <div className="ws-tray-row">{tray}</div>}
+      {wide ? null : <div className="ws-tray-row">{tray}</div>}
       {wide ? (
         <div className="ws-toolbar">
           {focusBar ?? layouts}
@@ -869,7 +851,22 @@ export function Workspace({
           );
         })}
       </div>
-      {wide && !inSidebar ? <div className="ws-traydock">{tray}</div> : null}
+      {wide ? <div className="ws-traydock">{tray}</div> : null}
+      {/* The one plain way to make a window: bottom left of the project screen, always in view. */}
+      <button
+        type="button"
+        className="ws-add-float"
+        data-add-window
+        onClick={(e) => {
+          const b = e.currentTarget.getBoundingClientRect();
+          setPicker({ x: b.left, y: b.top - 440, at: {} });
+        }}
+      >
+        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false">
+          <path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
+        {t(locale, "wsEmptyAdd")}
+      </button>
       {picker ? (
         <WindowPicker
           locale={locale}
@@ -979,55 +976,6 @@ function Tray({
   );
 }
 
-/** The Windows menu, at the foot of the sidebar: add a window of any kind (as many as wanted), the layouts, a chart, the reset. */
-function WindowsMenu({
-  locale,
-  count,
-  onAdd,
-  onPreset,
-  onReset,
-  presets,
-  presetKey,
-  chartMenu,
-}: {
-  locale: Locale;
-  count: (id: WinId) => number;
-  onAdd: (id: WinId) => void;
-  onPreset: (p: Preset) => void;
-  onReset: () => void;
-  presets: readonly Preset[];
-  presetKey: Record<Preset, string>;
-  chartMenu?: (done: () => void) => ReactNode;
-}) {
-  return (
-    <>
-      {/* Where a window is made: one plain row, always visible, with the plus. */}
-      <Menu id="ws-add-button" label={t(locale, "wsEmptyAdd")} icon={<SidebarIcon name="add" />} wide>
-        {WIN_IDS.map((id) => (
-          <MenuItem key={id} data-add={id} hint={count(id) ? String(count(id)) : undefined} onSelect={() => onAdd(id)}>
-            {t(locale, TITLE_KEY[id])}
-          </MenuItem>
-        ))}
-        <p className="sb-pop-foot">{t(locale, "wsAddHint")}</p>
-      </Menu>
-      <Menu id="ws-tray-button" label={t(locale, "wsPresets")} icon={<SidebarIcon name="windows" />} wide>
-        <MenuLabel>{t(locale, "wsPresets")}</MenuLabel>
-        {presets.map((p) => (
-          <MenuItem key={p} data-preset={p} onSelect={() => onPreset(p)}>
-            {t(locale, presetKey[p] as "wsDefault")}
-          </MenuItem>
-        ))}
-        {chartMenu ? <ChartEntry locale={locale} chartMenu={chartMenu} /> : null}
-        <MenuSeparator />
-        <MenuItem data-reset onSelect={onReset}>
-          {t(locale, "wsReset")}
-        </MenuItem>
-        <p className="sb-pop-foot">{t(locale, "wsHint")}</p>
-      </Menu>
-    </>
-  );
-}
-
 /** What to put in an empty place: every kind of window, with how many are open already. */
 function WindowPicker({
   locale,
@@ -1073,24 +1021,5 @@ function WindowPicker({
         </button>
       ))}
     </div>
-  );
-}
-
-function ChartEntry({ locale, chartMenu }: { locale: Locale; chartMenu: (done: () => void) => ReactNode }) {
-  const [adding, setAdding] = useState(false);
-  const close = useCloseMenu();
-  return (
-    <>
-      <MenuSeparator />
-      <button type="button" className="ws-pop-reset ws-pop-chart" aria-expanded={adding} onClick={() => setAdding((v) => !v)}>
-        {t(locale, "chartTray")}
-      </button>
-      {adding
-        ? chartMenu(() => {
-            setAdding(false);
-            close();
-          })
-        : null}
-    </>
   );
 }

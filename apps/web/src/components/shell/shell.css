@@ -31,15 +31,22 @@
   flex: 1;
 }
 
+.app-main > .page[data-page="project"] {
+  flex: 1 0 auto;
+  min-height: auto;
+  overflow: visible;
+}
+
 .page[data-page="project"] {
   display: flex;
   flex-direction: column;
   gap: var(--gap);
 }
 
+/* The board takes the height its windows need (the page scrolls), so the app, and with it the sidebar, spans all of it. */
 .page[data-page="project"] > .board {
-  flex: 1;
-  min-height: 0;
+  flex: 1 0 auto;
+  min-height: auto;
 }
 
 /* ---------- Sidebar ---------- */

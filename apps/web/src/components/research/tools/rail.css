@@ -117,7 +117,7 @@
   width: 380px;
   /* Never taller than the page's scroll box (the research page is a size container, below): the dock sticks to its
      top while the page scrolls, and the inspector's body scrolls inside. */
-  max-height: calc(100cqh - 16px);
+  max-height: calc(100dvh - 16px);
   display: flex;
   flex-direction: column;
   border: 1px solid var(--line);
@@ -315,13 +315,10 @@
   cursor: default;
 }
 
-/* The research page's scroll box measures the inspector (cqh above). */
-.page:has(.ws-dock) {
-  container-type: size;
-}
+/* The page itself scrolls (the app shell), so the inspector measures the viewport, not a scroll box. */
 /* Room for the sticky dock to travel: an inspector taller than the board must still come fully into view. */
 .ws[data-float="true"]:has(.ws-inspector:not([hidden])) {
-  min-height: calc(100cqh - 16px);
+  min-height: calc(100dvh - 16px);
 }
 
 /* The Statistics menu: opens on top of the rail, one line per analysis with its method in small print. */

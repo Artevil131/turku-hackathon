@@ -665,3 +665,34 @@
   background: var(--live);
   color: #fff;
 }
+
+/* "+ Add a window": the bottom left corner of the project screen, always in view. */
+.ws-add-float {
+  position: fixed;
+  bottom: 16px;
+  left: calc(var(--sb-w, 232px) + 16px);
+  z-index: 190;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--live);
+  border-radius: 999px;
+  background: var(--live);
+  box-shadow: var(--pop-shadow);
+  color: #fff;
+  font: inherit;
+  font-size: var(--t-s);
+  font-weight: 600;
+  cursor: pointer;
+}
+.ws-add-float:hover,
+.ws-add-float:focus-visible {
+  filter: brightness(1.1);
+}
+@media (max-width: 760px) {
+  .ws-add-float {
+    left: 16px;
+  }
+}
