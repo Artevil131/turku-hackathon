@@ -60,7 +60,7 @@ export const DEMOS: readonly DemoSpec[] = [
     blurbKey: "demoClinicianBlurb",
     mode: "continuous",
     board: "unit=MED-A&cov.unit=MED-A&cov.site=urine&cov.sev=mild",
-    layout: gridLayout({ coverage: { x: 0, y: 0, w: 8, h: 38 }, signals: { x: 8, y: 0, w: 4, h: 38 } }),
+    layout: gridLayout({ coverage: { x: 0, y: 0, w: 12, h: 40 } }),
     page: null,
   },
   {
@@ -71,10 +71,10 @@ export const DEMOS: readonly DemoSpec[] = [
     mode: "continuous",
     board: "unit=MED-A&ph=esbl",
     layout: gridLayout({
-      signals: { x: 0, y: 0, w: 4, h: 40 },
-      notebook: { x: 4, y: 0, w: 5, h: 40 },
-      graph: { x: 9, y: 0, w: 3, h: 20 },
-      map: { x: 9, y: 20, w: 3, h: 20 },
+      answer: { x: 0, y: 0, w: 12, h: 9 },
+      signals: { x: 0, y: 9, w: 4, h: 40 },
+      notebook: { x: 4, y: 9, w: 5, h: 40 },
+      graph: { x: 9, y: 9, w: 3, h: 40 },
     }),
     page: (locale, site) => {
       const s = slice(site, { from: "2025-02-17", to: "2025-05-11", unit: "MED-A", phenotype: "esbl" });
@@ -97,8 +97,9 @@ export const DEMOS: readonly DemoSpec[] = [
     asOf: "2025-04-30",
     board: "unit=MED-A&ph=esbl",
     layout: gridLayout({
-      notebook: { x: 0, y: 0, w: 8, h: 70 },
-      signals: { x: 8, y: 0, w: 4, h: 70 },
+      answer: { x: 0, y: 0, w: 12, h: 9 },
+      notebook: { x: 0, y: 9, w: 8, h: 70 },
+      signals: { x: 8, y: 9, w: 4, h: 70 },
     }),
     page: (locale, site) => {
       const s = slice(site, { from: "2025-03-01", to: "2025-04-30", unit: "MED-A", phenotype: "esbl" });

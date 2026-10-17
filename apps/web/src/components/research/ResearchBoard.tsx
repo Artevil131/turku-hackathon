@@ -7,6 +7,7 @@ import { currentSite, homeSite } from "../../sites.ts";
 import { hashParams, subscribeHash, writeHashParams } from "../../url.ts";
 import { CoverageWindow } from "../doctor/CoverageWindow.tsx";
 import { Timeline } from "../Timeline.tsx";
+import { AnswerWindow } from "./answer/AnswerWindow.tsx";
 import { Assistant } from "./assistant/Assistant.tsx";
 import { type BoardState, boardFromUrl, boardToParams, type FeedProps } from "./board.ts";
 import { ChartForm } from "./charts/ChartForm.tsx";
@@ -275,6 +276,24 @@ export function ResearchBoard(props: Props) {
         signal={notebookSignal}
         railCells={cells}
         onReproduce={reproduceIn}
+      />
+    ),
+    answer: (
+      <AnswerWindow
+        locale={locale}
+        asOf={asOf}
+        incidents={shown}
+        selected={selected}
+        unit={state.unit}
+        loading={loading}
+        onEvidence={(incident) => {
+          onChange({ incident: incident.key });
+          setReveal({ id: "math", key: `answer-evidence-${Date.now()}` });
+        }}
+        onFlow={(incident) => {
+          onChange({ incident: incident.key });
+          setReveal({ id: "graph", key: `answer-flow-${Date.now()}` });
+        }}
       />
     ),
     timeline: (

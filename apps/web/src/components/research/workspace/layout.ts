@@ -10,7 +10,19 @@ export const MAX_ROWS = 160;
 
 import { type ChartSpec, parseSpec } from "../charts/spec.ts";
 
-export const WIN_IDS = ["signals", "map", "graph", "math", "assistant", "grid", "reproduce", "notebook", "coverage", "timeline"] as const;
+export const WIN_IDS = [
+  "signals",
+  "map",
+  "graph",
+  "math",
+  "assistant",
+  "grid",
+  "reproduce",
+  "notebook",
+  "coverage",
+  "timeline",
+  "answer",
+] as const;
 export type WinId = (typeof WIN_IDS)[number];
 
 export interface Rect {
@@ -61,6 +73,7 @@ export const MIN_SIZE: Record<WinId, { w: number; h: number }> = {
   notebook: { w: 3, h: 10 },
   coverage: { w: 4, h: 12 },
   timeline: { w: 4, h: 9 },
+  answer: { w: 4, h: 7 },
 };
 
 export const CHART_MIN_SIZE = { w: 4, h: 10 };
@@ -115,12 +128,14 @@ export function baseLayout(): Layout {
     coverage: { x: 0, y: 0, w: 6, h: 30, open: false },
     // The replay timeline: a window of the project, opened by the templates and from the Windows menu.
     timeline: { x: 0, y: 0, w: 12, h: 11, open: false },
+    // The one-sentence summary: closed by default, opened first in the templates and demo files.
+    answer: { x: 0, y: 0, w: 12, h: 9, open: false },
   };
   return {
     wins,
     copies: {},
     charts: {},
-    order: ["signals", "map", "graph", "math", "assistant", "grid", "reproduce", "notebook", "coverage", "timeline"],
+    order: ["signals", "map", "graph", "math", "assistant", "grid", "reproduce", "notebook", "coverage", "timeline", "answer"],
   };
 }
 
@@ -346,6 +361,7 @@ export const DEFAULT_SIZE: Record<WinId, { w: number; h: number }> = {
   reproduce: { w: 5, h: 14 },
   coverage: { w: 6, h: 24 },
   timeline: { w: COLS, h: TIMELINE_ROWS },
+  answer: { w: COLS, h: 9 },
 };
 
 /**

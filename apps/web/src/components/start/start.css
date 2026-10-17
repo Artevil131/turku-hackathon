@@ -794,3 +794,61 @@
   stroke-width: 2.5;
   opacity: 0.5;
 }
+
+/* The question box: one big field and three questions that open their answer in one click. */
+.start-ask {
+  margin: 0 0 28px;
+}
+.start-ask-field {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  padding: 0 18px;
+  border: 1px solid var(--line-strong, var(--line));
+  border-radius: 999px;
+  background: var(--glass-1);
+  box-shadow: var(--pop-shadow);
+  color: var(--ink-3);
+  font: inherit;
+  font-size: var(--t-m);
+  text-align: left;
+  cursor: text;
+}
+.start-ask-field:hover,
+.start-ask-field:focus-visible {
+  border-color: var(--live);
+}
+.start-ask-field span {
+  flex: 1;
+}
+.start-ask-field kbd {
+  padding: 1px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: var(--t-xs);
+}
+.start-ask-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.start-ask-chips button {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--glass-1);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--t-s);
+  cursor: pointer;
+}
+.start-ask-chips button:hover,
+.start-ask-chips button:focus-visible {
+  border-color: var(--live);
+  background: var(--live-soft);
+  color: var(--live);
+}

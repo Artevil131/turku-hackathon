@@ -7,6 +7,7 @@ import { launchTemplate } from "../../shell/launch.ts";
 import { DeleteProjectDialog } from "../research/projects/ProjectDialogs.tsx";
 import { parseLayout } from "../research/workspace/layout.ts";
 import { QUICK_STARTS, TEMPLATE_KEYS, type Template } from "../research/workspace/templates.ts";
+import { openSearch } from "../shell/Sidebar.tsx";
 import type { Audience } from "./audience.ts";
 import { NewProjectDialog } from "./NewProjectDialog.tsx";
 import { ShareDialog } from "./ShareDialog.tsx";
@@ -179,6 +180,42 @@ export function StartPage({
             </div>
           </div>
         </header>
+        <div className="start-ask" role="search">
+          <button type="button" className="start-ask-field" data-start-ask onClick={openSearch}>
+            <svg
+              viewBox="0 0 24 24"
+              width="20"
+              height="20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
+              <circle cx="11" cy="11" r="6.5" />
+              <path d="m16 16 4.5 4.5" />
+            </svg>
+            <span>{t(locale, "startAskPlaceholder")}</span>
+            <kbd>/</kbd>
+          </button>
+          <div className="start-ask-chips">
+            <button
+              type="button"
+              onClick={() => {
+                const control = DEMOS.find((d) => d.id === "control");
+                if (control) onDemo(control);
+              }}
+            >
+              {t(locale, "startAskQ1")}
+            </button>
+            <button type="button" onClick={() => shell.openView("patient", { "cov.site": "urine" })}>
+              {t(locale, "startAskQ2")}
+            </button>
+            <button type="button" onClick={() => shell.openView(null, { unit: "MED-A", ph: "esbl" })}>
+              {t(locale, "startAskQ3")}
+            </button>
+          </div>
+        </div>
         <section id="start-recent" tabIndex={-1}>
           <h2>{t(locale, "startRecent")}</h2>
           {failed ? (

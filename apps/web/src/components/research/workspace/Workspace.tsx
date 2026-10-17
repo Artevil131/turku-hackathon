@@ -86,6 +86,7 @@ const TITLE_KEY = {
   notebook: "notebookWindow",
   coverage: "boardCoverage",
   timeline: "boardTimeline",
+  answer: "boardAnswer",
 } as const;
 
 /** A request to add a chart window: a new `key` adds `spec`. */
@@ -96,6 +97,7 @@ export interface ChartRequest {
 
 /** The stacked order under 1100 px: the list first, the map last (as before). */
 const STACK_ORDER: readonly WinId[] = [
+  "answer",
   "signals",
   "notebook",
   "math",

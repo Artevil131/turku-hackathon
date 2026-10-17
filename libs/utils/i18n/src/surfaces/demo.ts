@@ -1,6 +1,15 @@
 // Copy for the demo files: ready-made projects that show what the tool does for each kind of user. Keys are global: prefix them `demo`.
 
 export const demoEn = {
+  answerNone: "Nothing unusual right now",
+  answerNoneNote: "No open signals {where} as of this date.",
+  answerEverywhere: "anywhere in the hospital",
+  answerOpenOne: "1 open signal",
+  answerOpenCount: "{n} open signals",
+  answerSeen: "Seen",
+  answerUsual: "Usual",
+  answerEvidence: "Show the evidence",
+  answerFlow: "Where patients came from",
   demoSection: "Demo files",
   demoHint: "Ready-made projects, filled in as if they had been used. Open one to see what the tool does for that role.",
   demoOpenError: "The demo file could not be opened. Try again.",
@@ -31,6 +40,15 @@ export const demoEn = {
 };
 
 export const demoFi: Record<keyof typeof demoEn, string> = {
+  answerNone: "Ei mitään epätavallista juuri nyt",
+  answerNoneNote: "Ei avoimia signaaleja {where} tähän päivään mennessä.",
+  answerEverywhere: "missään sairaalassa",
+  answerOpenOne: "1 avoin signaali",
+  answerOpenCount: "{n} avointa signaalia",
+  answerSeen: "Havaittu",
+  answerUsual: "Tavallisesti",
+  answerEvidence: "Näytä perustelut",
+  answerFlow: "Mistä potilaat tulivat",
   demoSection: "Esimerkkitiedostot",
   demoHint: "Valmiita projekteja, täytetty kuin niitä olisi käytetty. Avaa yksi nähdäksesi, mitä työkalu tekee kyseiselle roolille.",
   demoOpenError: "Esimerkkitiedostoa ei voitu avata. Yritä uudelleen.",
