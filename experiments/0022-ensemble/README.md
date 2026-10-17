@@ -385,3 +385,29 @@ trained on a disjoint stream (a seed outside 2026 to 2030, pending Artem) and wi
 as a rule of its own, with B's loosest run length and A's phenotype alpha on a finer grid, since both components' levels
 were fixed by their own settings; (4) the CUSUM module's place in `libs/utils` is settled for now (it is there and tested),
 but a live use needs the held-out result first; nothing here changes the live tool.
+
+## Held-out re-score (orchestrator's request, after close)
+
+Artem's winner's-curse rule: the screening headlines above (seed 2026) re-scored on the held-out injection seeds 2027 to 2030
+(50 trials per seed, 200 per cell) with `aei.score_detection.confirm`, each ensemble at its D5 headline level from the screening
+run (the level comes from the scoring-period noise curve, so `tuned_on_test` is true in `out/heldout.json`; the noise does not
+depend on the seed), the live set's `_heldout` keys read from `baselines/live-set-retuned-year1.json`. Command:
+`uv run python experiments/0022-ensemble/heldout.py` (60 s CPU, computed); outputs `out/heldout.json`, `out/heldout.md`.
+Nothing above this section was changed. D5 at k = 4, Wilson 95 %; every number computed. "At 5/yr" is the rate interpolated
+linearly in noise at 5.0 a year on the same seeds' curve.
+
+| row | level, noise a year (episodes) | screening rare / common ESBL | held-out rare | held-out common ESBL | at 5/yr screening rare / common | at 5/yr held-out rare / common |
+|---|---|---|---|---|---|---|
+| live set re-tuned year 1 | x0.3, 3.01 (6) | 0.920 / 0.750 | 0.940 [0.898, 0.965] | 0.695 [0.628, 0.755] | 0.960 / 0.836 | 0.960 / 0.817 |
+| rank product (primary) | 1e-3, 4.52 (9) | 0.940 / 0.830 | 0.965 [0.930, 0.983] | 0.765 [0.702, 0.818] | 0.942 / 0.834 | 0.966 / 0.772 |
+| intersection | 3e-3, 4.52 (9) | 0.970 / 0.850 | 0.970 [0.936, 0.986] | 0.805 [0.745, 0.854] | 0.971 / 0.857 | 0.971 / 0.816 |
+| stack | 3e-3, 3.01 (6) | 0.990 / 0.850 | 0.965 [0.930, 0.983] | 0.800 [0.739, 0.850] | 0.991 / 0.865 | 0.969 / 0.822 |
+
+Reading (computed differences, no new analysis). Common ESBL fell from screening to held-out in every row, the live set too
+(0.750 to 0.695; rank product 0.830 to 0.765, intersection 0.850 to 0.805, stack 0.850 to 0.800); the stack's rare rate fell
+from 0.990 to 0.965, the others' rare rates moved by 0.025 or less. At 5 a year on the held-out seeds no ensemble is above the
+live set (rare 0.966, 0.971, 0.969 against 0.960; common ESBL 0.772, 0.816, 0.822 against 0.817), as at screening, and the
+rank product's common ESBL (0.772) is below it. The headline rows still differ in noise (3.0 and 4.5 a year), and every
+held-out interval of an ensemble overlaps the live set's. The screening edge of the stack at 3.0 a year (common ESBL 0.850 against 0.750)
+shrinks to 0.800 against 0.695 with overlapping intervals ([0.739, 0.850] and [0.628, 0.755]); the low-noise reads at 1.5 a year
+were not re-scored. Nothing is established beyond the screening conclusion: the rank product does not beat the live set at 5 a year.
