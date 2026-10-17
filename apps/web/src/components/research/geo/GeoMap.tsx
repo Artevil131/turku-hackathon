@@ -9,14 +9,13 @@ import "./geo.css";
 import { type Layout, MAP_LAYOUT, mapPoint } from "./layout.ts";
 import { useLoad } from "./useLoad.ts";
 
-// One geographic panel (redesign D2): Finland's wellbeing counties filled by
-// the THL rate of the replay month, the referral tree of the university and
-// central hospitals as a graph on top, and Tyks magnified into an inset with
-// its nine units, patient flow, the last 28 days of alerts, where the patients
-// of a lit unit go next, and the phenotype trail.
+// Finland's wellbeing counties filled by the THL rate of the replay month.
+// The hospital referral hierarchy is a hand-drawn diagram, not patient data;
+// the separate unit graph shows Tyks's own (synthetic demo) data.
 
 const DEFAULT_GROUP = "MRSA carriage";
 const NATIONAL = "Finland (all counties)";
+const TYKS_COUNTY = "Varsinais-Suomen hyvinvointialue";
 
 /** The API's series name stays the key; the label is translated. */
 const SERIES_KEY = {
@@ -122,7 +121,7 @@ function Spark({
 
 export function GeoMap({ client, locale, asOf, reducedMotion }: PanelProps) {
   const [group, setGroup] = useState(DEFAULT_GROUP);
-  const [chosen, setChosen] = useState<string | null>(null);
+  const [chosen, setChosen] = useState<string | null>(TYKS_COUNTY);
   const [attempt, setAttempt] = useState(0);
 
   const L: Layout = MAP_LAYOUT;
@@ -215,6 +214,7 @@ export function GeoMap({ client, locale, asOf, reducedMotion }: PanelProps) {
           {t(locale, "geoLegendRef")}
         </li>
       </ul>
+      <p className="geo-faint">{t(locale, "geoThlCredit")}</p>
     </div>
   );
 
@@ -226,6 +226,9 @@ export function GeoMap({ client, locale, asOf, reducedMotion }: PanelProps) {
           <p className="geo-card-name">
             <strong>{shortName(chosen)}</strong>
             {signalOf.has(chosen) ? <Glyph strong={(signalOf.get(chosen) as RegionalSignal).strong} /> : null}
+            <button type="button" className="geo-card-close" onClick={() => setChosen(null)}>
+              {t(locale, "geoCloseCounty")}
+            </button>
           </p>
           {fs ? (
             <>
