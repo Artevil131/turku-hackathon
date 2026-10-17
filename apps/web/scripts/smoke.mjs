@@ -1085,6 +1085,8 @@ async function main() {
       if (!(await waitIn(`!document.querySelector(${JSON.stringify(card)}) && !document.querySelector('.project-dialog')`)))
         reasons.push("project was not deleted");
     } finally {
+      // Leave the project first: deleting it under an open page makes its next layout save a 404.
+      await load(cdp, urlOf("start"), idle);
       await fetch(`${base}/api/projects/${encodeURIComponent(id)}`, { method: "DELETE" });
     }
   });
@@ -1327,6 +1329,8 @@ async function main() {
       });
       await click("#ws-win-reproduce .ws-maximize");
     } finally {
+      // Leave the project first: deleting it under an open page makes its next layout save a 404.
+      await load(cdp, urlOf("start"), idle);
       await fetch(`${base}/api/projects/${encodeURIComponent(id)}`, { method: "DELETE" });
     }
   });
