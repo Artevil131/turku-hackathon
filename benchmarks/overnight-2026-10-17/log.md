@@ -57,3 +57,4 @@ Code, Opus 5.5, operated by Artem).
 | 09:25 | 0016 held-out re-score | start | Sonnet 5.5 | | Artem's winner's-curse rule; seeds 2027–2030 |
 | 09:27 | 0016 held-out re-score | finish | Sonnet 5.5 | 16 s CPU | seeds 2027–2030, 200 per cell: CUSUM D5 rare 0.660, common ESBL 0.435 (screening 0.665, 0.485); live set 0.940, 0.695 (0.920, 0.750); gap stays, intervals do not overlap |
 | 09:30 | 0018 | result committed | Sonnet 5.5 | 245–330 s CPU | year 1 chose H 1/26, w 2; D5 rare 0.14 (0.10–0.19), common ESBL 0.135 at 1.5 cluster episodes/yr; %R signals named divergence add 5.0 episodes/yr that D5's cluster+sentinel noise (Choices 3) leaves out; refuted; no Fable review |
+| 09:32 | records check | finish | Haiku 5.5 | | 8 closed records: template, frontmatter, exploratory, command, metrics.json, figure sizes all pass; sentence-level tag check flags 11–32 sentences each, mostly tagged by the paragraph or a section-level statement (spot-checked) |
