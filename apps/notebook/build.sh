@@ -42,6 +42,9 @@ for page in "$out/index.html:aei-theme.css" "$out/lab/index.html:../aei-theme.cs
   perl -0pi -e "s#</head>#<link rel=\"stylesheet\" href=\"$href\">\n</head>#" "$file"
 done
 
+# The page's own Python kernel (apps/web notebook/kernel.worker.ts) installs `aei` from this wheel; it finds the
+# file name here, since a static server lists no directories.
+printf '{"wheel": "%s"}\n' "$(cd "$out/pypi" && ls aei-*.whl)" > "$out/pypi/aei.json"
 # uv writes the wheel as 0600; nginx in the web image runs as another user and must read every file.
 chmod -R a+rX "$out"
 echo "JupyterLite site in $out ($(du -sh "$out" | cut -f1))"

@@ -540,3 +540,93 @@
     transition: none;
   }
 }
+
+/* ---------- code output ---------- */
+.nb-bar [data-restart-python] {
+  margin-left: auto;
+}
+.nb-run-status {
+  margin: 4px 0 0;
+  color: var(--ink-2);
+  font-size: var(--t-xs);
+  font-variant-numeric: tabular-nums;
+}
+.nb-out {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 6px 0 0 8px;
+  border-left: 2px solid var(--line);
+  min-width: 0;
+}
+.nb-out-label {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--t-xs);
+}
+.nb-out[data-earlier] .nb-out-text {
+  color: var(--ink-2);
+}
+.nb-out-text {
+  margin: 0;
+  max-height: 24em;
+  overflow: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: var(--t-xs);
+  line-height: 1.5;
+  white-space: pre;
+  tab-size: 4;
+}
+.nb-out-error,
+.nb-out[data-earlier] .nb-out-error {
+  color: var(--st-alert);
+  white-space: pre-wrap;
+}
+.nb-out-err summary {
+  cursor: pointer;
+  color: var(--ink-3);
+  font-size: var(--t-xs);
+}
+.nb-out-err details .nb-out-text {
+  margin-top: 4px;
+  color: var(--ink-2);
+}
+.nb-out-img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-control);
+  background: #fff;
+}
+.nb-out-table .nb-muted {
+  margin-top: 4px;
+}
+.nb-out-scroll {
+  max-height: 24em;
+  overflow: auto;
+}
+.nb-out-table table {
+  border-collapse: collapse;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: var(--t-xs);
+  font-variant-numeric: tabular-nums;
+}
+.nb-out-table th,
+.nb-out-table td {
+  padding: 2px 8px;
+  border-bottom: 1px solid var(--line);
+  text-align: right;
+  white-space: nowrap;
+}
+.nb-out-table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--glass-3);
+  color: var(--ink-2);
+  font-weight: 600;
+}
+.nb-out-table tbody th {
+  color: var(--ink-3);
+  font-weight: 400;
+}
