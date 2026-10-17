@@ -22,10 +22,8 @@ server {
     proxy_read_timeout 120s;
   }
 
-  # No language-model proxy here: the app's AI questions report themselves off.
-  location /llm/ {
-    return 404;
-  }
+  # The language-model proxy, or a 404 when no model is set: written at start by 40-aei-llm.sh.
+  include /etc/nginx/aei-llm.inc;
 
   location /assets/ {
     add_header Cache-Control "public, max-age=31536000, immutable";

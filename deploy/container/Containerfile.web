@@ -9,12 +9,15 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
 COPY libs/utils libs/utils
 COPY apps/web apps/web
 RUN pnpm install --frozen-lockfile --filter "@aei/web..."
-RUN pnpm --filter @aei/web build
+# 1 when the container will proxy /llm to a model (AEI_LLM_URL at run time): the app then looks for it.
+ARG AEI_LLM_PROXY=0
+RUN AEI_LLM_PROXY=$AEI_LLM_PROXY pnpm --filter @aei/web build
 
 FROM nginx:1.30.6-alpine
 # Rendered at start by the image's entrypoint (envsubst on *.template), so the
 # API's address is set at run time: AEI_API_UPSTREAM, default api:8787.
 ENV AEI_API_UPSTREAM=api:8787
 COPY deploy/container/nginx.conf.template /etc/nginx/templates/default.conf.template
+COPY deploy/container/40-aei-llm.sh /docker-entrypoint.d/40-aei-llm.sh
 COPY --from=build /app/apps/web/dist /usr/share/nginx/html
 EXPOSE 8080

@@ -49,9 +49,17 @@ services:
     build:
       context: ../..
       dockerfile: deploy/container/Containerfile.web
+      args:
+        # 1 builds the app to use the /llm proxy below; set it with AEI_LLM_URL.
+        AEI_LLM_PROXY: ${AEI_LLM_PROXY:-0}
     image: localhost/aei-web:dev
     environment:
       AEI_API_UPSTREAM: api:8787
+      # The app's AI questions go to /llm, which this container forwards with the token (40-aei-llm.sh).
+      AEI_LLM_URL: ${AEI_LLM_URL:-}
+      AEI_LLM_KEY: ${AEI_LLM_KEY:-}
+      AEI_LLM_ACCESS_ID: ${AEI_LLM_ACCESS_ID:-}
+      AEI_LLM_ACCESS_SECRET: ${AEI_LLM_ACCESS_SECRET:-}
     ports:
       - "${AEI_WEB_PORT:-8080}:8080"
     depends_on:
