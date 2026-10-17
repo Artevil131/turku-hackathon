@@ -120,7 +120,7 @@ export function UnitContext({
                   <span className="uc-swatch" aria-hidden="true" style={{ background: SHADES[i] }} />
                   <i className="uc-org-name">{shortOrganism(o.organism)}</i>
                   <span className="uc-org-n num">
-                    {pct(o.share)} % · n {num(locale, o.isolates)}
+                    {pct(o.share)}&nbsp;% · n {num(locale, o.isolates)}
                   </span>
                 </li>
               ))}

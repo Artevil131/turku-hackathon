@@ -42,7 +42,7 @@ export function PrintSheet({ locale, filters, data, asOf, signals, singles, pair
       <li key={item.id} className="pr-row">
         <b className="pr-name">{item.name}</b>
         <span className="pr-num">
-          {assessable && item.share !== null ? `${pct(item.share)} % ` : ""}
+          {assessable && item.share !== null ? `${pct(item.share)}\u00a0% ` : ""}
           {item.interval && assessable ? `(${pct(item.interval[0])}–${pct(item.interval[1])}) ` : ""}n {num(locale, item.n)}
         </span>
         <span className="pr-res">

@@ -17,6 +17,8 @@ export interface Home {
   columnIndex: number;
   index: number;
   size: number;
+  /** Set when closing emptied the column: its width, for recreating it on reopen. */
+  width?: number;
 }
 export interface Layout {
   columns: Column[];
@@ -57,7 +59,27 @@ export function fractions(values: number[], minimum = 0.16): number[] {
   return result;
 }
 
-export function clampLayout(layout: Layout): Layout {
+/**
+ * A column with no windows is never kept: the others share its width in
+ * proportion to their own (via clampLayout), and closed homes that pointed at a
+ * dropped column further right shift left, so reopening still lands between
+ * the same neighbours.
+ */
+function pruneColumns(layout: Layout): Layout {
+  const removed = layout.columns.flatMap((c, i) => (c.windows.length ? [] : [i]));
+  if (!removed.length) return layout;
+  const columns = layout.columns.filter((c) => c.windows.length);
+  const present = new Set(columns.map((c) => c.id));
+  const closed: Layout["closed"] = {};
+  for (const [id, home] of Object.entries(layout.closed) as [WinId, Home][]) {
+    const shift = present.has(home.column) ? 0 : removed.filter((k) => k < home.columnIndex).length;
+    closed[id] = shift ? { ...home, columnIndex: home.columnIndex - shift } : home;
+  }
+  return { ...layout, columns, closed };
+}
+
+export function clampLayout(input: Layout): Layout {
+  const layout = pruneColumns(input);
   const widths = fractions(
     layout.columns.map((c) => c.width),
     0.18,
@@ -209,7 +231,16 @@ export function closeWindow(layout: Layout, id: WinId): Layout {
   return clampLayout({
     ...layout,
     columns: layout.columns.map((c) => ({ ...c, windows: c.windows.filter((w) => w.id !== id) })),
-    closed: { ...layout.closed, [id]: { column: col.id, columnIndex: at.column, index: at.index, size: win.size } },
+    closed: {
+      ...layout.closed,
+      [id]: {
+        column: col.id,
+        columnIndex: at.column,
+        index: at.index,
+        size: win.size,
+        ...(col.windows.length === 1 ? { width: col.width } : {}),
+      },
+    },
     maximized: layout.maximized === id ? null : layout.maximized,
   });
 }
@@ -218,9 +249,17 @@ export function reopenWindow(layout: Layout, id: WinId): Layout {
   const home = layout.closed[id];
   if (!home) return layout;
   const found = layout.columns.findIndex((c) => c.id === home.column);
-  const column = found < 0 ? clamp(home.columnIndex, 0, layout.columns.length - 1) : found;
   const closed = { ...layout.closed };
   delete closed[id];
+  if (found < 0 && layout.columns.length < 3) {
+    // Its column is gone: recreate it at its remembered position.
+    const n = layout.columns.length;
+    const width = n ? clamp(home.width ?? 1 / (n + 1), 0.18, 0.6) : 1;
+    const columns = layout.columns.map((c) => ({ ...c, width: c.width * (1 - width) }));
+    columns.splice(clamp(home.columnIndex, 0, n), 0, { id: home.column, width, windows: [{ id, size: 1 }] });
+    return clampLayout({ ...layout, closed, maximized: null, columns });
+  }
+  const column = found < 0 ? clamp(home.columnIndex, 0, layout.columns.length - 1) : found;
   return clampLayout({
     ...layout,
     closed,
@@ -238,7 +277,8 @@ export function reopenWindow(layout: Layout, id: WinId): Layout {
 /** Only the source and destination stacks change. No collision solving or compaction. */
 export function moveWindow(layout: Layout, id: WinId, slot: Slot): Layout {
   const from = locate(layout, id);
-  if (!from || layout.maximized || (slot.newColumn && layout.columns.length >= 3)) return layout;
+  const alone = layout.columns[from?.column ?? -1]?.windows.length === 1;
+  if (!from || layout.maximized || (slot.newColumn && layout.columns.length >= 3 && !alone)) return layout;
   const dest = clamp(Math.round(slot.column), 0, layout.columns.length - (slot.newColumn ? 0 : 1));
   if (!slot.newColumn && dest === from.column && (slot.index === from.index || slot.index === from.index + 1)) return layout;
   const columns = layout.columns.map((c) => ({ ...c, windows: c.windows.filter((w) => w.id !== id).map((w) => ({ ...w })) }));
@@ -267,8 +307,7 @@ export function moveWindow(layout: Layout, id: WinId, slot: Slot): Layout {
     const index = slot.index - (dest === from.column && from.index < slot.index ? 1 : 0);
     col.windows.splice(clamp(index, 0, col.windows.length), 0, { id, size });
   }
-  // Two columns remain dockable even when empty; a third empty source yields its space.
-  if (columns.length > 2 && !source.windows.length) columns.splice(columns.indexOf(source), 1);
+  // An emptied source column is dropped by clampLayout; the others take its width.
   return clampLayout({ ...layout, columns });
 }
 
@@ -348,7 +387,6 @@ export function parseLayout(raw: string | null): Layout | null {
     if (
       value.v !== 2 ||
       !Array.isArray(value.columns) ||
-      value.columns.length < 2 ||
       value.columns.length > 3 ||
       !value.closed ||
       typeof value.closed !== "object" ||
@@ -376,7 +414,8 @@ export function parseLayout(raw: string | null): Layout | null {
         home.columnIndex < 0 ||
         !Number.isInteger(home.index) ||
         home.index < 0 ||
-        !finite(home.size)
+        !finite(home.size) ||
+        (home.width !== undefined && !finite(home.width))
       )
         return null;
       seen.add(id);
