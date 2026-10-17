@@ -7,6 +7,7 @@ import {
   type ReactNode,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
@@ -14,10 +15,13 @@ import {
   closeWindow,
   defaultLayout,
   equalize,
+  fitLayout,
   type Layout,
   locate,
+  MIN_BODY,
   maximizeWindow,
   migrateLayout,
+  minWindowHeight,
   moveWindow,
   type Preset,
   presetLayout,
@@ -74,7 +78,7 @@ type Resize = {
   index: number;
   origin: number;
   span: number;
-  minimum: number;
+  minimum: number | [number, number];
   base: Layout;
   last: Layout;
 };
@@ -87,15 +91,20 @@ export function Workspace({
   onOpened,
   onClosed,
   initiallyOpen,
+  reveal,
 }: {
   locale: Locale;
   content: Record<WinId, ReactNode>;
   onOpened?: (id: WinId) => void;
   onClosed?: (id: WinId) => void;
   initiallyOpen?: WinId[];
+  /** Opens `id` from the tray, without moving focus, whenever `key` changes to a new value. */
+  reveal?: { id: WinId; key: string | null };
 }) {
   const wide = useWide();
   const [layout, setLayout] = useState<Layout>(() => (initiallyOpen ?? []).reduce(reopenWindow, loadLayout()));
+  // Windows render only once the stored layout is fitted to the measured board, so none mounts squashed.
+  const [fitted, setFitted] = useState(false);
   const [draft, setDraft] = useState<Layout | null>(null);
   const [moving, setMoving] = useState<{ id: WinId; x: number; y: number } | null>(null);
   const [drop, setDrop] = useState<Drop | null>(null);
@@ -108,6 +117,28 @@ export function Workspace({
   const commit = (next: Layout) => {
     setLayout(next);
     saveLayout(next);
+  };
+  const keep = useRef(initiallyOpen ?? []);
+  useLayoutEffect(() => {
+    if (fitted) return;
+    const height = area.current?.clientHeight ?? 0;
+    if (wide && height > 0) setLayout((l) => fitLayout(l, height, keep.current));
+    setFitted(true);
+  }, [fitted, wide]);
+  const boardHeight = () => (wide && area.current?.clientHeight) || Number.POSITIVE_INFINITY;
+  const revealed = useRef(reveal?.key ?? null);
+  useEffect(() => {
+    if (!reveal || reveal.key === revealed.current) return;
+    revealed.current = reveal.key;
+    if (reveal.key === null || !layout.closed[reveal.id]) return;
+    commit(reopenWindow(layout, reveal.id));
+    onOpened?.(reveal.id);
+  });
+  /** Per-window floors for the two windows beside a stack splitter, as fractions of the stack. */
+  const stackMinimum = (column: number, index: number, span: number): [number, number] => {
+    const windows = layout.columns[column]?.windows ?? [];
+    const floor = (id: WinId | undefined) => Math.max(0.16, id ? minWindowHeight(id) / Math.max(1, span) : 0);
+    return [floor(windows[index]?.id), floor(windows[index + 1]?.id)];
   };
   const cancel = useCallback(() => {
     gesture.current = null;
@@ -151,7 +182,7 @@ export function Workspace({
   const preset = (p: Preset) => {
     cancel();
     focusAfter.current = "ws-tray-button";
-    const next = presetLayout(p);
+    const next = presetLayout(p, boardHeight());
     for (const id of WIN_IDS) {
       if (locate(layout, id) && !locate(next, id)) onClosed?.(id);
       if (!locate(layout, id) && locate(next, id)) onOpened?.(id);
@@ -205,7 +236,7 @@ export function Workspace({
       index,
       origin: kind === "column" ? e.clientX : e.clientY,
       span,
-      minimum: Math.min(1 / count, Math.max(kind === "column" ? 0.18 : 0.16, (kind === "column" ? 240 : 84) / span)),
+      minimum: kind === "column" ? Math.min(1 / count, Math.max(0.18, 240 / span)) : stackMinimum(column, index, span),
       base: layout,
       last: layout,
     };
@@ -225,9 +256,10 @@ export function Workspace({
       const windows = [...col.querySelectorAll<HTMLElement>(".ws-win")];
       for (const [j, win] of windows.entries()) {
         const w = win.getBoundingClientRect();
-        if (y < w.top + w.height / 2) return { slot: { column: i, index: j }, top: Math.max(2, w.top - r.top - 4) };
+        // The marker sits in the column's scrolled content, so offsets include its scroll.
+        if (y < w.top + w.height / 2) return { slot: { column: i, index: j }, top: Math.max(2, w.top - r.top + col.scrollTop - 4) };
       }
-      return { slot: { column: i, index: windows.length }, top: Math.max(2, r.height - 4) };
+      return { slot: { column: i, index: windows.length }, top: Math.max(2, col.scrollHeight - 4) };
     }
     return null;
   };
@@ -290,12 +322,12 @@ export function Workspace({
           if (!sign) return;
           e.preventDefault();
           const el = vertical ? area.current : area.current?.querySelector<HTMLElement>(`[data-column-index="${column}"]`);
-          const span = (vertical ? el?.clientWidth : el?.clientHeight) ?? 1;
-          const min = Math.min(
-            1 / values.length,
-            Math.max(vertical ? 0.18 : 0.16, (vertical ? 240 : 84) / Math.max(1, span - (values.length - 1) * 8)),
+          const span = Math.max(1, ((vertical ? el?.clientWidth : el?.clientHeight) ?? 1) - (values.length - 1) * 8);
+          commit(
+            vertical
+              ? resizeColumns(layout, index, sign * 0.03, Math.min(1 / values.length, Math.max(0.18, 240 / span)))
+              : resizeStack(layout, column, index, sign * 0.03, stackMinimum(column, index, span)),
           );
-          commit(vertical ? resizeColumns(layout, index, sign * 0.03, min) : resizeStack(layout, column, index, sign * 0.03, min));
         }}
       />
     );
@@ -308,8 +340,9 @@ export function Workspace({
       className="ws-win"
       data-win={id}
       data-dragging={moving?.id === id}
+      data-min-body={MIN_BODY[id]}
       hidden={!!shown.maximized && shown.maximized !== id}
-      style={{ flexGrow: shown.maximized ? 1 : size } as CSSProperties}
+      style={{ flexGrow: shown.maximized ? 1 : size, "--ws-min": `${minWindowHeight(id)}px` } as CSSProperties}
       aria-label={title(id)}
     >
       <header className="ws-header">
@@ -363,7 +396,6 @@ export function Workspace({
   return (
     <div className="ws" data-docked={wide}>
       <div className="ws-toolbar">
-        <span className="ws-instruction">{t(locale, wide ? "wsDockHint" : "wsStackHint")}</span>
         <Tray locale={locale} layout={layout} onToggle={(id) => (locate(layout, id) ? close(id) : open(id))} onPreset={preset} />
       </div>
       <div
@@ -375,28 +407,32 @@ export function Workspace({
         onPointerCancel={cancel}
         onLostPointerCapture={cancel}
       >
-        {wide
-          ? shown.columns.map((col, ci) => (
-              <Fragment key={col.id}>
-                {ci && !shown.maximized ? splitter(ci, ci - 1, true) : null}
-                <div
-                  className="ws-column"
-                  data-column-index={ci}
-                  style={{ flexGrow: shown.maximized ? 1 : col.width }}
-                  hidden={!!shown.maximized && !col.windows.some((w) => w.id === shown.maximized)}
-                >
-                  {col.windows.map((w, wi) => (
-                    <Fragment key={w.id}>
-                      {wi && !shown.maximized ? splitter(ci, wi - 1, false) : null}
-                      {renderWindow(w.id, w.size)}
-                    </Fragment>
-                  ))}
-                  {!col.windows.length ? <p className="ws-empty">{t(locale, "wsEmptyColumn")}</p> : null}
-                  {drop && !drop.slot.newColumn && drop.slot.column === ci ? <div className="ws-insert" style={{ top: drop.top }} /> : null}
-                </div>
-              </Fragment>
-            ))
-          : STACK_ORDER.filter((id) => locate(shown, id)).map((id) => renderWindow(id))}
+        {wide && !fitted
+          ? null
+          : wide
+            ? shown.columns.map((col, ci) => (
+                <Fragment key={col.id}>
+                  {ci && !shown.maximized ? splitter(ci, ci - 1, true) : null}
+                  <div
+                    className="ws-column"
+                    data-column-index={ci}
+                    style={{ flexGrow: shown.maximized ? 1 : col.width }}
+                    hidden={!!shown.maximized && !col.windows.some((w) => w.id === shown.maximized)}
+                  >
+                    {col.windows.map((w, wi) => (
+                      <Fragment key={w.id}>
+                        {wi && !shown.maximized ? splitter(ci, wi - 1, false) : null}
+                        {renderWindow(w.id, w.size)}
+                      </Fragment>
+                    ))}
+                    {!col.windows.length ? <p className="ws-empty">{t(locale, "wsEmptyColumn")}</p> : null}
+                    {drop && !drop.slot.newColumn && drop.slot.column === ci ? (
+                      <div className="ws-insert" style={{ top: drop.top }} />
+                    ) : null}
+                  </div>
+                </Fragment>
+              ))
+            : STACK_ORDER.filter((id) => locate(shown, id)).map((id) => renderWindow(id))}
         {drop?.slot.newColumn ? (
           <div
             className="ws-new-column"
@@ -436,6 +472,8 @@ function Tray({
 }) {
   const [shown, setShown] = useState(false);
   const root = useRef<HTMLDivElement>(null);
+  const closed = WIN_IDS.filter((id) => layout.closed[id]);
+  const open = WIN_IDS.filter((id) => !layout.closed[id]);
   useEffect(() => {
     if (!shown) return;
     const key = (e: globalThis.KeyboardEvent) => {
@@ -468,17 +506,41 @@ function Tray({
           <path d="M2 2h12v12H2zM6 2v12M10 2v12" fill="none" stroke="currentColor" strokeWidth="1.3" />
         </svg>
         {t(locale, "wsToolbar")}
-        {WIN_IDS.some((id) => layout.closed[id]) ? (
-          <span className="ws-tray-count">{WIN_IDS.filter((id) => layout.closed[id]).length}</span>
-        ) : null}
+        {closed.length ? <span className="ws-tray-count">· {t(locale, "wsClosedCount", { n: closed.length })}</span> : null}
       </button>
       {shown ? (
         <div className="ws-pop" id="ws-tray-pop" role="group" aria-label={t(locale, "wsToolbar")}>
+          {/* Closed windows first: they are what the count on the button promises. */}
+          <p className="ws-pop-head">{t(locale, closed.length ? "wsDock" : "wsAllOpen")}</p>
+          {closed.length ? (
+            <ul className="ws-pop-list">
+              {closed.map((id) => (
+                <li key={id}>
+                  <button
+                    type="button"
+                    className="ws-pop-open"
+                    data-reopen={id}
+                    aria-label={t(locale, "wsReopen", { title: t(locale, TITLE_KEY[id]) })}
+                    onClick={() => onToggle(id)}
+                  >
+                    <span>{t(locale, TITLE_KEY[id])}</span>
+                    <span className="ws-pop-open-tag" aria-hidden="true">
+                      <svg viewBox="0 0 16 16" width="12" height="12">
+                        <path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                      </svg>
+                      {t(locale, "wsOpenAction")}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <p className="ws-pop-head">{t(locale, "wsOpenWindows")}</p>
           <ul className="ws-pop-list">
-            {WIN_IDS.map((id) => (
+            {open.map((id) => (
               <li key={id}>
                 <label className="ws-pop-row">
-                  <input type="checkbox" checked={!!locate(layout, id)} onChange={() => onToggle(id)} />
+                  <input type="checkbox" checked data-toggle={id} onChange={() => onToggle(id)} />
                   <span>{t(locale, TITLE_KEY[id])}</span>
                 </label>
               </li>

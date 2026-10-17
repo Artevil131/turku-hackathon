@@ -429,7 +429,7 @@ async function main() {
           unavailableInSummary: /65+|Hoitopäivä/.test(document.querySelector('.rs-sum')?.textContent ?? '') };
       })()`,
         );
-        if (!initial.row?.includes("kaikki kasvavat")) reasons.push("unopened row omits all-growth denominator");
+        if (!/kaikki (kasvavat|bakteerit)/.test(initial.row ?? "")) reasons.push("unopened row omits all-growth denominator");
         if (!initial.disclosure?.includes("ei potilashoitoon") || !initial.disclosure?.includes("Tukee päätöstä"))
           reasons.push("demo/decision disclosure missing");
         if (initial.unavailableInSummary) reasons.push("unavailable filters appear active");
@@ -605,7 +605,7 @@ async function main() {
     "research-workspace-close",
     async (idle, reasons) => {
       await cleanWorkspace(idle);
-      for (const id of ["math", "graph"]) {
+      for (const id of ["math", "map"]) {
         await click(`#ws-win-${id} .ws-close`);
         if (!(await waitIn(`!document.querySelector('#ws-win-${id}')`, 1000)))
           reasons.push(`${id} not dismissed by its first real close click`);
@@ -634,10 +634,31 @@ async function main() {
       if (geometry.bottom > 900 || geometry.height < 200 || geometry.overflow > 1)
         reasons.push(`board does not fit viewport: ${JSON.stringify(geometry)}`);
       if (!geometry.mapFits) reasons.push("map SVG clipped in its default dock");
-      // Reopen into the previous right-hand stack, maximize, then restore exactly.
+      // No open window is squashed to its header: each body keeps its minimum (the column scrolls instead).
+      const squashed = `JSON.stringify([...document.querySelectorAll('.ws-win')].filter(w => w.getBoundingClientRect().width > 0)
+        .map(w => ({ id: w.dataset.win, body: Math.round(w.querySelector('.ws-body').getBoundingClientRect().height), min: Number(w.dataset.minBody) }))
+        .filter(w => w.body < w.min - 1))`;
+      for (const width of [1440, 1920]) {
+        await cdp.send("Emulation.setDeviceMetricsOverride", { width, height: 900, deviceScaleFactor: 1, mobile: false });
+        await cdp.send("Page.navigate", { url: "about:blank" });
+        await load(cdp, urlOf("research"), idle);
+        const bad = await evaluate(cdp, squashed);
+        if (bad !== "[]") reasons.push(`window bodies below their minimum at ${width}x900: ${bad}`);
+        const many = await evaluate(
+          cdp,
+          `[...document.querySelectorAll('.ws-column')].some(c => c.querySelectorAll('.ws-win').length > 2)`,
+        );
+        if (many) reasons.push(`default layout stacks more than two windows in a column at ${width}x900`);
+      }
+      // The tray button says what its number is.
+      const label = await evaluate(cdp, `document.querySelector('#ws-tray-button').textContent`);
+      if (!/\d+ (closed|suljettuna)/.test(label)) reasons.push(`tray button does not name its closed count: ${label}`);
+      // Reopen into the previous stack, maximize, then restore exactly.
       await click("#ws-win-math .ws-close");
       await click("#ws-tray-button");
-      await click(".ws-pop-list li:nth-child(4) input");
+      const listed = `(() => { const l = [...document.querySelectorAll('.ws-pop-list')]; return !!l[0]?.querySelector('[data-reopen="math"]') && !l[0].querySelector('input') && !!l[1]?.querySelector('input'); })()`;
+      if (!(await evaluate(cdp, listed))) reasons.push("the tray does not list closed windows first, with an open button");
+      await click('[data-reopen="math"]');
       if (!(await waitIn(`${order} === ${JSON.stringify(initial)}`))) reasons.push("reopen changed the stack order");
       await key("Escape");
       await click("#ws-win-math .ws-maximize");
@@ -662,15 +683,19 @@ async function main() {
       await key("Escape");
       await mouse("mouseReleased", target, { button: "left", buttons: 0, clickCount: 1 });
       if ((await evaluate(cdp, `localStorage.getItem('aei.research.layout.v2')`)) !== before) reasons.push("Esc did not cancel the move");
-      // Drop into the map column, then move back using only the keyboard.
+      // Drop into the map column (its own emptied column yields), then move left using only the keyboard.
       await mouse("mousePressed", source, { button: "left", buttons: 1, clickCount: 1 });
       await mouse("mouseMoved", target, { buttons: 1 });
       await mouse("mouseReleased", target, { button: "left", buttons: 0, clickCount: 1 });
-      if (!(await waitIn(`document.querySelector('#ws-win-math')?.closest('.ws-column')?.dataset.columnIndex === '1'`)))
+      if (
+        !(await waitIn(
+          `document.querySelector('#ws-win-math')?.closest('.ws-column')?.querySelector('#ws-win-map') && document.querySelectorAll('.ws-column').length === 2`,
+        ))
+      )
         reasons.push("drop did not insert into target column");
       await evaluate(cdp, `document.querySelector('#ws-title-math').focus()`);
-      await key("ArrowRight", 1);
-      if (!(await waitIn(`document.querySelector('#ws-win-math')?.closest('.ws-column')?.dataset.columnIndex === '2'`)))
+      await key("ArrowLeft", 1);
+      if (!(await waitIn(`document.querySelector('#ws-win-math')?.closest('.ws-column')?.dataset.columnIndex === '0'`)))
         reasons.push("Alt + arrow did not move the window");
       // Focusable splitters change the fraction, reset equally on double click/Enter.
       await evaluate(cdp, `document.querySelector('.ws-splitter-col').focus()`);
@@ -681,7 +706,7 @@ async function main() {
       await click(".ws-splitter-col", 2);
       const equal = await evaluate(
         cdp,
-        `JSON.parse(localStorage.getItem('aei.research.layout.v2')).columns.every(c=>Math.abs(c.width-1/3)<0.001)`,
+        `(() => { const c = JSON.parse(localStorage.getItem('aei.research.layout.v2')).columns; return c.every(x=>Math.abs(x.width-1/c.length)<0.001); })()`,
       );
       if (!equal) reasons.push("double-click did not equalize columns");
       const divider = await pointOf(".ws-splitter-col");
@@ -698,6 +723,9 @@ async function main() {
         1000,
       );
       if (!clamped) reasons.push("column pointer drag did not clamp at its minimum");
+      // Signals over Alert math needs a tall board to fit; on a short one the column scrolls and the splitter rests.
+      await cdp.send("Emulation.setDeviceMetricsOverride", { width: 1440, height: 1400, deviceScaleFactor: 1, mobile: false });
+      await waitIn(`document.querySelector('.ws-column').scrollHeight <= document.querySelector('.ws-column').clientHeight + 1`, 2000);
       const row = await pointOf(".ws-splitter-row");
       const stackBefore = await evaluate(cdp, `document.querySelector('.ws-splitter-row').getAttribute('aria-valuenow')`);
       await mouse("mousePressed", row, { button: "left", buttons: 1, clickCount: 1 });
@@ -708,8 +736,14 @@ async function main() {
       await evaluate(cdp, `document.querySelector('.ws-splitter-row').focus()`);
       await key("ArrowDown");
       await key("Enter");
-      const heights = await evaluate(cdp, `JSON.parse(localStorage.getItem('aei.research.layout.v2')).columns[2].windows.map(w=>w.size)`);
-      if (heights.some((h) => Math.abs(h - 1 / 3) > 0.001)) reasons.push("Enter did not equalize stack heights");
+      const heights = await evaluate(cdp, `JSON.parse(localStorage.getItem('aei.research.layout.v2')).columns[0].windows.map(w=>w.size)`);
+      if (heights.some((h) => Math.abs(h - 1 / heights.length) > 0.001)) reasons.push("Enter did not equalize stack heights");
+      const floors = await evaluate(
+        cdp,
+        `[...document.querySelectorAll('.ws-column')][0].querySelectorAll('.ws-win').length === 2 && ${squashed} === "[]"`,
+      );
+      if (!floors) reasons.push("stack splitter let a window below its minimum");
+      await cdp.send("Emulation.setDeviceMetricsOverride", { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
       // Presets and reset must change visible geometry, and a fresh load must keep the new model.
       for (const p of ["map", "signals", "units"]) {
         await click("#ws-tray-button");
@@ -724,7 +758,9 @@ async function main() {
       if ((await evaluate(cdp, order)) !== initial) reasons.push("layout was not persisted across reload");
       // Edge drop from a two-column preset creates a third column, never a free-floating window.
       await click("#ws-tray-button");
-      await click('[data-preset="signals"]');
+      await click('[data-preset="map"]');
+      await click("#ws-tray-button");
+      await click('[data-reopen="math"]');
       const start = await pointOf("#ws-title-math");
       const edge = await evaluate(
         cdp,
@@ -739,7 +775,13 @@ async function main() {
       await click("#ws-tray-button");
       await click(".ws-pop-reset");
       await cdp.send("Emulation.setDeviceMetricsOverride", { width: 1100, height: 768, deviceScaleFactor: 1, mobile: false });
-      if ((await evaluate(cdp, "document.documentElement.lang")) !== "en") await click(".top-tools button[lang]");
+      // The language is chosen only in Settings; switch there when an earlier interaction has not already.
+      if ((await evaluate(cdp, "document.documentElement.lang")) !== "en") {
+        await load(cdp, urlOf("settings"), idle);
+        await click(".settings button[lang='en']");
+        await waitIn(`document.documentElement.lang === "en"`);
+        await load(cdp, urlOf("research"), idle);
+      }
       const compact = await evaluate(
         cdp,
         `(() => {
@@ -821,11 +863,26 @@ async function main() {
     if (!(await waitIn(`!!document.querySelector(".math .alert-explanation [aria-live] p:not(.field-hint)")`, 15_000)))
       reasons.push("clicking explain did not load its template explanation");
     await evaluate(cdp, `document.querySelector(${JSON.stringify(explain)}).focus()`);
-    await cdp.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
+    // A keyDown needs its text, as a physical key gives, or Chrome raises no keypress and no click on the button.
+    await cdp.send("Input.dispatchKeyEvent", {
+      type: "keyDown",
+      key: "Enter",
+      code: "Enter",
+      windowsVirtualKeyCode: 13,
+      text: "\r",
+      unmodifiedText: "\r",
+    });
     await cdp.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
     if (!(await waitIn(`document.querySelector(${JSON.stringify(explain)})?.getAttribute("aria-expanded") === "false"`)))
       reasons.push("Enter did not close the explanation");
-    await cdp.send("Input.dispatchKeyEvent", { type: "keyDown", key: " ", code: "Space", windowsVirtualKeyCode: 32 });
+    await cdp.send("Input.dispatchKeyEvent", {
+      type: "keyDown",
+      key: " ",
+      code: "Space",
+      windowsVirtualKeyCode: 32,
+      text: " ",
+      unmodifiedText: " ",
+    });
     await cdp.send("Input.dispatchKeyEvent", { type: "keyUp", key: " ", code: "Space", windowsVirtualKeyCode: 32 });
     if (
       !(await waitIn(

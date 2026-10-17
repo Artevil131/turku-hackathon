@@ -13,7 +13,7 @@ import {
   type WardCode,
 } from "@aei/domain";
 import { effectiveResult, suitsSpecimen } from "@aei/eucast";
-import { addDays } from "@aei/replay";
+import { addDays, daysBetween } from "@aei/replay";
 
 // The doctor's empirical coverage list (D-023, revised by D-033): for a unit
 // and specimen, how often each antibiotic covered what grew, over the last
@@ -26,12 +26,32 @@ import { addDays } from "@aei/replay";
 
 export type Level = "unit" | "ward type" | "hospital";
 
+/** Where an infection was acquired (D-049): in hospital, in the community, or either. */
+export type Onset = "hospital" | "community" | "any";
+export const ONSETS: readonly Onset[] = ["hospital", "community", "any"];
+/** Days from admission to sampling at or above which an isolate is hospital-acquired: day 3 of the stay (D-049). */
+export const HOSPITAL_ONSET_DAYS = 2;
+
+/**
+ * Hospital-acquired when sampled at least two days after admission (day 3 of
+ * the stay); community otherwise, including cultures without an admission
+ * date (D-049). The same rule as `isHospitalOnset` in `@aei/detect`.
+ */
+export function onsetOf(r: Pick<IsolateRecord, "admissionDate" | "sampleDate">): "hospital" | "community" {
+  return r.admissionDate !== null && daysBetween(r.admissionDate, r.sampleDate) >= HOSPITAL_ONSET_DAYS ? "hospital" : "community";
+}
+
 export interface CoverageQuery {
   asOf: IsoDate;
   ward: WardCode;
   specimen: Specimen;
   /** Restrict to one sex (urinary E. coli resistance differs by sex: experiments/0005). Dropped before the unit is. */
   sex?: Sex;
+  /**
+   * Restrict to hospital- or community-acquired isolates (D-049); "any" (the default) does not filter.
+   * Dropped before the sex filter, and both before the unit is. "hospital" also raises the bar to 90 % (`barFor`).
+   */
+  onset?: Onset;
   /** Days in the main window. Default 365. */
   windowDays?: number;
   /** Isolates a level needs before it is used. Default 30 (CONTEXT.md). */
@@ -87,6 +107,8 @@ export interface CoverageResult {
   isolates: number;
   /** False when the sex filter was dropped to keep the unit's own data (or a sex was not asked for). */
   sexApplied: boolean;
+  /** False when the onset filter was dropped to keep the unit's own data (or an onset was not asked for), D-049. */
+  onsetApplied: boolean;
   from: IsoDate;
   /** First isolates of the level's pool, per organism, most common first. */
   organisms: { organism: Organism; isolates: number; share: number }[];
@@ -149,16 +171,25 @@ export function coverage(records: readonly IsolateRecord[], q: CoverageQuery, wa
     "ward type": (r) => wardType.get(r.ward) === wardType.get(q.ward),
     hospital: () => true,
   };
+  // The onset filter is dropped before the sex filter, both before the unit is (D-049, D-033): onset and sex,
+  // then sex alone, then neither, while the unit keeps `minTested` isolates; when it never does, both stay on.
+  const onset = q.onset ?? "any";
+  const byOnset = onset === "any" ? all : all.filter((r) => onsetOf(r) === onset);
+  const unitWithBoth = (q.sex ? byOnset.filter((r) => r.sex === q.sex) : byOnset).filter(inLevel.unit).length;
+  const onsetApplied = onset !== "any" && (unitWithBoth >= minTested || all.filter(inLevel.unit).length < minTested);
+  const scoped = onsetApplied ? byOnset : all;
   // The sex filter is dropped before the unit is (D-033).
-  const bySex = q.sex ? all.filter((r) => r.sex === q.sex) : all;
+  const bySex = q.sex ? scoped.filter((r) => r.sex === q.sex) : scoped;
   const unitWithSex = bySex.filter(inLevel.unit).length;
-  const sexApplied = !!q.sex && (unitWithSex >= minTested || all.filter(inLevel.unit).length < minTested);
-  const base = sexApplied ? bySex : all;
+  const sexApplied = !!q.sex && (unitWithSex >= minTested || scoped.filter(inLevel.unit).length < minTested);
+  const base = sexApplied ? bySex : scoped;
   const level = (["unit", "ward type"] as Level[]).find((l) => base.filter(inLevel[l]).length >= minTested) ?? "hospital";
   const pool = base.filter(inLevel[level]);
   const recentFrom = addDays(q.asOf, -27);
   const recentPool = firstIsolates(
-    records.filter((r) => inWindow(r, recentFrom) && r.ward === q.ward && (!sexApplied || r.sex === q.sex)),
+    records.filter(
+      (r) => inWindow(r, recentFrom) && r.ward === q.ward && (!sexApplied || r.sex === q.sex) && (!onsetApplied || onsetOf(r) === onset),
+    ),
     { from: recentFrom, to: q.asOf },
   );
 
@@ -221,10 +252,11 @@ export function coverage(records: readonly IsolateRecord[], q: CoverageQuery, wa
   const byOrganism = new Map<Organism, number>();
   for (const r of pool) byOrganism.set(r.organism, (byOrganism.get(r.organism) ?? 0) + 1);
   return {
-    query: { asOf: q.asOf, ward: q.ward, specimen: q.specimen, sex: q.sex ?? null, windowDays, minTested },
+    query: { asOf: q.asOf, ward: q.ward, specimen: q.specimen, sex: q.sex ?? null, onset, windowDays, minTested },
     level,
     isolates: pool.length,
     sexApplied,
+    onsetApplied,
     from,
     organisms: [...byOrganism.entries()]
       .map(([organism, isolates]) => ({ organism, isolates, share: pool.length ? isolates / pool.length : 0 }))
@@ -256,6 +288,16 @@ export const AWARE: Record<AntibioticCode, "Access" | "Watch"> = {
 /** Expected coverage a choice should reach: 80 % for mild or moderate infections, 90 % for severe ones (Artem's notes, A3). */
 export const THRESHOLDS = { mild: 0.8, severe: 0.9 } as const;
 export type Severity = keyof typeof THRESHOLDS;
+
+/**
+ * The bar a query is judged against: hospital-acquired infections against the
+ * severe bar (90 %) whatever the severity (D-049, B5), otherwise THRESHOLDS by
+ * severity. Follows the onset asked for, also when the filter was dropped to
+ * keep the unit: the patient's infection is still hospital-acquired.
+ */
+export function barFor(query: { onset?: Onset | null }, severity: Severity): number {
+  return query.onset === "hospital" ? THRESHOLDS.severe : THRESHOLDS[severity];
+}
 
 export type Standing = "clears" | "borderline" | "below" | "not assessable";
 
@@ -302,11 +344,13 @@ const RANK: Record<Standing, number> = { clears: 0, borderline: 1, below: 2, "no
  * isolates have a result or over a fifth of the level's pool is untested.
  * Mild infections are judged within each antibiotic's intended spectrum and
  * leave out drugs given only by injection; severe ones over all organisms
- * (D-027, D-033). Every row carries the all-organism share. Informs; the
- * doctor decides.
+ * (D-027, D-033). The threshold is `barFor(result.query, severity)`: 90 %
+ * for a hospital-acquired query whatever the severity (D-049); the basis and
+ * the injection-only rule still follow the severity. Every row carries the
+ * all-organism share. Informs; the doctor decides.
  */
 export function suggest(result: CoverageResult, severity: Severity): Suggestion[] {
-  const threshold = THRESHOLDS[severity];
+  const threshold = barFor(result.query, severity);
   const basis = severity === "mild" ? "spectrum" : "all organisms";
   return result.antibiotics
     .filter((c) => severity !== "mild" || !IV_ONLY.includes(c.antibiotic))
@@ -354,7 +398,7 @@ export interface CombinationSuggestion {
 export function suggestCombinations(result: CoverageResult, severity: Severity, limit = 5): CombinationSuggestion[] {
   // Two antibiotics at once is for severe infections only.
   if (severity !== "severe" || suggest(result, severity).some((s) => s.standing === "clears")) return [];
-  const threshold = THRESHOLDS[severity];
+  const threshold = barFor(result.query, severity);
   return result.combinations
     .filter(
       ({ antibiotics: [a, b] }) =>

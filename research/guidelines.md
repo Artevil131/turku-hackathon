@@ -42,7 +42,7 @@ What the Varha guide gives the doctor:
   severe infection needing hospital care, and when the organism is known
   but the susceptibility result is not yet.
 - **Syndrome → drug, dose, route, duration** (sections 6 and 7). Urinary
-  (7.4.1, p. 36–37): cystitis in women: trimethoprim 160 mg × 2, or
+  (7.4.1, p. 37–38): cystitis in women: trimethoprim 160 mg × 2, or
   nitrofurantoin 75 mg × 2, or pivmecillinam 200 mg × 3 / 400 mg × 2, 3
   days; ESBL cystitis by susceptibility, e.g. nitrofurantoin, fosfomycin
   3 g once, or pivmecillinam 400 mg × 3. Pyelonephritis: cefuroxime 1.5 g
@@ -50,12 +50,12 @@ What the Varha guide gives the doctor:
   iv**. Men, afebrile: trimethoprim or sulfa-trimethoprim 7 days;
   nitrofurantoin or fosfomycin if the prostate is not tender. Men, febrile:
   fluoroquinolone or iv cefuroxime, 10–14 days. Sepsis of unknown focus,
-  community onset (6.2.1, p. 19–20): **cefuroxime 1.5 g × 4 iv**; ESBL
+  community onset (6.2.1, p. 20–21): **cefuroxime 1.5 g × 4 iv**; ESBL
   carrier: ertapenem or meropenem; MRSA carrier: add vancomycin; recent
   travel in the tropics: meropenem + doxycycline. Healthcare-associated
   sepsis (hospital stay or antibiotics over 7 days): pip-tazo 4 g × 4 or
   meropenem. Urinary-source sepsis (6.3.1): cefuroxime 1.5 g × 3 iv.
-  Wound infections (7.1.4, p. 29–30): mild: flucloxacillin or cefalexin
+  Wound infections (7.1.4, p. 27): mild: flucloxacillin or cefalexin
   po, clindamycin if β-lactam allergy, MRSA carrier by susceptibility;
   moderate: cloxacillin or cefuroxime iv; severe: pip-tazo or meropenem;
   "check recent culture findings" repeated at every tier.
@@ -110,7 +110,7 @@ dots; the `L` level suffix returns 403 here. Dimension ids
 (`fact_lite.dimensions.json`): time 9–26 = 2008–2025; organism 56
 Escherichia, 58 Klebsiella, 64 Staphylococcus, 55 Enterococcus, 61
 Pseudomonas, 54 Enterobacter, 65 Streptococcus; antibiotic 149 AMP, 169
-MEC, 180 TZP, 165 CXM, 164 CRO, 162 CAZ, 168 MEM, 182 CIP, 187 TMP, 174 NIT,
+MEC, 180 TZP, 165 CXM, 164 CRO, 162 CAZ, 168 MEM (the server resolves id 168 to a time member, so `aei.finres` asks for its sid 45550), 182 CIP, 187 TMP, 174 NIT,
 189 VAN, 166 CLI, 153 ESBL, 170 MRSA, 188 VRE; spec_type 195 urine, 190
 blood, 191 pus and other; measure 196 strains, 197 tests, 200 R, 201 %R,
 202 and 203 the interval. Example:

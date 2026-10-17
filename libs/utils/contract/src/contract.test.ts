@@ -28,6 +28,19 @@ it("posts questions and encodes explanation identifiers", async () => {
   ]);
   expect(requests[1]?.[0]).toBe("/api/explain?id=carrier%3Ac%3Aesbl&lang=fi");
 });
+it("encodes the patient id and the onset filter", async () => {
+  const urls: string[] = [];
+  const client = createAeiClient({
+    baseUrl: "",
+    fetch: async (input) => {
+      urls.push(String(input));
+      return new Response("{}", { status: 200 });
+    },
+  });
+  await client.patientFindings("P 1/2");
+  await client.coverage({ ward: "ICU", specimen: "blood", onset: "hospital", severity: "mild" });
+  expect(urls).toEqual(["/api/patient/findings?id=P+1%2F2", "/api/coverage?ward=ICU&specimen=blood&onset=hospital&severity=mild"]);
+});
 it("exposes HTTP status to clients", async () => {
   const client = createAeiClient({ baseUrl: "", fetch: async () => new Response("disabled", { status: 503 }) });
   await expect(client.ask("question", "en")).rejects.toMatchObject({ status: 503, name: "ApiError" });

@@ -91,10 +91,21 @@
   width: 100%;
   height: 100%;
 }
-.ws[data-float="false"] .geo-stage {
+/* Docked (wide) workspace: the map keeps a readable height and the text under it scrolls in the window body. */
+.ws[data-docked="true"] .geo-stage {
+  flex: none;
+  height: 440px;
+}
+.ws[data-docked="true"] .ws-area[data-maximized="true"] .geo-stage {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 440px;
+}
+/* Phone and narrow screens: the map takes the full width at its own aspect ratio. */
+.ws[data-docked="false"] .geo-stage {
   flex: none;
 }
-.ws[data-float="false"] .geo-svg {
+.ws[data-docked="false"] .geo-svg {
   height: auto;
 }
 .geo-overlay-legend {

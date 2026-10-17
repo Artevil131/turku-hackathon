@@ -15,6 +15,7 @@
     "@aei/coverage": "workspace:*",
     "@aei/dataset": "workspace:*",
     "@aei/domain": "workspace:*",
+    "@aei/eucast": "workspace:*",
     "@aei/i18n": "workspace:*",
     "@aei/ingest": "workspace:*",
     "@aei/quality": "workspace:*",

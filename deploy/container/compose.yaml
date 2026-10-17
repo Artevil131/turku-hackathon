@@ -34,7 +34,7 @@ services:
     volumes:
       # The organisers' dataset, read-only (z: relabel for SELinux hosts).
       - ${AEI_DATASET:-../../data/synthetic_microbiology_dataset}:/data:ro,z
-      # THL county data from scripts/fetch_thl_ttr.py; without it /api/regional answers 404.
+      # THL data from scripts/fetch_thl_ttr.py and scripts/fetch_finres.py; without them /api/regional and /api/national answer 404.
       - ${AEI_THL_DIR:-../../data/external/thl}:/regional:ro,z
       # County shapes from scripts/fetch_county_geometry.py; without them /api/counties answers 404 and the map is empty.
       - ${AEI_STATFI_DIR:-../../data/external/statfi}:/statfi:ro,z

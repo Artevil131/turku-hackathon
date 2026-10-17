@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { resolve } from "node:path";
-import { buildAlerts, sortAlerts } from "@aei/alerts";
+import { buildAlerts, patientFindings, sortAlerts } from "@aei/alerts";
 import { alertExplainInput, createLlm, explainAlert, fillSlots, LlmError, llmConfigFromEnv, parseQuestion } from "@aei/ask";
 import {
   type ClockCommand,
@@ -9,6 +9,8 @@ import {
   type IsolateQuery,
   type LiveEvent,
   type Meta,
+  type NationalResponse,
+  type PatientFindingsResponse,
   type QualityResponse,
   type RegionalData,
   type RegionalQuery,
@@ -17,9 +19,19 @@ import {
   regionalUpTo,
   type SitesResponse,
 } from "@aei/contract";
-import { type CoverageResult, coverage, suggest, suggestCombinations } from "@aei/coverage";
+import { barFor, type CoverageResult, coverage, ONSETS, type Onset, suggest, suggestCombinations } from "@aei/coverage";
 import { type Dataset, joinIsolates, loadDataset } from "@aei/dataset";
-import { ANTIBIOTICS, type IsolateRecord, ORGANISMS, SPECIMENS, type Specimen, type WardCode } from "@aei/domain";
+import {
+  ANTIBIOTICS,
+  type AntibioticCode,
+  type IsolateRecord,
+  ORGANISMS,
+  type Phenotype,
+  SPECIMENS,
+  type Specimen,
+  type WardCode,
+} from "@aei/domain";
+import { defeatedBy } from "@aei/eucast";
 import { antibioticName, phenotypeName, registerSites, registerWards, specimenName, wardName } from "@aei/i18n";
 import { asResult, type CodeMaps, DEFAULT_CODE_MAPS, detectFormat, extendCodeMaps, ingest, mergeResults } from "@aei/ingest";
 import { checkRows, type Finding, summarize } from "@aei/quality";
@@ -73,6 +85,8 @@ const config = {
   // Other hospitals connected to this server, with their units and tokens (D-051); unset: the home site alone.
   // A relative path is read from where the command was started (pnpm's INIT_CWD, e.g. the repository root).
   sitesFile: env.AEI_SITES ? resolve(env.INIT_CWD ?? ".", env.AEI_SITES) : undefined,
+  // THL Finres national reference, written by scripts/fetch_finres.py (D-048); read on each request.
+  nationalFile: resolve(env.AEI_NATIONAL ?? "../../data/external/thl/finres.json"),
 };
 const codeMaps: CodeMaps = config.codeMapFile
   ? extendCodeMaps(JSON.parse(readFileSync(resolve(config.codeMapFile), "utf8")) as Partial<CodeMaps>)
@@ -410,12 +424,14 @@ export const server = createServer(async (req, res) => {
       if (!meta.wards.some((w) => w.code === ward)) return send(res, 400, { error: "ward is required and must be a ward code" });
       if (!meta.specimens.some((x) => x.code === specimen)) return send(res, 400, { error: "specimen is required" });
       if (sex !== null && sex !== "F" && sex !== "M") return send(res, 400, { error: "sex must be F or M" });
+      const onset = url.searchParams.get("onset") ?? "any";
+      if (!ONSETS.includes(onset as Onset)) return send(res, 400, { error: "onset must be hospital, community or any" });
       const days = windowDays === null ? undefined : Number(windowDays);
       if (days !== undefined && (!Number.isInteger(days) || days < 1))
         return send(res, 400, { error: "windowDays must be a positive integer" });
       const asOf = clock.state().asOf;
       // Only released records, so nothing after the replay date leaks in.
-      const key = JSON.stringify([asOf, ward, specimen, sex, days]);
+      const key = JSON.stringify([asOf, ward, specimen, sex, days, onset]);
       let result = coverages.get(key);
       if (!result) {
         if (coverages.size > 500) coverages.clear();
@@ -427,6 +443,7 @@ export const server = createServer(async (req, res) => {
             specimen: specimen as Specimen,
             ...(sex ? { sex } : {}),
             ...(days ? { windowDays: days } : {}),
+            onset: onset as Onset,
           },
           registry.wards,
         );
@@ -435,10 +452,21 @@ export const server = createServer(async (req, res) => {
       return send(res, 200, {
         asOf,
         severity,
+        bar: barFor(result.query, severity),
         coverage: result,
         suggestions: suggest(result, severity),
         combinationSuggestions: suggestCombinations(result, severity),
       });
+    }
+    if (url.pathname === ROUTES.patientFindings) {
+      const id = url.searchParams.get("id")?.trim();
+      if (!id) return send(res, 400, { error: "id is required" });
+      const asOf = clock.state().asOf;
+      // Only released records, so nothing after the replay date leaks in (D-050).
+      const findings = patientFindings(state.released.upTo(asOf), id, asOf);
+      const affects: Partial<Record<Phenotype, AntibioticCode[]>> = {};
+      for (const f of findings) affects[f.phenotype] ??= defeatedBy(f.phenotype);
+      return send(res, 200, { asOf, patientId: id, findings, affects } satisfies PatientFindingsResponse);
     }
     if (url.pathname === ROUTES.ingest && req.method === "POST") {
       // The token names the sending site (D-051); no token is the home site unless it has one.
@@ -458,6 +486,11 @@ export const server = createServer(async (req, res) => {
       const data = JSON.parse(readFileSync(config.regionalFile, "utf8")) as RegionalData;
       const query: RegionalQuery = { group: url.searchParams.get("group") ?? "", region: url.searchParams.get("region") ?? "" };
       return send(res, 200, regionalUpTo(data, clock.state().asOf, query));
+    }
+    if (url.pathname === ROUTES.national) {
+      if (!existsSync(config.nationalFile))
+        return send(res, 404, { error: "No national data; run `uv run python scripts/fetch_finres.py`" });
+      return send(res, 200, JSON.parse(readFileSync(config.nationalFile, "utf8")) as NationalResponse);
     }
     if (url.pathname === ROUTES.weekly) {
       const asOf = clock.state().asOf;

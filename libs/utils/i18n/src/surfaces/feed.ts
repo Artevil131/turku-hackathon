@@ -47,6 +47,7 @@ export const feedEn = {
   feedKindTrend: "trend",
   feedKindDivergence: "divergence",
   feedKindData: "data problem",
+  feedKindDataChip: "data",
   feedNoDetectorYet: "no detector yet",
   feedPinned: "Sentinels, last 180 days",
   feedPinnedHide: "Collapse the sentinels",
@@ -116,7 +117,7 @@ export const feedEn = {
   feedSpanPatients: "{n} patients from {unit}, {from}–{to}",
   feedSpanTrailTitle: "{n} carriers, {confirmed} again, {from} to {to}",
   feedSpanNote:
-    "Next: share of patients leaving the unit for each next unit, counted over the window to the as-of date. Trail: carriers of the phenotype found in one unit and later sampled in another. Also: other incidents of the same phenotype within 28 days.",
+    "Next: share of the unit's patients next sampled in each other unit (sampling order, not transfer records), counted over the window to the as-of date. Trail: carriers of the phenotype found in one unit and later sampled in another. Also: other incidents of the same phenotype within 28 days.",
   feedUnitOnly: "{unit} only",
   feedShowAll: "Show all",
   feedIsolates: "Isolates",
@@ -181,6 +182,7 @@ export const feedFi: Record<keyof typeof feedEn, string> = {
   feedKindTrend: "trendi",
   feedKindDivergence: "poikkeama",
   feedKindData: "aineisto-ongelma",
+  feedKindDataChip: "aineisto",
   feedNoDetectorYet: "ei vielä ilmaisinta",
   feedPinned: "Vartijat, viimeiset 180 päivää",
   feedPinnedHide: "Piilota vartijat",
@@ -250,7 +252,7 @@ export const feedFi: Record<keyof typeof feedEn, string> = {
   feedSpanPatients: "{n} potilasta yksiköstä {unit}, {from}–{to}",
   feedSpanTrailTitle: "{n} kantajaa, {confirmed} uudelleen, {from}–{to}",
   feedSpanNote:
-    "Seuraavat: kuinka suuri osa yksiköstä lähteneistä potilaista siirtyi kuhunkin seuraavaan yksikköön, laskettuna ikkunassa tilannepäivään asti. Jälki: fenotyypin kantajat, jotka löydettiin yhdessä yksikössä ja näytteistettiin myöhemmin toisessa. Myös: saman fenotyypin muut tapahtumat 28 päivän sisällä.",
+    "Seuraavat: kuinka suuri osa yksikön potilaista näytteistettiin seuraavaksi kussakin toisessa yksikössä (näytteenottojärjestys, ei siirtotietoja), laskettuna ikkunassa tilannepäivään asti. Jälki: fenotyypin kantajat, jotka löydettiin yhdessä yksikössä ja näytteistettiin myöhemmin toisessa. Myös: saman fenotyypin muut tapahtumat 28 päivän sisällä.",
   feedUnitOnly: "Vain {unit}",
   feedShowAll: "Näytä kaikki",
   feedIsolates: "Löydökset",
