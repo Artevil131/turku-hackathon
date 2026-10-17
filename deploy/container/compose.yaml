@@ -21,6 +21,7 @@ services:
       AEI_GUIDELINE: ${AEI_GUIDELINE:-}
       # A site's own code map, mounted under /config: AEI_CODE_MAP=/config/codes.json
       AEI_CODE_MAP: ${AEI_CODE_MAP:-}
+      AEI_COUNTIES: /statfi/counties.geojson
       # Optional language model for Ask and AI wording (off when unset).
       AEI_LLM_URL: ${AEI_LLM_URL:-}
       AEI_LLM_MODEL: ${AEI_LLM_MODEL:-}
@@ -32,6 +33,8 @@ services:
       - ${AEI_DATASET:-../../data/synthetic_microbiology_dataset}:/data:ro,z
       # THL county data from scripts/fetch_thl_ttr.py; without it /api/regional answers 404.
       - ${AEI_THL_DIR:-../../data/external/thl}:/regional:ro,z
+      # County shapes from scripts/fetch_county_geometry.py; without them /api/counties answers 404 and the map is empty.
+      - ${AEI_STATFI_DIR:-../../data/external/statfi}:/statfi:ro,z
       - ${AEI_CONFIG_DIR:-./config}:/config:ro,z
     ports:
       # Published on the host's loopback only, for scripts/send_lab_results.py.

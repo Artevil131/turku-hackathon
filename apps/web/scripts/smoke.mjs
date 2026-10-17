@@ -6,7 +6,7 @@
 //   SMOKE_URL=http://localhost:5173 pnpm smoke   # test an app that is already running
 //
 // Options: --data DIR, --as-of YYYY-MM-DD, --api-port 8798, --web-port 5176, --out DIR (default
-// apps/web/smoke-out), --routes home,doctor,... (home is the empty hash), --headed. Chrome comes from $CHROME, else google-chrome,
+// apps/web/smoke-out), --routes home,doctor,... (home is the empty hash), --interactions all|doctor, --headed. Chrome comes from $CHROME, else google-chrome,
 // google-chrome-stable, chromium or chromium-browser on the PATH.
 //
 // Per route and viewport it checks: no uncaught exception or console error, no /api request that failed or
@@ -41,6 +41,7 @@ const asOf = opt("as-of", fixture ? "2025-05-22" : "2025-06-10");
 const apiPort = Number(opt("api-port", "8798"));
 const webPort = Number(opt("web-port", "5176"));
 const outDir = resolve(opt("out", join(WEB, "smoke-out")));
+const interactionGroup = opt("interactions", "all");
 const ROUTES = opt("routes", "home,doctor,research,method,settings,intro").split(",");
 const VIEWPORTS = [
   { name: "desktop", width: 1440, height: 1000, mobile: false },
@@ -386,6 +387,7 @@ async function main() {
   // ---------- interactions (desktop) ----------
   let cdp = null;
   const interaction = async (name, body, viewport = VIEWPORTS[0]) => {
+    if (interactionGroup !== "all" && !name.startsWith(`${interactionGroup}-`)) return;
     const reasons = [];
     const file = join(outDir, `interaction-${name}.png`);
     cdp = await browser.newPage(viewport);
@@ -410,6 +412,84 @@ async function main() {
     }
     return false;
   };
+
+  // Doctor regressions: real hit-testing after scrolling, not only programmatic clicks.
+  for (const vp of VIEWPORTS) {
+    await interaction(
+      `doctor-usability-${vp.name}`,
+      async (idle, reasons) => {
+        await load(cdp, `${urlOf("doctor")}?age=older&onset=1`, idle);
+        const initial = await evaluate(
+          cdp,
+          `(() => {
+        const row = document.querySelector('.cl-row');
+        return { row: row?.textContent, disclosure: document.querySelector('.cl-disclosure')?.textContent,
+          unavailableInSummary: /65+|Hoitopäivä/.test(document.querySelector('.rs-sum')?.textContent ?? '') };
+      })()`,
+        );
+        if (!initial.row?.includes("kaikki kasvavat")) reasons.push("unopened row omits all-growth denominator");
+        if (!initial.disclosure?.includes("ei potilashoitoon") || !initial.disclosure?.includes("Tukee päätöstä"))
+          reasons.push("demo/decision disclosure missing");
+        if (initial.unavailableInSummary) reasons.push("unavailable filters appear active");
+        await evaluate(cdp, `document.querySelector('.rs-sumrow')?.click()`);
+        const unavailable = await evaluate(cdp, `document.querySelectorAll('.rs-choice:disabled').length`);
+        if (unavailable !== 6) reasons.push(`expected 6 unavailable controls, saw ${unavailable}`);
+        const shortcut = await evaluate(
+          cdp,
+          `(() => { const b = document.querySelector('.rs-quick'); const r = b?.getBoundingClientRect(); if (!b || r.height < 44) return false; b.click(); return true; })()`,
+        );
+        if (!shortcut) reasons.push("severe blood shortcut missing or below 44 px");
+        if (
+          !(await waitIn(
+            `location.hash.includes('site=blood') && location.hash.includes('sev=severe') && !!document.querySelector('.cl[aria-busy=false] .cl-row')`,
+          ))
+        )
+          reasons.push("severe blood shortcut did not load coverage");
+        await idle();
+        await screenshot(cdp, join(outDir, `doctor-severe-${vp.name}.png`));
+        const pair = await evaluate(
+          cdp,
+          `(() => { const b = document.querySelector('.cl-pair-summary button'); if (!b) return null; b.click(); return !!document.querySelector('.cl-pair-summary')?.textContent.includes('Yksikään antibiootti'); })()`,
+        );
+        if (pair === false) reasons.push("combination summary omits reason");
+        if (pair !== null) {
+          if (!(await waitIn(`!!document.querySelector('.cl-row[aria-expanded=true]')`)))
+            reasons.push("combination summary did not open its details");
+          await evaluate(cdp, `document.querySelector('.dp-close')?.click()`);
+        }
+        await evaluate(cdp, `document.querySelector('.cl-li:last-child .cl-row')?.scrollIntoView({block:'end'})`);
+        const target = await evaluate(
+          cdp,
+          `(() => {
+        const b = document.querySelector('.cl-li:last-child .cl-row');
+        const r = b?.getBoundingClientRect(); const d = b?.querySelector('.cl-details')?.getBoundingClientRect();
+        if (!r || !d) return null;
+        const x = d.x + d.width/2, y = d.y + d.height/2;
+        return {x,y, height:r.height, width:r.width, hit:b.contains(document.elementFromPoint(x,y))};
+      })()`,
+        );
+        if (!target?.hit || target.height < 44 || target.width < 44) reasons.push("bottom row details target is obscured or below 44x44");
+        else {
+          await cdp.send("Input.dispatchMouseEvent", { type: "mousePressed", x: target.x, y: target.y, button: "left", clickCount: 1 });
+          await cdp.send("Input.dispatchMouseEvent", { type: "mouseReleased", x: target.x, y: target.y, button: "left", clickCount: 1 });
+          if (
+            !(await waitIn(`!!document.querySelector('.cl-row[aria-expanded=true]') && !!document.querySelector('#dr-details .dt-name')`))
+          )
+            reasons.push("real tap did not open antibiotic details");
+          if (!(await evaluate(cdp, `location.hash.startsWith('#doctor') && !document.querySelector('.cmd[data-expanded]')`)))
+            reasons.push("details tap opened navigation or search");
+          await screenshot(cdp, join(outDir, `doctor-details-${vp.name}.png`));
+        }
+        await evaluate(
+          cdp,
+          `document.querySelector('.dp-close')?.click(); document.querySelector('.cl-disclosure .data-quality a')?.click()`,
+        );
+        if (!(await waitIn(`location.hash === '#settings?section=data' && !!document.querySelector('#settings-data .quality-results')`)))
+          reasons.push("source line did not lead to loaded quality checks");
+      },
+      vp,
+    );
+  }
 
   const tabRoutes = ["doctor", "research", "method", "home"];
   await interaction("tabs", async (idle, reasons) => {

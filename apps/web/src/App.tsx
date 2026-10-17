@@ -178,7 +178,9 @@ export function App() {
               />
             ) : null}
             {page === "method" ? <MethodPage client={live.client} locale={locale} asOf={live.clock?.asOf ?? null} /> : null}
-            {page === "settings" ? <Settings locale={locale} onLocale={setLocale} onResetRole={() => setLastRole(null)} /> : null}
+            {page === "settings" ? (
+              <Settings client={live.client} locale={locale} onLocale={setLocale} onResetRole={() => setLastRole(null)} />
+            ) : null}
           </Suspense>
         </main>
       </div>

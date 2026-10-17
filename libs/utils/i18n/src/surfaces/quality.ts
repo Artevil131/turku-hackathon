@@ -1,6 +1,65 @@
 // Copy for the data-checks status (D-038). Keys are global: prefix them `q`.
+// The doctor view's link and Settings list (DataQuality.tsx) use the `quality…` keys.
+const checksEn = {
+  qualityLoading: "Loading data checks…",
+  qualityError: "Data checks could not be loaded.",
+  qualityLink: "Data checks: {n} findings — view checks",
+  qualityTitle: "Data checks",
+  qualityScope: "Checked: {patients} patients, {cultures} cultures, {isolates} isolates, {results} results.",
+  qualityNote:
+    "Plausibility checks, not clinical validation. Findings do not change or remove rows. The checks and their finding counts are listed below.",
+  qualityNone: "No findings in the checked data.",
+  qualityCount: "{check}: {n} findings",
+  qualityErrors: "Error",
+  qualitySuspects: "Verify",
+  qualityDuplicateId: "Duplicate identifiers",
+  qualityDuplicateResult: "Duplicate results",
+  qualityMissingLink: "Missing linked rows",
+  qualityIsolateCount: "Isolate counts",
+  qualitySampleBeforeBirth: "Sample before birth",
+  qualityAdmissionAfterSample: "Admission after sample",
+  qualityFutureSample: "Future sample dates",
+  qualityAgeMismatch: "Age inconsistent with birth year",
+  qualityWardType: "Ward type",
+  qualityIntrinsic: "Susceptible despite intrinsic resistance",
+  qualityBreakpoint: "Reported without a breakpoint",
+  qualitySpecimen: "Specimen and antibiotic mismatch",
+  qualityInference: "Contradictory inferred results",
+  qualityPhenotypeOrganism: "Phenotype and organism mismatch",
+  qualityPhenotypeResult: "Phenotype and result mismatch",
+} as const;
+
+const checksFi: Record<keyof typeof checksEn, string> = {
+  qualityLoading: "Ladataan aineiston tarkistuksia…",
+  qualityError: "Aineiston tarkistuksia ei voitu ladata.",
+  qualityLink: "Aineiston tarkistukset: {n} huomiota — näytä tarkistukset",
+  qualityTitle: "Aineiston tarkistukset",
+  qualityScope: "Tarkistettu: {patients} potilasta, {cultures} viljelyä, {isolates} isolaattia, {results} tulosta.",
+  qualityNote:
+    "Uskottavuustarkistuksia, ei kliinistä validointia. Huomiot eivät muuta tai poista rivejä. Alla ovat tarkistukset ja niiden huomiomäärät.",
+  qualityNone: "Tarkistetussa aineistossa ei huomioita.",
+  qualityCount: "{check}: {n} huomiota",
+  qualityErrors: "Virhe",
+  qualitySuspects: "Tarkistettava",
+  qualityDuplicateId: "Toistuvat tunnisteet",
+  qualityDuplicateResult: "Toistuvat tulokset",
+  qualityMissingLink: "Puuttuvat viitatut rivit",
+  qualityIsolateCount: "Isolaattien lukumäärät",
+  qualitySampleBeforeBirth: "Näyte ennen syntymää",
+  qualityAdmissionAfterSample: "Hoitoon tulo näytteen jälkeen",
+  qualityFutureSample: "Tulevaisuuteen päivätyt näytteet",
+  qualityAgeMismatch: "Ikä ei vastaa syntymävuotta",
+  qualityWardType: "Osastotyyppi",
+  qualityIntrinsic: "Herkkä luontaisesta resistenssistä huolimatta",
+  qualityBreakpoint: "Tulos ilman raja-arvoa",
+  qualitySpecimen: "Näytteen ja antibiootin ristiriita",
+  qualityInference: "Ristiriitaiset päätellyt tulokset",
+  qualityPhenotypeOrganism: "Fenotyypin ja mikrobin ristiriita",
+  qualityPhenotypeResult: "Fenotyypin ja tuloksen ristiriita",
+};
 
 export const qualityEn = {
+  ...checksEn,
   qPassed: "Data checks passed",
   qFindings: "{n} findings",
   qFindingsOne: "1 finding",
@@ -35,6 +94,7 @@ export const qualityEn = {
 } as const;
 
 export const qualityFi = {
+  ...checksFi,
   qPassed: "Tarkistukset läpi",
   qFindings: "{n} havaintoa",
   qFindingsOne: "1 havainto",

@@ -3,7 +3,7 @@ import { isWardCode, type Sex, type Specimen, WARDS, type WardCode } from "@aei/
 import { type Locale, type MessageKey, t } from "@aei/i18n";
 
 // The doctor's one-click filters, their defaults, and how they travel in the URL
-// (`#doctor?unit=URO&site=urine&sex=F&age=older&onset=1&sev=severe&period=28`) and in localStorage (`aei.unit`).
+// (`#doctor?unit=URO&site=urine&sex=F&sev=severe&period=28`) and in localStorage (`aei.unit`).
 
 export const AGE_GROUPS = ["any", "child", "adult", "older", "veryold"] as const;
 export type AgeGroup = (typeof AGE_GROUPS)[number];
@@ -13,9 +13,9 @@ export interface DoctorFilters {
   unit: WardCode;
   site: Specimen;
   sex: Sex | "any";
-  /** Shown, not applied: the coverage API has no age filter. */
+  /** Disabled, not applied: the coverage API has no age filter. */
   age: AgeGroup;
-  /** Shown, not applied: the API has no onset filter and the bar it implies is undecided (ENGINE 2.6). */
+  /** Disabled, not applied: the API has no onset filter and the bar it implies is undecided (ENGINE 2.6). */
   onset: boolean;
   sev: Severity;
   period: Period;
@@ -59,14 +59,13 @@ export function filtersFromUrl(params: URLSearchParams): DoctorFilters {
   const unit = params.get("unit");
   const site = params.get("site");
   const sex = params.get("sex");
-  const age = params.get("age");
   const sev = params.get("sev");
   return {
     unit: unit && isWardCode(unit) ? unit : (readStoredUnit() ?? DEFAULT_UNIT),
     site: SITES.find((s) => s === site) ?? DEFAULTS.site,
     sex: sex === "F" || sex === "M" ? sex : DEFAULTS.sex,
-    age: AGE_GROUPS.find((a) => a === age) ?? DEFAULTS.age,
-    onset: params.get("onset") === "1",
+    age: DEFAULTS.age,
+    onset: DEFAULTS.onset,
     sev: sev === "severe" ? "severe" : "mild",
     period: params.get("period") === "28" ? 28 : 365,
   };
@@ -78,8 +77,8 @@ export function filtersToParams(f: DoctorFilters): Record<string, string | null>
     unit: f.unit,
     site: f.site === DEFAULTS.site ? null : f.site,
     sex: f.sex === "any" ? null : f.sex,
-    age: f.age === "any" ? null : f.age,
-    onset: f.onset ? "1" : null,
+    age: null,
+    onset: null,
     sev: f.sev === "mild" ? null : f.sev,
     period: f.period === 365 ? null : String(f.period),
   };

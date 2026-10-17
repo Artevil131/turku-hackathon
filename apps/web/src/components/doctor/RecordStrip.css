@@ -242,3 +242,29 @@
     display: none;
   }
 }
+
+/* Unavailable controls never look selected or contribute to the summary. */
+.rs-choice:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: transparent;
+  color: var(--d-ink-2);
+}
+.rs-quick {
+  min-height: 44px;
+  margin: 4px 8px;
+  color: var(--d-acc);
+  border: 1px solid var(--d-line-strong);
+  border-radius: 6px;
+}
+.rs[data-wide] {
+  height: auto;
+  flex-wrap: wrap;
+}
+.rs[data-wide] .rs-body {
+  flex-wrap: wrap;
+  height: auto;
+}
+.rs[data-wide] .rs-quick {
+  margin-top: 0;
+}

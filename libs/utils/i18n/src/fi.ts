@@ -260,6 +260,7 @@ export const fi: Record<keyof typeof en, string> = {
   uiSelectRow: "Valitse rivi",
   ...boardFi,
   ...doctorFi,
+  ...qualityFi,
   ...mathFi,
   ...methodFi,
   ...feedFi,
@@ -270,5 +271,4 @@ export const fi: Record<keyof typeof en, string> = {
   ...introFi,
   ...commandFi,
   ...timelineFi,
-  ...qualityFi,
 };

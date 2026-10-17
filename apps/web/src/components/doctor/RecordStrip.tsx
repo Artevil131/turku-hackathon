@@ -27,6 +27,7 @@ function Choices<T extends string | number>(props: {
   options: readonly (readonly [T, string, string?])[];
   value: T;
   onPick: (v: T) => void;
+  disabled?: boolean;
 }) {
   return (
     <div className="rs-choices">
@@ -36,7 +37,8 @@ function Choices<T extends string | number>(props: {
           type="button"
           className="rs-choice"
           title={title}
-          aria-pressed={props.value === value}
+          disabled={props.disabled}
+          aria-pressed={!props.disabled && props.value === value}
           onClick={() => props.onPick(value)}
         >
           {text}
@@ -59,8 +61,6 @@ export function RecordStrip({ locale, filters, onChange }: Props) {
     sexWord(locale, filters.sex),
     tr(filters.sev === "mild" ? "drSevMildShort" : "drSevSevereShort"),
     tr(filters.period === 365 ? "drPeriodYear" : "drPeriodMonth"),
-    filters.age !== "any" ? tr(AGE_KEYS[filters.age]) : null,
-    filters.onset ? tr("drOnset") : null,
   ]
     .filter(Boolean)
     .join(" · ");
@@ -133,8 +133,9 @@ export function RecordStrip({ locale, filters, onChange }: Props) {
     </Group>
   );
   const age = (
-    <Group label={tr("drAge")} tag={filters.age !== "any" && notApplied}>
+    <Group label={tr("drAge")} tag={notApplied}>
       <Choices<AgeGroup>
+        disabled
         options={AGE_GROUPS.map(
           (a) =>
             [
@@ -149,12 +150,13 @@ export function RecordStrip({ locale, filters, onChange }: Props) {
     </Group>
   );
   const onset = (
-    <Group label={tr("drOnset")} tag={filters.onset && notApplied}>
+    <Group label={tr("drOnset")} tag={notApplied}>
       <button
         type="button"
         className="rs-choice rs-toggle"
         title={tr("drOnset")}
-        aria-pressed={filters.onset}
+        disabled
+        aria-pressed={false}
         onClick={() => change({ onset: !filters.onset })}
       >
         {wide ? tr("drOnsetShort") : tr("drOnsetPhone")}
@@ -162,7 +164,21 @@ export function RecordStrip({ locale, filters, onChange }: Props) {
     </Group>
   );
 
-  // Laptop: every filter in one 40 px row. Phone: a one-line summary that opens the filters, so the list comes first.
+  const severeBlood = (
+    <button
+      type="button"
+      className="rs-choice rs-quick"
+      aria-pressed={filters.site === "blood" && filters.sev === "severe"}
+      onClick={() => {
+        onChange({ site: "blood", sev: "severe" });
+        setMore(false);
+      }}
+    >
+      {tr("drSevereBlood")}
+    </button>
+  );
+
+  // Keep the severe blood shortcut visible even when phone filters are collapsed.
   if (wide) {
     return (
       <form className="rs" data-wide="" aria-label={tr("drRecord")} onSubmit={(e) => e.preventDefault()}>
@@ -175,6 +191,7 @@ export function RecordStrip({ locale, filters, onChange }: Props) {
           {onset}
           {period}
         </div>
+        {severeBlood}
       </form>
     );
   }
@@ -186,6 +203,7 @@ export function RecordStrip({ locale, filters, onChange }: Props) {
         </span>
         <span aria-hidden="true">{more ? "▴" : "▾"}</span>
       </button>
+      {severeBlood}
       {more ? (
         <div className="rs-body rs-more" id="rs-more">
           {unit}

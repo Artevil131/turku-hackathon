@@ -258,6 +258,7 @@ export const en = {
   uiSelectRow: "Select a row",
   ...boardEn,
   ...doctorEn,
+  ...qualityEn,
   ...mathEn,
   ...methodEn,
   ...feedEn,
@@ -268,5 +269,4 @@ export const en = {
   ...introEn,
   ...commandEn,
   ...timelineEn,
-  ...qualityEn,
 } as const;
