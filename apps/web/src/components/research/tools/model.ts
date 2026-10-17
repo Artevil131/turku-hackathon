@@ -410,9 +410,9 @@ export function cellTable(r: CellResult): ExportTable {
           to: s.to,
           k: s.k,
           n: s.n,
-          share: finite(s.share),
-          lo: finite(s.interval.lo),
-          hi: finite(s.interval.hi),
+          share: s.share === null ? "" : finite(s.share),
+          lo: s.interval === null ? "" : finite(s.interval.lo),
+          hi: s.interval === null ? "" : finite(s.interval.hi),
         })),
       );
     case "beta": {

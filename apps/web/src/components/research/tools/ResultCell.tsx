@@ -155,7 +155,10 @@ function Compare({ r, locale }: { r: CompareResult; locale: Locale }) {
 
 function Shares({ r, locale }: { r: SharesResult; locale: Locale }) {
   const name = eventName(locale, r.event);
-  const known = r.points.filter((p) => ok(p.share));
+  // Periods without a denominator carry a null share and interval; they are left out of the summary.
+  const known = r.points.filter(
+    (p): p is typeof p & { share: number; interval: { lo: number; hi: number } } => p.share !== null && p.interval !== null && ok(p.share),
+  );
   const summary = known
     .map((p) => `${formatDate(locale, p.from)} ${pct(p.share, locale)} (${pct(p.interval.lo, locale)}–${pct(p.interval.hi, locale)})`)
     .join("; ");
