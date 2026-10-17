@@ -335,6 +335,7 @@ export function GeoMap({
         </p>
       ) : null}
 
+      {/* The county detail opens beside the map (a side pane); the map stays in view. */}
       {chosen ? (
         <CountyDetail
           region={chosen}
@@ -365,7 +366,8 @@ export function GeoMap({
             <TyksCompare weekly={weekly.data} group={group} locale={locale} />
           ) : null}
         </CountyDetail>
-      ) : (
+      ) : null}
+      {
         <>
           <div className="geo-stage">
             <svg
@@ -545,7 +547,7 @@ export function GeoMap({
             </section>
           </details>
         </>
-      )}
+      }
     </section>
   );
 }

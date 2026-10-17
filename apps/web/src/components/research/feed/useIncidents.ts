@@ -7,6 +7,8 @@ import { groupIncidents, type Incident, shift } from "./model.ts";
 // read the same incidents.
 
 export const WINDOW_DAYS = 365;
+const AUTO_RETRIES = 3;
+const RETRY_MS = 2000;
 
 export type IncidentLoad = { status: "loading" } | { status: "error" } | { status: "ready"; asOf: string; alerts: Alert[] };
 
@@ -17,13 +19,20 @@ export function useIncidents(client: AeiClient, asOf: string | null) {
   useEffect(() => {
     if (!asOf) return;
     let stale = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
     setLoad((l) => (l.status === "ready" ? l : { status: "loading" }));
     client
       .alerts({ from: shift(asOf, -WINDOW_DAYS) })
       .then((r) => !stale && setLoad({ status: "ready", asOf: r.asOf, alerts: r.alerts }))
-      .catch(() => !stale && setLoad({ status: "error" }));
+      .catch(() => {
+        if (stale) return;
+        setLoad({ status: "error" });
+        // The server restarts while it reloads code or data (a 502 through the proxy): try again by itself a few times.
+        if (attempt < AUTO_RETRIES) timer = setTimeout(() => setAttempt((n) => n + 1), RETRY_MS);
+      });
     return () => {
       stale = true;
+      if (timer) clearTimeout(timer);
     };
   }, [client, asOf, attempt]);
   const incidents = useMemo<Incident[]>(() => (load.status === "ready" ? groupIncidents(load.alerts) : []), [load]);

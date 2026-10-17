@@ -870,3 +870,11 @@
   background: var(--brand-accent-soft, #ecebfc);
   color: var(--ink-2, #1d204e);
 }
+
+/* On the phone the strip is one scrolling row and never widens the page. */
+.timeline-phone .tl-events {
+  width: 100%;
+  max-width: 100vw;
+  min-width: 0;
+  overflow: hidden;
+}

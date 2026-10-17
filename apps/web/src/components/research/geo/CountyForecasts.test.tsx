@@ -104,7 +104,7 @@ describe("visible county detail", () => {
     strong: true,
   };
 
-  it("replaces the map rather than appearing beneath its fixed-height stage", () => {
+  it("opens beside the map, which stays in view", () => {
     loaded.chosen = home;
     loaded.counties = counties;
     loaded.regional = regionalUpTo(
@@ -125,7 +125,7 @@ describe("visible county detail", () => {
       expect(html).toContain(locale === "en" ? "Forecast · phenotype totals" : "Ennuste · fenotyypit yhteensä");
       expect(html).toContain(locale === "en" ? "90\u00a0% predictive range" : "90\u00a0%:n ennusteväli");
       expect(html).toContain(locale === "en" ? "VRE: no forecast" : "VRE: ei ennustetta");
-      expect(html).not.toContain('class="geo-stage"');
+      expect(html).toContain('class="geo-stage"');
       expect(html).not.toContain('class="geo-overlay-card"');
     }
   });

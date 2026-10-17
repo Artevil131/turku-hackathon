@@ -972,3 +972,30 @@
 .ug.has-selection .ug-node:hover {
   opacity: 1;
 }
+
+/* The county detail is a side pane over the right part of the map window: the map stays in view,
+   the pane scrolls on its own, and "Back to map" closes it. On narrow screens it covers the map. */
+.geo {
+  position: relative;
+}
+.geo-detail {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  width: min(46%, 400px);
+  min-width: 240px;
+  padding: 10px 12px;
+  border-left: 1px solid var(--line, #e4e6ee);
+  background: #fff;
+  box-shadow: -8px 0 16px rgba(7, 8, 28, 0.06);
+  overflow: auto;
+}
+.ws[data-docked="false"] .geo-detail,
+.timeline-phone ~ * .geo-detail {
+  width: 100%;
+  min-width: 0;
+  border-left: 0;
+  box-shadow: none;
+}
