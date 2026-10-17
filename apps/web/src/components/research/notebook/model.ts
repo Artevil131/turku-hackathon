@@ -65,6 +65,8 @@ export interface CodeCell extends Base {
   code: string;
   /** False while the code is still the prefill (switching language then swaps the prefill). */
   edited: boolean;
+  /** The last run's output as text (figures are not kept), shown after a reload as from an earlier run. */
+  last?: { text: string; error: boolean };
 }
 export interface ChartCell extends Base {
   kind: "chart";
@@ -275,7 +277,11 @@ function validCell(c: unknown): c is NbCell {
     case "analysis":
       return TOOLS.includes(x.tool as ToolId) && !!x.params && typeof x.params === "object";
     case "code":
-      return (x.lang === "python" || x.lang === "r") && typeof x.code === "string";
+      return (
+        (x.lang === "python" || x.lang === "r") &&
+        typeof x.code === "string" &&
+        (x.last === undefined || (!!x.last && typeof (x.last as { text?: unknown }).text === "string"))
+      );
     case "timeline":
       return (
         !!x.window && typeof (x.window as { from?: unknown }).from === "string" && typeof (x.window as { to?: unknown }).to === "string"

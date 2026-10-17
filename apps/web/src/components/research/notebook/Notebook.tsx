@@ -15,6 +15,7 @@ import { CodeCellBody } from "./cells/CodeCell.tsx";
 import { NoteCellBody } from "./cells/NoteCell.tsx";
 import { notebookSliceSentence, SliceCellBody, type SliceSources } from "./cells/SliceCell.tsx";
 import { TimelineCellBody } from "./cells/TimelineCell.tsx";
+import { kernel, useKernel } from "./kernel.ts";
 import {
   codeFor,
   defaultParams,
@@ -214,6 +215,7 @@ export function Notebook({ client, locale, asOf, page, update, projectId, signal
   const [exporting, setExporting] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const cells = page.cells;
+  const py = useKernel();
 
   const focusCell = (id: string) => requestAnimationFrame(() => root.current?.querySelector<HTMLElement>(`[data-cell="${id}"]`)?.focus());
 
@@ -389,6 +391,19 @@ export function Notebook({ client, locale, asOf, page, update, projectId, signal
             {projectId ? t(locale, "nbSavedProject", { id: projectId }) : t(locale, "nbSaved")}
           </p>
         </div>
+        {py.phase !== "off" && (
+          <button
+            type="button"
+            className="btn"
+            data-restart-python
+            onClick={() => {
+              kernel.restart();
+              setStatus(t(locale, "nbPyRestarted"));
+            }}
+          >
+            {t(locale, "nbRestartPy")}
+          </button>
+        )}
         <button
           type="button"
           className="btn"
