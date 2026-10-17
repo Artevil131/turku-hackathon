@@ -1,18 +1,31 @@
 import { type Locale, t } from "@aei/i18n";
-import { useEffect, useRef } from "react";
-import { type NbCell, PAGE_VERSION, savePage } from "../components/research/notebook/model.ts";
+import { useEffect, useRef, useState } from "react";
+import { type NbCell, PAGE_VERSION } from "../components/research/notebook/model.ts";
 import { PAGE_EVENT } from "../components/research/notebook/usePage.ts";
-import { Clock, countUp, drawLines, placeInto, press, sweep, typeInto } from "./fillEffects.ts";
-import { PACE, resolve, type Step } from "./fillScript.ts";
+import { applyPlan } from "./applyPlan.ts";
+import { copy } from "./fillCopy.ts";
+import { countUp, drawLines, placeInto, press, sweep, typeInto } from "./fillEffects.ts";
+import { demoOf, PACE, resolve, type Step } from "./fillScript.ts";
 import { scriptFor } from "./fillScripts.ts";
 import type { FillPlan } from "./openDemo.ts";
+import { Clock } from "./perform/clock.ts";
+import { type Outcome, Performance } from "./perform/Performance.tsx";
 import "./fill.css";
 
-// A demo opens empty and fills itself in, as if a colleague were at the keyboard: the player performs the demo's
-// screenplay (fillScripts.ts) against the plan and the board's DOM. Nothing can be pressed meanwhile (this overlay
-// catches every pointer and key); when the last beat ends the lock lifts and the app offers the tour.
+// A demo opens empty and fills itself in while the screen is locked. First choice: a performance (perform/), in
+// which a drawn cursor operates the real screen the way the professional would. If the demo has no screenplay, or
+// a beat the story cannot do without fails, the plain fill-in below takes over: the planned notebook is handed to
+// the page beat by beat (fillScripts.ts). Either way the lock always lifts and `onDone` hears exactly once how:
+// "done" after a full play, "skipped" after Skip or Escape (the board then snaps to the planned end state).
 
-/** The fill never holds the screen longer than its script plus this. */
+export function FillOverlay(props: { locale: Locale; plan: FillPlan; onDone: (how: Outcome) => void }) {
+  const [mode, setMode] = useState<"perform" | "plain">(() => (demoOf(props.plan) ? "perform" : "plain"));
+  const demo = demoOf(props.plan);
+  if (mode === "perform" && demo) return <Performance {...props} demo={demo} onFallback={() => setMode("plain")} />;
+  return <PlainFill {...props} />;
+}
+
+/** The plain fill-in never holds the screen longer than its script plus this. */
 const GRACE_MS = 8_000;
 const EASE = "var(--mo-ease)";
 
@@ -43,10 +56,11 @@ const root = () => document.querySelector<HTMLElement>(".ws");
 const win = (id: string) => document.getElementById(`ws-win-${id}`);
 const cellOf = (c: NbCell | undefined) => (c ? document.querySelector<HTMLElement>(`.nb-cell[data-cell="${c.id}"]`) : null);
 
-export function FillOverlay({ locale, plan, onDone }: { locale: Locale; plan: FillPlan; onDone: () => void }) {
+function PlainFill({ locale, plan, onDone }: { locale: Locale; plan: FillPlan; onDone: (how: Outcome) => void }) {
   const bar = useRef<HTMLElement>(null);
   const done = useRef(onDone);
   done.current = onDone;
+  const skip = useRef<() => void>(() => {});
   useEffect(() => {
     const clock = new Clock();
     const stage = new Stage(plan);
@@ -61,18 +75,19 @@ export function FillOverlay({ locale, plan, onDone }: { locale: Locale; plan: Fi
         ws.removeAttribute("data-fill");
         sweep(ws);
       }
-      for (const id of plan.windows) win(id)?.setAttribute("data-shown", "");
-      stage.dispatch(plan.cells);
-      savePage(plan.slot, { v: PAGE_VERSION, cells: plan.cells });
+      applyPlan(plan);
     };
-    const finish = () => {
+    const finish = (how: Outcome = "done") => {
       if (finished) return;
       settle();
-      done.current();
+      done.current(how);
     };
-    const safety = setTimeout(finish, total * 1000 + GRACE_MS);
-    // Every key is swallowed while the colleague works; the overlay itself takes the pointer.
+    skip.current = () => finish("skipped");
+    const safety = setTimeout(() => finish("done"), total * 1000 + GRACE_MS);
+    // Every key is swallowed while the colleague works (a real Escape skips); the overlay itself takes the pointer.
     const swallow = (e: Event) => {
+      if (!e.isTrusted) return;
+      if (e instanceof KeyboardEvent && e.key === "Escape" && e.type === "keydown") skip.current();
       e.preventDefault();
       e.stopPropagation();
     };
@@ -92,13 +107,10 @@ export function FillOverlay({ locale, plan, onDone }: { locale: Locale; plan: Fi
       const ease = step.ease ?? EASE;
       switch (step.do) {
         case "reveal": {
+          // Windows are in place from the start; a reveal only counts its figures up, if it has any.
           const el = win(step.window);
           if (!el) return;
           const ms = (step.for ?? (step.how === "wipe" ? PACE.wipe : PACE.rise)) * 1000;
-          el.style.setProperty("--fill-for", `${ms}ms`);
-          el.style.setProperty("--fill-ease", ease);
-          el.setAttribute("data-fill-how", step.how ?? "rise");
-          el.setAttribute("data-shown", "");
           countUp(el, Math.max(400, ms), clock);
           return clock.wait(ms);
         }
@@ -184,10 +196,7 @@ export function FillOverlay({ locale, plan, onDone }: { locale: Locale; plan: Fi
       // The board mounts a moment after the project opens: the first frame it is there, the fill begins.
       const first = await clock.waitFor(() => win(plan.windows[0] ?? ""), 6000);
       if (clock.stopped) return;
-      if (first) {
-        root()?.setAttribute("data-fill", "");
-        for (const id of plan.windows) win(id)?.removeAttribute("data-shown");
-      }
+      if (first) root()?.setAttribute("data-fill", "");
       if (bar.current) {
         bar.current.style.transition = `transform ${total}s linear`;
         bar.current.style.transform = "scaleX(1)";
@@ -199,9 +208,9 @@ export function FillOverlay({ locale, plan, onDone }: { locale: Locale; plan: Fi
       await Promise.allSettled(running);
       if (clock.stopped) return;
       await clock.wait(350);
-      finish();
+      finish("done");
     };
-    void run().catch(finish);
+    void run().catch(() => finish("done"));
 
     return () => {
       clearTimeout(safety);
@@ -215,6 +224,9 @@ export function FillOverlay({ locale, plan, onDone }: { locale: Locale; plan: Fi
         <span>{t(locale, "demoFilling")}</span>
         <i ref={bar} aria-hidden="true" />
       </div>
+      <button type="button" className="pf-skip" onClick={() => skip.current()}>
+        {copy(locale, "skip")}
+      </button>
     </div>
   );
 }

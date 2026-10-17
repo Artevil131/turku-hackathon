@@ -99,10 +99,10 @@ export const DEMOS: readonly DemoSpec[] = [
     mode: "frozen",
     asOf: "2025-04-30",
     board: "unit=MED-A&ph=esbl",
+    // A researcher's basic desk: the timeline to cut a period from, the notebook to write in, the signals beside it.
     layout: gridLayout({
-      answer: { x: 0, y: 0, w: 12, h: 9 },
-      notebook: { x: 0, y: 9, w: 8, h: 70 },
-      signals: { x: 8, y: 9, w: 4, h: 70 },
+      notebook: { x: 0, y: 0, w: 8, h: 56 },
+      signals: { x: 8, y: 0, w: 4, h: 56 },
     }),
     page: (locale, site) => {
       const s = slice(site, { from: "2025-03-01", to: "2025-04-30", unit: "MED-A", phenotype: "esbl" });
@@ -119,7 +119,6 @@ export const DEMOS: readonly DemoSpec[] = [
           id: newId(),
           kind: "chart",
           spec: defaultSpec({ unit: "MED-A", window: { from: "2024-11-01", to: "2025-04-30" }, event: "phenotype:esbl", periodDays: 14 }),
-          collapsed: true,
         },
         note(t(locale, "demoNoteResearcherRead")),
       ]);

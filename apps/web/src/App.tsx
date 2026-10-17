@@ -139,11 +139,11 @@ export function App() {
   // The guided tour offered when a demo file opens; leaving the project ends it.
   const [tour, setTour] = useState<{ demo: TourId; key: number } | null>(null);
   // First visit: the full tour is offered once; "Not now" leaves a way back on the start page and in the sidebar.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: only on first load
   useEffect(() => {
     if (page === "home" && stored("yl.welcomed", "", () => true) === "") setTour({ demo: "overview", key: Date.now() });
-    // biome-ignore lint/correctness/useExhaustiveDependencies: only on first load
   }, []);
-  // A demo filling itself in: the screen is locked until it is done, then the tour is offered.
+  // A demo filling itself in: the screen is locked until it is done (or skipped); a full play then offers the tour, a skip does not.
   const [filling, setFilling] = useState<{ demo: DemoId; plan: FillPlan; key: number } | null>(null);
   const startTour = () => {
     setPage("home");
@@ -360,6 +360,8 @@ export function App() {
     openDemo(client, locale, demo, { fill })
       .then(({ project, plan }) => {
         shell.openProject(project);
+        // A "Take the tour?" left from a previous demo must not sit on the stage while this one plays.
+        if (plan) setTour((current) => (current?.demo === "overview" ? current : null));
         if (plan) setFilling({ demo: demo.id, plan, key: Date.now() });
         else setTour((current) => (current?.demo === "overview" ? current : { demo: demo.id, key: Date.now() }));
       })
@@ -520,8 +522,9 @@ export function App() {
                 key={filling.key}
                 locale={locale}
                 plan={filling.plan}
-                onDone={() => {
-                  setTour({ demo: filling.demo, key: Date.now() });
+                onDone={(how?: "done" | "skipped") => {
+                  // Played to the end, the guide is offered; skipped, the judge goes straight to the finished project.
+                  if (how !== "skipped") setTour({ demo: filling.demo, key: Date.now() });
                   setFilling(null);
                 }}
               />

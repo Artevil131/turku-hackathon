@@ -1,6 +1,6 @@
-/* While a demo fills itself in (demo/FillOverlay.tsx plays demo/fillScripts.ts): windows wait unseen until their beat,
-   cells show their body only once the colleague has reached them, and every motion is opacity, transform or clip-path.
-   Durations and easing come from the beat (--fill-for, --fill-ease); the app's tokens are the fallback. */
+/* The plain fill-in (demo/FillOverlay.tsx plays demo/fillScripts.ts), the fallback behind the performance: the
+   windows are in place from the start; cells show their body only once the colleague has reached them, and every
+   motion is opacity, transform or clip-path. Durations and easing come from the beat (--fill-for, --fill-ease). */
 
 @keyframes fill-rise {
   from {
@@ -13,41 +13,15 @@
     opacity: 0;
   }
 }
-@keyframes fill-wipe {
-  from {
-    opacity: 0.4;
-    clip-path: inset(0 100% 0 0);
-  }
-  to {
-    opacity: 1;
-    clip-path: inset(0 0 0 0);
-  }
-}
 @keyframes fill-caret {
   50% {
     opacity: 0;
   }
 }
 
-/* ---------- windows ---------- */
-.ws[data-fill] .ws-win:not([data-shown]) {
-  opacity: 0;
-  pointer-events: none;
-}
-.ws[data-fill] .ws-win .ws-frame {
-  will-change: opacity, transform;
-}
-.ws[data-fill] .ws-win[data-shown] .ws-frame {
-  animation: fill-rise var(--fill-for, 500ms) var(--fill-ease, var(--mo-ease)) both;
-}
-.ws[data-fill] .ws-win[data-shown][data-fill-how="wipe"] .ws-frame {
-  animation-name: fill-wipe;
-  animation-timing-function: linear;
-}
-
 /* ---------- notebook cells ---------- */
 .ws[data-fill] .nb-slot {
-  animation: fill-rise 320ms var(--mo-ease) both;
+  animation: fill-fade 320ms var(--mo-ease) both;
 }
 /* A cell's body waits until the colleague reaches it (its title is already there). */
 .ws[data-fill] .nb-cell:not([data-fill-active]):not([data-fill-done]) .nb-body {
@@ -161,7 +135,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ws[data-fill] .ws-win[data-shown] .ws-frame,
   .ws[data-fill] .nb-slot,
   .ws[data-fill] .nb-cell[data-fill-result] .tl-cell,
   .ws[data-fill] .nb-cell[data-fill-result] .nb-method,

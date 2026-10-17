@@ -1,0 +1,188 @@
+/* A demo performing itself: a transparent lock over the whole screen, the guided tour's drawn cursor as a hand
+   (moved by transform alone, from hand.ts), a quiet ring on what it works on, a small label. While it performs
+   (html[data-perform]) the content the hand causes arrives softly: results and formulas fade in, charts draw. */
+
+.pf-lock {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  cursor: progress;
+  animation: pf-fade 240ms var(--mo-ease) both;
+}
+@keyframes pf-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* The ring: a soft outline on the thing being worked on, no dimming of the rest. */
+.pf-spot {
+  position: fixed;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  border: 1.5px solid var(--live);
+  border-radius: calc(var(--radius-control) + 4px);
+  box-shadow: 0 0 0 4px var(--live-glow);
+  pointer-events: none;
+  will-change: transform;
+  transition:
+    transform 360ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    width 360ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    height 360ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    opacity 260ms var(--mo-ease);
+}
+.pf-spot[data-shown] {
+  opacity: 0.8;
+}
+
+/* The hand. Its position is written every frame; only its opacity and press are transitions. */
+.pf-cursor {
+  position: fixed;
+  left: -4px;
+  top: -3px;
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform;
+  transition: opacity 320ms var(--mo-ease);
+  filter: drop-shadow(0 2px 3px rgb(7 8 28 / 0.25));
+}
+.pf-cursor[data-shown] {
+  opacity: 1;
+}
+.pf-cursor svg {
+  display: block;
+  transform-origin: 4px 3px;
+  transition: transform 140ms var(--mo-ease);
+}
+.pf-cursor[data-pressed] svg {
+  transform: scale(0.88);
+}
+.pf-ripple {
+  position: absolute;
+  left: 4px;
+  top: 3px;
+  width: 28px;
+  height: 28px;
+  margin: -14px 0 0 -14px;
+  border-radius: 50%;
+  border: 1.5px solid var(--live);
+  animation: pf-ripple 420ms ease-out forwards;
+}
+@keyframes pf-ripple {
+  from {
+    transform: scale(0.35);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+/* Skip: small and quiet in the bottom right corner, clear of the board's float bar, the popovers and the tour offer. */
+.pf-skip {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 1;
+  min-height: 32px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--glass-1);
+  box-shadow: var(--pop-shadow);
+  color: var(--ink-2);
+  font: inherit;
+  font-size: var(--t-xs);
+  font-weight: 500;
+  cursor: pointer;
+  animation: pf-fade 400ms var(--mo-ease) 600ms both;
+}
+.pf-skip:hover,
+.pf-skip:focus-visible {
+  color: var(--ink);
+  border-color: var(--line-strong, var(--line));
+}
+.pf-skip:focus-visible {
+  outline: 2px solid var(--live);
+  outline-offset: 2px;
+}
+
+/* A tour offer left over from an earlier demo must not sit on the stage while the hand works. */
+html[data-perform] .tour-offer,
+html[data-perform] .tour {
+  visibility: hidden;
+}
+
+/* ---------- what the hand causes arrives softly ---------- */
+@keyframes pf-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes pf-draw {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+/* A new cell, a result, its method: they fade in where they are. */
+html[data-perform] .nb-slot,
+html[data-perform] .nb-cell .tl-cell,
+html[data-perform] .answer,
+html[data-perform] .dr-answer-head,
+html[data-perform] .dr-answer-line,
+html[data-perform] .dt {
+  animation: pf-in 480ms var(--mo-ease) both;
+}
+html[data-perform] .nb-method {
+  animation: pf-in 560ms var(--mo-ease) 140ms both;
+}
+/* A method opened: its constants fade in, its code arrives top to bottom. */
+@keyframes pf-unroll {
+  from {
+    clip-path: inset(0 0 100% 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+html[data-perform] .nb-more[open] > :not(summary) {
+  animation: pf-in 420ms var(--mo-ease) both;
+}
+html[data-perform] .nb-more[open] .nb-pre {
+  animation: pf-unroll 900ms cubic-bezier(0.4, 0, 0.3, 1) 120ms both;
+}
+/* A chart draws itself left to right. */
+html[data-perform] .ch-fig {
+  animation: pf-draw 1100ms cubic-bezier(0.4, 0, 0.3, 1) 120ms both;
+}
+html[data-perform] .ch-read {
+  animation: pf-in 480ms var(--mo-ease) 900ms both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pf-spot,
+  .pf-cursor,
+  .pf-cursor svg {
+    transition: none;
+  }
+  .pf-ripple,
+  .pf-lock,
+  html[data-perform] .nb-slot,
+  html[data-perform] .nb-cell .tl-cell,
+  html[data-perform] .nb-method,
+  html[data-perform] .ch-fig,
+  html[data-perform] .ch-read,
+  html[data-perform] .nb-more[open] > :not(summary),
+  html[data-perform] .nb-more[open] .nb-pre,
+  html[data-perform] .answer,
+  html[data-perform] .dr-answer-head,
+  html[data-perform] .dr-answer-line,
+  html[data-perform] .dt {
+    animation: none;
+  }
+}
