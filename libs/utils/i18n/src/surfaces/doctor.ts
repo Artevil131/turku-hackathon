@@ -5,6 +5,8 @@ export const doctorEn = {
   drTargetMicrobes: "target organisms",
   drAllGrowing: "all growth",
   drBorderlineWhy: "The 95 % interval crosses the {bar} % bar.",
+  drBorderlineWhyLow:
+    "The estimate is at or above {bar} %, but the bar is judged on the lower end of the 95 % interval, which is {lo} %.",
   drNoSingle: "No single antibiotic clears the bar with certainty.",
   drBestPair: "First ranked combination: {name}, {share} %, n {n} — details",
   drDemo: "Synthetic demo data · not for patient care",
@@ -152,6 +154,8 @@ export const doctorFi: Record<keyof typeof doctorEn, string> = {
   drTargetMicrobes: "kohdemikrobit",
   drAllGrowing: "kaikki kasvavat",
   drBorderlineWhy: "95 %:n väli ulottuu rajan {bar} % molemmille puolille.",
+  drBorderlineWhyLow:
+    "Arvio on vähintään {bar} %, mutta rajaa arvioidaan 95 %:n välin alapään mukaan, ja se on {lo} %.",
   drNoSingle: "Yksikään antibiootti ei yksin ylitä rajaa varmuudella.",
   drBestPair: "Ensimmäiseksi sijoitettu yhdistelmä: {name}, {share} %, n {n} — tiedot",
   drDemo: "Synteettinen demoaineisto · ei potilashoitoon",

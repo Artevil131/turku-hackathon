@@ -137,7 +137,11 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
           <span className="cl-details">
             {t(locale, "drDetails")} <span aria-hidden="true">{isSel ? "−" : "+"}</span>
           </span>
-          {item.standing === "borderline" ? <span className="cl-why">{t(locale, "drBorderlineWhy", { bar })}</span> : null}
+          {item.standing === "borderline" ? (
+            <span className="cl-why">
+              {t(locale, item.interval ? "drBorderlineWhyLow" : "drBorderlineWhy", { bar, lo: item.interval ? pct(item.interval[0]) : "" })}
+            </span>
+          ) : null}
         </button>
       </li>
     );
