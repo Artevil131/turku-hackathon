@@ -1,11 +1,12 @@
 import type { CountiesResponse, RegionalResponse, RegionalSeries, RegionalSignal } from "@aei/contract";
 import { formatMonth, type Locale, t } from "@aei/i18n";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AsOf } from "../../AsOf.tsx";
 import { HOSPITALS, LINKS } from "../../intro/surface.ts";
 import type { PanelProps } from "../board.ts";
 import { centroidOf, pathOf } from "../map/geo.ts";
 import "./geo.css";
+import { CountyDetail } from "./CountyDetail.tsx";
 import { CountyForecasts } from "./CountyForecasts.tsx";
 import { type Layout, MAP_LAYOUT, mapPoint } from "./layout.ts";
 import { useLoad } from "./useLoad.ts";
@@ -125,6 +126,19 @@ export function GeoMap({ client, locale, asOf, reducedMotion }: PanelProps) {
   const [group, setGroup] = useState(DEFAULT_GROUP);
   const [chosen, setChosen] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
+  const detailHeading = useRef<HTMLHeadingElement>(null);
+  const mapHeading = useRef<HTMLHeadingElement>(null);
+  const wasChosen = useRef(false);
+  useEffect(() => {
+    if (chosen) {
+      // Focus also scrolls a previously scrolled workspace tile back to its detail.
+      detailHeading.current?.focus();
+      wasChosen.current = true;
+    } else if (wasChosen.current) {
+      mapHeading.current?.focus();
+      wasChosen.current = false;
+    }
+  }, [chosen]);
 
   const L: Layout = MAP_LAYOUT;
 
@@ -227,48 +241,10 @@ export function GeoMap({ client, locale, asOf, reducedMotion }: PanelProps) {
   );
 
   const fs = chosen ? byRegion.get(chosen) : undefined;
-  const card = (
-    <div className="geo-card" aria-live="polite">
-      {chosen && month ? (
-        <>
-          <p className="geo-card-name">
-            <strong>{shortName(chosen)}</strong>
-            {signalOf.has(chosen) ? <Glyph strong={(signalOf.get(chosen) as RegionalSignal).strong} /> : null}
-          </p>
-          {fs ? (
-            <>
-              <p className="geo-card-figs">
-                {t(locale, "geoMonthCases", { cases: fmt(locale, casesAt(chosen) ?? 0, 0), month: monthLong(month) })} · {rateText(chosen)}
-              </p>
-              <p className="geo-card-figs">
-                {t(locale, "mapFocusTwelve", {
-                  n: fmt(locale, sum(fs.cases.slice(Math.max(0, idx - 11), idx + 1)), 0),
-                  month: monthLong(month),
-                })}
-              </p>
-              {signalOf.has(chosen) ? (
-                <p className="geo-card-figs">
-                  {t(locale, (signalOf.get(chosen) as RegionalSignal).strong ? "mapSignalStrong" : "mapSignalWeak")} ·{" "}
-                  {t(locale, "mapSignalDetail", {
-                    cases: (signalOf.get(chosen) as RegionalSignal).cases,
-                    expected: fmt(locale, (signalOf.get(chosen) as RegionalSignal).expected),
-                    p: fmtP(locale, (signalOf.get(chosen) as RegionalSignal).p),
-                  })}
-                </p>
-              ) : null}
-              <Spark locale={locale} series={fs} months={months} signals={signalsAll.filter((s) => s.region === chosen)} />
-              <p className="geo-faint">{t(locale, "geoExpectedTick")}</p>
-            </>
-          ) : (
-            <p className="geo-faint">{t(locale, "geoNoRegional")}</p>
-          )}
-          <CountyForecasts forecasts={forecasts} region={chosen} locale={locale} />
-        </>
-      ) : (
-        <p className="geo-faint">{t(locale, "geoPick")}</p>
-      )}
-    </div>
-  );
+  const strongest = chosen
+    ? ([...(data?.signals ?? [])].filter((s) => s.region === chosen).sort((a, b) => Number(b.strong) - Number(a.strong) || a.p - b.p)[0] ??
+      null)
+    : null;
 
   const rows = shapes
     .map((c) => ({ ...c, rate: rateAt(c.name), cases: casesAt(c.name) }))
@@ -283,7 +259,7 @@ export function GeoMap({ client, locale, asOf, reducedMotion }: PanelProps) {
       data-reduced={reducedMotion}
     >
       <header className="geo-head">
-        <h2 id="geo-title" className="geo-title">
+        <h2 id="geo-title" className="geo-title" tabIndex={-1} ref={mapHeading}>
           {t(locale, "geoTitle")}
         </h2>
         {data ? (
@@ -325,166 +301,207 @@ export function GeoMap({ client, locale, asOf, reducedMotion }: PanelProps) {
         </p>
       ) : null}
 
-      <div className="geo-stage">
-        <svg viewBox={`0 0 ${L.w} ${L.h}`} className="geo-svg" role="group" aria-label={t(locale, "geoTitle")}>
-          <defs>
-            <marker id="geo-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
-              <path d="M1 1 L9 5 L1 9 Z" className="geo-spread-head" />
-            </marker>
-            <marker id="geo-arrow-trail" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
-              <path d="M1 1 L9 5 L1 9 Z" className="geo-trail-head" />
-            </marker>
-          </defs>
+      {chosen ? (
+        <CountyDetail
+          region={chosen}
+          signal={strongest}
+          groupLabel={strongest ? seriesLabel(locale, strongest.group) : ""}
+          forecasts={forecasts}
+          locale={locale}
+          onClose={() => setChosen(null)}
+          headingRef={detailHeading}
+        >
+          {fs && month ? (
+            <>
+              <p className="geo-card-figs">
+                {seriesLabel(locale, group)} ·{" "}
+                {t(locale, "geoMonthCases", { cases: fmt(locale, casesAt(chosen) ?? 0, 0), month: monthLong(month) })} · {rateText(chosen)}
+              </p>
+              <p className="geo-card-figs">
+                {t(locale, "mapFocusTwelve", {
+                  n: fmt(locale, sum(fs.cases.slice(Math.max(0, idx - 11), idx + 1)), 0),
+                  month: monthLong(month),
+                })}
+              </p>
+              <Spark locale={locale} series={fs} months={months} signals={signalsAll.filter((s) => s.region === chosen)} />
+              <p className="geo-faint">{t(locale, "geoExpectedTick")}</p>
+            </>
+          ) : null}
+        </CountyDetail>
+      ) : (
+        <>
+          <div className="geo-stage">
+            <svg viewBox={`0 0 ${L.w} ${L.h}`} className="geo-svg" role="group" aria-label={t(locale, "geoTitle")}>
+              <defs>
+                <marker id="geo-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                  <path d="M1 1 L9 5 L1 9 Z" className="geo-spread-head" />
+                </marker>
+                <marker id="geo-arrow-trail" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                  <path d="M1 1 L9 5 L1 9 Z" className="geo-trail-head" />
+                </marker>
+              </defs>
 
-          <g transform={`scale(${L.s})`}>
-            {shapes.map((c) => (
-              <path
-                key={c.name}
-                d={c.d}
-                className={`geo-county geo-fill-${fillOf(c.name)}`}
-                data-selected={chosen === c.name}
-                vectorEffect="non-scaling-stroke"
-                role="button"
-                tabIndex={-1}
-                aria-label={shortName(c.name)}
-                aria-pressed={chosen === c.name}
-                onClick={() => setChosen((cur) => (cur === c.name ? null : c.name))}
-                onKeyDown={(e) => e.key === "Enter" && setChosen((cur) => (cur === c.name ? null : c.name))}
-              >
-                <title>
-                  {data && month
-                    ? t(locale, "mapCountyLabel", {
-                        region: shortName(c.name),
-                        cases: casesAt(c.name) ?? 0,
-                        month: monthLong(month),
-                        rate: rateText(c.name),
-                      })
-                    : shortName(c.name)}
-                </title>
-              </path>
-            ))}
-          </g>
-
-          <g className="geo-refs">
-            {LINKS.map(([a, b, w]) => {
-              const pa = hospitals.get(a)?.p;
-              const pb = hospitals.get(b)?.p;
-              if (!pa || !pb) return null;
-              const isTyks = a === "Tyks" || b === "Tyks";
-              return (
-                <line
-                  key={`${a}|${b}`}
-                  x1={pa[0]}
-                  y1={pa[1]}
-                  x2={pb[0]}
-                  y2={pb[1]}
-                  className="geo-ref"
-                  data-uni={w < 1}
-                  data-tyks={isTyks}
-                />
-              );
-            })}
-            {[...hospitals.values()].map((h) => {
-              const tipKind = t(locale, h.uni ? "geoUniHospital" : "geoCentralHospital");
-              const tip = h.to ? t(locale, "geoCentralTo", { name: h.name, kind: tipKind, to: h.to }) : `${h.name}, ${tipKind}`;
-              return (
-                <g key={h.id}>
-                  <circle
-                    cx={h.p[0]}
-                    cy={h.p[1]}
-                    r={h.id === "Tyks" ? 7 : h.uni ? 5.5 : 3.2}
-                    className="geo-hosp"
-                    data-uni={!!h.uni}
-                    data-tyks={h.id === "Tyks"}
-                  >
-                    <title>{tip}</title>
-                  </circle>
-                  {h.uni ? (
-                    <text
-                      x={h.id === "Tyks" ? h.p[0] - 11 : h.p[0] + 9}
-                      y={h.p[1] + 4.5}
-                      textAnchor={h.id === "Tyks" ? "end" : "start"}
-                      className="geo-hosp-label"
-                      data-tyks={h.id === "Tyks"}
-                    >
-                      {h.id}
-                    </text>
-                  ) : null}
-                </g>
-              );
-            })}
-          </g>
-
-          <g className="geo-sigs" pointerEvents="none">
-            {shapes
-              .filter((c) => signalOf.has(c.name))
-              .map((c) => {
-                const s = signalOf.get(c.name) as RegionalSignal;
-                let x = c.cx * L.s;
-                const y = c.cy * L.s - 9;
-                for (const h of hospitals.values()) if (Math.hypot(h.p[0] - x, h.p[1] - y) < 12) x += 14;
-                return (
-                  <circle key={c.name} cx={x} cy={y} r={6} className={s.strong ? "geo-glyph geo-glyph-strong" : "geo-glyph geo-glyph-weak"}>
-                    <title>
-                      {shortName(c.name)}:{" "}
-                      {t(locale, "mapSignalDetail", { cases: s.cases, expected: fmt(locale, s.expected), p: fmtP(locale, s.p) })}
-                    </title>
-                  </circle>
-                );
-              })}
-          </g>
-
-          <circle cx={tyks[0]} cy={tyks[1]} r={11} className="geo-anchor" />
-        </svg>
-
-        {edgeMax > 0 ? <div className="geo-overlay-legend">{legendScale}</div> : null}
-        {chosen ? <div className="geo-overlay-card">{card}</div> : null}
-      </div>
-
-      {legendKeys}
-
-      {forecasts.length > 0 ? (
-        <section className="geo-forecast-home" aria-label={t(locale, "geoForecastHome")}>
-          <h3 className="geo-h3">{t(locale, "geoForecastHome")}</h3>
-          <CountyForecasts forecasts={forecasts} region={home} locale={locale} />
-          <p className="geo-faint">{t(locale, "geoForecastNote")}</p>
-          <p className="geo-faint">{t(locale, "geoForecastCaveat")}</p>
-        </section>
-      ) : null}
-
-      <details className="geo-lists">
-        <summary className="geo-h3">{t(locale, "geoCounties")}</summary>
-        <section aria-label={t(locale, "geoCounties")}>
-          {rows.length === 0 ? (
-            <p className="geo-faint">
-              {counties.state === "404" ? t(locale, "geoNoCounties") : loading ? t(locale, "mapLoading") : t(locale, "geoNoCases")}
-            </p>
-          ) : (
-            <ul className="geo-list geo-list-counties">
-              {rows.map((c) => (
-                <li key={c.name}>
-                  <button
-                    type="button"
-                    className="geo-row"
+              <g transform={`scale(${L.s})`}>
+                {shapes.map((c) => (
+                  <path
+                    key={c.name}
+                    d={c.d}
+                    className={`geo-county geo-fill-${fillOf(c.name)}`}
+                    data-selected={chosen === c.name}
+                    vectorEffect="non-scaling-stroke"
+                    role="button"
+                    tabIndex={0}
+                    aria-label={shortName(c.name)}
                     aria-pressed={chosen === c.name}
-                    onClick={() => setChosen(c.name)}
-                    title={c.name}
+                    onClick={() => setChosen((cur) => (cur === c.name ? null : c.name))}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setChosen(c.name);
+                      }
+                    }}
                   >
-                    <span className="geo-row-glyphs" aria-hidden="true">
-                      {signalOf.has(c.name) ? <Glyph strong={(signalOf.get(c.name) as RegionalSignal).strong} size={14} /> : null}
-                    </span>
-                    <span className="geo-row-name">{shortName(c.name)}</span>
-                    <span className="geo-row-figs">
-                      {c.rate === null ? "–" : fmt(locale, c.rate)} · n {c.cases ?? 0}
-                    </span>
-                  </button>
-                  <CountyForecasts forecasts={forecasts} region={c.name} locale={locale} />
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      </details>
+                    <title>
+                      {data && month
+                        ? t(locale, "mapCountyLabel", {
+                            region: shortName(c.name),
+                            cases: casesAt(c.name) ?? 0,
+                            month: monthLong(month),
+                            rate: rateText(c.name),
+                          })
+                        : shortName(c.name)}
+                    </title>
+                  </path>
+                ))}
+              </g>
+
+              <g className="geo-refs">
+                {LINKS.map(([a, b, w]) => {
+                  const pa = hospitals.get(a)?.p;
+                  const pb = hospitals.get(b)?.p;
+                  if (!pa || !pb) return null;
+                  const isTyks = a === "Tyks" || b === "Tyks";
+                  return (
+                    <line
+                      key={`${a}|${b}`}
+                      x1={pa[0]}
+                      y1={pa[1]}
+                      x2={pb[0]}
+                      y2={pb[1]}
+                      className="geo-ref"
+                      data-uni={w < 1}
+                      data-tyks={isTyks}
+                    />
+                  );
+                })}
+                {[...hospitals.values()].map((h) => {
+                  const tipKind = t(locale, h.uni ? "geoUniHospital" : "geoCentralHospital");
+                  const tip = h.to ? t(locale, "geoCentralTo", { name: h.name, kind: tipKind, to: h.to }) : `${h.name}, ${tipKind}`;
+                  return (
+                    <g key={h.id}>
+                      <circle
+                        cx={h.p[0]}
+                        cy={h.p[1]}
+                        r={h.id === "Tyks" ? 7 : h.uni ? 5.5 : 3.2}
+                        className="geo-hosp"
+                        data-uni={!!h.uni}
+                        data-tyks={h.id === "Tyks"}
+                      >
+                        <title>{tip}</title>
+                      </circle>
+                      {h.uni ? (
+                        <text
+                          x={h.id === "Tyks" ? h.p[0] - 11 : h.p[0] + 9}
+                          y={h.p[1] + 4.5}
+                          textAnchor={h.id === "Tyks" ? "end" : "start"}
+                          className="geo-hosp-label"
+                          data-tyks={h.id === "Tyks"}
+                        >
+                          {h.id}
+                        </text>
+                      ) : null}
+                    </g>
+                  );
+                })}
+              </g>
+
+              <g className="geo-sigs" pointerEvents="none">
+                {shapes
+                  .filter((c) => signalOf.has(c.name))
+                  .map((c) => {
+                    const s = signalOf.get(c.name) as RegionalSignal;
+                    let x = c.cx * L.s;
+                    const y = c.cy * L.s - 9;
+                    for (const h of hospitals.values()) if (Math.hypot(h.p[0] - x, h.p[1] - y) < 12) x += 14;
+                    return (
+                      <circle
+                        key={c.name}
+                        cx={x}
+                        cy={y}
+                        r={6}
+                        className={s.strong ? "geo-glyph geo-glyph-strong" : "geo-glyph geo-glyph-weak"}
+                      >
+                        <title>
+                          {shortName(c.name)}:{" "}
+                          {t(locale, "mapSignalDetail", { cases: s.cases, expected: fmt(locale, s.expected), p: fmtP(locale, s.p) })}
+                        </title>
+                      </circle>
+                    );
+                  })}
+              </g>
+
+              <circle cx={tyks[0]} cy={tyks[1]} r={11} className="geo-anchor" />
+            </svg>
+
+            {edgeMax > 0 ? <div className="geo-overlay-legend">{legendScale}</div> : null}
+          </div>
+
+          {legendKeys}
+
+          {forecasts.length > 0 ? (
+            <section className="geo-forecast-home" aria-label={t(locale, "geoForecastHome")}>
+              <h3 className="geo-h3">{t(locale, "geoForecastHome")}</h3>
+              <CountyForecasts forecasts={forecasts} region={home} locale={locale} />
+              <p className="geo-faint">{t(locale, "geoForecastNote")}</p>
+              <p className="geo-faint">{t(locale, "geoForecastCaveat")}</p>
+            </section>
+          ) : null}
+
+          <details className="geo-lists">
+            <summary className="geo-h3">{t(locale, "geoCounties")}</summary>
+            <section aria-label={t(locale, "geoCounties")}>
+              {rows.length === 0 ? (
+                <p className="geo-faint">
+                  {counties.state === "404" ? t(locale, "geoNoCounties") : loading ? t(locale, "mapLoading") : t(locale, "geoNoCases")}
+                </p>
+              ) : (
+                <ul className="geo-list geo-list-counties">
+                  {rows.map((c) => (
+                    <li key={c.name}>
+                      <button
+                        type="button"
+                        className="geo-row"
+                        aria-pressed={chosen === c.name}
+                        onClick={() => setChosen(c.name)}
+                        title={c.name}
+                      >
+                        <span className="geo-row-glyphs" aria-hidden="true">
+                          {signalOf.has(c.name) ? <Glyph strong={(signalOf.get(c.name) as RegionalSignal).strong} size={14} /> : null}
+                        </span>
+                        <span className="geo-row-name">{shortName(c.name)}</span>
+                        <span className="geo-row-figs">
+                          {c.rate === null ? "–" : fmt(locale, c.rate)} · n {c.cases ?? 0}
+                        </span>
+                      </button>
+                      <CountyForecasts forecasts={forecasts} region={c.name} locale={locale} />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </details>
+        </>
+      )}
     </section>
   );
 }
