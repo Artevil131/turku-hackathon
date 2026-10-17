@@ -65,7 +65,7 @@ function useSize() {
   return { ref, size };
 }
 
-export function UnitGraph({ client, locale, asOf, state, onChange, reducedMotion }: PanelProps) {
+export function UnitGraph({ client, locale, asOf, state, onChange, reducedMotion, kin = [], hasSelection = false }: PanelProps) {
   const [hover, setHover] = useState<WardCode | null>(null);
   const [mode, setMode] = useState<"around" | "all">("around");
   const [attempt, setAttempt] = useState(0);
@@ -303,7 +303,7 @@ export function UnitGraph({ client, locale, asOf, state, onChange, reducedMotion
       return (
         <g
           key={nodeKey}
-          className="ug-node"
+          className={`ug-node${kin.includes(unit) ? " is-kin" : ""}`}
           role="button"
           tabIndex={0}
           aria-label={aria(unit, p, dir)}
@@ -331,7 +331,7 @@ export function UnitGraph({ client, locale, asOf, state, onChange, reducedMotion
 
   return (
     <section
-      className="board-panel ug"
+      className={`board-panel ug${hasSelection ? " has-selection" : ""}`}
       aria-labelledby="ug-title"
       aria-busy={loading || updating}
       data-stale={updating}

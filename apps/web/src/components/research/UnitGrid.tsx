@@ -50,7 +50,7 @@ interface Cell {
   cluster: boolean;
 }
 
-export function UnitGrid({ client, locale, asOf, state, onChange }: PanelProps) {
+export function UnitGrid({ client, locale, asOf, state, onChange, kin = [], hasSelection = false }: PanelProps) {
   const phenotype: Phenotype = state.phenotype ?? "esbl";
   const weeks = state.weeks;
   // The unit lit in the grid: the selected incident's, else the unit filter.
@@ -173,7 +173,12 @@ export function UnitGrid({ client, locale, asOf, state, onChange }: PanelProps) 
   const topWeek = asOf ? mondayMs(asOf) : null;
 
   return (
-    <section className="board-panel ugrid" aria-labelledby="ugrid-title" aria-busy={loading} data-stale={updating}>
+    <section
+      className={`board-panel ugrid${hasSelection ? " has-selection" : ""}${state.unit ? " has-unit" : ""}`}
+      aria-labelledby="ugrid-title"
+      aria-busy={loading}
+      data-stale={updating}
+    >
       <header className="ugrid-head">
         <div className="ugrid-titleline">
           <h2 id="ugrid-title" className="ugrid-title">
@@ -243,7 +248,7 @@ export function UnitGrid({ client, locale, asOf, state, onChange }: PanelProps) 
                       key={w.code}
                       scope="col"
                       title={w[locale]}
-                      className="ugrid-colhead"
+                      className={`ugrid-colhead${kin.includes(w.code) ? " is-kin" : ""}`}
                       data-selected={lit === w.code}
                       aria-label={lit === w.code ? `${w[locale]}, ${t(locale, "gridSelectedUnit")}` : w[locale]}
                     >
