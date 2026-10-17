@@ -3,6 +3,7 @@ import { useId, useState } from "react";
 import type { FeedMeta } from "../../feed/types.ts";
 import { formatDate, formatNumber, formatShare, type Locale, t } from "../../i18n/index.ts";
 import type { AwareGroup, Share } from "../../model/types.ts";
+import { DemoLabel } from "../../ui/DemoLabel.tsx";
 import {
   AwareBadge,
   Card,
@@ -159,7 +160,7 @@ function Basis({
           </span>
         ))}
       </p>
-      <p className="treat-basis-demo">{t(locale, "treat.basis.demo")}</p>
+      <DemoLabel locale={locale} />
       {c.level !== "unit" ? (
         <p className="treat-note is-widened">
           <Icon name="alert-triangle" size={18} />
@@ -197,16 +198,18 @@ function Facts({ locale, items, min }: { locale: Locale; items: { label: string;
 
 function standingText(locale: Locale, s: Suggestion, threshold: string, min: number): string {
   const { standing } = s;
-  if (standing === "clears") return t(locale, "treat.standing.clears", { threshold });
+  const basis = t(locale, s.basis === "spectrum" ? "treat.standing.spectrum" : "treat.standing.all");
+  if (standing === "clears") return t(locale, "treat.standing.clears", { threshold, basis });
   if (standing === "borderline")
     return t(locale, "treat.standing.borderline", {
       threshold,
+      basis,
       percent: pct(locale, s.share ?? 0),
       lo: s.interval ? pct(locale, s.interval[0]) : "—",
       hi: s.interval ? pct(locale, s.interval[1]) : "—",
     });
-  if (standing === "below") return t(locale, "treat.standing.below", { threshold });
-  return t(locale, "treat.standing.na", { min: formatNumber(locale, min) });
+  if (standing === "below") return t(locale, "treat.standing.below", { threshold, basis });
+  return t(locale, "treat.standing.na", { min: formatNumber(locale, min), basis });
 }
 
 /** "E. faecalis 10 %, S. aureus 4 %": organisms as shares of the samples behind the figure. */
@@ -238,6 +241,7 @@ function TopMatch({ locale, meta, s, threshold, min }: { locale: Locale; meta: F
     : undefined;
   const all = s.allOrganisms.share;
   const allRange = interval(locale, s.allOrganisms.interval);
+  const standing = <p className={`treat-top-standing is-${s.standing.replace(" ", "-")}`}>{standingText(locale, s, threshold, min)}</p>;
 
   return (
     <article className={`treat-top${ok ? "" : " is-few"}`} aria-labelledby={headingId}>
@@ -257,8 +261,8 @@ function TopMatch({ locale, meta, s, threshold, min }: { locale: Locale; meta: F
       {s.basis === "spectrum" ? (
         <dl className="treat-answer-figures">
           {[
-            { label: t(locale, "treat.fig.spectrum"), share: s.share, range, counts: basisCounts },
-            { label: t(locale, "treat.fig.all"), share: all, range: allRange, counts: c.counts },
+            { label: t(locale, "treat.fig.spectrum"), share: s.share, range, counts: basisCounts, judged: true },
+            { label: t(locale, "treat.fig.all"), share: all, range: allRange, counts: c.counts, judged: false },
           ].map((figure) => (
             <div key={figure.label}>
               <dt>{figure.label}</dt>
@@ -268,14 +272,17 @@ function TopMatch({ locale, meta, s, threshold, min }: { locale: Locale; meta: F
                 <span className="u-num">
                   {formatNumber(locale, figure.counts.covered)}/{formatNumber(locale, figure.counts.known)}
                 </span>
+                {figure.judged ? standing : null}
               </dd>
             </div>
           ))}
         </dl>
       ) : (
-        <ShareBar locale={locale} share={asShare(basisCounts)} min={min} size="lg" label={t(locale, "treat.fig.all")} caption={caption} />
+        <>
+          <ShareBar locale={locale} share={asShare(basisCounts)} min={min} size="lg" label={t(locale, "treat.fig.all")} caption={caption} />
+          {standing}
+        </>
       )}
-      <p className={`treat-top-standing is-${s.standing.replace(" ", "-")}`}>{standingText(locale, s, threshold, min)}</p>
       {c.notCovering.length > 0 ? (
         <p className="treat-top-notfor">
           <Icon name="info" size={16} />

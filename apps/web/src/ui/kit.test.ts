@@ -105,12 +105,22 @@ describe("kit", () => {
     ];
     for (const p of parts) expect(renderToStaticMarkup(p).length).toBeGreaterThan(0);
   });
+  it("collapses phone simulation controls by default without changing desktop controls", () => {
+    const phone = renderToStaticMarkup(h(SimControl, { locale: "en", clock, onControl: async () => {}, desktop: false }));
+    expect(phone).toContain("Simulation");
+    expect(phone).toContain('aria-expanded="false"');
+    expect(phone).not.toContain("+1 day");
+    expect(phone).not.toContain(">Play<");
+    const desktop = renderToStaticMarkup(h(SimControl, { locale: "en", clock, onControl: async () => {}, desktop: true }));
+    expect(desktop).toContain("+1 day");
+    expect(desktop).toContain("Whole demo period:");
+  });
   it("labels the freshness and the alerts badge in words", () => {
     expect(
       renderToStaticMarkup(
         h(FreshChip, { locale: "fi", status: "live", asOf: "2025-05-12", arrivalSeq: 0, checking: false, short: false }),
       ),
-    ).toContain("Tulokset 12. toukokuuta 2025 asti");
+    ).toContain("Simulaation nykyhetki: 12. toukokuuta 2025");
     expect(renderToStaticMarkup(h(Tabs, { locale: "en", route: "treat", alertsBadge: 3, variant: "top" }))).toContain(
       "3 not yet marked seen",
     );

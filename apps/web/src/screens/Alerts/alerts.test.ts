@@ -8,7 +8,7 @@ import { store } from "../../ui/hooks.ts";
 import { describe } from "./describe.tsx";
 import { DEFAULT_FILTERS, isActive, passes, reveal, sortAlerts, unseenActive } from "./filters.ts";
 import { AlertsScreen } from "./index.tsx";
-import { Body, patientTag } from "./parts.tsx";
+import { Body, patientTag, Summary } from "./parts.tsx";
 
 // Made-up codes on purpose: the screen must work with any feed.
 const meta: FeedMeta = {
@@ -195,6 +195,15 @@ group("alert wording", () => {
   it("words an empty run as results that stopped, over the run's own days", () => {
     const run = { ...gap, id: "gap|run", source: "empty-run" as const, observed: 0, expected: 12, windowDays: 4 };
     expect(describe("en", meta, run, asOf).how).toBe("0 results in the last 4 days. Normally about 12.");
+  });
+  it("keeps the patient count and responsible team together by the incident heading", () => {
+    for (const locale of ["en", "fi"] as const) {
+      const d = describe(locale, meta, sentinel, asOf);
+      const html = renderToStaticMarkup(h(Summary, { locale, d, control: d.title.node, level: 2 }));
+      const facts = html.slice(html.indexOf('class="alerts-heading-facts"'));
+      expect(facts).toContain(locale === "en" ? "1 patient" : "1 potilas");
+      expect(facts).toContain(locale === "en" ? "Infection control" : "Infektioiden torjunta");
+    }
   });
   it("names a rare find with its flag and organism", () => {
     const d = describe("en", meta, sentinel, asOf);

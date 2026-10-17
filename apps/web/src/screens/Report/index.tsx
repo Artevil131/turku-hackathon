@@ -2,6 +2,7 @@ import { useDeferredValue, useMemo } from "react";
 import type { FeedMeta, IsoDate, Result } from "../../feed/types.ts";
 import { formatDate, formatNumber, type Locale, t } from "../../i18n/index.ts";
 import type { AgeBand, Catalog, PatientQuery } from "../../model/types.ts";
+import { DemoLabel } from "../../ui/DemoLabel.tsx";
 import {
   ageLabel,
   antibioticName,
@@ -178,6 +179,7 @@ export function ReportScreen(p: {
           <h1 id="report-title" className="report-title">
             {site} · {view === "units" ? t(locale, "common.unit.all") : unitLabel}
           </h1>
+          <DemoLabel locale={locale} />
           <p className="report-who">
             {organism ? <Org name={organism} /> : t(locale, "report.filter.organismAll")}
             {" · "}

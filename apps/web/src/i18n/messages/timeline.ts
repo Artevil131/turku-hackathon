@@ -101,8 +101,8 @@ const en = {
   "timeline.legend.notYet": "Not arrived yet",
   "timeline.legend.severity": "Signal colour shows how serious it is; the mark inside shows the kind",
 
-  "timeline.region.title": "The region: county signals",
-  "timeline.region.jump": "The region: county signals below",
+  "timeline.region.title": "Unusual county-months",
+  "timeline.region.jump": "Unusual county-months below",
   "timeline.region.loading": "Loading THL county signals…",
   "timeline.region.method": "How this is calculated",
   "timeline.region.methodExpected":
@@ -113,8 +113,8 @@ const en = {
     "A strong signal also survives a Bonferroni correction at 0.05 over all {tested} county-months tested (across the notification series). Other signals may be chance.",
   "timeline.region.methodCounts":
     "Counts are THL notifications, not confirmed outbreaks. The latest months are still revised. These real public data are separate from the synthetic hospital demo.",
-  "timeline.region.sub": "THL notifications of MRSA, ESBL, VRE and CPE per wellbeing services county, months up to {month}",
-  "timeline.region.signal": "{month}: {cases} cases, about {expected} expected",
+  "timeline.region.sub": "The region: THL notifications of MRSA, ESBL, VRE and CPE per wellbeing services county, months up to {month}",
+  "timeline.region.signal": "{month}: {cases} cases, about {expected} expected from the county's own history",
   "timeline.region.strong": "Strong signal",
   "timeline.region.weak": "May be chance",
   "timeline.region.home": "Tyks's county",
@@ -246,8 +246,8 @@ const fi: Record<keyof typeof en, string> = {
   "timeline.legend.notYet": "Ei vielä saapunut",
   "timeline.legend.severity": "Signaalin väri kertoo vakavuuden, merkki sen sisällä lajin",
 
-  "timeline.region.title": "Alue: hyvinvointialueiden signaalit",
-  "timeline.region.jump": "Alue: hyvinvointialueiden signaalit alempana",
+  "timeline.region.title": "Poikkeavat alue-kuukaudet",
+  "timeline.region.jump": "Poikkeavat alue-kuukaudet alempana",
   "timeline.region.loading": "Ladataan THL:n aluesignaaleja…",
   "timeline.region.method": "Miten tämä lasketaan",
   "timeline.region.methodExpected":
@@ -258,8 +258,8 @@ const fi: Record<keyof typeof en, string> = {
     "Vahva signaali kestää myös Bonferroni-korjauksen tasolla 0,05 kaikkien {tested} testatun alue-kuukauden yli (kaikissa ilmoitussarjoissa). Muut signaalit voivat olla sattumaa.",
   "timeline.region.methodCounts":
     "Luvut ovat THL:n ilmoituksia, eivät vahvistettuja epidemioita. Viimeisimpiä kuukausia tarkennetaan vielä. Nämä todelliset julkiset tiedot ovat erillään synteettisestä sairaalademosta.",
-  "timeline.region.sub": "THL:n MRSA-, ESBL-, VRE- ja CPE-ilmoitukset hyvinvointialueittain, kuukaudet {month} asti",
-  "timeline.region.signal": "{month}: {cases} tapausta, odotettu noin {expected}",
+  "timeline.region.sub": "Alue: THL:n MRSA-, ESBL-, VRE- ja CPE-ilmoitukset hyvinvointialueittain, kuukaudet {month} asti",
+  "timeline.region.signal": "{month}: {cases} tapausta, odotettu noin {expected} alueen omasta historiasta",
   "timeline.region.strong": "Vahva signaali",
   "timeline.region.weak": "Voi olla sattumaa",
   "timeline.region.home": "Tyksin alue",

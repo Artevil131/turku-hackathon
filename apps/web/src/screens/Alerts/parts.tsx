@@ -45,7 +45,7 @@ export function Tags({ locale, s, isNew }: { locale: Locale; s: Signal; isNew: b
 }
 
 /** Title (as the given control), second line, where · when, and the one-line evidence. */
-export function Summary({ d, control, level = 3, short = true }: { d: Described; control: ReactNode; level?: 2 | 3; short?: boolean }) {
+export function Summary({ locale, d, control, level = 3 }: { locale: Locale; d: Described; control: ReactNode; level?: 2 | 3 }) {
   const H = level === 2 ? "h2" : "h3";
   return (
     <>
@@ -56,7 +56,16 @@ export function Summary({ d, control, level = 3, short = true }: { d: Described;
         <span aria-hidden="true"> · </span>
         <span>{d.when}</span>
       </p>
-      {short && d.short ? <p className="alerts-short u-num">{d.short}</p> : null}
+      <div className="alerts-heading-facts">
+        {d.short ? <p className="alerts-short u-num">{d.short}</p> : null}
+        <p className="alerts-owner">
+          <Icon name={AUDIENCE_ICON[d.audience]} size={16} />
+          <span>
+            <span className="u-sr">{t(locale, "alerts.label.who")}: </span>
+            {t(locale, `alerts.who.${d.audience}`)}
+          </span>
+        </p>
+      </div>
     </>
   );
 }

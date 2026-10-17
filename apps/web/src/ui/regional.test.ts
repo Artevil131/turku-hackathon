@@ -26,7 +26,7 @@ describe("regional provenance and method", () => {
       vi.mocked(useRegional).mockReturnValue({ status });
       const html = renderToStaticMarkup(h(RegionalCard, { locale: "en", asOf: data.asOf }));
       expect(html).toContain('id="timeline-region" tabindex="-1"');
-      expect(html).toContain("The region: county signals");
+      expect(html).toContain("Unusual county-months");
     }
   });
   it("provides the method even when there are no signals, in both languages", () => {

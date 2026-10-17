@@ -44,7 +44,6 @@ const en = {
 
   // ---- Basis: what the answer rests on ----
   "treat.result.label": "What has worked",
-  "treat.basis.demo": "Demo: the organisers' synthetic Tyks dataset",
   "treat.basis.lead": "Based on {n} first isolates",
   "treat.basis.leadOne": "Based on 1 first isolate",
   "treat.basis.year": "last {months} months",
@@ -69,10 +68,12 @@ const en = {
   "treat.top.notFor": "Does not cover: {list}",
   "treat.top.none": "No single antibiotic reliably reaches {threshold}: for that, its whole 95% range must be above {threshold}.",
   "treat.top.decide": "How often each antibiotic covered what grew in similar samples here. You decide — check your local guideline.",
-  "treat.standing.clears": "Reaches {threshold}: the whole 95% range is above it",
-  "treat.standing.borderline": "Estimate {percent}, but the range {lo}–{hi} dips below {threshold}",
-  "treat.standing.below": "Below {threshold}",
-  "treat.standing.na": "Not assessable: fewer than {min} results, or over a fifth not tested",
+  "treat.standing.spectrum": "Of the bacteria it is meant for",
+  "treat.standing.all": "Of everything that grows",
+  "treat.standing.clears": "{basis}, the whole 95% range is above {threshold}",
+  "treat.standing.borderline": "{basis}: estimate {percent}, but the range {lo}–{hi} dips below {threshold}",
+  "treat.standing.below": "{basis}: below {threshold}",
+  "treat.standing.na": "{basis}: not assessable, fewer than {min} results, or over a fifth not tested",
 
   // ---- Figures side by side ----
   "treat.fig.spectrum": "Of the bacteria it is meant for",
@@ -165,7 +166,6 @@ const fi: Record<keyof typeof en, string> = {
   "treat.institution.primary_care": "Perusterveydenhuolto",
 
   "treat.result.label": "Mikä on tehonnut",
-  "treat.basis.demo": "Demo: järjestäjien synteettinen Tyks-aineisto",
   "treat.basis.lead": "Perustuu {n} ensimmäiseen löydökseen",
   "treat.basis.leadOne": "Perustuu 1 ensimmäiseen löydökseen",
   "treat.basis.year": "viimeiset {months} kuukautta",
@@ -191,10 +191,12 @@ const fi: Record<keyof typeof en, string> = {
     "Mikään yksittäinen antibiootti ei yllä luotettavasti tasoon {threshold}: koko 95 %:n vaihteluvälin on oltava tason {threshold} yläpuolella.",
   "treat.top.decide":
     "Kuinka usein kukin antibiootti on tehonnut vastaavissa näytteissä täällä. Sinä päätät – tarkista paikallinen hoito-ohje.",
-  "treat.standing.clears": "Yltää tasoon {threshold}: koko 95 %:n vaihteluväli on sen yläpuolella",
-  "treat.standing.borderline": "Arvio {percent}, mutta vaihteluväli {lo}–{hi} ulottuu tason {threshold} alapuolelle",
-  "treat.standing.below": "Alle {threshold}",
-  "treat.standing.na": "Ei arvioitavissa: alle {min} tulosta tai yli viidennes testaamatta",
+  "treat.standing.spectrum": "Bakteereista, joihin lääke on tarkoitettu",
+  "treat.standing.all": "Kaikista kasvavista bakteereista",
+  "treat.standing.clears": "{basis}: koko 95 %:n vaihteluväli on tason {threshold} yläpuolella",
+  "treat.standing.borderline": "{basis}: arvio {percent}, mutta vaihteluväli {lo}–{hi} ulottuu tason {threshold} alapuolelle",
+  "treat.standing.below": "{basis}: alle {threshold}",
+  "treat.standing.na": "{basis}: ei arvioitavissa, alle {min} tulosta tai yli viidennes testaamatta",
 
   "treat.fig.spectrum": "Niistä bakteereista, joihin se on tarkoitettu",
   "treat.fig.all": "Kaikista täällä kasvaneista bakteereista",

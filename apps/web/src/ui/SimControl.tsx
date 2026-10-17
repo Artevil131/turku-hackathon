@@ -9,7 +9,7 @@ import { Sheet } from "./Sheet.tsx";
   SimControl: the DEMO SIMULATION band under the header. Clearly labelled
   "Simulation" in its own (violet) colour: a live hospital feed has no such
   control. Play / pause, +1 day, +1 week, speed and jump to a date.
-  Phones: a slim row (play/pause, +1 day, the date) whose "more" button opens a sheet with everything.
+  Phones: a single Simulation toggle opens a sheet with every control.
     locale    Locale
     clock     FeedClock
     onControl (command: FeedCommand) => Promise<unknown>
@@ -160,13 +160,16 @@ export function SimControl({
   return (
     <section className="app-sim is-phone" aria-label={t(locale, "common.sim.label")}>
       <div className="app-sim-inner">
-        {label}
-        <div className="app-sim-group">
-          {playPause}
-          {step(1)}
-        </div>
-        <button type="button" className="k-iconbtn is-sim-more" onClick={() => setSheet(true)} aria-label={t(locale, "common.sim.more")}>
-          <Icon name="sliders" size={20} />
+        <button
+          type="button"
+          className="k-btn is-sim-ghost app-sim-toggle"
+          onClick={() => setSheet(true)}
+          aria-expanded={sheet}
+          aria-haspopup="dialog"
+        >
+          <Icon name="flask" size={16} />
+          {t(locale, "common.sim.label")}
+          <Icon name="chevron-down" size={16} />
         </button>
       </div>
       {error}
