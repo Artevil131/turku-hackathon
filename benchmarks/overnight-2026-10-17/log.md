@@ -48,3 +48,4 @@ Code, Opus 5.5, operated by Artem).
 | 09:08 | 0017 Farrington-Noufaily (m11) | plan start | Sonnet 5.5 | | plan then implement; unit series added so D2 can match |
 | 09:10 | 0016 | result committed | Sonnet 5.5 | 71 s CPU | year 1 chose θ 8 (not C5's 2.5); D5 rare 0.665 (0.597–0.727), common ESBL 0.485 at 3.52 episodes/yr vs live set 0.92 / 0.75; Siegmund/simulation ARL ratio 0.91; Bernoulli part carries 123 of 133 rare hits; no Fable review |
 | 09:11 | 0022 ensemble (m21) | plan start | Fable 5.1 | | the two best by D5: live set (re-tuned) and the 0016 CUSUM union |
+| 09:17 | 0022 | plan committed | Fable 5.1 | 8 min | primary row rank product; stack and union/intersection as references; calibration frozen at 2024-09-30 |
