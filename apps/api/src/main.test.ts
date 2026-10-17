@@ -201,6 +201,27 @@ describe("research projects (D-057, D-058)", () => {
     await expect(restarted.deleteProject(project.id)).rejects.toMatchObject({ status: 404 });
   });
 
+  it("roundtrips opaque project layouts and rejects oversized layouts", async () => {
+    vi.stubEnv("AEI_STATE_DIR", dir);
+    const base = await startApi();
+    const client = createAeiClient({ baseUrl: base });
+    const layout = { v: 2, columns: [], closed: {}, maximized: null };
+    const created = await client.createProject({ ...input, layout });
+    expect(created.project.layout).toEqual(layout);
+    const changed = { ...layout, maximized: "coverage" };
+    await client.updateProject(created.project.id, { ...input, layout: changed });
+    expect((await client.project(created.project.id)).project.layout).toEqual(changed);
+    for (const layout of [[], null, { text: "x".repeat(20_000) }]) {
+      const response = await fetch(`${base}/api/projects`, { method: "POST", body: JSON.stringify({ ...input, layout }) });
+      expect(response.status).toBe(400);
+    }
+    await stop(api);
+    api = undefined;
+    vi.resetModules();
+    const restarted = createAeiClient({ baseUrl: await startApi() });
+    expect((await restarted.project(created.project.id)).project.layout).toEqual(changed);
+  });
+
   it("pins frozen rows without moving the clock, reports drift and only repins when the cut changes", async () => {
     const base = await startApi();
     const client = createAeiClient({ baseUrl: base });
