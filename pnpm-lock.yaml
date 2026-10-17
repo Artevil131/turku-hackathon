@@ -102,6 +102,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@aei/alerts':
+        specifier: workspace:*
+        version: link:../../libs/utils/alerts
       '@aei/ask':
         specifier: workspace:*
         version: link:../../libs/utils/ask

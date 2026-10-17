@@ -124,12 +124,23 @@ function Spark({
   );
 }
 
-export function GeoMap({ client, locale, asOf, reducedMotion, hasSelection = false }: PanelProps) {
+// focusCounty: the signal card's "Show on map" selects this county (set by ResearchBoard).
+export function GeoMap({
+  client,
+  locale,
+  asOf,
+  reducedMotion,
+  hasSelection = false,
+  focusCounty = null,
+}: PanelProps & { focusCounty?: string | null }) {
   const TYKS_COUNTY = siteCounty();
   const [group, setGroup] = useState(DEFAULT_GROUP);
   // The map shows first; the county detail replaces it in the tile once a county is picked.
   const [chosen, setChosen] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    if (focusCounty) setChosen(focusCounty);
+  }, [focusCounty]);
   const detailHeading = useRef<HTMLHeadingElement>(null);
   const mapHeading = useRef<HTMLHeadingElement>(null);
   const wasChosen = useRef(false);

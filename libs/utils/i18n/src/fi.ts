@@ -1,5 +1,6 @@
 import type { en } from "./en.ts";
 import { boardFi } from "./surfaces/board.ts";
+import { cardFi } from "./surfaces/card.ts";
 import { commandFi } from "./surfaces/command.ts";
 import { connectFi } from "./surfaces/connect.ts";
 import { doctorFi } from "./surfaces/doctor.ts";
@@ -273,6 +274,7 @@ export const fi: Record<keyof typeof en, string> = {
   ...mapFi,
   ...homeFi,
   ...introFi,
+  ...cardFi,
   ...commandFi,
   ...timelineFi,
   ...failsTogetherFi,

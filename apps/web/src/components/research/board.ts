@@ -1,4 +1,4 @@
-import type { AeiClient, Alert } from "@aei/contract";
+import type { AeiClient, Alert, ClockCommand } from "@aei/contract";
 import { PHENOTYPES, type Phenotype, type WardCode } from "@aei/domain";
 import type { Locale } from "@aei/i18n";
 import type { Finding } from "../../live.ts";
@@ -100,4 +100,6 @@ export interface PanelProps {
 export interface FeedProps extends PanelProps {
   findings: Finding[];
   acknowledge: (ids: string[]) => void;
+  /** The clock command (App's `live.command`): the signal card seeks to its day with it. */
+  command?: (c: ClockCommand) => void;
 }

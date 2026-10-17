@@ -1,32 +1,32 @@
-import type { AeiClient, Alert } from "@aei/contract";
-import { alertEvidence, formatDate, formatDateNumeric, incidentResponsibility, type Locale, t } from "@aei/i18n";
-import { useEffect, useMemo, useState } from "react";
+import { NEW_IN_UNIT_DAYS } from "@aei/alerts";
+import type { AeiClient, Alert, ClockCommand } from "@aei/contract";
+import { LIVE_SETTINGS } from "@aei/detect";
+import { alertEvidence, formatDate, type GlossTerm, incidentResponsibility, type Locale, phenotypeName, t } from "@aei/i18n";
+import { formatNum } from "@aei/viz";
+import { type ReactNode, useMemo, useState } from "react";
 import type { Finding } from "../../../live.ts";
+import { allSites, currentSite, homeSite } from "../../../sites.ts";
 import { AlertExplanation } from "../../AlertExplanation.tsx";
+import { Gloss } from "../../Gloss.tsx";
 import { InfoButton } from "../../Info.tsx";
+import { PoissonTail, SurpriseScale } from "../../math/index.ts";
 import type { BoardState } from "../board.ts";
 import { KindGlyph } from "../feed/glyphs.tsx";
 import { IsolateList, useIsolates } from "../feed/Isolates.tsx";
-import { formatP, type Incident, oneDecimal, windowOf } from "../feed/model.ts";
-import { kindLabel, resistantFromProfile, shortTitle, surpriseOf, unitLabel } from "../feed/names.ts";
+import { type Incident, oneDecimal, windowOf } from "../feed/model.ts";
+import { kindLabel, shortTitle, surpriseOf, unitLabel } from "../feed/names.ts";
 import { SpanGroups } from "../feed/SpanChips.tsx";
 import type { Spans } from "../feed/spans.ts";
 import "./math.css";
 
-// The alert-math panel (spec-v2 5 and 6.2): observed against usual as two
-// bars, the surprise (−log10 p) as the big number, the test named in one
-// line, "rule, no test" for sentinels, and the isolates one click away.
+// The signal card (research-unified.md section 3): what, where, when; how much
+// against usual; how sure; how we know; what it touches; the evidence; what next.
+// The root keeps the `math` class for the workspace's window rules.
 
-/** Isolates shown in the panel itself (U2: one click, not two); the rest open in the full list. */
-const INLINE_ISOLATES = 3;
+/** The detectors whose sentence and ⓘ figure rest on a Poisson count (D-020). */
+const COUNT_DETECTORS = ["phenotype-excess", "profile-excess", "sampling-drop", "empty-run"];
 
-const TEST = {
-  "phenotype-excess": "feedTestPhenotype",
-  "profile-excess": "feedTestProfile",
-  "rising-trend": "feedTestTrend",
-  "sampling-drop": "feedTestSampling",
-  "empty-run": "feedTestSampling",
-} as const;
+const GLOSSED: readonly GlossTerm[] = ["ESBL", "MRSA", "VRE", "CPE"];
 
 interface Props {
   client: AeiClient;
@@ -38,13 +38,85 @@ interface Props {
   acknowledge: (ids: string[]) => void;
   /** The list's own state, shown when nothing can be selected. */
   empty: "loading" | "none" | "pick";
+  /** The replay clock's date; "Go to this day" is disabled on it. */
+  asOf?: string | null;
+  /** The clock command (App's `live.command`); without it the day button is disabled. */
+  command?: (c: ClockCommand) => void;
+  /** Opens the map window on this county. */
+  onShowMap?: (county: string) => void;
 }
 
-export function AlertMath({ client, locale, incident: inc, spans, findings, onChange, acknowledge, empty }: Props) {
-  const [view, setView] = useState<"math" | "isolates">("math");
-  const key = inc?.key;
-  // biome-ignore lint/correctness/useExhaustiveDependencies: a new incident returns to the numbers.
-  useEffect(() => setView("math"), [key]);
+/** The selected site's county (D-051), as the map keeps it. */
+const siteCounty = () => (allSites().find((s) => s.id === currentSite()) ?? homeSite()).county;
+
+const numberLocale = (locale: Locale) => (locale === "fi" ? "fi-FI" : "en-GB");
+
+/** "1 in 50 000", or the capped phrase under one in a million (p below 1e-6). */
+export function oddsPhrase(locale: Locale, p: number): string {
+  if (p < 1e-6) return t(locale, "cardOddsCap");
+  return t(locale, "cardOdds", { n: formatNum(Math.max(1, Math.round(1 / p)), numberLocale(locale)) });
+}
+
+/** The label after the surprise number: "surprise · 1 in 50 000 by chance". */
+export function surpriseLabel(locale: Locale, p: number): string {
+  const chance =
+    p < 1e-6 ? t(locale, "cardChanceCap") : t(locale, "cardChance", { n: formatNum(Math.max(1, Math.round(1 / p)), numberLocale(locale)) });
+  return `${t(locale, "cardSurprise")} · ${chance}`;
+}
+
+/** One sentence per detector with the live numbers filled in (D-020, D-044). */
+export function howSentence(locale: Locale, a: Alert): string {
+  if (a.kind === "cpe") return t(locale, "cardHowCpe");
+  if (a.kind === "new-in-unit") return t(locale, "cardHowSentinel", { what: phenotypeName(a.phenotype), days: NEW_IN_UNIT_DAYS });
+  if (a.kind !== "detector") return "";
+  const expected = oneDecimal(locale, a.expected ?? 0);
+  const odds = a.p === undefined ? "" : oddsPhrase(locale, a.p);
+  switch (a.detector) {
+    case "profile-excess":
+      return t(locale, "cardHowCluster", { days: LIVE_SETTINGS.profileExcess.windowDays, n: a.observed, expected, odds });
+    case "phenotype-excess":
+      return t(locale, "cardHowPhenotype", { days: LIVE_SETTINGS.phenotypeExcess.windowDays, n: a.observed, expected, odds });
+    case "sampling-drop":
+      return t(locale, "cardHowData", { n: a.observed, expected });
+    case "empty-run":
+      return t(locale, "cardHowEmpty", { n: a.observed, expected });
+    case "rising-trend":
+      return t(locale, "cardHowTrend", { days: LIVE_SETTINGS.risingTrend.binDays, to: `${Math.round(a.observed * 100)} %` });
+  }
+}
+
+/** The title in words: "ESBL Escherichia coli in Urology", the first abbreviation glossed. */
+function Title({ locale, lead, ward }: { locale: Locale; lead: Alert; ward: string | null }) {
+  const what = shortTitle(locale, lead);
+  const unit = unitLabel(locale, ward);
+  const named = lead.kind === "detector" && lead.detector === "rising-trend" ? what : what.replace(" · ", " ");
+  const text = t(locale, ward ? "cardTitleIn" : "cardTitleWide", { what: named, unit });
+  const term = GLOSSED.find((g) => text.startsWith(g));
+  if (!term) return <>{text}</>;
+  return (
+    <>
+      <Gloss term={term} locale={locale} first />
+      {text.slice(term.length)}
+    </>
+  );
+}
+
+export function AlertMath({
+  client,
+  locale,
+  incident: inc,
+  spans,
+  findings,
+  onChange,
+  acknowledge,
+  empty,
+  asOf = null,
+  command,
+  onShowMap,
+}: Props) {
+  const key = inc?.key ?? null;
+  // The body of a new incident fades in (keyed, so it remounts; the class leaves on animationend); the frame and the action row stay put.
+  const [entered, setEntered] = useState<string | null>(null);
   const iso = useIsolates(client, inc);
 
   const ids = useMemo(() => {
@@ -52,13 +124,14 @@ export function AlertMath({ client, locale, incident: inc, spans, findings, onCh
     if (inc) for (const a of inc.members) if ("isolateId" in a) s.add(a.isolateId);
     return s;
   }, [iso.matched, inc]);
+
   if (!inc)
     return (
-      <aside className="math" aria-labelledby="math-title" aria-busy={empty === "loading"}>
-        <header className="math-head">
-          <h2 id="math-title">{t(locale, "feedMathTitle")}</h2>
+      <aside className="sig math" aria-labelledby="sig-title" aria-busy={empty === "loading"}>
+        <header className="sig-head">
+          <h2 id="sig-title">{t(locale, "cardTitle")}</h2>
         </header>
-        <p className="math-empty">{empty === "loading" ? t(locale, "feedIsolatesLoading") : t(locale, "feedPickSignal")}</p>
+        <p className="sig-empty">{empty === "loading" ? t(locale, "feedIsolatesLoading") : t(locale, "cardEmpty")}</p>
       </aside>
     );
 
@@ -72,109 +145,86 @@ export function AlertMath({ client, locale, incident: inc, spans, findings, onCh
     lead.kind === "detector"
       ? t(locale, "feedNoIsolatesData", { observed: lead.observed, expected: oneDecimal(locale, lead.expected ?? 0) })
       : "";
+  const onDay = asOf === lead.date;
 
   return (
-    <aside className="math" aria-labelledby="math-title" data-kind={inc.kind}>
-      <header className="math-head">
-        <h2 id="math-title">{t(locale, "feedMathTitle")}</h2>
+    <aside className="sig math" aria-labelledby="sig-title" data-kind={inc.kind}>
+      <header className="sig-head">
+        <h2 id="sig-title">{t(locale, "cardTitle")}</h2>
         <InfoButton locale={locale} align="end">
           {t(locale, "feedMathHelp")}
         </InfoButton>
       </header>
 
-      {view === "isolates" ? (
-        <div className="math-scroll">
-          <button type="button" className="math-back" onClick={() => setView("math")}>
-            ← {t(locale, "feedBack")}
-          </button>
-          <h3 className="math-sub">{t(locale, "feedIsolatesBehind")}</h3>
-          <IsolateList locale={locale} status={iso.status} matched={iso.matched} retry={iso.retry} window={win} dataNote={dataNote} />
+      <div
+        key={inc.key}
+        className={`sig-body${entered === key ? "" : " is-entering"}`}
+        onAnimationEnd={(e) => (e.target === e.currentTarget ? setEntered(key) : undefined)}
+      >
+        <div>
+          <span className="sig-kind">
+            <KindGlyph kind={inc.kind} />
+            {kindLabel(locale, inc.kind)}
+          </span>
+          <h3 className="sig-title">
+            <Title locale={locale} lead={lead} ward={inc.ward} />
+          </h3>
+          <p className="sig-where">{whereLine(locale, inc, win)}</p>
         </div>
-      ) : (
-        <div className="math-scroll">
-          <div className="math-who">
-            <span className="math-kind">
-              <KindGlyph kind={inc.kind} />
-              {kindLabel(locale, inc.kind)}
-            </span>
-            <b className="math-name">{shortTitle(locale, lead)}</b>
-            <span className="math-meta">
-              {unitLabel(locale, inc.ward)} · {formatDateNumeric(inc.date)}
-            </span>
-            <span>{t(locale, inc.members.length === 1 ? "feedIncidentOne" : "feedIncidentMany", { n: inc.members.length })}</span>
-            <span className="feed-evidence">{t(locale, "feedLatestEvidence", { evidence: alertEvidence(locale, lead) })}</span>
-            <span className="feed-owner">{incidentResponsibility(locale, inc.members)}</span>
-          </div>
 
-          <div className="math-explain">
-            <AlertExplanation client={client} id={lead.id} locale={locale} />
-          </div>
+        <Numbers locale={locale} alert={lead} />
 
-          <AlertNumbers locale={locale} alert={lead} />
+        <section className="sig-how" aria-labelledby="sig-how-head">
+          <h4 className="sig-how-head" id="sig-how-head">
+            {t(locale, "cardHow")}
+            <HowFigure locale={locale} alert={lead} />
+          </h4>
+          <p className="sig-how-text">{howSentence(locale, lead)}</p>
+          <p className="feed-evidence">{t(locale, "feedLatestEvidence", { evidence: alertEvidence(locale, lead) })}</p>
+          <p className="feed-owner">{incidentResponsibility(locale, inc.members)}</p>
+        </section>
 
-          <ul className="math-members" aria-label={t(locale, "feedMembers")}>
-            {inc.members.map((a) => (
-              <li key={a.id} aria-current={a.id === lead.id ? "true" : undefined}>
-                <time dateTime={a.date}>{formatDateNumeric(a.date)}</time>
-                <span className="math-mem-what">
-                  {shortTitle(locale, a)} · {alertEvidence(locale, a)}
-                </span>
-              </li>
-            ))}
-          </ul>
-          <p className="feed-note">{t(locale, "feedMembersNote")}</p>
-
-          {spans ? (
-            <section className="math-spans" aria-labelledby="math-spans-title">
-              <h3 id="math-spans-title" className="math-sub">
-                {t(locale, "feedSpans")}
-                <InfoButton locale={locale} align="end">
-                  {t(locale, "feedSpanNote")}
-                </InfoButton>
-              </h3>
-              <SpanGroups locale={locale} spans={spans} onUnit={(u) => onChange({ focus: u as BoardState["focus"] })} />
-            </section>
-          ) : null}
-
-          {inc.kind !== "data" ? (
-            <section className="math-isolates" aria-labelledby="math-iso-title">
-              <h3 id="math-iso-title" className="math-sub">
-                {t(locale, "feedIsolatesBehind")}
-              </h3>
-              <IsolateList
-                locale={locale}
-                status={iso.status}
-                matched={iso.matched}
-                retry={iso.retry}
-                window={win}
-                dataNote={dataNote}
-                limit={INLINE_ISOLATES}
-              />
-            </section>
-          ) : null}
+        <div className="math-explain">
+          <AlertExplanation client={client} id={lead.id} locale={locale} />
         </div>
-      )}
 
-      <footer className="math-actions">
-        {view === "math" ? (
-          <button type="button" className="math-primary" onClick={() => setView("isolates")}>
-            {inc.kind === "data"
-              ? t(locale, "feedIsolates")
-              : iso.status === "ready" && iso.matched.length > INLINE_ISOLATES
-                ? t(locale, "feedIsolatesAll", { n: iso.matched.length })
-                : t(locale, "feedIsolatesOpen", { n: iso.status === "ready" ? iso.matched.length : "…" })}{" "}
-            →
-          </button>
+        {spans ? (
+          <div className="sig-reach">
+            <span className="sig-reach-label">{t(locale, "cardReach")}</span>
+            <SpanGroups locale={locale} spans={spans} onUnit={(u) => onChange({ focus: u as BoardState["focus"] })} />
+          </div>
         ) : null}
-        <a className="math-btn" href={doctor}>
-          {t(locale, "feedOpenInDoctor")}
-        </a>
-        <button type="button" className="math-btn" onClick={() => onChange({ panel: "grid", phenotype: inc.phenotypes[0] ?? null })}>
-          {t(locale, "feedShowInGrid")}
-        </button>
+
+        {inc.kind !== "data" ? (
+          <details className="sig-isolates">
+            <summary>{t(locale, "cardIsolates", { n: iso.status === "ready" ? iso.matched.length : "…" })}</summary>
+            <IsolateList locale={locale} status={iso.status} matched={iso.matched} retry={iso.retry} window={win} dataNote={dataNote} />
+          </details>
+        ) : null}
+      </div>
+
+      <footer className="sig-actions">
         <button
           type="button"
-          className="math-btn"
+          className="sig-primary"
+          disabled={onDay || !command}
+          title={onDay ? t(locale, "cardGoToDayHere") : undefined}
+          onClick={() => command?.({ action: "seek", date: lead.date })}
+        >
+          {t(locale, "cardGoToDay")}
+        </button>
+        <button type="button" className="sig-btn" onClick={() => onShowMap?.(siteCounty())}>
+          {t(locale, "cardShowMap")}
+        </button>
+        <a className="sig-btn" href="#method">
+          {t(locale, "cardMethod")}
+        </a>
+        <a className="sig-btn" href={doctor}>
+          {t(locale, "feedOpenInDoctor")}
+        </a>
+        <button
+          type="button"
+          className="sig-btn"
           disabled={unseen.length === 0}
           title={mine.length === 0 ? t(locale, "feedSeenNone") : undefined}
           onClick={() => acknowledge(unseen.map((f) => f.id))}
@@ -187,82 +237,78 @@ export function AlertMath({ client, locale, incident: inc, spans, findings, onCh
   );
 }
 
-/** One alert's numbers: two bars, the big surprise number, the test in one line. */
-function AlertNumbers({ locale, alert: a }: { locale: Locale; alert: Alert }) {
-  if (a.kind !== "detector") {
-    return (
-      <div className="math-block">
-        <p className="math-rule">{t(locale, "feedRuleNoTest")}</p>
-        <p className="math-line">
-          {a.kind === "new-in-unit"
-            ? a.previous
-              ? t(locale, "feedPrevious", { date: formatDate(locale, a.previous) })
-              : t(locale, "feedNoneBefore")
-            : a.kind === "cpe"
-              ? `${a.organism}`
-              : ""}
-        </p>
-      </div>
-    );
-  }
+/** "5 patients · 2 Jun – 29 Jun · fired 9 Jun": the count and window where the alert has them. */
+function whereLine(locale: Locale, inc: Incident, win: { from: string; to: string }): string {
+  const a = inc.lead;
+  const parts: string[] = [];
+  if (a.kind === "detector" && (a.detector === "profile-excess" || a.detector === "phenotype-excess"))
+    parts.push(t(locale, a.observed === 1 ? "cardPatientOne" : "cardPatients", { n: a.observed }));
+  if (a.kind === "detector" && a.detector !== "rising-trend") parts.push(`${formatDate(locale, win.from)} – ${formatDate(locale, win.to)}`);
+  parts.push(t(locale, "cardFired", { date: formatDate(locale, a.date) }));
+  return parts.join(" · ");
+}
+
+/** The ⓘ of the how-section: the Poisson tail for the count detectors; sentinels and trends have none. */
+function HowFigure({ locale, alert: a }: { locale: Locale; alert: Alert }): ReactNode {
+  if (a.kind !== "detector" || !COUNT_DETECTORS.includes(a.detector) || a.p === undefined || a.expected === undefined) return null;
+  return (
+    <InfoButton locale={locale} align="end" label={t(locale, "cardHowInfo")}>
+      <PoissonTail observed={a.observed} expected={a.expected} p={a.p} detector={a.detector} locale={locale} />
+    </InfoButton>
+  );
+}
+
+/** Observed against usual on one scale, and the surprise as the one big number. Sentinels have neither. */
+function Numbers({ locale, alert: a }: { locale: Locale; alert: Alert }) {
+  if (a.kind !== "detector") return null;
   const trend = a.detector === "rising-trend";
-  const fmt = (n: number) => (trend ? `${Math.round(n * 100)} %` : oneDecimal(locale, n));
-  const fmtObs = (n: number) => (trend ? fmt(n) : String(n));
+  const data = a.detector === "sampling-drop";
   const obs = a.observed;
   const exp = a.expected;
+  const fmtObs = trend
+    ? `${Math.round(obs * 100)} %`
+    : data
+      ? t(locale, "cardCultures", { n: obs })
+      : t(locale, obs === 1 ? "cardPatientOne" : "cardPatients", { n: obs });
+  const fmtUsual = exp === undefined ? "" : t(locale, "cardUsualValue", { n: oneDecimal(locale, exp) });
   // A share is already on a 0 to 1 scale; counts are scaled to the larger of the two.
   const max = trend ? 1 : Math.max(obs, exp ?? 0) || 1;
   const s = surpriseOf(a);
-  // An empty-run alert has two facts in two units (days without cultures, cultures per day):
-  // no shared bar, each fact in a sentence.
-  const empty = a.detector === "empty-run";
+  // An empty run has two facts in two units (days without cultures, cultures per day): no shared bar.
+  const bars = a.detector !== "empty-run";
   return (
-    <div className="math-block">
-      <div className="math-big">
-        {s !== null ? (
-          <>
-            <b className="math-bignum">{oneDecimal(locale, s)}</b>
-            <span className="math-biglabel">
-              {t(locale, "feedSurprise")}
-              {a.p !== undefined ? <span className="math-p"> · p {formatP(locale, a.p).replace("= ", "")}</span> : null}
-            </span>
-          </>
-        ) : null}
-      </div>
-      {empty ? (
-        <p className="math-line">
-          {t(locale, "feedEmptyRun", {
-            days: obs,
-            rate: oneDecimal(locale, exp ?? 0),
-            p: a.p !== undefined ? formatP(locale, a.p).replace("= ", "") : "",
-          })}
-        </p>
-      ) : (
+    <>
+      {bars ? (
         <div
-          className="math-bars"
+          className="sig-bars"
           role="group"
-          aria-label={`${t(locale, "feedBarObserved")} ${fmtObs(obs)}${exp !== undefined ? `, ${t(locale, "feedUsual")} ${fmt(exp)}` : ""}`}
+          aria-label={`${t(locale, "cardObserved")} ${fmtObs}${exp !== undefined ? `, ${t(locale, "cardUsual")} ${fmtUsual}` : ""}`}
         >
-          <Bar label={t(locale, "feedBarObserved")} value={fmtObs(obs)} share={obs / max} tone="obs" />
-          {exp !== undefined ? <Bar label={t(locale, "feedUsual")} value={fmt(exp)} share={exp / max} tone="usual" /> : null}
+          <Bar label={t(locale, "cardObserved")} value={fmtObs} share={obs / max} tone="obs" />
+          {exp !== undefined ? <Bar label={t(locale, "cardUsual")} value={fmtUsual} share={exp / max} tone="usual" /> : null}
         </div>
-      )}
-      {empty ? null : <p className="math-line">{t(locale, TEST[a.detector])}</p>}
-      {a.detector === "profile-excess" && a.profile ? (
-        <p className="math-line">{t(locale, "feedResistantTo", { names: resistantFromProfile(locale, a.profile).join(", ") })}</p>
       ) : null}
-    </div>
+      {s !== null && a.p !== undefined ? (
+        <div className="sig-surprise">
+          <b className="sig-num">{oneDecimal(locale, s)}</b>
+          <span className="sig-surprise-label">{surpriseLabel(locale, a.p)}</span>
+          <InfoButton locale={locale} align="end" label={t(locale, "cardSurpriseInfo")}>
+            <SurpriseScale p={a.p} detector={a.detector} locale={locale} />
+          </InfoButton>
+        </div>
+      ) : null}
+    </>
   );
 }
 
 function Bar({ label, value, share, tone }: { label: string; value: string; share: number; tone: "obs" | "usual" }) {
   return (
-    <div className="math-bar" data-tone={tone}>
-      <span className="math-bar-label">{label}</span>
-      <span className="math-bar-track" aria-hidden="true">
+    <div className="sig-bar" data-tone={tone}>
+      <span className="sig-bar-label">{label}</span>
+      <span className="sig-bar-track" aria-hidden="true">
         <i style={{ width: `${Math.max(2, Math.round(share * 100))}%` }} />
       </span>
-      <b className="math-bar-value">{value}</b>
+      <b className="sig-bar-value">{value}</b>
     </div>
   );
 }

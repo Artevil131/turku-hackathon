@@ -1,4 +1,5 @@
 import { boardEn } from "./surfaces/board.ts";
+import { cardEn } from "./surfaces/card.ts";
 import { commandEn } from "./surfaces/command.ts";
 import { connectEn } from "./surfaces/connect.ts";
 import { doctorEn } from "./surfaces/doctor.ts";
@@ -271,6 +272,7 @@ export const en = {
   ...mapEn,
   ...homeEn,
   ...introEn,
+  ...cardEn,
   ...commandEn,
   ...timelineEn,
   ...failsTogetherEn,

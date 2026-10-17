@@ -53,12 +53,11 @@ describe("explanation controls", () => {
         empty="pick"
       />,
     );
-    expect(html).toContain("One incident · 2 related alerts");
     expect(html).toContain("responsible doctor for Urology");
-    expect(html).toContain("2 patients observed · expected 0.3");
-    expect(html).toContain('dateTime="2025-06-06"');
-    expect(html).toContain('dateTime="2025-06-07"');
-    expect(html.indexOf("responsible doctor")).toBeLessThan(html.indexOf('class="math-block"'));
-    expect(html.indexOf("Explain")).toBeLessThan(html.indexOf('class="math-block"'));
+    expect(html).toContain("2 patients");
+    expect(html).toContain("0.3 usual");
+    // The how-section and its evidence come first, the explanation next, the reach and isolates after.
+    expect(html.indexOf("responsible doctor")).toBeLessThan(html.indexOf("Explain"));
+    expect(html.indexOf("Explain")).toBeLessThan(html.indexOf("Isolates behind it"));
   });
 });

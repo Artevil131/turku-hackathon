@@ -240,6 +240,7 @@ export function App() {
                     asOf={live.clock?.asOf ?? null}
                     findings={findings}
                     acknowledge={live.acknowledge}
+                    command={live.command}
                     reducedMotion={reducedMotion}
                   />
                 ) : null}
