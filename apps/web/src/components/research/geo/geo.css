@@ -532,6 +532,7 @@
   opacity: 0.7;
 }
 .ug-head {
+  flex: none;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -549,6 +550,9 @@
 .ug-head .geo-chip {
   margin-left: auto;
 }
+.ug-head .geo-chip + .geo-chip {
+  margin-left: 0;
+}
 .ug-stage {
   flex: 1 1 auto;
   min-height: 140px;
@@ -564,6 +568,7 @@
   min-height: 0;
 }
 .ug-keys {
+  flex: none;
   display: flex;
   flex-wrap: wrap;
   gap: 4px 14px;
@@ -584,7 +589,13 @@
   font-style: italic;
 }
 .geo-tube {
-  stroke-opacity: 0.32;
+  stroke-opacity: 0.42;
+}
+.geo-tube[data-faint="true"] {
+  stroke-opacity: 0.16;
+}
+.geo-tube[data-active="true"] {
+  stroke-opacity: 0.75;
 }
 
 .ws-body .ug-title,

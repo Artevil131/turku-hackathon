@@ -4,21 +4,28 @@ import { phenotypeName, t, wardName } from "@aei/i18n";
 import { nextUnits, undirectedFlows } from "@aei/relations";
 import { type KeyboardEvent, useMemo, useState } from "react";
 import { AsOf } from "../../AsOf.tsx";
-import { tubeWidth } from "../../Network.tsx";
 import type { PanelProps } from "../board.ts";
 import { KindGlyph } from "../feed/glyphs.tsx";
 import { badgeText, shiftDays, signalsOf } from "../network/model.ts";
 import "./geo.css";
-import { arc, bendPath, GRAPH_H, GRAPH_W, NODE_HALF_H, NODE_HALF_W, nodeRect, placeTags, unitPoint } from "./layout.ts";
+import { arc, curve, GRAPH_H, GRAPH_W, NODE_HALF_H, NODE_HALF_W, nodeRect, outwardSide, placeTags, route, unitPoint } from "./layout.ts";
 import { useLoad } from "./useLoad.ts";
 
-// The Tyks unit graph (its own window): nine units laid out along the
-// patient route, curved flow edges whose width is the number of patients, lit
-// units with one glyph per kind of signal, and arrows to where the patients of
-// a lit unit go next, each labelled "share · n". Positions are schematic.
+// The Tyks unit graph (its own window): the six hospital units on an inner
+// ring, the emergency department and the health centres outside it. Only the
+// meaningful flows are drawn: each unit's strongest two outgoing flows plus
+// every flow that touches a lit or selected unit; "all flows" adds the rest,
+// faint. Edge width is the number of patients on a linear scale, edges bulge
+// round the ring instead of across it, lit units get the red ring and one
+// glyph per kind of signal, and accent arrows show where the patients of a lit
+// unit go next, each labelled "share · n" beside the edge. Positions are
+// schematic.
 
 const WINDOW_DAYS = 28;
 const MAX_SPREAD = 3;
+const KEEP_OUT = 2;
+/** Edge width in viewBox units: linear in patients, from a hairline to 8. */
+const edgeWidth = (patients: number, max: number) => 1.2 + 6.8 * (max > 0 ? patients / max : 0);
 const pct = (v: number) => Math.round(v * 100);
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 
@@ -27,6 +34,7 @@ type Net = { relations: RelationsResponse; alerts: Alert[] };
 export function UnitGraph({ client, locale, asOf, state, onChange, reducedMotion }: PanelProps) {
   const [hover, setHover] = useState<WardCode | null>(null);
   const [showTrail, setShowTrail] = useState(false);
+  const [showAll, setShowAll] = useState(false);
   const [attempt, setAttempt] = useState(0);
 
   const net = useLoad<Net>(
@@ -57,20 +65,31 @@ export function UnitGraph({ client, locale, asOf, state, onChange, reducedMotion
     return out;
   }, [signals, flows]);
 
+  const lit = useMemo(() => new Set<WardCode>([...signals.byUnit].filter(([, s]) => s.resistance).map(([unit]) => unit)), [signals]);
+
+  // The flows worth drawing: each unit's strongest outgoing ones, and everything that touches a lit or chosen unit.
+  const strongest = useMemo(() => {
+    const keys = new Set<string>();
+    for (const w of WARDS) {
+      for (const n of nextUnits(flows, w.code, KEEP_OUT)) keys.add(w.code < n.ward ? `${w.code}|${n.ward}` : `${n.ward}|${w.code}`);
+    }
+    return keys;
+  }, [flows]);
+
   const spreadTags = useMemo(() => {
     const list = [...spread]
       .sort((x, y) => x.from.localeCompare(y.from) || x.to.localeCompare(y.to))
       .map((sp) => {
-        const g = arc(unitPoint(sp.from), unitPoint(sp.to), -0.22);
+        const g = curve(unitPoint(sp.from), unitPoint(sp.to), route(sp.from, sp.to));
         const label = t(locale, "geoSpread", { share: pct(sp.share), n: sp.n });
-        return { sp, g, label, w: Math.round(label.length * 6.8 + 18) };
+        return { sp, g, label, w: Math.round(label.length * 6.8 + 18), side: outwardSide(g) };
       });
     const spots = placeTags(
-      list.map((x) => ({ id: `${x.sp.from}|${x.sp.to}`, w: x.w, at: x.g.at, tan: x.g.tan })),
+      list.map((x) => ({ id: `${x.sp.from}|${x.sp.to}`, w: x.w, side: x.side, at: x.g.at, tan: x.g.tan })),
       WARDS.map((w) => nodeRect(unitPoint(w.code))),
       { x0: 0, y0: 0, x1: GRAPH_W, y1: GRAPH_H },
     );
-    return list.map((x) => ({ ...x, spot: spots.get(`${x.sp.from}|${x.sp.to}`) as NonNullable<ReturnType<typeof spots.get>> }));
+    return list.map((x) => ({ ...x, spot: spots.get(`${x.sp.from}|${x.sp.to}`) }));
   }, [spread, locale]);
 
   const choose = (code: WardCode) => {
@@ -100,6 +119,9 @@ export function UnitGraph({ client, locale, asOf, state, onChange, reducedMotion
         </h2>
         {rel ? <AsOf locale={locale} date={rel.to} pending={updating} clockDate={asOf ?? undefined} /> : null}
         <span className="ug-window">{t(locale, "netWindowNote")}</span>
+        <button type="button" className="geo-chip" aria-pressed={showAll} onClick={() => setShowAll((v) => !v)}>
+          {t(locale, "netAllFlows")}
+        </button>
         <button type="button" className="geo-chip" aria-pressed={showTrail} onClick={() => setShowTrail((v) => !v)}>
           <svg viewBox="0 0 28 10" width="28" height="10" aria-hidden="true">
             <path d="M1 5 H27" stroke="currentColor" strokeWidth="2" strokeDasharray="5 3" />
@@ -154,14 +176,17 @@ export function UnitGraph({ client, locale, asOf, state, onChange, reducedMotion
           <g className="geo-tubes">
             {pairs.map(({ a, b, patients }) => {
               const active = sel === a || sel === b;
-              if (patients < 0.2 * maxPair && !active) return null;
+              const key = `${a}|${b}`;
+              const shown = strongest.has(key) || lit.has(a) || lit.has(b) || a === state.focus || b === state.focus || active;
+              if (!shown && !showAll) return null;
               return (
                 <path
-                  key={`${a}|${b}`}
-                  d={bendPath(unitPoint(a), unitPoint(b), 0.1)}
+                  key={key}
+                  d={curve(unitPoint(a), unitPoint(b), route(a, b)).d}
                   className="geo-tube"
                   data-active={active}
-                  strokeWidth={tubeWidth(patients, maxPair) * 0.8 + 0.8}
+                  data-faint={!shown}
+                  strokeWidth={edgeWidth(patients, maxPair) * (shown ? 1 : 0.6)}
                 >
                   <title>{t(locale, "netEdgeTitle", { a, b, patients, from: rel?.from ?? "", to: rel?.to ?? "" })}</title>
                 </path>
@@ -198,12 +223,16 @@ export function UnitGraph({ client, locale, asOf, state, onChange, reducedMotion
             {spreadTags.map(({ sp, g, label, w, spot }) => (
               <g key={`${sp.from}|${sp.to}`} data-active={sel === sp.from || sel === sp.to}>
                 <title>{t(locale, "geoSpreadTitle", { share: pct(sp.share), from: sp.from, n: sp.n, total: sp.total, to: sp.to })}</title>
-                <path d={g.d} className="geo-spread" strokeWidth={1.8 + sp.share * 6} markerEnd="url(#ug-arrow)" />
-                {spot.from ? <line x1={spot.from[0]} y1={spot.from[1]} x2={spot.x} y2={spot.y} className="geo-leader" /> : null}
-                <rect x={spot.x - w / 2} y={spot.y - 10} width={w} height="20" rx="10" className="geo-tag" />
-                <text x={spot.x} y={spot.y + 4} textAnchor="middle" className="geo-tag-text">
-                  {label}
-                </text>
+                <path d={g.d} className="geo-spread" strokeWidth={2.4} markerEnd="url(#ug-arrow)" />
+                {spot ? (
+                  <>
+                    {spot.from ? <line x1={spot.from[0]} y1={spot.from[1]} x2={spot.x} y2={spot.y} className="geo-leader" /> : null}
+                    <rect x={spot.x - w / 2} y={spot.y - 10} width={w} height="20" rx="10" className="geo-tag" />
+                    <text x={spot.x} y={spot.y + 4} textAnchor="middle" className="geo-tag-text">
+                      {label}
+                    </text>
+                  </>
+                ) : null}
               </g>
             ))}
           </g>
@@ -211,8 +240,8 @@ export function UnitGraph({ client, locale, asOf, state, onChange, reducedMotion
           {WARDS.map((w) => {
             const [x, y] = unitPoint(w.code);
             const s = signals.byUnit.get(w.code);
-            const lit = s?.resistance ?? false;
-            const dataOnly = !!s?.data && !lit;
+            const isLit = lit.has(w.code);
+            const dataOnly = !!s?.data && !isLit;
             const kinds = [...new Set((s?.badges ?? []).map((b) => b.kind))].slice(0, 3);
             const aria = [
               t(locale, "netNodeAria", { unit: w.code, name: wardName(locale, w.code) }),
@@ -254,7 +283,7 @@ export function UnitGraph({ client, locale, asOf, state, onChange, reducedMotion
                   rx="12"
                 />
                 <rect
-                  className={lit ? "geo-box geo-lit" : "geo-box"}
+                  className={isLit ? "geo-box geo-lit" : "geo-box"}
                   x={x - NODE_HALF_W}
                   y={y - NODE_HALF_H}
                   width={NODE_HALF_W * 2}

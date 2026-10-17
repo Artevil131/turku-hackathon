@@ -52,14 +52,44 @@ export function clampRect(r: Rect, id: WinId, rows: number): Rect {
  */
 export function defaultLayout(): Layout {
   const wins: Record<WinId, WinState> = {
-    signals: { x: 0, y: 0, w: 3, h: 38, open: true },
-    map: { x: 3, y: 0, w: 4, h: 38, open: true },
-    graph: { x: 7, y: 0, w: 5, h: 13, open: true },
-    math: { x: 7, y: 13, w: 5, h: 17, open: true },
-    assistant: { x: 7, y: 30, w: 5, h: 8, open: true },
+    signals: { x: 0, y: 0, w: 3, h: 40, open: true },
+    map: { x: 3, y: 0, w: 4, h: 40, open: true },
+    graph: { x: 7, y: 0, w: 5, h: 18, open: true },
+    math: { x: 7, y: 18, w: 5, h: 14, open: true },
+    assistant: { x: 7, y: 32, w: 5, h: 8, open: true },
     grid: { x: 0, y: 0, w: 12, h: 30, open: false },
   };
   return { wins, order: ["signals", "map", "graph", "math", "assistant", "grid"] };
+}
+
+const overlaps = (a: Rect, b: Rect) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+
+/**
+ * Vertical compaction, as in a dashboard grid. Open windows are taken in order of their top edge (then left
+ * edge; the window being moved or resized wins a tie) and each floats up while the row above is free, then
+ * is pushed down past anything it overlaps. No overlaps remain and no gap that a window could rise into.
+ * Closed windows keep their rectangle and are left out.
+ */
+export function compactLayout(layout: Layout, moved?: WinId): Layout {
+  const open = WIN_IDS.filter((id) => layout.wins[id].open).sort(
+    (a, b) =>
+      layout.wins[a].y - layout.wins[b].y ||
+      (a === moved ? -1 : b === moved ? 1 : 0) ||
+      layout.wins[a].x - layout.wins[b].x ||
+      WIN_IDS.indexOf(a) - WIN_IDS.indexOf(b),
+  );
+  const placed: Rect[] = [];
+  const wins = { ...layout.wins };
+  for (const id of open) {
+    const w = layout.wins[id];
+    const r: Rect = { x: w.x, y: Math.max(0, w.y), w: w.w, h: w.h };
+    const blocked = (y: number) => placed.some((p) => overlaps({ ...r, y }, p));
+    while (r.y > 0 && !blocked(r.y - 1)) r.y--;
+    while (blocked(r.y)) r.y++;
+    placed.push(r);
+    wins[id] = { ...w, y: r.y };
+  }
+  return { wins, order: layout.order };
 }
 
 /** The layout as it must be drawn: every window inside the board. */
@@ -99,7 +129,7 @@ export function parseLayout(raw: string | null): Layout | null {
     }
     const order = (v.order as unknown[]).filter((x): x is WinId => WIN_IDS.includes(x as WinId));
     for (const id of WIN_IDS) if (!order.includes(id)) order.push(id);
-    return { wins, order: [...new Set(order)] };
+    return compactLayout(fitLayout({ wins, order: [...new Set(order)] }));
   } catch {
     return null;
   }

@@ -23,33 +23,33 @@ export const mapPoint = (l: Layout, lon: number, lat: number): [number, number] 
 };
 
 /** The unit graph's drawing area, in viewBox units. */
-export const GRAPH_W = 480;
-export const GRAPH_H = 190;
+export const GRAPH_W = 420;
+export const GRAPH_H = 300;
+
+/** Centre of the inner ring; the health centres and the emergency department sit on an outer arc to its left. */
+const CENTER: [number, number] = [232, 150];
 
 /**
- * Unit positions as fractions of the graph's area: the patient route runs left to right (health centres, the
- * emergency department, then the wards, the intensive care unit in the middle). Hand-set and schematic, not
- * geography; the two busiest units (ED, ICU) get a gap wide enough for a spread label.
+ * Unit positions: the six hospital units on an inner ring, the emergency department and the two health centres
+ * outside it, so the patient route reads from the outside in. Hand-set and schematic, not geography; the gaps
+ * are wide enough for a "share · n" label beside an edge.
  */
-const UNIT_FRAC: Record<WardCode, [number, number]> = {
-  "PHC-N": [0.09, 0.2],
-  "PHC-S": [0.09, 0.8],
-  ED: [0.31, 0.5],
-  ICU: [0.58, 0.5],
-  "MED-A": [0.47, 0.15],
-  URO: [0.84, 0.16],
-  SURG: [0.9, 0.5],
-  GER: [0.84, 0.84],
-  "MED-B": [0.47, 0.85],
+const UNIT_POINT: Record<WardCode, [number, number]> = {
+  ED: [38, 150],
+  "PHC-N": [136, 46],
+  "PHC-S": [136, 254],
+  ICU: [140, 150],
+  "MED-A": [186, 98],
+  SURG: [278, 98],
+  URO: [324, 150],
+  GER: [278, 202],
+  "MED-B": [186, 202],
 };
 
-export const unitPoint = (code: WardCode): [number, number] => {
-  const [fx, fy] = UNIT_FRAC[code];
-  return [fx * GRAPH_W, fy * GRAPH_H];
-};
+export const unitPoint = (code: WardCode): [number, number] => UNIT_POINT[code];
 
-export const NODE_HALF_W = 32;
-export const NODE_HALF_H = 14;
+export const NODE_HALF_W = 29;
+export const NODE_HALF_H = 13;
 
 /** A curved path from node a to node b, trimmed to leave both node boxes, and its midpoint. */
 export function bendPath(a: [number, number], b: [number, number], bend: number): string {
@@ -58,9 +58,9 @@ export function bendPath(a: [number, number], b: [number, number], bend: number)
   return `M${a[0].toFixed(1)},${a[1].toFixed(1)} Q${cx.toFixed(1)},${cy.toFixed(1)} ${b[0].toFixed(1)},${b[1].toFixed(1)}`;
 }
 
-export function arc(a: [number, number], b: [number, number], bend: number) {
-  const cx = (a[0] + b[0]) / 2 - (b[1] - a[1]) * bend;
-  const cy = (a[1] + b[1]) / 2 + (b[0] - a[0]) * bend;
+/** A quadratic curve from node a to node b through control point c, trimmed to leave both node boxes. */
+export function curve(a: [number, number], b: [number, number], c: [number, number]) {
+  const [cx, cy] = c;
   const trim = (p: [number, number], toward: [number, number]): [number, number] => {
     const len = Math.hypot(toward[0] - p[0], toward[1] - p[1]) || 1;
     const ux = (toward[0] - p[0]) / len;
@@ -87,6 +87,54 @@ export function arc(a: [number, number], b: [number, number], bend: number) {
     mx: 0.25 * s[0] + 0.5 * cx + 0.25 * e[0],
     my: 0.25 * s[1] + 0.5 * cy + 0.25 * e[1],
   };
+}
+
+export function arc(a: [number, number], b: [number, number], bend: number) {
+  return curve(a, b, [(a[0] + b[0]) / 2 - (b[1] - a[1]) * bend, (a[1] + b[1]) / 2 + (b[0] - a[0]) * bend]);
+}
+
+const inside = (p: [number, number], r: { x0: number; x1: number; y0: number; y1: number }) =>
+  p[0] > r.x0 && p[0] < r.x1 && p[1] > r.y0 && p[1] < r.y1;
+
+/**
+ * The control point of the edge between units a and b: bulging away from the middle of the graph (so edges
+ * run round the ring, not across it), by the smallest bend whose curve leaves every other unit's box clear.
+ * Deterministic and symmetric: route(a, b) and route(b, a) are the same curve.
+ */
+export function route(a: WardCode, b: WardCode): [number, number] {
+  const [from, to] = a < b ? [a, b] : [b, a];
+  const p = unitPoint(from);
+  const q = unitPoint(to);
+  const len = Math.hypot(q[0] - p[0], q[1] - p[1]) || 1;
+  const m: [number, number] = [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
+  const n: [number, number] = [-(q[1] - p[1]) / len, (q[0] - p[0]) / len];
+  const out = n[0] * (m[0] - CENTER[0]) + n[1] * (m[1] - CENTER[1]) >= 0 ? 1 : -1;
+  const boxes = WARDS_ALL.filter((w) => w !== from && w !== to).map((w) => {
+    const [x, y] = unitPoint(w);
+    return { x0: x - NODE_HALF_W - 5, x1: x + NODE_HALF_W + 5, y0: y - NODE_HALF_H - 5, y1: y + NODE_HALF_H + 5 };
+  });
+  let best: { c: [number, number]; hits: number } | null = null;
+  for (const k of [0.14, -0.14, 0.26, -0.26, 0.4, -0.4, 0.55, -0.55]) {
+    const c: [number, number] = [m[0] + n[0] * out * k * len, m[1] + n[1] * out * k * len];
+    const g = curve(p, q, c);
+    let hits = 0;
+    for (let u = 0.06; u <= 0.94; u += 0.04) {
+      const pt = g.at(u);
+      if (boxes.some((r) => inside(pt, r))) hits++;
+    }
+    if (!best || hits < best.hits) best = { c, hits };
+    if (hits === 0) break;
+  }
+  return (best as NonNullable<typeof best>).c;
+}
+
+const WARDS_ALL = Object.keys(UNIT_POINT) as WardCode[];
+
+/** Which side of a curve at u faces away from the middle of the graph: +1 along its left normal, else -1. */
+export function outwardSide(g: { at: (u: number) => [number, number]; tan: (u: number) => [number, number] }, u = 0.5): 1 | -1 {
+  const [x, y] = g.at(u);
+  const [tx, ty] = g.tan(u);
+  return -ty * (x - CENTER[0]) + tx * (y - CENTER[1]) >= 0 ? 1 : -1;
 }
 
 export interface Rect {
@@ -121,7 +169,7 @@ export const nodeRect = (p: [number, number]): Rect => ({
  * stays inside the bounds and overlaps no node, glyph or earlier label. A label off its curve gets a leader line.
  */
 export function placeTags(
-  items: { id: string; w: number; at: (u: number) => [number, number]; tan: (u: number) => [number, number] }[],
+  items: { id: string; w: number; side?: 1 | -1; at: (u: number) => [number, number]; tan: (u: number) => [number, number] }[],
   obstacles: Rect[],
   bounds: Rect,
 ): Map<string, TagSpot> {
@@ -133,20 +181,19 @@ export function placeTags(
     for (const u of [0.5, 0.4, 0.6, 0.3, 0.7, 0.22, 0.78]) {
       const [px, py] = it.at(u);
       const [tx, ty] = it.tan(u);
-      for (const off of [0, 17, -17, 31, -31]) {
+      const sd = it.side ?? 1;
+      for (const off of [0, 17 * sd, -17 * sd, 31 * sd, -31 * sd]) {
         const x = px - ty * off;
         const y = py + tx * off;
         const rect = { x0: x - it.w / 2, x1: x + it.w / 2, y0: y - TAG_H / 2, y1: y + TAG_H / 2 };
-        const cost = Math.abs(u - 0.5) * 60 + Math.abs(off) + (off < 0 ? 1 : 0);
+        const cost = Math.abs(u - 0.5) * 60 + Math.abs(off) + (off * sd < 0 ? 12 : 0) + (off === 0 ? 24 : 0);
         if (best && cost >= best.cost) continue;
         if (!fits(rect) || obstacles.some((o) => hits(rect, o, 2)) || placed.some((o) => hits(rect, o, 3))) continue;
-        best = { cost, rect, spot: { x, y, from: off === 0 ? null : [px, py] } };
+        best = { cost, rect, spot: { x, y, from: Math.abs(off) < 20 ? null : [px, py] } };
       }
     }
-    if (!best) {
-      const [x, y] = it.at(0.5);
-      best = { cost: 0, rect: { x0: x - it.w / 2, x1: x + it.w / 2, y0: y - TAG_H / 2, y1: y + TAG_H / 2 }, spot: { x, y, from: null } };
-    }
+    // A label that would collide is dropped; the edge's tooltip still carries the figures.
+    if (!best) continue;
     placed.push(best.rect);
     out.set(it.id, best.spot);
   }
