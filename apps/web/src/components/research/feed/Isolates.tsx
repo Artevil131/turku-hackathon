@@ -1,10 +1,10 @@
 import type { AeiClient } from "@aei/contract";
 import { ANTIBIOTICS, type IsolateRecord } from "@aei/domain";
-import { antibioticName, formatDate, type Locale, phenotypeName, specimenName, t } from "@aei/i18n";
+import { type Locale, phenotypeName, specimenName, t } from "@aei/i18n";
 import { useEffect, useMemo, useState } from "react";
-import { type Incident, isolatesBehind, stayDay, windowOf } from "./model.ts";
+import { type Incident, isolatesBehind, resultString, windowOf } from "./model.ts";
 
-// The isolates behind an incident (U2): one click from the signal.
+// The isolates behind an incident (U2): fetched once per incident, shown as rows in the card's data section.
 
 type Load = { status: "loading" } | { status: "error" } | { status: "ready"; records: IsolateRecord[] };
 
@@ -34,52 +34,21 @@ export function useIsolates(client: AeiClient, inc: Incident | null) {
   return { status: isData ? ("data" as const) : load.status, matched, retry: () => setAttempt((n) => n + 1) };
 }
 
-/** The resistant drugs by name; the full profile in a disclosure, in words, never colour alone. */
-function ResistanceLine({ locale, record: r }: { locale: Locale; record: IsolateRecord }) {
-  const resistant = ANTIBIOTICS.filter((a) => r.results[a.code] === "R");
-  const word = (code: (typeof ANTIBIOTICS)[number]["code"]) =>
-    r.results[code] === "R" ? t(locale, "feedResR") : r.results[code] === "S" ? t(locale, "feedResS") : t(locale, "feedResNone");
-  return (
-    <details className="feed-res">
-      <summary>
-        <span className="feed-res-line">
-          {resistant.length > 0
-            ? t(locale, "feedResistantTo", { names: resistant.map((a) => antibioticName(locale, a.code)).join(", ") })
-            : t(locale, "feedResistantNone")}
-        </span>
-      </summary>
-      <p className="feed-note">{t(locale, "feedFullProfile")}</p>
-      <ul className="feed-profile">
-        {ANTIBIOTICS.map((a) => (
-          <li key={a.code} data-result={r.results[a.code] ?? "none"}>
-            <span>{antibioticName(locale, a.code)}</span>
-            <b>{word(a.code)}</b>
-          </li>
-        ))}
-      </ul>
-    </details>
-  );
-}
-
-export function IsolateList({
+/** The isolates in the window as rows: date, patient, specimen, organism, and the phenotypes or, for a profile signal, the S/R profile. */
+export function IsolateTable({
   locale,
   status,
   matched,
   retry,
-  window: win,
-  dataNote,
-  limit,
+  profile = false,
 }: {
   locale: Locale;
-  status: "loading" | "error" | "ready" | "data";
+  status: "loading" | "error" | "ready";
   matched: IsolateRecord[];
   retry: () => void;
-  window: { from: string; to: string };
-  dataNote: string;
-  /** Show only the first n rows; the count line still says how many there are. */
-  limit?: number;
+  /** Show the S/R profile string (antibiotic order, "." untested) instead of the phenotypes. */
+  profile?: boolean;
 }) {
-  if (status === "data") return <p className="feed-note">{dataNote}</p>;
   if (status === "loading")
     return (
       <p className="feed-note" role="status">
@@ -97,38 +66,36 @@ export function IsolateList({
     );
   if (matched.length === 0) return <p className="feed-note">{t(locale, "feedIsolatesNone")}</p>;
   return (
-    <>
-      <p className="feed-note">
-        {t(locale, matched.length === 1 ? "feedIsolatesCountOne" : "feedIsolatesCount", {
-          n: matched.length,
-          from: formatDate(locale, win.from),
-          to: formatDate(locale, win.to),
-        })}
-      </p>
-      <ul className="feed-isolates">
-        {(limit === undefined ? matched : matched.slice(0, limit)).map((r) => {
-          const day = stayDay(r);
-          return (
-            <li key={r.isolateId}>
-              <span className="feed-iso-main">
-                <b>{formatDate(locale, r.sampleDate)}</b>
-                <span className="mono" title={t(locale, "feedColPatient")}>
-                  {r.patientId}
-                </span>
-                <i title={t(locale, "feedColOrganism")}>{r.organism}</i>
-                <span title={t(locale, "feedColSpecimen")}>{specimenName(locale, r.specimen)}</span>
-              </span>
-              <span className="feed-iso-sub">
-                <span title={t(locale, "feedColStay")}>
-                  {day === null ? t(locale, "outpatient") : t(locale, "feedStayDay", { n: day })}
-                </span>
-                <span title={t(locale, "feedColPhenotypes")}>{r.phenotypes.map(phenotypeName).join(", ") || "–"}</span>
-              </span>
-              <ResistanceLine locale={locale} record={r} />
-            </li>
-          );
-        })}
-      </ul>
-    </>
+    <div className="feed-iso-wrap">
+      <table className="feed-iso-table">
+        <caption>{t(locale, "feedIsolatesRows", { n: matched.length })}</caption>
+        <thead>
+          <tr>
+            <th scope="col">{t(locale, "feedColDate")}</th>
+            <th scope="col">{t(locale, "feedColPatient")}</th>
+            <th scope="col">{t(locale, "feedColSpecimen")}</th>
+            <th scope="col">{t(locale, "feedColOrganism")}</th>
+            <th scope="col" title={profile ? ANTIBIOTICS.map((a) => a.code).join(" ") : undefined}>
+              {t(locale, profile ? "feedColProfile" : "feedColPhenotypes")}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {matched.map((r) => (
+            <tr key={r.isolateId}>
+              <td className="num">{r.sampleDate}</td>
+              <td className="mono">{r.patientId}</td>
+              <td>{specimenName(locale, r.specimen)}</td>
+              <td>
+                <i>{r.organism}</i>
+              </td>
+              <td className={profile ? "mono" : undefined}>
+                {profile ? resultString(r) : r.phenotypes.map(phenotypeName).join(", ") || "–"}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

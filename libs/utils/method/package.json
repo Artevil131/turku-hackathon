@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@aei/alerts": "workspace:*",
-    "@aei/detect": "workspace:*"
+    "@aei/detect": "workspace:*",
+    "@aei/domain": "workspace:*"
   }
 }

@@ -11,7 +11,6 @@
   color: var(--ink-2);
 }
 
-.sig-isolates[open] > summary,
 .sig-reach[open] > summary {
   margin-bottom: 8px;
 }
@@ -78,15 +77,9 @@
   margin-top: 1px;
 }
 
-/* The open sections: the assistant's reading, the analysis; one quiet heading each. */
-.sig-section {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  border-top: 1px solid var(--line);
-  padding-top: 8px;
-}
+/* Section headings: the method's sits in its summary, the data's stands alone. */
 .sig-section-title {
+  display: inline;
   margin: 0;
   font-size: var(--t-s, 13px);
   font-weight: 600;
@@ -152,16 +145,6 @@
   align-self: flex-start;
 }
 
-/* What it means, in words: the one sentence between the numbers and the sections. */
-.sig-means {
-  margin: 0;
-  font-size: var(--t-s, 13px);
-  line-height: 1.5;
-  color: var(--ink);
-  max-width: 48ch;
-  text-wrap: pretty;
-}
-
 /* The collapsed sections share one look: a bold summary with a chevron, a hairline above. */
 .sig-reach {
   display: block;
@@ -208,7 +191,7 @@
   align-self: center;
 }
 
-/* "How we calculate it" is closed until asked for; the summary reads as the section heading. */
+/* "How we calculate it" stands open in the layer; the summary holds the section heading. */
 .sig-how > summary {
   cursor: pointer;
   list-style: none;
@@ -414,4 +397,77 @@
 }
 .sig-plain[open] > summary {
   margin-bottom: 4px;
+}
+
+/* Data behind it: the counts the test used, the isolates, the copy and download row. */
+.sig-data {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+.sig-counts {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--t-xs, 12px);
+  font-variant-numeric: tabular-nums;
+}
+.sig-counts th,
+.sig-counts td {
+  padding: 2px 0;
+  border-bottom: 1px dotted var(--line);
+  text-align: left;
+  vertical-align: baseline;
+  overflow-wrap: anywhere;
+}
+.sig-counts th {
+  width: 48%;
+  padding-right: 8px;
+  font-weight: 400;
+  color: var(--ink-3);
+}
+.sig-counts td {
+  color: var(--ink-1, #1b1b1f);
+}
+.sig-sym {
+  display: inline-block;
+  min-width: 1.4em;
+  font-family: "Times New Roman", serif;
+  font-size: 13px;
+  color: var(--ink-1, #1b1b1f);
+}
+.sig-data-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.sig-data-actions .sig-copy {
+  padding: 3px 10px;
+  font-size: var(--t-xs, 12px);
+}
+.sig-copy:focus-visible,
+.sig-seg button:focus-visible,
+.sig-snippet:focus-visible {
+  outline: 2px solid var(--accent, #5b5bd6);
+  outline-offset: 1px;
+}
+
+/* At a 300 px window nothing pushes the layer wider: the grid column shrinks, long code and maths scroll in place. */
+.sig-how-section,
+.sig-how {
+  min-width: 0;
+}
+.sig-method {
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+}
+.sig-with {
+  min-width: 0;
+  overflow-x: auto;
+}
+.sig-method .math-poisson svg {
+  max-width: 100%;
+  height: auto;
 }
