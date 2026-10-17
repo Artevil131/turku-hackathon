@@ -292,7 +292,6 @@ export function App() {
         asOf={asOf}
         resultCount={results.length}
         quality={quality}
-        feedSource={`${window.location.host}/api`}
         ai={ai}
         onCheckAi={() => void checkAi(true)}
         onForget={forget}

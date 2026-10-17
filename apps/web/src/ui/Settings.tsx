@@ -16,7 +16,6 @@ import type { QualityState } from "./useQuality.ts";
     locale, onLocale(locale)
     meta: FeedMeta | null, asOf: IsoDate | null, resultCount: number
     quality: QualityState          the server's data checks (D-038)
-    feedSource: string            where the feed is read from (shown to the user)
     ai: { available: boolean; model: string | null; checking: boolean }
     onCheckAi()                   check the language model again
     onForget()                    clear every remembered choice on this device
@@ -35,7 +34,6 @@ export function Settings({
   asOf,
   resultCount,
   quality,
-  feedSource,
   ai,
   onCheckAi,
   onForget,
@@ -46,7 +44,6 @@ export function Settings({
   asOf: IsoDate | null;
   resultCount: number;
   quality: QualityState;
-  feedSource: string;
   ai: AiState;
   onCheckAi: () => void;
   onForget: () => void;
@@ -75,7 +72,7 @@ export function Settings({
         <ul className="app-facts">
           <li>
             <Icon name="flask" size={18} />
-            <span>{t(locale, "common.settings.feed", { source: feedSource })}</span>
+            <span>{t(locale, "common.settings.feed")}</span>
           </li>
           {meta && asOf ? (
             <li>

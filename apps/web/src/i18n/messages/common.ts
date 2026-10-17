@@ -138,8 +138,8 @@ const en = {
   "common.settings.rank": "Best match prefers first-choice antibiotics when they work nearly as well",
   "common.settings.rankWhy": "This saves last-resort antibiotics for the patients who need them most.",
   "common.settings.data": "About the data",
-  "common.settings.feed": "Reads the laboratory feed at {source}.",
-  "common.settings.thisServer": "this server",
+  "common.settings.feed":
+    "Results come from the laboratory as they are reported. In this demo they are the organisers' synthetic Tyks dataset, released day by day.",
   "common.settings.range": "The feed covers {start} to {end}. Results are released up to {asOf}.",
   "common.settings.count": "{count} results released so far.",
   "common.settings.sim":
@@ -329,8 +329,8 @@ const fi: Record<keyof typeof en, string> = {
   "common.settings.rank": "Paras vaihtoehto suosii ensisijaisia antibiootteja, kun ne tehoavat lähes yhtä hyvin",
   "common.settings.rankWhy": "Näin viimesijaiset antibiootit säästyvät niitä eniten tarvitseville.",
   "common.settings.data": "Tiedoista",
-  "common.settings.feed": "Lukee laboratorion syötettä osoitteesta {source}.",
-  "common.settings.thisServer": "tämä palvelin",
+  "common.settings.feed":
+    "Tulokset tulevat laboratoriosta sitä mukaa kuin ne valmistuvat. Tässä demossa ne ovat järjestäjien synteettinen Tyksin aineisto, julkaistuna päivä kerrallaan.",
   "common.settings.range": "Syöte kattaa {start}–{end}. Tulokset on julkaistu {asOf} asti.",
   "common.settings.count": "{count} tulosta julkaistu tähän mennessä.",
   "common.settings.sim":
