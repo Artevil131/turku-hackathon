@@ -13,7 +13,7 @@ describe("project template layouts", () => {
     expect(Object.keys(layout.wins).sort()).toEqual([...WIN_IDS].sort());
   });
   it("opens the outbreak evidence together and keeps blank genuinely blank", () => {
-    expect(openIds("outbreak")).toEqual(["signals", "graph", "math"]);
+    expect(openIds("outbreak")).toEqual(["signals", "graph"]);
     expect(openIds("blank")).toEqual([]);
     expect(openIds("regional")).toEqual(["map"]);
   });

@@ -16,9 +16,8 @@ export const QUICK_STARTS: readonly Template[] = ["patient"];
 const OPEN: Record<Template, Partial<Record<WinId, Partial<WinState>>>> = {
   blank: {},
   outbreak: {
-    signals: { x: 0, y: 0, w: 4, h: 40 },
-    math: { x: 4, y: 0, w: 4, h: 40 },
-    graph: { x: 8, y: 0, w: 4, h: 40 },
+    signals: { x: 0, y: 0, w: 5, h: 40 },
+    graph: { x: 5, y: 0, w: 7, h: 40 },
   },
   antibiogram: { grid: { x: 0, y: 0, w: 6, h: 30 }, coverage: { x: 6, y: 0, w: 6, h: 30 } },
   regional: { map: { x: 0, y: 0, w: 12, h: 36 } },
