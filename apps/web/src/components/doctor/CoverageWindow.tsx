@@ -150,7 +150,7 @@ export function CoverageWindow({
   // A link followed inside the app (search, home, back button) changes the hash without remounting.
   useEffect(() => {
     const onHash = () => {
-      if (hashPage() === (embedded ? "research" : "doctor")) setFilters(readCoverageFilters(embedded));
+      if (embedded || hashPage() === "doctor") setFilters(readCoverageFilters(embedded));
     };
     addEventListener("hashchange", onHash);
     return () => removeEventListener("hashchange", onHash);

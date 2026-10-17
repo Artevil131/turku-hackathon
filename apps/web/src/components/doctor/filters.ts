@@ -120,6 +120,16 @@ export function coverageQuery(f: DoctorFilters): CoverageQuery {
   };
 }
 
+/** Carries legacy doctor deep links into a workspace without borrowing its filter names. */
+export function doctorParamsToWindow(params: URLSearchParams): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const key of ["unit", "site", "sex", "age", "onset", "sev", "period", "syn"]) {
+    const value = params.get(key);
+    if (value !== null) result[`cov.${key}`] = value;
+  }
+  return result;
+}
+
 /** URL first, then the remembered unit, then the default; a unit of a hospital other than the selected one is not used. */
 export function filtersFromUrl(params: URLSearchParams): DoctorFilters {
   const unit = params.get("unit");
