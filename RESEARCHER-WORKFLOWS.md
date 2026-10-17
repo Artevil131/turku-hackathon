@@ -96,6 +96,7 @@ esbl-urology-spring-2025/
   figures/*.svg, *.png  the views as they were on screen
   analysis.py           loads everything into pandas
   analysis.ipynb        a Jupyter starting point (also renders with Quarto)
+  analysis.R            loads everything into R, typed for the AMR package
 ```
 
 `datapackage.json` is a recognised standard for describing tables, and both
@@ -104,11 +105,22 @@ data in a form tools understand, not just in a README. The single-format
 downloads we built today (CSV, JSON, Markdown, LaTeX, Word, Python) stay;
 the package bundles them.
 
-### 2. R: not now
+### 2. R beside Python (D-063)
 
-Aapo, 2026-10-17: we do not build for R. The CSVs and `datapackage.json`
-load in R with standard readers, so an R user is not locked out; we ship no
-R script or R package, and Python is where our own code is importable.
+Samuli Niiranen (organisers): in biomedicine R is a usual choice for
+statistical analysis, Python for machine-learning pipelines. So both are
+first-class for the data, and Python carries our methods:
+
+- `analysis.R` in the package: the tables typed from `datapackage.json`,
+  results as `AMR` package `sir` objects and organisms as `mo` codes, so
+  `first_isolate()`, `antibiogram()` and `eucast_rules()` work at once and
+  a researcher can check our coverage figure against the field's reference
+  implementation.
+- A small R package `aei` (`libs/utils/r`, from git): `read_package()`,
+  `connect()` and `verify()`, mirroring the Python client.
+- An R kernel (xeus-r) in the Reproduce window beside Python.
+- Our detectors and coverage are not ported to R; R reproduces the cut
+  and checks numbers with its own tools.
 
 ### 3. The Python package: our code, importable
 
