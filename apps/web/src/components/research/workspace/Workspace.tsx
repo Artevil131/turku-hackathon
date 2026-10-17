@@ -1,40 +1,46 @@
 import { type Locale, t } from "@aei/i18n";
 import {
   type CSSProperties,
-  Fragment,
   type KeyboardEvent,
   type PointerEvent,
   type ReactNode,
-  useCallback,
   useEffect,
   useLayoutEffect,
   useRef,
   useState,
 } from "react";
 import {
-  closeWindow,
+  boardRows,
+  COLS,
+  clampRect,
+  compactLayout,
   defaultLayout,
-  equalize,
   fitLayout,
   type Layout,
-  locate,
-  MIN_BODY,
-  maximizeWindow,
-  migrateLayout,
-  minWindowHeight,
-  moveWindow,
+  loadLayout,
+  MAX_ROWS,
+  MIN_SIZE,
   type Preset,
+  patchWin,
   presetLayout,
-  reopenWindow,
-  resizeColumns,
-  resizeStack,
-  type Slot,
-  STORAGE_KEY,
-  serializeLayout,
+  ROW_PX,
+  raise,
+  saveLayout,
   WIN_IDS,
   type WinId,
 } from "./layout.ts";
 import "./workspace.css";
+
+// The window workspace of the researcher page. At 1100 px and wider the
+// windows float on a 12-column grid with 24 px rows: drag the top edge to
+// move, drag (or use the arrow keys on) the corner handle to resize, close
+// with the button and reopen from the toolbar. Narrower, the windows stack.
+// Windows compact upward like a dashboard grid: after any move, resize or
+// close they float up to fill gaps, and the window being dragged pushes the
+// ones it lands on down. While dragging, the window follows the pointer (a
+// transform, updated once per animation frame), a soft placeholder shows the
+// cell it will land in and the others move out of the way live; the grid is
+// committed on release.
 
 const TITLE_KEY = {
   signals: "boardFeed",
@@ -44,47 +50,42 @@ const TITLE_KEY = {
   assistant: "boardAssistant",
   grid: "boardGrid",
 } as const;
+
+/** The stacked order under 1100 px: the list first, the map last (as before). */
 const STACK_ORDER: readonly WinId[] = ["signals", "math", "assistant", "map", "graph", "grid"];
-const PRESETS = ["default", "map", "signals", "units"] as const;
-const PRESET_KEY = { default: "wsDefault", map: "wsMap", signals: "wsSignals", units: "wsUnits" } as const;
-function loadLayout(): Layout {
-  try {
-    return migrateLayout(localStorage.getItem(STORAGE_KEY));
-  } catch {
-    return defaultLayout();
-  }
-}
-function saveLayout(layout: Layout) {
-  try {
-    localStorage.setItem(STORAGE_KEY, serializeLayout(layout));
-  } catch {
-    /* Blocked storage: keep the session usable. */
-  }
-}
-function useWide() {
-  const [wide, setWide] = useState(() => typeof matchMedia === "function" && matchMedia("(min-width: 1100px)").matches);
+
+function useWide(): boolean {
+  const query = "(min-width: 1100px)";
+  const [wide, setWide] = useState(() => typeof matchMedia === "function" && matchMedia(query).matches);
   useEffect(() => {
-    const mq = matchMedia("(min-width: 1100px)");
-    const change = () => setWide(mq.matches);
-    mq.addEventListener("change", change);
-    return () => mq.removeEventListener("change", change);
+    if (typeof matchMedia !== "function") return;
+    const mq = matchMedia(query);
+    const on = () => setWide(mq.matches);
+    mq.addEventListener("change", on);
+    on();
+    return () => mq.removeEventListener("change", on);
   }, []);
   return wide;
 }
-const reducedMotion = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
-type Move = { kind: "move"; id: WinId; x: number; y: number; active: boolean; slot: Slot | null; top: number };
-type Resize = {
-  kind: "column" | "stack";
-  column: number;
-  index: number;
-  origin: number;
-  span: number;
-  minimum: number | [number, number];
+
+type Rect = { x: number; y: number; w: number; h: number };
+
+type Drag = {
+  kind: "move" | "size" | "sizeX" | "sizeY";
+  id: WinId;
+  x0: number;
+  y0: number;
+  scroll0: number;
+  /** The layout when the drag began; every preview is computed from it. */
   base: Layout;
-  last: Layout;
+  rect: Rect;
+  last: Rect;
+  colW: number;
+  areaW: number;
+  el: HTMLElement | null;
+  pointer: { x: number; y: number };
+  raf: number | null;
 };
-type Gesture = Move | Resize;
-type Drop = { slot: Slot; top: number };
 
 export function Workspace({
   locale,
@@ -98,380 +99,297 @@ export function Workspace({
   content: Record<WinId, ReactNode>;
   onOpened?: (id: WinId) => void;
   onClosed?: (id: WinId) => void;
+  /** Windows to open on mount (a link that names the unit grid). */
   initiallyOpen?: WinId[];
-  /** Opens `id` from the tray, without moving focus, whenever `key` changes to a new value. */
+  /** A window to bring forward (opening it if closed) each time `key` changes: the card on a new signal, the map on "Show on map". */
   reveal?: { id: WinId; key: string | null };
 }) {
   const wide = useWide();
-  const [layout, setLayout] = useState<Layout>(() => (initiallyOpen ?? []).reduce(reopenWindow, loadLayout()));
-  // Windows render only once the stored layout is fitted to the measured board, so none mounts squashed.
-  const [fitted, setFitted] = useState(false);
+  const areaRef = useRef<HTMLDivElement>(null);
+  // null = the default layout for the board's height; set once the user changes anything.
+  const [saved, setSaved] = useState<Layout | null>(loadLayout);
+  // The layout previewed while a window is being dragged or resized; committed on release.
   const [draft, setDraft] = useState<Layout | null>(null);
-  const [moving, setMoving] = useState<{ id: WinId; x: number; y: number } | null>(null);
-  const [drop, setDrop] = useState<Drop | null>(null);
+  const [dragging, setDragging] = useState<WinId | null>(null);
+  const [areaW, setAreaW] = useState(0);
+  const [animate, setAnimate] = useState(false);
   const [status, setStatus] = useState("");
-  const root = useRef<HTMLDivElement>(null);
-  const area = useRef<HTMLDivElement>(null);
-  const gesture = useRef<Gesture | null>(null);
+  const drag = useRef<Drag | null>(null);
   const focusAfter = useRef<string | null>(null);
-  const shown = draft ?? layout;
-  const title = (id: WinId) => t(locale, TITLE_KEY[id]);
-  const commit = (next: Layout) => {
-    setLayout(next);
-    saveLayout(next);
-  };
-  /** Layout changes that reorder or reveal windows. No View Transition: the page is not interactive
-   *  while one runs, which blocked the next click (the smoke test caught it); the CSS tokens carry the motion. */
-  const reflow = (next: Layout) => commit(next);
-  const keep = useRef(initiallyOpen ?? []);
+
+  const layout: Layout = compactLayout(fitLayout(draft ?? saved ?? defaultLayout()));
+  const colW = areaW / COLS;
+
   useLayoutEffect(() => {
-    if (fitted) return;
-    const height = area.current?.clientHeight ?? 0;
-    if (wide && height > 0) setLayout((l) => fitLayout(l, height, keep.current));
-    setFitted(true);
-  }, [fitted, wide]);
-  const boardHeight = () => (wide && area.current?.clientHeight) || Number.POSITIVE_INFINITY;
+    const el = areaRef.current;
+    if (!el) return;
+    const measure = () => setAreaW(el.getBoundingClientRect().width);
+    measure();
+    if (typeof ResizeObserver !== "function") return;
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  // Position changes animate, but not the first placement.
+  useEffect(() => {
+    if (areaW <= 0 || animate) return;
+    const raf = requestAnimationFrame(() => setAnimate(true));
+    return () => cancelAnimationFrame(raf);
+  }, [areaW, animate]);
+
+  const commit = (next: Layout, moved?: WinId) => {
+    const c = compactLayout(fitLayout(next), moved);
+    setSaved(c);
+    saveLayout(c);
+    return c;
+  };
+  const update = (fn: (l: Layout) => Layout, moved?: WinId) => commit(fn(layout), moved);
+
+  // A link that names a window (the unit grid) opens it once the board is measured.
+  const wanted = useRef(initiallyOpen);
+  useEffect(() => {
+    if (!wanted.current) return;
+    const ids = wanted.current.filter((id) => !layout.wins[id].open);
+    wanted.current = undefined;
+    if (ids.length) update((l) => ids.reduce((acc, id) => raise(patchWin(acc, id, { open: true }), id), l), ids[0]);
+  });
+
+  useEffect(() => {
+    const id = focusAfter.current;
+    if (!id) return;
+    focusAfter.current = null;
+    document.getElementById(id)?.focus();
+  });
+
+  const close = (id: WinId) => {
+    focusAfter.current = "ws-tray-button";
+    update((l) => patchWin(l, id, { open: false }));
+    onClosed?.(id);
+  };
+  const open = (id: WinId) => {
+    focusAfter.current = `ws-win-${id}`;
+    update((l) => raise(patchWin(l, id, { open: true }), id), id);
+    onOpened?.(id);
+  };
+  const toggle = (id: WinId) => (layout.wins[id].open ? close(id) : open(id));
   const revealed = useRef(reveal?.key ?? null);
   useEffect(() => {
     if (!reveal || reveal.key === revealed.current) return;
     revealed.current = reveal.key;
-    if (reveal.key === null || !layout.closed[reveal.id]) return;
-    // No view transition here: it runs on mount and a stuck snapshot covered the page (smoke caught it).
-    commit(reopenWindow(layout, reveal.id));
-    onOpened?.(reveal.id);
+    if (reveal.key === null) return;
+    if (!layout.wins[reveal.id].open) open(reveal.id);
+    else focusWin(reveal.id);
   });
-  /** Per-window floors for the two windows beside a stack splitter, as fractions of the stack. */
-  const stackMinimum = (column: number, index: number, span: number): [number, number] => {
-    const windows = layout.columns[column]?.windows ?? [];
-    const floor = (id: WinId | undefined) => Math.max(0.16, id ? minWindowHeight(id) / Math.max(1, span) : 0);
-    return [floor(windows[index]?.id), floor(windows[index + 1]?.id)];
-  };
-  const cancel = useCallback(() => {
-    gesture.current = null;
-    root.current?.removeAttribute("data-resizing");
-    setDraft(null);
-    setMoving(null);
-    setDrop(null);
-  }, []);
-  useEffect(() => {
-    const onEscape = (e: globalThis.KeyboardEvent) => {
-      if (e.key === "Escape" && gesture.current) {
-        e.preventDefault();
-        cancel();
-      }
-    };
-    window.addEventListener("keydown", onEscape);
-    return () => window.removeEventListener("keydown", onEscape);
-  }, [cancel]);
-  useEffect(() => {
-    if (!wide) cancel();
-  }, [wide, cancel]);
-  useEffect(() => {
-    if (!focusAfter.current) return;
-    document.getElementById(focusAfter.current)?.focus();
-    focusAfter.current = null;
-  });
-  const announceMove = (next: Layout, id: WinId) => {
-    const at = locate(next, id);
-    if (at) setStatus(t(locale, "wsStatus", { title: title(id), x: at.column + 1, y: at.index + 1 }));
-  };
-  const close = (id: WinId) => {
-    focusAfter.current = "ws-tray-button";
-    reflow(closeWindow(layout, id));
-    setStatus(t(locale, "wsClosed", { title: title(id) }));
-    onClosed?.(id);
-  };
-  const open = (id: WinId) => {
-    focusAfter.current = `ws-title-${id}`;
-    reflow(reopenWindow(layout, id));
-    onOpened?.(id);
-  };
-  const preset = (p: Preset) => {
-    cancel();
-    focusAfter.current = "ws-tray-button";
-    const next = presetLayout(p, boardHeight());
-    for (const id of WIN_IDS) {
-      if (locate(layout, id) && !locate(next, id)) onClosed?.(id);
-      if (!locate(layout, id) && locate(next, id)) onOpened?.(id);
-    }
-    reflow(next);
+  const PRESETS: readonly Preset[] = ["default", "map", "signals", "units"];
+  const PRESET_KEY = { default: "wsDefault", map: "wsMap", signals: "wsSignals", units: "wsUnits" } as const;
+  const applyPreset = (p: Preset) => {
+    const l = presetLayout(p);
+    setSaved(l);
+    saveLayout(l);
     setStatus(t(locale, "wsPresetApplied", { title: t(locale, PRESET_KEY[p]) }));
   };
-  const keyboardMove = (e: KeyboardEvent, id: WinId) => {
-    if (!e.altKey || shown.maximized || !wide) return;
-    const at = locate(layout, id);
-    if (!at) return;
-    let slot: Slot;
-    if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-      const column = at.column + (e.key === "ArrowLeft" ? -1 : 1);
-      if (column < 0 || column >= layout.columns.length) return;
-      slot = { column, index: layout.columns[column]?.windows.length ?? 0 };
-    } else if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-      slot = { column: at.column, index: at.index + (e.key === "ArrowUp" ? -1 : 2) };
-    } else return;
-    e.preventDefault();
-    focusAfter.current = `ws-title-${id}`;
-    const next = moveWindow(layout, id, slot);
-    commit(next);
-    announceMove(next, id);
-  };
-  const capture = (e: PointerEvent) => {
-    e.preventDefault();
-    // Capture on the stable board, never on a window that may be reparented on drop.
-    area.current?.setPointerCapture(e.pointerId);
-  };
-  const beginMove = (e: PointerEvent, id: WinId) => {
-    if (!wide || shown.maximized || e.button !== 0) return;
-    capture(e);
-    e.currentTarget instanceof HTMLElement && e.currentTarget.focus();
-    gesture.current = { kind: "move", id, x: e.clientX, y: e.clientY, active: false, slot: null, top: 0 };
-  };
-  const beginResize = (e: PointerEvent, kind: Resize["kind"], column: number, index: number) => {
-    if (e.button !== 0 || !area.current) return;
-    e.preventDefault();
-    // Splitters stay mounted; capturing here preserves their double-click target.
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    (e.currentTarget as HTMLElement).focus();
-    const el = kind === "column" ? area.current : area.current.querySelector<HTMLElement>(`[data-column-index="${column}"]`);
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const count = kind === "column" ? layout.columns.length : (layout.columns[column]?.windows.length ?? 1);
-    const span = (kind === "column" ? rect.width : rect.height) - (count - 1) * 8;
-    gesture.current = {
-      kind,
-      column,
-      index,
-      origin: kind === "column" ? e.clientX : e.clientY,
-      span,
-      minimum: kind === "column" ? Math.min(1 / count, Math.max(0.18, 240 / span)) : stackMinimum(column, index, span),
-      base: layout,
-      last: layout,
-    };
-    // Dock transitions stay off while the pointer drags (see workspace.css).
-    root.current?.setAttribute("data-resizing", "true");
-  };
-  const hitSlot = (x: number, y: number): Drop | null => {
-    const board = area.current;
-    if (!board) return null;
-    const bounds = board.getBoundingClientRect();
-    if (x < bounds.left || x > bounds.right || y < bounds.top || y > bounds.bottom) return null;
-    const columns = [...board.querySelectorAll<HTMLElement>(".ws-column")];
-    for (const [i, col] of columns.entries()) {
-      const r = col.getBoundingClientRect();
-      if (layout.columns.length < 3 && Math.abs(x - r.left) < 20) return { slot: { column: i, index: 0, newColumn: true }, top: 0 };
-      if (layout.columns.length < 3 && i === columns.length - 1 && Math.abs(x - r.right) < 20)
-        return { slot: { column: i + 1, index: 0, newColumn: true }, top: 0 };
-      if (x < r.left - 4 || x > r.right + 4) continue;
-      const windows = [...col.querySelectorAll<HTMLElement>(".ws-win")];
-      for (const [j, win] of windows.entries()) {
-        const w = win.getBoundingClientRect();
-        // The marker sits in the column's scrolled content, so offsets include its scroll.
-        if (y < w.top + w.height / 2) return { slot: { column: i, index: j }, top: Math.max(2, w.top - r.top + col.scrollTop - 4) };
-      }
-      return { slot: { column: i, index: windows.length }, top: Math.max(2, col.scrollHeight - 4) };
-    }
-    return null;
-  };
-  const pointerMove = (e: PointerEvent) => {
-    const g = gesture.current;
-    if (!g) return;
-    if (g.kind === "move") {
-      if (!g.active && Math.hypot(e.clientX - g.x, e.clientY - g.y) < 5) return;
-      g.active = true;
-      const target = hitSlot(e.clientX, e.clientY);
-      g.slot = target?.slot ?? null;
-      g.top = target?.top ?? 0;
-      setDrop(target);
-      setMoving({ id: g.id, x: e.clientX, y: e.clientY });
-    } else {
-      const delta = ((g.kind === "column" ? e.clientX : e.clientY) - g.origin) / g.span;
-      g.last =
-        g.kind === "column" ? resizeColumns(g.base, g.index, delta, g.minimum) : resizeStack(g.base, g.column, g.index, delta, g.minimum);
-      setDraft(g.last);
-    }
-  };
-  const pointerUp = (e: PointerEvent) => {
-    pointerMove(e);
-    const g = gesture.current;
-    if (!g) return;
-    if (g.kind === "move") {
-      if (g.active && g.slot) {
-        const next = moveWindow(layout, g.id, g.slot);
-        focusAfter.current = `ws-title-${g.id}`;
-        commit(next);
-        announceMove(next, g.id);
-      }
-    } else commit(g.last);
-    cancel();
-  };
-  const splitter = (column: number, index: number, vertical: boolean) => {
-    const values = vertical ? shown.columns.map((c) => c.width) : (shown.columns[column]?.windows.map((w) => w.size) ?? []);
-    const value = values[index] ?? 0.5;
-    const reset = () => commit(equalize(layout, vertical ? undefined : column));
-    return (
-      <div
-        className={`ws-splitter ${vertical ? "ws-splitter-col" : "ws-splitter-row"}`}
-        role="separator"
-        tabIndex={0}
-        aria-orientation={vertical ? "vertical" : "horizontal"}
-        aria-label={t(locale, vertical ? "wsColumnResize" : "wsStackResize")}
-        aria-valuenow={Math.round(value * 100)}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        title={t(locale, "wsSplitterHint")}
-        onPointerDown={(e) => beginResize(e, vertical ? "column" : "stack", column, index)}
-        onDoubleClick={reset}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === "Home") {
-            e.preventDefault();
-            reset();
-            return;
-          }
-          const sign = vertical ? { ArrowLeft: -1, ArrowRight: 1 }[e.key] : { ArrowUp: -1, ArrowDown: 1 }[e.key];
-          if (!sign) return;
-          e.preventDefault();
-          const el = vertical ? area.current : area.current?.querySelector<HTMLElement>(`[data-column-index="${column}"]`);
-          const span = Math.max(1, ((vertical ? el?.clientWidth : el?.clientHeight) ?? 1) - (values.length - 1) * 8);
-          commit(
-            vertical
-              ? resizeColumns(layout, index, sign * 0.03, Math.min(1 / values.length, Math.max(0.18, 240 / span)))
-              : resizeStack(layout, column, index, sign * 0.03, stackMinimum(column, index, span)),
-          );
-        }}
-      />
-    );
-  };
-  // Never raise/reparent a window on pointerdown or focus: that swallowed the old close button's click.
-  const renderWindow = (id: WinId, size = 1) => (
-    <section
-      key={id}
-      id={`ws-win-${id}`}
-      className="ws-win"
-      data-win={id}
-      data-dragging={moving?.id === id}
-      data-min-body={MIN_BODY[id]}
-      hidden={!!shown.maximized && shown.maximized !== id}
-      style={{ flexGrow: shown.maximized ? 1 : size, "--ws-min": `${minWindowHeight(id)}px` } as CSSProperties}
-      aria-label={title(id)}
-    >
-      <header className="ws-header">
-        <button
-          type="button"
-          className="ws-title"
-          id={`ws-title-${id}`}
-          title={t(locale, "wsMoveHint")}
-          onPointerDown={(e) => beginMove(e, id)}
-          onKeyDown={(e) => keyboardMove(e, id)}
-        >
-          <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
-            <path d="M5 3v10M10 3v10" stroke="currentColor" strokeWidth="1.5" strokeDasharray="1.5 2" />
-          </svg>
-          <span>{title(id)}</span>
-        </button>
-        <button
-          type="button"
-          className="ws-action ws-maximize"
-          aria-label={t(locale, shown.maximized === id ? "wsRestore" : "wsMaximize", { title: title(id) })}
-          title={t(locale, shown.maximized === id ? "wsRestore" : "wsMaximize", { title: title(id) })}
-          onClick={() => {
-            focusAfter.current = `ws-title-${id}`;
-            reflow(maximizeWindow(layout, id));
-          }}
-        >
-          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-            <path
-              d={shown.maximized === id ? "M5 3h8v8M3 5h8v8H3z" : "M3 3h10v10H3z"}
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.4"
-            />
-          </svg>
-        </button>
-        <button
-          type="button"
-          className="ws-action ws-close"
-          aria-label={t(locale, "wsClose", { title: title(id) })}
-          title={t(locale, "wsClose", { title: title(id) })}
-          onClick={() => close(id)}
-        >
-          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-            <path d="M4 4l8 8M12 4l-8 8" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-        </button>
-      </header>
-      <div className="ws-body">{content[id]}</div>
-    </section>
+  const layouts = (
+    <div className="ws-layouts" role="group" aria-label={t(locale, "wsPresets")}>
+      <span className="ws-layouts-label">{t(locale, "wsPresets")}</span>
+      <div className="seg">
+        {PRESETS.map((p) => (
+          <button type="button" key={p} data-preset={p} onClick={() => applyPreset(p)}>
+            {t(locale, PRESET_KEY[p])}
+          </button>
+        ))}
+      </div>
+    </div>
   );
+  const reset = () => {
+    setSaved(null);
+    saveLayout(null);
+    setStatus("");
+  };
+  const focusWin = (id: WinId) => {
+    if (layout.order[layout.order.length - 1] !== id) update((l) => raise(l, id));
+  };
+
+  const announce = (id: WinId, r: Rect) =>
+    setStatus(t(locale, "wsStatus", { title: t(locale, TITLE_KEY[id]), x: r.x + 1, y: r.y + 1, w: r.w, h: r.h }));
+
+  const begin = (e: PointerEvent, kind: Drag["kind"], id: WinId) => {
+    if (e.button !== 0 || !areaRef.current) return;
+    if ((e.target as HTMLElement).closest("button") && kind === "move") return;
+    e.preventDefault();
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    focusWin(id);
+    const w = layout.wins[id];
+    const area = areaRef.current.getBoundingClientRect().width;
+    const cw = area / COLS;
+    const el = (e.currentTarget as HTMLElement).closest<HTMLElement>(".ws-win");
+    const rect = { x: w.x, y: w.y, w: w.w, h: w.h };
+    el?.style.setProperty("--tx", `${rect.x * cw}px`);
+    el?.style.setProperty("--ty", `${rect.y * ROW_PX}px`);
+    el?.style.setProperty("--tw", `${rect.w * cw}px`);
+    el?.style.setProperty("--th", `${rect.h * ROW_PX}px`);
+    drag.current = {
+      kind,
+      id,
+      x0: e.clientX,
+      y0: e.clientY,
+      scroll0: window.scrollY,
+      base: layout,
+      rect,
+      last: rect,
+      colW: cw,
+      areaW: area,
+      el,
+      pointer: { x: e.clientX, y: e.clientY },
+      raf: null,
+    };
+    setDraft(layout);
+    setDragging(id);
+  };
+
+  // One frame of the drag: the window follows the pointer freely; the grid cell it would take is previewed.
+  const frame = (d: Drag) => {
+    d.raf = null;
+    const dx = d.pointer.x - d.x0;
+    const dy = d.pointer.y - d.y0 + (window.scrollY - d.scroll0);
+    const left0 = d.rect.x * d.colW;
+    const top0 = d.rect.y * ROW_PX;
+    const w0 = d.rect.w * d.colW;
+    const h0 = d.rect.h * ROW_PX;
+    let next: Rect;
+    if (d.kind === "move") {
+      const px = Math.min(Math.max(0, left0 + dx), d.areaW - w0);
+      const py = Math.max(0, top0 + dy);
+      d.el?.style.setProperty("--tx", `${px}px`);
+      d.el?.style.setProperty("--ty", `${py}px`);
+      next = { ...d.rect, x: Math.round(px / d.colW), y: Math.round(py / ROW_PX) };
+    } else {
+      const min = MIN_SIZE[d.id];
+      const pw = Math.min(Math.max(min.w * d.colW, w0 + (d.kind === "sizeY" ? 0 : dx)), d.areaW - left0);
+      const ph = Math.max(min.h * ROW_PX, h0 + (d.kind === "sizeX" ? 0 : dy));
+      d.el?.style.setProperty("--tw", `${pw}px`);
+      d.el?.style.setProperty("--th", `${ph}px`);
+      next = { ...d.rect, w: Math.round(pw / d.colW), h: Math.round(ph / ROW_PX) };
+    }
+    next = clampRect(next, d.id, MAX_ROWS);
+    const l = d.last;
+    if (next.x === l.x && next.y === l.y && next.w === l.w && next.h === l.h) return;
+    d.last = next;
+    setDraft(compactLayout(patchWin(d.base, d.id, next), d.id));
+  };
+  const move = (e: PointerEvent) => {
+    const d = drag.current;
+    if (!d) return;
+    d.pointer = { x: e.clientX, y: e.clientY };
+    if (d.raf === null) d.raf = requestAnimationFrame(() => frame(d));
+  };
+  const end = () => {
+    const d = drag.current;
+    drag.current = null;
+    if (!d) return;
+    if (d.raf !== null) {
+      cancelAnimationFrame(d.raf);
+      frame(d);
+    }
+    const c = commit(patchWin(d.base, d.id, d.last), d.id);
+    setDraft(null);
+    setDragging(null);
+    announce(d.id, c.wins[d.id]);
+  };
+
+  const onHandleKey = (e: KeyboardEvent, id: WinId) => {
+    const dir = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
+    if (!dir) return;
+    e.preventDefault();
+    const w = layout.wins[id];
+    const r = e.shiftKey
+      ? { ...w, x: w.x + (dir[0] as number), y: w.y + (dir[1] as number) }
+      : { ...w, w: w.w + (dir[0] as number), h: w.h + (dir[1] as number) };
+    const next = clampRect(r, id, MAX_ROWS);
+    const c = update((l) => patchWin(l, id, next), id);
+    announce(id, c.wins[id]);
+  };
+
+  const ids = wide ? layout.order : STACK_ORDER;
+  const tray = <Tray locale={locale} open={(id) => layout.wins[id].open} onToggle={toggle} onReset={reset} />;
+  const place = (r: Rect): CSSProperties => ({
+    transform: `translate3d(${r.x * colW}px,${r.y * ROW_PX}px,0)`,
+    width: r.w * colW,
+    height: r.h * ROW_PX,
+  });
+
   return (
-    <div className="ws" ref={root} data-docked={wide}>
-      <div className="ws-toolbar">
-        {/* Ready-made layouts, one click each; the tray keeps the per-window switches. */}
-        <div className="ws-layouts" role="group" aria-label={t(locale, "wsPresets")}>
-          <span className="ws-layouts-label">{t(locale, "wsPresets")}</span>
-          <div className="seg">
-            {PRESETS.map((p) => (
-              <button type="button" key={p} data-preset={p} onClick={() => preset(p)}>
-                {t(locale, PRESET_KEY[p])}
-              </button>
-            ))}
-          </div>
-        </div>
-        <Tray locale={locale} layout={layout} onToggle={(id) => (locate(layout, id) ? close(id) : open(id))} onPreset={preset} />
+    <div className="ws" data-float={wide} data-animate={animate}>
+      {wide ? null : <div className="ws-tray-row">{tray}</div>}
+      {wide ? <div className="ws-toolbar">{layouts}</div> : null}
+      <div className="ws-area" ref={areaRef} style={wide ? { height: boardRows(layout) * ROW_PX } : undefined}>
+        {wide && dragging ? <div className="ws-ghost" aria-hidden="true" style={place(layout.wins[dragging])} /> : null}
+        {ids.map((id, z) => {
+          const w = layout.wins[id];
+          if (!w.open) return null;
+          const title = t(locale, TITLE_KEY[id]);
+          const style = wide
+            ? ({
+                ...(dragging === id
+                  ? { transform: "translate3d(var(--tx),var(--ty),0)", width: "var(--tw)", height: "var(--th)" }
+                  : place(w)),
+                visibility: areaW > 0 ? undefined : "hidden",
+                zIndex: dragging === id ? 150 : z + 1,
+              } as CSSProperties)
+            : undefined;
+          const drags = (kind: Drag["kind"]) => ({
+            onPointerDown: (e: PointerEvent) => begin(e, kind, id),
+            onPointerMove: move,
+            onPointerUp: end,
+            onPointerCancel: end,
+          });
+          return (
+            <section
+              key={id}
+              id={`ws-win-${id}`}
+              className="ws-win"
+              data-win={id}
+              data-dragging={dragging === id}
+              style={style}
+              tabIndex={-1}
+              aria-label={title}
+              // Raising reorders the DOM; doing it under a button press would swallow that button's click.
+              onPointerDownCapture={wide ? (e) => (e.target as Element).closest("button") || focusWin(id) : undefined}
+              onFocusCapture={wide ? () => focusWin(id) : undefined}
+            >
+              <div className="ws-frame">
+                <div className="ws-body">{content[id]}</div>
+                {wide ? (
+                  <>
+                    <div className="ws-grip" aria-hidden="true" {...drags("move")} />
+                    <div className="ws-edge ws-edge-r" aria-hidden="true" {...drags("sizeX")} />
+                    <div className="ws-edge ws-edge-b" aria-hidden="true" {...drags("sizeY")} />
+                    <button
+                      type="button"
+                      className="ws-handle"
+                      title={`${t(locale, "wsHandle", { title })}. ${t(locale, "wsHint")}`}
+                      aria-label={`${t(locale, "wsHandle", { title })}. ${t(locale, "wsHint")}`}
+                      {...drags("size")}
+                      onKeyDown={(e) => onHandleKey(e, id)}
+                    />
+                  </>
+                ) : null}
+                <button
+                  type="button"
+                  className="ws-close"
+                  aria-label={t(locale, "wsClose", { title })}
+                  title={t(locale, "wsClose", { title })}
+                  onClick={() => close(id)}
+                >
+                  <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true" focusable="false">
+                    <path d="M4 4l8 8M12 4l-8 8" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                  </svg>
+                </button>
+              </div>
+            </section>
+          );
+        })}
       </div>
-      <div
-        className="ws-area"
-        ref={area}
-        data-maximized={!!shown.maximized}
-        onPointerMove={pointerMove}
-        onPointerUp={pointerUp}
-        onPointerCancel={cancel}
-        onLostPointerCapture={cancel}
-      >
-        {wide && !fitted
-          ? null
-          : wide
-            ? shown.columns.map((col, ci) => (
-                <Fragment key={col.id}>
-                  {ci && !shown.maximized ? splitter(ci, ci - 1, true) : null}
-                  <div
-                    className="ws-column"
-                    data-column-index={ci}
-                    style={{ flexGrow: shown.maximized ? 1 : col.width }}
-                    hidden={!!shown.maximized && !col.windows.some((w) => w.id === shown.maximized)}
-                  >
-                    {col.windows.map((w, wi) => (
-                      <Fragment key={w.id}>
-                        {wi && !shown.maximized ? splitter(ci, wi - 1, false) : null}
-                        {renderWindow(w.id, w.size)}
-                      </Fragment>
-                    ))}
-                    {drop && !drop.slot.newColumn && drop.slot.column === ci ? (
-                      <div className="ws-insert" style={{ top: drop.top }} />
-                    ) : null}
-                  </div>
-                </Fragment>
-              ))
-            : STACK_ORDER.filter((id) => locate(shown, id)).map((id) => renderWindow(id))}
-        {wide && fitted && !shown.columns.length ? <p className="ws-empty">{t(locale, "wsEmptyBoard")}</p> : null}
-        {drop?.slot.newColumn ? (
-          <div
-            className="ws-new-column"
-            style={{
-              left:
-                drop.slot.column === shown.columns.length
-                  ? "calc(100% - 24px)"
-                  : `${shown.columns.slice(0, drop.slot.column).reduce((s, c) => s + c.width, 0) * 100}%`,
-            }}
-          >
-            {t(locale, "wsNewColumn")}
-          </div>
-        ) : null}
-      </div>
-      {moving ? (
-        <div className="ws-drag-label" aria-hidden="true" style={{ left: moving.x + 12, top: moving.y + 12 }}>
-          {title(moving.id)}
-        </div>
-      ) : null}
+      {wide ? <div className="ws-rail">{tray}</div> : null}
       <p className="visually-hidden" role="status" aria-live="polite">
         {status}
       </p>
@@ -479,37 +397,35 @@ export function Workspace({
   );
 }
 
+/** The tray: one quiet icon button that lists the panels with checkmarks, the keyboard hint and the reset link. */
 function Tray({
   locale,
-  layout,
+  open,
   onToggle,
-  onPreset,
+  onReset,
 }: {
   locale: Locale;
-  layout: Layout;
+  open: (id: WinId) => boolean;
   onToggle: (id: WinId) => void;
-  onPreset: (p: Preset) => void;
+  onReset: () => void;
 }) {
   const [shown, setShown] = useState(false);
   const root = useRef<HTMLDivElement>(null);
-  const closed = WIN_IDS.filter((id) => layout.closed[id]);
-  const open = WIN_IDS.filter((id) => !layout.closed[id]);
   useEffect(() => {
     if (!shown) return;
-    const key = (e: globalThis.KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setShown(false);
-        document.getElementById("ws-tray-button")?.focus();
-      }
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setShown(false);
+      document.getElementById("ws-tray-button")?.focus();
     };
-    const pointer = (e: globalThis.PointerEvent) => {
-      if (!root.current?.contains(e.target as Node)) setShown(false);
+    const onPointer = (e: globalThis.PointerEvent) => {
+      if (root.current && !root.current.contains(e.target as Node)) setShown(false);
     };
-    document.addEventListener("keydown", key);
-    document.addEventListener("pointerdown", pointer);
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onPointer);
     return () => {
-      document.removeEventListener("keydown", key);
-      document.removeEventListener("pointerdown", pointer);
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("pointerdown", onPointer);
     };
   }, [shown]);
   return (
@@ -520,77 +436,30 @@ function Tray({
         className="ws-tray-button"
         aria-expanded={shown}
         aria-controls="ws-tray-pop"
+        aria-label={t(locale, "wsToolbar")}
+        title={t(locale, "wsToolbar")}
         onClick={() => setShown((v) => !v)}
       >
-        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-          <path d="M2 2h12v12H2zM6 2v12M10 2v12" fill="none" stroke="currentColor" strokeWidth="1.3" />
+        <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">
+          <rect x="2" y="2" width="5" height="12" rx="1.2" fill="none" stroke="currentColor" strokeWidth="1.5" />
+          <rect x="9" y="2" width="5" height="5" rx="1.2" fill="none" stroke="currentColor" strokeWidth="1.5" />
+          <rect x="9" y="9.5" width="5" height="4.5" rx="1.2" fill="none" stroke="currentColor" strokeWidth="1.5" />
         </svg>
-        {t(locale, "wsToolbar")}
-        {closed.length ? <span className="ws-tray-count">· {t(locale, "wsClosedCount", { n: closed.length })}</span> : null}
       </button>
       {shown ? (
         <div className="ws-pop" id="ws-tray-pop" role="group" aria-label={t(locale, "wsToolbar")}>
-          {/* Closed windows first: they are what the count on the button promises. */}
-          <p className="ws-pop-head">{t(locale, closed.length ? "wsDock" : "wsAllOpen")}</p>
-          {closed.length ? (
-            <ul className="ws-pop-list">
-              {closed.map((id) => (
-                <li key={id}>
-                  <button
-                    type="button"
-                    className="ws-pop-open"
-                    data-reopen={id}
-                    aria-label={t(locale, "wsReopen", { title: t(locale, TITLE_KEY[id]) })}
-                    onClick={() => onToggle(id)}
-                  >
-                    <span>{t(locale, TITLE_KEY[id])}</span>
-                    <span className="ws-pop-open-tag" aria-hidden="true">
-                      <svg viewBox="0 0 16 16" width="12" height="12">
-                        <path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-                      </svg>
-                      {t(locale, "wsOpenAction")}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-          <p className="ws-pop-head">{t(locale, "wsOpenWindows")}</p>
           <ul className="ws-pop-list">
-            {open.map((id) => (
+            {WIN_IDS.map((id) => (
               <li key={id}>
                 <label className="ws-pop-row">
-                  <input type="checkbox" checked data-toggle={id} onChange={() => onToggle(id)} />
+                  <input type="checkbox" checked={open(id)} data-toggle={id} onChange={() => onToggle(id)} />
                   <span>{t(locale, TITLE_KEY[id])}</span>
                 </label>
               </li>
             ))}
           </ul>
-          <div className="ws-presets" role="group" aria-label={t(locale, "wsPresets")}>
-            <p>{t(locale, "wsPresets")}</p>
-            {PRESETS.map((p) => (
-              <button
-                type="button"
-                data-preset={p}
-                key={p}
-                onClick={() => {
-                  onPreset(p);
-                  setShown(false);
-                }}
-              >
-                {t(locale, PRESET_KEY[p])}
-              </button>
-            ))}
-          </div>
           <p className="ws-pop-hint">{t(locale, "wsHint")}</p>
-          <button
-            type="button"
-            className="ws-pop-reset"
-            onClick={() => {
-              onPreset("default");
-              setShown(false);
-            }}
-          >
+          <button type="button" className="ws-pop-reset" onClick={onReset}>
             {t(locale, "wsReset")}
           </button>
         </div>

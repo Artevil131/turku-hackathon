@@ -1,439 +1,194 @@
-// Dock geometry only: ordered stacks, fractional sizes and a tray. No DOM or storage access.
-export const STORAGE_KEY = "aei.research.layout.v2";
+// The window workspace's geometry: a 12-column grid with rows of 24 px.
+// Everything here is pure (no DOM), so snapping, clamping and persistence
+// can be tested and the default layout always fits the board it is given.
+
+export const COLS = 12;
+export const ROW_PX = 24;
+export const STORAGE_KEY = "aei.research.layout";
+/** The board grows downward as windows move down; this is only a sanity limit. */
+export const MAX_ROWS = 160;
+
 export const WIN_IDS = ["signals", "map", "graph", "math", "assistant", "grid"] as const;
 export type WinId = (typeof WIN_IDS)[number];
-export type Preset = "default" | "map" | "signals" | "units";
-export interface DockWindow {
-  id: WinId;
-  size: number;
+
+export interface Rect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
 }
-export interface Column {
-  id: string;
-  width: number;
-  windows: DockWindow[];
-}
-export interface Home {
-  column: string;
-  columnIndex: number;
-  index: number;
-  size: number;
-  /** Set when closing emptied the column: its width, for recreating it on reopen. */
-  width?: number;
+export interface WinState extends Rect {
+  open: boolean;
 }
 export interface Layout {
-  columns: Column[];
-  closed: Partial<Record<WinId, Home>>;
-  maximized: WinId | null;
-}
-/** Indices refer to the current layout, before removing the moving window. */
-export interface Slot {
-  column: number;
-  index: number;
-  newColumn?: boolean;
-}
-const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
-const finite = (n: unknown): n is number => typeof n === "number" && Number.isFinite(n);
-const isWin = (id: unknown): id is WinId => WIN_IDS.includes(id as WinId);
-
-/** Normalise fractions with a floor, including untrusted saved sizes. */
-export function fractions(values: number[], minimum = 0.16): number[] {
-  if (!values.length) return [];
-  const min = clamp(minimum, 0, 1 / values.length);
-  const weights = values.map((n) => (finite(n) && n > 0 ? n : 1));
-  const scale = Math.max(1, ...weights);
-  for (let i = 0; i < weights.length; i++) weights[i] = (weights[i] as number) / scale;
-  const result = weights.map(() => 0);
-  let remaining = 1;
-  let active = weights.map((_, i) => i);
-  while (active.length) {
-    const total = active.reduce((s, i) => s + (weights[i] as number), 0);
-    const small = active.filter((i) => (remaining * (weights[i] as number)) / total < min);
-    if (!small.length) {
-      for (const i of active) result[i] = (remaining * (weights[i] as number)) / total;
-      break;
-    }
-    for (const i of small) result[i] = min;
-    remaining -= min * small.length;
-    active = active.filter((i) => !small.includes(i));
-  }
-  return result;
+  wins: Record<WinId, WinState>;
+  /** Back to front: the last one is on top. */
+  order: WinId[];
 }
 
-/**
- * A column with no windows is never kept: the others share its width in
- * proportion to their own (via clampLayout), and closed homes that pointed at a
- * dropped column further right shift left, so reopening still lands between
- * the same neighbours.
- */
-function pruneColumns(layout: Layout): Layout {
-  const removed = layout.columns.flatMap((c, i) => (c.windows.length ? [] : [i]));
-  if (!removed.length) return layout;
-  const columns = layout.columns.filter((c) => c.windows.length);
-  const present = new Set(columns.map((c) => c.id));
-  const closed: Layout["closed"] = {};
-  for (const [id, home] of Object.entries(layout.closed) as [WinId, Home][]) {
-    const shift = present.has(home.column) ? 0 : removed.filter((k) => k < home.columnIndex).length;
-    closed[id] = shift ? { ...home, columnIndex: home.columnIndex - shift } : home;
-  }
-  return { ...layout, columns, closed };
-}
-
-export function clampLayout(input: Layout): Layout {
-  const layout = pruneColumns(input);
-  const widths = fractions(
-    layout.columns.map((c) => c.width),
-    0.18,
-  );
-  return {
-    ...layout,
-    columns: layout.columns.map((c, i) => {
-      const sizes = fractions(c.windows.map((w) => w.size));
-      return { ...c, width: widths[i] as number, windows: c.windows.map((w, j) => ({ ...w, size: sizes[j] as number })) };
-    }),
-  };
-}
-
-/**
- * The smallest body, in px, at which each window still shows something useful
- * (the map: its 440 px stage and its head). A docked window never shrinks below
- * this; a column whose windows need more than the board scrolls instead.
- */
-export const MIN_BODY: Readonly<Record<WinId, number>> = {
-  signals: 360,
-  map: 520,
-  graph: 300,
-  math: 320,
-  assistant: 220,
-  grid: 320,
+/** Smallest size of each window, in columns and rows. */
+export const MIN_SIZE: Record<WinId, { w: number; h: number }> = {
+  signals: { w: 3, h: 8 },
+  map: { w: 3, h: 8 },
+  graph: { w: 3, h: 7 },
+  math: { w: 3, h: 6 },
+  assistant: { w: 3, h: 5 },
+  grid: { w: 4, h: 8 },
 };
-/** A window's header (40 px) and its 1 px border, top and bottom. */
-export const WINDOW_CHROME = 42;
-export const SPLITTER = 8;
-export const minWindowHeight = (id: WinId) => MIN_BODY[id] + WINDOW_CHROME;
-/** The height a stack needs so no window in it goes below its minimum. */
-export function stackNeed(ids: readonly WinId[]): number {
-  return ids.reduce((s, id) => s + minWindowHeight(id), 0) + Math.max(0, ids.length - 1) * SPLITTER;
-}
-/** Lowest priority first: what leaves a crowded column for the tray. */
-const TRAY_ORDER: readonly WinId[] = ["assistant", "graph", "grid", "math", "map", "signals"];
 
-/**
- * Fit a layout to a board `height` px tall: while a column needs more than the
- * board and holds more than one window, its lowest-priority window moves to the
- * tray (keeping its home, so reopening puts it back). A single window too tall
- * for the board stays and its column scrolls. `keep` windows never move.
- */
-export function fitLayout(layout: Layout, height: number, keep: readonly WinId[] = []): Layout {
-  if (!finite(height) || height <= 0 || layout.maximized) return layout;
-  let next = layout;
-  for (let i = 0; i < next.columns.length; i++) {
-    for (;;) {
-      const ids = (next.columns[i] as Column).windows.map((w) => w.id);
-      if (ids.length < 2 || stackNeed(ids) <= height) break;
-      const out = TRAY_ORDER.find((id) => ids.includes(id) && !keep.includes(id));
-      if (!out) break;
-      next = closeWindow(next, out);
-    }
-  }
-  return next;
+const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
+
+/** Keeps a rectangle at least its minimum size and inside the board. */
+export function clampRect(r: Rect, id: WinId, rows: number): Rect {
+  const min = MIN_SIZE[id];
+  const w = clamp(Math.round(r.w), Math.min(min.w, COLS), COLS);
+  const h = clamp(Math.round(r.h), Math.min(min.h, rows), Math.max(rows, 1));
+  return { w, h, x: clamp(Math.round(r.x), 0, COLS - w), y: clamp(Math.round(r.y), 0, Math.max(0, rows - h)) };
 }
 
 /**
- * Signals | Alert math over Assistant | Map over Patient flow, the unit grid in
- * the tray; fitted to the board, so under about 900 px Patient flow and under
- * about 630 px Assistant start in the tray, never squashed.
+ * Generous natural heights (the page may scroll): signals left, the map large in the middle, the unit graph,
+ * alert math and the assistant stacked on the right; the unit grid waits in the tray.
  */
-export function defaultLayout(height = Number.POSITIVE_INFINITY): Layout {
-  return fitLayout(
-    {
-      columns: [
-        { id: "signals", width: 0.27, windows: [{ id: "signals", size: 1 }] },
-        {
-          id: "detail",
-          width: 0.33,
-          windows: [
-            { id: "math", size: 0.6 },
-            { id: "assistant", size: 0.4 },
-          ],
-        },
-        {
-          id: "map",
-          width: 0.4,
-          windows: [
-            { id: "map", size: 0.64 },
-            { id: "graph", size: 0.36 },
-          ],
-        },
-      ],
-      closed: { grid: { column: "map", columnIndex: 2, index: 2, size: 0.4 } },
-      maximized: null,
-    },
-    height,
-  );
+export function defaultLayout(): Layout {
+  const wins: Record<WinId, WinState> = {
+    signals: { x: 0, y: 0, w: 3, h: 40, open: true },
+    map: { x: 3, y: 0, w: 4, h: 40, open: true },
+    graph: { x: 7, y: 0, w: 5, h: 18, open: true },
+    math: { x: 7, y: 18, w: 5, h: 14, open: true },
+    assistant: { x: 7, y: 32, w: 5, h: 8, open: true },
+    grid: { x: 0, y: 0, w: 12, h: 30, open: false },
+  };
+  return { wins, order: ["signals", "map", "graph", "math", "assistant", "grid"] };
 }
 
-/** Presets are fitted like the default: what the board cannot hold starts in the tray. */
-export function presetLayout(preset: Preset, height = Number.POSITIVE_INFINITY): Layout {
-  if (preset === "default") return defaultLayout(height);
-  if (preset === "signals")
-    // Reading: the feed and the alert math side by side, wide.
-    return fitLayout(
-      clampLayout({
-        columns: [
-          { id: "signals", width: 0.42, windows: [{ id: "signals", size: 1 }] },
-          {
-            id: "detail",
-            width: 0.58,
-            windows: [
-              { id: "math", size: 0.6 },
-              { id: "assistant", size: 0.4 },
-            ],
-          },
-        ],
-        closed: {
-          map: { column: "detail", columnIndex: 1, index: 2, size: 0.5 },
-          graph: { column: "detail", columnIndex: 1, index: 3, size: 0.4 },
-          grid: { column: "detail", columnIndex: 1, index: 3, size: 0.4 },
-        },
-        maximized: null,
-      }),
-      height,
-    );
-  const big = preset === "map" ? "map" : "grid";
-  return clampLayout({
-    columns: [
-      { id: "signals", width: 0.26, windows: [{ id: "signals", size: 1 }] },
-      { id: "map", width: 0.74, windows: [{ id: big, size: 1 }] },
-    ],
-    closed: {
-      graph: { column: "map", columnIndex: 1, index: 1, size: 0.4 },
-      math: { column: "signals", columnIndex: 0, index: 1, size: 0.5 },
-      assistant: { column: "signals", columnIndex: 0, index: 2, size: 0.3 },
-      [big === "map" ? "grid" : "map"]: { column: "map", columnIndex: 1, index: 1, size: 0.5 },
-    },
-    maximized: null,
-  });
-}
+export type Preset = "default" | "map" | "signals" | "units";
 
-export function locate(layout: Layout, id: WinId): { column: number; index: number } | null {
-  for (const [column, c] of layout.columns.entries()) {
-    const index = c.windows.findIndex((w) => w.id === id);
-    if (index !== -1) return { column, index };
-  }
-  return null;
-}
-
-export function closeWindow(layout: Layout, id: WinId): Layout {
-  const at = locate(layout, id);
-  if (!at) return layout;
-  const col = layout.columns[at.column] as Column;
-  const win = col.windows[at.index] as DockWindow;
-  return clampLayout({
-    ...layout,
-    columns: layout.columns.map((c) => ({ ...c, windows: c.windows.filter((w) => w.id !== id) })),
-    closed: {
-      ...layout.closed,
-      [id]: {
-        column: col.id,
-        columnIndex: at.column,
-        index: at.index,
-        size: win.size,
-        ...(col.windows.length === 1 ? { width: col.width } : {}),
-      },
-    },
-    maximized: layout.maximized === id ? null : layout.maximized,
-  });
-}
-
-export function reopenWindow(layout: Layout, id: WinId): Layout {
-  const home = layout.closed[id];
-  if (!home) return layout;
-  const found = layout.columns.findIndex((c) => c.id === home.column);
-  const closed = { ...layout.closed };
-  delete closed[id];
-  if (found < 0 && layout.columns.length < 3) {
-    // Its column is gone: recreate it at its remembered position.
-    const n = layout.columns.length;
-    const width = n ? clamp(home.width ?? 1 / (n + 1), 0.18, 0.6) : 1;
-    const columns = layout.columns.map((c) => ({ ...c, width: c.width * (1 - width) }));
-    columns.splice(clamp(home.columnIndex, 0, n), 0, { id: home.column, width, windows: [{ id, size: 1 }] });
-    return clampLayout({ ...layout, closed, maximized: null, columns });
-  }
-  const column = found < 0 ? clamp(home.columnIndex, 0, layout.columns.length - 1) : found;
-  return clampLayout({
-    ...layout,
-    closed,
-    maximized: null,
-    columns: layout.columns.map((c, i) => {
-      if (i !== column) return c;
-      const size = c.windows.length ? clamp(home.size, 0.16, 0.6) : 1;
-      const windows = c.windows.map((w) => ({ ...w, size: w.size * (1 - size) }));
-      windows.splice(clamp(home.index, 0, windows.length), 0, { id, size });
-      return { ...c, windows };
-    }),
-  });
-}
-
-/** Only the source and destination stacks change. No collision solving or compaction. */
-export function moveWindow(layout: Layout, id: WinId, slot: Slot): Layout {
-  const from = locate(layout, id);
-  const alone = layout.columns[from?.column ?? -1]?.windows.length === 1;
-  if (!from || layout.maximized || (slot.newColumn && layout.columns.length >= 3 && !alone)) return layout;
-  const dest = clamp(Math.round(slot.column), 0, layout.columns.length - (slot.newColumn ? 0 : 1));
-  if (!slot.newColumn && dest === from.column && (slot.index === from.index || slot.index === from.index + 1)) return layout;
-  const columns = layout.columns.map((c) => ({ ...c, windows: c.windows.filter((w) => w.id !== id).map((w) => ({ ...w })) }));
-  const source = columns[from.column] as Column;
-  const moved = layout.columns[from.column]?.windows[from.index] as DockWindow;
-  if (slot.newColumn || dest !== from.column) {
-    const sizes = fractions(source.windows.map((w) => w.size));
-    source.windows.forEach((w, i) => {
-      w.size = sizes[i] as number;
-    });
-  }
-  if (slot.newColumn) {
-    let n = 1;
-    while (columns.some((c) => c.id === `column-${n}`)) n++;
-    columns.forEach((c) => {
-      c.width *= 2 / 3;
-    });
-    columns.splice(dest, 0, { id: `column-${n}`, width: 1 / 3, windows: [{ id, size: 1 }] });
-  } else {
-    const col = columns[dest] as Column;
-    const size = dest === from.column ? moved.size : 1 / (col.windows.length + 1);
-    if (dest !== from.column)
-      col.windows.forEach((w) => {
-        w.size *= 1 - size;
+/** Ready-made arrangements, one click each; the same grid as the default. */
+export function presetLayout(preset: Preset): Layout {
+  const d = defaultLayout();
+  const w = (patch: Partial<Record<WinId, Partial<WinState>>>): Layout => {
+    const wins = { ...d.wins };
+    for (const id of WIN_IDS) if (patch[id]) wins[id] = { ...wins[id], ...patch[id] };
+    return { wins, order: d.order };
+  };
+  switch (preset) {
+    case "map":
+      return w({
+        map: { x: 0, y: 0, w: 8, h: 40, open: true },
+        signals: { x: 8, y: 0, w: 4, h: 18, open: true },
+        math: { x: 8, y: 18, w: 4, h: 14, open: true },
+        assistant: { x: 8, y: 32, w: 4, h: 8, open: true },
+        graph: { x: 8, y: 40, w: 4, h: 12, open: false },
       });
-    const index = slot.index - (dest === from.column && from.index < slot.index ? 1 : 0);
-    col.windows.splice(clamp(index, 0, col.windows.length), 0, { id, size });
+    case "signals":
+      return w({
+        signals: { x: 0, y: 0, w: 6, h: 40, open: true },
+        math: { x: 6, y: 0, w: 6, h: 16, open: true },
+        map: { x: 6, y: 16, w: 6, h: 24, open: true },
+        graph: { open: false },
+        assistant: { open: false },
+      });
+    case "units":
+      return w({
+        grid: { x: 0, y: 0, w: 12, h: 26, open: true },
+        signals: { x: 0, y: 26, w: 4, h: 18, open: true },
+        math: { x: 4, y: 26, w: 4, h: 14, open: true },
+        graph: { x: 8, y: 26, w: 4, h: 18, open: true },
+        map: { open: false },
+        assistant: { open: false },
+      });
+    default:
+      return d;
   }
-  // An emptied source column is dropped by clampLayout; the others take its width.
-  return clampLayout({ ...layout, columns });
 }
+
+const overlaps = (a: Rect, b: Rect) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 
 /**
- * Change just the adjacent pair; delta is a fraction of the whole board/stack.
- * `minimum` is one floor for both, or [upper/left, lower/right] floors; floors
- * that cannot both fit are scaled down together.
+ * Vertical compaction, as in a dashboard grid. Open windows are taken in order of their top edge (then left
+ * edge; the window being moved or resized wins a tie) and each floats up while the row above is free, then
+ * is pushed down past anything it overlaps. No overlaps remain and no gap that a window could rise into.
+ * Closed windows keep their rectangle and are left out.
  */
-export function resizePair(values: number[], index: number, delta: number, minimum: number | readonly [number, number]): number[] {
-  if (index < 0 || index >= values.length - 1 || !finite(delta)) return values;
-  const next = [...values];
-  const total = (values[index] as number) + (values[index + 1] as number);
-  let [lo, hi] = typeof minimum === "number" ? [minimum, minimum] : minimum;
-  if (lo + hi > total) {
-    const scale = total / (lo + hi);
-    lo *= scale;
-    hi *= scale;
-  }
-  next[index] = clamp((values[index] as number) + delta, lo, total - hi);
-  next[index + 1] = total - (next[index] as number);
-  return next;
-}
-export function resizeColumns(layout: Layout, index: number, delta: number, minimum: number | readonly [number, number] = 0.18): Layout {
-  const widths = resizePair(
-    layout.columns.map((c) => c.width),
-    index,
-    delta,
-    minimum,
+export function compactLayout(layout: Layout, moved?: WinId): Layout {
+  const open = WIN_IDS.filter((id) => layout.wins[id].open).sort(
+    (a, b) =>
+      layout.wins[a].y - layout.wins[b].y ||
+      (a === moved ? -1 : b === moved ? 1 : 0) ||
+      layout.wins[a].x - layout.wins[b].x ||
+      WIN_IDS.indexOf(a) - WIN_IDS.indexOf(b),
   );
-  return { ...layout, columns: layout.columns.map((c, i) => ({ ...c, width: widths[i] as number })) };
-}
-export function resizeStack(
-  layout: Layout,
-  column: number,
-  index: number,
-  delta: number,
-  minimum: number | readonly [number, number] = 0.16,
-): Layout {
-  return {
-    ...layout,
-    columns: layout.columns.map((c, i) => {
-      if (i !== column) return c;
-      const sizes = resizePair(
-        c.windows.map((w) => w.size),
-        index,
-        delta,
-        minimum,
-      );
-      return { ...c, windows: c.windows.map((w, j) => ({ ...w, size: sizes[j] as number })) };
-    }),
-  };
-}
-export function equalize(layout: Layout, column?: number): Layout {
-  return {
-    ...layout,
-    columns: layout.columns.map((c, i) =>
-      column === undefined
-        ? { ...c, width: 1 / layout.columns.length }
-        : i === column
-          ? { ...c, windows: c.windows.map((w) => ({ ...w, size: 1 / c.windows.length })) }
-          : c,
-    ),
-  };
-}
-export function maximizeWindow(layout: Layout, id: WinId): Layout {
-  return locate(layout, id) ? { ...layout, maximized: layout.maximized === id ? null : id } : layout;
+  const placed: Rect[] = [];
+  const wins = { ...layout.wins };
+  for (const id of open) {
+    const w = layout.wins[id];
+    const r: Rect = { x: w.x, y: Math.max(0, w.y), w: w.w, h: w.h };
+    const blocked = (y: number) => placed.some((p) => overlaps({ ...r, y }, p));
+    while (r.y > 0 && !blocked(r.y - 1)) r.y--;
+    while (blocked(r.y)) r.y++;
+    placed.push(r);
+    wins[id] = { ...w, y: r.y };
+  }
+  return { wins, order: layout.order };
 }
 
-export function serializeLayout(layout: Layout): string {
-  return JSON.stringify({ v: 2, ...layout });
+/** The layout as it must be drawn: every window inside the board. */
+export function fitLayout(layout: Layout): Layout {
+  const wins = { ...layout.wins };
+  for (const id of WIN_IDS) wins[id] = { ...wins[id], ...clampRect(wins[id], id, MAX_ROWS) };
+  return { wins, order: layout.order };
 }
-/** Old free-grid layouts are intentionally not migrated: their geometry has no dock meaning. */
+
+/** Rows the board needs: the lowest open window's bottom edge. */
+export function boardRows(layout: Layout): number {
+  return Math.max(12, ...WIN_IDS.filter((id) => layout.wins[id].open).map((id) => layout.wins[id].y + layout.wins[id].h));
+}
+
+export function raise(layout: Layout, id: WinId): Layout {
+  if (layout.order[layout.order.length - 1] === id) return layout;
+  return { ...layout, order: [...layout.order.filter((x) => x !== id), id] };
+}
+
+export function patchWin(layout: Layout, id: WinId, patch: Partial<WinState>): Layout {
+  return { ...layout, wins: { ...layout.wins, [id]: { ...layout.wins[id], ...patch } } };
+}
+
+const isInt = (n: unknown): n is number => typeof n === "number" && Number.isInteger(n);
+
+/** Reads the saved layout; anything malformed gives null (the default is used). */
 export function parseLayout(raw: string | null): Layout | null {
   if (!raw) return null;
   try {
-    const value = JSON.parse(raw);
-    if (
-      value.v !== 2 ||
-      !Array.isArray(value.columns) ||
-      value.columns.length > 3 ||
-      !value.closed ||
-      typeof value.closed !== "object" ||
-      Array.isArray(value.closed)
-    )
-      return null;
-    const seen = new Set<WinId>();
-    const columns = new Set<string>();
-    for (const c of value.columns) {
-      if (!c || typeof c.id !== "string" || !c.id || columns.has(c.id) || !finite(c.width) || !Array.isArray(c.windows)) return null;
-      columns.add(c.id);
-      for (const w of c.windows) {
-        if (!w || !isWin(w.id) || seen.has(w.id) || !finite(w.size)) return null;
-        seen.add(w.id);
-      }
+    const v = JSON.parse(raw) as { v?: number; wins?: Record<string, Partial<WinState>>; order?: unknown };
+    if (v.v !== 1 || !v.wins || !Array.isArray(v.order)) return null;
+    const wins = {} as Record<WinId, WinState>;
+    for (const id of WIN_IDS) {
+      const w = v.wins[id];
+      if (!w || !isInt(w.x) || !isInt(w.y) || !isInt(w.w) || !isInt(w.h) || typeof w.open !== "boolean") return null;
+      wins[id] = { x: w.x, y: w.y, w: w.w, h: w.h, open: w.open };
     }
-    for (const [id, h] of Object.entries(value.closed)) {
-      const home = h as Home;
-      if (
-        !isWin(id) ||
-        seen.has(id) ||
-        !home ||
-        typeof home.column !== "string" ||
-        !Number.isInteger(home.columnIndex) ||
-        home.columnIndex < 0 ||
-        !Number.isInteger(home.index) ||
-        home.index < 0 ||
-        !finite(home.size) ||
-        (home.width !== undefined && !finite(home.width))
-      )
-        return null;
-      seen.add(id);
-    }
-    if (seen.size !== WIN_IDS.length || (value.maximized !== null && (!isWin(value.maximized) || !locate(value, value.maximized))))
-      return null;
-    return clampLayout({ columns: value.columns, closed: value.closed, maximized: value.maximized });
+    const order = (v.order as unknown[]).filter((x): x is WinId => WIN_IDS.includes(x as WinId));
+    for (const id of WIN_IDS) if (!order.includes(id)) order.push(id);
+    return compactLayout(fitLayout({ wins, order: [...new Set(order)] }));
   } catch {
     return null;
   }
 }
-/**
- * The stored layout, or the default, fitted to the board: a stored stack that
- * would squash a window below its minimum loses its lowest-priority windows to
- * the tray. The fitted result is shown, not written back, so a taller screen
- * later still gets the stored arrangement.
- */
-export function migrateLayout(raw: string | null, height = Number.POSITIVE_INFINITY, keep: readonly WinId[] = []): Layout {
-  const stored = parseLayout(raw);
-  return stored ? fitLayout(stored, height, keep) : defaultLayout(height);
+
+export function loadLayout(): Layout | null {
+  try {
+    return parseLayout(localStorage.getItem(STORAGE_KEY));
+  } catch {
+    return null;
+  }
+}
+
+export function saveLayout(layout: Layout | null): void {
+  try {
+    if (layout === null) localStorage.removeItem(STORAGE_KEY);
+    else localStorage.setItem(STORAGE_KEY, JSON.stringify({ v: 1, ...layout }));
+  } catch {
+    // Private mode or blocked storage: the layout simply does not persist.
+  }
 }

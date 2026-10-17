@@ -610,267 +610,33 @@ async function main() {
   };
   const cleanWorkspace = async (idle) => {
     await load(cdp, urlOf("research"), idle);
-    await evaluate(cdp, `localStorage.removeItem('aei.research.layout.v2')`);
+    await evaluate(cdp, `localStorage.removeItem('aei.research.layout')`);
     await cdp.send("Page.navigate", { url: "about:blank" });
     await load(cdp, urlOf("research"), idle);
   };
-  await interaction(
-    "research-workspace-close",
-    async (idle, reasons) => {
-      await cleanWorkspace(idle);
-      const columns = `document.querySelectorAll('.ws-column').length`;
-      const empty = `[...document.querySelectorAll('.ws-column')].some(c => !c.querySelector('.ws-win'))`;
-      // What the fitted default shows depends on the board's measured height, so each
-      // expectation is read from the page: a window alone in its column takes the column with it.
-      let collapsed = 0;
-      for (const id of ["math", "map"]) {
-        const before = await evaluate(cdp, columns);
-        const alone = await evaluate(
-          cdp,
-          `document.querySelector('#ws-win-${id}')?.closest('.ws-column')?.querySelectorAll('.ws-win').length === 1`,
-        );
-        await click(`#ws-win-${id} .ws-close`);
-        if (!(await waitIn(`!document.querySelector('#ws-win-${id}')`, 1000)))
-          reasons.push(`${id} not dismissed by its first real close click`);
-        const expected = alone ? before - 1 : before;
-        if (!(await waitIn(`${columns} === ${expected}`, 1000)))
-          reasons.push(`closing ${id} (${alone ? "alone" : "stacked"}) left ${await evaluate(cdp, columns)} columns, expected ${expected}`);
-        if (alone) collapsed++;
-        if (await evaluate(cdp, empty)) reasons.push(`an empty column remains after closing ${id}`);
-      }
-      if (!collapsed) reasons.push("neither Alert math nor Map was alone in its column: column removal went untested");
-      const fill = await evaluate(
-        cdp,
-        `(() => { const a = document.querySelector('.ws-area').getBoundingClientRect(); const c = [...document.querySelectorAll('.ws-column')];
-          return Math.abs(c.reduce((s, e) => s + e.getBoundingClientRect().width, 0) + (c.length - 1) * 8 - a.width) < 4; })()`,
-      );
-      if (!fill) reasons.push("the remaining columns do not fill the board after closing");
-    },
-    { name: "desktop-900", width: 1440, height: 900, mobile: false },
-  );
-
+  // The free-grid workspace (the 11:00 version Artem asked back): close a window with its real
+  // close button, reopen it from the tray, apply a ready-made layout.
   await interaction(
     "research-workspace",
     async (idle, reasons) => {
       await cleanWorkspace(idle);
-      const order = `JSON.stringify([...document.querySelectorAll('.ws-column')].map(c => [...c.querySelectorAll('.ws-win')].map(w => w.dataset.win)))`;
-      const initial = await evaluate(cdp, order);
-      const geometry = await evaluate(
-        cdp,
-        `(() => {
-      const b = document.querySelector('.ws-area').getBoundingClientRect();
-      const p = document.querySelector('.page');
-      const svg = document.querySelector('.geo-svg').getBoundingClientRect();
-      const body = document.querySelector('#ws-win-map .ws-body').getBoundingClientRect();
-      return { bottom: b.bottom, height: b.height, overflow: p.scrollHeight - p.clientHeight,
-        mapFits: svg.left >= body.left && svg.right <= body.right + 1 && svg.top >= body.top && svg.bottom <= body.bottom + 1 };
-    })()`,
-      );
-      // The board flows (windows at their own height, the page scrolls), so only its presence is checked.
-      if (geometry.height < 200) reasons.push(`board too small: ${JSON.stringify(geometry)}`);
-      if (!geometry.mapFits) reasons.push("map SVG clipped in its default dock");
-      // No open window is squashed to its header: each body keeps its minimum (the column scrolls instead).
-      const squashed = `JSON.stringify([...document.querySelectorAll('.ws-win')].filter(w => w.getBoundingClientRect().width > 0)
-        .map(w => ({ id: w.dataset.win, body: Math.round(w.querySelector('.ws-body').getBoundingClientRect().height), min: Number(w.dataset.minBody) }))
-        .filter(w => w.body < w.min - 1))`;
-      for (const width of [1440, 1920]) {
-        await cdp.send("Emulation.setDeviceMetricsOverride", { width, height: 900, deviceScaleFactor: 1, mobile: false });
-        await cdp.send("Page.navigate", { url: "about:blank" });
-        await load(cdp, urlOf("research"), idle);
-        const bad = await evaluate(cdp, squashed);
-        if (bad !== "[]") reasons.push(`window bodies below their minimum at ${width}x900: ${bad}`);
-        const many = await evaluate(
-          cdp,
-          `[...document.querySelectorAll('.ws-column')].some(c => c.querySelectorAll('.ws-win').length > 2)`,
-        );
-        if (many) reasons.push(`default layout stacks more than two windows in a column at ${width}x900`);
-      }
-      // The tray button says what its number is.
-      const label = await evaluate(cdp, `document.querySelector('#ws-tray-button').textContent`);
-      if (!/\d+ (closed|suljettuna)/.test(label)) reasons.push(`tray button does not name its closed count: ${label}`);
-      // Reopen into the previous stack, maximize, then restore exactly.
+      const open = `[...document.querySelectorAll('.ws-win')].map(w => w.dataset.win).sort().join(',')`;
+      if (!(await waitIn(`!!document.querySelector('#ws-win-math')`, 3000))) reasons.push("the Signal window is not open by default");
       await click("#ws-win-math .ws-close");
+      if (!(await waitIn(`!document.querySelector('#ws-win-math')`, 1500))) reasons.push("the Signal window did not close");
       await click("#ws-tray-button");
-      const listed = `(() => { const l = [...document.querySelectorAll('.ws-pop-list')]; return !!l[0]?.querySelector('[data-reopen="math"]') && !l[0].querySelector('input') && !!l[1]?.querySelector('input'); })()`;
-      if (!(await evaluate(cdp, listed))) reasons.push("the tray does not list closed windows first, with an open button");
-      await click('[data-reopen="math"]');
-      if (!(await waitIn(`${order} === ${JSON.stringify(initial)}`))) reasons.push("reopen changed the stack order");
-      await key("Escape");
-      await click("#ws-win-math .ws-maximize");
-      const max = await evaluate(
-        cdp,
-        `(() => {
-      const w = document.querySelector('#ws-win-math').getBoundingClientRect(), a = document.querySelector('.ws-area').getBoundingClientRect();
-      return Math.abs(w.width-a.width)<2 && Math.abs(w.height-a.height)<2 && [...document.querySelectorAll('.ws-win')].filter(e=>e.getBoundingClientRect().width>0).length === 1;
-    })()`,
-      );
-      if (!max) reasons.push("maximize did not fill the board and hide the other windows");
-      await click("#ws-win-math .ws-maximize");
-      if ((await evaluate(cdp, order)) !== initial) reasons.push("restore changed dock order");
-      // Preview must not rearrange any stack. Esc must leave both DOM and persisted layout unchanged.
-      const before = await evaluate(cdp, `localStorage.getItem('aei.research.layout.v2')`);
-      const source = await pointOf("#ws-title-math"),
-        target = await pointOf("#ws-title-map");
-      await mouse("mousePressed", source, { button: "left", buttons: 1, clickCount: 1 });
-      await mouse("mouseMoved", { x: target.x, y: target.y + 20 }, { buttons: 1 });
-      if (!(await waitIn(`!!document.querySelector('.ws-insert')`, 1000))) reasons.push("drag has no insertion indicator");
-      if ((await evaluate(cdp, order)) !== initial) reasons.push("drag preview reshuffled the windows");
-      await key("Escape");
-      await mouse("mouseReleased", target, { button: "left", buttons: 0, clickCount: 1 });
-      if ((await evaluate(cdp, `localStorage.getItem('aei.research.layout.v2')`)) !== before) reasons.push("Esc did not cancel the move");
-      // Drop into the map column (its own column is removed only if Alert math was alone in it),
-      // then move one column left using only the keyboard.
-      const shape = JSON.parse(initial);
-      const mathAlone = shape.find((c) => c.includes("math"))?.length === 1;
-      const expectColumns = shape.length - (mathAlone ? 1 : 0);
-      await mouse("mousePressed", source, { button: "left", buttons: 1, clickCount: 1 });
-      await mouse("mouseMoved", target, { buttons: 1 });
-      await mouse("mouseReleased", target, { button: "left", buttons: 0, clickCount: 1 });
-      const mathColumn = `Number(document.querySelector('#ws-win-math')?.closest('.ws-column')?.dataset.columnIndex)`;
-      if (
-        !(await waitIn(
-          `document.querySelector('#ws-win-math')?.closest('.ws-column')?.querySelector('#ws-win-map') && document.querySelectorAll('.ws-column').length === ${expectColumns}`,
-        ))
-      )
-        reasons.push(`drop did not insert into target column: ${await evaluate(cdp, order)}, expected ${expectColumns} columns`);
-      const dropped = await evaluate(cdp, mathColumn);
-      await evaluate(cdp, `document.querySelector('#ws-title-math').focus()`);
-      await key("ArrowLeft", 1);
-      if (!(await waitIn(`${mathColumn} === ${dropped - 1}`)))
-        reasons.push(`Alt + arrow did not move the window one column left: ${await evaluate(cdp, order)}`);
-      // A stack splitter dragged far past either neighbour stops at that window's own minimum
-      // (checked on the stored fractions, not only on the CSS floor that would hide a bad clamp).
-      const mathStack = `document.querySelector('#ws-win-math').closest('.ws-column')`;
-      // Stored heights in px against each window's minimum (body + 42 px chrome), for Alert math's stack.
-      const stackHeights = `(() => {
-        const col = ${mathStack};
-        const stored = JSON.parse(localStorage.getItem('aei.research.layout.v2')).columns.find(c => c.windows.some(w => w.id === 'math'));
-        const span = col.clientHeight - (stored.windows.length - 1) * 8;
-        const rows = stored.windows.map(w => ({ id: w.id, px: Math.round(w.size * span), min: Number(col.querySelector('#ws-win-' + w.id).dataset.minBody) + 42 }));
-        return JSON.stringify({ fits: rows.reduce((s, r) => s + r.min, 0) <= span, rows });
-      })()`;
-      for (const edge of ["bottom", "top"]) {
-        const handle = await evaluate(
-          cdp,
-          `(() => { const s = ${mathStack}.querySelector('.ws-splitter-row'); s.scrollIntoView({ block: 'nearest' });
-            const r = s.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`,
-        );
-        // Drag to the board's edge, far past the neighbour's floor but still inside the viewport,
-        // so the release reaches the page and ends the gesture.
-        const far = await evaluate(cdp, `document.querySelector('.ws-area').getBoundingClientRect().${edge}`);
-        const dy = far + (edge === "bottom" ? -2 : 2) - handle.y;
-        await mouse("mousePressed", handle, { button: "left", buttons: 1, clickCount: 1 });
-        await mouse("mouseMoved", { x: handle.x, y: handle.y + dy / 2 }, { buttons: 1 });
-        await mouse("mouseMoved", { x: handle.x, y: handle.y + dy }, { buttons: 1 });
-        await mouse("mouseReleased", { x: handle.x, y: handle.y + dy }, { button: "left", buttons: 0, clickCount: 1 });
-        const { fits, rows } = JSON.parse(await evaluate(cdp, stackHeights));
-        const pinned = edge === "bottom" ? rows.at(-1) : rows[0];
-        if (rows.length < 2) reasons.push(`Alert math's column has no stack splitter to test: ${await evaluate(cdp, order)}`);
-        else if (
-          (await evaluate(cdp, squashed)) !== "[]" ||
-          (fits && (rows.some((r) => r.px < r.min - 2) || Math.abs(pinned.px - pinned.min) > 6))
-        )
-          reasons.push(`stack splitter dragged ${Math.round(dy)} px did not stop at the window minimum: ${JSON.stringify(rows)}`);
-      }
-      // Focusable splitters change the fraction, reset equally on double click/Enter.
-      await evaluate(cdp, `document.querySelector('.ws-splitter-col').focus()`);
-      const width = await evaluate(cdp, `document.querySelector('.ws-splitter-col').getAttribute('aria-valuenow')`);
-      await key("ArrowRight");
-      if ((await evaluate(cdp, `document.querySelector('.ws-splitter-col').getAttribute('aria-valuenow')`)) === width)
-        reasons.push("keyboard column resize did not update aria-valuenow");
-      await click(".ws-splitter-col", 2);
-      const equal = await evaluate(
-        cdp,
-        `(() => { const c = JSON.parse(localStorage.getItem('aei.research.layout.v2')).columns; return c.every(x=>Math.abs(x.width-1/c.length)<0.001); })()`,
-      );
-      if (!equal) reasons.push("double-click did not equalize columns");
-      const divider = await pointOf(".ws-splitter-col");
-      const leftEdge = await evaluate(cdp, `document.querySelector('.ws-area').getBoundingClientRect().left + 1`);
-      await mouse("mousePressed", divider, { button: "left", buttons: 1, clickCount: 1 });
-      await mouse("mouseMoved", { x: leftEdge, y: divider.y }, { buttons: 1 });
-      await mouse("mouseReleased", { x: leftEdge, y: divider.y }, { button: "left", buttons: 0, clickCount: 1 });
-      const clamped = await waitIn(
-        `(() => {
-        const a=document.querySelector('.ws-area').getBoundingClientRect();
-        const expected=Math.max(240,(a.width-16)*0.18);
-        return Math.abs(document.querySelector('.ws-column').getBoundingClientRect().width-expected)<2;
-      })()`,
-        1000,
-      );
-      if (!clamped) reasons.push("column pointer drag did not clamp at its minimum");
-      // On a tall board Alert math's stack fits without scrolling, so a pointer drag moves the splitter.
-      await cdp.send("Emulation.setDeviceMetricsOverride", { width: 1440, height: 1400, deviceScaleFactor: 1, mobile: false });
-      await waitIn(`${mathStack}.scrollHeight <= ${mathStack}.clientHeight + 1`, 2000);
-      const rowSplitter = `${mathStack}.querySelector('.ws-splitter-row')`;
-      const row = await evaluate(
-        cdp,
-        `(() => { const r = ${rowSplitter}.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`,
-      );
-      const stackBefore = await evaluate(cdp, `${rowSplitter}.getAttribute('aria-valuenow')`);
-      await mouse("mousePressed", row, { button: "left", buttons: 1, clickCount: 1 });
-      await mouse("mouseMoved", { x: row.x, y: row.y + 40 }, { buttons: 1 });
-      await mouse("mouseReleased", { x: row.x, y: row.y + 40 }, { button: "left", buttons: 0, clickCount: 1 });
-      if ((await evaluate(cdp, `${rowSplitter}.getAttribute('aria-valuenow')`)) === stackBefore)
-        reasons.push("pointer stack resize did not change the fraction");
-      await evaluate(cdp, `${rowSplitter}.focus()`);
-      await key("ArrowDown");
-      await key("Enter");
-      const heights = await evaluate(
-        cdp,
-        `JSON.parse(localStorage.getItem('aei.research.layout.v2')).columns.find(c => c.windows.some(w => w.id === 'math')).windows.map(w=>w.size)`,
-      );
-      if (heights.some((h) => Math.abs(h - 1 / heights.length) > 0.001)) reasons.push("Enter did not equalize stack heights");
-      const floors = await evaluate(cdp, `${mathStack}.querySelectorAll('.ws-win').length === 2 && ${squashed} === "[]"`);
-      if (!floors) reasons.push("stack splitter let a window below its minimum");
-      await cdp.send("Emulation.setDeviceMetricsOverride", { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
-      // Presets and reset must change visible geometry, and a fresh load must keep the new model.
-      for (const p of ["map", "signals", "units"]) {
-        await click("#ws-tray-button");
-        await click(`[data-preset="${p}"]`);
-        if ((await evaluate(cdp, order)) === initial) reasons.push(`preset ${p} made no visible change`);
-      }
-      await click("#ws-tray-button");
-      await click(".ws-pop-reset");
-      if ((await evaluate(cdp, order)) !== initial) reasons.push("reset did not visibly restore the default stack order");
-      await cdp.send("Page.navigate", { url: "about:blank" });
-      await load(cdp, urlOf("research"), idle);
-      if ((await evaluate(cdp, order)) !== initial) reasons.push("layout was not persisted across reload");
-      // Edge drop from a two-column preset creates a third column, never a free-floating window.
-      await click("#ws-tray-button");
+      await click('[data-toggle="math"]');
+      if (!(await waitIn(`!!document.querySelector('#ws-win-math')`, 1500))) reasons.push("the Signal window did not reopen from the tray");
+      await cdp.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape" });
+      await cdp.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Escape" });
+      const before = await evaluate(cdp, `document.querySelector('#ws-win-map').getBoundingClientRect().width`);
       await click('[data-preset="map"]');
-      await click("#ws-tray-button");
-      await click('[data-reopen="math"]');
-      const start = await pointOf("#ws-title-math");
-      const edge = await evaluate(
-        cdp,
-        `(() => { const r=document.querySelectorAll('.ws-column')[1].getBoundingClientRect(); return {x:r.left+2,y:r.top+40}; })()`,
-      );
-      await mouse("mousePressed", start, { button: "left", buttons: 1, clickCount: 1 });
-      await mouse("mouseMoved", edge, { buttons: 1 });
-      if (!(await waitIn(`!!document.querySelector('.ws-new-column')`, 1000))) reasons.push("edge drop has no new-column indicator");
-      await mouse("mouseReleased", edge, { button: "left", buttons: 0, clickCount: 1 });
-      if (!(await waitIn(`document.querySelectorAll('.ws-column').length === 3`)))
-        reasons.push("edge drop did not create a third docked column");
-      await click("#ws-tray-button");
-      await click(".ws-pop-reset");
-      await cdp.send("Emulation.setDeviceMetricsOverride", { width: 1100, height: 768, deviceScaleFactor: 1, mobile: false });
-      // The language is chosen only in Settings; switch there when an earlier interaction has not already.
-      if ((await evaluate(cdp, "document.documentElement.lang")) !== "en") {
-        await load(cdp, urlOf("settings"), idle);
-        await click(".settings button[lang='en']");
-        await waitIn(`document.documentElement.lang === "en"`);
-        await load(cdp, urlOf("research"), idle);
-      }
-      const compact = await evaluate(
-        cdp,
-        `(() => {
-        const a=document.querySelector('.ws-area').getBoundingClientRect();
-        return a.bottom <= 768 && [...document.querySelectorAll('.ws-column')].every(c=>c.getBoundingClientRect().width>=239) && document.documentElement.scrollWidth<=1100;
-      })()`,
-      );
-      if (!compact) reasons.push("compact desktop overflows or loses column minimums");
-      await screenshot(cdp, join(outDir, "research-compact-en.png"));
-      await cdp.send("Emulation.setDeviceMetricsOverride", { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
+      if (!(await waitIn(`document.querySelector('#ws-win-map').getBoundingClientRect().width > ${before} + 40`, 1500)))
+        reasons.push("the Map layout did not widen the map window");
+      if (!(await evaluate(cdp, `localStorage.getItem('aei.research.layout') !== null`))) reasons.push("the layout was not saved");
+      await click('[data-preset="default"]');
+      if (!(await waitIn(`${open} === 'assistant,graph,map,math,signals'`, 1500)))
+        reasons.push(`default layout: open windows ${await evaluate(cdp, open)}`);
       await idle();
     },
     { name: "desktop-900", width: 1440, height: 900, mobile: false },
