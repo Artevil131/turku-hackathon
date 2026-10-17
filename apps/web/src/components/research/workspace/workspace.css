@@ -8,14 +8,6 @@
   min-height: 0;
   color: var(--ink);
 }
-.ws-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
-  flex: none;
-  min-height: 32px;
-}
 .ws-area {
   position: relative;
   display: flex;
@@ -301,163 +293,77 @@
   font-size: var(--t-s, 13px);
   pointer-events: none;
 }
+/* An empty board says so and offers every window kind, so a blank project is never a dead end. */
 .ws-empty {
   display: grid;
-  place-content: center;
+  align-content: center;
+  justify-items: center;
+  gap: 12px;
   flex: 1;
+  min-height: 280px;
   margin: 0;
-  padding: 12px;
+  padding: 32px 16px;
   border: 1px dashed var(--line-strong);
   border-radius: var(--radius-panel, 10px);
-  color: var(--ink-3);
-  font-size: var(--t-xs, 12px);
-}
-.ws-tray {
-  position: relative;
-  flex: none;
-  z-index: 4;
-}
-.ws-tray-button {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 32px;
-  padding: 0 8px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-control, 6px);
-  background: #fff;
   color: var(--ink-2);
-  font: inherit;
-  font-size: var(--t-xs, 12px);
-  cursor: pointer;
+  text-align: center;
 }
-.ws-tray-button:hover,
-.ws-tray-button[aria-expanded="true"] {
-  border-color: var(--live);
+.ws-empty-title {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--t-m, 15px);
+  font-weight: 600;
 }
-.ws-tray-count {
+.ws-empty-lead {
+  margin: 0;
   color: var(--ink-3);
-  font-variant-numeric: tabular-nums;
-}
-.ws-pop {
-  position: absolute;
-  top: 36px;
-  right: 0;
-  width: 256px;
-  max-height: min(560px, 65dvh);
-  overflow: auto;
-  padding: 8px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-panel, 10px);
-  background: #fff;
-  box-shadow: var(--pop-shadow, 0 4px 16px rgb(7 8 28 / 0.12));
   font-size: var(--t-s, 13px);
 }
-.ws-pop-list {
+.ws-empty-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  max-width: 640px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
-.ws-pop-head {
-  margin: 4px 4px 4px;
-  color: var(--ink-3);
-  font-size: var(--t-xs, 12px);
-}
-.ws-pop-head + .ws-pop-head,
-.ws-pop-list + .ws-pop-head {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid var(--line);
-}
-.ws-pop-open {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  min-height: 32px;
-  padding: 0 4px 0 8px;
-  border: 0;
-  border-radius: var(--radius-control, 6px);
-  background: none;
-  color: var(--ink);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-.ws-pop-open:hover {
-  background: var(--brand-accent-soft, #ecebfc);
-}
-.ws-pop-open-tag {
+.ws-empty-list button,
+.ws-empty-presets button {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  flex: none;
-  padding: 2px 8px;
-  border: 1px solid var(--live);
-  border-radius: var(--radius-control, 6px);
-  color: var(--live);
-  font-size: var(--t-xs, 12px);
-  font-weight: 600;
-}
-.ws-pop-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 32px;
-  padding: 0 4px;
-  cursor: pointer;
-}
-.ws-pop-row:hover {
-  background: var(--brand-accent-soft, #ecebfc);
-}
-.ws-pop-row input {
-  accent-color: var(--live);
-}
-.ws-presets {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4px;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid var(--line);
-}
-.ws-presets p {
-  grid-column: 1 / -1;
-  margin: 0 4px 4px;
-  color: var(--ink-3);
-  font-size: var(--t-xs, 12px);
-}
-.ws-presets button {
-  min-height: 32px;
-  padding: 4px 8px;
+  gap: 6px;
+  min-height: var(--control-h, 28px);
+  padding: 0 12px;
   border: 1px solid var(--line);
-  border-radius: var(--radius-control, 6px);
-  background: #fff;
-  color: var(--ink-2);
+  border-radius: 999px;
+  background: var(--glass-1, #fff);
+  color: var(--ink);
   font: inherit;
-  text-align: left;
+  font-size: var(--t-s, 13px);
   cursor: pointer;
 }
-.ws-presets button:hover {
-  background: var(--brand-accent-soft, #ecebfc);
+.ws-empty-list button svg {
+  color: var(--live);
 }
-.ws-pop-hint {
-  margin: 12px 4px 8px;
+.ws-empty-list button:hover,
+.ws-empty-presets button:hover {
+  border-color: var(--live);
+  color: var(--live);
+}
+.ws-empty-presets {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
   color: var(--ink-3);
   font-size: var(--t-xs, 12px);
 }
-.ws-pop-reset {
-  min-height: 32px;
-  margin: 0 4px;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--ink-2);
-  font: inherit;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  cursor: pointer;
+.ws-empty-presets button {
+  border-style: dashed;
+  font-size: var(--t-xs, 12px);
 }
 /* Keep the established phone reading order and natural content heights. */
 .ws[data-docked="false"] {

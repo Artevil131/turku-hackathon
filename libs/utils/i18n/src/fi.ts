@@ -14,12 +14,14 @@ import { methodFi } from "./surfaces/method.ts";
 import { networkFi } from "./surfaces/network.ts";
 import { projectsFi } from "./surfaces/projects.ts";
 import { qualityFi } from "./surfaces/quality.ts";
+import { shellFi } from "./surfaces/shell.ts";
 import { sitesFi } from "./surfaces/sites.ts";
 import { startFi } from "./surfaces/start.ts";
 import { timelineFi } from "./surfaces/timeline.ts";
 
 export const fi: Record<keyof typeof en, string> = {
   ...startFi,
+  ...shellFi,
   askSubmit: "Kysy",
   askLoading: "Tulkitaan…",
   askUnavailable: "Avustaja ei ole käytettävissä. Käytä rajauksia.",

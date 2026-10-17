@@ -10,7 +10,7 @@
   position: relative;
 }
 @media (min-width: 1100px) {
-  .console:has(> .page > .board) {
+  .app-main:has(> .page > .board) {
     height: auto;
     min-height: 100%;
   }

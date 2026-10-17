@@ -209,18 +209,6 @@ button {
 
 /* ---------- Layout ---------- */
 
-.console {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
-  gap: var(--gap);
-  height: 100%;
-  padding-block: var(--gap);
-  padding-left: max(12px, env(safe-area-inset-left, 0px));
-  padding-right: max(12px, env(safe-area-inset-right, 0px));
-}
-
 .glass {
   border: 1px solid var(--line);
   border-radius: var(--radius-panel);
@@ -1070,10 +1058,6 @@ button {
 }
 
 @media (max-width: 980px) {
-  .console {
-    height: auto;
-    min-height: 100%;
-  }
   .section {
     grid-template-columns: minmax(0, 1fr);
   }

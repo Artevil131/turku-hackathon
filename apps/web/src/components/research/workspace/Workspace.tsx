@@ -1,4 +1,4 @@
-import type { AeiClient, Project } from "@aei/contract";
+import { type AeiClient, ApiError, type Project } from "@aei/contract";
 import { type Locale, t } from "@aei/i18n";
 import {
   type CSSProperties,
@@ -12,8 +12,11 @@ import {
   useRef,
   useState,
 } from "react";
+import { InSlot } from "../../../shell/context.ts";
 import { hashParams } from "../../../url.ts";
+import { Menu, MenuCheck, MenuItem, MenuLabel, MenuSeparator } from "../../shell/Menu.tsx";
 import { storedAudience } from "../../start/audience.ts";
+import { SidebarIcon } from "../projects/ProjectActions.tsx";
 import {
   closeWindow,
   defaultLayout,
@@ -50,8 +53,9 @@ const TITLE_KEY = {
   grid: "boardGrid",
   reproduce: "boardReproduce",
   coverage: "boardCoverage",
+  timeline: "boardTimeline",
 } as const;
-const STACK_ORDER: readonly WinId[] = ["signals", "coverage", "math", "assistant", "map", "graph", "grid", "reproduce"];
+const STACK_ORDER: readonly WinId[] = ["signals", "coverage", "timeline", "math", "assistant", "map", "graph", "grid", "reproduce"];
 const PRESETS = ["default", "map", "signals", "units"] as const;
 const PRESET_KEY = { default: "wsDefault", map: "wsMap", signals: "wsSignals", units: "wsUnits" } as const;
 function loadLayout(): Layout {
@@ -114,14 +118,15 @@ export function Workspace({
   onClosed,
   initiallyOpen,
   reveal,
-  toolbar,
   overlay,
+  onGone,
 }: {
   projectId?: string | null;
   project?: Project;
   client?: AeiClient;
   locale: Locale;
-  toolbar?: ReactNode;
+  /** The project was deleted elsewhere: its layout save answered 404. */
+  onGone?: () => void;
   /** Stable content outside the reparented dock windows. */
   overlay?: ReactNode;
   content: Record<WinId, ReactNode>;
@@ -152,12 +157,13 @@ export function Workspace({
         const fresh = await client.project(next.id);
         await client.updateProject(next.id, { ...fresh.project, layout: JSON.parse(serializeLayout(next.layout)) });
         setSaveFailed(false);
-      } catch {
-        setSaveFailed(true);
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 404) onGone?.();
+        else setSaveFailed(true);
       }
     });
     return saveQueue.current;
-  }, [client]);
+  }, [client, onGone]);
   useEffect(
     () => () => {
       if (timer.current) clearTimeout(timer.current);
@@ -245,8 +251,8 @@ export function Workspace({
     const at = locate(next, id);
     if (at) setStatus(t(locale, "wsStatus", { title: title(id), x: at.column + 1, y: at.index + 1 }));
   };
-  const close = (id: WinId) => {
-    focusAfter.current = "ws-tray-button";
+  const close = (id: WinId, quiet = false) => {
+    if (!quiet) focusAfter.current = "ws-tray-button";
     commit(closeWindow(layout, id));
     setStatus(t(locale, "wsClosed", { title: title(id) }));
     onClosed?.(id);
@@ -472,10 +478,14 @@ export function Workspace({
   );
   return (
     <div className="ws" data-docked={wide}>
-      <div className="ws-toolbar">
-        {toolbar}
-        <Tray locale={locale} layout={layout} onToggle={(id) => (locate(layout, id) ? close(id) : open(id))} onPreset={preset} />
-      </div>
+      <InSlot name="windows">
+        <WindowsMenu
+          locale={locale}
+          layout={layout}
+          onToggle={(id) => (locate(layout, id) ? close(id, true) : open(id))}
+          onPreset={preset}
+        />
+      </InSlot>
       <div
         className="ws-area"
         ref={area}
@@ -510,7 +520,14 @@ export function Workspace({
                 </Fragment>
               ))
             : STACK_ORDER.filter((id) => locate(shown, id)).map((id) => renderWindow(id))}
-        {wide && fitted && !shown.columns.length ? <p className="ws-empty">{t(locale, "wsEmptyBoard")}</p> : null}
+        {(wide ? fitted : true) && !shown.columns.length ? (
+          <EmptyBoard
+            locale={locale}
+            blank={!!project && Object.keys(layout.closed).length === WIN_IDS.length}
+            onOpen={open}
+            onPreset={preset}
+          />
+        ) : null}
         {drop?.slot.newColumn ? (
           <div
             className="ws-new-column"
@@ -539,7 +556,48 @@ export function Workspace({
   );
 }
 
-function Tray({
+/** Every window kind, to add one to an empty board. */
+function EmptyBoard({
+  locale,
+  blank,
+  onOpen,
+  onPreset,
+}: {
+  locale: Locale;
+  blank: boolean;
+  onOpen: (id: WinId) => void;
+  onPreset: (p: Preset) => void;
+}) {
+  return (
+    <div className="ws-empty">
+      <p className="ws-empty-title">{t(locale, blank ? "wsEmptyBlank" : "wsEmptyBoard")}</p>
+      <p className="ws-empty-lead">{t(locale, "wsEmptyAdd")}</p>
+      <ul className="ws-empty-list">
+        {WIN_IDS.map((id) => (
+          <li key={id}>
+            <button type="button" data-add={id} onClick={() => onOpen(id)}>
+              <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
+                <path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+              </svg>
+              {t(locale, TITLE_KEY[id])}
+            </button>
+          </li>
+        ))}
+      </ul>
+      <div className="ws-empty-presets" role="group" aria-label={t(locale, "wsPresets")}>
+        <span>{t(locale, "wsPresets")}</span>
+        {PRESETS.map((p) => (
+          <button type="button" key={p} onClick={() => onPreset(p)}>
+            {t(locale, PRESET_KEY[p])}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** The sidebar's Windows menu: closed windows first (what the count promises), then the open ones, then layouts. */
+function WindowsMenu({
   locale,
   layout,
   onToggle,
@@ -550,111 +608,45 @@ function Tray({
   onToggle: (id: WinId) => void;
   onPreset: (p: Preset) => void;
 }) {
-  const [shown, setShown] = useState(false);
-  const root = useRef<HTMLDivElement>(null);
   const closed = WIN_IDS.filter((id) => layout.closed[id]);
   const open = WIN_IDS.filter((id) => !layout.closed[id]);
-  useEffect(() => {
-    if (!shown) return;
-    const key = (e: globalThis.KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setShown(false);
-        document.getElementById("ws-tray-button")?.focus();
-      }
-    };
-    const pointer = (e: globalThis.PointerEvent) => {
-      if (!root.current?.contains(e.target as Node)) setShown(false);
-    };
-    document.addEventListener("keydown", key);
-    document.addEventListener("pointerdown", pointer);
-    return () => {
-      document.removeEventListener("keydown", key);
-      document.removeEventListener("pointerdown", pointer);
-    };
-  }, [shown]);
   return (
-    <div className="ws-tray" ref={root}>
-      <button
-        type="button"
-        id="ws-tray-button"
-        className="ws-tray-button"
-        aria-expanded={shown}
-        aria-controls="ws-tray-pop"
-        onClick={() => setShown((v) => !v)}
-      >
-        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-          <path d="M2 2h12v12H2zM6 2v12M10 2v12" fill="none" stroke="currentColor" strokeWidth="1.3" />
-        </svg>
-        {t(locale, "wsToolbar")}
-        {closed.length ? <span className="ws-tray-count">· {t(locale, "wsClosedCount", { n: closed.length })}</span> : null}
-      </button>
-      {shown ? (
-        <div className="ws-pop" id="ws-tray-pop" role="group" aria-label={t(locale, "wsToolbar")}>
-          {/* Closed windows first: they are what the count on the button promises. */}
-          <p className="ws-pop-head">{t(locale, closed.length ? "wsDock" : "wsAllOpen")}</p>
-          {closed.length ? (
-            <ul className="ws-pop-list">
-              {closed.map((id) => (
-                <li key={id}>
-                  <button
-                    type="button"
-                    className="ws-pop-open"
-                    data-reopen={id}
-                    aria-label={t(locale, "wsReopen", { title: t(locale, TITLE_KEY[id]) })}
-                    onClick={() => onToggle(id)}
-                  >
-                    <span>{t(locale, TITLE_KEY[id])}</span>
-                    <span className="ws-pop-open-tag" aria-hidden="true">
-                      <svg viewBox="0 0 16 16" width="12" height="12">
-                        <path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-                      </svg>
-                      {t(locale, "wsOpenAction")}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-          <p className="ws-pop-head">{t(locale, "wsOpenWindows")}</p>
-          <ul className="ws-pop-list">
-            {open.map((id) => (
-              <li key={id}>
-                <label className="ws-pop-row">
-                  <input type="checkbox" checked data-toggle={id} onChange={() => onToggle(id)} />
-                  <span>{t(locale, TITLE_KEY[id])}</span>
-                </label>
-              </li>
-            ))}
-          </ul>
-          <div className="ws-presets" role="group" aria-label={t(locale, "wsPresets")}>
-            <p>{t(locale, "wsPresets")}</p>
-            {PRESETS.map((p) => (
-              <button
-                type="button"
-                data-preset={p}
-                key={p}
-                onClick={() => {
-                  onPreset(p);
-                  setShown(false);
-                }}
-              >
-                {t(locale, PRESET_KEY[p])}
-              </button>
-            ))}
-          </div>
-          <p className="ws-pop-hint">{t(locale, "wsHint")}</p>
-          <button
-            type="button"
-            className="ws-pop-reset"
-            onClick={() => {
-              onPreset("default");
-              setShown(false);
-            }}
-          >
-            {t(locale, "wsReset")}
-          </button>
-        </div>
+    <Menu
+      id="ws-tray-button"
+      label={t(locale, "wsToolbar")}
+      icon={<SidebarIcon name="windows" />}
+      badge={closed.length ? t(locale, "wsClosedCount", { n: closed.length }) : undefined}
+      wide
+    >
+      <MenuLabel>{t(locale, closed.length ? "wsDock" : "wsAllOpen")}</MenuLabel>
+      {closed.map((id) => (
+        <MenuItem key={id} data-reopen={id} hint={t(locale, "wsOpenAction")} onSelect={() => onToggle(id)}>
+          {t(locale, TITLE_KEY[id])}
+        </MenuItem>
+      ))}
+      {open.length ? (
+        <>
+          <MenuSeparator />
+          <MenuLabel>{t(locale, "wsOpenWindows")}</MenuLabel>
+          {open.map((id) => (
+            <MenuCheck key={id} checked data-toggle={id} onToggle={() => onToggle(id)}>
+              {t(locale, TITLE_KEY[id])}
+            </MenuCheck>
+          ))}
+        </>
       ) : null}
-    </div>
+      <MenuSeparator />
+      <MenuLabel>{t(locale, "wsPresets")}</MenuLabel>
+      {PRESETS.map((p) => (
+        <MenuItem key={p} data-preset={p} onSelect={() => onPreset(p)}>
+          {t(locale, PRESET_KEY[p])}
+        </MenuItem>
+      ))}
+      <MenuSeparator />
+      <MenuItem data-reset onSelect={() => onPreset("default")}>
+        {t(locale, "wsReset")}
+      </MenuItem>
+      <p className="sb-pop-foot">{t(locale, "wsHint")}</p>
+    </Menu>
   );
 }

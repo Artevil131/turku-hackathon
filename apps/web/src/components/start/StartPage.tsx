@@ -1,16 +1,23 @@
 import type { AeiClient, Alert, Project } from "@aei/contract";
 import { formatDate, type Locale, siteName, t, wardName } from "@aei/i18n";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { Connection, Finding } from "../../live.ts";
+import { useShell } from "../../shell/context.ts";
+import { launchTemplate } from "../../shell/launch.ts";
 import { sharedQuery } from "../../url.ts";
-import { incidentOf } from "../home/changes.ts";
+import { changesOn, incidentOf } from "../home/changes.ts";
 import { latestSentence, latestSignal } from "../home/Latest.tsx";
-import { ProjectDialog } from "../research/projects/ProjectDialog.tsx";
-import { openProject } from "../research/projects/useProject.ts";
+import { Since } from "../home/Since.tsx";
+import { IncidentRow } from "../research/feed/IncidentRow.tsx";
+import { groupIncidents, openIncidents } from "../research/feed/model.ts";
+import { DeleteProjectDialog } from "../research/projects/ProjectDialogs.tsx";
 import { parseLayout } from "../research/workspace/layout.ts";
-import { TEMPLATE_KEYS, type Template } from "../research/workspace/templates.ts";
+import { QUICK_STARTS, TEMPLATE_KEYS, type Template } from "../research/workspace/templates.ts";
 import { AUDIENCE_KEYS, AUDIENCES, type Audience } from "./audience.ts";
 import { NewProjectDialog } from "./NewProjectDialog.tsx";
 import { ShareDialog } from "./ShareDialog.tsx";
+import "../home/home.css";
+import "../research/SignalFeed.css";
 import "./start.css";
 
 const ORDER: Record<Audience, Template[]> = {
@@ -57,6 +64,8 @@ export function StartPage({
   locale,
   clock,
   alerts,
+  findings = [],
+  connection = "open",
   audience,
   onAudience,
 }: {
@@ -64,6 +73,8 @@ export function StartPage({
   locale: Locale;
   clock: string | null;
   alerts: readonly Alert[];
+  findings?: Finding[];
+  connection?: Connection;
   audience: Audience;
   onAudience: (value: Audience) => void;
 }) {
@@ -74,7 +85,26 @@ export function StartPage({
   const [sharing, setSharing] = useState<Project | null>(null);
   const [deleting, setDeleting] = useState<Project | null>(null);
   const [busy, setBusy] = useState(false);
+  const [launching, setLaunching] = useState<Template | null>(null);
   const [actionError, setActionError] = useState(false);
+  const [period, setPeriod] = useState<1 | 7 | 28>(1);
+  const shell = useShell();
+  // A template opens at once, with the defaults; "Customise…" asks for the details first.
+  const launch = async (template: Template) => {
+    if (QUICK_STARTS.includes(template)) {
+      shell.openView(template);
+      return;
+    }
+    if (launching) return;
+    setLaunching(template);
+    setActionError(false);
+    try {
+      shell.openProject(await launchTemplate(client, locale, template));
+    } catch {
+      setActionError(true);
+      setLaunching(null);
+    }
+  };
   // biome-ignore lint/correctness/useExhaustiveDependencies: revision reloads after project actions and retry.
   useEffect(() => {
     let stale = false;
@@ -92,35 +122,34 @@ export function StartPage({
     };
   }, [client, revision]);
   const latest = clock ? latestSignal(clock, [...alerts]) : null;
+  const changes = useMemo(
+    () => (clock ? changesOn(clock, findings, [...alerts], undefined, period) : null),
+    [clock, findings, alerts, period],
+  );
+  const open = useMemo(() => (clock ? openIncidents(groupIncidents(alerts.filter((a) => a.date <= clock)), clock) : []), [clock, alerts]);
+  const summary = connection === "offline" ? "offline" : clock === null ? "connecting" : "ready";
   const templates = ORDER[audience];
   return (
     <div className="start-page">
-      <aside className="start-rail">
-        <button type="button" className="start-primary" onClick={() => setCreating(templates[0] ?? "blank")}>
-          {t(locale, "startNew")}
-        </button>
-        <button type="button" disabled>
-          {t(locale, "startPackage")} <small>{t(locale, "startSoon")}</small>
-        </button>
-        <nav aria-label={t(locale, "startProjects")}>
-          {(["Recent", "Shared", "Templates"] as const).map((section) => (
-            <a
-              key={section}
-              href={`#start-${section.toLowerCase()}`}
-              onClick={(e) => {
-                e.preventDefault();
-                document.getElementById(`start-${section.toLowerCase()}`)?.scrollIntoView({ behavior: "instant" });
-                document.getElementById(`start-${section.toLowerCase()}`)?.focus();
-              }}
-            >
-              {t(locale, `start${section}`)}
-            </a>
-          ))}
-        </nav>
-      </aside>
       <div className="start-main">
         <header className="start-heading">
-          <h1>{t(locale, "startHeading")}</h1>
+          <div className="start-heading-row">
+            <h1>{t(locale, "startHeading")}</h1>
+            <div className="start-actions">
+              <button type="button" className="start-primary" data-start-new disabled={!!launching} onClick={() => void launch("blank")}>
+                {t(locale, launching === "blank" ? "startLaunching" : "startNew")}
+              </button>
+              <button
+                type="button"
+                className="start-secondary"
+                data-start-customise
+                onClick={() => setCreating(templates[0] ?? "blank")}
+                title={t(locale, "startCustomiseHint")}
+              >
+                {t(locale, "startCustomise")}
+              </button>
+            </div>
+          </div>
           <fieldset className="start-audience">
             <legend>{t(locale, "startAs")}</legend>
             {AUDIENCES.map((item) => (
@@ -146,7 +175,7 @@ export function StartPage({
             <div className="start-empty">
               <h3>{t(locale, "startEmpty")}</h3>
               <p>{t(locale, "startEmptyNote")}</p>
-              <button type="button" className="start-primary" onClick={() => setCreating(templates[0] ?? "blank")}>
+              <button type="button" className="start-primary" disabled={!!launching} onClick={() => void launch(templates[0] ?? "blank")}>
                 {t(locale, TEMPLATE_KEYS[templates[0] ?? "blank"][0])}
               </button>
             </div>
@@ -154,7 +183,7 @@ export function StartPage({
             <div className="start-project-grid">
               {projects.map((project) => (
                 <article className="start-card" key={project.id} data-project-card={project.id}>
-                  <button type="button" className="start-card-open" onClick={() => openProject(project)}>
+                  <button type="button" className="start-card-open" onClick={() => shell.openProject(project)}>
                     <LayoutPreview layout={project.layout} />
                     <h3>{project.name}</h3>
                   </button>
@@ -183,7 +212,7 @@ export function StartPage({
                       </svg>
                     </summary>
                     <div>
-                      <button type="button" onClick={() => openProject(project)}>
+                      <button type="button" onClick={() => shell.openProject(project)}>
                         {t(locale, "startOpen")}
                       </button>
                       <button type="button" onClick={() => setSharing(project)}>
@@ -223,18 +252,32 @@ export function StartPage({
         <section id="start-templates" tabIndex={-1}>
           <h2>{t(locale, "startTemplates")}</h2>
           <div className="start-templates">
-            {templates.map((template, i) => (
-              <button
-                key={template}
-                type="button"
-                data-template={template}
-                className={i === 0 ? "start-template-prominent" : undefined}
-                onClick={() => setCreating(template)}
-              >
-                <strong>{t(locale, TEMPLATE_KEYS[template][0])}</strong>
-                <span>{t(locale, TEMPLATE_KEYS[template][1])}</span>
-              </button>
-            ))}
+            {templates.map((template, i) => {
+              const quick = QUICK_STARTS.includes(template);
+              return (
+                <div
+                  key={template}
+                  className={`start-template${i === 0 ? " start-template-prominent" : ""}`}
+                  data-busy={launching === template || undefined}
+                >
+                  <button type="button" data-template={template} disabled={!!launching} onClick={() => void launch(template)}>
+                    <strong>{t(locale, launching === template ? "startLaunching" : TEMPLATE_KEYS[template][0])}</strong>
+                    <span>{t(locale, TEMPLATE_KEYS[template][1])}</span>
+                    {quick ? <small>{t(locale, "startQuickNote")}</small> : null}
+                  </button>
+                  <button
+                    type="button"
+                    className="start-template-custom"
+                    data-customise={template}
+                    aria-label={`${t(locale, "startCustomise")} ${t(locale, TEMPLATE_KEYS[template][0])}`}
+                    title={t(locale, "startCustomiseHint")}
+                    onClick={() => setCreating(template)}
+                  >
+                    {t(locale, "startCustomise")}
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </section>
         <section id="start-shared" tabIndex={-1}>
@@ -252,13 +295,40 @@ export function StartPage({
       </div>
       <aside className="start-context">
         <p>{t(locale, "startIntro")}</p>
+        <Since
+          locale={locale}
+          asOf={clock}
+          changes={changes}
+          state={summary}
+          period={period}
+          onPeriod={setPeriod}
+          openCount={summary === "ready" ? open.length : null}
+          level={2}
+        />
+        {summary === "ready" && open.length ? (
+          <section className="hm-incidents" aria-label={t(locale, "feedOpen", { n: open.length })}>
+            <ul className="feed-list">
+              {open.map((incident) => (
+                <li key={incident.key}>
+                  <IncidentRow
+                    locale={locale}
+                    incident={incident}
+                    spans={null}
+                    selected={false}
+                    onSelect={(key) => shell.openView(null, { inc: key })}
+                  />
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
         <section>
           <h2>{t(locale, "startLatest")}</h2>
           {latest ? (
             <>
               <time dateTime={latest.date}>{formatDate(locale, latest.date, "long")}</time>
               <p>{latestSentence(locale, latest)}</p>
-              <a href={`#workspace?inc=${encodeURIComponent(incidentOf(latest))}${sharedQuery().replace("?", "&")}`}>
+              <a href={`#project?inc=${encodeURIComponent(incidentOf(latest))}${sharedQuery().replace("?", "&")}`}>
                 {t(locale, "startSignalLink")}
               </a>
             </>
@@ -272,32 +342,16 @@ export function StartPage({
       ) : null}
       {sharing ? <ShareDialog project={sharing} locale={locale} onClose={() => setSharing(null)} /> : null}
       {deleting ? (
-        <ProjectDialog
-          title={t(locale, "startDeleteTitle", { name: deleting.name })}
-          closeLabel={t(locale, "startCancel")}
+        <DeleteProjectDialog
+          client={client}
+          locale={locale}
+          project={deleting}
+          onDeleted={(gone) => {
+            shell.closeProject(gone.id);
+            setRevision((n) => n + 1);
+          }}
           onClose={() => setDeleting(null)}
-        >
-          <p>{t(locale, "startDeleteNote")}</p>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={async () => {
-              setBusy(true);
-              try {
-                await client.deleteProject(deleting.id);
-                setDeleting(null);
-                setRevision((n) => n + 1);
-              } catch {
-                setActionError(true);
-              } finally {
-                setBusy(false);
-              }
-            }}
-          >
-            {t(locale, "startDelete")}
-          </button>
-          {actionError ? <p role="alert">{t(locale, "startError")}</p> : null}
-        </ProjectDialog>
+        />
       ) : null}
     </div>
   );

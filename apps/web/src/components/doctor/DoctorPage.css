@@ -310,11 +310,17 @@
   }
   .chassis,
   .banner,
-  .console > :not(.page),
+  .sidebar,
+  .sb-scrim,
+  .phonebar,
+  .viewbar,
+  .palette,
+  .toast,
   .page > :not(.coverage-surface):not(:has(.coverage-window)) {
     display: none !important;
   }
-  .console,
+  .app,
+  .app-main,
   .page,
   .doctor,
   .doctor-main,

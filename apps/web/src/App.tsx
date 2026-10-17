@@ -1,14 +1,21 @@
-import type { Flow } from "@aei/contract";
+import type { Flow, Project } from "@aei/contract";
 import { formatDate, type Locale, t } from "@aei/i18n";
-import { Fragment, lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { CommandField } from "./components/command/CommandField.tsx";
 import { doctorParamsToWindow } from "./components/doctor/filters.ts";
+import { useMedia } from "./components/doctor/useMedia.ts";
+import { projectHash } from "./components/research/projects/useProject.ts";
 import { SiteLine } from "./components/SitePicker.tsx";
+import { PHONE } from "./components/shell/Menu.tsx";
+import { ReplayClock } from "./components/shell/ReplayClock.tsx";
+import { Sidebar, tabName } from "./components/shell/Sidebar.tsx";
 import { type Audience, storedAudience } from "./components/start/audience.ts";
 import { StartPage } from "./components/start/StartPage.tsx";
-import { Timeline } from "./components/Timeline.tsx";
-import { type Page, TopBar } from "./components/TopBar.tsx";
 import { useLive } from "./live.ts";
 import { FlowsContext } from "./relations.ts";
+import { type Shell, ShellContext, type Slots, SlotsContext } from "./shell/context.ts";
+import { launchTemplate } from "./shell/launch.ts";
+import { closeTab, type DocTab, loadTabs, PROJECT_PAGE, patchTab, saveTabs, tabKey, upsertTab } from "./shell/tabs.ts";
 import {
   alertsOf,
   allSites,
@@ -40,7 +47,8 @@ const NO_FLOWS: readonly Flow[] = [];
 // [data-theme="dark"]; switch this (or add a toggle) to bring them back.
 const THEME: "light" | "dark" = "light";
 
-const PAGES: readonly Page[] = ["home", "doctor", "research", "method", "connect", "settings", "intro"];
+type Page = "home" | "project" | "data" | "method" | "settings" | "intro";
+const PAGES: readonly Page[] = ["home", "project", "data", "method", "settings", "intro"];
 
 function stored<T extends string>(key: string, fallback: T, valid: (v: string) => boolean): T {
   try {
@@ -60,20 +68,31 @@ function store(key: string, value: string | null) {
   }
 }
 
-// The page is in the URL hash (#doctor, #research) so it can be bookmarked.
+/**
+ * The page is in the URL hash so it can be bookmarked. Old routes still work: #research and #workspace
+ * open the project view with the same params, #doctor opens Treat a patient with its filters (D-065),
+ * #connect opens Data.
+ */
 function pageFromHash(): Page {
   const value = hashPage();
   if (value === "doctor") {
     const previous = hashParams();
-    // Old doctor links open the coverage window with the same filters (D-065).
     const params = new URLSearchParams(doctorParamsToWindow(previous));
     if (previous.has(HOSPITAL_PARAM)) params.set(HOSPITAL_PARAM, previous.get(HOSPITAL_PARAM) as string);
     params.delete("project");
     params.set("quick", "patient");
-    history.replaceState(null, "", `#workspace?${params}`);
-    return "research";
+    history.replaceState(null, "", `#${PROJECT_PAGE}?${params}`);
+    return "project";
   }
-  if (value === "workspace") return "research";
+  if (value === "workspace" || value === "research") {
+    const query = location.hash.split("?")[1];
+    history.replaceState(null, "", `#${PROJECT_PAGE}${query ? `?${query}` : ""}`);
+    return "project";
+  }
+  if (value === "connect") {
+    history.replaceState(null, "", `#data${sharedQuery()}`);
+    return "data";
+  }
   if (value === "start") return "home";
   return PAGES.includes(value as Page) ? (value as Page) : "home";
 }
@@ -93,10 +112,21 @@ function usePrefersReducedMotion(): boolean {
 export function App() {
   const [locale, setLocale] = useState<Locale>(() => stored("aei.locale", "fi", (v) => v === "fi" || v === "en"));
   const [page, setPage] = useState<Page>(pageFromHash);
-  const [route, setRoute] = useState({ hash: location.hash });
   const [audience, setAudience] = useState<Audience>(storedAudience);
-  const [workspaceUrl, setWorkspaceUrl] = useState("#workspace");
-  const [projectName, setProjectName] = useState<string | null>(null);
+  const [tabs, setTabs] = useState<DocTab[]>(() => {
+    const open = loadTabs();
+    return page === "project" ? upsertTab(open, location.hash) : open;
+  });
+  const [activeKey, setActiveKey] = useState<string | null>(() => (page === "project" ? tabKey(location.hash) : null));
+  const [collapsed, setCollapsed] = useState(
+    () => stored<"open" | "rail">("aei.sidebar", "open", (v) => v === "rail" || v === "open") === "rail",
+  );
+  const [drawer, setDrawer] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [slots, setSlots] = useState<Slots>({ actions: null, windows: null });
+  const setActionsSlot = useCallback((el: HTMLElement | null) => setSlots((s) => (s.actions === el ? s : { ...s, actions: el })), []);
+  const setWindowsSlot = useCallback((el: HTMLElement | null) => setSlots((s) => (s.windows === el ? s : { ...s, windows: el })), []);
+  const phone = useMedia(PHONE);
   const live = useLive();
   const reducedMotion = usePrefersReducedMotion();
 
@@ -146,40 +176,52 @@ export function App() {
     store("aei.audience", audience);
     document.documentElement.dataset.density = audience === "clinician" ? "comfortable" : audience === "researcher" ? "compact" : "default";
   }, [audience]);
-  const navigate = useCallback(
-    (next: Page) => {
-      if (page === "research") setWorkspaceUrl(location.hash);
-      history.pushState(null, "", next === "home" ? `#${sharedQuery()}` : next === "research" ? workspaceUrl : `#${next}${sharedQuery()}`);
-      setPage(next);
+  useEffect(() => saveTabs(tabs), [tabs]);
+  useEffect(() => store("aei.sidebar", collapsed ? "rail" : "open"), [collapsed]);
+
+  // The project view writes its filters with replaceState, so its tab learns its latest hash before the app
+  // leaves it.
+  const pageRef = useRef(page);
+  pageRef.current = page;
+  const capture = useCallback(() => {
+    if (pageRef.current !== "project" || hashPage() !== PROJECT_PAGE) return;
+    const hash = location.hash;
+    setTabs((open) => upsertTab(open, hash));
+  }, []);
+  const go = useCallback(
+    (hash: string) => {
+      capture();
+      history.pushState(null, "", hash);
       dispatchEvent(new HashChangeEvent("hashchange"));
     },
-    [page, workspaceUrl],
+    [capture],
   );
-  useEffect(() => {
-    const id = new URLSearchParams(route.hash.split("?")[1] ?? "").get("project");
-    if (page !== "research") return;
-    setWorkspaceUrl(location.hash);
-    if (!id) {
-      setProjectName(null);
-      return;
-    }
-    let stale = false;
-    client
-      .project(id)
-      .then(({ project }) => {
-        if (!stale) setProjectName(project.name);
-      })
-      .catch(() => {
-        if (!stale) setProjectName(null);
-      });
-    return () => {
-      stale = true;
-    };
-  }, [client, page, route]);
+  const navigate = useCallback(
+    (next: Exclude<Page, "project">) => go(next === "home" ? `#${sharedQuery()}` : `#${next}${sharedQuery()}`),
+    [go],
+  );
+  const tabsRef = useRef(tabs);
+  tabsRef.current = tabs;
+  const activate = useCallback((tab: DocTab) => go(tab.hash), [go]);
+  const close = useCallback((key: string) => {
+    const wasActive = pageRef.current === "project" && tabKey(location.hash) === key;
+    const { tabs: rest, next } = closeTab(tabsRef.current, key);
+    setTabs(rest);
+    if (!wasActive) return;
+    // Replace, not push: Back should not reopen a closed tab.
+    history.replaceState(null, "", next ? next.hash : `#${sharedQuery()}`);
+    dispatchEvent(new HashChangeEvent("hashchange"));
+  }, []);
+
   useEffect(() => {
     const onHash = () => {
-      setPage(pageFromHash());
-      setRoute({ hash: location.hash });
+      const next = pageFromHash();
+      setPage(next);
+      if (next === "project") {
+        const hash = location.hash;
+        setTabs((open) => upsertTab(open, hash));
+        setActiveKey(tabKey(hash));
+      }
       // Back and forward, or a pasted link, may name another hospital.
       if (isMulti()) {
         const s = validSite(hashParams().get(HOSPITAL_PARAM));
@@ -195,6 +237,84 @@ export function App() {
     };
   }, []);
 
+  // Names for tabs restored from an earlier visit, and tabs of projects deleted since then are dropped.
+  const named = useRef(false);
+  useEffect(() => {
+    if (named.current || !tabs.some((tab) => tab.project)) return;
+    named.current = true;
+    client
+      .projects()
+      .then(({ projects }) => {
+        const byId = new Map(projects.map((p) => [p.id, p]));
+        setTabs((open) =>
+          open.flatMap((tab) => {
+            if (!tab.project) return [tab];
+            const p = byId.get(tab.project);
+            if (!p) return tab.key === tabKey(location.hash) && pageRef.current === "project" ? [tab] : [];
+            return [{ ...tab, name: p.name, frozen: p.mode === "frozen", asOf: p.asOf ?? null }];
+          }),
+        );
+      })
+      .catch(() => {});
+  }, [client, tabs]);
+
+  const shell = useMemo<Shell>(
+    () => ({
+      openProject: (project: Project) => {
+        const open = tabsRef.current.find((tab) => tab.project === project.id);
+        setTabs((all) =>
+          patchTab(upsertTab(all, open?.hash ?? projectHash(project)), `p:${project.id}`, {
+            name: project.name,
+            frozen: project.mode === "frozen",
+            asOf: project.asOf ?? null,
+          }),
+        );
+        go(open?.hash ?? projectHash(project));
+      },
+      openView: (quick, params) => {
+        const search = new URLSearchParams(params);
+        if (quick) search.set("quick", quick);
+        const hospital = hashParams().get(HOSPITAL_PARAM);
+        if (hospital) search.set(HOSPITAL_PARAM, hospital);
+        const qs = search.toString();
+        go(`#${PROJECT_PAGE}${qs ? `?${qs}` : ""}`);
+      },
+      closeProject: (id) => close(`p:${id}`),
+      projectGone: (id, name) => {
+        setNotice(t(locale, "shellProjectGone", { name: name ?? t(locale, "shellUntitled") }));
+        close(`p:${id}`);
+      },
+      closeActive: () => close(tabKey(location.hash)),
+      goHome: () => navigate("home"),
+      describe: ({ project, drift }) => {
+        const key = tabKey(location.hash);
+        if (!project || key !== `p:${project.id}`) return;
+        setTabs((all) => patchTab(all, key, { name: project.name, frozen: project.mode === "frozen", asOf: project.asOf ?? null, drift }));
+      },
+    }),
+    [go, close, navigate, locale],
+  );
+  useEffect(() => {
+    if (!notice) return;
+    const timer = setTimeout(() => setNotice(null), 8000);
+    return () => clearTimeout(timer);
+  }, [notice]);
+
+  const active = page === "project" ? (tabs.find((tab) => tab.key === activeKey) ?? null) : null;
+  const title =
+    page === "project" && active
+      ? tabName(locale, active)
+      : page === "data"
+        ? t(locale, "shellData")
+        : page === "settings"
+          ? t(locale, "settings")
+          : page === "method"
+            ? t(locale, "methodTitle")
+            : t(locale, "shellHome");
+  useEffect(() => {
+    document.title = page === "home" ? t(locale, "appName") : `${title} · ${t(locale, "appName")}`;
+  }, [page, title, locale]);
+
   // The pitch intro is full screen, without the working tool's chrome.
   if (page === "intro")
     return (
@@ -209,82 +329,160 @@ export function App() {
       </Suspense>
     );
 
+  const clock = <ReplayClock locale={locale} clock={live.clock} connection={live.connection} command={live.command} />;
   return (
-    <SitesContext.Provider value={sites}>
-      <FlowsContext.Provider value={flows}>
-        <div className="chassis" aria-hidden="true" />
-        <div className="console">
-          {/* A button, not a link: the hash holds the page, so focus moves by script. */}
-          <button type="button" className="skip-link" onClick={() => document.getElementById("main-content")?.focus()}>
-            {t(locale, "skipToContent")}
-          </button>
-          <TopBar
-            locale={locale}
-            page={page}
-            onPage={navigate}
-            projectName={projectName}
-            asOf={live.clock?.asOf ?? null}
-            alerts={live.alertsLoaded ? alerts : undefined}
-          />
-          {page === "research" ? (
-            <Timeline
-              key={siteKey}
-              client={client}
-              liveAlerts={liveAlerts}
-              locale={locale}
-              clock={live.clock}
-              connection={live.connection}
-              lastArrivals={live.lastArrivals}
-              command={live.command}
-              reducedMotion={reducedMotion}
-              collapsible
-            />
-          ) : page === "home" && live.clock ? (
-            <p className="start-clock">{t(locale, "startClock", { date: formatDate(locale, live.clock.asOf, "long") })}</p>
-          ) : null}
-
-          <main id="main-content" className="page" tabIndex={-1}>
-            <SiteLine locale={locale} />
-            <Fragment key={siteKey}>
-              {page === "home" ? (
-                <StartPage
-                  client={client}
-                  locale={locale}
-                  clock={live.clock?.asOf ?? null}
-                  alerts={alerts}
-                  audience={audience}
-                  onAudience={(next) => {
-                    store("aei.research.layout.v2", null);
-                    setAudience(next);
-                  }}
-                />
-              ) : null}
-              <Suspense fallback={<div className="section" aria-busy="true" />}>
-                {page === "research" ? (
-                  <ResearchBoard
-                    client={client}
-                    locale={locale}
-                    asOf={live.clock?.asOf ?? null}
-                    findings={findings}
-                    acknowledge={live.acknowledge}
-                    reducedMotion={reducedMotion}
-                  />
+    <ShellContext.Provider value={shell}>
+      <SlotsContext.Provider value={slots}>
+        <SitesContext.Provider value={sites}>
+          <FlowsContext.Provider value={flows}>
+            <div className="chassis" aria-hidden="true" />
+            {/* A button, not a link: the hash holds the page, so focus moves by script. */}
+            <button type="button" className="skip-link" onClick={() => document.getElementById("main-content")?.focus()}>
+              {t(locale, "skipToContent")}
+            </button>
+            <div className="app" data-rail={collapsed && !phone ? "" : undefined}>
+              <Sidebar
+                locale={locale}
+                page={page === "method" ? "data" : page}
+                tabs={tabs}
+                activeKey={activeKey}
+                collapsed={collapsed}
+                drawer={drawer}
+                onDrawer={setDrawer}
+                onCollapsed={setCollapsed}
+                onHome={() => navigate("home")}
+                onTab={activate}
+                onCloseTab={(tab) => close(tab.key)}
+                onNew={() => {
+                  launchTemplate(client, locale, "blank")
+                    .then(shell.openProject)
+                    .catch(() => setNotice(t(locale, "pmError")));
+                }}
+                onPage={navigate}
+                setActionsSlot={setActionsSlot}
+                setWindowsSlot={setWindowsSlot}
+              />
+              <div className="app-main">
+                {phone ? (
+                  <header className="phonebar">
+                    <button
+                      type="button"
+                      id="sb-menu-button"
+                      className="phonebar-menu"
+                      aria-expanded={drawer}
+                      aria-controls="app-sidebar"
+                      onClick={() => setDrawer(true)}
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        width="18"
+                        height="18"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        strokeLinecap="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M4 7h16M4 12h16M4 17h16" />
+                      </svg>
+                      <span className="visually-hidden">{t(locale, "shellMenu")}</span>
+                    </button>
+                    <span className="phonebar-title">{title}</span>
+                    {page === "project" ? clock : null}
+                  </header>
                 ) : null}
-                {page === "method" ? <MethodPage client={client} locale={locale} asOf={live.clock?.asOf ?? null} /> : null}
-                {page === "connect" ? <ConnectPage client={live.client} locale={locale} /> : null}
-                {page === "settings" ? (
-                  <Settings client={client} locale={locale} onLocale={setLocale} onResetRole={() => setAudience("control")} />
-                ) : null}
-              </Suspense>
-            </Fragment>
-          </main>
-        </div>
-        {live.connection === "offline" ? (
-          <p className="banner" role="status">
-            {live.lastGoodAsOf ? t(locale, "offline", { date: formatDate(locale, live.lastGoodAsOf, "long") }) : t(locale, "offlineNoDate")}
-          </p>
-        ) : null}
-      </FlowsContext.Provider>
-    </SitesContext.Provider>
+                <main id="main-content" className="page" tabIndex={-1} data-page={page}>
+                  {page === "project" && !phone ? (
+                    <div className="viewbar">
+                      <h1 className="viewbar-title" title={active?.project ? undefined : t(locale, "shellUnsaved")}>
+                        {active ? tabName(locale, active) : t(locale, "shellUntitled")}
+                      </h1>
+                      {active?.frozen ? (
+                        <span className="project-frozen" role="status">
+                          {t(locale, "projectFrozenBanner", { date: active.asOf ?? "" })}
+                          {active.drift ? <strong> · {t(locale, "projectDrift")}</strong> : null}
+                        </span>
+                      ) : active && !active.project ? (
+                        <span className="viewbar-note">{t(locale, "shellUnsaved")}</span>
+                      ) : null}
+                      {clock}
+                    </div>
+                  ) : page === "project" ? (
+                    <h1 className="visually-hidden">{active ? tabName(locale, active) : t(locale, "shellUntitled")}</h1>
+                  ) : null}
+                  {page === "project" && phone && active?.frozen ? (
+                    <p className="project-frozen viewbar-phone" role="status">
+                      {t(locale, "projectFrozenBanner", { date: active.asOf ?? "" })}
+                      {active.drift ? <strong> · {t(locale, "projectDrift")}</strong> : null}
+                    </p>
+                  ) : null}
+                  <SiteLine locale={locale} />
+                  <Fragment key={siteKey}>
+                    {page === "home" ? (
+                      <StartPage
+                        client={client}
+                        locale={locale}
+                        clock={live.clock?.asOf ?? null}
+                        alerts={alerts}
+                        findings={findings}
+                        connection={live.connection}
+                        audience={audience}
+                        onAudience={(next) => {
+                          store("aei.research.layout.v2", null);
+                          setAudience(next);
+                        }}
+                      />
+                    ) : null}
+                    <Suspense fallback={<div className="section" aria-busy="true" />}>
+                      {page === "project" ? (
+                        <ResearchBoard
+                          key={activeKey ?? "view"}
+                          client={client}
+                          locale={locale}
+                          asOf={live.clock?.asOf ?? null}
+                          findings={findings}
+                          acknowledge={live.acknowledge}
+                          reducedMotion={reducedMotion}
+                          replay={{
+                            clock: live.clock,
+                            connection: live.connection,
+                            lastArrivals: live.lastArrivals,
+                            command: live.command,
+                            liveAlerts,
+                          }}
+                        />
+                      ) : null}
+                      {page === "method" ? <MethodPage client={client} locale={locale} asOf={live.clock?.asOf ?? null} /> : null}
+                      {page === "data" ? <ConnectPage client={live.client} locale={locale} /> : null}
+                      {page === "settings" ? (
+                        <Settings client={client} locale={locale} onLocale={setLocale} onResetRole={() => setAudience("control")} />
+                      ) : null}
+                    </Suspense>
+                  </Fragment>
+                </main>
+              </div>
+            </div>
+            <div className="palette">
+              <CommandField locale={locale} alerts={live.alertsLoaded ? alerts : undefined} asOf={live.clock?.asOf ?? null} />
+            </div>
+            {notice ? (
+              <p className="toast" role="status">
+                {notice}
+                <button type="button" onClick={() => setNotice(null)} aria-label={t(locale, "projectClose")}>
+                  ×
+                </button>
+              </p>
+            ) : null}
+            {live.connection === "offline" ? (
+              <p className="banner" role="status">
+                {live.lastGoodAsOf
+                  ? t(locale, "offline", { date: formatDate(locale, live.lastGoodAsOf, "long") })
+                  : t(locale, "offlineNoDate")}
+              </p>
+            ) : null}
+          </FlowsContext.Provider>
+        </SitesContext.Provider>
+      </SlotsContext.Provider>
+    </ShellContext.Provider>
   );
 }

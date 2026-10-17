@@ -1,6 +1,11 @@
+import type { ClockCommand, ClockState } from "@aei/contract";
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { LiveAlerts } from "../../alertsSince.ts";
+import type { Connection } from "../../live.ts";
+import { InSlot, useShell } from "../../shell/context.ts";
 import { hashParams, writeHashParams } from "../../url.ts";
 import { CoverageWindow } from "../doctor/CoverageWindow.tsx";
+import { Timeline } from "../Timeline.tsx";
 import { Assistant } from "./assistant/Assistant.tsx";
 import { type BoardState, boardFromUrl, boardToParams, type FeedProps } from "./board.ts";
 import { applyFilters, shift } from "./feed/model.ts";
@@ -9,7 +14,7 @@ import { useIncidents } from "./feed/useIncidents.ts";
 import { GeoMap } from "./geo/GeoMap.tsx";
 import { UnitGraph } from "./geo/UnitGraph.tsx";
 import { AlertMath } from "./math/AlertMath.tsx";
-import { ProjectControls } from "./projects/ProjectControls.tsx";
+import { ProjectActions } from "./projects/ProjectActions.tsx";
 import { type NotebookLanguage, Reproduce, ReproduceHost } from "./projects/Reproduce.tsx";
 import { useProject } from "./projects/useProject.ts";
 import { SignalFeed } from "./SignalFeed.tsx";
@@ -24,11 +29,30 @@ import "./ResearchBoard.css";
 // lives in the URL. Under 1100 px the three stack: list, math, panel.
 // Choosing a signal opens the alert math again if it was closed.
 
-type Props = Omit<FeedProps, "state" | "onChange">;
+/** The replay the timeline window shows and seeks: the one global clock (D-066). */
+export interface Replay {
+  clock: ClockState | null;
+  connection: Connection;
+  lastArrivals: { to: string; count: number } | null;
+  command: (c: ClockCommand) => void;
+  liveAlerts: LiveAlerts;
+}
+type Props = Omit<FeedProps, "state" | "onChange"> & { replay: Replay };
 
 export function ResearchBoard(props: Props) {
   const { locale, client, asOf, findings, acknowledge } = props;
   const project = useProject(client, asOf);
+  const shell = useShell();
+  const current = project.response?.project ?? null;
+  const drift = !!project.response?.drift;
+  // The sidebar names this tab and marks it frozen from what the server says.
+  useEffect(() => shell.describe({ project: current, drift }), [shell, current, drift]);
+  const gone = useCallback(() => {
+    if (project.id) shell.projectGone(project.id, current?.name ?? null);
+  }, [shell, project.id, current?.name]);
+  useEffect(() => {
+    if (project.missing) gone();
+  }, [project.missing, gone]);
   const [notebookLanguage, setNotebookLanguage] = useState<NotebookLanguage>("python");
   const [state, setState] = useState<BoardState>(boardFromUrl);
   const [reveal, setReveal] = useState<{ id: WinId; key: string | null }>({ id: "math", key: state.incident });
@@ -105,6 +129,19 @@ export function ResearchBoard(props: Props) {
         empty={loading ? "loading" : "pick"}
       />
     ),
+    timeline: (
+      <Timeline
+        variant="window"
+        client={client}
+        locale={locale}
+        clock={props.replay.clock}
+        connection={props.replay.connection}
+        lastArrivals={props.replay.lastArrivals}
+        command={props.replay.command}
+        liveAlerts={props.replay.liveAlerts}
+        reducedMotion={props.reducedMotion}
+      />
+    ),
     assistant: (
       <Assistant client={client} locale={locale} incident={selected} spans={selected ? spansOf(selected) : null} waiting={loading} />
     ),
@@ -118,22 +155,23 @@ export function ResearchBoard(props: Props) {
   ]);
   return (
     <div className="section board">
+      <InSlot name="actions">
+        <ProjectActions
+          client={client}
+          locale={locale}
+          clock={asOf}
+          board={state}
+          selection={project}
+          onReproduce={() => setReveal({ id: "reproduce", key: `reproduce-${Date.now()}` })}
+        />
+      </InSlot>
       <Workspace
         projectId={project.id}
         project={project.response?.project}
         client={client}
         locale={locale}
         content={content}
-        toolbar={
-          <ProjectControls
-            client={client}
-            locale={locale}
-            clock={asOf}
-            board={state}
-            selection={project}
-            onReproduce={() => setReveal({ id: "reproduce", key: `reproduce-${Date.now()}` })}
-          />
-        }
+        onGone={gone}
         overlay={<ReproduceHost locale={locale} projectId={project.id} language={notebookLanguage} />}
         initiallyOpen={initiallyOpen.current}
         reveal={reveal}

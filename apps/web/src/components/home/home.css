@@ -30,7 +30,7 @@
   gap: 4px 16px;
 }
 
-.hm-head h1 {
+.hm-head :is(h1, h2) {
   margin: 0;
   font-size: var(--t-m);
   font-weight: 600;

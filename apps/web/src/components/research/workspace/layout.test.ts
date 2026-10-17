@@ -39,16 +39,16 @@ const valid = (l: Layout) => {
   }
 };
 describe("docked layout", () => {
-  it("starts with signals | alert math over assistant | map over patient flow, and the grid in the tray", () => {
-    expect(ids(defaultLayout())).toEqual([["signals"], ["math", "assistant"], ["map", "graph"]]);
+  it("starts with signals | alert math over assistant | timeline over map, patient flow and the grid in the tray", () => {
+    expect(ids(defaultLayout())).toEqual([["signals"], ["math", "assistant"], ["timeline", "map"]]);
     valid(defaultLayout());
   });
   it("fits the default to the board: at most two windows a column, and none below its minimum", () => {
-    // A 900 px screen with the timeline expanded leaves about 600 px.
+    // A short laptop screen leaves about 600 px for the board.
     expect(ids(defaultLayout(600))).toEqual([["signals"], ["math"], ["map"]]);
-    expect(Object.keys(defaultLayout(600).closed).sort()).toEqual(["assistant", "coverage", "graph", "grid", "reproduce"]);
+    expect(Object.keys(defaultLayout(600).closed).sort()).toEqual(["assistant", "coverage", "graph", "grid", "reproduce", "timeline"]);
     expect(ids(defaultLayout(700))).toEqual([["signals"], ["math", "assistant"], ["map"]]);
-    expect(ids(defaultLayout(stackNeed(["map", "graph"])))).toEqual(ids(defaultLayout()));
+    expect(ids(defaultLayout(stackNeed(["timeline", "map"])))).toEqual(ids(defaultLayout()));
     for (const height of [300, 500, 600, 620, 700, 800, 900, 1000, 1400]) {
       const l = defaultLayout(height);
       valid(l);
@@ -79,18 +79,18 @@ describe("docked layout", () => {
   it("inserts into another stack without changing unrelated columns", () => {
     const base = defaultLayout();
     const next = moveWindow(base, "math", { column: 2, index: 0 });
-    expect(ids(next)).toEqual([["signals"], ["assistant"], ["math", "map", "graph"]]);
+    expect(ids(next)).toEqual([["signals"], ["assistant"], ["math", "timeline", "map"]]);
     expect(next.columns[0]).toEqual(base.columns[0]);
     expect(base).toEqual(defaultLayout());
     valid(next);
   });
   it("reorders in the same stack, preserving window heights", () => {
     const base = defaultLayout();
-    const next = moveWindow(base, "graph", { column: 2, index: 0 });
-    expect(ids(next)[2]).toEqual(["graph", "map"]);
-    expect(next.columns[2]?.windows.map((w) => w.size)).toEqual([0.36, 0.64]);
-    expect(moveWindow(base, "map", { column: 2, index: 1 })).toBe(base);
-    expect(ids(moveWindow(base, "map", { column: 2, index: 2 }))[2]).toEqual(["graph", "map"]);
+    const next = moveWindow(base, "map", { column: 2, index: 0 });
+    expect(ids(next)[2]).toEqual(["map", "timeline"]);
+    expect(next.columns[2]?.windows.map((w) => w.size)).toEqual([0.68, 0.32]);
+    expect(moveWindow(base, "timeline", { column: 2, index: 1 })).toBe(base);
+    expect(ids(moveWindow(base, "timeline", { column: 2, index: 2 }))[2]).toEqual(["map", "timeline"]);
     valid(next);
   });
   it("clamps insertion indices and drops the column the move emptied", () => {
@@ -162,7 +162,7 @@ describe("docked layout", () => {
     l = moveWindow(l, "assistant", { column: 0, index: 0 });
     expect(l.columns).toHaveLength(2);
     l = reopenWindow(l, "math");
-    expect(ids(l)).toEqual([["assistant", "signals"], ["math"], ["map", "graph"]]);
+    expect(ids(l)).toEqual([["assistant", "signals"], ["math"], ["timeline", "map"]]);
     valid(l);
   });
   it("can close every window and reopen every window", () => {
@@ -301,16 +301,19 @@ describe("persistence and migration", () => {
   it.each([null, "", "no", "null", "[]", '{"v":99}'])("rejects malformed input %s", (raw) => {
     expect(parseLayout(raw)).toBeNull();
   });
-  it("rejects duplicates, missing windows, invalid homes, column counts and closed maximize", () => {
+  it("puts window kinds added since a layout was saved in the tray, keeping the rest as saved", () => {
+    const old = defaultLayout();
+    delete old.closed.coverage;
+    const parsed = parseLayout(serializeLayout(old));
+    expect(parsed).not.toBeNull();
+    expect(ids(parsed as Layout)).toEqual(ids(old));
+    expect(parsed?.closed.coverage).toMatchObject({ column: "map", columnIndex: 2, index: 2 });
+    valid(parsed as Layout);
+  });
+  it("rejects duplicates, invalid homes, column counts and closed maximize", () => {
     for (const mutate of [
       (l: Layout) => {
         l.columns[0]?.windows.push({ id: "map", size: 1 });
-      },
-      (l: Layout) => {
-        if (l.columns[0]) l.columns[0].windows = [];
-      },
-      (l: Layout) => {
-        l.columns.splice(1);
       },
       (l: Layout) => {
         if (l.columns[1]) l.columns[1].id = "signals";

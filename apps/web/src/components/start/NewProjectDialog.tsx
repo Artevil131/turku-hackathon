@@ -2,9 +2,9 @@ import type { AeiClient, Project } from "@aei/contract";
 import type { Phenotype } from "@aei/domain";
 import { type Locale, t } from "@aei/i18n";
 import { useState } from "react";
+import { useShell } from "../../shell/context.ts";
 import { allSites, currentSite, siteWards } from "../../sites.ts";
 import { ProjectDialog } from "../research/projects/ProjectDialog.tsx";
-import { openProject } from "../research/projects/useProject.ts";
 import { TEMPLATE_KEYS, TEMPLATES, type Template, templateJson } from "../research/workspace/templates.ts";
 
 export function NewProjectDialog({
@@ -29,6 +29,7 @@ export function NewProjectDialog({
   const [units, setUnits] = useState<string[]>([]);
   const [phenotypes, setPhenotypes] = useState<Phenotype[]>([]);
   const [from, setFrom] = useState("");
+  const shell = useShell();
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
   return (
@@ -60,7 +61,7 @@ export function NewProjectDialog({
               },
               layout: templateJson(template),
             });
-            openProject(project);
+            shell.openProject(project);
             onClose();
           } catch {
             setFailed(true);

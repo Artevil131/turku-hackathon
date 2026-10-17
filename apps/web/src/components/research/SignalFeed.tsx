@@ -77,7 +77,7 @@ export function SignalFeed(props: Props) {
     <section ref={rootRef} className="feed" aria-labelledby="feed-title" aria-busy={load.status === "loading"}>
       <header className="feed-header">
         <div className="feed-headline">
-          <h1 id="feed-title">{t(locale, "feedTitle")}</h1>
+          <h2 id="feed-title">{t(locale, "feedTitle")}</h2>
           {readyAsOf ? (
             <>
               <span className="feed-count">

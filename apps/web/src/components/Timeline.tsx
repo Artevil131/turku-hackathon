@@ -1,14 +1,12 @@
 import type { AeiClient, ClockCommand, ClockState } from "@aei/contract";
 import { type Locale, t } from "@aei/i18n";
 import { type KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, useId, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { type LiveAlerts, useAlertsSinceStart } from "../alertsSince.ts";
 import type { Connection } from "../live.ts";
-import { compactDate, dayNumber, isoFromDay } from "./hero/geometry.ts";
+import { compactDate } from "./hero/geometry.ts";
 import { useLayers } from "./hero/layers.ts";
 import { useWeekly } from "./hero/useWeekly.ts";
 import { WeeklyBand } from "./hero/WeeklyBand.tsx";
-import { Chevron, Pause, Play, StepDay, StepWeek } from "./Icons.tsx";
 import { QualityStatus } from "./quality/QualityStatus.tsx";
 import { useQuality } from "./quality/useQuality.ts";
 import "./timeline.css";
@@ -24,77 +22,26 @@ interface TimelineProps {
   client?: AeiClient;
   /** The app's live alert list; the history appends from it instead of opening its own stream. */
   liveAlerts: LiveAlerts;
-  /** The chart can be folded to one line of controls; the choice is remembered (folded by default). */
-  collapsible?: boolean;
+  /** Kept for callers of the old strip; the timeline is a workspace window now (D-066). */
+  variant?: "window";
 }
 
-const COLLAPSE_KEY = "aei.timeline.collapsed";
-
-function readCollapsed(): boolean {
-  try {
-    return localStorage.getItem(COLLAPSE_KEY) !== "0";
-  } catch {
-    return true;
-  }
-}
-
-function writeCollapsed(value: boolean) {
-  try {
-    localStorage.setItem(COLLAPSE_KEY, value ? "1" : "0");
-  } catch {
-    // Storage can be unavailable; the choice just won't persist.
-  }
-}
-
-const clampDate = (iso: string, start: string, end: string) => (iso < start ? start : iso > end ? end : iso);
+export const clampDate = (iso: string, start: string, end: string) => (iso < start ? start : iso > end ? end : iso);
 
 type EventKey = "tlEventUro" | "tlEventGap" | "tlEventIcu";
-const EVENTS: readonly { date: string; key: EventKey }[] = [
+export const EVENTS: readonly { date: string; key: EventKey }[] = [
   { date: "2025-05-12", key: "tlEventUro" },
   { date: "2025-11-17", key: "tlEventGap" },
   { date: "2026-02-10", key: "tlEventIcu" },
 ];
 
 type SpeedKey = "tlSpeedDay2s" | "tlSpeedDay" | "tlSpeedWeek" | "tlSpeedMonth";
-const SPEEDS: readonly { key: SpeedKey; tickMs: number; daysPerTick: number }[] = [
+export const SPEEDS: readonly { key: SpeedKey; tickMs: number; daysPerTick: number }[] = [
   { key: "tlSpeedDay2s", tickMs: 2000, daysPerTick: 1 },
   { key: "tlSpeedDay", tickMs: 1000, daysPerTick: 1 },
   { key: "tlSpeedWeek", tickMs: 1000, daysPerTick: 7 },
   { key: "tlSpeedMonth", tickMs: 1000, daysPerTick: 30 },
 ];
-
-const IGNORED_TARGET = "input, textarea, select, [contenteditable], [role=dialog]";
-
-function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = useState(() => window.matchMedia(query).matches);
-  useEffect(() => {
-    const mql = window.matchMedia(query);
-    const onChange = () => setMatches(mql.matches);
-    onChange();
-    mql.addEventListener("change", onChange);
-    return () => mql.removeEventListener("change", onChange);
-  }, [query]);
-  return matches;
-}
-
-/** Moves focus between the enabled buttons of a group with the arrow keys; returns the one focused, or null. */
-function roveFocus(e: ReactKeyboardEvent<HTMLElement>): HTMLElement | null {
-  const keys = ["ArrowRight", "ArrowDown", "ArrowLeft", "ArrowUp", "Home", "End"];
-  if (!keys.includes(e.key)) return null;
-  const items = [...e.currentTarget.querySelectorAll<HTMLElement>("button:not(:disabled)")];
-  const at = items.indexOf(e.target as HTMLElement);
-  if (at < 0) return null;
-  e.preventDefault();
-  const to =
-    e.key === "Home"
-      ? 0
-      : e.key === "End"
-        ? items.length - 1
-        : (at + (e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : 1) + items.length) % items.length;
-  const next = items[to] ?? null;
-  next?.focus();
-  return next;
-}
 
 const Info = () => (
   <svg
@@ -112,33 +59,17 @@ const Info = () => (
   </svg>
 );
 
-export function Timeline({
-  locale,
-  clock,
-  connection,
-  lastArrivals,
-  command,
-  reducedMotion,
-  client,
-  liveAlerts,
-  collapsible = false,
-}: TimelineProps) {
-  const phone = useMediaQuery("(max-width: 760px)");
-  const rootRef = useRef<HTMLDivElement>(null);
+/**
+ * The timeline window (D-066): the weekly band with its unit lanes and signal pills, the replay's date, the
+ * data checks and the demo jumps. It shows and seeks the one replay clock; play, step and speed stay in the
+ * clock above the project, since they drive every window and the server's replay.
+ */
+export function Timeline({ locale, clock, connection, lastArrivals, command, client, liveAlerts }: TimelineProps) {
   const [seekingTo, setSeekingTo] = useState<string | null>(null);
-  const [sheet, setSheet] = useState(false);
   const [menu, setMenu] = useState(false);
-  const [stepStop, setStepStop] = useState(1);
-  const [folded, setFolded] = useState(readCollapsed);
-  const fold = (value: boolean) => {
-    setFolded(value);
-    writeCollapsed(value);
-  };
-
   const ready = connection === "open" && clock !== null;
   const start = clock?.start ?? "";
   const end = clock?.end ?? "";
-  const atEnd = clock ? clock.asOf >= clock.end : false;
   const shown = seekingTo ?? clock?.asOf ?? null;
   const alerts = useAlertsSinceStart(client, clock?.start, clock?.asOf, liveAlerts);
   const weekly = useWeekly(client, clock?.start, clock?.asOf);
@@ -156,374 +87,107 @@ export function Timeline({
       if (!clock) return;
       const target = clampDate(date, clock.start, clock.end);
       setSeekingTo(target);
+      command({ action: "pause" });
       command({ action: "seek", date: target });
     },
     [clock, command],
   );
 
-  // Moves relative to where the replay is heading, so quick repeated steps add up.
-  const stepBy = useCallback(
-    (n: number) => {
-      if (!clock) return;
-      if (n > 0) {
-        if (clock.asOf >= clock.end) return;
-        command({ action: "step", days: n });
-      } else {
-        const base = seekingTo ?? clock.asOf;
-        seek(isoFromDay(dayNumber(base) + n));
-      }
-    },
-    [clock, command, seek, seekingTo],
-  );
-
-  const jumpToEvent = (date: string) => {
-    command({ action: "pause" });
-    seek(date);
-    setMenu(false);
-    setSheet(false);
-  };
-
-  // Keyboard shortcuts, like a video player.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (!ready || !clock || e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
-      const target = e.target instanceof Element ? e.target : null;
-      // Inside the timeline only the band's slider passes keys on (Space plays; it keeps the arrows for reading weeks).
-      if (target?.closest(IGNORED_TARGET) || (rootRef.current?.contains(target) && !target?.closest(".hs-slider"))) return;
-      if (e.key === " " || e.key === "Spacebar") {
-        if (target?.closest("button, a, summary")) return;
-        e.preventDefault();
-        command({ action: clock.running ? "pause" : "play" });
-      } else if (e.key === "ArrowLeft") {
-        e.preventDefault();
-        stepBy(e.shiftKey ? -7 : -1);
-      } else if (e.key === "ArrowRight") {
-        e.preventDefault();
-        stepBy(e.shiftKey ? 7 : 1);
-      } else if (e.key === "Home") {
-        e.preventDefault();
-        seek(clock.start);
-      } else if (e.key === "End") {
-        e.preventDefault();
-        seek(clock.end);
-      }
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [ready, clock, command, stepBy, seek]);
-
-  const running = ready && Boolean(clock?.running) && !atEnd;
+  const running = ready && Boolean(clock?.running) && !(clock ? clock.asOf >= clock.end : false);
   const readout = clock && shown ? compactDate(shown) : "–";
-  const offline = connection === "offline";
-
-  const playButton = (
-    <button
-      type="button"
-      className="tl-btn tl-play"
-      disabled={!ready || atEnd}
-      onClick={() => command({ action: running ? "pause" : "play" })}
-      aria-label={running ? t(locale, "pause") : t(locale, "play")}
-      title={`${running ? t(locale, "pause") : t(locale, "play")} (${t(locale, "tlShortcuts")})`}
-    >
-      {running ? <Pause /> : <Play />}
-    </button>
-  );
-
-  const steps = (weeks: boolean) => (
-    <div
-      className="tl-steps"
-      role="toolbar"
-      aria-label={t(locale, "tlSteps")}
-      data-weeks={weeks || undefined}
-      onKeyDown={(e) => {
-        const next = roveFocus(e);
-        if (next) setStepStop(Number(next.dataset.stop));
-      }}
-    >
-      {weeks ? (
-        <button
-          type="button"
-          className="tl-btn tl-back"
-          data-stop={0}
-          tabIndex={stepStop === 0 ? 0 : -1}
-          disabled={!ready}
-          onClick={() => stepBy(-7)}
-          aria-label={t(locale, "tlStepBackWeek")}
-          title={t(locale, "tlStepBackWeek")}
-        >
-          <StepWeek />
-        </button>
-      ) : null}
-      <button
-        type="button"
-        className="tl-btn tl-back"
-        data-stop={1}
-        tabIndex={stepStop === 1 ? 0 : -1}
-        disabled={!ready}
-        onClick={() => stepBy(-1)}
-        aria-label={t(locale, "tlStepBackDay")}
-        title={t(locale, "tlStepBackDay")}
-      >
-        <StepDay />
-      </button>
-      <button
-        type="button"
-        className="tl-btn"
-        data-stop={2}
-        tabIndex={stepStop === 2 ? 0 : -1}
-        disabled={!ready || atEnd}
-        onClick={() => stepBy(1)}
-        aria-label={t(locale, "stepDay")}
-        title={t(locale, "stepDay")}
-      >
-        <StepDay />
-      </button>
-      {weeks ? (
-        <button
-          type="button"
-          className="tl-btn"
-          data-stop={3}
-          tabIndex={stepStop === 3 ? 0 : -1}
-          disabled={!ready || atEnd}
-          onClick={() => stepBy(7)}
-          aria-label={t(locale, "tlStepWeek")}
-          title={t(locale, "tlStepWeek")}
-        >
-          <StepWeek />
-        </button>
-      ) : null}
-    </div>
-  );
-
-  // Play and the day (and week) steps read as one segmented control.
-  const transport = (weeks: boolean) => (
-    <div className="tl-transport">
-      {playButton}
-      {steps(weeks)}
-    </div>
-  );
-
-  const selectedSpeed = clock ? SPEEDS.findIndex((s) => s.tickMs === clock.tickMs && s.daysPerTick === clock.daysPerTick) : -1;
-  const speed = (
-    <select
-      className="tl-select"
-      aria-label={t(locale, "tlSpeed")}
-      title={t(locale, "tlSpeed")}
-      disabled={!ready}
-      value={selectedSpeed < 0 ? "" : selectedSpeed}
-      onChange={(e) => {
-        const s = SPEEDS[Number(e.target.value)];
-        if (s) command({ action: "configure", tickMs: s.tickMs, daysPerTick: s.daysPerTick });
-      }}
-    >
-      {selectedSpeed < 0 ? <option value="">–</option> : null}
-      {SPEEDS.map((s, i) => (
-        <option key={s.key} value={i}>
-          {t(locale, s.key)}
-        </option>
-      ))}
-    </select>
-  );
-
-  const band = (compact: boolean) =>
-    clock ? (
-      <WeeklyBand
-        locale={locale}
-        start={clock.start}
-        asOf={clock.asOf}
-        weekly={weekly}
-        alerts={alerts}
-        layers={layers}
-        onLayers={compact ? undefined : setLayers}
-        compact={compact}
-        disabled={!ready}
-        label={t(locale, "tlStream")}
-        onActivate={() => setSheet(true)}
-      />
-    ) : (
-      <div className="tl-band-empty" />
-    );
-
   const note = clock ? t(locale, "tlReplayNote", { from: compactDate(clock.start), to: compactDate(clock.end) }) : "";
   const arrivals = lastArrivals ? t(locale, "tlArrivalsOn", { n: lastArrivals.count, date: compactDate(lastArrivals.to) }) : null;
-  const status = offline ? (
-    <span className="tl-reason" role="status">
-      {t(locale, "offlineShort")}
-    </span>
-  ) : null;
-
-  const dateJump = (
-    <DateJump
-      locale={locale}
-      min={start}
-      max={end}
-      value={shown ?? ""}
-      disabled={!ready}
-      onGo={(iso, keepOpen) => {
-        command({ action: "pause" });
-        seek(iso);
-        if (keepOpen) return;
-        setMenu(false);
-        setSheet(false);
-      }}
-    />
-  );
-
-  const eventList = (
-    <ul className="tl-event-list">
-      {EVENTS.map((ev) => (
-        <li key={ev.key}>
-          <button type="button" className="tl-event" disabled={!ready} onClick={() => jumpToEvent(ev.date)}>
-            <span className="tl-diamond" aria-hidden="true" />
-            <span className="tl-event-text">{t(locale, ev.key)}</span>
-            <span className="tl-event-date num">{compactDate(ev.date)}</span>
-          </button>
-        </li>
-      ))}
-    </ul>
-  );
-
-  const eventsMenu = (
-    <div className="tl-menu-wrap">
-      <button
-        type="button"
-        className="tl-seg tl-events-btn"
-        aria-expanded={menu}
-        aria-haspopup="true"
-        disabled={!ready}
-        onClick={() => setMenu((m) => !m)}
-      >
-        {t(locale, "tlEvents")}
-      </button>
-      {menu ? (
-        // biome-ignore lint/a11y/noStaticElementInteractions: Esc handling for the popup
-        <div
-          className="tl-menu"
-          onKeyDown={(e: ReactKeyboardEvent) => {
-            if (e.key === "Escape") {
-              e.stopPropagation();
-              setMenu(false);
-            }
-          }}
-        >
-          {eventList}
-          {dateJump}
-        </div>
-      ) : null}
-    </div>
-  );
-
-  if (phone) {
-    return (
-      <div className="timeline timeline-phone" ref={rootRef} aria-busy={seekingTo ? true : undefined}>
-        <div className="tl-strip">
-          {playButton}
-          <button
-            type="button"
-            className="tl-date num"
-            onClick={() => setSheet(true)}
-            aria-haspopup="dialog"
-            aria-label={`${t(locale, "tlOpen")}: ${readout}`}
-          >
-            {readout}
-          </button>
-          {band(true)}
-          <button
-            type="button"
-            className="tl-btn"
-            onClick={() => setSheet(true)}
-            aria-label={t(locale, "tlOpen")}
-            title={t(locale, "tlOpen")}
-            aria-haspopup="dialog"
-          >
-            <Chevron />
-          </button>
-        </div>
-        {sheet ? (
-          <Sheet locale={locale} onClose={() => setSheet(false)} still={reducedMotion}>
-            <div className="tl-sheet-read">
-              <b className="tl-readout num">{readout}</b>
-              {status}
-            </div>
-            {note ? <p className="tl-note">{note}</p> : null}
-            <div className="tl-quality">
-              <QualityStatus locale={locale} state={quality} />
-            </div>
-            <div className="tl-sheet-band">{band(false)}</div>
-            <div className="tl-sheet-ctl">
-              {transport(true)}
-              {speed}
-            </div>
-            {eventList}
-            {dateJump}
-          </Sheet>
-        ) : null}
-      </div>
-    );
-  }
-
-  if (collapsible && folded) {
-    return (
-      <div className="timeline timeline-folded" ref={rootRef} aria-busy={seekingTo ? true : undefined} data-running={running || undefined}>
-        {transport(true)}
-        <span className="tl-when">
-          <span className="tl-folded-label">{t(locale, "tlCollapsedLabel")}</span>
-          <b className="tl-readout num">{readout}</b>
-        </span>
-        {speed}
-        {arrivals ? <span className="tl-folded-fresh">{arrivals}</span> : null}
-        {status}
-        {eventsMenu}
-        <button
-          type="button"
-          className="tl-btn tl-fold"
-          aria-expanded={false}
-          onClick={() => fold(false)}
-          aria-label={t(locale, "tlExpand")}
-          title={t(locale, "tlExpand")}
-        >
-          <Chevron />
-        </button>
-      </div>
-    );
-  }
 
   return (
-    <div className="timeline" ref={rootRef} aria-busy={seekingTo ? true : undefined} data-running={running || undefined}>
-      <div className="tl-left">
-        <div className="tl-ctl">
-          {transport(false)}
-          {speed}
-        </div>
-        <div className="tl-read">
+    <div className="timeline timeline-window" aria-busy={seekingTo ? true : undefined} data-running={running || undefined}>
+      <div className="tl-win-head">
+        <span className="tl-when">
           <b className="tl-readout num">{readout}</b>
           <InfoPopover locale={locale}>
             <p>{note}</p>
             {arrivals ? <p>{arrivals}</p> : null}
             <p>{t(locale, "tlShortcuts")}</p>
           </InfoPopover>
-          {status}
-          {collapsible ? (
-            <button
-              type="button"
-              className="tl-btn tl-fold tl-fold-open"
-              aria-expanded={true}
-              onClick={() => fold(true)}
-              aria-label={t(locale, "tlCollapse")}
-              title={t(locale, "tlCollapse")}
+        </span>
+        {connection === "offline" ? (
+          <span className="tl-reason" role="status">
+            {t(locale, "offlineShort")}
+          </span>
+        ) : null}
+        <div className="tl-quality">
+          <QualityStatus locale={locale} state={quality} />
+        </div>
+        <div className="tl-menu-wrap">
+          <button
+            type="button"
+            className="tl-seg tl-events-btn"
+            aria-expanded={menu}
+            aria-haspopup="true"
+            disabled={!ready}
+            onClick={() => setMenu((m) => !m)}
+          >
+            {t(locale, "tlEvents")}
+          </button>
+          {menu ? (
+            // biome-ignore lint/a11y/noStaticElementInteractions: Esc handling for the popup
+            <div
+              className="tl-menu"
+              onKeyDown={(e: ReactKeyboardEvent) => {
+                if (e.key === "Escape") {
+                  e.stopPropagation();
+                  setMenu(false);
+                }
+              }}
             >
-              <Chevron />
-            </button>
+              <ul className="tl-event-list">
+                {EVENTS.map((ev) => (
+                  <li key={ev.key}>
+                    <button
+                      type="button"
+                      className="tl-event"
+                      disabled={!ready}
+                      onClick={() => {
+                        seek(ev.date);
+                        setMenu(false);
+                      }}
+                    >
+                      <span className="tl-diamond" aria-hidden="true" />
+                      <span className="tl-event-text">{t(locale, ev.key)}</span>
+                      <span className="tl-event-date num">{compactDate(ev.date)}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <DateJump
+                locale={locale}
+                min={start}
+                max={end}
+                value={shown ?? ""}
+                disabled={!ready}
+                onGo={(iso, keepOpen) => {
+                  seek(iso);
+                  if (!keepOpen) setMenu(false);
+                }}
+              />
+            </div>
           ) : null}
         </div>
-        <div className="tl-foot">
-          <div className="tl-quality">
-            <QualityStatus locale={locale} state={quality} />
-          </div>
-          {eventsMenu}
-        </div>
       </div>
-      {band(false)}
+      {clock ? (
+        <WeeklyBand
+          locale={locale}
+          start={clock.start}
+          asOf={clock.asOf}
+          weekly={weekly}
+          alerts={alerts}
+          layers={layers}
+          onLayers={setLayers}
+          disabled={!ready}
+          label={t(locale, "tlStream")}
+        />
+      ) : (
+        <div className="tl-band-empty" />
+      )}
     </div>
   );
 }
@@ -576,7 +240,7 @@ function InfoPopover({ locale, children }: { locale: Locale; children: React.Rea
   );
 }
 
-function DateJump({
+export function DateJump({
   locale,
   min,
   max,
@@ -623,56 +287,5 @@ function DateJump({
         {t(locale, "tlJumpGo")}
       </button>
     </form>
-  );
-}
-
-const FOCUSABLE = "button:not(:disabled), input:not(:disabled), select:not(:disabled), [tabindex='0']";
-
-function Sheet({ locale, onClose, still, children }: { locale: Locale; onClose: () => void; still: boolean; children: React.ReactNode }) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const previous = document.activeElement as HTMLElement | null;
-    (ref.current?.querySelector<HTMLElement>(".tl-play:not(:disabled)") ?? ref.current?.querySelector<HTMLElement>(FOCUSABLE))?.focus();
-    return () => previous?.focus?.();
-  }, []);
-  const onKeyDown = (e: ReactKeyboardEvent) => {
-    if (e.key === "Escape") {
-      e.stopPropagation();
-      onClose();
-      return;
-    }
-    if (e.key !== "Tab" || !ref.current) return;
-    const items = [...ref.current.querySelectorAll<HTMLElement>(FOCUSABLE)];
-    const first = items[0];
-    const last = items[items.length - 1];
-    if (!first || !last) return;
-    if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault();
-      last.focus();
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault();
-      first.focus();
-    }
-  };
-  return createPortal(
-    // biome-ignore lint/a11y/noStaticElementInteractions: backdrop click and Esc/Tab handling for the modal sheet
-    <div
-      className="tl-backdrop"
-      data-still={still || undefined}
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-      onKeyDown={onKeyDown}
-      role="presentation"
-    >
-      <div className="tl-sheet" ref={ref} role="dialog" aria-modal="true" aria-labelledby="tl-sheet-title">
-        <h2 id="tl-sheet-title" className="tl-sheet-title">
-          {t(locale, "tlScrub")}
-        </h2>
-        {children}
-        <button type="button" className="tl-close" onClick={onClose}>
-          {t(locale, "tlClose")}
-        </button>
-      </div>
-    </div>,
-    document.body,
   );
 }

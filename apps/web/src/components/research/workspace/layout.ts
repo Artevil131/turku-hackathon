@@ -1,6 +1,6 @@
 // Dock geometry only: ordered stacks, fractional sizes and a tray. No DOM or storage access.
 export const STORAGE_KEY = "aei.research.layout.v2";
-export const WIN_IDS = ["signals", "map", "graph", "math", "assistant", "grid", "reproduce", "coverage"] as const;
+export const WIN_IDS = ["signals", "map", "graph", "math", "assistant", "grid", "reproduce", "coverage", "timeline"] as const;
 export type WinId = (typeof WIN_IDS)[number];
 export type Preset = "default" | "map" | "signals" | "units";
 export interface DockWindow {
@@ -107,6 +107,7 @@ export const MIN_BODY: Readonly<Record<WinId, number>> = {
   grid: 320,
   reproduce: 360,
   coverage: 400,
+  timeline: 200,
 };
 /** A window's header (40 px) and its 1 px border, top and bottom. */
 export const WINDOW_CHROME = 42;
@@ -117,7 +118,7 @@ export function stackNeed(ids: readonly WinId[]): number {
   return ids.reduce((s, id) => s + minWindowHeight(id), 0) + Math.max(0, ids.length - 1) * SPLITTER;
 }
 /** Lowest priority first: what leaves a crowded column for the tray. */
-const TRAY_ORDER: readonly WinId[] = ["assistant", "graph", "grid", "math", "map", "signals", "coverage"];
+const TRAY_ORDER: readonly WinId[] = ["assistant", "graph", "grid", "timeline", "math", "map", "signals", "coverage"];
 
 /**
  * Fit a layout to a board `height` px tall: while a column needs more than the
@@ -141,9 +142,9 @@ export function fitLayout(layout: Layout, height: number, keep: readonly WinId[]
 }
 
 /**
- * Signals | Alert math over Assistant | Map over Patient flow, the unit grid in
- * the tray; fitted to the board, so under about 900 px Patient flow and under
- * about 630 px Assistant start in the tray, never squashed.
+ * Signals | Alert math over Assistant | Timeline over Map, Patient flow and the
+ * unit grid in the tray; fitted to the board, so on a short board the timeline
+ * and Assistant start in the tray, never squashed.
  */
 export function defaultLayout(height = Number.POSITIVE_INFINITY): Layout {
   return fitLayout(
@@ -162,12 +163,13 @@ export function defaultLayout(height = Number.POSITIVE_INFINITY): Layout {
           id: "map",
           width: 0.4,
           windows: [
-            { id: "map", size: 0.64 },
-            { id: "graph", size: 0.36 },
+            { id: "timeline", size: 0.32 },
+            { id: "map", size: 0.68 },
           ],
         },
       ],
       closed: {
+        graph: { column: "map", columnIndex: 2, index: 2, size: 0.36 },
         coverage: { column: "map", columnIndex: 2, index: 4, size: 0.6 },
         grid: { column: "map", columnIndex: 2, index: 2, size: 0.4 },
         reproduce: { column: "map", columnIndex: 2, index: 3, size: 0.6 },
@@ -202,6 +204,7 @@ export function presetLayout(preset: Preset, height = Number.POSITIVE_INFINITY):
           map: { column: "detail", columnIndex: 1, index: 2, size: 0.5 },
           graph: { column: "detail", columnIndex: 1, index: 3, size: 0.4 },
           grid: { column: "detail", columnIndex: 1, index: 3, size: 0.4 },
+          timeline: { column: "detail", columnIndex: 1, index: 0, size: 0.3 },
         },
         maximized: null,
       }),
@@ -219,6 +222,7 @@ export function presetLayout(preset: Preset, height = Number.POSITIVE_INFINITY):
       graph: { column: "map", columnIndex: 1, index: 1, size: 0.4 },
       math: { column: "signals", columnIndex: 0, index: 1, size: 0.5 },
       assistant: { column: "signals", columnIndex: 0, index: 2, size: 0.3 },
+      timeline: { column: "map", columnIndex: 1, index: 0, size: 0.3 },
       [big === "map" ? "grid" : "map"]: { column: "map", columnIndex: 1, index: 1, size: 0.5 },
     },
     maximized: null,
@@ -430,9 +434,19 @@ export function parseLayout(raw: string | null): Layout | null {
         return null;
       seen.add(id);
     }
-    if (seen.size !== WIN_IDS.length || (value.maximized !== null && (!isWin(value.maximized) || !locate(value, value.maximized))))
-      return null;
-    return clampLayout({ columns: value.columns, closed: value.closed, maximized: value.maximized });
+    if (value.maximized !== null && (!isWin(value.maximized) || !locate(value, value.maximized))) return null;
+    // A window kind added after the layout was saved starts in the tray, at the end of the last column.
+    const closed = { ...value.closed };
+    const last = value.columns.at(-1);
+    for (const id of WIN_IDS)
+      if (!seen.has(id))
+        closed[id] = {
+          column: last?.id ?? id,
+          columnIndex: Math.max(0, value.columns.length - 1),
+          index: last?.windows.length ?? 0,
+          size: 0.4,
+        };
+    return clampLayout({ columns: value.columns, closed, maximized: value.maximized });
   } catch {
     return null;
   }

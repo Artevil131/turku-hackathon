@@ -99,8 +99,17 @@ export function CommandField({ locale, alerts, asOf = null }: Props) {
       setExpanded(true);
       setPing((n) => n + 1);
     };
+    // The sidebar's Search row asks for the palette by this event.
+    const onAsk = () => {
+      setExpanded(true);
+      setPing((n) => n + 1);
+    };
     addEventListener("keydown", onKey);
-    return () => removeEventListener("keydown", onKey);
+    addEventListener("aei:command", onAsk);
+    return () => {
+      removeEventListener("keydown", onKey);
+      removeEventListener("aei:command", onAsk);
+    };
   }, []);
   useEffect(() => {
     if (ping > 0) {

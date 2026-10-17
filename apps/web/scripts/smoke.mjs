@@ -10,9 +10,10 @@
 // google-chrome-stable, chromium or chromium-browser on the PATH.
 //
 // Per route and viewport it checks: no uncaught exception or console error, no /api request that failed or
-// answered 400 or more, exactly one visible main heading (h1) with text, the header (header.topbar) and the
-// tab bar (nav.sections) present, no horizontal page overflow, at least one visible control, and the page
-// finished loading. The pitch intro (#intro) is full screen, so it is checked without the header and tabs.
+// answered 400 or more, exactly one visible main heading (h1) with text, the sidebar (nav.sidebar, a drawer on
+// phones) present, no horizontal page overflow, at least one visible control, and the page finished loading.
+// Old routes (#research, #workspace, #connect) must land on their new pages. The pitch intro (#intro) is full
+// screen, so it is checked without the sidebar.
 // Interactions cover navigation between the tabs, stepping the replay clock one day from the timeline, language
 // switching, opening a signal on the research page (its isolates appear), the search ("/" then "uro") and
 // eight concurrent tabs. Writes a PNG per check and report.md / report.json to
@@ -42,7 +43,7 @@ const apiPort = Number(opt("api-port", "8798"));
 const webPort = Number(opt("web-port", "5176"));
 const outDir = resolve(opt("out", join(WEB, "smoke-out")));
 const interactionGroup = opt("interactions", "all");
-const ROUTES = opt("routes", "start,workspace,research,method,settings,intro").split(",");
+const ROUTES = opt("routes", "start,project,research,workspace,data,method,settings,intro").split(",");
 const INTERACTIONS = interactionGroup === "all" || interactionGroup === "doctor" ? [] : interactionGroup.split(",").filter(Boolean);
 // --desktop 1366x768 runs the desktop checks and interactions at a laptop-sized window instead of 1440x1000.
 const desktopSize = /^(\d+)x(\d+)$/.exec(opt("desktop", "1440x1000")) ?? ["", "1440", "1000"];
@@ -53,6 +54,9 @@ const VIEWPORTS = [
 const external = process.env.SMOKE_URL?.replace(/\/$/, "");
 // A route name is its hash; home is the empty hash.
 const hashOf = (route) => (route === "home" ? "" : `#${route}`);
+// Where an old route lands now: the project view replaced the workspace, Data replaced Connect.
+const LANDS = { start: "#start", research: "#project", workspace: "#project", doctor: "#project", connect: "#data" };
+const landingOf = (route) => LANDS[route] ?? hashOf(route);
 const urlOf = (route) => `${base}/${hashOf(route)}`;
 const base = external ?? `http://localhost:${webPort}`;
 
@@ -294,8 +298,7 @@ const CHECKS = `(() => {
   return {
     heading: h1s[0] ? h1s[0].textContent.trim().replace(/\\s+/g, " ") : "",
     headings: h1s.length,
-    header: !!document.querySelector("header.topbar"),
-    tabs: !!document.querySelector("nav.sections"),
+    sidebar: !!document.querySelector("nav.sidebar"),
     busy: !!root?.querySelector("[aria-busy=true]"),
     overflow: document.documentElement.scrollWidth - window.innerWidth,
     controls: controls.length,
@@ -365,14 +368,13 @@ async function main() {
       if (!info.heading) extra.push("no visible main heading (h1)");
       if (info.headings > 1) extra.push(`${info.headings} visible h1 headings, expected one`);
       if (route !== "intro") {
-        if (!info.header) extra.push("header.topbar missing");
-        if (!info.tabs) extra.push("tab bar (nav.sections) missing");
+        if (!info.sidebar) extra.push("sidebar (nav.sidebar) missing");
       }
       if (info.busy) extra.push("still loading (aria-busy) after 25 s");
       if (info.overflow > 1) extra.push(`page ${info.overflow}px wider than the viewport`);
       if (info.controls === 0) extra.push("no visible control in the page");
       // A page may add its own params to the hash (#doctor?unit=MED-A); only the page part is compared.
-      if (info.hash.split("?")[0] !== hashOf(route)) extra.push(`landed on ${info.hash || "(home)"}`);
+      if (info.hash.split("?")[0] !== landingOf(route)) extra.push(`landed on ${info.hash || "(home)"}`);
       const reasons = judge(problems, extra);
       rows.push({
         check: route === "home" ? "home" : `#${route}`,
@@ -1012,13 +1014,39 @@ async function main() {
     { name: "desktop-900", width: 1440, height: 900, mobile: false },
   );
 
-  await interaction("start", async (idle, reasons) => {
+  const en = async (idle) => {
     await load(cdp, urlOf("settings"), idle);
-    await evaluate(cdp, `localStorage.setItem('aei.locale', 'en'); localStorage.setItem('aei.audience', 'control')`);
+    await evaluate(cdp, `localStorage.setItem('aei.locale', 'en'); localStorage.setItem('aei.audience', 'control'); true`);
+  };
+  // Home loads the project list after it paints; wait for it, or a click can land on a card that moved in.
+  const goHome = async () => {
+    await click(".sb-home");
+    if (
+      !(await waitIn(
+        `!!document.querySelector('.start-project-grid, .start-empty') && !document.querySelector('.start-page [aria-busy=true]')`,
+      ))
+    )
+      throw new Error("Home did not load its projects");
+    await sleep(200);
+  };
+  const projectOf = () => evaluate(cdp, `new URLSearchParams(location.hash.split('?')[1]).get('project')`);
+  const removeProject = async (id, idle) => {
+    if (!id) return;
+    // Leave the project first: deleting it under an open page makes its next layout save a 404.
+    await load(cdp, urlOf("home"), idle);
+    await fetch(`${base}/api/projects/${encodeURIComponent(id)}`, { method: "DELETE" });
+  };
+
+  await interaction("start", async (idle, reasons) => {
+    await en(idle);
     await cdp.send("Page.navigate", { url: "about:blank" });
     await load(cdp, urlOf("start"), idle);
-    if (!(await waitIn(`!!document.querySelector('.start-empty') && document.querySelectorAll('[data-template]').length === 5`)))
-      reasons.push("empty start page did not show templates");
+    if (
+      !(await waitIn(
+        `(!!document.querySelector('.start-empty') || !!document.querySelector('.start-project-grid')) && document.querySelectorAll('[data-template]').length === 5`,
+      ))
+    )
+      reasons.push("start page did not show recent projects (or its empty state) and five templates");
     await click('.start-audience input[value="clinician"] + span');
     if (
       !(await waitIn(
@@ -1034,32 +1062,37 @@ async function main() {
     )
       reasons.push("researcher preset did not promote blank");
     await click('.start-audience input[value="control"] + span');
-    await click('[data-template="outbreak"]');
-    if (!(await waitIn(`!!document.querySelector('.start-create')`))) throw new Error("new-project dialog missing");
+    // The details form is the optional path: "Customise…" beside a template.
+    await click('[data-customise="outbreak"]');
+    if (!(await waitIn(`!!document.querySelector('.start-create')`))) throw new Error("customise dialog missing");
     await screenshot(cdp, join(outDir, "start-create.png"));
     await click('.start-create button[type="submit"]');
     if (
       !(await waitIn(
-        `location.hash.startsWith('#workspace?') && !!document.querySelector('#ws-win-signals') && !!document.querySelector('#ws-win-graph') && !document.querySelector('.project-dialog')`,
+        `location.hash.startsWith('#project?') && !!document.querySelector('#ws-win-signals') && !!document.querySelector('#ws-win-graph') && !document.querySelector('.project-dialog')`,
         15_000,
       ))
     )
-      throw new Error("created outbreak did not open with signals");
-    const id = await evaluate(cdp, `new URLSearchParams(location.hash.split('?')[1]).get('project')`);
+      throw new Error("customised outbreak did not open with signals");
+    const id = await projectOf();
     try {
+      if (!(await waitIn(`!!document.querySelector('.sb-tab[data-tab="p:${id}"][data-current]')`)))
+        reasons.push("the opened project has no current entry in the sidebar");
       const browserLayout = await evaluate(cdp, `localStorage.getItem('aei.research.layout.v2')`);
       await click("#ws-win-graph .ws-close");
       if (!(await waitIn(`fetch('/api/projects/${encodeURIComponent(id)}').then(r=>r.json()).then(r=>!!r.project.layout.closed.graph)`)))
         reasons.push("project layout change was not saved");
       if (await evaluate(cdp, `localStorage.getItem('aei.research.layout.v2') !== ${JSON.stringify(browserLayout)}`))
         reasons.push("project layout overwrote browser workspace");
-      await click("nav.sections button:first-child");
+      await goHome();
       const card = `[data-project-card="${id}"]`;
       if (!(await waitIn(`!!document.querySelector(${JSON.stringify(card)})`))) throw new Error("recent project card missing");
       await click(`${card} .start-card-open`);
       if (!(await waitIn(`!!document.querySelector('#ws-win-signals') && !document.querySelector('#ws-win-graph')`)))
         reasons.push("reopened project did not restore its saved layout");
-      await click("nav.sections button:first-child");
+      if ((await evaluate(cdp, `document.querySelectorAll('.sb-tab[data-tab="p:${id}"]').length`)) !== 1)
+        reasons.push("reopening an open project made a second sidebar entry");
+      await goHome();
       if (!(await waitIn(`!!document.querySelector(${JSON.stringify(card)})`))) throw new Error("recent project card missing on return");
       await screenshot(cdp, join(outDir, "start-recent-desktop.png"));
       await cdp.send("Emulation.setDeviceMetricsOverride", { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
@@ -1081,14 +1114,178 @@ async function main() {
       await screenshot(cdp, join(outDir, "start-share.png"));
       await click(".project-dialog header button");
       await click(`${card} .start-card-menu button:nth-child(4)`);
-      await click(".project-dialog > button");
-      if (!(await waitIn(`!document.querySelector(${JSON.stringify(card)}) && !document.querySelector('.project-dialog')`)))
-        reasons.push("project was not deleted");
+      await click(".project-dialog [data-confirm-delete]");
+      if (
+        !(await waitIn(
+          `!document.querySelector(${JSON.stringify(card)}) && !document.querySelector('.project-dialog') && !document.querySelector('[data-tab="p:${id}"]')`,
+        ))
+      )
+        reasons.push("project was not deleted, or its sidebar entry stayed");
     } finally {
-      // Leave the project first: deleting it under an open page makes its next layout save a 404.
-      await load(cdp, urlOf("start"), idle);
-      await fetch(`${base}/api/projects/${encodeURIComponent(id)}`, { method: "DELETE" });
+      await removeProject(id, idle);
     }
+  });
+
+  // A template opens straight into its own project (D-065): no dialog, a numbered name, continuous data.
+  await interaction("template-launch", async (idle, reasons) => {
+    await en(idle);
+    await load(cdp, urlOf("home"), idle);
+    const before = (await api("/api/projects")).projects.length;
+    const created = [];
+    try {
+      const launch = async () => {
+        await waitIn(`!!document.querySelector('[data-template="outbreak"]:not(:disabled)')`);
+        const previous = await projectOf();
+        await click('[data-template="outbreak"]');
+        const ok = await waitIn(
+          `(() => { const id = new URLSearchParams(location.hash.split('?')[1]).get('project'); return location.hash.startsWith('#project?') && !!id && id !== ${JSON.stringify(previous)} && !!document.querySelector('#ws-win-signals') && !!document.querySelector('#ws-win-timeline') && !!document.querySelector('#ws-win-graph'); })()`,
+          15_000,
+        );
+        if (!ok)
+          throw new Error(
+            `outbreak template did not open its project with signals, timeline and graph (${await evaluate(cdp, "location.hash")})`,
+          );
+        const id = await projectOf();
+        created.push(id);
+        return id;
+      };
+      const first = await launch();
+      if (await evaluate(cdp, `!!document.querySelector('.project-dialog')`)) reasons.push("launching a template asked for details");
+      const project = (await api(`/api/projects/${encodeURIComponent(first)}`)).project;
+      if (!/^Outbreak investigation \d+$/.test(project.name))
+        reasons.push(`launched project is not named like "Outbreak investigation 1": ${project.name}`);
+      if (project.mode !== "continuous") reasons.push("launched project is not continuous");
+      const shown = await evaluate(
+        cdp,
+        `document.querySelector('.viewbar-title')?.textContent + ' | ' + document.querySelector('.sb-tab[data-current] .sb-tab-name')?.textContent`,
+      );
+      if (shown !== `${project.name} | ${project.name}`) reasons.push(`project name not shown in the view and sidebar: ${shown}`);
+      await screenshot(cdp, join(outDir, "template-launched-desktop.png"));
+      await goHome();
+      const second = await launch();
+      const again = (await api(`/api/projects/${encodeURIComponent(second)}`)).project;
+      if (again.name === project.name) reasons.push(`a second launch reused the name ${again.name}`);
+      if ((await evaluate(cdp, `document.querySelectorAll('.sb-tab').length`)) < 2)
+        reasons.push("two launched projects do not both show in the sidebar");
+      // Switch back by the sidebar, then close the current one: its neighbour opens.
+      await click(`.sb-tab[data-tab="p:${first}"] .sb-item`);
+      if (!(await waitIn(`new URLSearchParams(location.hash.split('?')[1]).get('project') === ${JSON.stringify(first)}`)))
+        reasons.push("choosing an open project in the sidebar did not switch to it");
+      await click(`.sb-tab[data-tab="p:${first}"] .sb-tab-close`);
+      if (
+        !(await waitIn(
+          `!document.querySelector('[data-tab="p:${first}"]') && new URLSearchParams(location.hash.split('?')[1]).get('project') === ${JSON.stringify(second)}`,
+        ))
+      )
+        reasons.push("closing the current project did not show its neighbour");
+      // Treat a patient is a quick start: a view without a project.
+      await goHome();
+      await click('[data-template="patient"]');
+      if (
+        !(await waitIn(
+          `location.hash.startsWith('#project') && new URLSearchParams(location.hash.split('?')[1]).get('quick') === 'patient' && !new URLSearchParams(location.hash.split('?')[1]).has('project') && !!document.querySelector('#ws-win-coverage') && !!document.querySelector('.ws-area[data-maximized=true]') && !!document.querySelector('.sb-tab[data-tab="view"][data-current]')`,
+          15_000,
+        ))
+      )
+        reasons.push(
+          `Treat a patient did not open the coverage list maximised in a project-less view: ${await evaluate(cdp, `location.hash + " | " + [...document.querySelectorAll(".sb-tab")].map(t => t.dataset.tab + (t.dataset.current ? "*" : "")).join() + " | " + [...document.querySelectorAll(".ws-win")].map(w => w.dataset.win).join()`)}`,
+        );
+      if ((await api("/api/projects")).projects.length !== before + 2) reasons.push("Treat a patient created a project");
+      await screenshot(cdp, join(outDir, "template-patient-desktop.png"));
+      // Old links still work.
+      for (const [from, to] of [
+        ["#doctor?unit=URO", "#project"],
+        ["#workspace?unit=URO", "#project"],
+        ["#research?panel=grid", "#project"],
+      ]) {
+        await load(cdp, `${base}/${from}`, idle);
+        if (!(await waitIn(`location.hash.split('?')[0] === ${JSON.stringify(to)}`)))
+          reasons.push(`${from} did not land on ${to}: ${await evaluate(cdp, "location.hash")}`);
+      }
+      await cdp.send("Emulation.setDeviceMetricsOverride", { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
+      await load(cdp, `${base}/#project?project=${encodeURIComponent(second)}`, idle);
+      await waitIn(`!!document.querySelector('#ws-win-timeline')`);
+      await screenshot(cdp, join(outDir, "template-launched-phone.png"));
+      await cdp.send("Emulation.setDeviceMetricsOverride", {
+        width: VIEWPORTS[0].width,
+        height: VIEWPORTS[0].height,
+        deviceScaleFactor: 1,
+        mobile: false,
+      });
+    } finally {
+      await load(cdp, urlOf("home"), idle);
+      for (const id of created) await fetch(`${base}/api/projects/${encodeURIComponent(id)}`, { method: "DELETE" });
+    }
+  });
+
+  // The replay timeline is a window (D-066); the clock above the project steps it and every other window.
+  await interaction("timeline-window", async (idle, reasons) => {
+    await en(idle);
+    await cleanWorkspace(idle);
+    const win = "#ws-win-timeline";
+    if (!(await waitIn(`!!document.querySelector('${win} .timeline-window .hs-svg')`, 15_000))) {
+      reasons.push("the default view has no timeline window with its band");
+      return;
+    }
+    const readout = `document.querySelector('${win} .tl-readout')?.textContent ?? ''`;
+    const clockDate = `document.querySelector('.viewbar .clock-readout')?.textContent ?? ''`;
+    const before = await evaluate(cdp, readout);
+    if (!before || before === "–") reasons.push("timeline window shows no as-of date");
+    if (!(await evaluate(cdp, `!!document.querySelector('${win} .tl-quality')?.textContent.trim()`)))
+      reasons.push("timeline window has no data-quality status");
+    if (!(await evaluate(cdp, `document.querySelectorAll('${win} .hs-svg text').length > 3`)))
+      reasons.push("timeline band has no unit lanes");
+    // Step one day from the clock: the clock and the window move together.
+    const clockBefore = await evaluate(cdp, clockDate);
+    await click('.viewbar .clock [data-step="1"]');
+    if (
+      !(await waitIn(
+        `(${readout}) !== ${JSON.stringify(before)} && (${clockDate}) !== ${JSON.stringify(clockBefore)} && !document.querySelector('.clock[aria-busy]')`,
+        15_000,
+      ))
+    )
+      reasons.push(`clock step did not move the timeline window (still ${await evaluate(cdp, readout)})`);
+    // A demo jump from the window seeks the shared clock.
+    await click(`${win} .tl-events-btn`);
+    await click(`${win} .tl-event`);
+    if (
+      !(await waitIn(
+        `(${readout}).includes('12.5.2025') || (${readout}).includes('2025-05-12') || (${clockDate}).includes('12 May 2025')`,
+        15_000,
+      ))
+    )
+      reasons.push(`demo jump did not seek the clock: ${await evaluate(cdp, readout)} / ${await evaluate(cdp, clockDate)}`);
+    // The clock's menu: speed choices and a date jump, with Escape back to the date button.
+    await click(".viewbar .clock-date");
+    if (
+      !(await waitIn(
+        `document.querySelectorAll('.clock-pop [role=menuitemradio]').length === 4 && !!document.querySelector('.clock-pop input[type=date]')`,
+      ))
+    )
+      reasons.push("clock menu has no speeds or date jump");
+    await screenshot(cdp, join(outDir, "timeline-clock-menu.png"));
+    await key("Escape");
+    if (!(await waitIn(`!document.querySelector('.clock-pop') && document.activeElement?.classList.contains('clock-date')`)))
+      reasons.push("Escape did not close the clock menu back to its button");
+    await screenshot(cdp, join(outDir, "timeline-window-desktop.png"));
+    // Close it and bring it back from Windows.
+    await click(`${win} .ws-close`);
+    if (!(await waitIn(`!document.querySelector('${win}')`))) reasons.push("timeline window did not close");
+    await click("#ws-tray-button");
+    await click('[data-reopen="timeline"]');
+    if (!(await waitIn(`!!document.querySelector('${win} .hs-svg')`))) reasons.push("timeline window did not reopen from Windows");
+    await cdp.send("Emulation.setDeviceMetricsOverride", { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
+    await evaluate(cdp, `document.querySelector('${win}')?.scrollIntoView({ block: 'start' })`);
+    await idle();
+    if (!(await evaluate(cdp, `!!document.querySelector('.phonebar .clock') && document.documentElement.scrollWidth <= innerWidth + 1`)))
+      reasons.push("phone: no clock in the bar, or the page overflows");
+    await screenshot(cdp, join(outDir, "timeline-window-phone.png"));
+    await cdp.send("Emulation.setDeviceMetricsOverride", {
+      width: VIEWPORTS[0].width,
+      height: VIEWPORTS[0].height,
+      deviceScaleFactor: 1,
+      mobile: false,
+    });
   });
 
   await interaction("projects", async (idle, reasons) => {
@@ -1098,14 +1295,29 @@ async function main() {
     if (!(await waitIn(`document.documentElement.lang === 'en'`))) throw new Error("English did not load");
     await cleanWorkspace(idle);
     const clock = await api("/api/clock");
-    const projectButton = '.ws-toolbar .project-controls button[aria-haspopup="dialog"]';
-    const exportButton = '.ws-toolbar .project-controls button[aria-haspopup="menu"]';
     const listed = `!!document.querySelector('.project-list[aria-busy=false]')`;
     const smokeRow = `[...document.querySelectorAll('.project-list li')].find(li => li.querySelector('strong')?.textContent === 'Smoke project')`;
-    await click(projectButton);
-    if (!(await waitIn(listed))) throw new Error("Project dialog did not list projects (or its empty state)");
-    const list = await evaluate(cdp, `!!document.querySelector('.project-list ul, .project-list p')`);
-    if (!list) reasons.push("Project dialog has neither projects nor an empty state");
+    const menu = async (item) => {
+      await click("#pm-project");
+      if (!(await waitIn(`!!document.querySelector('[data-pm="${item}"]')`))) throw new Error(`Project menu has no ${item}`);
+      await click(`[data-pm="${item}"]`);
+    };
+    // Keyboard: the Project menu opens on Enter at its first item; arrows move; Escape returns to the row.
+    await evaluate(cdp, `document.querySelector('#pm-project').focus()`);
+    await key("Enter");
+    if (!(await waitIn(`document.activeElement?.dataset.pm === 'new'`)))
+      reasons.push("Enter did not open the Project menu at its first item");
+    await key("ArrowDown");
+    if (!(await waitIn(`document.activeElement?.dataset.pm === 'new-custom'`))) reasons.push("ArrowDown did not move in the Project menu");
+    await key("Escape");
+    if (!(await waitIn(`document.activeElement?.id === 'pm-project' && !document.querySelector('[data-pm]')`)))
+      reasons.push("Escape did not close the Project menu back to its row");
+    await menu("open");
+    if (!(await waitIn(listed))) throw new Error("Open dialog did not list projects (or its empty state)");
+    if (!(await evaluate(cdp, `!!document.querySelector('.project-list ul, .project-list p')`)))
+      reasons.push("Open dialog has neither projects nor an empty state");
+    await click(".project-dialog header button");
+    await menu("save");
     await click('.project-dialog form input[maxlength="200"]');
     await key("a", 2);
     await cdp.send("Input.insertText", { text: "Smoke project" });
@@ -1115,102 +1327,101 @@ async function main() {
     await click('.project-dialog button[type="submit"]');
     if (
       !(await waitIn(
-        `!document.querySelector('.project-dialog') && new URLSearchParams(location.hash.split('?')[1]).has('project') && !!document.querySelector('.project-frozen')`,
+        `!document.querySelector('.project-dialog') && new URLSearchParams(location.hash.split('?')[1]).has('project') && !!document.querySelector('.viewbar .project-frozen')`,
       ))
     )
       throw new Error("saving a frozen project did not open it with project=<id> in the hash");
-    const hash = await evaluate(cdp, `location.hash`);
-    const id = new URLSearchParams(hash.split("?")[1]).get("project");
-    await click(projectButton);
-    if (!(await waitIn(`${listed} && !!(${smokeRow})`))) throw new Error("saved project missing from the list");
-    if (!(await evaluate(cdp, `(${smokeRow}).querySelector('.project-mode')?.textContent.includes('Frozen')`)))
-      reasons.push("saved project has no frozen badge");
-    await key("Escape");
-    const origin = await evaluate(cdp, `performance.timeOrigin`);
-    await cdp.send("Page.reload");
-    if (
-      !(await waitIn(
-        `performance.timeOrigin !== ${origin} && document.querySelector('.project-frozen')?.textContent.includes('Frozen at ${clock.asOf}') && new URLSearchParams(location.hash.split('?')[1]).get('project') === ${JSON.stringify(id)}`,
-      ))
-    )
-      throw new Error("reloading did not keep the frozen project open");
-    await idle();
-    const project = await api(`/api/projects/${encodeURIComponent(id)}`);
-    const downloadDir = mkdtempSync(join(tmpdir(), "aei-smoke-downloads-"));
-    const downloads = new Map();
-    const progress = (m) => {
-      if (m.method === "Browser.downloadWillBegin") downloads.set(m.params.guid, { ...m.params, state: "inProgress" });
-      if (m.method === "Browser.downloadProgress" && downloads.has(m.params.guid)) Object.assign(downloads.get(m.params.guid), m.params);
-    };
-    browser.on(progress);
+    const id = await projectOf();
+    if (await evaluate(cdp, `!!document.querySelector('.sb-tab[data-tab="view"]')`))
+      reasons.push("the saved view stayed open beside its project");
+    if (!(await waitIn(`!!document.querySelector('.sb-tab[data-tab="p:${id}"] [data-frozen]')`)))
+      reasons.push("the frozen project has no frozen marker in the sidebar");
     try {
-      await browser.send("Browser.setDownloadBehavior", { behavior: "allow", downloadPath: downloadDir, eventsEnabled: true });
-      await click(exportButton);
-      const download = async (label, extension) => {
-        if (
-          !(await waitIn(
-            `!![...document.querySelectorAll('.project-export-options button')].find(b => b.textContent === ${JSON.stringify(label)} && !b.disabled)`,
-          ))
-        )
-          throw new Error(`export control unavailable: ${label}`);
-        const previous = new Set(downloads.keys());
-        await evaluate(
-          cdp,
-          `[...document.querySelectorAll('.project-export-options button')].find(b => b.textContent === ${JSON.stringify(label)}).click()`,
-        );
-        const until = Date.now() + 30_000;
-        while (Date.now() < until) {
-          const fresh = [...downloads.values()].filter((d) => !previous.has(d.guid));
-          if (fresh.some((d) => d.state === "canceled")) throw new Error(`${label} download canceled`);
-          const done = await evaluate(cdp, `document.querySelector('.project-export-options')?.getAttribute('aria-busy') === 'false'`);
-          if (fresh.length && done && fresh.every((d) => d.state === "completed")) {
-            const files = fresh.filter((d) => d.suggestedFilename.endsWith(extension));
-            if (!files.length) throw new Error(`${label} downloaded no ${extension} file`);
-            return files.map((d) => readFileSync(join(downloadDir, d.suggestedFilename)));
-          }
-          if (await evaluate(cdp, `!!document.querySelector('.project-error[role=alert]')`))
-            throw new Error(`${label} export reported an error`);
-          await sleep(100);
-        }
-        throw new Error(`${label} download did not complete in 30 s`);
+      await menu("open");
+      if (!(await waitIn(`${listed} && !!(${smokeRow})`))) throw new Error("saved project missing from the list");
+      if (!(await evaluate(cdp, `(${smokeRow}).querySelector('.project-mode')?.textContent.includes('Frozen')`)))
+        reasons.push("saved project has no frozen badge");
+      await click(".project-dialog header button");
+      const origin = await evaluate(cdp, `performance.timeOrigin`);
+      await cdp.send("Page.reload");
+      if (
+        !(await waitIn(
+          `performance.timeOrigin !== ${origin} && document.querySelector('.viewbar .project-frozen')?.textContent.includes('Frozen at ${clock.asOf}') && new URLSearchParams(location.hash.split('?')[1]).get('project') === ${JSON.stringify(id)}`,
+        ))
+      )
+        throw new Error("reloading did not keep the frozen project open");
+      await idle();
+      const project = await api(`/api/projects/${encodeURIComponent(id)}`);
+      const downloadDir = mkdtempSync(join(tmpdir(), "aei-smoke-downloads-"));
+      const downloads = new Map();
+      const progress = (m) => {
+        if (m.method === "Browser.downloadWillBegin") downloads.set(m.params.guid, { ...m.params, state: "inProgress" });
+        if (m.method === "Browser.downloadProgress" && downloads.has(m.params.guid)) Object.assign(downloads.get(m.params.guid), m.params);
       };
-      const [json] = await download("JSON", ".json");
-      const bundle = JSON.parse(json.toString("utf8"));
-      if (bundle.format !== "aei-export/1") reasons.push("JSON export has the wrong format");
-      if (!bundle.tables?.find((table) => table.name === "isolates")?.rows.length) reasons.push("JSON export has no isolates");
-      if (!project.project.fingerprint?.sha256 || JSON.stringify(bundle.fingerprint) !== JSON.stringify(project.project.fingerprint))
-        reasons.push("JSON export does not carry the project's fingerprint");
-      const [word] = await download("Word (.docx)", ".docx");
-      if (word.subarray(0, 2).toString() !== "PK") reasons.push("Word export is not a ZIP (.docx)");
-      for (const svg of await download("Figures (SVG)", ".svg")) {
-        const text = svg.toString("utf8");
-        if (!text.startsWith("<svg") || text.includes("var(--")) reasons.push("SVG export is not standalone with inlined styles");
+      browser.on(progress);
+      try {
+        await browser.send("Browser.setDownloadBehavior", { behavior: "allow", downloadPath: downloadDir, eventsEnabled: true });
+        await click("#pm-export");
+        const download = async (label, extension) => {
+          if (
+            !(await waitIn(
+              `!![...document.querySelectorAll('.project-export-options button')].find(b => b.textContent === ${JSON.stringify(label)} && !b.disabled)`,
+            ))
+          )
+            throw new Error(`export control unavailable: ${label}`);
+          const previous = new Set(downloads.keys());
+          await evaluate(
+            cdp,
+            `[...document.querySelectorAll('.project-export-options button')].find(b => b.textContent === ${JSON.stringify(label)}).click()`,
+          );
+          const until = Date.now() + 30_000;
+          while (Date.now() < until) {
+            const fresh = [...downloads.values()].filter((d) => !previous.has(d.guid));
+            if (fresh.some((d) => d.state === "canceled")) throw new Error(`${label} download canceled`);
+            const done = await evaluate(cdp, `document.querySelector('.project-export-options')?.getAttribute('aria-busy') === 'false'`);
+            if (fresh.length && done && fresh.every((d) => d.state === "completed")) {
+              const files = fresh.filter((d) => d.suggestedFilename.endsWith(extension));
+              if (!files.length) throw new Error(`${label} downloaded no ${extension} file`);
+              return files.map((d) => readFileSync(join(downloadDir, d.suggestedFilename)));
+            }
+            if (await evaluate(cdp, `!!document.querySelector('.project-error[role=alert]')`))
+              throw new Error(`${label} export reported an error`);
+            await sleep(100);
+          }
+          throw new Error(`${label} download did not complete in 30 s`);
+        };
+        const [json] = await download("JSON", ".json");
+        const bundle = JSON.parse(json.toString("utf8"));
+        if (bundle.format !== "aei-export/1") reasons.push("JSON export has the wrong format");
+        if (!bundle.tables?.find((table) => table.name === "isolates")?.rows.length) reasons.push("JSON export has no isolates");
+        if (!project.project.fingerprint?.sha256 || JSON.stringify(bundle.fingerprint) !== JSON.stringify(project.project.fingerprint))
+          reasons.push("JSON export does not carry the project's fingerprint");
+        const [word] = await download("Word (.docx)", ".docx");
+        if (word.subarray(0, 2).toString() !== "PK") reasons.push("Word export is not a ZIP (.docx)");
+        for (const svg of await download("Figures (SVG)", ".svg")) {
+          const text = svg.toString("utf8");
+          if (!text.startsWith("<svg") || text.includes("var(--")) reasons.push("SVG export is not standalone with inlined styles");
+        }
+      } finally {
+        browser.off(progress);
+        await browser.send("Browser.setDownloadBehavior", { behavior: "default", eventsEnabled: false });
+        rmSync(downloadDir, { recursive: true, force: true });
       }
+      await key("Escape");
+      await menu("delete");
+      await click(".project-dialog [data-confirm-delete]");
+      if (
+        !(await waitIn(
+          `!document.querySelector('.project-dialog') && !new URLSearchParams(location.hash.split('?')[1]).has('project') && !document.querySelector('[data-tab="p:${id}"]')`,
+        ))
+      )
+        reasons.push("deleted project remains open or in the sidebar");
+      if ((await fetch(`${base}/api/projects/${encodeURIComponent(id)}`)).status !== 404)
+        reasons.push("deleted project still on the server");
+      await idle();
     } finally {
-      browser.off(progress);
-      await browser.send("Browser.setDownloadBehavior", { behavior: "default", eventsEnabled: false });
-      rmSync(downloadDir, { recursive: true, force: true });
+      await removeProject(id, idle);
     }
-    await key("Escape");
-    await click(projectButton);
-    if (!(await waitIn(`${listed} && !!(${smokeRow})`))) throw new Error("project not listed for deletion");
-    let confirmed = false;
-    const confirmation = (m) => {
-      if (m.method === "Page.javascriptDialogOpening" && m.params.type === "confirm") {
-        confirmed = true;
-        void cdp.send("Page.handleJavaScriptDialog", { accept: true });
-      }
-    };
-    cdp.on(confirmation);
-    try {
-      await evaluate(cdp, `(${smokeRow}).querySelector('.project-actions button:last-child').click()`);
-      if (!(await waitIn(`${listed} && !(${smokeRow}) && !new URLSearchParams(location.hash.split('?')[1]).has('project')`)))
-        reasons.push("deleted project remains in the list or URL");
-      if (!confirmed) reasons.push("project deletion did not ask for confirmation");
-    } finally {
-      cdp.off(confirmation);
-    }
-    await idle();
   });
 
   await interaction("reproduce", async (idle, reasons) => {
@@ -1220,13 +1431,14 @@ async function main() {
     await cdp.send("Page.addScriptToEvaluateOnNewDocument", {
       source: `addEventListener("unhandledrejection", e => { console.error(String(e.reason?.stack ?? e.reason)); });`,
     });
-    await click("[data-project-dialog]");
-    if (!(await waitIn(`!!document.querySelector('.project-list[aria-busy=false]')`))) throw new Error("Project dialog did not load");
+    await click("#pm-project");
+    await click('[data-pm="save"]');
+    if (!(await waitIn(`!!document.querySelector('.project-dialog form')`))) throw new Error("Save as project dialog did not open");
     await click('.project-dialog form input[maxlength="200"]');
     await cdp.send("Input.insertText", { text: "Smoke reproduce" });
     await click('.project-dialog input[value="frozen"]');
     await click('.project-dialog button[type="submit"]');
-    if (!(await waitIn(`!!document.querySelector('[data-open-reproduce]') && !document.querySelector('.project-dialog')`)))
+    if (!(await waitIn(`!!document.querySelector('[data-open-reproduce]:not(:disabled)') && !document.querySelector('.project-dialog')`)))
       throw new Error("Frozen project did not open");
     const id = await evaluate(cdp, `new URLSearchParams(location.hash.split('?')[1]).get('project')`);
     try {

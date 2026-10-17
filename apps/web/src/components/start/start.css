@@ -1,6 +1,7 @@
 .start-page {
   display: grid;
-  grid-template-columns: 184px minmax(0, 1fr) 220px;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  max-width: 1320px;
   gap: 32px;
   padding: 28px 12px 64px;
   align-items: start;
@@ -252,17 +253,66 @@
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 8px;
 }
-.start-templates button {
+.start-template {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  border: 1px solid var(--line);
+  background: var(--glass-1);
+  border-radius: var(--radius-control);
+  overflow: hidden;
+  transition: border-color 0.15s var(--ease-out);
+}
+.start-template:hover,
+.start-template:focus-within {
+  border-color: var(--live);
+}
+.start-template[data-busy] {
+  border-color: var(--live);
+  box-shadow: 0 0 0 3px var(--live-glow);
+}
+.start-templates .start-template > button[data-template] {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 10px;
-  padding: 18px 14px;
+  padding: 18px 14px 12px;
   text-align: left;
-  border: 1px solid var(--line);
-  background: var(--glass-1);
-  border-radius: var(--radius-control);
+  border: 0;
+  background: none;
   color: var(--ink);
+}
+.start-templates .start-template > button[data-template]:disabled {
+  cursor: progress;
+}
+.start-templates small {
+  font-size: var(--t-xs);
+  color: var(--ink-2);
+}
+.start-template-custom {
+  justify-self: start;
+  margin: 0 8px 8px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--ink-3);
+  font-size: var(--t-xs);
+  font-weight: 500;
+}
+.start-template-custom:hover {
+  color: var(--live);
+  background: var(--live-soft);
+}
+.start-secondary {
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control);
+  background: var(--glass-1);
+  color: var(--ink);
+  font-weight: 500;
+}
+.start-secondary:hover {
+  border-color: var(--live);
+  color: var(--live);
 }
 .start-templates strong {
   font-size: var(--t-s);
@@ -276,9 +326,6 @@
 .start-templates .start-template-prominent {
   border-color: var(--brand-accent-line);
   background: var(--live-soft);
-}
-.start-templates button:hover {
-  border-color: var(--live);
 }
 .start-examples {
   display: grid;
@@ -416,13 +463,51 @@
   height: 16px;
   padding: 0;
 }
-@media (max-width: 1200px) {
+.start-context .hm-since {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  display: grid;
+  gap: 8px;
+}
+.start-context .hm-stats {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.start-context .hm-incidents {
+  margin-top: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--glass-1);
+  max-height: 360px;
+  overflow: auto;
+}
+.start-heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  margin-bottom: 16px;
+}
+.start-heading-row h1 {
+  margin: 0;
+}
+.start-actions {
+  display: flex;
+  gap: 8px;
+}
+.start-actions button {
+  padding: 8px 14px;
+}
+@media (max-width: 1280px) {
   .start-page {
-    grid-template-columns: 164px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     gap: 24px;
   }
   .start-context {
-    grid-column: 2;
+    grid-column: 1;
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 24px;

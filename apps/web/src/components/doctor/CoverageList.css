@@ -31,7 +31,7 @@
   outline: none;
 }
 
-.cl-head h1 {
+.cl-head h2 {
   margin: 0;
   font-family: var(--brand-font-display, inherit);
   font-size: var(--d-m);
