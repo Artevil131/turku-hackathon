@@ -462,17 +462,19 @@ async function main() {
   });
 
   await interaction("language", async (idle, reasons) => {
-    await load(cdp, urlOf("home"), idle);
+    // The language is chosen only in Settings; the header has no switch.
+    await load(cdp, urlOf("settings"), idle);
+    if (await evaluate(cdp, `!!document.querySelector(".top-tools button[lang]")`)) reasons.push("a language button in the header");
     const before = await evaluate(cdp, `document.documentElement.lang`);
     const nav = await evaluate(cdp, `document.querySelector("nav.sections")?.textContent ?? ""`);
     const clicked = await evaluate(
       cdp,
       `(() => {
-      const b = document.querySelector(".top-tools button[lang]");
+      const b = document.querySelector(".settings button[lang][aria-pressed='false']");
       if (!b) return false; b.click(); return b.getAttribute("lang"); })()`,
     );
     if (!clicked) {
-      reasons.push("no FI/EN button in the header");
+      reasons.push("no language choice in Settings");
       return;
     }
     if (clicked === before) reasons.push(`the language button offers "${clicked}", the page is already in it`);

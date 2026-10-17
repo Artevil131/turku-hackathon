@@ -15,8 +15,6 @@ interface Props {
   unseen?: number;
   /** The replay clock's as-of date, for the badge's label. */
   asOf?: string | null;
-  /** Without it the FI/EN switch is left out. */
-  onLocale?: (l: Locale) => void;
   /** The released alerts the app holds, for the search field; without them it offers none. */
   alerts?: readonly Alert[];
 }
@@ -29,7 +27,6 @@ export function TopBar(props: Props) {
     n: signals,
     date: props.asOf ? formatDate(locale, props.asOf, "long") : "-",
   });
-  const other: Locale = locale === "fi" ? "en" : "fi";
   const tab = (p: Page, label: string, extra?: ReactNode) => (
     <button type="button" className="section-tab" aria-current={page === p ? "page" : undefined} onClick={() => props.onPage(p)}>
       {label}
@@ -59,18 +56,6 @@ export function TopBar(props: Props) {
 
       <div className="top-tools">
         <CommandField locale={locale} alerts={props.alerts} asOf={props.asOf ?? null} />
-        {props.onLocale ? (
-          <button
-            type="button"
-            className="icon-btn icon-btn-text"
-            lang={other}
-            onClick={() => props.onLocale?.(other)}
-            title={t(locale, "switchLanguage")}
-          >
-            {other.toUpperCase()}
-            <span className="visually-hidden"> · {t(locale, "switchLanguage")}</span>
-          </button>
-        ) : null}
         <button
           type="button"
           className="icon-btn"

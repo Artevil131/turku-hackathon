@@ -130,7 +130,6 @@ export function App() {
           page={page}
           onPage={setPage}
           asOf={live.clock?.asOf ?? null}
-          onLocale={setLocale}
           alerts={live.alertsLoaded ? live.alerts : undefined}
         />
         <Timeline
