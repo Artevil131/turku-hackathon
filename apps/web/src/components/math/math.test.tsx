@@ -3,7 +3,7 @@ import { poissonLower, poissonUpper } from "@aei/detect";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { CoverageShape } from "./CoverageShape.tsx";
-import { ALPHA, betaCurve, betaDensity, logGamma, poissonPlan, poissonPmf, surprise, weeklyPatients } from "./mathHelpers.ts";
+import { poissonPlan } from "./mathHelpers.ts";
 import { PoissonTail } from "./PoissonTail.tsx";
 import { SurpriseScale } from "./SurpriseScale.tsx";
 import { WeeklyWindow } from "./WeeklyWindow.tsx";
@@ -21,34 +21,6 @@ const ALERTS = [
   { detector: "sampling-drop", observed: 39, expected: 69.875, p: 0.000040917637918265346 },
 ];
 
-describe("math helpers", () => {
-  it("logGamma matches factorials and Γ(1/2)", () => {
-    expect(Math.exp(logGamma(6))).toBeCloseTo(120, 8);
-    expect(logGamma(0.5)).toBeCloseTo(Math.log(Math.sqrt(Math.PI)), 12);
-    expect(logGamma(101)).toBeCloseTo(363.73937555556347, 8);
-  });
-  it("pmf sums to 1", () => {
-    let s = 0;
-    for (let k = 0; k < 80; k++) s += poissonPmf(k, 12.5);
-    expect(s).toBeCloseTo(1, 12);
-  });
-  it("beta density integrates to 1 and peaks at the share", () => {
-    const c = betaCurve(88, 100, 2000);
-    const area = c.reduce((s, q) => s + q.y, 0) / 2000;
-    expect(area).toBeCloseTo(1, 2);
-    const peak = c.reduce((m, q) => (q.y > m.y ? q : m));
-    expect(peak.x).toBeCloseTo(0.88, 2);
-    expect(betaDensity(0.5, 1, 1)).toBeCloseTo(1, 12);
-    expect(betaDensity(0.3, 2, 3)).toBeCloseTo(12 * 0.3 * 0.49, 10); // 1/B(2,3) = 12
-  });
-  it("surprise and thresholds", () => {
-    expect(surprise(1e-3)).toBeCloseTo(3, 12);
-    expect(surprise(1e-9)).toBe(6);
-    expect(ALPHA["profile-excess"]).toBe(1e-4);
-    expect(ALPHA["phenotype-excess"]).toBe(1e-3);
-  });
-});
-
 describe("PoissonTail: shaded tail is the live detector's p", () => {
   for (const a of ALERTS) {
     it(`${a.detector} ${a.observed}/${a.expected}`, () => {
@@ -64,37 +36,6 @@ describe("PoissonTail: shaded tail is the live detector's p", () => {
     });
   }
   it("rising trend has no count", () => expect(poissonPlan("rising-trend", 0.2, 0.1)).toBeNull());
-});
-
-describe("weeklyPatients", () => {
-  const rec = (patientId: string, sampleDate: string, ward = "URO", phenotypes = ["esbl"]) =>
-    ({ patientId, sampleDate, ward, phenotypes }) as never;
-  it("counts distinct patients per week, ward and phenotype", () => {
-    const w = weeklyPatients(
-      [
-        rec("a", "2025-06-02"),
-        rec("a", "2025-06-05"),
-        rec("b", "2025-06-08"),
-        rec("c", "2025-06-09"),
-        rec("d", "2025-06-09", "ICU"),
-        rec("e", "2025-06-09", "URO", ["mrsa"]),
-        rec("f", "2025-06-16"),
-      ],
-      "URO",
-      "esbl",
-      "2025-06-02",
-      "2025-06-15",
-    );
-    expect(w).toEqual([
-      { start: "2025-06-02", count: 2 },
-      { start: "2025-06-09", count: 1 },
-    ]);
-  });
-  it("drops a partial last week and leaves empty weeks at 0", () => {
-    const w = weeklyPatients([], "URO", "esbl", "2025-06-01", "2025-06-24");
-    expect(w.map((x) => x.start)).toEqual(["2025-06-01", "2025-06-08", "2025-06-15"]);
-    expect(w.every((x) => x.count === 0)).toBe(true);
-  });
 });
 
 describe("render", () => {

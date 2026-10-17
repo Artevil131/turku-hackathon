@@ -58,3 +58,39 @@ export function weeklySeries(records: readonly IsolateRecord[], cultures: readon
   }
   return { weeks, units };
 }
+
+// ---------- weekly patients in a window that starts anywhere ----------
+
+const DAY = 86_400_000;
+const toMs = (d: IsoDate) => Date.parse(`${d}T00:00:00Z`);
+
+/** `date` plus `n` days (n may be negative). */
+export const addDaysIso = (d: IsoDate, n: number): IsoDate => addDays(d, n);
+
+/**
+ * Distinct patients per week with `phenotype` in `ward`, for the weeks that start at `from`, `from + 7`, … and end
+ * at or before `to` (a last partial week is dropped). Unlike `weeklySeries`, weeks are anchored at `from`, not on a
+ * Monday, so a window can end on the as-of date: pass `from = addDaysIso(asOf, −7·n + 1)` and `to = asOf`.
+ * Weeks without a patient are returned with count 0. Counts are raw (D-039).
+ */
+export function weeklyPatients(
+  records: readonly Pick<IsolateRecord, "patientId" | "sampleDate" | "ward" | "phenotypes">[],
+  ward: WardCode,
+  phenotype: Phenotype,
+  from: IsoDate,
+  to: IsoDate,
+): { start: IsoDate; count: number }[] {
+  const weeks: { start: IsoDate; count: number }[] = [];
+  const sets: Set<string>[] = [];
+  for (let s = from; addDays(s, 6) <= to; s = addDays(s, 7)) {
+    weeks.push({ start: s, count: 0 });
+    sets.push(new Set());
+  }
+  const t0 = toMs(from);
+  for (const r of records) {
+    if (r.ward !== ward || !r.phenotypes.includes(phenotype)) continue;
+    const i = Math.floor((toMs(r.sampleDate) - t0) / (7 * DAY));
+    if (i >= 0 && i < weeks.length && toMs(r.sampleDate) <= toMs(to)) sets[i]?.add(r.patientId);
+  }
+  return weeks.map((w, i) => ({ start: w.start, count: sets[i]?.size ?? 0 }));
+}

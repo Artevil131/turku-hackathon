@@ -1,6 +1,6 @@
 # Math components
 
-Self-contained SVG React components that draw the arithmetic behind a signal or a share. Each has its own `.css` (tokens from `styles.css` via `var()` with fallbacks), bilingual copy in `libs/utils/i18n/src/surfaces/math.ts` (keys `math…`), `role="img"` with an aria-label stating the numbers, no colour-only encoding (outline, shaded band, triangle and dashed line carry meaning too), and works from 320 to 700 px (the SVG scales, max width 480 px; captions are HTML and wrap). Pure helpers live in `mathHelpers.ts` (tested in `math.test.tsx`).
+Self-contained SVG React components that draw the arithmetic behind a signal or a share. Each has its own `.css` (tokens from `styles.css` via `var()` with fallbacks), bilingual copy in `libs/utils/i18n/src/surfaces/math.ts` (keys `math…`), `role="img"` with an aria-label stating the numbers, no colour-only encoding (outline, shaded band, triangle and dashed line carry meaning too), and works from 320 to 700 px (the SVG scales, max width 480 px; captions are HTML and wrap). Pure helpers live in `@aei/viz` (`libs/utils/viz`, tested there); `mathHelpers.ts` only re-exports them.
 
 Import from `./components/math` (`index.ts`). All take `locale: Locale`.
 

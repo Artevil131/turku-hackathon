@@ -16,6 +16,7 @@
     "@aei/domain": "workspace:*",
     "@aei/i18n": "workspace:*",
     "@aei/relations": "workspace:*",
+    "@aei/viz": "workspace:*",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },
