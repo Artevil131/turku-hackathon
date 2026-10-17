@@ -1031,3 +1031,40 @@
   border-left: 0;
   box-shadow: none;
 }
+
+/* The selected signal, told on the map: which series it switched to and how to read it. */
+.geo-signal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  margin: 4px 0 0;
+  padding: 8px 10px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--signal, #c8234a) 8%, transparent);
+  font-size: var(--t-xs, 12px);
+  color: var(--ink-2, #44475f);
+}
+.geo-signal strong {
+  flex-basis: 100%;
+  color: var(--ink-1, #1d1f3a);
+}
+
+/* The flow's plain sentence and its direction labels. */
+.ug-story {
+  margin: 4px 0 0;
+  font-size: var(--t-sm, 13px);
+  color: var(--ink-2, #44475f);
+}
+.ug-dir {
+  margin: 6px 0 0;
+  font-size: var(--t-xs, 12px);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--ink-3, #6f7292);
+}
+.ug-dir-row {
+  display: flex;
+  justify-content: space-between;
+}
