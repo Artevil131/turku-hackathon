@@ -1,4 +1,4 @@
-import type { CoverageResponse, Severity } from "@aei/contract";
+import type { CoverageResponse, NationalResponse, Severity } from "@aei/contract";
 import type { IsolateRecord } from "@aei/domain";
 import { guide } from "@aei/guideline";
 import type { ComponentProps } from "react";
@@ -250,5 +250,40 @@ describe("guide beside the data (D-047)", () => {
     expect(html).toContain("The guide (7.4.1 A, p. 37) names: nitrofurantoin 75 mg × 2 po");
     expect(html).toContain("route: oral");
     expect(html).toContain("Duration: 3 days.");
+  });
+});
+
+const NATIONAL: NationalResponse = {
+  source: "THL Finres cube",
+  licence: "CC BY 4.0, (c) THL and the FiRe laboratory network",
+  fetched: "2026-10-17",
+  year: 2025,
+  cells: [
+    { genus: "Escherichia", antibiotic: "NIT", specimen: "urine", tests: 81234, resistant: 1625, pctR: 2, interval: [1.9, 2.1] },
+    { genus: "Escherichia", antibiotic: "TMP", specimen: "urine", tests: 80000, resistant: 16000, pctR: 20, interval: [19.7, 20.3] },
+  ],
+};
+const details = (data: CoverageResponse, id: string, national: NationalResponse | null) => {
+  const item = itemsOf(data, "en").singles.find((i) => i.id === id);
+  if (!item) throw new Error(`fixture must carry ${id}`);
+  return renderToStaticMarkup(
+    <Details client={{} as never} locale="en" filters={filters} data={data} item={item} signals={[]} national={national} />,
+  );
+};
+
+describe("national line (D-048)", () => {
+  it("gives Finres's genus figure with its source, and no difference sentence under 10 points", () => {
+    const html = details(urine(), "NIT", NATIONAL);
+    expect(html).toContain("Finland 2025, Escherichia (genus): 2 % resistant, 81,234 tests");
+    expect(html).toContain("CC BY 4.0");
+    expect(html).not.toContain("nationally");
+  });
+  it("says in words when the leading organism differs by 10 points or more", () => {
+    // Trimethoprim covers 40 of 60 here: 33 % resistant against 20 % nationally.
+    expect(details(urine(), "TMP", NATIONAL)).toContain("more resistance here than nationally (33 % here, 20 % in Finland)");
+  });
+  it("shows nothing without a national figure", () => {
+    expect(details(urine(), "MEC", NATIONAL)).not.toContain("dt-national");
+    expect(details(urine(), "NIT", null)).not.toContain("dt-national");
   });
 });

@@ -1,4 +1,4 @@
-import type { AeiClient, CoverageResponse } from "@aei/contract";
+import type { AeiClient, CoverageResponse, NationalResponse } from "@aei/contract";
 import { shortOrganism } from "@aei/domain";
 import type { Syndrome } from "@aei/guideline";
 import { type Locale, t } from "@aei/i18n";
@@ -6,6 +6,7 @@ import { AlertExplanation } from "../AlertExplanation.tsx";
 import { AlertTri } from "../Icons.tsx";
 import { certaintyOf, type DoctorFilters, halfWidth, num, pct } from "./filters.ts";
 import { GuideDetails } from "./Guide.tsx";
+import { NationalLines } from "./National.tsx";
 import { flagsOf, type Item, reasonOf, STANDING } from "./reason.ts";
 import { signalDate, type UnitSignal } from "./signals.ts";
 
@@ -17,10 +18,12 @@ interface Props {
   item: Item;
   signals: UnitSignal[];
   syndrome?: Syndrome | null;
+  /** Finres national reference (D-048), fetched once per page; null when the server has none. */
+  national?: NationalResponse | null;
 }
 
 /** Details on demand for the selected line: the reason, the flags, all-organism share and the last 28 days. */
-export function Details({ client, locale, filters, data, item, signals, syndrome }: Props) {
+export function Details({ client, locale, filters, data, item, signals, syndrome, national = null }: Props) {
   const level = certaintyOf(data.coverage.level);
   const st = STANDING[item.standing];
   const row = item.row;
@@ -99,6 +102,16 @@ export function Details({ client, locale, filters, data, item, signals, syndrome
         ))}
       </ul>
       {row ? <GuideDetails locale={locale} syndrome={syndrome} code={row.antibiotic} /> : null}
+      {row ? (
+        <NationalLines
+          locale={locale}
+          national={national}
+          data={data}
+          antibiotic={row.antibiotic}
+          specimen={filters.site}
+          share={row.share}
+        />
+      ) : null}
       {mine.map((s) => (
         <AlertExplanation key={s.alert.id} client={client} id={s.alert.id} locale={locale} />
       ))}

@@ -1,4 +1,4 @@
-import type { AeiClient, Alert, CoverageResponse } from "@aei/contract";
+import type { AeiClient, Alert, CoverageResponse, NationalResponse } from "@aei/contract";
 import type { WardCode } from "@aei/domain";
 import type { Syndrome } from "@aei/guideline";
 import type { Locale } from "@aei/i18n";
@@ -57,6 +57,20 @@ export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetry
   const [selected, setSelected] = useState<string | null>(null);
   const wide = useMedia("(min-width: 960px)");
   const sheetRef = useRef<HTMLDivElement>(null);
+  const [national, setNational] = useState<NationalResponse | null>(null);
+  // The national reference (D-048) once per page; a server without the file answers 404, which means no national line.
+  useEffect(() => {
+    let stale = false;
+    client
+      .national()
+      .then((n) => {
+        if (!stale) setNational(n);
+      })
+      .catch(() => {});
+    return () => {
+      stale = true;
+    };
+  }, [client]);
 
   useEffect(() => {
     storeUnit(filters.unit);
@@ -174,6 +188,7 @@ export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetry
                     item={item}
                     signals={signals}
                     syndrome={syndrome}
+                    national={national}
                   />
                 ) : (
                   <p className="dt-empty">{t(locale, "drSelectRow")}</p>
@@ -209,7 +224,16 @@ export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetry
               {t(locale, "drClose")}
             </button>
           </div>
-          <Details client={client} locale={locale} filters={filters} data={current} item={item} signals={signals} syndrome={syndrome} />
+          <Details
+            client={client}
+            locale={locale}
+            filters={filters}
+            data={current}
+            item={item}
+            signals={signals}
+            syndrome={syndrome}
+            national={national}
+          />
         </div>
       ) : null}
     </div>
