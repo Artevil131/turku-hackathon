@@ -32,3 +32,8 @@ Code, Opus 5.5, operated by Artem).
 | 02:05 | harness check | finish | Fable 5.1 | 19 min | sound: reproductions exact, views strict, post-hoc level filter exact; 18 findings, none invalidates a row; fixes: C3(b) tail p beside the ratio, C7 expected coverage, D5 noise/level columns, D4 interval, re-tuned row caveat, flaky test (tests read files the verifier rewrites) |
 | 02:06 | harness fixes from the review | start | Sonnet 5.5 | | additive keys only; baselines and 0012 metrics regenerated |
 | 02:06 | 0015 Gamma-Poisson guard band (m8) | implement start | Sonnet 5.5 | | plan by Fable (committed) |
+| 08:33 | run | session usage limit | Opus 5.5 | ~02:15–08:31 | three Sonnet agents (harness fixes, 0015, 0013 phase B) stopped at about 02:15 on the session limit; nothing ran until 08:31. Artem extended the run to 12:00: stop launching 11:15, report by 12:00 |
+| 08:34 | harness fixes, 0015 | resumed | Sonnet 5.5 | | after the session limit; tests pass on the partial fixes (112 passed) |
+| 08:34 | 0018 BOCPD (m13) | implement start | Sonnet 5.5 | | plan by Fable (committed) |
+| 08:34 | 0016 CUSUM (m9) | plan start | Sonnet 5.5 | | plan then implement |
+| 08:34 | 0013 | result committed | Sonnet 5.5 | 48 s CPU (verify) | M_π 100, M 30 chosen on TUNE; C1 +0.0001 (−0.00001 to +0.00021) vs hospital-365; replacement rule not met (C4); C6 E1 CRO 48 d; ENGINE 2.4 variance correct (max rel. error 0.64 % vs Monte Carlo); WISCA lowers top severe pick by 0.5 points; finished just before the session limit, verified by the orchestrator |

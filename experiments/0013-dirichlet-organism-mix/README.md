@@ -1,5 +1,5 @@
 ---
-status: proposed    # proposed, then accepted, rejected or superseded
+status: accepted    # proposed, then accepted, rejected or superseded
 by: Claude Code, operated by Artem (overnight run)
 data: [synthetic_microbiology_dataset, seed 2026, as received 2026-10-09]
 parent: 0004
@@ -375,4 +375,261 @@ shares are visibly uncertain.
 
 ## Result
 
+Command: `uv run python experiments/0013-dirichlet-organism-mix/run.py`; it
+writes `out/results.md`, `out/metrics.json`, `out/grid.json` and
+`out/figure.png`. Tags: computed (by that run), measured (counted in the
+data), derived (calculated from numbers given here); every number below is
+computed unless tagged. The estimator and the checks are deterministic;
+bootstrap draws are the harness's (seed 2026, 1,000 resamples of 26 windows
+or 24 months), the Monte Carlo checks use seed 2026. CPU time 28 to 45 s
+over the runs (measured with `aei.harness.Clock`, on a shared laptop; the
+committed outputs record 45.2 s) against the 600 s budget; 20 estimators
+were scored in full (16 settings, 4 controls) and no cut from the plan's
+list was needed. `uv run python scripts/verify_experiments.py --only 0013`
+says "reproduces".
+
+**Setting chosen on TUNE only** (10 windows, 61,847 isolate × antibiotic
+predictions, Brier in `left_out`). At M = 30 the TUNE Brier falls with M_π:
+0.13718, 0.13708, 0.13698, 0.13692 for M_π = 10, 30, 100, 300. The minimum
+(0.13692) lies on the M_π = 300 edge (M = 10 and 30 tie) and is reported as
+such; nothing beyond 300 was run. Eight settings (M_π ≥ 100, any M) are
+within 0.0001 of it, (30, 30) is not among them, so the rule took the one
+nearest to (30, 30): **M_π = 100, M = 30**. The one-layer control's TUNE
+Brier is 0.13719, 0.13705, 0.13692, 0.13686 for M = 10 to 300; 100 and 300
+tie, so **M = 100**. `tuned_on_test` false.
+
+**Metrics against both baseline rows** (95 % bootstrap intervals; 26 windows
+for C1 to C3(a), C8 C1, 24 months for C4, C3(b), C7, C8 C4):
+
+| metric | two-layer (100, 30) | one-layer control (M 100) | hospital-365 | shipped |
+|---|---|---|---|---|
+| C1 all | 0.1415 (0.1399 to 0.1432) | 0.1415 (0.1399 to 0.1432) | 0.1414 (0.1398 to 0.1431) | 0.1417 (0.1401 to 0.1435) |
+| C1 small | 0.1607 (0.1577 to 0.1637) | 0.1607 (0.1577 to 0.1638) | 0.1605 (0.1576 to 0.1635) | 0.1614 (0.1582 to 0.1646) |
+| C1 all, counted | 0.1454 (0.1439 to 0.1470) | 0.1454 (0.1439 to 0.1470) | 0.1453 (0.1437 to 0.1469) | 0.1456 (0.1440 to 0.1472) |
+| C1 small, counted | 0.1418 (0.1394 to 0.1445) | 0.1419 (0.1393 to 0.1445) | 0.1417 (0.1393 to 0.1443) | 0.1424 (0.1399 to 0.1452) |
+| C1 diff to hospital-365, all | +0.00010 (−0.00001 to +0.00021) | +0.00010 (−0.00001 to +0.00020) | 0 | +0.00030 (+0.00014 to +0.00046) |
+| C1 diff to hospital-365, small | +0.00015 (−0.00010 to +0.00038) | +0.00015 (−0.00008 to +0.00037) | 0 | +0.00084 (+0.00035 to +0.00130) |
+| C1 diff to hospital-365, all, counted | +0.00012 (+0.00001 to +0.00024) | +0.00012 (+0.00001 to +0.00024) | 0 | +0.00033 (+0.00017 to +0.00051) |
+| C2 all | 0.4437 (0.4396 to 0.4479) | 0.4437 | 0.4433 (0.4393 to 0.4476) | 0.4445 (0.4403 to 0.4488) |
+| C3(a) slope, intercept | 1.036, 0.026 | 1.035, 0.024 | 1.038, 0.023 | 1.026, 0.031 |
+| C3(b) mild, severe (observed of expected) | 0 of 0.22; 29 of 27.8 | 0 of 0.21; 29 of 26.3 | 0 of 0.13; 29 of 26.2 | 0 of 0.31; 23 of 19.6 |
+| C4 mild, spectrum | 0.9661 (0.9626 to 0.9697) | 0.9661 (0.9626 to 0.9697) | 0.9661 (0.9626 to 0.9697) | 0.9656 (0.9621 to 0.9693) |
+| C4 mild, all organisms | 0.7542 (0.7471 to 0.7605) | 0.7542 (0.7471 to 0.7605) | 0.7542 (0.7471 to 0.7605) | 0.7543 (0.7471 to 0.7606) |
+| C4 severe | 0.9536 (0.9504 to 0.9563) | 0.9533 (0.9499 to 0.9561) | 0.9532 (0.9499 to 0.9559) | 0.9545 (0.9514 to 0.9572) |
+| C4 severe, counted | 0.9381 (0.9353 to 0.9408) | 0.9383 (0.9351 to 0.9412) | 0.9383 (0.9353 to 0.9412) | 0.9386 (0.9356 to 0.9412) |
+| C6 E1 ceftriaxone, E1 cefuroxime, E2 cefuroxime (days) | 48, 117, not reached | 49, not reached, not reached | not reached ×3 | 47, not reached, not reached |
+| C7(a) | 0.905 (0.884 to 0.926) | 0.907 (0.884 to 0.928) | 0.899 (0.875 to 0.923) | 0.902 (0.877 to 0.925) |
+| C7(b) (27 blocks) | 0.741 | 0.741 | 0.556 | 0.741 |
+| C8 C1 (2,692 isolates) | 0.1653 (0.1528 to 0.1923) | 0.1655 (0.1527 to 0.1931) | 0.1669 (0.1538 to 0.1931) | 0.1656 (0.1531 to 0.1928) |
+| C8 C1 diff to hospital-365 | −0.00158 (−0.00349 to +0.00049) | −0.00143 (−0.00320 to +0.00052) | 0 | −0.00131 (−0.00405 to +0.00260) |
+| C8 C4 severe | 0.920 (0.784 to 0.980) | 0.903 (0.723 to 0.980) | 0.906 (0.743 to 0.981) | 0.915 (0.756 to 0.973) |
+
+C4 mild, spectrum and all organisms are the same in every row because the
+mild top pick is the same cell (urinary mecillinam); in C4 severe the
+two-layer row's top pick clears in 431 query-months, hospital-365's in 500,
+so the pooled figures rest on different query-months (15,475 and 15,785
+isolates, measured).
+
+**The value of the separation: two-layer minus one-layer control**, C1,
+paired over the 26 windows: all +0.000003 (−0.000013 to +0.000019), small
+−0.000003 (−0.000053 to +0.000046), all counted −0.000001 (−0.000016 to
++0.000015), small counted −0.000008 (−0.000048 to +0.000035).
+
+**Replacement rule, line by line** (two-layer, chosen setting; the control
+gets the same verdicts):
+
+1. C1 not worse than the shipped row by more than 0.002: 0.1415 against
+   0.1417, −0.0002. Passes. Against hospital-365: +0.00010 (−0.00001 to
+   +0.00021).
+2. C4 not worse than the shipped row on all six figures (point estimate not
+   below): mild spectrum +0.0005, mild all organisms −0.0001, severe −0.0009,
+   and the counted figures +0.0005, −0.0001, −0.0004. Four figures lie below,
+   each far inside the shipped row's interval (about ±0.003 or more). **Fails
+   under the literal reading.** The hospital-365 row fails the same line
+   (severe 0.9532 against 0.9545).
+3. C8 better than the shipped row (lower C8 C1): 0.1653 against 0.1656, lower
+   by 0.0003, inside an interval of 0.1528 to 0.1923. Passes under the
+   literal reading; not a difference beyond its interval.
+4. C3(b): mild 0 of 0.22 expected, severe 29 of 27.8 (ratio 1.04). Passes.
+5. C7(a): 0.905 (0.884 to 0.926). Passes (band 0.85 to 0.95).
+
+The rule is not met (line 2). C6 is in the table: 48 days for E1
+ceftriaxone, 117 for E1 cefuroxime, E2 not reached.
+
+**The grid on the scoring period** (exploratory; a row picked from it is
+`tuned-on-test`; every row in `out/grid.json`). C1 difference to hospital-365
+(all) runs from +0.00004 at (300, 30) to +0.00027 at (10, 300) and falls with
+M_π at every M (at M = 30: +0.00023, +0.00017, +0.00010, +0.00004 for M_π =
+10, 30, 100, 300); 11 of 16 intervals lie wholly above zero, none below. The
+one-layer control runs from +0.00003 (M 300) to +0.00026 (M 10). C7(a) is 0.900
+to 0.906 and C4 severe 0.953 to 0.954 in every row. C6 for E1 ceftriaxone is 36
+to 51 days or not reached; it is reached sooner at larger M_π and smaller M
+(36 days at (300, 10)), and E1 cefuroxime only at M_π ≥ 100 with M ≤ 30 or
+(300, 100). A larger M_π shrinks the mix term of the variance (derived: V_o
+falls as α_0 grows) and METRICS.md's C6 note warns that a narrow interval
+reaches C6 fastest; interval widths were not measured here.
+
+**Checks** (all pass): (1) the variance of ENGINE.md 2.4 against
+200,000-draw Monte Carlo on 20 cells: maximum relative error 0.0064, median
+0.0031; largest gap between the matched-Beta 5 % and 95 % quantiles and the
+Monte Carlo ones 0.0006. (2) WISCA variance on 20 two-organism cells: maximum
+relative error 0.0094 (the pass line is 0.01, and Monte Carlo noise at this
+size is of that order, so the margin is thin), median 0.0021; with one-organism
+types only it equals the formula of 2.4 to 4.5e−16. (3) M_π = M = 0 equals
+0004's unit 365-day raw estimator on 2,106 cells to 2.2e−16. (4) Whole
+hospital as parent, huge M_π and M equals hospital-365 on 2,430 cells to
+2.1e−11. (5) 289 as-of views built, each asserting that the latest row read is
+dated before `view.start`; no assertion fired. (6) The episode C4-style loop
+for E0 reproduces the baseline row's isolate-level severe figures, 0.953183
+and 0.938322.
+
+**WISCA at episode level** (experiment-local; not a harness metric; not
+comparable with the leaderboard's C1 or C4). Targets: 14,246
+first-positive-culture episodes in the 26 windows, 1,519 with two organisms
+(10.7 %); 143,179 episode × antibiotic outcomes in `left_out`, 13,964 of them
+on two-organism episodes. Chosen setting (100, 30), nothing tuned on this
+target. Brier, `left_out` (95 % interval over windows), and difference to E3,
+the episode-level hospital-365 reference:
+
+| predictor | all | diff to E3, all | two-organism episodes | diff to E3, two-organism |
+|---|---|---|---|---|
+| E0 hospital-365, isolate level | 0.1442 (0.1425 to 0.1461) | +0.00026 (+0.00016 to +0.00036) | 0.2106 (0.2050 to 0.2161) | +0.00281 (+0.00231 to +0.00338) |
+| E1 two-layer mix, isolate level | 0.1443 (0.1426 to 0.1462) | +0.00037 (+0.00023 to +0.00052) | 0.2107 (0.2051 to 0.2162) | +0.00285 (+0.00242 to +0.00331) |
+| E2 WISCA, episode types | 0.1440 (0.1422 to 0.1460) | +0.00009 (−0.00005 to +0.00021) | 0.2080 (0.2023 to 0.2137) | +0.00023 (−0.00010 to +0.00053) |
+| E3 hospital-365, episode level | 0.1440 (0.1422 to 0.1458) | reference | 0.2078 (0.2021 to 0.2134) | reference |
+
+WISCA minus the isolate-level two-layer (E2 − E1): all −0.00029 (−0.00040 to
+−0.00018), two-organism episodes −0.00262 (−0.00320 to −0.00213); `counted`,
+all −0.00037 (−0.00049 to −0.00027). C4-style, realised coverage of the first
+severe-basis pick that clears, isolate level against episode level
+(`left_out`; `counted` in brackets): E0 0.9532 → 0.9483 (0.9383 → 0.9320),
+E1 0.9536 → 0.9488 (0.9381 → 0.9318), E2 0.9537 → 0.9487 (0.9381 → 0.9316),
+E3 0.9532 → 0.9484 (0.9383 → 0.9320); the gap is 0.48 to 0.49 points
+(`left_out`) and 0.63 to 0.65 (`counted`) for every predictor, because the pick
+is piperacillin-tazobactam in 500, 427, 380 and 488 of the clearing
+query-months (WISCA clears in 384 query-months, hospital-365 in 500). Per antibiotic over the 26 windows the episode-level realised share is
+below the isolate-level one by 0.5 points (piperacillin-tazobactam,
+ciprofloxacin) to 2.6 (vancomycin), 2.0 (cefuroxime, trimethoprim) and 1.9
+(ampicillin). Independence within an episode: over 13,963 two-organism
+episode × antibiotic outcomes the realised covered share is 0.4596 against
+0.4606 for the product of the two organisms' realised shares; the largest
+per-drug gaps are ciprofloxacin (0.818 against 0.845, n = 759) and trimethoprim
+(0.433 against 0.457, n = 1,080).
+
+**The directional expectations of the Hypothesis.** (1) M_π ≥ 100 chosen:
+yes (100; the TUNE minimum is at 300). (2) C1 within −0.0003 to +0.0003 of
+hospital-365: yes (+0.00010); within 0.0002 of the control: yes (+0.000003).
+(3) C8 not better than the shipped row: contradicted at the point estimate
+(0.1653 against 0.1656), inside the interval; E1 ceftriaxone at 47 days or
+more: yes (48); C3(b) passes: yes; C7(a) in 0.90 to 0.95: yes (0.905); not
+replaced: yes, but through C4 (line 2), not through C8. (4) WISCA Brier lower
+than the isolate-level mix by 0.0001 to 0.0005: yes (−0.00029); top-pick
+episode-level coverage 0.5 to 2 points below isolate level: 0.48 to 0.49
+points, 0.02 below the stated lower bound (the derived value at p = 0.95 was
+0.5). None of the four refutation conditions was met.
+
+**Deviations from plan.**
+
+- Added after the first run, none of which changes a plan section: the paired
+  two-layer minus control interval (the plan names the control but gives no
+  interval for the difference between the two); check 6; the one-organism
+  Brier column; the layout of `results.md`; the figure's layout, reworked twice
+  after I looked at it for overlapping labels (no number changed).
+- Before the TUNE selection ran I scored the WISCA Brier and C4-style on the
+  scoring period in a scratch script (outside the repository) at the arbitrary
+  setting (100, 30) to debug the code. That is the setting TUNE chose
+  afterwards by the rule; nothing was chosen or changed from those numbers
+  beyond fixing a print statement.
+- The plan's CPU estimate was 3 minutes (assumed); 28 to 45 s measured. C6 was
+  scored for every grid row, so the plan's first cut was not used.
+- The plan's rule for organisms under 3 % in the figure (merge into
+  "muut / others") was not exercised: the smallest column is 3.4 %. The
+  `left_out` figure is therefore drawn from eight columns and no merged interval.
+- The checks 1 and 2 draw their Monte Carlo from separate generators both
+  seeded 2026.
+
+Outputs: `out/results.md` (every table with intervals), `out/metrics.json`
+(the chosen row, `tuned_on_test` false, extra fields `setting`, `tune_brier`,
+`control`, `vs_control`, `checks`, `wisca`), `out/grid.json`, `out/figure.png`
+(49 KB, 120 dpi). Code: `run.py`, `mixture.py`, `episodes.py`, `wisca_eval.py`,
+`figure.py` in this directory.
+
 ## Interpretation
+
+**What it means for the hypothesis.** The prediction held where it was
+numerical: the two-layer estimate is indistinguishable from the pooled
+hospital year on C1 (+0.00010, interval −0.00001 to +0.00021), and from the
+one-layer control (+0.000003, −0.000013 to +0.000019), so on this dataset
+separating the organism mix from per-organism susceptibility changes the
+doctor's number by nothing a doctor, or the harness, can see. The reason is
+in the grid: C1 and the TUNE Brier improve at every step of more shrinkage of
+the mix (M_π), and the best settings are the ones closest to the pooled
+hospital year. There is no unit-specific organism signal to keep (the mix is
+the same in every unit, p = 0.36 to 0.90, measured), and the unit-specific
+susceptibility that exists for four urinary *E. coli* drugs (p < 0.02,
+measured) appears too small to pay for the noise of a 365-day unit count; this
+is 0004's finding again, now with the mix and the susceptibility each given
+their own strength.
+
+**Against the decision rules.** The replacement rule is not met, through C4
+(four of six figures a hair below the shipped row, each far inside its
+interval, so nothing is claimed beyond "no better"); the hospital-365 row and
+the one-layer control fail the same line. C8 reads as better than the shipped
+row by 0.0003 on 2,692 isolates and 27 blocks, an interval of 0.1528 to 0.1923:
+that is noise, not responsiveness. C6 tells the same story: 48 days for E1
+ceftriaxone, the shipped row's 47; the 117 days for cefuroxime (the shipped row
+never reaches it) comes with a slightly narrower interval, and the grid shows
+C6 improving only where the interval is narrowest. What is new for the team is
+not a better number but three things that hold: the closed-form variance of
+ENGINE.md 2.4 is correct (maximum relative error 0.64 % against Monte Carlo)
+and its matched-Beta interval is within 0.0006 of the Monte Carlo quantiles on
+20 cells; the intervals are honest (C7(a) 0.905, in the band, as the shipped
+row's 0.902); and the constants asked about in QUESTIONS B1 and B4 matter
+little on this data (C1 spans 0.00023 across the 16 settings, +0.00004 to
++0.00027), so the candidates (30, 30) are not worse than the best setting by
+more than 0.00013, with the caveat that more shrinkage of the mix is never
+worse here.
+
+**WISCA.** Counting a polymicrobial culture as one episode lowers the realised
+coverage of the list's top severe pick by 0.5 points (0.63 counting untested
+as not covered), and by 0.5 to 2.6 points for individual drugs; 10.7 % of
+episodes are two-organism (measured), which is as derived. The independence
+product predicts two-organism episodes well (0.4596 observed against 0.4606;
+the two largest per-drug gaps, 2.7 and 2.4 points, are within about two
+binomial standard errors, derived, and are not claimed), so on this synthetic
+data nothing is lost by building the episode number from per-organism Betas.
+But the gain over a plain episode-level hospital share is nil: WISCA minus E3
+is +0.00009 (−0.00005 to +0.00021), and the gain over reading the isolate-level
+number as an episode probability is 0.0003 Brier (0.0026 on the two-organism
+episodes). For the doctor the useful output is the gap itself, "covers 95.3 %
+of isolates, 94.8 % of cultures", not a different ranking: the top pick and its
+standing are unchanged except that WISCA clears piperacillin-tazobactam in 384
+query-months instead of 500, which fits a wider interval (not measured).
+
+**Strongest alternative explanation.** The data. The generator draws organisms
+by specimen, not by unit, and gives units little lasting difference in
+susceptibility (0004, and the p-values in the Hypothesis), so a method whose
+whole point is to let unit-level mix and unit-level susceptibility differ has
+nothing to find; the independence within an episode may also be built in. On
+real data with a unit-specific mix (an ICU's *Pseudomonas*, an outpatient
+*S. saprophyticus*) the separation could matter, and nothing here says it
+would not. Two further limits: the TUNE windows see 12 to 52 weeks of history
+rather than 365 days, which favours strong shrinkage (the minimum sits on the
+300 edge, and larger M_π were not run; the limit is the baseline row); and the
+estimator reads no onset, sex or age, so a difference those carry (urinary
+*E. coli* by sex and onset, 0004's review) is not in the number.
+
+**What to run next.** (1) The organism-known query: with π collapsed onto a
+suspected organism the per-organism Betas give a number a pooled share cannot,
+which needs organism-level targets in the harness. (2) A test where the
+separation should matter: inject a unit-specific organism shift or a
+resistance rise inside one organism (the injection harness, as 0007 and 0011)
+and compare how fast the two-layer and the one-layer interval react (C6, C8),
+since E1 and E2 moved one organism's susceptibility and the chosen row's
+shrinkage hid it. (3) Combine with 0012's discount and onset strata, where unit
+and recent data are given a chance, and with the pooling levels of method 6.
+(4) If Artem wants the explainable per-organism display, the estimator and
+WISCA are small enough to move into `libs/utils/py/aei` with tests; C1 and C4
+say it costs nothing in accuracy and the figure says what it shows. QUESTIONS
+B1 and B4 are sharpened, not settled: on this data C1 moves by 0.00013 between
+M_π = 30 and 300 (at M = 30), inside the intervals.
