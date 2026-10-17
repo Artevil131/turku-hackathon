@@ -249,113 +249,13 @@
   stroke-width: 2;
 }
 
-/* the Tyks lens */
-.geo-tube {
-  fill: none;
-  stroke: var(--geo-ink3);
-  stroke-opacity: 0.28;
-  stroke-linecap: round;
-}
-.geo-tube[data-active="true"] {
-  stroke: var(--geo-ink2);
-  stroke-opacity: 0.75;
-}
-.geo-spread {
-  fill: none;
-  stroke: var(--geo-accent);
-  stroke-linecap: round;
-}
+/* arrowheads of the map */
 .geo-spread-head {
   fill: var(--geo-accent);
-}
-.geo-trail {
-  fill: none;
-  stroke: var(--geo-ink2);
-  stroke-dasharray: 6 4;
 }
 .geo-trail-head {
   fill: var(--geo-ink2);
 }
-.geo-tag {
-  fill: #fff;
-  stroke: var(--geo-accent);
-  stroke-width: 1.5;
-}
-.geo-leader {
-  stroke: var(--geo-accent);
-  stroke-width: 1;
-  stroke-dasharray: 2 2;
-}
-.geo-tag-text {
-  font-size: 12px;
-  font-weight: 600;
-  fill: var(--geo-ink);
-  font-variant-numeric: tabular-nums;
-}
-.geo-trails .geo-tag-text {
-  font-weight: 400;
-  paint-order: stroke;
-  stroke: #fff;
-  stroke-width: 3px;
-}
-.geo-box {
-  fill: #fff;
-  stroke: var(--geo-ink2);
-  stroke-width: 1.5;
-  filter: none;
-}
-.geo-box.geo-lit {
-  stroke: var(--geo-alert);
-  stroke-width: 3.5;
-  fill: var(--st-alert-bg, #fde3e9);
-}
-.geo-code {
-  font-size: 13px;
-  font-weight: 600;
-  fill: var(--geo-ink);
-  pointer-events: none;
-}
-.geo-badge {
-  fill: #fff;
-  stroke: var(--geo-alert);
-  stroke-width: 1.5;
-}
-.geo-badge-glyph {
-  color: var(--geo-alert);
-}
-.geo-badge-text {
-  font-size: 12px;
-  fill: var(--geo-alert);
-  font-weight: 600;
-  letter-spacing: 1px;
-}
-.geo-node {
-  cursor: pointer;
-  outline: none;
-}
-.geo-ring {
-  fill: none;
-  stroke: transparent;
-  stroke-width: 3;
-}
-.geo-node[data-selected="true"] .geo-ring {
-  stroke: var(--geo-accent);
-}
-.geo-node[data-focus="true"] .geo-ring {
-  stroke: var(--geo-accent);
-  stroke-dasharray: 4 3;
-}
-.geo-node:hover .geo-ring {
-  stroke: var(--brand-accent-line, #c6c4ed);
-}
-.geo-node:focus-visible .geo-ring {
-  stroke: var(--geo-accent);
-  stroke-width: 3;
-}
-.geo-spreads g[data-active="true"] .geo-spread {
-  stroke-width: 5;
-}
-
 /* legend, card, lists */
 .geo-legend-keys {
   padding-top: 2px;
@@ -517,7 +417,7 @@
   }
 }
 
-/* the unit graph window */
+/* the unit graph: one unit's patient flow as a small Sankey */
 .ug {
   display: flex;
   flex-direction: column;
@@ -537,71 +437,173 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 4px var(--gap, 8px);
+  min-height: 28px;
 }
 .ug-title {
   margin: 0;
   font-size: var(--t-m, 15px);
   font-weight: 600;
 }
-.ug-window {
+.ug-caption {
+  margin: 0;
   color: var(--ink-3, #6f7292);
   font-size: var(--t-xs, 12px);
 }
-.ug-head .geo-chip {
+.ug-back {
   margin-left: auto;
+  padding: 2px 4px;
+  border: 0;
+  background: none;
+  color: var(--geo-accent);
+  font: inherit;
+  font-size: var(--t-xs, 12px);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
-.ug-head .geo-chip + .geo-chip {
-  margin-left: 0;
+.ug-back:focus-visible {
+  outline: 2px solid var(--geo-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 .ug-stage {
+  position: relative;
   flex: 1 1 auto;
-  min-height: 140px;
-  display: flex;
-  border: 1px solid var(--line, #e4e6ee);
-  border-radius: var(--radius-control, 6px);
-  background: color-mix(in oklab, var(--brand-accent-soft, #ecebfc) 35%, #fff);
+  min-height: 250px;
+  overflow: hidden;
+}
+.ug-stage[data-narrow="true"] {
+  flex: none;
+  min-height: 0;
 }
 .ug-svg {
   display: block;
-  width: 100%;
-  height: 100%;
-  min-height: 0;
+  max-width: 100%;
 }
-.ug-keys {
-  flex: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 14px;
+.ug-empty {
   margin: 0;
-  padding: 0;
-  list-style: none;
-  font-size: var(--t-xs, 12px);
+  padding: 24px 0;
+}
+.ug-flow {
+  animation: ug-in 200ms ease-out;
+}
+.ug[data-reduced="true"] .ug-flow {
+  animation: none;
+}
+@keyframes ug-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ug-flow {
+    animation: none;
+  }
+}
+.ug-band {
+  fill: var(--ink-3, #6f7292);
+  fill-opacity: 0.2;
+  transition: fill-opacity 120ms;
+}
+.ug-band[data-accent="true"] {
+  fill: var(--geo-accent);
+  fill-opacity: 0.34;
+}
+.ug-band[data-active="true"] {
+  fill-opacity: 0.42;
+}
+.ug-band[data-accent="true"][data-active="true"] {
+  fill-opacity: 0.55;
+}
+.ug-bar {
+  fill: var(--ink-2, #1d204e);
+}
+.ug-bar[data-data="true"] {
+  fill: #fff;
+  stroke: var(--ink-2, #1d204e);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 2;
+}
+.ug-ring {
+  fill: none;
+  stroke: var(--geo-alert);
+  stroke-width: 2;
+}
+.ug-label {
+  font-size: 12px;
+  fill: var(--ink-2, #1d204e);
+  font-variant-numeric: tabular-nums;
+}
+.ug-code {
+  font-weight: 600;
+  fill: var(--ink, #07081c);
+}
+.ug-glyph {
   color: var(--ink-2, #1d204e);
 }
-.ug-keys li {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
+.ug-glyph[data-kind="sentinel"],
+.ug-glyph[data-kind="cluster"],
+.ug-glyph[data-kind="trend"],
+.ug-glyph[data-kind="divergence"] {
+  color: var(--geo-alert);
 }
-.ug-keys .ug-schematic {
-  margin-left: auto;
-  color: var(--ink-3, #6f7292);
-  font-style: italic;
+.ug-node {
+  cursor: pointer;
+  outline: none;
 }
-.geo-tube {
-  stroke-opacity: 0.42;
+.ug-hit {
+  fill: transparent;
 }
-.geo-tube[data-faint="true"] {
-  stroke-opacity: 0.16;
+.ug-focus {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 2;
 }
-.geo-tube[data-active="true"] {
-  stroke-opacity: 0.75;
+.ug-node:hover .ug-focus {
+  stroke: var(--brand-accent-line, #c6c4ed);
 }
-
-.ws-body .ug-title,
-.ws-body .geo-title {
-  display: none;
+.ug-node:focus-visible .ug-focus {
+  stroke: var(--geo-accent);
 }
-.ug-head {
-  min-height: 28px;
+.ug-centre-box {
+  fill: var(--ink-2, #1d204e);
+}
+.ug-centre-box[data-data="true"] {
+  stroke: #fff;
+  stroke-width: 2;
+  stroke-dasharray: 5 3;
+}
+.ug-centre-code {
+  font-size: 15px;
+  font-weight: 600;
+  fill: #fff;
+}
+.ug-centre-n {
+  font-size: 11.5px;
+  fill: #fff;
+  font-variant-numeric: tabular-nums;
+}
+.ug-centre-name {
+  font-size: 12px;
+  fill: var(--ink-2, #1d204e);
+}
+.ug-centre-name[data-in="true"] {
+  font-size: 11.5px;
+  fill: #fff;
+}
+.ug-chip rect {
+  fill: #fff;
+  stroke: var(--ink-2, #1d204e);
+  stroke-width: 1.5;
+}
+.ug-chip[data-lit="true"] rect {
+  stroke: var(--geo-alert);
+}
+.ug-chip text {
+  font-size: 12px;
+  font-weight: 600;
+  fill: var(--ink, #07081c);
 }

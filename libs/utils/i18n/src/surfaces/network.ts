@@ -52,6 +52,21 @@ export const networkEn = {
   netLegendSelected: "heavy ring: selected unit, filters the feed",
   netSelectedUnit: "selected unit",
   netWindowNote: "Flows and signals cover 28 days.",
+  netFlowCaption: "Patient flow, last 28 days · share of the unit's patients · schematic",
+  netFlowInfo:
+    "Red ring and glyph: a resistance signal in this unit in the last 28 days, the word names the kind. A dashed outline with ! is a data problem, not resistance. Bands: patients who moved between units; purple bands lead to units with a signal.",
+  netFlowInfoLabel: "What the ring means",
+  netBackToSignal: "Back to the signal",
+  netOthers: "others",
+  netFlowIn: "{n} in",
+  netFlowOut: "{n} out",
+  netBandIn: "{from} to {to}: {n} patients, {share} % of the patients who came to {to}",
+  netBandOut: "{from} to {to}: {n} patients, {share} % of the patients who left {from}",
+  netBandOthers: "others ({list}) to {to}: {n} patients, {share} % of the patients who came to {to}",
+  netBandOthersOut: "{from} to others ({list}): {n} patients, {share} % of the patients who left {from}",
+  netFlowRecentre: "show its flow",
+  netCentreAria: "{unit}, {name}: {nIn} patients in, {nOut} patients out in 28 days",
+  netFlowEmpty: "No transfers in or out of {unit} in the last 28 days.",
 } as const;
 
 export const networkFi: Record<keyof typeof networkEn, string> = {
@@ -106,4 +121,19 @@ export const networkFi: Record<keyof typeof networkEn, string> = {
   netLegendSelected: "paksu kehys: valittu yksikkö, rajaa syötteen",
   netSelectedUnit: "valittu yksikkö",
   netWindowNote: "Virrat ja signaalit kattavat 28 päivää.",
+  netFlowCaption: "Potilasvirta, viimeiset 28 päivää · osuus yksikön potilaista · kaavio",
+  netFlowInfo:
+    "Punainen kehys ja merkki: yksikössä on resistenssisignaali viimeisen 28 päivän ajalta, sana kertoo lajin. Katkoviivakehys ja ! on aineisto-ongelma, ei resistenssiä. Palkit: yksiköiden välillä siirtyneet potilaat; violetit palkit johtavat yksiköihin, joissa on signaali.",
+  netFlowInfoLabel: "Mitä kehys tarkoittaa",
+  netBackToSignal: "Takaisin signaaliin",
+  netOthers: "muut",
+  netFlowIn: "{n} tuli",
+  netFlowOut: "{n} lähti",
+  netBandIn: "{from} yksikköön {to}: {n} potilasta, {share} % yksikköön {to} tulleista",
+  netBandOut: "{from} yksikköön {to}: {n} potilasta, {share} % yksiköstä {from} lähteneistä",
+  netBandOthers: "muut ({list}) yksikköön {to}: {n} potilasta, {share} % yksikköön {to} tulleista",
+  netBandOthersOut: "{from} muihin ({list}): {n} potilasta, {share} % yksiköstä {from} lähteneistä",
+  netFlowRecentre: "näytä sen virta",
+  netCentreAria: "{unit}, {name}: {nIn} potilasta tuli, {nOut} lähti 28 päivässä",
+  netFlowEmpty: "Yksikköön {unit} tai sieltä pois ei ollut siirtoja viimeisen 28 päivän aikana.",
 };
