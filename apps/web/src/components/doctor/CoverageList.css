@@ -233,6 +233,34 @@
 .cl-num > span {
   display: block;
 }
+/* Two figures, year then four weeks, each a number over its label. */
+.cl-figs {
+  display: flex;
+  justify-content: flex-end;
+  gap: 2px 16px;
+}
+.cl-fig {
+  display: grid;
+  gap: 1px;
+  text-align: right;
+}
+.cl-fig b {
+  font-size: var(--d-m, 16px);
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+.cl-fig small {
+  color: var(--d-ink-3);
+  font-size: var(--d-xs);
+  white-space: nowrap;
+}
+.cl-fig-recent b {
+  color: var(--d-ink-2);
+}
+.cl-basis {
+  margin-top: 3px;
+  color: var(--d-ink-3);
+}
 
 .cl-num b {
   color: var(--d-ink);
@@ -404,6 +432,12 @@
     grid-row: 2;
     text-align: left;
     line-height: 1.6;
+  }
+  .cl-figs {
+    justify-content: flex-start;
+  }
+  .cl-fig {
+    text-align: left;
   }
   .cl-res {
     grid-column: 2;
