@@ -433,3 +433,53 @@ live tests' sensitivity may stack, and the two-unit family (0.19 against
 says theta of 8, not 2.5, for bursts of 4, and a per-series run length of
 about 70 years (h near 7 for one common limit), to be re-checked on a drip
 family before it answers C5; nothing here changes the live tool.
+
+## Held-out re-score (orchestrator's request, after close)
+
+Requested by Artem's addendum: before a method is named best in its family in the report, re-score it on injection
+seeds that no experiment used. Run: `uv run python experiments/0016-cusum/heldout.py` (new file; run.py and everything
+above this heading are unchanged). CPU time 16.3 s (computed; wall 16.4 s; budget 10 minutes, no family, cell or trial
+was cut). Seeds 2027, 2028, 2029, 2030 (the held-out seeds of `aei.score_detection.confirm`), 50 trials per seed, 200
+per cell, same levels as the screening. Nothing was re-chosen: the Poisson setting (theta 8, weekly, no guard band), the
+Bernoulli setting (theta 8, guard band 4 weeks) and the operating run length (L = 72.0682 years, p = 3.79897e-05) are
+read from `out/metrics.json`, the sweep levels from `out/grid.json`, and the detector is built as run.py builds the union.
+The live-set rows are the `_heldout` keys of `benchmarks/overnight-2026-10-17/baselines/live-set-retuned-year1.json` and
+`live-set-shipped.json` (the same seeds and trials). Outputs: `out/heldout.json` (metrics, intervals, n, per-seed D2 and
+the D5 curve), `out/heldout.md` (the tables below with all five families, k = 3 and 4, and Wilson intervals). Every
+number below is computed by that run or read from the files named; intervals are Wilson 95 %.
+
+**D5 at about 3 to 3.5 episodes a year, k = 4 (computed).** The noise a year comes from the real data, not from the
+seeds, so it is the same in both columns (3.52, 7 episodes for the union; 3.01, 6 for the live rows).
+
+| row | rare, screening (seed 2026) | rare, held-out | common ESBL, screening | common ESBL, held-out |
+|---|---|---|---|---|
+| union (0016), L = 72.1 years | 0.665 [0.597, 0.727] | 0.660 [0.592, 0.722] | 0.485 [0.417, 0.554] | 0.435 [0.368, 0.504] |
+| live re-tuned year 1 (0.3 x alphas) | 0.920 [0.874, 0.950] | 0.940 [0.898, 0.965] | 0.750 [0.686, 0.805] | 0.695 [0.628, 0.755] |
+| live shipped (3 x alphas) | 0.920 [0.874, 0.950] | 0.940 [0.898, 0.965] | 0.750 [0.686, 0.805] | 0.695 [0.628, 0.755] |
+
+Median delay in days, screening / held-out (computed): union rare 7 / 7, common ESBL 6 / 7; live rows rare 6 / 5,
+common ESBL 6 / 7.
+
+**D2 at k = 3 and 4, rate (computed), screening / held-out; the re-tuned and shipped rows are each at their own level.**
+
+| family, k | union (0016) | live re-tuned | live shipped |
+|---|---|---|---|
+| rare, 3 | 0.345 / 0.400 | 0.860 / 0.885 | 0.615 / 0.680 |
+| rare, 4 | 0.665 / 0.660 | 0.980 / 0.970 | 0.890 / 0.890 |
+| common resistant, 3 | 0.025 / 0.030 | 0.020 / 0.030 | 0.005 / 0.005 |
+| common resistant, 4 | 0.040 / 0.010 | 0.010 / 0.000 | 0.005 / 0.000 |
+| wild type, 3 | 0.025 / 0.000 | 0.005 / 0.010 | 0.000 / 0.000 |
+| wild type, 4 | 0.025 / 0.035 | 0.000 / 0.000 | 0.000 / 0.000 |
+| common ESBL, 3 | 0.230 / 0.220 | 0.700 / 0.625 | 0.345 / 0.285 |
+| common ESBL, 4 | 0.485 / 0.435 | 0.880 / 0.880 | 0.610 / 0.590 |
+| two unit, 3 | 0.130 / 0.170 | 0.475 / 0.405 | 0.210 / 0.210 |
+| two unit, 4 | 0.190 / 0.225 | 0.565 / 0.555 | 0.240 / 0.285 |
+
+Reading (computed comparisons, not a new test): the headline D5 rates of the union and of the live rows all lie inside
+their screening intervals. Of the 10 D2 cells (5 families, k = 3 and 4) per row, 2 held-out union rates lie outside the screening
+interval of the same cell (common resistant k = 4: 0.010 against [0.020, 0.077]; wild type k = 3: 0.000 against [0.011,
+0.057]), 3 of the re-tuned row (common resistant k = 4, common ESBL k = 3: 0.625 against [0.633, 0.759], two unit k = 3:
+0.405 against [0.407, 0.544]) and 2 of the shipped row (rare k = 3: 0.680 just above [0.546, 0.680], common resistant
+k = 4), all by under 0.02, so the screening numbers were not a lucky seed for either side. The gap on the headline stays: rare
+0.660 against 0.940 and common ESBL 0.435 against 0.695, with the held-out intervals not overlapping. On this evidence the CUSUM union is not best in its family on D5 at this operating level; the
+re-tuned live set is, on seed 2026 and on seeds 2027 to 2030.

@@ -53,3 +53,6 @@ Code, Opus 5.5, operated by Artem).
 | 09:17 | 0022 ensemble | implement start | Sonnet 5.5 | | moves the CUSUM into aei.cusum with a reproduction test |
 | 09:20 | 0021 naming step (m27) | plan start | Sonnet 5.5 | | moves 0015's detector into aei.gamma_poisson in phase B |
 | 09:24 | 0015 | result committed | Sonnet 5.5 | 262–336 s CPU | year 1 chose S 26, g 0, L 1, q<0.005; D5 rare 0.205 (0.155–0.266), common ESBL 0.095 at 1.0 episode/yr (level 0.001; 0.005 sits at 5.02/yr, knife-edge); refuted; noise all from 243 organism × specimen series; on the 36 phenotype series alone 0.715 / 0.65 at 3.0/yr, level with live phenotype Poisson; budget never binds; no Fable review |
+| 09:25 | 0021 | plan committed | Sonnet 5.5 | 5 min | 7-row naming table, incident rules R1–R7 (R1 = D-034 reproduction) |
+| 09:25 | 0016 held-out re-score | start | Sonnet 5.5 | | Artem's winner's-curse rule; seeds 2027–2030 |
+| 09:27 | 0016 held-out re-score | finish | Sonnet 5.5 | 16 s CPU | seeds 2027–2030, 200 per cell: CUSUM D5 rare 0.660, common ESBL 0.435 (screening 0.665, 0.485); live set 0.940, 0.695 (0.920, 0.750); gap stays, intervals do not overlap |
