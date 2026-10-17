@@ -1,20 +1,24 @@
-/* The researcher's board. At 1100 px and wider the panels float inside the
-   workspace (workspace/workspace.css), which is as tall as its lowest panel;
-   the page area scrolls under the timeline. Narrower, the panels stack. */
-
+/* The console's final grid row is the research board's viewport. */
 .board {
   display: block;
   min-width: 0;
+  min-height: 0;
   position: relative;
-  /* Room under the lowest panel. */
-  padding-bottom: 12px;
 }
-
 @media (min-width: 1100px) {
-  /* The timeline stays put; the board scrolls under it. Never sideways. */
+  .page:has(> .board) {
+    overflow: hidden;
+  }
+  .board {
+    height: 100%;
+  }
+}
+@media (max-width: 1099px) {
   .page:has(> .board) {
     display: block;
-    overflow-x: hidden;
-    overflow-y: auto;
+    overflow: auto;
+  }
+  .board {
+    padding-bottom: 12px;
   }
 }
