@@ -17,11 +17,15 @@ import { networkEn } from "./surfaces/network.ts";
 import { notebookEn } from "./surfaces/notebook.ts";
 import { projectsEn } from "./surfaces/projects.ts";
 import { qualityEn } from "./surfaces/quality.ts";
+import { shellEn } from "./surfaces/shell.ts";
 import { sitesEn } from "./surfaces/sites.ts";
+import { startEn } from "./surfaces/start.ts";
 import { timelineEn } from "./surfaces/timeline.ts";
 import { toolsEn } from "./surfaces/tools.ts";
 
 export const en = {
+  ...startEn,
+  ...shellEn,
   askSubmit: "Ask",
   askLoading: "Understanding…",
   askUnavailable: "The assistant is unavailable, use the filters.",

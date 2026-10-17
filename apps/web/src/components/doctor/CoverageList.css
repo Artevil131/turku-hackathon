@@ -31,7 +31,7 @@
   outline: none;
 }
 
-.cl-head h1 {
+.cl-head h2 {
   margin: 0;
   font-family: var(--brand-font-display, inherit);
   font-size: var(--d-m);
@@ -351,7 +351,7 @@
   cursor: pointer;
 }
 
-@media (max-width: 1199px) {
+@container coverage (max-width: 1199px) {
   .cl-cols,
   .cl-row {
     grid-template-columns: minmax(100px, 1fr) minmax(175px, 1.5fr) 62px 44px;
@@ -363,7 +363,7 @@
   }
 }
 
-@media (max-width: 959px) {
+@container coverage (max-width: 959px) {
   .cl,
   .cl-scroll {
     overflow: visible;

@@ -283,10 +283,13 @@ function build(
   else {
     // One row per lane. A pill that would touch the one before it joins it: the run becomes one "n signals" pill.
     const lanesAlerts = new Map<number, { members: Alert[]; right: number; w: number; label: string }[]>();
+    // A narrow band (a timeline window at a third of a laptop screen) keeps the pills but drops their words:
+    // a single signal is a bare marker, a run shows its count. The full text stays in each pill's label and title.
+    const narrow = width < 420;
     for (const a of order) {
       const lane = a.ward ? wards.indexOf(a.ward) : -1;
       if (a.ward && lane < 0) continue;
-      const label = pillLabel(locale, a);
+      const label = narrow ? "" : pillLabel(locale, a);
       const w = pillWidth(label, pillKind(a) === "sentinel");
       const edge = Math.max(L.gutter + w, Math.min(xOf(dayNumber(a.date) + 0.5) + 3, right - 1));
       const stack = lanesAlerts.get(lane) ?? [];
@@ -297,7 +300,7 @@ function build(
         if (!cur || !prev || cur.right - cur.w >= prev.right + 2) break;
         stack.pop();
         const members = [...prev.members, ...cur.members];
-        const merged = t(locale, "tlPillSignals", { n: members.length });
+        const merged = narrow ? String(members.length) : t(locale, "tlPillSignals", { n: members.length });
         const mw = pillWidth(
           merged,
           members.some((x) => pillKind(x) === "sentinel"),

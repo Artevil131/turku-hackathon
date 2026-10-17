@@ -14,7 +14,7 @@
   font-size: var(--t-s, 13px);
 }
 
-.mt-top h1 {
+.mt-top :is(h1, h2) {
   margin: 0;
   font-family: var(--brand-font-display, inherit);
   font-size: var(--t-l, 22px);

@@ -24,7 +24,7 @@
 }
 
 /* Desktop and laptop widths: the chips wrap onto a second line rather than being cut off at the right edge. */
-@media (min-width: 960px) {
+@container coverage (min-width: 960px) {
   .syn-row {
     flex-wrap: wrap;
     row-gap: 6px;
@@ -80,7 +80,7 @@
   outline-offset: 2px;
 }
 
-@media (max-width: 959px) {
+@container coverage (max-width: 959px) {
   .syn {
     flex-direction: column;
     align-items: stretch;

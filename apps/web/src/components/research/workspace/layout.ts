@@ -10,7 +10,7 @@ export const MAX_ROWS = 160;
 
 import { type ChartSpec, parseSpec } from "../charts/spec.ts";
 
-export const WIN_IDS = ["signals", "map", "graph", "math", "assistant", "grid", "reproduce", "notebook"] as const;
+export const WIN_IDS = ["signals", "map", "graph", "math", "assistant", "grid", "reproduce", "notebook", "coverage"] as const;
 export type WinId = (typeof WIN_IDS)[number];
 
 export interface Rect {
@@ -49,6 +49,7 @@ export const MIN_SIZE: Record<WinId, { w: number; h: number }> = {
   grid: { w: 4, h: 8 },
   reproduce: { w: 5, h: 14 },
   notebook: { w: 3, h: 10 },
+  coverage: { w: 4, h: 12 },
 };
 
 export const CHART_MIN_SIZE = { w: 4, h: 10 };
@@ -81,8 +82,10 @@ export function defaultLayout(): Layout {
     assistant: { x: 9, y: 36, w: 3, h: 8, open: false },
     grid: { x: 0, y: 0, w: 12, h: 30, open: false },
     reproduce: { x: 4, y: 0, w: 5, h: 14, open: false },
+    // The doctor's patient coverage: an ordinary window, closed until opened from the Windows menu or a template.
+    coverage: { x: 0, y: 0, w: 6, h: 30, open: false },
   };
-  return { wins, charts: {}, order: ["signals", "map", "graph", "math", "assistant", "grid", "reproduce", "notebook"] };
+  return { wins, charts: {}, order: ["signals", "map", "graph", "math", "assistant", "grid", "reproduce", "notebook", "coverage"] };
 }
 
 export type Preset = "default" | "map" | "signals" | "units" | "analysis";
@@ -324,6 +327,11 @@ export function loadLayout(): Layout | null {
   } catch {
     return null;
   }
+}
+
+/** The layout as the JSON a project stores (the same shape as the browser's saved layout). */
+export function serializeLayout(layout: Layout): string {
+  return JSON.stringify({ v: 3, ...layout });
 }
 
 export function saveLayout(layout: Layout | null): void {

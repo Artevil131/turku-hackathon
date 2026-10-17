@@ -19,7 +19,7 @@ export function hashParams(): URLSearchParams {
 }
 
 /** Params that belong to the whole app (the timeline's layers, the hospital, the chosen weeks), kept when a page writes its own. */
-const SHARED_PARAMS = ["tl", "hospital", "from", "to"] as const;
+const SHARED_PARAMS = ["tl", "hospital", "from", "to", "quick"] as const;
 
 /**
  * Pure: `hash` (with or without the leading `#`) with `params` set, empty or null

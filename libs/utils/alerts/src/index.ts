@@ -95,6 +95,8 @@ export type Alert = CpeAlert | NewInUnitAlert | DetectorAlert | CarrierAlert;
 
 /** Look-back for "new in a unit" (D-021). */
 export const NEW_IN_UNIT_DAYS = 180;
+export const SAMPLING_DROP_SUPPRESSION_DAYS = 14;
+export const NEW_IN_UNIT_PHENOTYPES = ["mrsa", "vre"] as const;
 
 /**
  * An isolate with the phenotype in a unit that had none in the `lookbackDays`
@@ -105,7 +107,7 @@ export const NEW_IN_UNIT_DAYS = 180;
  */
 export function newInUnitAlerts(
   records: readonly IsolateRecord[],
-  phenotypes: readonly Phenotype[] = ["mrsa", "vre"],
+  phenotypes: readonly Phenotype[] = NEW_IN_UNIT_PHENOTYPES,
   lookbackDays = NEW_IN_UNIT_DAYS,
   wards: readonly Ward[] = WARDS,
 ): NewInUnitAlert[] {
@@ -182,7 +184,12 @@ export function detectorAlerts(signals: readonly Signal[]): DetectorAlert[] {
   const runs = eps.filter((e) => e.detector === "empty-run");
   const sameGap = (e: (typeof eps)[number]) =>
     e.detector === "sampling-drop" &&
-    runs.some((r) => r.first.ward === e.first.ward && r.first.date <= e.first.date && daysBetween(r.first.date, e.first.date) <= 14);
+    runs.some(
+      (r) =>
+        r.first.ward === e.first.ward &&
+        r.first.date <= e.first.date &&
+        daysBetween(r.first.date, e.first.date) <= SAMPLING_DROP_SUPPRESSION_DAYS,
+    );
   return eps
     .filter((e) => !sameGap(e))
     .map(({ first: s }) => ({

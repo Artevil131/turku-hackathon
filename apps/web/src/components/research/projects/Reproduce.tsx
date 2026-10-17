@@ -25,10 +25,10 @@ export function Reproduce({
         <p>{t(locale, "reproduceEmpty")}</p>
         <button
           type="button"
-          className="ws-tray-button"
-          onClick={() => document.querySelector<HTMLButtonElement>("[data-project-dialog]")?.click()}
+          className="reproduce-save"
+          onClick={() => dispatchEvent(new CustomEvent("aei:project-action", { detail: "save" }))}
         >
-          {t(locale, "projectButton")}
+          {t(locale, "pmSaveAs")}
         </button>
       </div>
     );

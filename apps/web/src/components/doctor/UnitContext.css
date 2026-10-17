@@ -222,7 +222,7 @@
 }
 
 /* Phone: the step tiles are too narrow for "whole hospital" on one line; let the name wrap instead of cutting it. */
-@media (max-width: 860px) {
+@container coverage (max-width: 860px) {
   .uc-step-name {
     white-space: normal;
     overflow-wrap: anywhere;

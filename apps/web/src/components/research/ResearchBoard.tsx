@@ -1,12 +1,14 @@
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { currentSite, homeSite } from "../../sites.ts";
+import { InSlot, useShell } from "../../shell/context.ts";
 import { hashParams, subscribeHash, writeHashParams } from "../../url.ts";
+import { CoverageWindow } from "../doctor/CoverageWindow.tsx";
 import { Assistant } from "./assistant/Assistant.tsx";
 import { type BoardState, boardFromUrl, boardToParams, type FeedProps } from "./board.ts";
 import { ChartForm } from "./charts/ChartForm.tsx";
 import { ChartWindow } from "./charts/ChartWindow.tsx";
 import type { ChartSpec } from "./charts/spec.ts";
-import { applyFilters } from "./feed/model.ts";
+import { applyFilters, shift } from "./feed/model.ts";
 import { computeSpans, useRelations } from "./feed/spans.ts";
 import { useIncidents } from "./feed/useIncidents.ts";
 import { GeoMap } from "./geo/GeoMap.tsx";
@@ -16,7 +18,7 @@ import type { SliceSources } from "./notebook/cells/SliceCell.tsx";
 import { appendResult, pageSlot, withSite } from "./notebook/model.ts";
 import { Notebook } from "./notebook/Notebook.tsx";
 import { useNotebookPage } from "./notebook/usePage.ts";
-import { ProjectControls } from "./projects/ProjectControls.tsx";
+import { ProjectActions } from "./projects/ProjectActions.tsx";
 import { type NotebookLanguage, Reproduce, ReproduceHost } from "./projects/Reproduce.tsx";
 import { useProject } from "./projects/useProject.ts";
 import { SignalFeed } from "./SignalFeed.tsx";
@@ -56,6 +58,17 @@ export function ResearchBoard(props: Props) {
   }, []);
   // The project (the friend's shell, D-057 on main) travels in the hash beside the board's own params.
   const project = useProject(client, asOf);
+  const shell = useShell();
+  const current = project.response?.project ?? null;
+  const drift = !!project.response?.drift;
+  // The sidebar names this tab and marks it frozen from what the server says.
+  useEffect(() => shell.describe({ project: current, drift }), [shell, current, drift]);
+  const gone = useCallback(() => {
+    if (project.id) shell.projectGone(project.id, current?.name ?? null);
+  }, [shell, project.id, current?.name]);
+  useEffect(() => {
+    if (project.missing) gone();
+  }, [project.missing, gone]);
   const [notebookLanguage, setNotebookLanguage] = useState<NotebookLanguage>("python");
   // The timeline's dragged range (`from=`, `to=`) stays too: the tool rail reads it as its frame.
   useEffect(() => {
@@ -190,6 +203,20 @@ export function ResearchBoard(props: Props) {
   );
 
   const content: Record<WinId, ReactNode> = {
+    coverage: (
+      <CoverageWindow
+        client={client}
+        locale={locale}
+        asOf={asOf}
+        alerts={load.status === "ready" ? load.alerts.filter((a) => a.date >= shift(load.asOf, 1 - 28)) : []}
+        alertsStatus={load.status}
+        onRetryAlerts={retry}
+        onOpenSignals={(unit) => {
+          onChange({ unit });
+          setReveal({ id: "signals", key: `coverage-signals-${Date.now()}` });
+        }}
+      />
+    ),
     signals: (
       <SignalFeed
         {...panelProps}
@@ -256,24 +283,32 @@ export function ResearchBoard(props: Props) {
   );
 
   // The URL's `panel` follows the last of the map and the unit grid that was opened or closed.
-  const initiallyOpen = useRef<WinId[] | undefined>(state.panel === "grid" ? ["grid"] : undefined);
+  // A coverage deep link opens its window even in a browser with no saved layout.
+  const initiallyOpen = useRef<WinId[]>([
+    ...(state.panel === "grid" ? ["grid" as const] : []),
+    ...([...hashParams().keys()].some((key) => key.startsWith("cov.")) ? ["coverage" as const] : []),
+  ]);
   return (
     <div className="section board">
+      <InSlot name="actions">
+        <ProjectActions
+          client={client}
+          locale={locale}
+          clock={asOf}
+          board={state}
+          selection={project}
+          onReproduce={() => setReveal({ id: "reproduce", key: `reproduce-${Date.now()}` })}
+        />
+      </InSlot>
       <Workspace
+        projectId={project.id}
+        project={project.response?.project}
+        client={client}
         locale={locale}
         content={content}
         initiallyOpen={initiallyOpen.current}
         reveal={reveal}
-        toolbar={
-          <ProjectControls
-            client={client}
-            locale={locale}
-            clock={asOf}
-            board={state}
-            selection={project}
-            onReproduce={() => setReveal({ id: "reproduce", key: `reproduce-${Date.now()}` })}
-          />
-        }
+        onGone={gone}
         overlay={<ReproduceHost locale={locale} projectId={project.id} language={notebookLanguage} />}
         primary={primary}
         answers={ANSWERS}

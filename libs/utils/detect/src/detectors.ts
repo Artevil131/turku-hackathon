@@ -28,6 +28,9 @@ export interface Signal {
   p?: number;
 }
 
+export const MIN_BASELINE_ISOLATES = 50;
+export const PROFILE_SMOOTHING = 0.5;
+
 export const PROFILE_ANTIBIOTICS: readonly AntibioticCode[] = [
   "AMP",
   "MEC",
@@ -136,10 +139,10 @@ export function profileExcess(records: readonly IsolateRecord[], o: ExcessOption
     const observed = distinctPatients(inWindow.filter((x) => profileOf(x) === profile));
     if (observed < o.minObserved) continue;
     const baseAll = slice(byOrganism.get(stratum(r)) ?? [], orgDates.get(stratum(r)) ?? [], baseFrom, baseTo).length;
-    if (baseAll < 50) continue;
+    if (baseAll < MIN_BASELINE_ISOLATES) continue;
     const pk = `${stratum(r)}|${profile}`;
     const baseProfile = slice(byProfile.get(pk) ?? [], profileDates.get(pk) ?? [], baseFrom, baseTo).length;
-    const expected = distinctPatients(inWindow) * ((baseProfile + 0.5) / (baseAll + 1));
+    const expected = distinctPatients(inWindow) * ((baseProfile + PROFILE_SMOOTHING) / (baseAll + 1));
     const p = poissonUpper(observed, expected);
     if (p < o.alpha) {
       signals.push({
@@ -176,8 +179,8 @@ export function phenotypeExcess(records: readonly IsolateRecord[], phenotypes: r
       const observed = distinctPatients(inWindow.filter((x) => x.phenotypes.includes(ph)));
       if (observed < o.minObserved) continue;
       const base = slice(list, dates, addDays(from, -o.baselineDays), addDays(from, -1));
-      if (base.length < 50) continue;
-      const share = (base.filter((x) => x.phenotypes.includes(ph)).length + 0.5) / (base.length + 1);
+      if (base.length < MIN_BASELINE_ISOLATES) continue;
+      const share = (base.filter((x) => x.phenotypes.includes(ph)).length + PROFILE_SMOOTHING) / (base.length + 1);
       const expected = distinctPatients(inWindow) * share;
       const p = poissonUpper(observed, expected);
       if (p < o.alpha) {
@@ -361,8 +364,10 @@ export interface Episode {
   signals: number;
 }
 
+export const EPISODE_DAYS = 28;
+
 /** Signals with the same detector and key, at most `gapDays` apart, merged into one episode. */
-export function episodes(signals: readonly Signal[], gapDays = 28): Episode[] {
+export function episodes(signals: readonly Signal[], gapDays = EPISODE_DAYS): Episode[] {
   const out: Episode[] = [];
   for (const [, list] of groupBy(signals, (s) => `${s.detector}|${s.key}`)) {
     list.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));

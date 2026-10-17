@@ -1,4 +1,5 @@
 import { type Locale, t } from "@aei/i18n";
+import { detectorMethodIds, methods } from "@aei/methods";
 import { formatNum, formatPSup, poissonPlan } from "./mathHelpers.ts";
 import "./PoissonTail.css";
 
@@ -22,6 +23,8 @@ const B = 28;
 export function PoissonTail({ observed, expected, p, detector, locale }: PoissonTailProps) {
   const plan = poissonPlan(detector, observed, expected);
   if (!plan) return <p className="math-note">{t(locale, "mathNoCount")}</p>;
+  const methodId = detectorMethodIds[detector as keyof typeof detectorMethodIds];
+  const decisions = methodId ? methods[methodId].decisions.join(" · ") : "";
   const n = plan.bars.length;
   const pw = W - L - R;
   const bw = pw / n;
@@ -76,7 +79,9 @@ export function PoissonTail({ observed, expected, p, detector, locale }: Poisson
           ))}
       </svg>
       <figcaption className="math-poisson-cap">
-        <span className="math-poisson-test">{t(locale, "mathTestLabel")} · D-020</span>
+        <span className="math-poisson-test">
+          {t(locale, "mathTestLabel")} · {decisions}
+        </span>
         <span className="math-poisson-formula">{caption}</span>
         <span className="math-poisson-legend">
           <i className="mp-sw mp-sw-tail" aria-hidden="true" /> {tailText}

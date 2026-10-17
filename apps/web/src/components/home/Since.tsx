@@ -10,14 +10,19 @@ interface Props {
   period: 1 | 7 | 28;
   onPeriod: (days: 1 | 7 | 28) => void;
   openCount: number | null;
+  /** The heading level: 1 as its own page, 2 inside another (the start page). */
+  level?: 1 | 2;
 }
 
 /** "Since yesterday": three numbers dated the as-of day, each a link to where it is shown. */
-export function Since({ locale, asOf, changes, state, period, onPeriod, openCount }: Props) {
+export function Since({ locale, asOf, changes, state, period, onPeriod, openCount, level = 1 }: Props) {
+  const Heading = level === 1 ? "h1" : "h2";
   return (
     <section className="hm-since glass" aria-labelledby="hm-since-title">
       <header className="hm-head">
-        <h1 id="hm-since-title">{openCount === null ? t(locale, "homeResearchWait") : t(locale, "feedOpen", { n: openCount })}</h1>
+        <Heading id="hm-since-title">
+          {openCount === null ? t(locale, "homeResearchWait") : t(locale, "feedOpen", { n: openCount })}
+        </Heading>
         {(asOf ?? changes?.asOf) ? <AsOf locale={locale} date={(asOf ?? changes?.asOf) as string} /> : null}
       </header>
       <p className="hm-lead">{t(locale, "homeLead")}</p>
@@ -63,19 +68,19 @@ function Stats({ locale, changes }: { locale: Locale; changes: Changes }) {
   const firstFind = changes.finds[0];
   const firstAlert = changes.alerts[0];
   const stats: { key: string; label: string; n: number; href: string; title?: string }[] = [];
-  if (changes.isolates !== null) stats.push({ key: "isolates", label: t(locale, "homeIsolates"), n: changes.isolates, href: "#research" });
+  if (changes.isolates !== null) stats.push({ key: "isolates", label: t(locale, "homeIsolates"), n: changes.isolates, href: "#project" });
   stats.push({
     key: "finds",
     label: t(locale, "homeFinds"),
     n: finds,
-    href: firstFind ? `#research?ph=${firstFind.phenotype}` : "#research",
+    href: firstFind ? `#project?ph=${firstFind.phenotype}` : "#project",
     title: changes.finds.map((f) => `${phenotypeName(f.phenotype)} ${f.count}`).join(" · ") || undefined,
   });
   stats.push({
     key: "signals",
     label: t(locale, "homeAlerts"),
     n: signals,
-    href: firstAlert ? `#research?inc=${encodeURIComponent(firstAlert.incident)}` : "#research",
+    href: firstAlert ? `#project?inc=${encodeURIComponent(firstAlert.incident)}` : "#project",
   });
   return (
     <ul className="hm-stats">

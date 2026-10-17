@@ -18,6 +18,8 @@ export interface ProjectInput {
   mode: "continuous" | "frozen";
   asOf?: IsoDate;
   scope: ProjectScope;
+  /** Opaque workspace state (D-065), bounded to 20 kB of JSON. */
+  layout?: Record<string, unknown>;
 }
 
 export interface Project extends ProjectInput {
@@ -54,6 +56,23 @@ function strings(value: unknown, field: string): string[] {
   return [...value];
 }
 
+function layoutObject(value: unknown): Record<string, unknown> | undefined {
+  if (value === undefined) return undefined;
+  const layout = object(value, "layout");
+  if (Object.getPrototypeOf(layout) !== Object.prototype && Object.getPrototypeOf(layout) !== null) {
+    throw new Error("layout must be a plain object");
+  }
+  let json: string;
+  try {
+    json = JSON.stringify(layout);
+  } catch {
+    throw new Error("layout must be JSON serializable");
+  }
+  if (new TextEncoder().encode(json).length > 20_000) throw new Error("layout exceeds 20 kB");
+  const parsed = JSON.parse(json);
+  return object(parsed, "layout");
+}
+
 /** Validate client input and keep only the fields clients may replace. */
 export function parseProjectInput(value: unknown): ProjectInput {
   const input = object(value, "project");
@@ -73,6 +92,7 @@ export function parseProjectInput(value: unknown): ProjectInput {
     description: optionalString(input.description, "description"),
     mode: input.mode,
     asOf,
+    ...(input.layout !== undefined ? { layout: layoutObject(input.layout) } : {}),
     scope: {
       site: optionalString(scope.site, "scope.site"),
       from,

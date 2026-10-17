@@ -31,6 +31,7 @@ interface or behind the API contract (D-006).
 | `alerts/` | Alerts: a CPE isolate, MRSA or VRE new in a unit, live detector episodes; carrier arrivals per patient |
 | `eucast/` | Intrinsic resistance, breakpoint gaps, inferred results, urine-only agents |
 | `counting/` | Surveillance counting: first isolate per patient, organism, specimen, period |
+| `methods/` | Live methods and export counts once (D-066): localized explanations, gear defaults, provenance, JSON for Python/R |
 | `detect/` | Deviation detectors and the live set: clusters, surges, sampling drops, trends |
 | `coverage/` | The doctor's coverage list: share covered per antibiotic, with fallback level and counts |
 | `guideline/` | The hospital's empirical-treatment guide per site: syndrome to first choices, allergy alternative, carrier rules, source page (D-047) |

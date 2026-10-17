@@ -103,6 +103,22 @@
   }
 }
 
+:root[data-density="comfortable"] {
+  --control-h: 40px;
+  --row-h: 44px;
+  --pad: 16px;
+  --gap: 12px;
+  --t-s: 15px;
+  --t-xs: 13px;
+}
+
+:root[data-density="compact"] {
+  --control-h: 26px;
+  --row-h: 28px;
+  --pad: 8px;
+  --gap: 6px;
+}
+
 :root[data-theme="dark"] {
   color-scheme: dark;
   --brand-accent-soft: #23214f;
@@ -212,18 +228,6 @@ button {
 
 /* ---------- Layout ---------- */
 
-.console {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
-  gap: var(--gap);
-  height: 100%;
-  padding-block: var(--gap);
-  padding-left: max(12px, env(safe-area-inset-left, 0px));
-  padding-right: max(12px, env(safe-area-inset-right, 0px));
-}
-
 .glass {
   border: 1px solid var(--line);
   border-radius: var(--radius-panel);
@@ -238,17 +242,6 @@ button {
 .ply-2,
 .ply-3 {
   background: var(--glass-1);
-}
-
-/* ---------- Top bar (48 px) ---------- */
-
-.topbar {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  height: 48px;
-  padding: 0 8px 0 16px;
-  min-width: 0;
 }
 
 .mark {
@@ -275,14 +268,6 @@ button {
   min-width: 0;
   max-width: 640px;
   position: relative;
-}
-
-.top-tools {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: var(--gap);
-  flex: none;
 }
 
 /* Segmented control: selected = accent fill, white text. */
@@ -714,35 +699,6 @@ button {
 
 /* ---------- Sections (order-entry layout) ---------- */
 
-.sections {
-  display: flex;
-  gap: 4px;
-}
-
-.section-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: var(--control-h);
-  padding: 0 12px;
-  border: 0;
-  border-radius: var(--radius-control);
-  background: none;
-  font-size: var(--t-m);
-  font-weight: 500;
-  color: var(--ink-2);
-}
-
-.section-tab:hover {
-  background: var(--chassis);
-  color: var(--ink);
-}
-
-.section-tab[aria-current="page"] {
-  background: var(--live);
-  color: var(--live-ink);
-}
-
 .badge {
   min-width: 22px;
   height: 18px;
@@ -1073,10 +1029,6 @@ button {
 }
 
 @media (max-width: 980px) {
-  .console {
-    height: auto;
-    min-height: 100%;
-  }
   .section {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -1085,12 +1037,6 @@ button {
   }
   .signals {
     overflow: visible;
-  }
-  .topbar {
-    flex-wrap: wrap;
-    height: auto;
-    gap: 4px 8px;
-    padding: 6px 8px 6px 12px;
   }
 }
 
@@ -1286,42 +1232,6 @@ fieldset.setting {
     grid-column: 1;
     grid-row: auto;
   }
-  .sections {
-    order: 3;
-    width: 100%;
-    min-width: 0;
-    gap: 2px;
-  }
-  .section-tab {
-    flex: 1;
-    min-width: 0;
-    justify-content: center;
-    gap: 4px;
-    padding: 0 4px;
-    font-size: var(--t-s);
-  }
-  .section-tab .badge {
-    min-width: 18px;
-    padding: 0 4px;
-  }
-}
-
-/* Phones: the five sections keep their natural width and the row scrolls sideways instead of squeezing labels and badges together. */
-@media (max-width: 560px) {
-  .sections {
-    gap: 4px;
-    overflow-x: auto;
-    scrollbar-width: none;
-    scroll-snap-type: x proximity;
-  }
-  .sections::-webkit-scrollbar {
-    display: none;
-  }
-  .section-tab {
-    flex: 0 0 auto;
-    padding: 0 12px;
-    scroll-snap-align: start;
-  }
 }
 
 /* The page area: the third row of the console grid; focus target of the skip link. */
@@ -1463,41 +1373,6 @@ fieldset.setting {
 }
 
 /* The Connect tab: an outlined pill with a plug, set apart from the plain section tabs. */
-.section-tab-connect {
-  border: 1px solid var(--brand-accent-line);
-  border-radius: 999px;
-  color: var(--live);
-  background: var(--glass-1);
-}
-
-.section-tab-connect:not([aria-current="page"]):hover {
-  border-color: var(--live);
-  background: var(--live-soft);
-  color: var(--live);
-}
-
-.section-tab-connect[aria-current="page"] {
-  border-color: var(--live);
-}
-
-.section-tab-connect:focus-visible {
-  outline: 2px solid var(--live);
-  outline-offset: 2px;
-}
-
-/* Phones: the five tabs share one row; the Connect pill keeps its outline, loses its icon. */
-@media (max-width: 560px) {
-  .sections {
-    gap: 2px;
-  }
-  .section-tab-connect svg {
-    display: none;
-  }
-  .section-tab {
-    padding: 0 4px;
-  }
-}
-
 /* ---------- Glossary (research-unified.md §6) ---------- */
 
 /* Any abbreviation on screen: dotted underline, the full name in the title and the tooltip. */

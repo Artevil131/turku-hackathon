@@ -1,9 +1,5 @@
-/* The top bar's search and command field. */
-
-.topbar {
-  position: relative;
-  z-index: 40;
-}
+/* The search and command palette: hidden until "/", Ctrl/Cmd+K or the sidebar's Search row opens it,
+   then centred near the top of the screen over a dimmed page. */
 
 .cmd {
   position: relative;
@@ -155,62 +151,65 @@
 }
 
 /* Phone: an icon button that opens the field across the whole top bar. */
+.palette .cmd {
+  position: fixed;
+  z-index: 90;
+  top: min(12vh, 96px);
+  left: 50%;
+  width: min(640px, calc(100vw - 32px));
+  transform: translateX(-50%);
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.palette .cmd:not([data-expanded]):not(:focus-within) {
+  display: none;
+}
+
+.palette:has(.cmd[data-expanded], .cmd:focus-within)::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 89;
+  background: rgb(7 8 28 / 0.28);
+}
+
+.palette .cmd-box {
+  width: auto;
+  height: 48px;
+  padding: 0 6px 0 14px;
+  border-color: var(--line-strong);
+  background: var(--glass-1);
+  box-shadow: var(--pop-shadow);
+}
+
+.palette .cmd-input {
+  font-size: 1rem; /* 16 px: keeps iOS from zooming in */
+}
+
+.palette .cmd .cmd-close {
+  display: inline-grid;
+  width: 36px;
+  height: 36px;
+  border-color: transparent;
+  background: none;
+}
+
+.palette .cmd-pop {
+  position: static;
+  width: auto;
+  margin-top: 8px;
+  max-height: min(60vh, 520px);
+}
+
 @media (max-width: 760px) {
-  .cmd .cmd-trigger {
-    display: inline-grid;
-    width: 32px;
-    height: 32px;
+  .palette .cmd {
+    top: 8px;
+    width: calc(100vw - 16px);
   }
-
-  .cmd-box {
-    display: none;
+  .palette .cmd-pop {
+    max-height: calc(100dvh - 90px);
   }
-
-  .cmd[data-expanded] .cmd-trigger,
-  .cmd[data-expanded] .cmd-trigger.icon-btn {
-    display: none;
-  }
-
-  .cmd[data-expanded] {
-    position: static;
-  }
-
-  .cmd[data-expanded] .cmd-box {
-    position: absolute;
-    z-index: 2;
-    inset: 6px 6px auto 6px;
-    display: flex;
-    width: auto;
-    height: 48px;
-    padding: 0 4px 0 12px;
-    background: var(--glass-3);
-  }
-
-  .cmd[data-expanded] .cmd-input {
-    font-size: 1rem; /* 16 px: keeps iOS from zooming in */
-  }
-
-  .cmd[data-expanded] .cmd-kbd {
-    display: none;
-  }
-
-  .cmd[data-expanded] .cmd-close {
-    display: inline-grid;
-    width: 44px;
-    height: 44px;
-    border-color: transparent;
-    background: none;
-  }
-
-  .cmd-pop {
-    position: absolute;
-    top: 60px;
-    left: 6px;
-    right: 6px;
-    width: auto;
-    max-height: calc(100dvh - 140px);
-  }
-
   .cmd-option {
     min-height: 48px;
   }

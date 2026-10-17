@@ -70,6 +70,17 @@ describe("project validation", () => {
     [{ ...input, scope: { ...scope, site: 2 } }, "scope.site"],
     [{ ...input, scope: { ...scope, board: false } }, "scope.board"],
   ])("rejects bad shape %j", (value, message) => expect(() => parseProjectInput(value)).toThrow(message));
+  it("accepts bounded opaque layout objects and rejects other shapes", () => {
+    const layout = { v: 2, columns: [], closed: {}, maximized: null };
+    expect(parseProjectInput({ ...input, layout }).layout).toEqual(layout);
+    expect(parseProjectInput({ ...input, layout: { text: "x".repeat(19_989) } }).layout).toBeDefined();
+    for (const layout of [null, [], "{}", new Date(), { text: "x".repeat(20_000) }, { text: "ä".repeat(10_000) }]) {
+      expect(() => parseProjectInput({ ...input, layout })).toThrow("layout");
+    }
+    const circular: Record<string, unknown> = {};
+    circular.self = circular;
+    expect(() => parseProjectInput({ ...input, layout: circular })).toThrow("layout");
+  });
   it("makes unique path-safe bounded ids", () => {
     for (const name of ["ESBL study!", "Åäö", "x".repeat(200)]) {
       const id = newProjectId(name);

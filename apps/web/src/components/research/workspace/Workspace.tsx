@@ -1,16 +1,23 @@
+import { type AeiClient, ApiError, type Project } from "@aei/contract";
 import { type Locale, t } from "@aei/i18n";
 import {
   type CSSProperties,
   type KeyboardEvent,
   type PointerEvent,
   type ReactNode,
+  useCallback,
+  useContext,
   useEffect,
   useLayoutEffect,
   useRef,
   useState,
 } from "react";
+import { InSlot, SlotsContext } from "../../../shell/context.ts";
+import { hashParams } from "../../../url.ts";
 import { chartTitle } from "../charts/model.ts";
 import type { ChartSpec } from "../charts/spec.ts";
+import { Menu, MenuCheck, MenuItem, MenuLabel, MenuSeparator, useCloseMenu } from "../../shell/Menu.tsx";
+import { SidebarIcon } from "../projects/ProjectActions.tsx";
 import {
   addChart,
   boardRows,
@@ -29,6 +36,7 @@ import {
   MAX_ROWS,
   MIN_SIZE,
   type Preset,
+  parseLayout,
   patchWin,
   presetLayout,
   ROW_PX,
@@ -36,11 +44,13 @@ import {
   removeChart,
   saveFocus,
   saveLayout,
+  serializeLayout,
   WIN_IDS,
   type WinId,
   winOf,
   withCharts,
 } from "./layout.ts";
+import { templateLayout } from "./templates.ts";
 import "./workspace.css";
 
 // The window workspace of the researcher page. At 1100 px and wider the
@@ -72,6 +82,7 @@ const TITLE_KEY = {
   grid: "boardGrid",
   reproduce: "boardReproduce",
   notebook: "notebookWindow",
+  coverage: "boardCoverage",
 } as const;
 
 /** A request to add a chart window: a new `key` adds `spec`. */
@@ -81,7 +92,7 @@ export interface ChartRequest {
 }
 
 /** The stacked order under 1100 px: the list first, the map last (as before). */
-const STACK_ORDER: readonly WinId[] = ["signals", "notebook", "math", "assistant", "map", "graph", "grid", "reproduce"];
+const STACK_ORDER: readonly WinId[] = ["signals", "notebook", "math", "assistant", "map", "graph", "grid", "reproduce", "coverage"];
 
 const RAIL_KEY = "aei.research.rail";
 /** Whether the tool rail is shown: open unless the researcher closed it (kept beside the layout). */
@@ -135,13 +146,16 @@ type Drag = {
 };
 
 export function Workspace({
+  projectId,
+  project,
+  client,
+  onGone,
   locale,
   content,
   onOpened,
   onClosed,
   initiallyOpen,
   reveal,
-  toolbar,
   overlay,
   primary = null,
   answers = [],
@@ -152,6 +166,12 @@ export function Workspace({
   rail,
   revealRail,
 }: {
+  /** The project open in this tab (null: the browser's own layout). */
+  projectId?: string | null;
+  project?: Project;
+  client?: AeiClient;
+  /** The project was deleted elsewhere: its layout save answered 404. */
+  onGone?: () => void;
   locale: Locale;
   content: Record<WinId, ReactNode>;
   onOpened?: (id: WinId) => void;
@@ -160,8 +180,6 @@ export function Workspace({
   initiallyOpen?: WinId[];
   /** A window to bring forward (opening it if closed) each time `key` changes: the card on a new signal, the map on "Show on map". */
   reveal?: { id: WinId; key: string | null };
-  /** Extra controls for the toolbar row (the project switcher and export). */
-  toolbar?: ReactNode;
   /** Rendered over the board (the friend's full-size notebook host). */
   overlay?: ReactNode;
   /** The window that holds the selected signal: it gets the accent ring and is what F focuses. */
@@ -195,7 +213,58 @@ export function Workspace({
   };
   const areaRef = useRef<HTMLDivElement>(null);
   // null = the default layout for the board's height; set once the user changes anything.
-  const [saved, setSaved] = useState<Layout | null>(loadLayout);
+  const initialLayout = (): Layout | null => {
+    if (project?.layout) return parseLayout(JSON.stringify(project.layout));
+    if (!projectId && hashParams().get("quick") === "patient") return templateLayout("patient");
+    return projectId ? null : loadLayout();
+  };
+  const [saved, setSaved] = useState<Layout | null>(initialLayout);
+  // A project keeps its own layout on the server, saved a second after the last change; the browser's layout is for project-less pages.
+  const pendingSave = useRef<{ id: string; layout: Layout | null } | null>(null);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveQueue = useRef(Promise.resolve());
+  const [saveFailed, setSaveFailed] = useState(false);
+  const flush = useCallback(() => {
+    const next = pendingSave.current;
+    pendingSave.current = null;
+    if (!next || !client) return;
+    saveQueue.current = saveQueue.current.then(async () => {
+      try {
+        // Read just before replacing, so a project-dialog edit or an earlier save is not overwritten by stale props.
+        const fresh = await client.project(next.id);
+        await client.updateProject(next.id, { ...fresh.project, layout: JSON.parse(serializeLayout(next.layout ?? defaultLayout())) });
+        setSaveFailed(false);
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 404) onGone?.();
+        else setSaveFailed(true);
+      }
+    });
+  }, [client, onGone]);
+  useEffect(
+    () => () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      flush();
+    },
+    [flush],
+  );
+  const persist = (layout: Layout | null) => {
+    if (project && client) {
+      pendingSave.current = { id: project.id, layout };
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      saveTimer.current = setTimeout(flush, 1000);
+    } else if (!projectId) saveLayout(layout);
+  };
+  // Another project (or none) in the same tab: save the old one's last change, then load the new one's layout.
+  const identity = `${projectId ?? ""}:${project?.id ?? ""}`;
+  const loadedIdentity = useRef(identity);
+  useEffect(() => {
+    if (loadedIdentity.current === identity) return;
+    loadedIdentity.current = identity;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    flush();
+    setSaved(initialLayout());
+    setSaveFailed(false);
+  });
   // The layout previewed while a window is being dragged or resized; committed on release.
   const [draft, setDraft] = useState<Layout | null>(null);
   const [dragging, setDragging] = useState<string | null>(null);
@@ -244,7 +313,7 @@ export function Workspace({
   const commit = (next: Layout, moved?: string) => {
     const c = fillLayout(compactLayout(fitLayout(next), moved), moved);
     setSaved(c);
-    saveLayout(c);
+    persist(c);
     return c;
   };
   const update = (fn: (l: Layout) => Layout, moved?: string) => commit(fn(base), moved);
@@ -365,7 +434,7 @@ export function Workspace({
   const applyPreset = (p: Preset) => {
     const l = withCharts(presetLayout(p), base);
     setSaved(l);
-    saveLayout(l);
+    persist(l);
     if (focus) setFocusTo(null);
     if (p === "analysis" && rail && !railOpen) toggleRail(true);
     setStatus(t(locale, "wsPresetApplied", { title: t(locale, PRESET_KEY[p]) }));
@@ -406,7 +475,7 @@ export function Workspace({
     // The fixed windows go back to the default; the charts the researcher added stay.
     const keep = Object.keys(base.charts).length > 0 ? withCharts(defaultLayout(), base) : null;
     setSaved(keep);
-    saveLayout(keep);
+    persist(keep);
     setStatus("");
   };
   const focusWin = (id: string) => {
@@ -516,6 +585,8 @@ export function Workspace({
   // A fixed DOM order; the stacking comes from `order` through z-index (see the note at the top).
   const chartIds = Object.keys(layout.charts);
   const ids: readonly string[] = wide ? [...WIN_IDS, ...chartIds] : [...STACK_ORDER, ...chartIds];
+  // With the app's sidebar mounted, the windows menu lives there; without it, the tray stays on the board.
+  const inSidebar = useContext(SlotsContext).windows !== null;
   const tray = <Tray locale={locale} open={(id) => base.wins[id].open} onToggle={toggle} onReset={reset} chartMenu={chartMenu} />;
   const roleOf = (id: string): "primary" | "answer" | "quiet" | undefined =>
     primary === null ? undefined : id === primary ? "primary" : answers.includes(id as WinId) ? "answer" : "quiet";
@@ -527,7 +598,19 @@ export function Workspace({
 
   return (
     <div className="ws" data-float={wide} data-animate={animate} data-focus={focused !== null} data-selection={primary !== null}>
-      {wide ? null : <div className="ws-tray-row">{tray}</div>}
+      <InSlot name="windows">
+        <WindowsMenu
+          locale={locale}
+          open={(id) => base.wins[id].open}
+          onToggle={toggle}
+          onPreset={applyPreset}
+          onReset={reset}
+          presets={PRESETS}
+          presetKey={PRESET_KEY}
+          chartMenu={chartMenu}
+        />
+      </InSlot>
+      {wide || inSidebar ? null : <div className="ws-tray-row">{tray}</div>}
       {wide ? (
         <div className="ws-toolbar">
           {focusBar ?? layouts}
@@ -543,7 +626,6 @@ export function Workspace({
               {t(locale, "toolsWindow")}
             </button>
           ) : null}
-          {toolbar}
         </div>
       ) : null}
       {rail ? (
@@ -667,7 +749,8 @@ export function Workspace({
           );
         })}
       </div>
-      {wide ? <div className="ws-traydock">{tray}</div> : null}
+      {wide && !inSidebar ? <div className="ws-traydock">{tray}</div> : null}
+      {saveFailed ? <p role="alert">{t(locale, "layoutSaveError")}</p> : null}
       {overlay}
       <p className="visually-hidden" role="status" aria-live="polite">
         {status}
@@ -760,5 +843,76 @@ function Tray({
         </div>
       ) : null}
     </div>
+  );
+}
+
+/** The sidebar's Windows menu: every window with a check, the layouts, a chart and the reset. */
+function WindowsMenu({
+  locale,
+  open,
+  onToggle,
+  onPreset,
+  onReset,
+  presets,
+  presetKey,
+  chartMenu,
+}: {
+  locale: Locale;
+  open: (id: WinId) => boolean;
+  onToggle: (id: WinId) => void;
+  onPreset: (p: Preset) => void;
+  onReset: () => void;
+  presets: readonly Preset[];
+  presetKey: Record<Preset, string>;
+  chartMenu?: (done: () => void) => ReactNode;
+}) {
+  const closed = WIN_IDS.filter((id) => !open(id));
+  return (
+    <Menu
+      id="ws-tray-button"
+      label={t(locale, "wsToolbar")}
+      icon={<SidebarIcon name="windows" />}
+      badge={closed.length ? t(locale, "wsClosedCount", { n: closed.length }) : undefined}
+      wide
+    >
+      <MenuLabel>{t(locale, "wsOpenWindows")}</MenuLabel>
+      {WIN_IDS.map((id) => (
+        <MenuCheck key={id} checked={open(id)} data-toggle={id} onToggle={() => onToggle(id)}>
+          {t(locale, TITLE_KEY[id])}
+        </MenuCheck>
+      ))}
+      <MenuSeparator />
+      <MenuLabel>{t(locale, "wsPresets")}</MenuLabel>
+      {presets.map((p) => (
+        <MenuItem key={p} data-preset={p} onSelect={() => onPreset(p)}>
+          {t(locale, presetKey[p] as "wsDefault")}
+        </MenuItem>
+      ))}
+      {chartMenu ? <ChartEntry locale={locale} chartMenu={chartMenu} /> : null}
+      <MenuSeparator />
+      <MenuItem data-reset onSelect={onReset}>
+        {t(locale, "wsReset")}
+      </MenuItem>
+      <p className="sb-pop-foot">{t(locale, "wsHint")}</p>
+    </Menu>
+  );
+}
+
+function ChartEntry({ locale, chartMenu }: { locale: Locale; chartMenu: (done: () => void) => ReactNode }) {
+  const [adding, setAdding] = useState(false);
+  const close = useCloseMenu();
+  return (
+    <>
+      <MenuSeparator />
+      <button type="button" className="ws-pop-reset ws-pop-chart" aria-expanded={adding} onClick={() => setAdding((v) => !v)}>
+        {t(locale, "chartTray")}
+      </button>
+      {adding
+        ? chartMenu(() => {
+            setAdding(false);
+            close();
+          })
+        : null}
+    </>
   );
 }

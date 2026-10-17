@@ -1,4 +1,5 @@
 import type { ExportBundle, ExportFile, ExportNumber, ExportTable } from "./bundle.ts";
+import { methodsNumbers, toMethodsParagraph } from "./methods.ts";
 
 export function slug(value: string): string {
   return (
@@ -72,7 +73,7 @@ export function toJson(bundle: ExportBundle): ExportFile {
   return {
     filename: `${slug(bundle.title)}.json`,
     mime: "application/json",
-    data: `${JSON.stringify({ format: "aei-export/1", ...bundle, figures }, null, 2)}\n`,
+    data: `${JSON.stringify({ format: "aei-export/1", ...bundle, numbers: methodsNumbers(bundle), figures }, null, 2)}\n`,
   };
 }
 
@@ -104,6 +105,7 @@ export function toMarkdown(bundle: ExportBundle): ExportFile {
       .join("\n"),
   ];
   if (bundle.numbers.length) parts.push("## Numbers", bundle.numbers.map((n) => `- ${markdown(numberText(n))}`).join("\n"));
+  parts.push("## Methods", markdown(toMethodsParagraph(bundle)));
   for (const table of bundle.tables) parts.push(`## ${markdown(table.title)}`, markdownTable(table));
   for (const figure of bundle.figures)
     parts.push(`![${markdown(figure.title)}](${slug(figure.name)}.svg)${figure.caption ? `\n\n${markdown(figure.caption)}` : ""}`);
@@ -123,9 +125,12 @@ export function latex(value: unknown): string {
     "}": "\\}",
     "~": "\\textasciitilde{}",
     "^": "\\textasciicircum{}",
+    "≥": "\\ensuremath{\\geq}",
+    "−": "\\ensuremath{-}",
+    "×": "\\ensuremath{\\times}",
   };
   return text(value)
-    .replace(/[\\&%$#_{}~^]/g, (c) => replacements[c] ?? c)
+    .replace(/[\\&%$#_{}~^≥−×]/g, (c) => replacements[c] ?? c)
     .replace(/\r\n|\r|\n/g, " ");
 }
 
@@ -158,6 +163,7 @@ export function toLatex(bundle: ExportBundle): ExportFile {
   ];
   if (bundle.numbers.length)
     parts.push("\\section*{Numbers}", "\\begin{itemize}", ...bundle.numbers.map((n) => `\\item ${latex(numberText(n))}`), "\\end{itemize}");
+  parts.push("\\section*{Methods}", latex(toMethodsParagraph(bundle)));
   for (const table of bundle.tables) parts.push(`\\section*{${latex(table.title)}}`, latexTable(table));
   parts.push("% Export figure files beside this .tex file: PNG, or convert SVG to PDF.");
   for (const figure of bundle.figures)

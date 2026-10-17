@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@aei/alerts": "workspace:*",
+    "@aei/methods": "workspace:*",
     "@aei/ask": "workspace:*",
     "@aei/compare": "workspace:*",
     "@aei/contract": "workspace:*",

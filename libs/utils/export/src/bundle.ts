@@ -1,3 +1,5 @@
+import type { MethodEntry, MethodId, ParameterValue } from "@aei/methods";
+
 export interface ExportColumn {
   key: string;
   label: string;
@@ -31,7 +33,10 @@ export interface ExportNumber {
   label: string;
   value: string | number;
   method?: string;
-  parameters?: Record<string, string | number>;
+  methodId?: MethodId;
+  decisions?: readonly string[];
+  definition?: MethodEntry;
+  parameters?: Record<string, ParameterValue>;
 }
 
 export interface ExportBundle {
@@ -46,6 +51,8 @@ export interface ExportBundle {
   tables: ExportTable[];
   figures: ExportFigure[];
   numbers: ExportNumber[];
+  /** Additional methods used to produce this cut (including detectors with no alerts). */
+  methodIds?: MethodId[];
   locale?: "en" | "fi";
 }
 

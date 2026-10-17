@@ -1,0 +1,753 @@
+[
+  {
+    "id": "profileExcess",
+    "kind": "detector",
+    "name": {
+      "en": "Profile excess",
+      "fi": "Resistenssiprofiilin ryväs"
+    },
+    "sentence": {
+      "en": "We count distinct patients with the same acquired-resistant profile and organism (same specimen required: {sameSpecimen}) in the last {windowDays} days on a unit and compare with the unit's distinct patient count for that organism times the hospital's smoothed profile share in the preceding {baselineDays} days (at least {minBaseline} baseline isolates). A signal requires at least {minObserved} patients and Poisson upper-tail p < {alpha}.",
+      "fi": "Laskemme saman hankitun resistenssiprofiilin ja bakteerin potilaat (sama näytetyyppi vaaditaan: {sameSpecimen}) yksikössä {windowDays} päivältä ja vertaamme yksikön kyseisen bakteerin potilasmäärään kerrottuna sairaalan tasoitetulla profiiliosuudella edeltäviltä {baselineDays} päivältä (vähintään {minBaseline} vertailuisolaattia). Signaali edellyttää vähintään {minObserved} potilasta ja Poisson-ylähännän p < {alpha}."
+    },
+    "parameters": [
+      {
+        "name": "windowDays",
+        "default": 28,
+        "description": {
+          "en": "Observation window",
+          "fi": "Havaintoikkuna"
+        },
+        "unit": "days",
+        "decision": "D-020"
+      },
+      {
+        "name": "baselineDays",
+        "default": 365,
+        "description": {
+          "en": "Baseline preceding the window",
+          "fi": "Ikkunaa edeltävä vertailujakso"
+        },
+        "unit": "days",
+        "decision": "D-020"
+      },
+      {
+        "name": "alpha",
+        "default": 0.0001,
+        "description": {
+          "en": "Signal when the one-sided p value is below this",
+          "fi": "Signaali, kun yksisuuntainen p-arvo alittaa tämän"
+        },
+        "decision": "D-020"
+      },
+      {
+        "name": "minObserved",
+        "default": 3,
+        "description": {
+          "en": "Minimum distinct patients",
+          "fi": "Potilaiden vähimmäismäärä"
+        },
+        "decision": "D-020"
+      },
+      {
+        "name": "sameSpecimen",
+        "default": true,
+        "description": {
+          "en": "Match specimen type",
+          "fi": "Sama näytetyyppi"
+        },
+        "decision": "D-020"
+      },
+      {
+        "name": "minBaseline",
+        "default": 50,
+        "description": {
+          "en": "Minimum baseline isolates",
+          "fi": "Vertailuisolaattien vähimmäismäärä"
+        },
+        "decision": "D-020"
+      },
+      {
+        "name": "smoothing",
+        "default": 0.5,
+        "description": {
+          "en": "Added successes in the baseline share (one total pseudo-isolate)",
+          "fi": "Vertailuosuuteen lisätyt onnistumiset (yhteensä yksi pseudoisolaatti)"
+        },
+        "decision": "D-020"
+      }
+    ],
+    "inputs": ["IsolateRecord[]", "ExcessOptions"],
+    "output": "Signal[]",
+    "decisions": ["D-020", "D-044"],
+    "experiments": ["0002", "0007", "0011", "0016"],
+    "gear": {
+      "module": "@aei/detect",
+      "export": "profileExcess"
+    }
+  },
+  {
+    "id": "phenotypeExcess",
+    "kind": "detector",
+    "name": {
+      "en": "Phenotype excess",
+      "fi": "Fenotyypin ryväs"
+    },
+    "sentence": {
+      "en": "We count distinct patients with a watched phenotype ({phenotypes}) in {windowDays} days on a unit and compare with the unit's current patient count times its smoothed phenotype share in the preceding {baselineDays} days (at least {minBaseline} baseline isolates). A signal requires at least {minObserved} patients and Poisson upper-tail p < {alpha}.",
+      "fi": "Laskemme seurattavan fenotyypin ({phenotypes}) potilaat yksikössä {windowDays} päivältä ja vertaamme yksikön nykyiseen potilasmäärään kerrottuna fenotyypin tasoitetulla osuudella edeltäviltä {baselineDays} päivältä (vähintään {minBaseline} vertailuisolaattia). Signaali edellyttää vähintään {minObserved} potilasta ja Poisson-ylähännän p < {alpha}."
+    },
+    "parameters": [
+      {
+        "name": "windowDays",
+        "default": 28,
+        "description": {
+          "en": "Observation window",
+          "fi": "Havaintoikkuna"
+        },
+        "unit": "days",
+        "decision": "D-020"
+      },
+      {
+        "name": "baselineDays",
+        "default": 365,
+        "description": {
+          "en": "Baseline preceding the window",
+          "fi": "Ikkunaa edeltävä vertailujakso"
+        },
+        "unit": "days",
+        "decision": "D-020"
+      },
+      {
+        "name": "alpha",
+        "default": 0.001,
+        "description": {
+          "en": "Signal when the one-sided p value is below this",
+          "fi": "Signaali, kun yksisuuntainen p-arvo alittaa tämän"
+        },
+        "decision": "D-020"
+      },
+      {
+        "name": "minObserved",
+        "default": 2,
+        "description": {
+          "en": "Minimum distinct patients",
+          "fi": "Potilaiden vähimmäismäärä"
+        },
+        "decision": "D-020"
+      },
+      {
+        "name": "phenotypes",
+        "default": ["esbl", "mrsa", "vre", "cpe"],
+        "description": {
+          "en": "Phenotypes watched",
+          "fi": "Seurattavat fenotyypit"
+        },
+        "decision": "D-020"
+      },
+      {
+        "name": "minBaseline",
+        "default": 50,
+        "description": {
+          "en": "Minimum baseline isolates",
+          "fi": "Vertailuisolaattien vähimmäismäärä"
+        },
+        "decision": "D-020"
+      },
+      {
+        "name": "smoothing",
+        "default": 0.5,
+        "description": {
+          "en": "Added successes in the baseline share (one total pseudo-isolate)",
+          "fi": "Vertailuosuuteen lisätyt onnistumiset (yhteensä yksi pseudoisolaatti)"
+        },
+        "decision": "D-020"
+      }
+    ],
+    "inputs": ["IsolateRecord[]", "Phenotype[]", "ExcessOptions"],
+    "output": "Signal[]",
+    "decisions": ["D-020", "D-044"],
+    "experiments": ["0002", "0015"],
+    "gear": {
+      "module": "@aei/detect",
+      "export": "phenotypeExcess"
+    }
+  },
+  {
+    "id": "samplingDrop",
+    "kind": "detector",
+    "name": {
+      "en": "Sampling drop",
+      "fi": "Näytemäärän lasku"
+    },
+    "sentence": {
+      "en": "We compare a unit's culture count over {windowDays} days with its preceding {baselineDays}-day daily rate; Poisson lower-tail p < {alpha} signals a drop.",
+      "fi": "Vertaamme yksikön viljelymäärää {windowDays} päivältä edeltävän {baselineDays} päivän päivätahtiin; Poisson-alahännän p < {alpha} merkitsee laskua."
+    },
+    "parameters": [
+      {
+        "name": "windowDays",
+        "default": 7,
+        "description": {
+          "en": "Observation window",
+          "fi": "Havaintoikkuna"
+        },
+        "unit": "days",
+        "decision": "D-020"
+      },
+      {
+        "name": "baselineDays",
+        "default": 56,
+        "description": {
+          "en": "Baseline preceding the window",
+          "fi": "Ikkunaa edeltävä vertailujakso"
+        },
+        "unit": "days",
+        "decision": "D-020"
+      },
+      {
+        "name": "alpha",
+        "default": 0.0001,
+        "description": {
+          "en": "Signal when the one-sided p value is below this",
+          "fi": "Signaali, kun yksisuuntainen p-arvo alittaa tämän"
+        },
+        "decision": "D-020"
+      }
+    ],
+    "inputs": ["Culture[]", "DropOptions"],
+    "output": "Signal[]",
+    "decisions": ["D-020", "D-044"],
+    "experiments": ["0002"],
+    "gear": {
+      "module": "@aei/detect",
+      "export": "samplingDrop"
+    }
+  },
+  {
+    "id": "emptyRun",
+    "kind": "detector",
+    "name": {
+      "en": "Empty run",
+      "fi": "Näytteetön jakso"
+    },
+    "sentence": {
+      "en": "We test consecutive days without cultures on a unit against its daily rate in the {baselineDays} days before the run began: exp(−rate × run) < {alpha}. We scan only through the last supplied culture date.",
+      "fi": "Vertaamme yksikön peräkkäisiä viljelyttömiä päiviä jakson alkua edeltävien {baselineDays} päivän päivätahtiin: exp(−tahti × jakso) < {alpha}. Seuranta päättyy viimeiseen annettuun viljelypäivään."
+    },
+    "parameters": [
+      {
+        "name": "baselineDays",
+        "default": 56,
+        "description": {
+          "en": "Baseline preceding the window",
+          "fi": "Ikkunaa edeltävä vertailujakso"
+        },
+        "unit": "days",
+        "decision": "D-031"
+      },
+      {
+        "name": "alpha",
+        "default": 0.001,
+        "description": {
+          "en": "Signal when the one-sided p value is below this",
+          "fi": "Signaali, kun yksisuuntainen p-arvo alittaa tämän"
+        },
+        "decision": "D-031"
+      }
+    ],
+    "inputs": ["Culture[]", "EmptyRunOptions"],
+    "output": "Signal[]",
+    "decisions": ["D-031", "D-044"],
+    "experiments": ["0009"],
+    "gear": {
+      "module": "@aei/detect",
+      "export": "emptyRun"
+    }
+  },
+  {
+    "id": "risingTrend",
+    "kind": "detector",
+    "name": {
+      "en": "Rising resistance trend",
+      "fi": "Nouseva resistenssitrendi"
+    },
+    "sentence": {
+      "en": "We test rising hospital resistance shares in complete {binDays}-day bins, with at least {minBins} bins, using the one-sided Cochran–Armitage test at p < {alpha} on the surveillance pairs.",
+      "fi": "Testaamme sairaalan resistenssiosuuden nousua täysissä {binDays} päivän jaksoissa, vähintään {minBins} jaksolla, yksisuuntaisella Cochran–Armitage-testillä: p < {alpha} seurattaville pareille."
+    },
+    "parameters": [
+      {
+        "name": "binDays",
+        "default": 28,
+        "description": {
+          "en": "Complete time-bin length",
+          "fi": "Täyden aikajakson pituus"
+        },
+        "unit": "days",
+        "decision": "D-020"
+      },
+      {
+        "name": "minBins",
+        "default": 13,
+        "description": {
+          "en": "Minimum complete bins",
+          "fi": "Täysien jaksojen vähimmäismäärä"
+        },
+        "decision": "D-020"
+      },
+      {
+        "name": "alpha",
+        "default": 0.001,
+        "description": {
+          "en": "Signal when the one-sided p value is below this",
+          "fi": "Signaali, kun yksisuuntainen p-arvo alittaa tämän"
+        },
+        "decision": "D-020"
+      },
+      {
+        "name": "pairs",
+        "default": [
+          {
+            "organism": "Escherichia coli",
+            "antibiotic": "AMP"
+          },
+          {
+            "organism": "Escherichia coli",
+            "antibiotic": "MEC",
+            "specimen": "urine"
+          },
+          {
+            "organism": "Escherichia coli",
+            "antibiotic": "TMP",
+            "specimen": "urine"
+          },
+          {
+            "organism": "Escherichia coli",
+            "antibiotic": "NIT",
+            "specimen": "urine"
+          },
+          {
+            "organism": "Escherichia coli",
+            "antibiotic": "CIP"
+          },
+          {
+            "organism": "Escherichia coli",
+            "antibiotic": "CXM"
+          },
+          {
+            "organism": "Escherichia coli",
+            "antibiotic": "CRO"
+          },
+          {
+            "organism": "Escherichia coli",
+            "antibiotic": "TZP"
+          },
+          {
+            "organism": "Escherichia coli",
+            "antibiotic": "MEM"
+          },
+          {
+            "organism": "Klebsiella pneumoniae",
+            "antibiotic": "CRO"
+          },
+          {
+            "organism": "Klebsiella pneumoniae",
+            "antibiotic": "CIP"
+          },
+          {
+            "organism": "Klebsiella pneumoniae",
+            "antibiotic": "TZP"
+          },
+          {
+            "organism": "Klebsiella pneumoniae",
+            "antibiotic": "MEM"
+          },
+          {
+            "organism": "Pseudomonas aeruginosa",
+            "antibiotic": "CAZ"
+          },
+          {
+            "organism": "Pseudomonas aeruginosa",
+            "antibiotic": "TZP"
+          },
+          {
+            "organism": "Pseudomonas aeruginosa",
+            "antibiotic": "MEM"
+          },
+          {
+            "organism": "Pseudomonas aeruginosa",
+            "antibiotic": "CIP"
+          },
+          {
+            "organism": "Staphylococcus aureus",
+            "antibiotic": "FOX"
+          },
+          {
+            "organism": "Staphylococcus aureus",
+            "antibiotic": "CLI"
+          },
+          {
+            "organism": "Enterococcus faecalis",
+            "antibiotic": "AMP"
+          },
+          {
+            "organism": "Enterococcus faecalis",
+            "antibiotic": "VAN"
+          },
+          {
+            "organism": "Proteus mirabilis",
+            "antibiotic": "CIP"
+          }
+        ],
+        "description": {
+          "en": "Surveillance organism–antibiotic pairs",
+          "fi": "Seurattavat bakteeri–antibioottiparit"
+        },
+        "decision": "D-020"
+      }
+    ],
+    "inputs": ["IsolateRecord[]", "Pair[]", "TrendOptions"],
+    "output": "Signal[]",
+    "decisions": ["D-020", "D-022", "D-044"],
+    "experiments": ["0002", "0006"],
+    "gear": {
+      "module": "@aei/detect",
+      "export": "risingTrend"
+    }
+  },
+  {
+    "id": "liveSignals",
+    "kind": "detector",
+    "name": {
+      "en": "Live detector set",
+      "fi": "Käytössä olevat tunnistimet"
+    },
+    "sentence": {
+      "en": "We run profile excess, phenotype excess, sampling drop, empty run and rising trend at their registered settings, separately by hospital; detected clusters are excluded causally from trends. Signals are not episode alerts.",
+      "fi": "Ajamme profiili- ja fenotyyppiryppäät, näytemäärän laskun, näytteettömän jakson ja nousevan trendin rekisteröidyillä asetuksilla sairaaloittain; jo havaitut ryppäät poistetaan trenditestistä ajallisesti. Signaalit eivät ole jaksohälytyksiä."
+    },
+    "parameters": [],
+    "inputs": ["IsolateRecord[]", "Culture[]"],
+    "output": "Signal[]",
+    "decisions": ["D-020", "D-031", "D-044", "D-051"],
+    "experiments": ["0002", "0007", "0009"],
+    "gear": {
+      "module": "@aei/detect",
+      "export": "liveSignals"
+    }
+  },
+  {
+    "id": "cpeAlerts",
+    "kind": "detector",
+    "name": {
+      "en": "CPE alerts",
+      "fi": "CPE-hälytykset"
+    },
+    "sentence": {
+      "en": "Every CPE isolate in the requested inclusive date range raises an alert, without a statistical test.",
+      "fi": "Jokainen CPE-isolaatti pyydetyllä päivämäärävälillä tuottaa hälytyksen ilman tilastollista testiä."
+    },
+    "parameters": [],
+    "inputs": ["IsolateRecord[]", "DateWindow?"],
+    "output": "CpeAlert[]",
+    "decisions": ["D-014"],
+    "experiments": [],
+    "gear": {
+      "module": "@aei/alerts",
+      "export": "cpeAlerts"
+    }
+  },
+  {
+    "id": "newInUnitAlerts",
+    "kind": "detector",
+    "name": {
+      "en": "New in unit",
+      "fi": "Uusi yksikössä"
+    },
+    "sentence": {
+      "en": "A finding with a watched phenotype ({phenotypes}) on an inpatient unit raises an alert after more than {lookbackDays} days without that phenotype; no alerts are raised in the hospital's first {lookbackDays} days of data.",
+      "fi": "Seurattavan fenotyypin ({phenotypes}) löydös vuodeosastolla hälyttää, kun edellisestä samasta fenotyypistä on yli {lookbackDays} päivää; sairaalan aineiston ensimmäiset {lookbackDays} päivää eivät hälytä."
+    },
+    "parameters": [
+      {
+        "name": "phenotypes",
+        "default": ["mrsa", "vre"],
+        "description": {
+          "en": "Phenotypes watched",
+          "fi": "Seurattavat fenotyypit"
+        },
+        "decision": "D-021"
+      },
+      {
+        "name": "lookbackDays",
+        "default": 180,
+        "description": {
+          "en": "Quiet interval and initial observation period",
+          "fi": "Hiljainen jakso ja havainnoinnin alkujakso"
+        },
+        "unit": "days",
+        "decision": "D-021"
+      }
+    ],
+    "inputs": ["IsolateRecord[]", "Phenotype[]?", "lookbackDays?", "Ward[]?"],
+    "output": "NewInUnitAlert[]",
+    "decisions": ["D-021", "D-034", "D-051"],
+    "experiments": [],
+    "gear": {
+      "module": "@aei/alerts",
+      "export": "newInUnitAlerts"
+    }
+  },
+  {
+    "id": "coverage",
+    "kind": "figure",
+    "name": {
+      "en": "Antibiotic coverage",
+      "fi": "Antibiootin kattavuus"
+    },
+    "sentence": {
+      "en": "We estimate the covered share of first isolates over {windowDays} days, with a 95 % Wilson interval. One pool is used: the unit if it has {minTested} isolates, otherwise its ward type, otherwise its hospital. Each drug estimate needs {minTested} known results. Filters drop age, onset, sex before widening when the unit has enough unfiltered isolates. Intrinsic resistance and no breakpoint count as not covered; untested results are excluded. The unit's last {recentDays} days are context only.",
+      "fi": "Arvioimme ensiisolaattien katetun osuuden {windowDays} päivältä ja 95 % Wilson-välin. Yksi aineisto: yksikkö, jos siinä on {minTested} isolaattia, muuten osastotyyppi, muuten sairaala. Lääkkeen arvio vaatii {minTested} tunnettua tulosta. Rajaukset poistetaan järjestyksessä ikä, alkuperä, sukupuoli ennen laajentamista, jos rajaamaton yksikkö riittää. Luontainen resistenssi ja puuttuva raja-arvo ovat kattamattomia; tutkimattomat jätetään pois. Yksikön viimeiset {recentDays} päivää ovat vain taustatietoa."
+    },
+    "parameters": [
+      {
+        "name": "windowDays",
+        "default": 365,
+        "description": {
+          "en": "Observation window",
+          "fi": "Havaintoikkuna"
+        },
+        "unit": "days",
+        "decision": "D-023"
+      },
+      {
+        "name": "minTested",
+        "default": 30,
+        "description": {
+          "en": "Minimum pool and known-result count",
+          "fi": "Aineiston ja tunnettujen tulosten vähimmäismäärä"
+        },
+        "decision": "D-033"
+      },
+      {
+        "name": "onset",
+        "default": "any",
+        "description": {
+          "en": "Acquisition filter",
+          "fi": "Infektion alkuperän rajaus"
+        },
+        "decision": "D-049"
+      },
+      {
+        "name": "recentDays",
+        "default": 28,
+        "description": {
+          "en": "Unit context only, not the estimate",
+          "fi": "Vain yksikön taustatieto, ei estimaatti"
+        },
+        "unit": "days",
+        "decision": "D-023"
+      },
+      {
+        "name": "wilsonZ",
+        "default": 1.959964,
+        "description": {
+          "en": "Normal quantile for the 95 % Wilson interval",
+          "fi": "95 % Wilson-välin normaalikvantiili"
+        },
+        "decision": "D-023"
+      }
+    ],
+    "inputs": ["IsolateRecord[]", "CoverageQuery", "Ward[]?"],
+    "output": "CoverageResult",
+    "decisions": ["D-023", "D-033", "D-044", "D-049", "D-053"],
+    "experiments": ["0004", "0005", "0012", "0014"],
+    "gear": {
+      "module": "@aei/coverage",
+      "export": "coverage"
+    }
+  },
+  {
+    "id": "suggest",
+    "kind": "ranking",
+    "name": {
+      "en": "Single-drug ranking",
+      "fi": "Yksittäisten lääkkeiden järjestys"
+    },
+    "sentence": {
+      "en": "We rank by standing then coverage, without AWaRe tiers. Clears means the interval's lower bound reaches the bar; borderline means only the point estimate does. Mild infections use in-spectrum coverage and exclude IV-only drugs; severe infections use all organisms. Bars are {mild} (mild) and {severe} (severe or hospital onset). An untested proportion above {maxUntested} is not assessable; all-organism coverage is always shown. This informs, not prescribes.",
+      "fi": "Järjestämme rajan ylityksen ja kattavuuden mukaan ilman AWaRe-luokkia. Raja ylittyy, kun luottamusvälin alaraja yltää siihen; rajatapauksessa vain piste-estimaatti yltää. Lievissä infektioissa käytetään vaikutuskirjon kattavuutta ilman vain suonensisäisiä lääkkeitä; vakavissa kaikkia bakteereita. Rajat ovat {mild} (lievä) ja {severe} (vakava tai sairaalasyntyinen). Tutkimaton osuus yli {maxUntested} estää arvion; kaikkien bakteerien kattavuus näytetään aina. Tieto tukee, ei määrää hoitoa."
+    },
+    "parameters": [
+      {
+        "name": "mild",
+        "default": 0.8,
+        "description": {
+          "en": "Mild infection coverage bar (proportion)",
+          "fi": "Lievän infektion kattavuusraja (osuus)"
+        },
+        "decision": "D-026"
+      },
+      {
+        "name": "severe",
+        "default": 0.9,
+        "description": {
+          "en": "Severe or hospital-onset coverage bar (proportion)",
+          "fi": "Vakavan tai sairaalasyntyisen infektion kattavuusraja (osuus)"
+        },
+        "decision": "D-049"
+      },
+      {
+        "name": "maxUntested",
+        "default": 0.2,
+        "description": {
+          "en": "Maximum untested proportion",
+          "fi": "Tutkimatta jääneiden enimmäisosuus"
+        },
+        "decision": "D-046"
+      }
+    ],
+    "inputs": ["CoverageResult", "Severity"],
+    "output": "Suggestion[]",
+    "decisions": ["D-026", "D-027", "D-033", "D-046", "D-049", "D-056"],
+    "experiments": ["0010"],
+    "gear": {
+      "module": "@aei/coverage",
+      "export": "suggest"
+    }
+  },
+  {
+    "id": "suggestCombinations",
+    "kind": "ranking",
+    "name": {
+      "en": "Combination ranking",
+      "fi": "Yhdistelmien järjestys"
+    },
+    "sentence": {
+      "en": "Only for severe infections when no single drug clears the bar, we rank tested-both pairs by standing then coverage, requiring gain ≥ {minPartnerGain} over the better single drug. Two beta-lactams or urine-only agents are excluded. Untested proportion above {maxUntested} is not assessable; return at most {limit} pairs.",
+      "fi": "Vain vakavissa infektioissa, kun yksittäinen lääke ei ylitä rajaa, järjestämme molemmille tutkitut parit rajan ylityksen ja kattavuuden mukaan; lisän on oltava ≥ {minPartnerGain} parempaan yksittäiseen lääkkeeseen. Kaksi beetalaktaamia tai virtsalääke suljetaan pois. Tutkimaton osuus yli {maxUntested} estää arvion; palautetaan enintään {limit} paria."
+    },
+    "parameters": [
+      {
+        "name": "limit",
+        "default": 5,
+        "description": {
+          "en": "Maximum suggestions",
+          "fi": "Ehdotusten enimmäismäärä"
+        },
+        "decision": "D-028"
+      },
+      {
+        "name": "minPartnerGain",
+        "default": 0.02,
+        "description": {
+          "en": "Minimum gain over the better single drug (proportion)",
+          "fi": "Vähimmäislisä parempaan yksittäiseen lääkkeeseen (osuus)"
+        },
+        "decision": "D-033"
+      },
+      {
+        "name": "maxUntested",
+        "default": 0.2,
+        "description": {
+          "en": "Maximum untested proportion",
+          "fi": "Tutkimatta jääneiden enimmäisosuus"
+        },
+        "decision": "D-046"
+      }
+    ],
+    "inputs": ["CoverageResult", "Severity", "limit?"],
+    "output": "CombinationSuggestion[]",
+    "decisions": ["D-028", "D-033", "D-046", "D-049", "D-056"],
+    "experiments": ["0010"],
+    "gear": {
+      "module": "@aei/coverage",
+      "export": "suggestCombinations"
+    }
+  },
+  {
+    "id": "isolates",
+    "kind": "count",
+    "name": {
+      "en": "Isolate count",
+      "fi": "Isolaattien määrä"
+    },
+    "sentence": {
+      "en": "We count exported isolate rows in the saved scope; this is a row count, not a first-isolate count.",
+      "fi": "Laskemme tallennetun rajauksen viedyt isolaattirivit; tämä ei ole ensiisolaattien määrä."
+    },
+    "parameters": [],
+    "inputs": ["isolates table"],
+    "output": "integer",
+    "decisions": ["D-060", "D-064"],
+    "experiments": [],
+    "gear": {
+      "module": "@aei/export",
+      "export": "projectBundle"
+    }
+  },
+  {
+    "id": "patients",
+    "kind": "count",
+    "name": {
+      "en": "Distinct patients",
+      "fi": "Eri potilaat"
+    },
+    "sentence": {
+      "en": "We count distinct patientId values in the exported isolate rows, within the saved scope.",
+      "fi": "Laskemme eri patientId-arvot viedyistä isolaattiriveistä tallennetussa rajauksessa."
+    },
+    "parameters": [],
+    "inputs": ["isolates table", "patientId"],
+    "output": "integer",
+    "decisions": ["D-060", "D-064"],
+    "experiments": [],
+    "gear": {
+      "module": "@aei/export",
+      "export": "projectBundle"
+    }
+  },
+  {
+    "id": "alerts",
+    "kind": "count",
+    "name": {
+      "en": "Alert count",
+      "fi": "Hälytysten määrä"
+    },
+    "sentence": {
+      "en": "We count exported alert rows in the saved scope, not distinct incidents. Source statistical alerts merge same-detector, same-key signals up to {episodeDays} days apart; a sampling-drop episode starting within {samplingDropSuppressionDays} days after an empty-run alert on the same unit is suppressed. CPE and new-in-unit alerts follow their sentinel rules.",
+      "fi": "Laskemme tallennetun rajauksen viedyt hälytysrivit, emme erillisiä tapahtumia. Lähteen tilastolliset hälytykset yhdistävät saman tunnistimen ja avaimen signaalit enintään {episodeDays} päivän välein; saman yksikön näytteettömän jakson hälytystä {samplingDropSuppressionDays} päivän sisällä seuraava näytemäärän laskujakso poistetaan. CPE ja uusi yksikössä noudattavat omia sääntöjään."
+    },
+    "parameters": [
+      {
+        "name": "episodeDays",
+        "default": 28,
+        "description": {
+          "en": "Maximum gap between same-key source signals",
+          "fi": "Saman avaimen lähdesignaalien enimmäisväli"
+        },
+        "unit": "days",
+        "decision": "D-020"
+      },
+      {
+        "name": "samplingDropSuppressionDays",
+        "default": 14,
+        "description": {
+          "en": "Suppress a source sampling-drop episode starting this soon after an empty run",
+          "fi": "Poista lähteen näytemäärän laskujakso, joka alkaa näin pian näytteettömän jakson jälkeen"
+        },
+        "unit": "days",
+        "decision": "D-031"
+      }
+    ],
+    "inputs": ["alerts table"],
+    "output": "integer",
+    "decisions": ["D-020", "D-031", "D-034", "D-060", "D-064"],
+    "experiments": [],
+    "gear": {
+      "module": "@aei/export",
+      "export": "projectBundle"
+    }
+  }
+]

@@ -1,5 +1,6 @@
 import { Document, HeadingLevel, ImageRun, Packer, Paragraph, Table, TableCell, TableRow, TextRun } from "docx";
 import type { ExportBundle, ExportFigure, ExportFile, ExportTable } from "./bundle.ts";
+import { toMethodsParagraph } from "./methods.ts";
 import { dictionary, metadata, numberText, slug, text } from "./text.ts";
 
 export function figureSvgFile(figure: ExportFigure): ExportFile {
@@ -41,6 +42,7 @@ export async function toDocx(bundle: ExportBundle): Promise<ExportFile> {
       new Paragraph({ text: "Numbers", heading: HeadingLevel.HEADING_1 }),
       ...bundle.numbers.map((number) => new Paragraph({ text: numberText(number), bullet: { level: 0 } })),
     );
+  children.push(new Paragraph({ text: "Methods", heading: HeadingLevel.HEADING_1 }), new Paragraph(toMethodsParagraph(bundle)));
   for (const table of bundle.tables) children.push(new Paragraph({ text: table.title, heading: HeadingLevel.HEADING_1 }), wordTable(table));
   for (const figure of bundle.figures) {
     children.push(new Paragraph({ text: figure.title, heading: HeadingLevel.HEADING_1 }));

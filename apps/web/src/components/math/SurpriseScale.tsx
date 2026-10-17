@@ -1,4 +1,5 @@
 import { type Locale, t } from "@aei/i18n";
+import { parameterDefaults } from "@aei/methods";
 import { ALPHA, formatNum, formatPSup, surprise } from "./mathHelpers.ts";
 import "./SurpriseScale.css";
 
@@ -13,7 +14,7 @@ const MAX = 6;
 
 /** A tiny gauge of −log10 p (0 to 6+) with the detector's alert threshold marked. */
 export function SurpriseScale({ p, detector, locale }: SurpriseScaleProps) {
-  const alpha = ALPHA[detector] ?? 1e-3;
+  const alpha = ALPHA[detector] ?? parameterDefaults.phenotypeExcess.alpha;
   const value = surprise(p, MAX);
   const thr = -Math.log10(alpha);
   const past = p < alpha;

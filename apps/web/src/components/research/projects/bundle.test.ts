@@ -107,11 +107,14 @@ describe("workspace export glue", () => {
     expect(bundle.fingerprint).toEqual(project.fingerprint);
     expect(bundle.title).toBe("Study");
   });
-  it("opens a project through the existing hash helpers and notifies App of the hospital", () => {
+  it("opens a project at its own view and hospital, keeping only the timeline layers", () => {
     const location = { hash: "#research?unit=URO&hospital=other&tl=alerts" };
     vi.stubGlobal("location", location);
     vi.stubGlobal("history", {
       state: null,
+      pushState: (_state: unknown, _unused: string, hash: string) => {
+        location.hash = hash;
+      },
       replaceState: (_state: unknown, _unused: string, hash: string) => {
         location.hash = hash;
       },
@@ -129,11 +132,13 @@ describe("workspace export glue", () => {
       createdAt: "2025-05-12",
       updatedAt: "2025-05-12",
     });
+    expect(location.hash.startsWith("#project?")).toBe(true);
     const params = new URLSearchParams(location.hash.split("?")[1]);
     expect(params.get("project")).toBe("study");
     expect(params.get("unit")).toBe("ICU");
     expect(params.get("tl")).toBe("alerts");
     expect(params.has("hospital")).toBe(false);
+    expect(params.has("quick")).toBe(false);
     expect(dispatch).toHaveBeenCalledOnce();
   });
 });
