@@ -186,7 +186,7 @@ async function launchChrome() {
       rmSync(profile, { recursive: true, force: true });
     } catch {}
   };
-  return { newPage, cleanup };
+  return { newPage, cleanup, send, on: (l) => listeners.add(l), off: (l) => listeners.delete(l) };
 }
 
 // ---------- page helpers ----------
@@ -931,6 +931,128 @@ async function main() {
     },
     { name: "desktop-900", width: 1440, height: 900, mobile: false },
   );
+
+  await interaction("projects", async (idle, reasons) => {
+    // Use English labels so this check is independent of earlier language interactions.
+    await load(cdp, urlOf("settings"), idle);
+    await click(".settings button[lang='en']");
+    if (!(await waitIn(`document.documentElement.lang === 'en'`))) throw new Error("English did not load");
+    await cleanWorkspace(idle);
+    const clock = await api("/api/clock");
+    const projectButton = '.ws-toolbar .project-controls button[aria-haspopup="dialog"]';
+    const exportButton = '.ws-toolbar .project-controls button[aria-haspopup="menu"]';
+    const listed = `!!document.querySelector('.project-list[aria-busy=false]')`;
+    const smokeRow = `[...document.querySelectorAll('.project-list li')].find(li => li.querySelector('strong')?.textContent === 'Smoke project')`;
+    await click(projectButton);
+    if (!(await waitIn(listed))) throw new Error("Project dialog did not list projects (or its empty state)");
+    const list = await evaluate(cdp, `!!document.querySelector('.project-list ul, .project-list p')`);
+    if (!list) reasons.push("Project dialog has neither projects nor an empty state");
+    await click('.project-dialog form input[maxlength="200"]');
+    await key("a", 2);
+    await cdp.send("Input.insertText", { text: "Smoke project" });
+    await click('.project-dialog input[value="frozen"]');
+    if ((await evaluate(cdp, `document.querySelector('.project-dialog input[type=date]')?.value`)) !== clock.asOf)
+      reasons.push("frozen as-of date did not default to the replay clock");
+    await click('.project-dialog button[type="submit"]');
+    if (
+      !(await waitIn(
+        `!document.querySelector('.project-dialog') && new URLSearchParams(location.hash.split('?')[1]).has('project') && !!document.querySelector('.project-frozen')`,
+      ))
+    )
+      throw new Error("saving a frozen project did not open it with project=<id> in the hash");
+    const hash = await evaluate(cdp, `location.hash`);
+    const id = new URLSearchParams(hash.split("?")[1]).get("project");
+    await click(projectButton);
+    if (!(await waitIn(`${listed} && !!(${smokeRow})`))) throw new Error("saved project missing from the list");
+    if (!(await evaluate(cdp, `(${smokeRow}).querySelector('.project-mode')?.textContent.includes('Frozen')`)))
+      reasons.push("saved project has no frozen badge");
+    await key("Escape");
+    const origin = await evaluate(cdp, `performance.timeOrigin`);
+    await cdp.send("Page.reload");
+    if (
+      !(await waitIn(
+        `performance.timeOrigin !== ${origin} && document.querySelector('.project-frozen')?.textContent.includes('Frozen at ${clock.asOf}') && new URLSearchParams(location.hash.split('?')[1]).get('project') === ${JSON.stringify(id)}`,
+      ))
+    )
+      throw new Error("reloading did not keep the frozen project open");
+    await idle();
+    const project = await api(`/api/projects/${encodeURIComponent(id)}`);
+    const downloadDir = mkdtempSync(join(tmpdir(), "aei-smoke-downloads-"));
+    const downloads = new Map();
+    const progress = (m) => {
+      if (m.method === "Browser.downloadWillBegin") downloads.set(m.params.guid, { ...m.params, state: "inProgress" });
+      if (m.method === "Browser.downloadProgress" && downloads.has(m.params.guid)) Object.assign(downloads.get(m.params.guid), m.params);
+    };
+    browser.on(progress);
+    try {
+      await browser.send("Browser.setDownloadBehavior", { behavior: "allow", downloadPath: downloadDir, eventsEnabled: true });
+      await click(exportButton);
+      const download = async (label, extension) => {
+        if (
+          !(await waitIn(
+            `!![...document.querySelectorAll('.project-export-options button')].find(b => b.textContent === ${JSON.stringify(label)} && !b.disabled)`,
+          ))
+        )
+          throw new Error(`export control unavailable: ${label}`);
+        const previous = new Set(downloads.keys());
+        await evaluate(
+          cdp,
+          `[...document.querySelectorAll('.project-export-options button')].find(b => b.textContent === ${JSON.stringify(label)}).click()`,
+        );
+        const until = Date.now() + 30_000;
+        while (Date.now() < until) {
+          const fresh = [...downloads.values()].filter((d) => !previous.has(d.guid));
+          if (fresh.some((d) => d.state === "canceled")) throw new Error(`${label} download canceled`);
+          const done = await evaluate(cdp, `document.querySelector('.project-export-options')?.getAttribute('aria-busy') === 'false'`);
+          if (fresh.length && done && fresh.every((d) => d.state === "completed")) {
+            const files = fresh.filter((d) => d.suggestedFilename.endsWith(extension));
+            if (!files.length) throw new Error(`${label} downloaded no ${extension} file`);
+            return files.map((d) => readFileSync(join(downloadDir, d.suggestedFilename)));
+          }
+          if (await evaluate(cdp, `!!document.querySelector('.project-error[role=alert]')`))
+            throw new Error(`${label} export reported an error`);
+          await sleep(100);
+        }
+        throw new Error(`${label} download did not complete in 30 s`);
+      };
+      const [json] = await download("JSON", ".json");
+      const bundle = JSON.parse(json.toString("utf8"));
+      if (bundle.format !== "aei-export/1") reasons.push("JSON export has the wrong format");
+      if (!bundle.tables?.find((table) => table.name === "isolates")?.rows.length) reasons.push("JSON export has no isolates");
+      if (!project.project.fingerprint?.sha256 || JSON.stringify(bundle.fingerprint) !== JSON.stringify(project.project.fingerprint))
+        reasons.push("JSON export does not carry the project's fingerprint");
+      const [word] = await download("Word (.docx)", ".docx");
+      if (word.subarray(0, 2).toString() !== "PK") reasons.push("Word export is not a ZIP (.docx)");
+      for (const svg of await download("Figures (SVG)", ".svg")) {
+        const text = svg.toString("utf8");
+        if (!text.startsWith("<svg") || text.includes("var(--")) reasons.push("SVG export is not standalone with inlined styles");
+      }
+    } finally {
+      browser.off(progress);
+      await browser.send("Browser.setDownloadBehavior", { behavior: "default", eventsEnabled: false });
+      rmSync(downloadDir, { recursive: true, force: true });
+    }
+    await key("Escape");
+    await click(projectButton);
+    if (!(await waitIn(`${listed} && !!(${smokeRow})`))) throw new Error("project not listed for deletion");
+    let confirmed = false;
+    const confirmation = (m) => {
+      if (m.method === "Page.javascriptDialogOpening" && m.params.type === "confirm") {
+        confirmed = true;
+        void cdp.send("Page.handleJavaScriptDialog", { accept: true });
+      }
+    };
+    cdp.on(confirmation);
+    try {
+      await evaluate(cdp, `(${smokeRow}).querySelector('.project-actions button:last-child').click()`);
+      if (!(await waitIn(`${listed} && !(${smokeRow}) && !new URLSearchParams(location.hash.split('?')[1]).has('project')`)))
+        reasons.push("deleted project remains in the list or URL");
+      if (!confirmed) reasons.push("project deletion did not ask for confirmation");
+    } finally {
+      cdp.off(confirmation);
+    }
+    await idle();
+  });
 
   await interaction("home-incident-period", async (idle, reasons) => {
     await load(cdp, urlOf("home"), idle);
