@@ -7,13 +7,24 @@ as the key element, the engine's math on screen, deadline 12:00), and the
 morning went to that redesign. The minute-by-minute record is
 `design-log.md`; reviews and audits are in `design/`.
 
-Branch `overnight/design` (pushed, never merged), built in a separate
+Branch `overnight/design`, built in a separate
 worktree at `/Users/artevil/turku-hackathon-design`. API on 8788 and web
 on 5174 (another session held 8787 and 5173); an AI-enabled test stack
 ran on 5176 (a local fake model for the Assistant panel). Screenshots
 come from the running app through `design/shoot.mjs` (headless Chrome,
 true 390 px phone emulation at 2×, laptop 1280×860). "Before" is the
 pre-night commit 98cfd99; replay date in every shot 12 May 2025.
+
+**Merged into `main` at Artem's request (11:05).** `origin/main` had 49
+new commits, among them a rewritten web app by teammates. Artem chose this
+design: `apps/web` on `main` is now the design branch's, and the previous
+web app remains in `main`'s history. Everything else from `main` was kept
+(API, quality checks, containers, the pitch film, scripts); contract
+routes from both sides are combined; `main` had already used D-038 to
+D-040, so Artem's Beta-binomial and raw-counts decisions are D-041 and
+D-042 there and the county route is D-043. `main`'s CI smoke job, which
+drives the previous screens, is paused (`if: false`, with a note) until
+it is ported; typecheck, lint, tests and the container builds still run.
 
 ## 1. What changed, by surface
 
@@ -133,9 +144,9 @@ clinical; no brand voice written.
 
 ## 8. With another night
 
-1. Bring `origin/main` in: teammates pushed new screens, a data-quality
-   route and a pitch film overnight (37 commits); this branch has not
-   been merged with them.
+1. Port the CI smoke test (`apps/web/scripts/smoke.mjs` in `main`'s
+   history) to the new routes and re-enable the job; show `main`'s
+   data-quality route (`/api/quality`) in the new design.
 2. The proposed routes above, starting with relations by window and
    weekly expected counts, so the lanes can show surprise rather than
    counts.
