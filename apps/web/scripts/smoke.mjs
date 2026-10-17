@@ -614,6 +614,82 @@ async function main() {
     await cdp.send("Page.navigate", { url: "about:blank" });
     await load(cdp, urlOf("research"), idle);
   };
+  await interaction("coverage-window", async (idle, reasons) => {
+    await cleanWorkspace(idle);
+    await evaluate(cdp, `location.hash = 'research?unit=ICU&cov.unit=URO'`);
+    await idle();
+    if (await evaluate(cdp, `!!document.querySelector('#ws-win-coverage')`)) reasons.push("coverage is open by default");
+    await click("#ws-tray-button");
+    await click('[data-reopen="coverage"]');
+    await key("Escape");
+    const root = "#ws-win-coverage";
+    if (!(await waitIn(`!!document.querySelector('${root} .cl[aria-busy=false] .cl-row')`)))
+      reasons.push("opening coverage from the tray did not load a non-empty list");
+    await click(`${root} .rs-sumrow`);
+    // Pick the specimen and severity through the window's controls, not the URL.
+    const picks = await evaluate(
+      cdp,
+      `(() => {
+      const buttons = [...document.querySelectorAll('${root} .rs-choice')];
+      const specimen = buttons.find(b => /^(Veri|Blood)$/i.test(b.textContent.trim()));
+      const severe = buttons.find(b => /^(vaikea|severe) /i.test(b.textContent.trim()));
+      specimen?.click(); severe?.click();
+      return !!specimen && !!severe;
+    })()`,
+    );
+    if (!picks) reasons.push("specimen or severity control missing inside coverage window");
+    await evaluate(cdp, `document.querySelector('${root} .rs-done')?.click()`);
+    const listReady = `!!document.querySelector('${root} .cl[aria-busy=false] .cl-row') && location.hash.includes('cov.site=blood') && location.hash.includes('cov.sev=severe')`;
+    if (!(await waitIn(listReady))) reasons.push("blood + severe did not render coverage at the default window size");
+    const scoped = await evaluate(
+      cdp,
+      `(() => {
+      const p = new URLSearchParams(location.hash.split('?')[1]);
+      return p.get('unit') === 'ICU' && p.get('cov.unit') === 'URO' && !p.has('site') && !p.has('sev');
+    })()`,
+    );
+    if (!scoped) reasons.push("coverage filters collided with workspace URL filters");
+    const fits = `(() => { const el = document.querySelector('${root} .coverage-surface'); return el && el.scrollWidth <= el.clientWidth + 1 && el.querySelector('.doctor').scrollWidth <= el.clientWidth + 1; })()`;
+    if (!(await evaluate(cdp, fits))) reasons.push("coverage overflows its default window width");
+    await screenshot(cdp, join(outDir, "coverage-window-default.png"));
+    await click(`${root} .cl-row`);
+    if (!(await waitIn(`!!document.querySelector('${root} #dr-details .dt-name')`))) reasons.push("docked coverage details did not open");
+    const contained = await evaluate(
+      cdp,
+      `(() => {
+      const body = document.querySelector('${root} .ws-body').getBoundingClientRect();
+      const details = document.querySelector('${root} #dr-details').getBoundingClientRect();
+      return details.left >= body.left && details.right <= body.right + 1;
+    })()`,
+    );
+    if (!contained) reasons.push("docked coverage details escaped the window");
+    await screenshot(cdp, join(outDir, "coverage-window-details.png"));
+    await click(`${root} .dp-close`);
+    await click(`${root} .ws-maximize`);
+    if (!(await waitIn(`${listReady} && !!document.querySelector('.ws-area[data-maximized=true]')`)))
+      reasons.push("maximized coverage did not keep a non-empty list and filters");
+    if (!(await evaluate(cdp, fits))) reasons.push("coverage overflows when maximized");
+    await screenshot(cdp, join(outDir, "coverage-window-maximized.png"));
+    // A deep link survives both a workspace filter change and a full reload.
+    await evaluate(cdp, `location.hash = location.hash.replace('unit=ICU', 'unit=MED-A')`);
+    await idle();
+    if (!(await evaluate(cdp, `location.hash.includes('cov.site=blood') && location.hash.includes('cov.sev=severe')`)))
+      reasons.push("workspace filtering discarded coverage parameters");
+    const deepLink = await evaluate(cdp, `localStorage.removeItem('aei.research.layout.v2'); location.href`);
+    await cdp.send("Page.navigate", { url: "about:blank" });
+    await load(cdp, deepLink, idle);
+    if (!(await waitIn(listReady))) reasons.push("coverage deep link did not restore without a saved workspace layout");
+    await click(`${root} .cl-row`);
+    if (!(await waitIn(`!!document.querySelector('${root} #dr-details .dt-name')`))) reasons.push("coverage details did not open");
+    await cdp.send("Emulation.setEmulatedMedia", { media: "print" });
+    const printable = await evaluate(
+      cdp,
+      `(() => { const p = document.querySelector('${root} .pr'); return !!p && p.getBoundingClientRect().height > 0 && getComputedStyle(p).display !== 'none'; })()`,
+    );
+    if (!printable) reasons.push("coverage print sheet is hidden in workspace print view");
+    await cdp.send("Emulation.setEmulatedMedia", { media: "" });
+  });
+
   await interaction(
     "research-workspace-close",
     async (idle, reasons) => {

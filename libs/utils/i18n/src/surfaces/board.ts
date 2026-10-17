@@ -13,6 +13,7 @@ export const boardEn = {
   boardMath: "Alert math",
   boardAssistant: "Assistant",
   boardReproduce: "Reproduce",
+  boardCoverage: "Treat a patient",
   reproduceEmpty:
     "Save or open a project to reproduce its numbers: the same rows, checked by fingerprint, and the same methods, recomputed in Python or R.",
   reproduceNewTab: "Open in new tab",
@@ -70,6 +71,7 @@ export const boardFi: Record<keyof typeof boardEn, string> = {
   boardMath: "Hälytyksen laskenta",
   boardAssistant: "Avustaja",
   boardReproduce: "Toista",
+  boardCoverage: "Hoida potilasta",
   reproduceEmpty:
     "Tallenna tai avaa projekti toistaaksesi sen luvut: samat rivit tarkistetaan sormenjäljellä ja samat menetelmät lasketaan uudelleen Pythonilla tai R:llä.",
   reproduceNewTab: "Avaa uudessa välilehdessä",

@@ -351,7 +351,7 @@
   cursor: pointer;
 }
 
-@media (max-width: 1199px) {
+@container coverage (max-width: 1199px) {
   .cl-cols,
   .cl-row {
     grid-template-columns: minmax(100px, 1fr) minmax(175px, 1.5fr) 62px 44px;
@@ -363,7 +363,7 @@
   }
 }
 
-@media (max-width: 959px) {
+@container coverage (max-width: 959px) {
   .cl,
   .cl-scroll {
     overflow: visible;
