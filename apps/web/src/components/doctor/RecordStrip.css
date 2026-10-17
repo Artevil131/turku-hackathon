@@ -271,21 +271,30 @@
   background: transparent;
   color: var(--d-ink-2);
 }
+/* One-tap preset: severe blood infection (sets site and severity together). */
 .rs-quick {
-  min-height: 44px;
-  margin: 4px 8px;
   color: var(--d-acc);
   border: 1px solid var(--d-line-strong);
   border-radius: 6px;
 }
+/* Phones: a full-size tap target under the summary line. */
+.rs:not([data-wide]) .rs-quick {
+  min-height: 44px;
+  margin: 4px 0 8px;
+}
+/* Wide: the preset sits at the end of the filter row at the same height as the other controls; the row wraps only when the window is too narrow. */
 .rs[data-wide] {
   height: auto;
   flex-wrap: wrap;
+  gap: 6px 8px;
+  padding: 6px 8px;
 }
 .rs[data-wide] .rs-body {
   flex-wrap: wrap;
   height: auto;
 }
 .rs[data-wide] .rs-quick {
-  margin-top: 0;
+  flex: none;
+  height: 28px;
+  margin: 0 0 0 auto;
 }
