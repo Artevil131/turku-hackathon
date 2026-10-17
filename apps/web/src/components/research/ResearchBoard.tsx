@@ -43,9 +43,11 @@ export function ResearchBoard(props: Props) {
   // state, so the card is revealed by hand: opened, raised and flashed.
   const incidentRef = useRef<string | null>(state.incident);
   incidentRef.current = state.incident;
+  const [explain, setExplain] = useState(0);
   const onChange = useCallback((patch: Partial<BoardState>) => {
     if (patch.incident !== undefined && patch.incident !== null && patch.incident === incidentRef.current) {
       setReveal({ id: "math", key: `math-${Date.now()}` });
+      setExplain((n) => n + 1);
     }
     setState((s) => ({ ...s, ...patch }));
   }, []);
@@ -159,6 +161,7 @@ export function ResearchBoard(props: Props) {
         asOf={asOf}
         command={command}
         onShowMap={showMap}
+        explain={explain}
         empty={loading ? "loading" : "pick"}
       />
     ),

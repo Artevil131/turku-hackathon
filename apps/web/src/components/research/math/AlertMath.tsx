@@ -4,7 +4,7 @@ import { LIVE_SETTINGS } from "@aei/detect";
 import { alertEvidence, formatDate, type GlossTerm, incidentResponsibility, type Locale, phenotypeName, t } from "@aei/i18n";
 import { fillSnippet, type Method, methodOf } from "@aei/method";
 import { formatNum } from "@aei/viz";
-import { type ReactNode, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import type { Finding } from "../../../live.ts";
 import { allSites, currentSite, homeSite } from "../../../sites.ts";
 import { AlertExplanation } from "../../AlertExplanation.tsx";
@@ -45,6 +45,8 @@ interface Props {
   command?: (c: ClockCommand) => void;
   /** Opens the map window on this county. */
   onShowMap?: (county: string) => void;
+  /** Each new positive value opens "How we calculate it" and the explanation (the row's "Open calculation and explanation"). */
+  explain?: number;
 }
 
 /** The selected site's county (D-051), as the map keeps it. */
@@ -139,8 +141,15 @@ export function AlertMath({
   asOf = null,
   command,
   onShowMap,
+  explain = 0,
 }: Props) {
   const key = inc?.key ?? null;
+  const how = useRef<HTMLDetailsElement | null>(null);
+  useEffect(() => {
+    if (explain <= 0 || !how.current) return;
+    how.current.open = true;
+    how.current.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [explain]);
   // The body of a new incident fades in (keyed, so it remounts; the class leaves on animationend); the frame and the action row stay put.
   const [entered, setEntered] = useState<string | null>(null);
   const iso = useIsolates(client, inc);
@@ -207,7 +216,7 @@ export function AlertMath({
         <Numbers locale={locale} alert={lead} />
 
         {/* Concise first: the method opens on request (Artem, 2026-10-17: detail only when the researcher asks). */}
-        <details className="sig-how">
+        <details className="sig-how" ref={how}>
           <summary className="sig-how-head">{t(locale, "cardHow")}</summary>
           <p className="sig-how-text">{howSentence(locale, lead)}</p>
           <HowFigure locale={locale} alert={lead} values={snippetValues} />
@@ -216,7 +225,7 @@ export function AlertMath({
         </details>
 
         <div className="math-explain">
-          <AlertExplanation client={client} id={lead.id} locale={locale} />
+          <AlertExplanation client={client} id={lead.id} locale={locale} openKey={explain} />
         </div>
 
         {spans ? (

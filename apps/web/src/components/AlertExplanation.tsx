@@ -7,9 +7,25 @@ import { useEffect, useId, useState } from "react";
  * model, an opt-in "AI wording" rewords it; every number is still filled in
  * by code, and the reworded text says it should be read against the figures.
  */
-export function AlertExplanation({ client, id, locale, ai = false }: { client: AeiClient; id: string; locale: Locale; ai?: boolean }) {
+export function AlertExplanation({
+  client,
+  id,
+  locale,
+  ai = false,
+  openKey = 0,
+}: {
+  client: AeiClient;
+  id: string;
+  locale: Locale;
+  ai?: boolean;
+  /** Each new positive value opens the plain explanation, as if the link had been pressed. */
+  openKey?: number;
+}) {
   const panelId = useId();
   const [wording, setWording] = useState<ExplainWording | null>(null);
+  useEffect(() => {
+    if (openKey > 0) setWording((w) => w ?? "template");
+  }, [openKey]);
   const [attempt, setAttempt] = useState(0);
   const open = wording !== null;
   const [result, setResult] = useState<ExplainResponse | null>(null);
