@@ -69,6 +69,8 @@ experiment, it belongs in `libs/utils`, from the start.
     PRODUCT.md      product context for design work
     VISION.md       where we are going: a full research tool (projects,
                     notes, tools, export)
+    RESEARCH-TOOL-DESIGN.md  the first slice of the vision, designed:
+                    projects gear, routes, export gear, tools, work order
     OBJECTIVES.md   what we prove with the data, how it is measured, system design
     ENGINE.md       the mathematical engine, draft: every formula and output
     QUESTIONS.md    open machinery decisions with proposals, to be answered

@@ -90,6 +90,12 @@ What a researcher finds has to leave the tool cleanly.
   exporters are reusable logic and go in `libs/utils`; the website only
   presents them.
 
+## Where it is being built
+
+RESEARCH-TOOL-DESIGN.md is the design of the first slice (projects, notes,
+export, a minimal tools layer), with Artem's decisions of 2026-10-17 in its
+section 0 and the open team decisions in its section 8.
+
 ## Open questions for the team
 
 None of these are decided. Each one goes into DECISIONS.md when it is.

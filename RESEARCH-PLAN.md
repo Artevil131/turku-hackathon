@@ -7,7 +7,10 @@ then the mathematics (correct, and understood), then the many-hospital
 connections with the colleague who builds them.
 
 Branch: `research/unified`, cut from `main` at 4fa9960. The judge's notes
-are in JUDGE-FEEDBACK.md.
+are in JUDGE-FEEDBACK.md; the longer direction is VISION.md; the design of
+its project shell (projects, notes, export, tools) is
+RESEARCH-TOOL-DESIGN.md, which also fixes the file ownership between that
+work and this plan's view work.
 
 ## 1. What main already has (so we build on it, not beside it)
 
