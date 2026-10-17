@@ -91,3 +91,28 @@
   outline: 2px solid var(--ink-2);
   outline-offset: 3px;
 }
+
+.ask-suggest {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+}
+
+.ask-suggest-label {
+  font-size: 0.8125rem;
+  color: var(--ink-2);
+}
+
+.ask-suggest .chip {
+  max-width: 100%;
+  min-height: 36px;
+  white-space: normal;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ask-suggest .chip:focus-visible {
+  outline: 2px solid var(--ink-2);
+  outline-offset: 3px;
+}

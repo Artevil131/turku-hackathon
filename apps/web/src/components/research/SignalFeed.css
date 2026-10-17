@@ -552,3 +552,27 @@ button.feed-chip:hover {
     display: none;
   }
 }
+
+.feed-ask {
+  margin-bottom: 12px;
+}
+
+.feed-ask .ask-box {
+  margin-bottom: 8px;
+}
+
+.feed-ask .asked-results {
+  padding: 8px 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  max-height: 360px;
+  overflow: auto;
+}
+
+.feed-ask .asked-results > * {
+  margin-inline: 12px;
+}
+
+.feed-ask .asked-results table {
+  width: calc(100% - 24px);
+}

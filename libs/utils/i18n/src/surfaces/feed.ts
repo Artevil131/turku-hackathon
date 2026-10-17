@@ -1,6 +1,11 @@
 // Copy for the researcher's signal feed (spec-research.md). Keys are global: prefix them.
 
 export const feedEn = {
+  askSuggestLabel: "Try:",
+  askSuggest1: "ESBL E. coli in urine in Urology this month",
+  askSuggest2: "E. coli in blood in the intensive care unit",
+  askSuggest3: "E. coli in urine in women in Geriatrics",
+  askSuggest4: "Blood cultures in Surgery this month",
   feedTitle: "Signals",
   feedWindow: "{n} signals in 365 days",
   feedWindowOne: "1 signal in 365 days",
@@ -78,6 +83,11 @@ export const feedEn = {
 } as const;
 
 export const feedFi: Record<keyof typeof feedEn, string> = {
+  askSuggestLabel: "Kokeile:",
+  askSuggest1: "ESBL E. coli virtsassa urologialla tässä kuussa",
+  askSuggest2: "E. coli verestä teho-osastolla",
+  askSuggest3: "E. coli virtsassa naisilla geriatrialla",
+  askSuggest4: "Veriviljelyt kirurgialla tässä kuussa",
   feedTitle: "Signaalit",
   feedWindow: "{n} signaalia 365 päivässä",
   feedWindowOne: "1 signaali 365 päivässä",

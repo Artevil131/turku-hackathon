@@ -2,6 +2,8 @@ import type { Alert } from "@aei/contract";
 import { type Phenotype, WARDS } from "@aei/domain";
 import { formatDate, phenotypeName, t, wardName } from "@aei/i18n";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuestion } from "../../ai.ts";
+import { Ask, AskedResults } from "../Ask.tsx";
 import { AsOf } from "../AsOf.tsx";
 import { useMedia } from "../doctor/useMedia.ts";
 import { type FeedProps, KINDS, type SignalKind } from "./board.ts";
@@ -25,6 +27,23 @@ export function SignalFeed(props: FeedProps) {
   const [pinnedOpen, setPinnedOpen] = useState(true);
   const phone = useMedia("(max-width: 760px)");
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  // The Ask field appears only when the API reports an assistant (Meta.ai).
+  const [ai, setAi] = useState(false);
+  useEffect(() => {
+    let stale = false;
+    client
+      .meta()
+      .then((m) => !stale && setAi(m.ai))
+      .catch(() => {});
+    return () => {
+      stale = true;
+    };
+  }, [client]);
+  // The model only returns filters; the unit filter also drives the board, the counts come from records.
+  const question = useQuestion(client, ai, asOf, state.unit ? { ward: state.unit } : {}, (f) => {
+    if ("ward" in f) onChange({ unit: f.ward ?? null });
+  });
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: `attempt` is the retry trigger.
   useEffect(() => {
@@ -108,6 +127,20 @@ export function SignalFeed(props: FeedProps) {
 
   return (
     <section ref={rootRef} className="feed" aria-labelledby="feed-title" aria-busy={load.status === "loading"}>
+      {question.available || question.active || question.error ? (
+        <div className="feed-ask">
+          <Ask locale={locale} question={question} />
+          {question.active ? (
+            <AskedResults
+              locale={locale}
+              records={question.records}
+              loading={question.loading}
+              error={question.loadError}
+              asOf={question.answer?.asOf}
+            />
+          ) : null}
+        </div>
+      ) : null}
       <header className="feed-header">
         <div className="feed-headline">
           <h2 id="feed-title">{t(locale, "feedTitle")}</h2>

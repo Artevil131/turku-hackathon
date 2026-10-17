@@ -158,7 +158,11 @@ export function CommandField({ locale, alerts, asOf = null }: Props) {
 
   const optionId = (i: number) => `${uid}-o${i}`;
   let lastGroup: Group | null = null;
-  const status = query ? (results.length ? t(locale, "cmdResultsN", { n: results.length }) : t(locale, "cmdNone")) : "";
+  const status = query
+    ? results.length
+      ? t(locale, "cmdResultsN", { n: results.length })
+      : t(locale, alerts ? "cmdNone" : "cmdNotLoaded")
+    : "";
 
   return (
     <div className="cmd" ref={wrap} data-expanded={expanded ? "" : undefined}>
@@ -247,7 +251,7 @@ export function CommandField({ locale, alerts, asOf = null }: Props) {
               })}
             </div>
           ) : (
-            <p className="cmd-empty">{t(locale, "cmdNoneFor", { q: query.trim() })}</p>
+            <p className="cmd-empty">{alerts ? t(locale, "cmdNoneFor", { q: query.trim() }) : t(locale, "cmdNotLoaded")}</p>
           )}
           <p className="cmd-hints">{t(locale, "cmdHints")}</p>
           <p className="cmd-keys">{t(locale, "cmdKeys")}</p>

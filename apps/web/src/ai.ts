@@ -101,7 +101,7 @@ export function useQuestion(
       sequence.current++;
       setPending(false);
       setAnswer(null);
-      apply(baseline.current);
+      apply(answer?.filters.ward ? { ...baseline.current, ward: baseline.current.ward } : baseline.current);
     },
   };
 }

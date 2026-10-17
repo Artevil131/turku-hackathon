@@ -48,6 +48,14 @@ describe("assistant presentation", () => {
     expect(fi).toContain("lapset · 0–17 v");
     expect(fi).toContain("Ei ymmärretty: mystery");
   });
+  it("offers example questions under an empty field, in both languages, and not once a question is active", () => {
+    const idle = { ...question, active: false, answer: null, parsed: null };
+    const en = renderToStaticMarkup(createElement(Ask, { locale: "en", question: idle }));
+    const fi = renderToStaticMarkup(createElement(Ask, { locale: "fi", question: idle }));
+    expect(en).toContain("ESBL E. coli in urine in Urology this month");
+    expect(fi).toContain("ESBL E. coli virtsassa urologialla tässä kuussa");
+    expect(renderToStaticMarkup(createElement(Ask, { locale: "en", question }))).not.toContain("ask-suggest");
+  });
   it("hides an unavailable field and exposes loading and recovery states", () => {
     expect(
       renderToStaticMarkup(
@@ -80,6 +88,9 @@ describe("assistant presentation", () => {
     const html = render(records);
     expect(html).toContain("60 isolates from 40 patients match");
     expect(html).not.toContain("%");
+    expect(
+      renderToStaticMarkup(createElement(AskedResults, { locale: "en", records, loading: false, error: false, asOf: "2025-05-01" })),
+    ).toContain("as of");
     expect(html.match(/<tr>/g)?.length).toBe(51); // header + the newest 50
     expect(html).toContain("Newest 50 shown");
     expect(render([])).toContain("No isolates match these filters");

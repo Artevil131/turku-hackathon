@@ -1,6 +1,6 @@
 import type { Flow } from "@aei/contract";
 import type { WardCode } from "@aei/domain";
-import { type Locale, t } from "@aei/i18n";
+import { formatDate, type Locale, t } from "@aei/i18n";
 import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { DoctorPage } from "./components/doctor/DoctorPage.tsx";
 import { Home, type Role } from "./components/Home.tsx";
@@ -120,7 +120,14 @@ export function App() {
         <button type="button" className="skip-link" onClick={() => document.getElementById("main-content")?.focus()}>
           {t(locale, "skipToContent")}
         </button>
-        <TopBar locale={locale} page={page} onPage={setPage} asOf={live.clock?.asOf ?? null} onLocale={setLocale} alerts={live.alerts} />
+        <TopBar
+          locale={locale}
+          page={page}
+          onPage={setPage}
+          asOf={live.clock?.asOf ?? null}
+          onLocale={setLocale}
+          alerts={live.alertsLoaded ? live.alerts : undefined}
+        />
         <Timeline
           locale={locale}
           clock={live.clock}
@@ -169,7 +176,7 @@ export function App() {
       </div>
       {live.connection === "offline" ? (
         <p className="banner" role="status">
-          {t(locale, "offline")}
+          {live.lastGoodAsOf ? t(locale, "offline", { date: formatDate(locale, live.lastGoodAsOf, "long") }) : t(locale, "offlineNoDate")}
         </p>
       ) : null}
     </FlowsContext.Provider>

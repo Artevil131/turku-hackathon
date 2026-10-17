@@ -10,6 +10,10 @@ export function Ask({ locale, question }: { locale: Locale; question: Question }
   const answer = question.answer;
   const filters = answer?.filters;
   const parsed = question.parsed?.filters;
+  const suggestions = [1, 2, 3, 4].map((n) => t(locale, `askSuggest${n}` as "askSuggest1"));
+  const submit = (value: string) => {
+    if (value.trim() && !question.pending) void question.ask(value, locale);
+  };
   const chips: [FilterChip, string][] = [];
   if (filters && parsed) {
     if (parsed.ward && filters.ward) chips.push(["ward", wardName(locale, filters.ward)]);
@@ -24,7 +28,7 @@ export function Ask({ locale, question }: { locale: Locale; question: Question }
   }
   if (!question.available && !question.active && !question.error) return null;
   return (
-    <div className="ask-box">
+    <div className="ask-box" role="search" aria-label={t(locale, "askLabel")}>
       {question.available ? (
         <>
           <label className="field-label" htmlFor={id}>
@@ -40,20 +44,38 @@ export function Ask({ locale, question }: { locale: Locale; question: Question }
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
-                  if (text.trim() && !question.pending) void question.ask(text, locale);
+                  submit(text);
                 }
               }}
             />
-            <button
-              type="button"
-              className="btn"
-              disabled={!text.trim() || question.pending}
-              onClick={() => void question.ask(text, locale)}
-            >
+            <button type="button" className="btn" disabled={!text.trim() || question.pending} onClick={() => submit(text)}>
               {t(locale, question.pending ? "askLoading" : "askSubmit")}
             </button>
           </div>
+          {!text.trim() && !question.active && !question.pending ? (
+            <div className="ask-suggest" role="group" aria-label={t(locale, "askSuggestLabel")}>
+              <span className="ask-suggest-label">{t(locale, "askSuggestLabel")}</span>
+              {suggestions.map((s) => (
+                <button
+                  type="button"
+                  className="chip"
+                  key={s}
+                  onClick={() => {
+                    setText(s);
+                    submit(s);
+                  }}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          ) : null}
         </>
+      ) : null}
+      {question.pending ? (
+        <p role="status" className="field-hint">
+          {t(locale, "askLoading")}
+        </p>
       ) : null}
       {question.error ? (
         <p role="alert" className="field-hint">
@@ -97,11 +119,14 @@ export function AskedResults({
   records,
   loading,
   error,
+  asOf,
 }: {
   locale: Locale;
   records: IsolateRecord[];
   loading: boolean;
   error: boolean;
+  /** The date the records are as of (the answer's own `asOf`). */
+  asOf?: string;
 }) {
   const patients = useMemo(() => new Set(records.map((r) => r.patientId)).size, [records]);
   const newest = useMemo(
@@ -127,7 +152,10 @@ export function AskedResults({
   if (!records.length) return <p className="empty">{t(locale, "noQueryRecords")}</p>;
   return (
     <div className="asked-results">
-      <p className="result-sub">{t(locale, "queryMatchCount", { isolates: records.length, patients })}</p>
+      <p className="result-sub">
+        {t(locale, "queryMatchCount", { isolates: records.length, patients })}
+        {asOf ? ` · ${t(locale, "asOfShort", { date: formatDate(locale, asOf, "long") })}` : ""}
+      </p>
       <table className="signal-table">
         <caption className="visually-hidden">{t(locale, "askResults")}</caption>
         <thead>
