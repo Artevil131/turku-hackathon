@@ -1,7 +1,7 @@
 import type { CoverageResponse } from "@aei/contract";
 import { shortOrganism } from "@aei/domain";
 import { antibioticName, type Locale, specimenName, t, wardName } from "@aei/i18n";
-import { type KeyboardEvent, type ReactNode, useMemo, useRef } from "react";
+import { cloneElement, isValidElement, type KeyboardEvent, type ReactNode, useMemo, useRef } from "react";
 import "./CoverageList.css";
 import { BAR, type DoctorFilters, dmy, num, pct } from "./filters.ts";
 import { InfoIcon, Popover } from "./Popover.tsx";
@@ -278,15 +278,8 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
   );
 }
 
+/** The bar's divider is drawn on the first row below it (data-divider), so the listbox holds only options. */
 function ListFragment({ divider, children }: { divider: string | null; children: ReactNode }) {
-  return (
-    <>
-      {divider ? (
-        <li className="cl-divider" aria-hidden="true">
-          <span>{divider}</span>
-        </li>
-      ) : null}
-      {children}
-    </>
-  );
+  if (divider && isValidElement<{ "data-divider"?: string }>(children)) return cloneElement(children, { "data-divider": divider });
+  return <>{children}</>;
 }
