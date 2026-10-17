@@ -68,15 +68,15 @@ export function clampRect(r: Rect, id: string, rows: number): Rect {
  * Generous natural heights (the page may scroll): the Signals window large on the left (a selected row opens
  * the signal card as a layer inside it, signals-redesign.md), the map in the middle, the unit graph on the
  * right. The card's own window and the assistant stay available from the tray as pop-outs, closed by default;
- * the unit grid and Reproduce wait there too. The notebook is open, wide, beside Signals.
+ * the unit grid and Reproduce wait there too. The notebook is open in the centre, beside Signals.
  */
 export function defaultLayout(): Layout {
   const wins: Record<WinId, WinState> = {
-    signals: { x: 0, y: 0, w: 5, h: 56, open: true },
-    map: { x: 5, y: 0, w: 4, h: 24, open: true },
-    graph: { x: 9, y: 0, w: 3, h: 24, open: true },
-    // The notebook, wide, right of Signals and under the map and the flow.
-    notebook: { x: 5, y: 24, w: 7, h: 32, open: true },
+    signals: { x: 0, y: 0, w: 4, h: 40, open: true },
+    // The notebook in the centre, as tall as Signals: the page the researcher works on, visible from the start.
+    notebook: { x: 4, y: 0, w: 5, h: 40, open: true },
+    map: { x: 9, y: 0, w: 3, h: 20, open: true },
+    graph: { x: 9, y: 20, w: 3, h: 20, open: true },
     math: { x: 9, y: 22, w: 3, h: 14, open: false },
     assistant: { x: 9, y: 36, w: 3, h: 8, open: false },
     grid: { x: 0, y: 0, w: 12, h: 30, open: false },
@@ -292,8 +292,8 @@ export function parseLayout(raw: string | null): Layout | null {
       charts?: Record<string, Partial<WinState> & Record<string, unknown>>;
       order?: unknown;
     };
-    // v2 (2026-10-17): the card moved into the Signals window; layouts saved with it open as a window start over.
-    if (v.v !== 2 || !v.wins || !Array.isArray(v.order)) return null;
+    // v3 (2026-10-17): the notebook took the centre column; earlier layouts (v1 card window, v2 notebook below the fold) start over.
+    if (v.v !== 3 || !v.wins || !Array.isArray(v.order)) return null;
     const wins = {} as Record<WinId, WinState>;
     const fallback = defaultLayout().wins;
     for (const id of WIN_IDS) {
@@ -329,7 +329,7 @@ export function loadLayout(): Layout | null {
 export function saveLayout(layout: Layout | null): void {
   try {
     if (layout === null) localStorage.removeItem(STORAGE_KEY);
-    else localStorage.setItem(STORAGE_KEY, JSON.stringify({ v: 2, ...layout }));
+    else localStorage.setItem(STORAGE_KEY, JSON.stringify({ v: 3, ...layout }));
   } catch {
     // Private mode or blocked storage: the layout simply does not persist.
   }

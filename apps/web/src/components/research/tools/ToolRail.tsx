@@ -21,18 +21,32 @@ import "./rail.css";
 
 type RailTool = "data" | ToolId | "chart";
 
-const TOOLS: readonly { id: RailTool | "select"; key: string; Icon: ComponentType<SVGProps<SVGSVGElement>> }[] = [
-  { id: "select", key: "V", Icon: SelectIcon },
-  { id: "data", key: "D", Icon: DataIcon },
+/** The five analyses live under one Statistics entry: a menu opens on top of the rail, and 1–5 still pick them. */
+const STATS: readonly { id: ToolId; key: string; Icon: ComponentType<SVGProps<SVGSVGElement>> }[] = [
   { id: "rate", key: "1", Icon: RateIcon },
   { id: "compare", key: "2", Icon: CompareIcon },
   { id: "shares", key: "3", Icon: SharesIcon },
   { id: "beta", key: "4", Icon: BeliefIcon },
   { id: "detector", key: "5", Icon: DetectorIcon },
+];
+const STATS_IDS: readonly string[] = STATS.map((x) => x.id);
+
+function StatsIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false" {...props}>
+      <path d="M11.5 3H4.5l4 5-4 5h7" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+const TOOLS: readonly { id: "select" | "data" | "stats" | "chart"; key: string; Icon: ComponentType<SVGProps<SVGSVGElement>> }[] = [
+  { id: "select", key: "V", Icon: SelectIcon },
+  { id: "data", key: "D", Icon: DataIcon },
+  { id: "stats", key: "S", Icon: StatsIcon },
   { id: "chart", key: "C", Icon: ChartAddIcon },
 ];
 
-const nameKey = (id: RailTool | "select" | "reset") => `toolsRail_${id}` as "toolsRail_rate";
+const nameKey = (id: RailTool | "select" | "reset" | "stats") => `toolsRail_${id}` as "toolsRail_rate";
 
 export interface ToolRailProps extends ToolsProps {
   /** The "+ Chart" form; `done` closes the inspector. */
@@ -46,6 +60,18 @@ const typing = (el: Element | null) => !!el?.closest("input, textarea, select, [
 export function ToolRail(props: ToolRailProps) {
   const { locale, chartMenu, request } = props;
   const [active, setActive] = useState<RailTool | null>(null);
+  const [menu, setMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  // The Statistics menu closes on a click elsewhere.
+  useEffect(() => {
+    if (!menu) return;
+    const onDown = (e: PointerEvent) => {
+      const el = e.target as Element | null;
+      if (!el?.closest(".ws-rail-menu, [data-tool='stats']")) setMenu(false);
+    };
+    document.addEventListener("pointerdown", onDown, true);
+    return () => document.removeEventListener("pointerdown", onDown, true);
+  }, [menu]);
   const seenRequest = useRef(request?.key ?? 0);
   useEffect(() => {
     if (!request || request.key === seenRequest.current) return;
@@ -88,6 +114,12 @@ export function ToolRail(props: ToolRailProps) {
       if (!el || el.closest("[hidden]")) return;
       if (document.querySelector("[aria-modal='true'], dialog[open]")) return;
       const target = e.target instanceof Element ? e.target : null;
+      if (e.key === "Escape" && menu) {
+        e.preventDefault();
+        setMenu(false);
+        root.current?.querySelector<HTMLElement>("[data-tool='stats']")?.focus();
+        return;
+      }
       if (e.key === "Escape") {
         // Escape closes the inspector before anything else on the page (focus mode waits for the next one).
         if (active === null || (typing(target) && !inspector.current?.contains(target))) return;
@@ -97,10 +129,17 @@ export function ToolRail(props: ToolRailProps) {
         return;
       }
       if (typing(target)) return;
-      const tool = TOOLS.find((x) => x.key === e.key.toUpperCase());
+      const k = e.key.toUpperCase();
+      if (k === "S") {
+        e.preventDefault();
+        setMenu((m) => !m);
+        return;
+      }
+      const tool = TOOLS.find((x) => x.key === k && x.id !== "stats") ?? STATS.find((x) => x.key === k);
       if (!tool) return;
       e.preventDefault();
-      choose(tool.id, true);
+      setMenu(false);
+      choose(tool.id as RailTool | "select", true);
     };
     // Capture, so Escape is taken before the workspace's own handler.
     document.addEventListener("keydown", onKey, true);
@@ -136,24 +175,53 @@ export function ToolRail(props: ToolRailProps) {
       <div className="ws-rail" role="toolbar" aria-orientation="vertical" aria-label={t(locale, "toolsRail")} onKeyDown={onRailKey}>
         {TOOLS.map(({ id, key, Icon }) => {
           const name = t(locale, nameKey(id));
+          const stats = id === "stats";
+          const pressed = stats ? STATS_IDS.includes(current) || menu : current === id;
           return (
             <button
               key={id}
               type="button"
               className="ws-rail-btn"
               data-tool={id}
-              aria-pressed={current === id}
+              aria-pressed={pressed}
               aria-label={name}
               aria-keyshortcuts={key}
-              aria-controls={id === "select" ? undefined : "ws-inspector"}
-              tabIndex={current === id ? 0 : -1}
-              onClick={() => choose(id)}
+              aria-haspopup={stats ? "menu" : undefined}
+              aria-expanded={stats ? menu : undefined}
+              aria-controls={id === "select" ? undefined : stats ? "ws-rail-menu" : "ws-inspector"}
+              tabIndex={pressed || (current === "select" && id === "select") ? 0 : -1}
+              onClick={() => (stats ? setMenu((m) => !m) : choose(id))}
             >
               <Icon />
               {tip(name, key)}
             </button>
           );
         })}
+        {menu ? (
+          <div id="ws-rail-menu" className="ws-rail-menu" role="menu" aria-label={t(locale, "toolsStatsMenu")} ref={menuRef}>
+            <p className="ws-rail-menu-title">{t(locale, "toolsStatsMenu")}</p>
+            {STATS.map(({ id, key, Icon }) => (
+              <button
+                key={id}
+                type="button"
+                role="menuitem"
+                data-tool={id}
+                aria-current={active === id || undefined}
+                onClick={() => {
+                  setMenu(false);
+                  choose(id);
+                }}
+              >
+                <Icon />
+                <span>
+                  <b>{t(locale, nameKey(id))}</b>
+                  <small>{t(locale, `toolsHint_${id}` as "toolsHint_rate")}</small>
+                </span>
+                <kbd>{key}</kbd>
+              </button>
+            ))}
+          </div>
+        ) : null}
         <span className="ws-rail-sep" aria-hidden="true" />
         <button
           type="button"

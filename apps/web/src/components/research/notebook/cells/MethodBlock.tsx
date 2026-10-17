@@ -3,6 +3,7 @@ import { useState } from "react";
 import type { CellResult } from "../../tools/model.ts";
 import { codeFor, type Lang, lettersOf, methodFor } from "../model.ts";
 import { useCopy } from "../useCopy.ts";
+import "../notebook.css";
 
 // The method under a result: the test's name, the formula (MathML, Copy LaTeX), this result's numbers in the
 // formula's letters, then the constants with their decisions and the code in Python or R with Copy.

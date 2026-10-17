@@ -3,6 +3,7 @@ import { antibioticName, formatDate, type Locale, phenotypeName, specimenName, t
 import { formatNum, formatP } from "@aei/viz";
 import { type ReactNode, useState } from "react";
 import { downloadFile } from "../../../downloadFile.ts";
+import { MethodBlock } from "../notebook/cells/MethodBlock.tsx";
 import { BetaCurve, ShareLine } from "./Charts.tsx";
 import { pythonScript } from "./method.ts";
 import {
@@ -318,6 +319,10 @@ export function ResultCell({
       {r.kind === "shares" && <Shares r={r} locale={locale} />}
       {r.kind === "beta" && <Beta r={r} locale={locale} />}
       {r.kind === "detector" && <Detector r={r} locale={locale} />}
+      <details className="tl-cell-method">
+        <summary>{t(locale, "toolsMethodFold")}</summary>
+        <MethodBlock id={`cell-${cell.id}`} locale={locale} result={r} />
+      </details>
       <footer className="tl-cell-foot">
         <button type="button" className="btn tl-act" onClick={copy}>
           <CopyIcon />
