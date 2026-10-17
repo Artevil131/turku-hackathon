@@ -1,7 +1,7 @@
 import type { CoverageResponse } from "@aei/contract";
 import { shortOrganism } from "@aei/domain";
 import { type Locale, specimenName, t, wardName } from "@aei/i18n";
-import { AGE_KEYS, BAR, certaintyOf, type DoctorFilters, dmy, num, pct, sexWord } from "./filters.ts";
+import { AGE_KEYS, BAR, certaintyOf, type DoctorFilters, dmy, droppedFilters, num, pct, sexWord } from "./filters.ts";
 import { flagsOf, type Item, levelKey, reasonOf, STANDING } from "./reason.ts";
 import { signalDate, type UnitSignal } from "./signals.ts";
 
@@ -21,13 +21,12 @@ export function PrintSheet({ locale, filters, data, asOf, signals, singles, pair
   const level = certaintyOf(cov.level);
   const unit = wardName(locale, filters.unit);
   const site = specimenName(locale, filters.site);
-  const ageChosen = filters.age !== "any";
   const record = [
     unit,
     site,
     filters.sex === "any" ? `${t(locale, "drSex").toLowerCase()} ${sexWord(locale, "any")}` : sexWord(locale, filters.sex),
-    ageChosen ? `${t(locale, "drPrintAge", { age: t(locale, AGE_KEYS[filters.age]) })} (${t(locale, "drNotApplied")})` : null,
-    filters.onset ? `${t(locale, "drOnset")} (${t(locale, "drNotApplied")})` : null,
+    filters.age === "any" ? null : t(locale, "drPrintAge", { age: t(locale, AGE_KEYS[filters.age]) }),
+    filters.onset ? t(locale, "drOnset").toLowerCase() : null,
     t(locale, filters.sev === "mild" ? "drSevMild" : "drSevSevere"),
     t(locale, filters.period === 365 ? "drPeriodYear" : "drPeriodMonth"),
     t(locale, "drPrintAsOf", { date: dmy(data.asOf) }),
@@ -41,10 +40,7 @@ export function PrintSheet({ locale, filters, data, asOf, signals, singles, pair
     const flags = item.row ? flagsOf(item.row) : null;
     return (
       <li key={item.id} className="pr-row">
-        <b className="pr-name">
-          {item.name}
-          {item.aware ? ` (${item.aware})` : ""}
-        </b>
+        <b className="pr-name">{item.name}</b>
         <span className="pr-num">
           {assessable && item.share !== null ? `${pct(item.share)}\u00a0% ` : ""}
           {item.interval && assessable ? `(${pct(item.interval[0])}–${pct(item.interval[1])}) ` : ""}n {num(locale, item.n)}
@@ -55,7 +51,9 @@ export function PrintSheet({ locale, filters, data, asOf, signals, singles, pair
         <span className="pr-why">
           {item.row
             ? reasonOf(locale, item.row, data, filters)
-            : `${t(locale, Math.round((item.pair?.gain ?? 0) * 100) === 1 ? "drGainOne" : "drGain", { gain: Math.round((item.pair?.gain ?? 0) * 100) })} · ${t(locale, "drAccessCount", { n: item.pair?.access ?? 0 })}`}
+            : t(locale, Math.round((item.pair?.gain ?? 0) * 100) === 1 ? "drGainOne" : "drGain", {
+                gain: Math.round((item.pair?.gain ?? 0) * 100),
+              })}
           {flags
             ? flags.notCovering
                 .slice(0, 2)
@@ -89,10 +87,9 @@ export function PrintSheet({ locale, filters, data, asOf, signals, singles, pair
           from: dmy(cov.from),
         })}
       </p>
-      {filters.sex !== "any" && !cov.sexApplied ? <p>{t(locale, "drSexDropped")}</p> : null}
-      {ageChosen || filters.onset ? (
-        <p>{t(locale, ageChosen && filters.onset ? "drNotAppliedBoth" : ageChosen ? "drNotAppliedAge" : "drNotAppliedDay3")}</p>
-      ) : null}
+      {droppedFilters(filters, cov).map((d) => (
+        <p key={d.long}>{t(locale, d.long)}</p>
+      ))}
       {signals.slice(0, 2).map((s) => (
         <p key={s.alert.id}>
           {s.feeder

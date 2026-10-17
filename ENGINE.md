@@ -74,13 +74,15 @@ analysis; parity tests require identical output (D-030, D-032).
 
 ## A2. The doctor's coverage list (D-023, D-033)
 
-For a query (unit i, specimen, as of t, optional sex):
+For a query (unit i, specimen, as of t, optional sex, age group, onset):
 
 ```
-pool       first isolates of that specimen sampled in [t − 364, t]
+pool       first isolates of that specimen sampled in [t − 364, t], then the patient filters:
+           sex; age group (D-019 table: 0–17, 18–64, 65+, 80+); onset "hospital" (day 3 or later)
 level      the unit if its pool has ≥ 30 isolates, else its ward type, else the hospital
-           (drop sex only if the filtered unit has < 30 but the unfiltered unit has ≥ 30;
-           if the unfiltered unit has < 30, keep sex while widening the level)
+           (patient filters are dropped one at a time, age group, then onset, then sex,
+           until the filtered unit has ≥ 30, when the unfiltered unit has ≥ 30;
+           if the unfiltered unit has < 30, keep them all while widening the level; D-053)
 per drug d offered for the specimen, on the chosen level's pool:
   known    isolates with a result (tested, by nature, inferred, or no breakpoint)
   k        those covered (effective result S)
@@ -94,8 +96,7 @@ per drug d offered for the specimen, on the chosen level's pool:
 90 % for severe. A drug *clears* when its interval's lower end reaches the
 threshold, is *borderline* when its share does, *below* otherwise, and *not
 assessable* without 30 results or with over 20 % of the pool untested.
-Clearing drugs come first, Access before Watch (WHO AWaRe 2023), then by
-share. Mild leaves out injection-only drugs; vancomycin and clindamycin
+Clearing drugs come first, by share (no WHO AWaRe tier, D-056). Mild leaves out injection-only drugs; vancomycin and clindamycin
 are not offered for urine. Pairs, for severe infections
 only and only when no single drug clears: covered if either drug covers the
 isolate, counted on isolates known for both; the partner must add 2 points;

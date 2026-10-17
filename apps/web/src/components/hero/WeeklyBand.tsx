@@ -55,10 +55,10 @@ interface Layout {
   /** Bottom of the unit lanes. */
   lanesEnd: number;
 }
-/** The full band: nine lanes make 200 px; fewer lanes make it shorter. */
+/** The full band: nine lanes make 218 px; fewer lanes make it shorter. A 15 px pitch keeps a visible gap between 12 px pills in neighbouring lanes. */
 const fullLayout = (n: number): Layout => {
-  const lanesEnd = 68 + n * 13;
-  return { gutter: 46, height: lanesEnd + 15, legend: 14, top: 20, base: 62, lanes: 68, pitch: 13, axis: lanesEnd + 12, lanesEnd };
+  const lanesEnd = 68 + n * 15;
+  return { gutter: 46, height: lanesEnd + 15, legend: 14, top: 20, base: 62, lanes: 68, pitch: 15, axis: lanesEnd + 12, lanesEnd };
 };
 const SMALL: Layout = { gutter: 0, height: 44, legend: 0, top: 3, base: 26, lanes: 0, pitch: 0, axis: 43, lanesEnd: 26 };
 
@@ -278,15 +278,12 @@ function build(
         stack.pop();
         const members = [...prev.members, ...cur.members];
         const merged = t(locale, "tlPillSignals", { n: members.length });
-        stack[stack.length - 1] = {
-          members,
-          right: cur.right,
-          w: pillWidth(
-            merged,
-            members.some((x) => pillKind(x) === "sentinel"),
-          ),
-          label: merged,
-        };
+        const mw = pillWidth(
+          merged,
+          members.some((x) => pillKind(x) === "sentinel"),
+        );
+        // The merged label can be wider than the last pill: keep it clear of the lane labels.
+        stack[stack.length - 1] = { members, right: Math.max(L.gutter + mw, cur.right), w: mw, label: merged };
       }
       lanesAlerts.set(lane, stack);
     }
@@ -656,7 +653,8 @@ function Legend({
           it.name,
         ),
       )}
-      {toggle("cult", t(locale, "tlLyCultures"), x, cultW, <path className="hs-cult" d={`M${x} 7.5h13`} />, text)}
+      {/* No room for even the short label: leave the cultures toggle to the Layers menu rather than show a bare dash. */}
+      {text ? toggle("cult", t(locale, "tlLyCultures"), x, cultW, <path className="hs-cult" d={`M${x} 7.5h13`} />, text) : null}
       {ratioNote ? (
         <text className="hs-legend" x={right - 8 - tagW} y={11} textAnchor="end">
           {ratioNote}

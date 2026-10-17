@@ -18,7 +18,7 @@ export function Since({ locale, asOf, changes, state, period, onPeriod, openCoun
     <section className="hm-since glass" aria-labelledby="hm-since-title">
       <header className="hm-head">
         <h1 id="hm-since-title">{openCount === null ? t(locale, "homeResearchWait") : t(locale, "feedOpen", { n: openCount })}</h1>
-        {asOf ? <AsOf locale={locale} date={asOf} /> : null}
+        {(asOf ?? changes?.asOf) ? <AsOf locale={locale} date={(asOf ?? changes?.asOf) as string} /> : null}
       </header>
       <p className="hm-lead">{t(locale, "homeLead")}</p>
       {state === "connecting" ? (

@@ -303,9 +303,14 @@ export function GeoMap({ client, locale, asOf, reducedMotion }: PanelProps) {
       ) : null}
       {counties.state === "404" || regional.state === "404" ? (
         <p className="geo-state" role="status">
-          {[counties.state === "404" ? t(locale, "geoNoCounties") : null, regional.state === "404" ? t(locale, "geoNoRegional") : null]
-            .filter(Boolean)
-            .join(" · ")}
+          {t(
+            locale,
+            counties.state === "404" && regional.state === "404"
+              ? "geoMissingBoth"
+              : counties.state === "404"
+                ? "geoMissingCounties"
+                : "geoMissingRegional",
+          )}
         </p>
       ) : null}
 

@@ -1,7 +1,7 @@
 # apps/video
 
 The pitch film (about 62 s, 1920×1080), made with Remotion as React code.
-The rendered film is `aei-pitch-1080p.mp4` (3.2 MB, rendered 2026-10-17).
+The rendered film is `aei-pitch-1080p.mp4` (5.4 MB, rendered 2026-10-17; re-rendered without the WHO AWaRe badges, D-050).
 Every number on screen comes from the running AEI server, read into
 `src/snapshot.json` by `scripts/snapshot.mjs`, or from the experiment
 records (the closing card cites each experiment).

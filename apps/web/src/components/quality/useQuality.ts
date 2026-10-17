@@ -27,15 +27,22 @@ export function useQuality(client: AeiClient | undefined, asOf: string | undefin
     if (last && asOf >= last && mondayOf(asOf) === mondayOf(last)) return;
     fetched.current = asOf;
     let live = true;
+    let settled = false;
     client
       .quality()
-      .then((data) => live && setState({ kind: "ready", data, asOf }))
+      .then((data) => {
+        settled = true;
+        if (live) setState({ kind: "ready", data, asOf });
+      })
       .catch((e) => {
+        settled = true;
         if (!live) return;
         setState(e instanceof ApiError && e.status === 404 ? { kind: "missing" } : { kind: "error" });
       });
     return () => {
       live = false;
+      // A read cancelled before it answered must not count as done, or the rerun skips it and the status stays on loading.
+      if (!settled) fetched.current = last;
     };
   }, [client, asOf]);
 
