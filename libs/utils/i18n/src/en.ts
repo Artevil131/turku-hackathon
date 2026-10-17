@@ -9,6 +9,7 @@ import { mapEn } from "./surfaces/map.ts";
 import { mathEn } from "./surfaces/math.ts";
 import { methodEn } from "./surfaces/method.ts";
 import { networkEn } from "./surfaces/network.ts";
+import { qualityEn } from "./surfaces/quality.ts";
 import { timelineEn } from "./surfaces/timeline.ts";
 
 export const en = {
@@ -267,4 +268,5 @@ export const en = {
   ...introEn,
   ...commandEn,
   ...timelineEn,
+  ...qualityEn,
 } as const;

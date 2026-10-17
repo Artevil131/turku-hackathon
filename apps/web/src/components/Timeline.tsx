@@ -9,6 +9,8 @@ import { useLayers } from "./hero/layers.ts";
 import { useWeekly } from "./hero/useWeekly.ts";
 import { WeeklyBand } from "./hero/WeeklyBand.tsx";
 import { Chevron, Pause, Play, StepDay, StepWeek } from "./Icons.tsx";
+import { QualityStatus } from "./quality/QualityStatus.tsx";
+import { useQuality } from "./quality/useQuality.ts";
 import "./timeline.css";
 
 interface TimelineProps {
@@ -106,6 +108,7 @@ export function Timeline({ locale, clock, connection, lastArrivals, command, red
   const alerts = useAlertsSinceStart(client, clock?.start, clock?.asOf, liveAlerts);
   const weekly = useWeekly(client, clock?.start, clock?.asOf);
   const [layers, setLayers] = useLayers();
+  const quality = useQuality(client, clock?.asOf);
 
   // A new clock state (or reset) from the server ends "seeking".
   // biome-ignore lint/correctness/useExhaustiveDependencies: the clock object identity is the trigger
@@ -369,6 +372,9 @@ export function Timeline({ locale, clock, connection, lastArrivals, command, red
               {status}
             </div>
             {note ? <p className="tl-note">{note}</p> : null}
+            <div className="tl-quality">
+              <QualityStatus locale={locale} state={quality} />
+            </div>
             <div className="tl-sheet-band">{band(false)}</div>
             <div className="tl-sheet-ctl">
               {playButton}
@@ -398,6 +404,9 @@ export function Timeline({ locale, clock, connection, lastArrivals, command, red
             {arrivals ? <p>{arrivals}</p> : null}
           </InfoPopover>
           {status}
+        </div>
+        <div className="tl-quality">
+          <QualityStatus locale={locale} state={quality} />
         </div>
       </div>
       {band(false)}

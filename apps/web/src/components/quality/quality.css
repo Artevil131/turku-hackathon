@@ -1,0 +1,156 @@
+/* Data-checks status: a quiet line in the timeline's left cluster, popover on demand. */
+.q-status {
+  max-width: 100%;
+  position: relative;
+  display: inline-flex;
+  min-width: 0;
+  font-size: var(--t-xs, 12px);
+}
+
+.q-quiet {
+  color: var(--ink-3, #5c6080);
+  line-height: 20px;
+}
+
+.q-btn {
+  width: max-content;
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 4px;
+  max-width: 100%;
+  min-height: 20px;
+  padding-block: 2px;
+  padding-inline: 4px;
+  margin-left: -4px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--st-watch, #94590a);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.q-btn[data-clean] {
+  color: var(--ink-3, #5c6080);
+}
+
+.q-btn svg {
+  flex: none;
+  margin-top: 1px;
+}
+
+.q-btn[data-clean] svg {
+  color: var(--st-ok, #17784a);
+}
+
+.q-btn:hover {
+  background: var(--chassis, #f8f8f8);
+}
+
+.q-btn:focus-visible {
+  outline: 2px solid var(--brand-accent, #635bf1);
+  outline-offset: 2px;
+}
+
+.q-label {
+  text-align: left;
+  line-height: 16px;
+}
+
+.q-pop {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 40;
+  width: max-content;
+  min-width: 240px;
+  max-width: min(340px, calc(100vw - 32px));
+  padding: 8px 12px;
+  border: 1px solid var(--line, #e4e6ee);
+  border-radius: 8px;
+  background: var(--glass-1, #fff);
+  box-shadow: var(--pop-shadow, 0 4px 16px rgb(7 8 28 / 0.12));
+  font-size: var(--t-s, 13px);
+  color: var(--ink, #07081c);
+}
+
+.q-title {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.q-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.q-list li {
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+}
+
+.q-sev {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--t-xs, 12px);
+  font-weight: 500;
+  color: var(--ink-2, #1d204e);
+}
+
+.q-sev[data-sev="error"] {
+  color: var(--st-alert, #d0004b);
+}
+
+.q-sev[data-sev="suspect"] {
+  color: var(--st-watch, #94590a);
+}
+
+.q-count {
+  font-weight: 600;
+  text-align: right;
+}
+
+.q-none {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+}
+
+.q-none svg {
+  color: var(--st-ok, #17784a);
+}
+
+.q-meta {
+  margin: 6px 0 0;
+  font-size: var(--t-xs, 12px);
+  color: var(--ink-3, #5c6080);
+}
+
+.q-meta + .q-meta {
+  margin-top: 2px;
+}
+
+/* In the phone sheet the popover flows inline instead of floating over a scrolling container. */
+.tl-sheet .q-status {
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.tl-sheet .q-pop {
+  position: static;
+  width: 100%;
+  max-width: none;
+  margin-top: 4px;
+  box-shadow: none;
+}
