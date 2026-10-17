@@ -25,18 +25,20 @@ interface Props {
   locale: Locale;
   incident: Incident;
   selected: boolean;
+  /** Another appearance of the selected signal's reach: a unit it touches. */
+  kin?: boolean;
   spans: Spans | null;
   onSelect: (key: string) => void;
 }
 
 /** Task summary first; the calculation and the dated member explanations are one action away. */
-export function IncidentRow({ locale, incident: inc, selected, spans, onSelect }: Props) {
+export function IncidentRow({ locale, incident: inc, selected, kin = false, spans, onSelect }: Props) {
   const priority = incidentPriority(inc.members);
   return (
     <article className="feed-incident">
       <button
         type="button"
-        className="feed-row"
+        className={`feed-row${kin ? " is-kin" : ""}`}
         data-kind={inc.kind}
         aria-current={selected ? "true" : undefined}
         data-key={inc.key}
@@ -59,21 +61,26 @@ export function IncidentRow({ locale, incident: inc, selected, spans, onSelect }
         <span className="feed-brief">
           {t(locale, priority === "high" ? "feedSeverityHigh" : "feedSeverityMedium")} · {alertEvidenceShort(locale, inc.lead)}
         </span>
-        {selected ? (
-          <>
-            <span className="feed-summary">
-              {t(locale, inc.members.length === 1 ? "feedIncidentOne" : "feedIncidentMany", { n: inc.members.length })}
-            </span>
-            <span className="feed-evidence">{t(locale, "feedLatestEvidence", { evidence: alertEvidence(locale, inc.lead) })}</span>
-            <span className="feed-owner">{incidentResponsibility(locale, inc.members)}</span>
-            {spans ? (
-              <span className="feed-row-bottom">
-                <SpanLine locale={locale} spans={spans} ward={inc.ward} />
-              </span>
+        {/* The details ease open: the wrapper is always there, its row grows from 0fr to 1fr. */}
+        <span className="feed-more" data-open={selected}>
+          <span className="feed-more-in">
+            {selected ? (
+              <>
+                <span className="feed-summary">
+                  {t(locale, inc.members.length === 1 ? "feedIncidentOne" : "feedIncidentMany", { n: inc.members.length })}
+                </span>
+                <span className="feed-evidence">{t(locale, "feedLatestEvidence", { evidence: alertEvidence(locale, inc.lead) })}</span>
+                <span className="feed-owner">{incidentResponsibility(locale, inc.members)}</span>
+                {spans ? (
+                  <span className="feed-row-bottom">
+                    <SpanLine locale={locale} spans={spans} ward={inc.ward} />
+                  </span>
+                ) : null}
+                <span className="feed-open">{t(locale, "feedMathOpen")} →</span>
+              </>
             ) : null}
-            <span className="feed-open">{t(locale, "feedMathOpen")} →</span>
-          </>
-        ) : null}
+          </span>
+        </span>
       </button>
       {selected ? (
         <details className="feed-members">

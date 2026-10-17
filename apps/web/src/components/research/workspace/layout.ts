@@ -47,15 +47,16 @@ export function clampRect(r: Rect, id: WinId, rows: number): Rect {
 }
 
 /**
- * Generous natural heights (the page may scroll): signals left, the map large in the middle, the unit graph,
- * alert math and the assistant stacked on the right; the unit grid waits in the tray.
+ * Generous natural heights (the page may scroll): signals left, the map large in the middle, the signal card
+ * first on the right (it is what a selected row opens), the unit graph and the assistant under it; the unit
+ * grid waits in the tray.
  */
 export function defaultLayout(): Layout {
   const wins: Record<WinId, WinState> = {
     signals: { x: 0, y: 0, w: 3, h: 40, open: true },
     map: { x: 3, y: 0, w: 4, h: 40, open: true },
-    graph: { x: 7, y: 0, w: 5, h: 18, open: true },
-    math: { x: 7, y: 18, w: 5, h: 14, open: true },
+    math: { x: 7, y: 0, w: 5, h: 14, open: true },
+    graph: { x: 7, y: 14, w: 5, h: 18, open: true },
     assistant: { x: 7, y: 32, w: 5, h: 8, open: true },
     grid: { x: 0, y: 0, w: 12, h: 30, open: false },
   };
@@ -143,6 +144,41 @@ export function fitLayout(layout: Layout): Layout {
 /** Rows the board needs: the lowest open window's bottom edge. */
 export function boardRows(layout: Layout): number {
   return Math.max(12, ...WIN_IDS.filter((id) => layout.wins[id].open).map((id) => layout.wins[id].y + layout.wins[id].h));
+}
+
+export const FOCUS_KEY = "aei.research.focus";
+
+/**
+ * Focus mode: one window takes the whole board width and at least `rows` rows (the viewport's height);
+ * the others are taken off the board. Derived from the user's layout, which is left untouched, so leaving
+ * focus restores it exactly.
+ */
+export function focusLayout(layout: Layout, id: WinId, rows: number): Layout {
+  const wins = { ...layout.wins };
+  for (const w of WIN_IDS) if (w !== id) wins[w] = { ...wins[w], open: false };
+  const own = wins[id];
+  wins[id] = { ...own, x: 0, y: 0, w: COLS, h: Math.max(own.h, rows, MIN_SIZE[id].h), open: true };
+  return { wins, order: raise(layout, id).order };
+}
+
+const isWinId = (v: unknown): v is WinId => typeof v === "string" && WIN_IDS.includes(v as WinId);
+
+export function loadFocus(): WinId | null {
+  try {
+    const v = localStorage.getItem(FOCUS_KEY);
+    return isWinId(v) ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveFocus(id: WinId | null): void {
+  try {
+    if (id === null) localStorage.removeItem(FOCUS_KEY);
+    else localStorage.setItem(FOCUS_KEY, id);
+  } catch {
+    // Private mode or blocked storage: focus simply does not persist.
+  }
 }
 
 export function raise(layout: Layout, id: WinId): Layout {

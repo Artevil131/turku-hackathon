@@ -1,8 +1,11 @@
+import { t } from "@aei/i18n";
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { currentHospitalName } from "../../sites.ts";
 import { subscribeHash, writeHashParams } from "../../url.ts";
 import { Assistant } from "./assistant/Assistant.tsx";
 import { type BoardState, boardFromUrl, boardToParams, type FeedProps } from "./board.ts";
 import { applyFilters } from "./feed/model.ts";
+import { unitLabel } from "./feed/names.ts";
 import { computeSpans, useRelations } from "./feed/spans.ts";
 import { useIncidents } from "./feed/useIncidents.ts";
 import { GeoMap } from "./geo/GeoMap.tsx";
@@ -21,6 +24,9 @@ import "./ResearchBoard.css";
 // Choosing a signal opens the alert math again if it was closed.
 
 type Props = Omit<FeedProps, "state" | "onChange">;
+
+/** The windows that answer a selected signal next: where its unit's patients go, and the region around it. */
+const ANSWERS: readonly WinId[] = ["graph", "map"];
 
 export function ResearchBoard(props: Props) {
   const { locale, client, asOf, findings, acknowledge, command } = props;
@@ -80,6 +86,22 @@ export function ResearchBoard(props: Props) {
   const panelProps = { ...props, state, onChange, kin, hasSelection: explicit };
   const loading = load.status === "loading";
 
+  // The reading order for a selected signal: the card first, the flow and the map answer it, the rest step
+  // back. Each window opens with one line saying what it answers for this signal.
+  const primary: WinId | null = explicit ? "math" : null;
+  const lead = useMemo<Partial<Record<WinId, string>> | undefined>(() => {
+    if (!explicit || !selected) return undefined;
+    const unit = unitLabel(locale, selected.ward);
+    return {
+      math: t(locale, "wsLeadMath"),
+      signals: t(locale, "wsLeadSignals"),
+      map: t(locale, "wsLeadMap", { hospital: currentHospitalName(locale) }),
+      graph: t(locale, "wsLeadGraph", { unit }),
+      grid: t(locale, "wsLeadGrid", { unit }),
+      assistant: t(locale, "wsLeadAssistant"),
+    };
+  }, [explicit, selected, locale]);
+
   const content: Record<WinId, ReactNode> = {
     signals: (
       <SignalFeed {...panelProps} load={load} incidents={incidents} retry={retry} spansOf={spansOf} selected={selected?.key ?? null} />
@@ -116,6 +138,9 @@ export function ResearchBoard(props: Props) {
         content={content}
         initiallyOpen={initiallyOpen.current}
         reveal={reveal}
+        primary={primary}
+        answers={ANSWERS}
+        lead={lead}
         onOpened={(id) => (id === "grid" ? onChange({ panel: "grid" }) : id === "map" ? onChange({ panel: "geo" }) : undefined)}
         onClosed={(id) => (id === "grid" ? onChange({ panel: "geo" }) : undefined)}
       />

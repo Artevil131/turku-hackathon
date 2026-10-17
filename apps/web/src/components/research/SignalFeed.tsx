@@ -29,7 +29,7 @@ interface Props extends FeedProps {
 }
 
 export function SignalFeed(props: Props) {
-  const { client, locale, asOf, state, onChange, load, incidents, retry, spansOf, selected } = props;
+  const { client, locale, asOf, state, onChange, load, incidents, retry, spansOf, selected, kin = [], hasSelection = false } = props;
   const rootRef = useRef<HTMLElement>(null);
 
   // The Ask field appears when the API reports the assistant answering (Meta.aiStatus "ready"); while
@@ -75,7 +75,12 @@ export function SignalFeed(props: Props) {
     onChange({ kinds: state.kinds.includes(k) ? state.kinds.filter((x) => x !== k) : [...state.kinds, k] });
 
   return (
-    <section ref={rootRef} className="feed" aria-labelledby="feed-title" aria-busy={load.status === "loading"}>
+    <section
+      ref={rootRef}
+      className={`feed${hasSelection ? " has-selection" : ""}`}
+      aria-labelledby="feed-title"
+      aria-busy={load.status === "loading"}
+    >
       <header className="feed-header">
         <div className="feed-headline">
           <h1 id="feed-title">{t(locale, "feedTitle")}</h1>
@@ -206,6 +211,7 @@ export function SignalFeed(props: Props) {
                         locale={locale}
                         incident={i}
                         selected={selected === i.key}
+                        kin={hasSelection && selected !== i.key && i.ward !== null && kin.includes(i.ward)}
                         spans={spansOf(i)}
                         onSelect={(key) => onChange({ incident: key })}
                       />

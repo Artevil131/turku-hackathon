@@ -16,7 +16,9 @@ import {
   compactLayout,
   defaultLayout,
   fitLayout,
+  focusLayout,
   type Layout,
+  loadFocus,
   loadLayout,
   MAX_ROWS,
   MIN_SIZE,
@@ -25,6 +27,7 @@ import {
   presetLayout,
   ROW_PX,
   raise,
+  saveFocus,
   saveLayout,
   WIN_IDS,
   type WinId,
@@ -41,6 +44,15 @@ import "./workspace.css";
 // transform, updated once per animation frame), a soft placeholder shows the
 // cell it will land in and the others move out of the way live; the grid is
 // committed on release.
+//
+// Windows are rendered in a fixed DOM order and stacked with z-index only:
+// raising one must not move its node, or a click on a button inside it
+// (which focuses the button, which raises the window) is swallowed mid-press.
+//
+// Focus mode (the F key, the button in a window's chrome, or the focus bar)
+// derives one more layout from the user's own: the focused window takes the
+// whole width and the viewport's height, the others wait in a rail of titles.
+// The user's layout is never written while focused, so leaving restores it.
 
 const TITLE_KEY = {
   signals: "boardFeed",
@@ -94,6 +106,9 @@ export function Workspace({
   onClosed,
   initiallyOpen,
   reveal,
+  primary = null,
+  answers = [],
+  lead,
 }: {
   locale: Locale;
   content: Record<WinId, ReactNode>;
@@ -103,6 +118,12 @@ export function Workspace({
   initiallyOpen?: WinId[];
   /** A window to bring forward (opening it if closed) each time `key` changes: the card on a new signal, the map on "Show on map". */
   reveal?: { id: WinId; key: string | null };
+  /** The window that holds the selected signal: it gets the accent ring and is what F focuses. */
+  primary?: WinId | null;
+  /** The windows that answer the selected signal next (full tone); every other window steps back. */
+  answers?: readonly WinId[];
+  /** One line per window saying what it answers for the selected signal, shown at its top. */
+  lead?: Partial<Record<WinId, string>>;
 }) {
   const wide = useWide();
   const areaRef = useRef<HTMLDivElement>(null);
@@ -112,23 +133,39 @@ export function Workspace({
   const [draft, setDraft] = useState<Layout | null>(null);
   const [dragging, setDragging] = useState<WinId | null>(null);
   const [areaW, setAreaW] = useState(0);
+  // Rows from the board's top edge to the bottom of its scroll viewport: the height of a focused window.
+  const [viewRows, setViewRows] = useState(24);
   const [animate, setAnimate] = useState(false);
   const [status, setStatus] = useState("");
+  const [focus, setFocus] = useState<WinId | null>(loadFocus);
   const drag = useRef<Drag | null>(null);
   const focusAfter = useRef<string | null>(null);
 
-  const layout: Layout = compactLayout(fitLayout(draft ?? saved ?? defaultLayout()));
+  // The user's own layout (or the drag preview of it), and the layout drawn: in focus mode, derived from it.
+  const base: Layout = compactLayout(fitLayout(draft ?? saved ?? defaultLayout()));
+  const focused = wide && focus !== null ? focus : null;
+  const layout: Layout = focused ? compactLayout(fitLayout(focusLayout(base, focused, viewRows))) : base;
   const colW = areaW / COLS;
 
   useLayoutEffect(() => {
     const el = areaRef.current;
     if (!el) return;
-    const measure = () => setAreaW(el.getBoundingClientRect().width);
+    const measure = () => {
+      const r = el.getBoundingClientRect();
+      setAreaW(r.width);
+      const scroller = el.closest<HTMLElement>(".page") ?? document.documentElement;
+      const top = r.top - scroller.getBoundingClientRect().top + scroller.scrollTop;
+      setViewRows(Math.max(12, Math.floor((scroller.clientHeight - top - 12) / ROW_PX)));
+    };
     measure();
+    window.addEventListener("resize", measure);
     if (typeof ResizeObserver !== "function") return;
     const ro = new ResizeObserver(measure);
     ro.observe(el);
-    return () => ro.disconnect();
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
   }, []);
   // Position changes animate, but not the first placement.
   useEffect(() => {
@@ -143,13 +180,48 @@ export function Workspace({
     saveLayout(c);
     return c;
   };
-  const update = (fn: (l: Layout) => Layout, moved?: WinId) => commit(fn(layout), moved);
+  const update = (fn: (l: Layout) => Layout, moved?: WinId) => commit(fn(base), moved);
+
+  // Focus mode: remembered apart from the layout, so it survives a reload but never rewrites the user's grid.
+  const setFocusTo = (id: WinId | null) => {
+    setFocus(id);
+    saveFocus(id);
+    if (id) {
+      focusAfter.current = `ws-win-${id}`;
+      setStatus(t(locale, "wsFocusStatus", { title: t(locale, TITLE_KEY[id]) }));
+    } else if (focus) {
+      focusAfter.current = `ws-win-${focus}`;
+      setStatus(t(locale, "wsFocusLeft"));
+    }
+  };
+  const toggleFocus = (id?: WinId) => {
+    if (focus && (!id || id === focus)) return setFocusTo(null);
+    const active = (document.activeElement as HTMLElement | null)?.closest<HTMLElement>(".ws-win")?.dataset.win as WinId | undefined;
+    const target = id ?? (primary && base.wins[primary].open ? primary : (active ?? primary ?? "math"));
+    setFocusTo(target);
+  };
+  useEffect(() => {
+    if (!wide) return;
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;
+      const el = e.target instanceof Element ? e.target : null;
+      if (el?.closest("input, textarea, select, [contenteditable='true']")) return;
+      if (e.key === "f" || e.key === "F") {
+        e.preventDefault();
+        toggleFocus();
+      } else if (e.key === "Escape" && focus && !el?.closest(".geo-detail, .ws-pop")) {
+        setFocusTo(null);
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  });
 
   // A link that names a window (the unit grid) opens it once the board is measured.
   const wanted = useRef(initiallyOpen);
   useEffect(() => {
     if (!wanted.current) return;
-    const ids = wanted.current.filter((id) => !layout.wins[id].open);
+    const ids = wanted.current.filter((id) => !base.wins[id].open);
     wanted.current = undefined;
     if (ids.length) update((l) => ids.reduce((acc, id) => raise(patchWin(acc, id, { open: true }), id), l), ids[0]);
   });
@@ -163,21 +235,25 @@ export function Workspace({
 
   const close = (id: WinId) => {
     focusAfter.current = "ws-tray-button";
+    if (focus === id) setFocusTo(null);
     update((l) => patchWin(l, id, { open: false }));
     onClosed?.(id);
   };
   const open = (id: WinId) => {
     focusAfter.current = `ws-win-${id}`;
     update((l) => raise(patchWin(l, id, { open: true }), id), id);
+    // While focused, an opened window is the one to look at.
+    if (focus && focus !== id) setFocusTo(id);
     onOpened?.(id);
   };
-  const toggle = (id: WinId) => (layout.wins[id].open ? close(id) : open(id));
+  const toggle = (id: WinId) => (base.wins[id].open ? close(id) : open(id));
   const revealed = useRef(reveal?.key ?? null);
   useEffect(() => {
     if (!reveal || reveal.key === revealed.current) return;
     revealed.current = reveal.key;
     if (reveal.key === null) return;
-    if (!layout.wins[reveal.id].open) open(reveal.id);
+    if (!base.wins[reveal.id].open) open(reveal.id);
+    else if (focus && focus !== reveal.id) setFocusTo(reveal.id);
     else focusWin(reveal.id);
   });
   const PRESETS: readonly Preset[] = ["default", "map", "signals", "units"];
@@ -186,6 +262,7 @@ export function Workspace({
     const l = presetLayout(p);
     setSaved(l);
     saveLayout(l);
+    if (focus) setFocusTo(null);
     setStatus(t(locale, "wsPresetApplied", { title: t(locale, PRESET_KEY[p]) }));
   };
   const layouts = (
@@ -200,13 +277,31 @@ export function Workspace({
       </div>
     </div>
   );
+  // The focus bar: the focused window's title, the other windows as a rail of titles, and the way back.
+  const focusBar = focused ? (
+    <div className="ws-focusbar" role="group" aria-label={t(locale, "wsFocusOn")}>
+      <span className="ws-layouts-label">{t(locale, "wsFocusOn")}</span>
+      <strong className="ws-focusbar-current">{t(locale, TITLE_KEY[focused])}</strong>
+      <span className="ws-focusbar-rail">
+        {WIN_IDS.filter((id) => id !== focused && base.wins[id].open).map((id) => (
+          <button type="button" key={id} className="ws-focusbar-win" data-focus-win={id} onClick={() => setFocusTo(id)}>
+            {t(locale, TITLE_KEY[id])}
+          </button>
+        ))}
+      </span>
+      <button type="button" className="ws-focusbar-leave" data-focus-leave onClick={() => setFocusTo(null)}>
+        {t(locale, "wsFocusLeave")}
+        <kbd>Esc</kbd>
+      </button>
+    </div>
+  ) : null;
   const reset = () => {
     setSaved(null);
     saveLayout(null);
     setStatus("");
   };
   const focusWin = (id: WinId) => {
-    if (layout.order[layout.order.length - 1] !== id) update((l) => raise(l, id));
+    if (base.order[base.order.length - 1] !== id) update((l) => raise(l, id));
   };
 
   const announce = (id: WinId, r: Rect) =>
@@ -218,7 +313,7 @@ export function Workspace({
     e.preventDefault();
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     focusWin(id);
-    const w = layout.wins[id];
+    const w = base.wins[id];
     const area = areaRef.current.getBoundingClientRect().width;
     const cw = area / COLS;
     const el = (e.currentTarget as HTMLElement).closest<HTMLElement>(".ws-win");
@@ -233,7 +328,7 @@ export function Workspace({
       x0: e.clientX,
       y0: e.clientY,
       scroll0: window.scrollY,
-      base: layout,
+      base,
       rect,
       last: rect,
       colW: cw,
@@ -242,7 +337,7 @@ export function Workspace({
       pointer: { x: e.clientX, y: e.clientY },
       raf: null,
     };
-    setDraft(layout);
+    setDraft(base);
     setDragging(id);
   };
 
@@ -300,7 +395,7 @@ export function Workspace({
     const dir = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
     if (!dir) return;
     e.preventDefault();
-    const w = layout.wins[id];
+    const w = base.wins[id];
     const r = e.shiftKey
       ? { ...w, x: w.x + (dir[0] as number), y: w.y + (dir[1] as number) }
       : { ...w, w: w.w + (dir[0] as number), h: w.h + (dir[1] as number) };
@@ -309,8 +404,11 @@ export function Workspace({
     announce(id, c.wins[id]);
   };
 
-  const ids = wide ? layout.order : STACK_ORDER;
-  const tray = <Tray locale={locale} open={(id) => layout.wins[id].open} onToggle={toggle} onReset={reset} />;
+  // A fixed DOM order; the stacking comes from `order` through z-index (see the note at the top).
+  const ids = wide ? WIN_IDS : STACK_ORDER;
+  const tray = <Tray locale={locale} open={(id) => base.wins[id].open} onToggle={toggle} onReset={reset} />;
+  const roleOf = (id: WinId): "primary" | "answer" | "quiet" | undefined =>
+    primary === null ? undefined : id === primary ? "primary" : answers.includes(id) ? "answer" : "quiet";
   const place = (r: Rect): CSSProperties => ({
     transform: `translate3d(${r.x * colW}px,${r.y * ROW_PX}px,0)`,
     width: r.w * colW,
@@ -318,15 +416,17 @@ export function Workspace({
   });
 
   return (
-    <div className="ws" data-float={wide} data-animate={animate}>
+    <div className="ws" data-float={wide} data-animate={animate} data-focus={focused !== null} data-selection={primary !== null}>
       {wide ? null : <div className="ws-tray-row">{tray}</div>}
-      {wide ? <div className="ws-toolbar">{layouts}</div> : null}
+      {wide ? <div className="ws-toolbar">{focusBar ?? layouts}</div> : null}
       <div className="ws-area" ref={areaRef} style={wide ? { height: boardRows(layout) * ROW_PX } : undefined}>
         {wide && dragging ? <div className="ws-ghost" aria-hidden="true" style={place(layout.wins[dragging])} /> : null}
-        {ids.map((id, z) => {
+        {ids.map((id) => {
           const w = layout.wins[id];
           if (!w.open) return null;
           const title = t(locale, TITLE_KEY[id]);
+          const z = layout.order.indexOf(id);
+          const isFocus = focused === id;
           const style = wide
             ? ({
                 ...(dragging === id
@@ -349,6 +449,8 @@ export function Workspace({
               className="ws-win"
               data-win={id}
               data-dragging={dragging === id}
+              data-role={roleOf(id)}
+              data-focus={isFocus || undefined}
               style={style}
               tabIndex={-1}
               aria-label={title}
@@ -357,8 +459,9 @@ export function Workspace({
               onFocusCapture={wide ? () => focusWin(id) : undefined}
             >
               <div className="ws-frame">
+                {lead?.[id] ? <p className="ws-lead">{lead[id]}</p> : null}
                 <div className="ws-body">{content[id]}</div>
-                {wide ? (
+                {wide && !focused ? (
                   <>
                     <div className="ws-grip" aria-hidden="true" {...drags("move")} />
                     <div className="ws-edge ws-edge-r" aria-hidden="true" {...drags("sizeX")} />
@@ -372,6 +475,41 @@ export function Workspace({
                       onKeyDown={(e) => onHandleKey(e, id)}
                     />
                   </>
+                ) : null}
+                {wide ? (
+                  <button
+                    type="button"
+                    className="ws-focus"
+                    data-focus-toggle={id}
+                    aria-pressed={isFocus}
+                    aria-label={isFocus ? t(locale, "wsFocusLeave") : t(locale, "wsFocus", { title })}
+                    title={`${isFocus ? t(locale, "wsFocusLeave") : t(locale, "wsFocus", { title })} · F`}
+                    onClick={() => toggleFocus(id)}
+                  >
+                    {isFocus ? (
+                      <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true" focusable="false">
+                        <path
+                          d="M6.5 2.5v4h-4M9.5 13.5v-4h4M2.5 9.5h4v4M13.5 6.5h-4v-4"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.6"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    ) : (
+                      <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true" focusable="false">
+                        <path
+                          d="M2.5 6.5v-4h4M13.5 9.5v4h-4M2.5 9.5v4h4M13.5 6.5v-4h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.6"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    )}
+                  </button>
                 ) : null}
                 <button
                   type="button"

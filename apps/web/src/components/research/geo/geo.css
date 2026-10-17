@@ -966,6 +966,9 @@
   stroke: var(--live, #635bf1);
   stroke-width: 1;
 }
+.ug-node {
+  transition: opacity var(--mo-2, 200ms) var(--mo-ease, ease-out);
+}
 .ug.has-selection .ug-node:not(.is-kin) {
   opacity: var(--dim-text, 0.7);
 }
@@ -991,6 +994,29 @@
   background: #fff;
   box-shadow: -8px 0 16px rgba(7, 8, 28, 0.06);
   overflow: auto;
+}
+/* The pane slides in from the right and fades; it leaves the same way (kept mounted while it goes). */
+.geo-detail {
+  transition:
+    transform var(--mo-3, 320ms) var(--mo-ease, ease-out),
+    opacity var(--mo-3, 320ms) var(--mo-ease, ease-out);
+}
+.geo-detail[data-open="false"] {
+  transform: translateX(24px);
+  opacity: 0;
+  pointer-events: none;
+}
+@starting-style {
+  .geo-detail[data-open="true"] {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .geo-detail,
+  .ug-node {
+    transition: none;
+  }
 }
 .ws[data-docked="false"] .geo-detail,
 .timeline-phone ~ * .geo-detail {

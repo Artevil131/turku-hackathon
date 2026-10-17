@@ -30,12 +30,48 @@
 
 .ws-frame {
   position: relative;
+  display: flex;
+  flex-direction: column;
   height: 100%;
   min-height: 0;
   border: 1px solid var(--line);
   border-radius: var(--radius-panel, 10px);
   background: #fff;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
   overflow: hidden;
+  transition:
+    border-color var(--mo-2, 200ms) var(--mo-ease, ease-out),
+    outline-color var(--mo-2, 200ms) var(--mo-ease, ease-out),
+    box-shadow var(--mo-2, 200ms) var(--mo-ease, ease-out),
+    background-color var(--mo-2, 200ms) var(--mo-ease, ease-out);
+}
+/* The reading order for a selected signal: the window holding it wears the accent ring every selected
+   element on the page wears; the windows that answer it keep full tone; the rest step back. */
+.ws[data-selection="true"] .ws-win[data-role="primary"] .ws-frame {
+  outline-color: var(--live);
+  box-shadow: 0 8px 24px rgb(7 8 28 / 0.08);
+}
+.ws[data-selection="true"] .ws-win[data-role="quiet"] .ws-frame {
+  border-color: color-mix(in oklab, var(--line) 55%, transparent);
+  background: color-mix(in oklab, #fff 72%, var(--chassis, #f8f8f8));
+}
+/* One line at the top of a window: what it answers for the selected signal. */
+.ws-lead {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 10px 56px 0 12px;
+  font-size: var(--t-xs, 12px);
+  line-height: 1.3;
+  font-weight: 500;
+  color: var(--ink-3);
+}
+.ws-win[data-role="primary"] .ws-lead {
+  color: var(--live);
+  font-weight: 600;
+}
+.ws-win[data-role="answer"] .ws-lead {
+  color: var(--ink-2);
 }
 .ws-win:focus-visible {
   outline: 2px solid var(--live);
@@ -44,7 +80,8 @@
 }
 .ws-body {
   position: relative;
-  height: 100%;
+  flex: 1 1 auto;
+  height: auto;
   min-height: 0;
   overflow: auto;
 }
@@ -81,9 +118,9 @@
 /* position and size changes glide; the window under the pointer follows it directly */
 .ws[data-float="true"][data-animate="true"] .ws-win {
   transition:
-    transform 180ms ease-out,
-    width 180ms ease-out,
-    height 180ms ease-out;
+    transform var(--mo-2, 200ms) var(--mo-ease, ease-out),
+    width var(--mo-2, 200ms) var(--mo-ease, ease-out),
+    height var(--mo-2, 200ms) var(--mo-ease, ease-out);
 }
 .ws[data-float="true"][data-animate] .ws-win[data-dragging="true"] {
   transition: none;
@@ -107,9 +144,9 @@
 }
 .ws[data-animate="true"] .ws-ghost {
   transition:
-    transform 180ms ease-out,
-    width 180ms ease-out,
-    height 180ms ease-out;
+    transform var(--mo-2, 200ms) var(--mo-ease, ease-out),
+    width var(--mo-2, 200ms) var(--mo-ease, ease-out),
+    height var(--mo-2, 200ms) var(--mo-ease, ease-out);
 }
 .ws-ghost::before {
   content: "";
@@ -121,7 +158,8 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .ws[data-float="true"][data-animate="true"] .ws-win,
-  .ws[data-animate="true"] .ws-ghost {
+  .ws[data-animate="true"] .ws-ghost,
+  .ws-frame {
     transition: none;
   }
 }
@@ -130,6 +168,7 @@
 .ws-grip,
 .ws-edge,
 .ws-handle,
+.ws-focus,
 .ws-close {
   position: absolute;
   touch-action: none;
@@ -204,6 +243,7 @@
 .ws-win:focus-within .ws-handle::after {
   opacity: 0.7;
 }
+.ws-focus,
 .ws-close {
   top: 4px;
   right: 4px;
@@ -222,14 +262,27 @@
 }
 .ws-win:hover .ws-close,
 .ws-win:focus-within .ws-close,
-.ws-close:focus-visible {
+.ws-close:focus-visible,
+.ws-win:hover .ws-focus,
+.ws-win:focus-within .ws-focus,
+.ws-focus:focus-visible,
+.ws-win[data-role="primary"] .ws-focus,
+.ws-win[data-focus="true"] .ws-focus {
   opacity: 1;
 }
-.ws-close:hover {
+.ws-focus {
+  right: 28px;
+}
+.ws-focus[aria-pressed="true"] {
+  color: var(--live);
+}
+.ws-close:hover,
+.ws-focus:hover {
   background: var(--brand-accent-soft, #ecebfc);
   color: var(--ink);
 }
 .ws-close:focus-visible,
+.ws-focus:focus-visible,
 .ws-handle:focus-visible,
 .ws-tray-button:focus-visible,
 .ws-pop-reset:focus-visible,
@@ -242,7 +295,8 @@
 }
 /* touch screens and stacked panels have no hover: keep the close mark */
 @media (hover: none), (max-width: 1099px) {
-  .ws-close {
+  .ws-close,
+  .ws-focus {
     opacity: 1;
   }
 }
@@ -345,22 +399,24 @@
   overflow: auto;
 }
 
-/* keep the close mark clear of header content */
+/* keep the focus and close marks clear of header content */
 .ws .feed-header,
-.ws .math-head {
-  padding-right: 32px;
+.ws .math-head,
+.ws .sig-head {
+  padding-right: 56px;
 }
 
-/* panel heads without a feed/math header: clear of the close mark too */
+/* panel heads without a feed/math header: clear of the marks too */
 .ws .hnet-head,
 .ws .geo-head,
 .ws .ug-head,
 .ws .ugrid-head,
 .ws .map-head,
 .ws .assist-title {
-  padding-right: 24px;
+  padding-right: 48px;
 }
-.ws-close {
+.ws-close,
+.ws-focus {
   box-shadow: 0 0 0 1px var(--line);
 }
 
@@ -388,4 +444,84 @@
   height: 24px;
   padding: 0 8px;
   font-size: var(--t-xs, 12px);
+}
+
+/* Focus mode: the focused window alone on the board, the others as a rail of titles in the toolbar. */
+.ws-focusbar {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 28px;
+}
+.ws-focusbar-current {
+  font-size: var(--t-s, 13px);
+  font-weight: 600;
+  color: var(--ink);
+}
+.ws-focusbar-rail {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-left: 8px;
+  min-width: 0;
+}
+.ws-focusbar-win,
+.ws-focusbar-leave {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control, 6px);
+  background: #fff;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: var(--t-xs, 12px);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    border-color var(--mo-1, 120ms) var(--mo-ease, ease-out),
+    background-color var(--mo-1, 120ms) var(--mo-ease, ease-out),
+    color var(--mo-1, 120ms) var(--mo-ease, ease-out);
+}
+.ws-focusbar-win:hover,
+.ws-focusbar-leave:hover {
+  border-color: var(--line-strong, #aebecb);
+  color: var(--ink);
+}
+.ws-focusbar-win:focus-visible,
+.ws-focusbar-leave:focus-visible {
+  outline: 2px solid var(--live);
+  outline-offset: 2px;
+}
+.ws-focusbar-leave {
+  margin-left: auto;
+}
+.ws-focusbar-leave kbd {
+  padding: 0 4px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: var(--chassis, #f8f8f8);
+  color: var(--ink-3);
+  font-family: inherit;
+  font-size: 11px;
+  line-height: 16px;
+}
+.ws-win[data-focus="true"] .ws-frame {
+  box-shadow: 0 12px 32px rgb(7 8 28 / 0.1);
+}
+/* A focused card keeps a reading measure; the bars and the actions do not stretch across the board. */
+.ws-win[data-focus="true"] .ws-body > .sig .sig-body,
+.ws-win[data-focus="true"] .ws-body > .sig .sig-actions,
+.ws-win[data-focus="true"] .ws-body > .assist {
+  max-width: 880px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ws-focusbar-win,
+  .ws-focusbar-leave {
+    transition: none;
+  }
 }

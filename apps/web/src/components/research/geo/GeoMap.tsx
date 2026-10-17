@@ -142,6 +142,21 @@ export function GeoMap({
   useEffect(() => {
     if (focusCounty) setChosen(focusCounty);
   }, [focusCounty]);
+  // The pane slides in as it mounts (CSS @starting-style) and stays mounted while it slides out.
+  const [pane, setPane] = useState<{ region: string; leaving: boolean } | null>(() => (chosen ? { region: chosen, leaving: false } : null));
+  useEffect(() => {
+    if (chosen) {
+      setPane({ region: chosen, leaving: false });
+      return;
+    }
+    if (reducedMotion) {
+      setPane(null);
+      return;
+    }
+    setPane((p) => (p ? { ...p, leaving: true } : null));
+    const id = setTimeout(() => setPane(null), 360);
+    return () => clearTimeout(id);
+  }, [chosen, reducedMotion]);
   const detailHeading = useRef<HTMLHeadingElement>(null);
   const mapHeading = useRef<HTMLHeadingElement>(null);
   const wasChosen = useRef(false);
@@ -263,10 +278,13 @@ export function GeoMap({
     </div>
   );
 
-  const fs = chosen ? byRegion.get(chosen) : undefined;
-  const strongest = chosen
-    ? ([...(data?.signals ?? [])].filter((s) => s.region === chosen).sort((a, b) => Number(b.strong) - Number(a.strong) || a.p - b.p)[0] ??
-      null)
+  // The pane's figures follow the region it shows, also while it slides out.
+  const shownRegion = chosen ?? pane?.region ?? null;
+  const fs = shownRegion ? byRegion.get(shownRegion) : undefined;
+  const strongest = shownRegion
+    ? ([...(data?.signals ?? [])]
+        .filter((s) => s.region === shownRegion)
+        .sort((a, b) => Number(b.strong) - Number(a.strong) || a.p - b.p)[0] ?? null)
     : null;
 
   const rows = shapes
@@ -336,21 +354,23 @@ export function GeoMap({
       ) : null}
 
       {/* The county detail opens beside the map (a side pane); the map stays in view. */}
-      {chosen ? (
+      {pane ? (
         <CountyDetail
-          region={chosen}
+          region={pane.region}
           signal={strongest}
           groupLabel={strongest ? seriesLabel(locale, strongest.group) : ""}
           forecasts={forecasts}
           locale={locale}
           onClose={() => setChosen(null)}
           headingRef={detailHeading}
+          open={!pane.leaving}
         >
           {fs && month ? (
             <>
               <p className="geo-card-figs">
                 {seriesLabel(locale, group)} ·{" "}
-                {t(locale, "geoMonthCases", { cases: fmt(locale, casesAt(chosen) ?? 0, 0), month: monthLong(month) })} · {rateText(chosen)}
+                {t(locale, "geoMonthCases", { cases: fmt(locale, casesAt(pane.region) ?? 0, 0), month: monthLong(month) })} ·{" "}
+                {rateText(pane.region)}
               </p>
               <p className="geo-card-figs">
                 {t(locale, "mapFocusTwelve", {
@@ -358,11 +378,11 @@ export function GeoMap({
                   month: monthLong(month),
                 })}
               </p>
-              <Spark locale={locale} series={fs} months={months} signals={signalsAll.filter((s) => s.region === chosen)} />
+              <Spark locale={locale} series={fs} months={months} signals={signalsAll.filter((s) => s.region === pane.region)} />
               <p className="geo-faint">{t(locale, "geoExpectedTick")}</p>
             </>
           ) : null}
-          {chosen === TYKS_COUNTY && weekly.state === "ok" && weekly.data ? (
+          {pane.region === TYKS_COUNTY && weekly.state === "ok" && weekly.data ? (
             <TyksCompare weekly={weekly.data} group={group} locale={locale} />
           ) : null}
         </CountyDetail>

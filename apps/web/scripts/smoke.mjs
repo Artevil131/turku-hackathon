@@ -610,7 +610,7 @@ async function main() {
   };
   const cleanWorkspace = async (idle) => {
     await load(cdp, urlOf("research"), idle);
-    await evaluate(cdp, `localStorage.removeItem('aei.research.layout')`);
+    await evaluate(cdp, `localStorage.removeItem('aei.research.layout'); localStorage.removeItem('aei.research.focus')`);
     await cdp.send("Page.navigate", { url: "about:blank" });
     await load(cdp, urlOf("research"), idle);
   };
@@ -637,6 +637,18 @@ async function main() {
       await click('[data-preset="default"]');
       if (!(await waitIn(`${open} === 'assistant,graph,map,math,signals'`, 1500)))
         reasons.push(`default layout: open windows ${await evaluate(cdp, open)}`);
+      // Focus mode: F enlarges the selected window and leaves the others in the rail; Esc restores.
+      await evaluate(cdp, `document.querySelector('.feed-row')?.click()`);
+      if (!(await waitIn(`!!document.querySelector('.ws-win[data-role="primary"]')`, 3000)))
+        reasons.push("selecting a signal gave no primary window");
+      await key("f");
+      if (!(await waitIn(`${open} === 'math' && document.querySelector('#ws-win-math').getBoundingClientRect().width > 1000`, 1500)))
+        reasons.push(`F did not focus the Signal window (open: ${await evaluate(cdp, open)})`);
+      if (!(await waitIn(`!!document.querySelector('[data-focus-leave]') && !!document.querySelector('[data-focus-win="map"]')`, 1500)))
+        reasons.push("focus mode shows no rail of the other windows");
+      await key("Escape");
+      if (!(await waitIn(`${open} === 'assistant,graph,map,math,signals'`, 1500)))
+        reasons.push(`Esc did not restore the layout (open: ${await evaluate(cdp, open)})`);
       await idle();
     },
     { name: "desktop-900", width: 1440, height: 900, mobile: false },

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { compactLayout, defaultLayout, patchWin, WIN_IDS } from "./layout.ts";
+import { COLS, compactLayout, defaultLayout, focusLayout, patchWin, WIN_IDS } from "./layout.ts";
 
 const noOverlap = (l: ReturnType<typeof defaultLayout>) => {
   const open = WIN_IDS.filter((id) => l.wins[id].open).map((id) => l.wins[id]);
@@ -30,5 +30,22 @@ describe("compactLayout", () => {
   it("resolves a stored layout that overlaps", () => {
     const l = patchWin(patchWin(defaultLayout(), "graph", { y: 2 }), "math", { y: 0 });
     noOverlap(compactLayout(l));
+  });
+});
+
+describe("focusLayout", () => {
+  it("gives the focused window the whole width and the viewport's rows, and takes the others off the board", () => {
+    const d = defaultLayout();
+    const f = focusLayout(d, "math", 30);
+    expect(f.wins.math).toEqual({ x: 0, y: 0, w: COLS, h: 30, open: true });
+    expect(WIN_IDS.filter((id) => f.wins[id].open)).toEqual(["math"]);
+    expect(f.order[f.order.length - 1]).toBe("math");
+  });
+  it("keeps a window taller than the viewport at its own height and leaves the source layout alone", () => {
+    const d = defaultLayout();
+    const f = focusLayout(d, "signals", 20);
+    expect(f.wins.signals.h).toBe(40);
+    expect(d.wins.math.open).toBe(true);
+    expect(d.wins.signals.w).toBe(3);
   });
 });

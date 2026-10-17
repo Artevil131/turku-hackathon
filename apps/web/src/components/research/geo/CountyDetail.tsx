@@ -12,6 +12,7 @@ export function CountyDetail({
   locale,
   onClose,
   headingRef,
+  open = true,
   children,
 }: {
   region: string;
@@ -21,11 +22,19 @@ export function CountyDetail({
   locale: Locale;
   onClose: () => void;
   headingRef: Ref<HTMLHeadingElement>;
+  /** False while the pane slides in or out. */
+  open?: boolean;
   children?: ReactNode;
 }) {
   const fmt = (n: number) => new Intl.NumberFormat(locale === "fi" ? "fi-FI" : "en-GB", { maximumFractionDigits: 1 }).format(n);
   return (
-    <section className="geo-detail" aria-labelledby="geo-county-title" onKeyDown={(e) => e.key === "Escape" && onClose()}>
+    <section
+      className="geo-detail"
+      data-open={open}
+      aria-labelledby="geo-county-title"
+      aria-hidden={!open || undefined}
+      onKeyDown={(e) => e.key === "Escape" && onClose()}
+    >
       <header className="geo-detail-head">
         <h3 id="geo-county-title" className="geo-title" tabIndex={-1} ref={headingRef}>
           {t(locale, "geoCountyDetail", { region: countyName(locale, region) })}

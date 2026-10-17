@@ -177,6 +177,28 @@
   min-width: 0;
 }
 
+/* The selected row's details ease open (a grid row from 0fr to 1fr), so the list below glides, not leaps. */
+.feed-more {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--mo-3, 320ms) var(--mo-ease, ease-out);
+}
+.feed-more[data-open="true"] {
+  grid-template-rows: 1fr;
+}
+.feed-more-in {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 0;
+  overflow: hidden;
+}
+@media (prefers-reduced-motion: reduce) {
+  .feed-more {
+    transition: none;
+  }
+}
+
 .feed-kind {
   display: inline-flex;
   flex: none;
