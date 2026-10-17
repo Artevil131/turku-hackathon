@@ -70,3 +70,4 @@ Screenshots come from headless Chrome through
 | 02:11 | builder (Sonnet 5.5) | Doctor's list prints as one A4 page (checked as PDF); Finnish home copy says löydökset |
 | 02:11 | QA (Sonnet 5.5) | Production-states audit (review-states.md): error+retry pass on feed, grid, network, map, doctor; URL state, remembered unit and language pass; open: organisms rail and signals block states, developer offline copy, live.ts recovery, stale-while-updating on grid/network/map, grid weeks in URL, tab order |
 | 02:11 | orchestrator (Opus 5.5) | Usage limit reached: run stopped here; report refreshed |
+| 08:38 | orchestrator (Opus 5.5) | Resumed after the usage-limit stop at 08:34, past the 08:30 cut-off: no new work started. After screenshots of every surface at phone and laptop; final morning report written |
