@@ -11,6 +11,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { flushSync } from "react-dom";
 import {
   closeWindow,
   defaultLayout,
@@ -71,6 +72,16 @@ function useWide() {
   }, []);
   return wide;
 }
+const reducedMotion = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+/** Reorders and reveals animate as one View Transition where the browser has one; otherwise they apply at once. */
+function viewChange(update: () => void) {
+  if (typeof document.startViewTransition !== "function" || reducedMotion()) {
+    update();
+    return;
+  }
+  // flushSync keeps the state update inside the transition's snapshot.
+  document.startViewTransition(() => flushSync(update));
+}
 type Move = { kind: "move"; id: WinId; x: number; y: number; active: boolean; slot: Slot | null; top: number };
 type Resize = {
   kind: "column" | "stack";
@@ -109,6 +120,7 @@ export function Workspace({
   const [moving, setMoving] = useState<{ id: WinId; x: number; y: number } | null>(null);
   const [drop, setDrop] = useState<Drop | null>(null);
   const [status, setStatus] = useState("");
+  const root = useRef<HTMLDivElement>(null);
   const area = useRef<HTMLDivElement>(null);
   const gesture = useRef<Gesture | null>(null);
   const focusAfter = useRef<string | null>(null);
@@ -118,6 +130,8 @@ export function Workspace({
     setLayout(next);
     saveLayout(next);
   };
+  /** Layout changes that reorder or reveal windows: animated as one view transition. */
+  const reflow = (next: Layout) => viewChange(() => commit(next));
   const keep = useRef(initiallyOpen ?? []);
   useLayoutEffect(() => {
     if (fitted) return;
@@ -131,7 +145,7 @@ export function Workspace({
     if (!reveal || reveal.key === revealed.current) return;
     revealed.current = reveal.key;
     if (reveal.key === null || !layout.closed[reveal.id]) return;
-    commit(reopenWindow(layout, reveal.id));
+    reflow(reopenWindow(layout, reveal.id));
     onOpened?.(reveal.id);
   });
   /** Per-window floors for the two windows beside a stack splitter, as fractions of the stack. */
@@ -142,6 +156,7 @@ export function Workspace({
   };
   const cancel = useCallback(() => {
     gesture.current = null;
+    root.current?.removeAttribute("data-resizing");
     setDraft(null);
     setMoving(null);
     setDrop(null);
@@ -170,13 +185,13 @@ export function Workspace({
   };
   const close = (id: WinId) => {
     focusAfter.current = "ws-tray-button";
-    commit(closeWindow(layout, id));
+    reflow(closeWindow(layout, id));
     setStatus(t(locale, "wsClosed", { title: title(id) }));
     onClosed?.(id);
   };
   const open = (id: WinId) => {
     focusAfter.current = `ws-title-${id}`;
-    commit(reopenWindow(layout, id));
+    reflow(reopenWindow(layout, id));
     onOpened?.(id);
   };
   const preset = (p: Preset) => {
@@ -187,7 +202,7 @@ export function Workspace({
       if (locate(layout, id) && !locate(next, id)) onClosed?.(id);
       if (!locate(layout, id) && locate(next, id)) onOpened?.(id);
     }
-    commit(next);
+    reflow(next);
     setStatus(t(locale, "wsPresetApplied", { title: t(locale, PRESET_KEY[p]) }));
   };
   const keyboardMove = (e: KeyboardEvent, id: WinId) => {
@@ -240,6 +255,8 @@ export function Workspace({
       base: layout,
       last: layout,
     };
+    // Dock transitions stay off while the pointer drags (see workspace.css).
+    root.current?.setAttribute("data-resizing", "true");
   };
   const hitSlot = (x: number, y: number): Drop | null => {
     const board = area.current;
@@ -366,7 +383,7 @@ export function Workspace({
           title={t(locale, shown.maximized === id ? "wsRestore" : "wsMaximize", { title: title(id) })}
           onClick={() => {
             focusAfter.current = `ws-title-${id}`;
-            commit(maximizeWindow(layout, id));
+            reflow(maximizeWindow(layout, id));
           }}
         >
           <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
@@ -394,7 +411,7 @@ export function Workspace({
     </section>
   );
   return (
-    <div className="ws" data-docked={wide}>
+    <div className="ws" ref={root} data-docked={wide}>
       <div className="ws-toolbar">
         {/* Ready-made layouts, one click each; the tray keeps the per-window switches. */}
         <div className="ws-layouts" role="group" aria-label={t(locale, "wsPresets")}>
