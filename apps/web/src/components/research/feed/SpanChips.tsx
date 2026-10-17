@@ -36,7 +36,7 @@ export function SpanLine({ locale, spans, ward }: { locale: Locale; spans: Spans
                 to: spans.to ? formatDateNumeric(spans.to) : "",
               })}
             >
-              {n.unit} {pct(n.share)}
+              {n.unit} {pct(n.share)} · n {n.patients}
             </span>
           ))}
         </>

@@ -1,7 +1,7 @@
 import type { Alert, WeeklyResponse } from "@aei/contract";
 import { WARDS, type WardCode } from "@aei/domain";
 import { type Locale, phenotypeName, t, wardName } from "@aei/i18n";
-import { type KeyboardEvent, memo, type PointerEvent, useEffect, useId, useMemo, useRef, useState } from "react";
+import { type KeyboardEvent, memo, type PointerEvent, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   bandPath,
   compactDate,
@@ -293,14 +293,17 @@ interface StaticProps {
   compact: boolean;
   asOf: string;
   disabled: boolean;
+  /** A pill was opened: the pointer readout goes away. */
+  onOpen: () => void;
 }
 
 /** Everything that does not change with the pointer; re-rendered only when the data, width or date change. */
-const StaticLayer = memo(function StaticLayer({ m, L, id, locale, compact, asOf, disabled }: StaticProps) {
+const StaticLayer = memo(function StaticLayer({ m, L, id, locale, compact, asOf, disabled, onOpen }: StaticProps) {
   const lanesEnd = compact ? L.base : L.lanes + m.lanes.length * L.pitch;
   const todayLabel = `${t(locale, "tlToday")} · ${compactDate(asOf)}`;
   const todayW = Math.ceil(todayLabel.length * 6.6 + 10);
   const open = (a: Alert) => {
+    onOpen();
     location.hash = `research?inc=${encodeURIComponent(a.incident ?? a.id)}`;
   };
   return (
@@ -464,6 +467,9 @@ function Legend({ id, L, locale, right }: { id: string; L: Layout; locale: Local
   const short = t(locale, "tlCulturesShort");
   const room = right - x - 18;
   const text = full.length * 6.2 <= room ? full : short.length * 6.2 <= room ? short : null;
+  const ratio = t(locale, "tlPillLegend");
+  const used = x + 17 + (text ? text.length * 6.2 : 0);
+  const ratioNote = right - used - 24 >= ratio.length * 6.2 ? ratio : null;
   x = L.gutter;
   return (
     <g>
@@ -484,6 +490,11 @@ function Legend({ id, L, locale, right }: { id: string; L: Layout; locale: Local
       {text ? (
         <text className="hs-legend" x={x + 17} y={11}>
           {text}
+        </text>
+      ) : null}
+      {ratioNote ? (
+        <text className="hs-legend" x={right - 8} y={11} textAnchor="end">
+          {ratioNote}
         </text>
       ) : null}
     </g>
@@ -531,10 +542,21 @@ export function WeeklyBand(p: Props) {
     return weekIndex(m.weekDays, Math.floor(day));
   };
 
+  // Pointer moves are read at most once per frame.
+  const frame = useRef(0);
+  const pending = useRef(0);
+  const idxAtRef = useRef(idxAt);
+  idxAtRef.current = idxAt;
+  useEffect(() => () => cancelAnimationFrame(frame.current), []);
   const onMove = (e: PointerEvent) => {
     if (compact || disabled || e.pointerType !== "mouse") return;
-    const idx = idxAt(e.clientX);
-    setHover((h) => (idx < 0 ? null : h?.idx === idx && !h.kbd ? h : { idx, kbd: false }));
+    pending.current = e.clientX;
+    if (frame.current) return;
+    frame.current = requestAnimationFrame(() => {
+      frame.current = 0;
+      const idx = idxAtRef.current(pending.current);
+      setHover((h) => (idx < 0 ? null : h?.idx === idx && !h.kbd ? h : { idx, kbd: false }));
+    });
   };
   const onDown = (e: PointerEvent) => {
     if (compact) {
@@ -545,6 +567,12 @@ export function WeeklyBand(p: Props) {
     const idx = idxAt(e.clientX);
     setHover(idx < 0 ? null : { idx, kbd: false });
   };
+
+  const clearHover = useCallback(() => {
+    cancelAnimationFrame(frame.current);
+    frame.current = 0;
+    setHover(null);
+  }, []);
 
   const lastIdx = m.rows.length - 1;
   const onSliderKey = (e: KeyboardEvent) => {
@@ -581,7 +609,11 @@ export function WeeklyBand(p: Props) {
       style={{ height: L.height }}
       data-compact={compact || undefined}
       data-disabled={disabled || undefined}
-      onPointerLeave={() => setHover((h) => (h?.kbd ? h : null))}
+      onPointerLeave={() => {
+        cancelAnimationFrame(frame.current);
+        frame.current = 0;
+        setHover((h) => (h?.kbd ? h : null));
+      }}
     >
       <svg
         className="hs-svg"
@@ -617,7 +649,7 @@ export function WeeklyBand(p: Props) {
             onFocus={() => setHover((h) => h ?? { idx: lastIdx, kbd: true })}
           />
         ) : null}
-        <StaticLayer m={m} L={L} id={id} locale={locale} compact={compact} asOf={asOf} disabled={disabled} />
+        <StaticLayer m={m} L={L} id={id} locale={locale} compact={compact} asOf={asOf} disabled={disabled} onOpen={clearHover} />
         {row && !row.hidden ? (
           <g className="hs-cross">
             <rect className="hs-cross-week" x={hx0} y={L.top - 1} width={Math.max(3, hx1 - hx0)} height={lanesEnd - L.top + 1} />

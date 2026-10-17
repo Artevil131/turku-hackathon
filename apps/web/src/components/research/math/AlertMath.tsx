@@ -8,7 +8,7 @@ import type { BoardState } from "../board.ts";
 import { KindGlyph } from "../feed/glyphs.tsx";
 import { IsolateList, useIsolates } from "../feed/Isolates.tsx";
 import { formatP, type Incident, oneDecimal, windowOf } from "../feed/model.ts";
-import { kindLabel, shortTitle, surpriseOf, unitLabel } from "../feed/names.ts";
+import { kindLabel, resistantFromProfile, shortTitle, surpriseOf, unitLabel } from "../feed/names.ts";
 import { SpanGroups } from "../feed/SpanChips.tsx";
 import type { Spans } from "../feed/spans.ts";
 import "./math.css";
@@ -16,6 +16,9 @@ import "./math.css";
 // The alert-math panel (spec-v2 5 and 6.2): observed against usual as two
 // bars, the surprise (−log10 p) as the big number, the test named in one
 // line, "rule, no test" for sentinels, and the isolates one click away.
+
+/** Isolates shown in the panel itself (U2: one click, not two); the rest open in the full list. */
+const INLINE_ISOLATES = 3;
 
 const TEST = {
   "phenotype-excess": "feedTestPhenotype",
@@ -132,6 +135,23 @@ export function AlertMath({ client, locale, incident: inc, spans, findings, onCh
             </section>
           ) : null}
 
+          {inc.kind !== "data" ? (
+            <section className="math-isolates" aria-labelledby="math-iso-title">
+              <h3 id="math-iso-title" className="math-sub">
+                {t(locale, "feedIsolatesBehind")}
+              </h3>
+              <IsolateList
+                locale={locale}
+                status={iso.status}
+                matched={iso.matched}
+                retry={iso.retry}
+                window={win}
+                dataNote={dataNote}
+                limit={INLINE_ISOLATES}
+              />
+            </section>
+          ) : null}
+
           <div className="math-explain">
             <AlertExplanation client={client} id={lead.id} locale={locale} />
           </div>
@@ -143,7 +163,9 @@ export function AlertMath({ client, locale, incident: inc, spans, findings, onCh
           <button type="button" className="math-primary" onClick={() => setView("isolates")}>
             {inc.kind === "data"
               ? t(locale, "feedIsolates")
-              : t(locale, "feedIsolatesOpen", { n: iso.status === "ready" ? iso.matched.length : "…" })}{" "}
+              : iso.status === "ready" && iso.matched.length > INLINE_ISOLATES
+                ? t(locale, "feedIsolatesAll", { n: iso.matched.length })
+                : t(locale, "feedIsolatesOpen", { n: iso.status === "ready" ? iso.matched.length : "…" })}{" "}
             →
           </button>
         ) : null}
@@ -215,6 +237,9 @@ function AlertNumbers({ locale, alert: a }: { locale: Locale; alert: Alert }) {
         {exp !== undefined ? <Bar label={t(locale, "feedUsual")} value={fmt(exp)} share={exp / max} tone="usual" /> : null}
       </div>
       <p className="math-line">{t(locale, TEST[a.detector])}</p>
+      {a.detector === "profile-excess" && a.profile ? (
+        <p className="math-line">{t(locale, "feedResistantTo", { names: resistantFromProfile(locale, a.profile).join(", ") })}</p>
+      ) : null}
     </div>
   );
 }

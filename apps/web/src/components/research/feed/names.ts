@@ -1,4 +1,5 @@
 import type { Alert } from "@aei/contract";
+import { ANTIBIOTICS } from "@aei/domain";
 import { antibioticName, formatDate, type Locale, phenotypeName, specimenName, t, wardName } from "@aei/i18n";
 import type { SignalKind } from "../board.ts";
 import { formatP, type Incident, oneDecimal } from "./model.ts";
@@ -33,7 +34,7 @@ export function shortTitle(locale: Locale, a: Alert): string {
       if (a.detector === "rising-trend")
         return [a.antibiotic ? antibioticName(locale, a.antibiotic) : "", a.organism ?? ""].filter(Boolean).join(" · ");
       if (a.phenotype) return phenotypeName(a.phenotype);
-      return [a.organism ?? "", a.profile ?? ""].filter(Boolean).join(" · ");
+      return a.profile ? t(locale, "feedRareProfile", { organism: a.organism ?? "" }) : (a.organism ?? "");
   }
 }
 
@@ -95,4 +96,9 @@ export function baselineLine(locale: Locale, a: Alert): string {
   }
   if (a.p !== undefined) parts.push(t(locale, "feedP", { p: formatP(locale, a.p) }));
   return parts.join(" · ");
+}
+
+/** The drugs a profile string ("RSS.RR.SRRS..", one character per antibiotic in the domain's order) marks resistant. */
+export function resistantFromProfile(locale: Locale, profile: string): string[] {
+  return ANTIBIOTICS.filter((_, i) => profile[i] === "R").map((a) => antibioticName(locale, a.code));
 }

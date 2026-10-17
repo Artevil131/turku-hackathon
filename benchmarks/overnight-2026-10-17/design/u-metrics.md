@@ -22,3 +22,13 @@ Measured by `measure.sh` in this folder (`sh measure.sh <label>`). Lighthouse JS
 | 09:35 | 0c283ee (clean detached checkout, measure-wt) | redesign | see orchestrator row | see orchestrator row | see orchestrator row | a11y 100 / 92 / 97; contrast home pass, doctor FAIL (1 item: `div.cl-scroll > ul.cl-rows > li.cl-divider > span`), research FAIL (34 items, e.g. `span.geo-row-figs`, `span.geo-month`, `span.geo-faint`) | 0 (en 239, fi 239); JSX literal hint 4 lines, literal attributes 0 | 3.46 s / 4.22 s / 4.67 s LCP (all above 2.5 s); FCP 1.66 s / 2.64 s / 1.89 s | see orchestrator row | Failing a11y audits: doctor `aria-required-children` (weight 10; `ul.cl-rows` has `li.cl-divider` child without a listitem role), `color-contrast` (1 item, `li.cl-divider > span`), `label-content-name-mismatch` (weight 0; `button.uc-chip`); research `color-contrast` (34 items, research was a pass in wave2). Home has no failing audits. The EN toggle mismatch from wave2 is not listed on any page. U6 noisy: recorded only. |
 
 The first run at 01:12 (ec23f01 plus other agents' uncommitted edits) gave identical U4 to U6 numbers; it is replaced by the clean row above.
+
+Performance (research page, 1440x900, headless Chrome, scratchpad perf.mjs; load = first 9 s)
+
+| Measure | Before | After |
+|---|---|---|
+| Live streams opened by the app (EventSource, one open) | 2 | 1 |
+| Document scrollHeight / innerHeight at 1440x900 | 1219 / 900 | 900 / 900 (also 1280x800, 1920x1080, 1100 wide) |
+| Relations requests on load | 15 incl. days=28 three times | 14, each window once, at most 3 in flight |
+| Long tasks (>50 ms): idle, 60 moves timeline, 60 on map, resize | 0 | 0 to 1 (noise) |
+| Main-thread task time, 60 moves over timeline | 156 ms | 96 to 248 ms (run-to-run noise) |

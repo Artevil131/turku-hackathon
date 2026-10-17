@@ -2,7 +2,7 @@ import type { AeiClient, ClockCommand, ClockState } from "@aei/contract";
 import { type Locale, t } from "@aei/i18n";
 import { type KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { useAlertsSinceStart } from "../alertsSince.ts";
+import { type LiveAlerts, useAlertsSinceStart } from "../alertsSince.ts";
 import type { Connection } from "../live.ts";
 import { compactDate, dayNumber, isoFromDay } from "./hero/geometry.ts";
 import { useWeekly } from "./hero/useWeekly.ts";
@@ -19,6 +19,8 @@ interface TimelineProps {
   reducedMotion: boolean;
   /** The API client, for the alert history; the band shows no marks without it. */
   client?: AeiClient;
+  /** The app's live alert list; the history appends from it instead of opening its own stream. */
+  liveAlerts: LiveAlerts;
 }
 
 const clampDate = (iso: string, start: string, end: string) => (iso < start ? start : iso > end ? end : iso);
@@ -87,7 +89,7 @@ const Info = () => (
   </svg>
 );
 
-export function Timeline({ locale, clock, connection, lastArrivals, command, reducedMotion, client }: TimelineProps) {
+export function Timeline({ locale, clock, connection, lastArrivals, command, reducedMotion, client, liveAlerts }: TimelineProps) {
   const phone = useMediaQuery("(max-width: 760px)");
   const rootRef = useRef<HTMLDivElement>(null);
   const [seekingTo, setSeekingTo] = useState<string | null>(null);
@@ -100,7 +102,7 @@ export function Timeline({ locale, clock, connection, lastArrivals, command, red
   const end = clock?.end ?? "";
   const atEnd = clock ? clock.asOf >= clock.end : false;
   const shown = seekingTo ?? clock?.asOf ?? null;
-  const alerts = useAlertsSinceStart(client, clock?.start, clock?.asOf);
+  const alerts = useAlertsSinceStart(client, clock?.start, clock?.asOf, liveAlerts);
   const weekly = useWeekly(client, clock?.start, clock?.asOf);
 
   // A new clock state (or reset) from the server ends "seeking".

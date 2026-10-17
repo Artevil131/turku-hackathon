@@ -68,6 +68,7 @@ export function IsolateList({
   retry,
   window: win,
   dataNote,
+  limit,
 }: {
   locale: Locale;
   status: "loading" | "error" | "ready" | "data";
@@ -75,6 +76,8 @@ export function IsolateList({
   retry: () => void;
   window: { from: string; to: string };
   dataNote: string;
+  /** Show only the first n rows; the count line still says how many there are. */
+  limit?: number;
 }) {
   if (status === "data") return <p className="feed-note">{dataNote}</p>;
   if (status === "loading")
@@ -103,7 +106,7 @@ export function IsolateList({
         })}
       </p>
       <ul className="feed-isolates">
-        {matched.map((r) => {
+        {(limit === undefined ? matched : matched.slice(0, limit)).map((r) => {
           const day = stayDay(r);
           return (
             <li key={r.isolateId}>

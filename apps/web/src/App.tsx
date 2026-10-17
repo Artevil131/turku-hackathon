@@ -1,7 +1,7 @@
 import type { Flow } from "@aei/contract";
 import type { WardCode } from "@aei/domain";
 import { formatDate, type Locale, t } from "@aei/i18n";
-import { lazy, Suspense, useCallback, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { DoctorPage } from "./components/doctor/DoctorPage.tsx";
 import { Home, type Role } from "./components/Home.tsx";
 import { Timeline } from "./components/Timeline.tsx";
@@ -69,6 +69,10 @@ export function App() {
   });
   const live = useLive();
   const reducedMotion = usePrefersReducedMotion();
+  const liveAlerts = useMemo(
+    () => ({ alerts: live.alerts, loaded: live.alertsLoaded, to: live.alertsTo }),
+    [live.alerts, live.alertsLoaded, live.alertsTo],
+  );
 
   useEffect(() => {
     document.documentElement.dataset.theme = THEME;
@@ -131,6 +135,7 @@ export function App() {
         />
         <Timeline
           client={live.client}
+          liveAlerts={liveAlerts}
           locale={locale}
           clock={live.clock}
           connection={live.connection}

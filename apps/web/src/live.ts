@@ -65,6 +65,8 @@ export function useLive(baseUrl = API_BASE_URL) {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   // False until the alerts of the current clock date have been read, so "no alerts" and "not loaded" differ.
   const [alertsLoaded, setAlertsLoaded] = useState(false);
+  // The newest date an `alerts` stream event covered; the timeline's history reads again only when the date outruns it.
+  const [alertsTo, setAlertsTo] = useState<string>("");
   const [relations, setRelations] = useState<RelationsResponse | null>(null);
   const [lastArrivals, setLastArrivals] = useState<{ to: string; count: number } | null>(null);
   // Bumped to run the whole connection again (the browser came back online).
@@ -113,6 +115,7 @@ export function useLive(baseUrl = API_BASE_URL) {
     function loadBacklog(asOf: string) {
       const generation = ++backlogGeneration.current;
       setAlerts([]);
+      setAlertsTo("");
       setAlertsLoaded(false);
       void retrying(
         () => client.isolates({ from: shift(asOf, -BACKLOG_DAYS) }),
@@ -150,6 +153,7 @@ export function useLive(baseUrl = API_BASE_URL) {
             if (fresh.length) setFindings((list) => [...fresh, ...list].slice(0, MAX_FINDINGS));
           }
           if (event.type === "alerts") {
+            setAlertsTo(event.to);
             const cutoff = shift(event.to, 1 - BACKLOG_DAYS);
             setAlerts((list) => [...event.alerts, ...list.filter((a) => a.date >= cutoff)]);
           }
@@ -264,6 +268,7 @@ export function useLive(baseUrl = API_BASE_URL) {
     records,
     alerts,
     alertsLoaded,
+    alertsTo,
     relations,
     lastArrivals,
     lastGoodAsOf,

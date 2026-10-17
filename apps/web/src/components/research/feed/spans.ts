@@ -1,6 +1,6 @@
 import type { AeiClient, Flow, RelationsResponse, TrailLink } from "@aei/contract";
 import type { Phenotype, WardCode } from "@aei/domain";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { daysBetween, type Incident, windowOf } from "./model.ts";
 
 // The units an incident spans (Artem's correction 1): where it was raised,
@@ -90,39 +90,34 @@ export function daysFor(inc: Incident, asOf: string): number {
  */
 export function useRelations(client: AeiClient, asOf: string | null, incidents: readonly Incident[]) {
   const [cache, setCache] = useState<Map<number, RelationsResponse>>(new Map());
-  const cacheAt = useRef<string | null>(null);
-  const days = useMemo(() => (asOf ? [...new Set(incidents.filter((i) => i.ward).map((i) => daysFor(i, asOf)))] : []), [incidents, asOf]);
+  // What is cached or already asked for under the current date, so a changed list never repeats a request.
+  const asked = useRef<{ at: string | null; days: Set<number> }>({ at: null, days: new Set() });
+  const days = useMemo(
+    () => (asOf ? [...new Set(incidents.filter((i) => i.ward).map((i) => daysFor(i, asOf)))].sort((a, b) => a - b) : []),
+    [incidents, asOf],
+  );
   const key = days.join(",");
   // biome-ignore lint/correctness/useExhaustiveDependencies: `key` stands for `days`.
   useEffect(() => {
     if (!asOf) return;
-    let stale = false;
-    if (cacheAt.current !== asOf) {
-      cacheAt.current = asOf;
+    if (asked.current.at !== asOf) {
+      asked.current = { at: asOf, days: new Set() };
       setCache(new Map());
     }
-    (async () => {
-      for (let i = 0; i < days.length && !stale; i += 4) {
-        const batch = days.slice(i, i + 4);
-        const got = await Promise.all(
-          batch.map((d) =>
-            client.relations({ days: d }).then(
-              (r) => [d, r] as const,
-              () => null,
-            ),
-          ),
-        );
-        if (stale) return;
-        setCache((c) => {
-          const next = new Map(c);
-          for (const g of got) if (g) next.set(g[0], g[1]);
-          return next;
-        });
+    const mine = asked.current;
+    const todo = days.filter((d) => !mine.days.has(d));
+    for (const d of todo) mine.days.add(d);
+    // At most three requests at a time; each result lands as it arrives.
+    let next = 0;
+    const worker = async () => {
+      while (next < todo.length && asked.current === mine) {
+        const d = todo[next++] as number;
+        const r = await client.relations({ days: d }).catch(() => null);
+        if (!r) mine.days.delete(d);
+        else if (asked.current === mine) setCache((c) => new Map(c).set(d, r));
       }
-    })();
-    return () => {
-      stale = true;
     };
+    for (let w = 0; w < 3; w++) void worker();
   }, [client, asOf, key]);
-  return (inc: Incident): RelationsResponse | null => (asOf ? (cache.get(daysFor(inc, asOf)) ?? null) : null);
+  return useCallback((inc: Incident): RelationsResponse | null => (asOf ? (cache.get(daysFor(inc, asOf)) ?? null) : null), [asOf, cache]);
 }

@@ -197,7 +197,7 @@ button {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr);
   gap: var(--gap);
   height: 100%;
   padding-block: var(--gap);
