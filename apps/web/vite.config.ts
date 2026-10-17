@@ -5,6 +5,16 @@ import { defineConfig } from "vite";
 // so the browser sees one origin. AEI_API_URL points it elsewhere.
 export default defineConfig({
   plugins: [react()],
+  build: {
+    rolldownOptions: {
+      output: {
+        // React changes only with an upgrade, so its own chunk stays cached while the app's code changes.
+        manualChunks(id) {
+          if (/[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/.test(id)) return "react";
+        },
+      },
+    },
+  },
   server: {
     port: 5173,
     proxy: {

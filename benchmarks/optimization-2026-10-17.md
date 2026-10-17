@@ -87,3 +87,42 @@ answer with `Cache-Control: no-store`, the only header added.
 
 `/api/weekly` and `/api/isolates` were not touched; their differences are run-to-run noise on this machine
 (the first request of a run is the slowest for every endpoint). Tests: `npx vitest run apps/api`, 17 of 17 passed.
+
+## Step 2: web code split (export gear and projects window on demand; React in its own chunk)
+
+Change: the export gear (`@aei/export`, which brings `docx` and `jszip`) is no longer imported by the research
+page's code. `ProjectControls` loads it with `import()` when an export is asked for, and its export menu and the
+projects window are `React.lazy` boundaries. `bundle.ts` imports `@aei/export` and `@aei/export/dom` on demand.
+`vite.config.ts` puts `react`, `react-dom` and `scheduler` into one `react` chunk (`manualChunks`, through
+`build.rolldownOptions`, since this is Vite 8).
+
+What was already lazy and is left as it was: the Method page, the Connect page, Settings and the pitch intro
+(`App.tsx`). Home and the doctor's list are in the main chunk, as before.
+
+### Web build, after step 2 (raw / gzip)
+
+| Chunk | Before | After |
+|---|---|---|
+| `ResearchBoard-*.js` | 662.91 kB / 195.98 kB | 101.74 kB / 32.05 kB |
+| `index-*.js` | 365.21 kB / 112.51 kB | 154.47 kB / 46.96 kB |
+| `jsx-runtime-*.js` (React, before) / `react-*.js` (after) | 172.35 kB / 56.31 kB | 218.76 kB / 68.27 kB |
+| `src-*.js` (shared app code, after only) | — | 163.16 kB / 52.67 kB |
+| `src-*.js` (export gear, lazy, after only) | — | 555.41 kB / 162.33 kB |
+| `ExportMenu-*.js` / `ProjectsPanel-*.js` (lazy, after only) | — | 1.70 kB / 4.37 kB |
+
+The lazy export chunk is above Vite's 500 kB warning limit; it loads only when an export is asked for.
+
+### JavaScript on the first visit to `#research` (decoded bytes, measured in Chrome from the built app)
+
+| Build | Files | Bytes | Gzip (build output) |
+|---|---|---|---|
+| Before (926376e) | `index` 365 212, `jsx-runtime` 172 354, `math` 11 382, `ResearchBoard` 662 917, `surface` 5 273 | 1 217 138 | 371.2 kB |
+| After step 2 | `rolldown-runtime` 989, `index` 154 472, `react` 218 766, `src` (shared) 163 160, `math` 11 412, `ResearchBoard` 101 745, `surface` 5 273 | 655 817 | 206.9 kB |
+
+First visit to `#home` before: `index` 365 212 and `jsx-runtime` 172 354, 537 566 bytes in total (the list in the
+browser had only these two files). The after-step-2 home figure is in the table at the end.
+
+Smoke: the full smoke passes (`apps/web/scripts/smoke.mjs` against the dev server, 23 of 23, including the
+projects interaction that downloads each export format). The per-route wall times below are dev-server runs
+with `--interactions none`; they measure the harness and Chrome start, not the bundle, because the dev server
+does not bundle.
