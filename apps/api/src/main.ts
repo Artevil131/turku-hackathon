@@ -31,7 +31,7 @@ import {
   WARDS,
   type WardCode,
 } from "@aei/domain";
-import { inferredResistantFrom } from "@aei/eucast";
+import { defeatedBy } from "@aei/eucast";
 import { antibioticName, phenotypeName, specimenName, wardName } from "@aei/i18n";
 import { asResult, type CodeMaps, DEFAULT_CODE_MAPS, detectFormat, extendCodeMaps, ingest, mergeResults } from "@aei/ingest";
 import { checkRows, type Finding, summarize } from "@aei/quality";
@@ -361,7 +361,7 @@ export const server = createServer(async (req, res) => {
       // Only released records, so nothing after the replay date leaks in (D-050).
       const findings = patientFindings(state.released.upTo(asOf), id, asOf);
       const affects: Partial<Record<Phenotype, AntibioticCode[]>> = {};
-      for (const f of findings) affects[f.phenotype] ??= inferredResistantFrom(f.phenotype);
+      for (const f of findings) affects[f.phenotype] ??= defeatedBy(f.phenotype);
       return send(res, 200, { asOf, patientId: id, findings, affects } satisfies PatientFindingsResponse);
     }
     if (url.pathname === ROUTES.ingest && req.method === "POST") {

@@ -83,7 +83,7 @@ describe("patient findings route (D-050)", () => {
     ]);
     expect(body.findings[2]).toEqual({ phenotype: "esbl", date: "2025-03-01", ward: "URO", organism: "Escherichia coli", isolateId: "i1" });
     // EUCAST infers nothing from ESBL or CPE in this dataset's rules; only the phenotypes found are keyed.
-    expect(body.affects).toEqual({ esbl: [], cpe: [] });
+    expect(body.affects).toEqual({ esbl: ["AMP", "CXM", "CRO", "CAZ"], cpe: ["AMP", "TZP", "CXM", "CRO", "CAZ", "MEM"] }); // D-052
     // p2's CPE isolate of 2025-06-01 lies after the clock: an empty list, not 404.
     const p2 = await fetch(`${base}/api/patient/findings?id=p2`);
     expect(p2.status).toBe(200);

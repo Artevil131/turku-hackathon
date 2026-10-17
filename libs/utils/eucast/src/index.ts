@@ -142,3 +142,24 @@ export function inferredResistantFrom(phenotype: Phenotype): AntibioticCode[] {
     return e.basis === "inferred" && e.result === "R";
   });
 }
+
+/**
+ * Antibiotics a phenotype defeats, for annotating the doctor's list (D-050,
+ * D-052): what `effectiveResult` infers, plus EUCAST's expected resistant
+ * phenotypes the rules do not model. ESBL defeats aminopenicillins and the
+ * cephalosporins (mecillinam keeps activity against many ESBL E. coli, which
+ * is why the Varha guide names pivmecillinam for ESBL cystitis); VRE defeats
+ * vancomycin; CPE defeats the beta-lactams and the carbapenem.
+ */
+export const PHENOTYPE_DEFEATS: Record<Phenotype, readonly AntibioticCode[]> = {
+  esbl: ["AMP", "CXM", "CRO", "CAZ"],
+  mrsa: [],
+  vre: ["VAN"],
+  cpe: ["AMP", "TZP", "CXM", "CRO", "CAZ", "MEM"],
+};
+
+/** `inferredResistantFrom` and `PHENOTYPE_DEFEATS` together, in the dataset's antibiotic order. */
+export function defeatedBy(phenotype: Phenotype): AntibioticCode[] {
+  const set = new Set<AntibioticCode>([...inferredResistantFrom(phenotype), ...PHENOTYPE_DEFEATS[phenotype]]);
+  return ANTIBIOTICS.map((a) => a.code).filter((code) => set.has(code));
+}
