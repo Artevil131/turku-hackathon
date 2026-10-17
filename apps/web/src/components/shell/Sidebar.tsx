@@ -267,7 +267,6 @@ export function Sidebar({
               {active?.project ? t(locale, "shellThisProject") : t(locale, "shellThisView")}
             </h2>
             <div ref={setActionsSlot} className="sb-slot" />
-            <div ref={setWindowsSlot} className="sb-slot" />
           </section>
 
           <section className="sb-section" aria-label={t(locale, "shellData")}>
@@ -288,6 +287,8 @@ export function Sidebar({
         </div>
 
         <div className="sb-foot">
+          {/* The open project puts its Windows menu here, in the bottom left corner. */}
+          <div ref={setWindowsSlot} className="sb-slot" />
           {rail ? null : <SitePicker locale={locale} compact />}
           <button type="button" className="sb-item" data-search onClick={openSearch} title={`${t(locale, "shellSearch")} (/ · Ctrl+K)`}>
             <span className="sb-icon">

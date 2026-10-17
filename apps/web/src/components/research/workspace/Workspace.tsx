@@ -14,12 +14,14 @@ import {
 } from "react";
 import { InSlot, SlotsContext } from "../../../shell/context.ts";
 import { hashParams } from "../../../url.ts";
+import { Menu, MenuItem, MenuLabel, MenuSeparator, useCloseMenu } from "../../shell/Menu.tsx";
 import { chartTitle } from "../charts/model.ts";
 import type { ChartSpec } from "../charts/spec.ts";
-import { Menu, MenuCheck, MenuItem, MenuLabel, MenuSeparator, useCloseMenu } from "../../shell/Menu.tsx";
 import { SidebarIcon } from "../projects/ProjectActions.tsx";
 import {
   addChart,
+  addWindow,
+  allIds,
   boardRows,
   CHART_MIN_SIZE,
   COLS,
@@ -30,6 +32,8 @@ import {
   fitLayout,
   focusLayout,
   isChartId,
+  isCopyId,
+  kindOf,
   type Layout,
   loadFocus,
   loadLayout,
@@ -42,6 +46,7 @@ import {
   ROW_PX,
   raise,
   removeChart,
+  removeCopy,
   saveFocus,
   saveLayout,
   serializeLayout,
@@ -93,7 +98,18 @@ export interface ChartRequest {
 }
 
 /** The stacked order under 1100 px: the list first, the map last (as before). */
-const STACK_ORDER: readonly WinId[] = ["signals", "notebook", "math", "assistant", "map", "graph", "grid", "reproduce", "coverage", "timeline"];
+const STACK_ORDER: readonly WinId[] = [
+  "signals",
+  "notebook",
+  "math",
+  "assistant",
+  "map",
+  "graph",
+  "grid",
+  "reproduce",
+  "coverage",
+  "timeline",
+];
 
 const RAIL_KEY = "aei.research.rail";
 /** Whether the tool rail is shown: open unless the researcher closed it (kept beside the layout). */
@@ -322,7 +338,9 @@ export function Workspace({
   // Focus mode: remembered apart from the layout, so it survives a reload but never rewrites the user's grid.
   const titleOf = (id: string): string => {
     const c = layout.charts[id] ?? base.charts[id];
-    return c ? chartTitle(locale, c, null) : t(locale, TITLE_KEY[id as WinId]);
+    if (c) return chartTitle(locale, c, null);
+    if (isCopyId(id)) return `${t(locale, TITLE_KEY[kindOf(base, id) ?? "signals"])} ${id.split(":")[2] ?? ""}`.trim();
+    return t(locale, TITLE_KEY[id as WinId]);
   };
   const setFocusTo = (id: string | null) => {
     setFocus(id);
@@ -392,6 +410,8 @@ export function Workspace({
     if (focus === id) setFocusTo(null);
     // A chart is not kept in the tray: closing it removes it.
     if (isChartId(id)) return void update((l) => removeChart(l, id));
+    // A copy of a kind is not kept in the tray either.
+    if (isCopyId(id)) return void update((l) => removeCopy(l, id));
     update((l) => patchWin(l, id, { open: false }));
     onClosed?.(id as WinId);
   };
@@ -403,6 +423,71 @@ export function Workspace({
     onOpened?.(id);
   };
   const toggle = (id: WinId) => (base.wins[id].open ? close(id) : open(id));
+  // A new window of any kind, as often as the grid allows: where the researcher asked, else under the others.
+  const add = (kind: WinId, at?: Partial<Rect>) => {
+    const added = addWindow(base, kind, at);
+    commit(added.layout, added.id);
+    focusAfter.current = `ws-win-${added.id}`;
+    if (focus) setFocusTo(added.id);
+    setStatus(t(locale, "wsOpenedStatus", { title: t(locale, TITLE_KEY[kind]) }));
+    onOpened?.(kind);
+  };
+  const countOf = (kind: WinId) => allIds(base).filter((id) => kindOf(base, id) === kind && winOf(base, id).open).length;
+  // The picker (a click on empty board, or the + on a frame's empty side) and the + hint near a frame's edge.
+  const [picker, setPicker] = useState<{ x: number; y: number; at: Partial<Rect> } | null>(null);
+  const [hint, setHint] = useState<{ x: number; y: number; at: Rect; side: string } | null>(null);
+  const free = (r: Rect) =>
+    r.x >= 0 &&
+    r.x + r.w <= COLS &&
+    r.y >= 0 &&
+    !allIds(base).some((id) => {
+      const o = winOf(base, id);
+      return o.open && o.x < r.x + r.w && r.x < o.x + o.w && o.y < r.y + r.h && r.y < o.y + o.h;
+    });
+  const cellAt = (e: { clientX: number; clientY: number }) => {
+    const box = areaRef.current?.getBoundingClientRect();
+    return box ? { px: e.clientX - box.left, py: e.clientY - box.top } : null;
+  };
+  const findHint = (px: number, py: number) => {
+    const NEAR = 26;
+    for (const id of allIds(base)) {
+      const r = winOf(base, id);
+      if (!r.open) continue;
+      const right = (r.x + r.w) * colW;
+      const left = r.x * colW;
+      const top = r.y * ROW_PX;
+      const bottom = (r.y + r.h) * ROW_PX;
+      const within = py >= top && py <= bottom;
+      if (within && Math.abs(px - right) <= NEAR)
+        for (const w of [4, 3]) {
+          const at = { x: r.x + r.w, y: r.y, w, h: r.h };
+          if (free(at)) return { x: right, y: (top + bottom) / 2, at, side: "right" };
+        }
+      if (within && Math.abs(px - left) <= NEAR)
+        for (const w of [4, 3]) {
+          const at = { x: r.x - w, y: r.y, w, h: r.h };
+          if (free(at)) return { x: left, y: (top + bottom) / 2, at, side: "left" };
+        }
+      if (px >= left && px <= right && Math.abs(py - bottom) <= NEAR) {
+        const at = { x: r.x, y: r.y + r.h, w: r.w, h: 10 };
+        if (free(at)) return { x: (left + right) / 2, y: bottom, at, side: "bottom" };
+      }
+    }
+    return null;
+  };
+  const onAreaMove = (e: PointerEvent<HTMLDivElement>) => {
+    if (!wide || focused || dragging || picker) return;
+    const c = cellAt(e);
+    const next = c ? findHint(c.px, c.py) : null;
+    setHint((h) => (h?.x === next?.x && h?.y === next?.y && h?.side === next?.side ? h : next));
+  };
+  const onAreaClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target !== e.currentTarget || !wide || focused) return;
+    const c = cellAt(e);
+    if (!c) return;
+    const x = Math.min(COLS - 3, Math.max(0, Math.floor(c.px / colW)));
+    setPicker({ x: e.clientX, y: e.clientY, at: { x, y: Math.max(0, Math.floor(c.py / ROW_PX)) } });
+  };
   // "Add as chart" and the tray form: a new window, brought forward (and focused when the board is in focus mode).
   const lastChart = useRef(chartRequest?.key ?? null);
   useEffect(() => {
@@ -458,7 +543,7 @@ export function Workspace({
       <span className="ws-layouts-label">{t(locale, "wsFocusOn")}</span>
       <strong className="ws-focusbar-current">{titleOf(focused)}</strong>
       <span className="ws-focusbar-rail">
-        {[...WIN_IDS, ...Object.keys(base.charts)]
+        {allIds(base)
           .filter((id) => id !== focused && winOf(base, id).open)
           .map((id) => (
             <button type="button" key={id} className="ws-focusbar-win" data-focus-win={id} onClick={() => setFocusTo(id)}>
@@ -537,7 +622,7 @@ export function Workspace({
       d.el?.style.setProperty("--ty", `${py}px`);
       next = { ...d.rect, x: Math.round(px / d.colW), y: Math.round(py / ROW_PX) };
     } else {
-      const min = isChartId(d.id) ? CHART_MIN : MIN_SIZE[d.id as WinId];
+      const min = isChartId(d.id) ? CHART_MIN : MIN_SIZE[(isCopyId(d.id) ? d.id.split(":")[1] : d.id) as WinId];
       const pw = Math.min(Math.max(min.w * d.colW, w0 + (d.kind === "sizeY" ? 0 : dx)), d.areaW - left0);
       const ph = Math.max(min.h * ROW_PX, h0 + (d.kind === "sizeX" ? 0 : dy));
       d.el?.style.setProperty("--tw", `${pw}px`);
@@ -585,12 +670,13 @@ export function Workspace({
 
   // A fixed DOM order; the stacking comes from `order` through z-index (see the note at the top).
   const chartIds = Object.keys(layout.charts);
-  const ids: readonly string[] = wide ? [...WIN_IDS, ...chartIds] : [...STACK_ORDER, ...chartIds];
+  const copyIds = Object.keys(layout.copies);
+  const ids: readonly string[] = wide ? [...WIN_IDS, ...copyIds, ...chartIds] : [...STACK_ORDER, ...copyIds, ...chartIds];
   // With the app's sidebar mounted, the windows menu lives there; without it, the tray stays on the board.
   const inSidebar = useContext(SlotsContext).windows !== null;
   const tray = <Tray locale={locale} open={(id) => base.wins[id].open} onToggle={toggle} onReset={reset} chartMenu={chartMenu} />;
   const roleOf = (id: string): "primary" | "answer" | "quiet" | undefined =>
-    primary === null ? undefined : id === primary ? "primary" : answers.includes(id as WinId) ? "answer" : "quiet";
+    primary === null ? undefined : id === primary ? "primary" : answers.includes((kindOf(base, id) ?? id) as WinId) ? "answer" : "quiet";
   const place = (r: Rect): CSSProperties => ({
     transform: `translate3d(${r.x * colW}px,${r.y * ROW_PX}px,0)`,
     width: r.w * colW,
@@ -602,8 +688,8 @@ export function Workspace({
       <InSlot name="windows">
         <WindowsMenu
           locale={locale}
-          open={(id) => base.wins[id].open}
-          onToggle={toggle}
+          count={countOf}
+          onAdd={(kind) => add(kind)}
           onPreset={applyPreset}
           onReset={reset}
           presets={PRESETS}
@@ -634,19 +720,42 @@ export function Workspace({
           {rail}
         </div>
       ) : null}
-      {/* A double-click on the empty board (not on a window) shows or hides the tool rail. */}
-      {/* biome-ignore lint/a11y/noStaticElementInteractions: a pointer shortcut; the keyboard has T and the toolbar button. */}
+      {/* A click on the empty board offers a new window there; the keyboard has the Windows menu. */}
+      {/* biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: a pointer shortcut; the keyboard has the Windows menu. */}
       <div
         className="ws-area"
         ref={areaRef}
-        style={wide ? { height: boardRows(layout) * ROW_PX } : undefined}
-        onDoubleClick={rail ? (e) => e.target === e.currentTarget && toggleRail() : undefined}
+        // The board is at least as tall as the viewport, so there is always empty board to click.
+        style={wide ? { height: Math.max(boardRows(layout), viewRows) * ROW_PX } : undefined}
+        onClick={onAreaClick}
+        onPointerMove={onAreaMove}
+        onPointerLeave={() => setHint(null)}
       >
+        {wide && hint && !dragging && !picker ? (
+          <button
+            type="button"
+            className="ws-plus"
+            data-side={hint.side}
+            style={{ left: hint.x, top: hint.y }}
+            aria-label={t(locale, "wsEmptyAdd")}
+            title={t(locale, "wsEmptyAdd")}
+            onClick={(e) => {
+              const b = e.currentTarget.getBoundingClientRect();
+              setPicker({ x: b.right + 6, y: b.top, at: hint.at });
+              setHint(null);
+            }}
+          >
+            <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false">
+              <path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+          </button>
+        ) : null}
         {wide && dragging ? <div className="ws-ghost" aria-hidden="true" style={place(winOf(layout, dragging))} /> : null}
         {ids.map((id) => {
           const w = winOf(layout, id);
           if (!w.open) return null;
           const chart = layout.charts[id];
+          const kind = kindOf(layout, id);
           const title = titleOf(id);
           const z = layout.order.indexOf(id);
           const isFocus = focused === id;
@@ -682,8 +791,8 @@ export function Workspace({
               onFocusCapture={wide ? () => focusWin(id) : undefined}
             >
               <div className="ws-frame">
-                {lead?.[id as WinId] ? <p className="ws-lead">{lead[id as WinId]}</p> : null}
-                <div className="ws-body">{chart ? chartContent?.(id, chart) : content[id as WinId]}</div>
+                {kind && lead?.[kind] ? <p className="ws-lead">{lead[kind]}</p> : null}
+                <div className="ws-body">{chart ? chartContent?.(id, chart) : kind ? content[kind] : null}</div>
                 {wide && !focused ? (
                   <>
                     <div className="ws-grip" aria-hidden="true" {...drags("move")} />
@@ -751,6 +860,19 @@ export function Workspace({
         })}
       </div>
       {wide && !inSidebar ? <div className="ws-traydock">{tray}</div> : null}
+      {picker ? (
+        <WindowPicker
+          locale={locale}
+          x={picker.x}
+          y={picker.y}
+          count={countOf}
+          onPick={(kind) => {
+            add(kind, picker.at);
+            setPicker(null);
+          }}
+          onClose={() => setPicker(null)}
+        />
+      ) : null}
       {saveFailed ? <p role="alert">{t(locale, "layoutSaveError")}</p> : null}
       {overlay}
       <p className="visually-hidden" role="status" aria-live="polite">
@@ -847,11 +969,11 @@ function Tray({
   );
 }
 
-/** The sidebar's Windows menu: every window with a check, the layouts, a chart and the reset. */
+/** The Windows menu, at the foot of the sidebar: add a window of any kind (as many as wanted), the layouts, a chart, the reset. */
 function WindowsMenu({
   locale,
-  open,
-  onToggle,
+  count,
+  onAdd,
   onPreset,
   onReset,
   presets,
@@ -859,28 +981,21 @@ function WindowsMenu({
   chartMenu,
 }: {
   locale: Locale;
-  open: (id: WinId) => boolean;
-  onToggle: (id: WinId) => void;
+  count: (id: WinId) => number;
+  onAdd: (id: WinId) => void;
   onPreset: (p: Preset) => void;
   onReset: () => void;
   presets: readonly Preset[];
   presetKey: Record<Preset, string>;
   chartMenu?: (done: () => void) => ReactNode;
 }) {
-  const closed = WIN_IDS.filter((id) => !open(id));
   return (
-    <Menu
-      id="ws-tray-button"
-      label={t(locale, "wsToolbar")}
-      icon={<SidebarIcon name="windows" />}
-      badge={closed.length ? t(locale, "wsClosedCount", { n: closed.length }) : undefined}
-      wide
-    >
-      <MenuLabel>{t(locale, "wsOpenWindows")}</MenuLabel>
+    <Menu id="ws-tray-button" label={t(locale, "wsToolbar")} icon={<SidebarIcon name="windows" />} wide>
+      <MenuLabel>{t(locale, "wsEmptyAdd")}</MenuLabel>
       {WIN_IDS.map((id) => (
-        <MenuCheck key={id} checked={open(id)} data-toggle={id} onToggle={() => onToggle(id)}>
+        <MenuItem key={id} data-add={id} hint={count(id) ? String(count(id)) : undefined} onSelect={() => onAdd(id)}>
           {t(locale, TITLE_KEY[id])}
-        </MenuCheck>
+        </MenuItem>
       ))}
       <MenuSeparator />
       <MenuLabel>{t(locale, "wsPresets")}</MenuLabel>
@@ -896,6 +1011,54 @@ function WindowsMenu({
       </MenuItem>
       <p className="sb-pop-foot">{t(locale, "wsHint")}</p>
     </Menu>
+  );
+}
+
+/** What to put in an empty place: every kind of window, with how many are open already. */
+function WindowPicker({
+  locale,
+  x,
+  y,
+  count,
+  onPick,
+  onClose,
+}: {
+  locale: Locale;
+  x: number;
+  y: number;
+  count: (id: WinId) => number;
+  onPick: (id: WinId) => void;
+  onClose: () => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    ref.current?.querySelector<HTMLElement>("button")?.focus();
+    const key = (e: globalThis.KeyboardEvent) => e.key === "Escape" && onClose();
+    const pointer = (e: globalThis.PointerEvent) => {
+      if (!ref.current?.contains(e.target as Node)) onClose();
+    };
+    document.addEventListener("keydown", key);
+    document.addEventListener("pointerdown", pointer);
+    return () => {
+      document.removeEventListener("keydown", key);
+      document.removeEventListener("pointerdown", pointer);
+    };
+  }, [onClose]);
+  const left = Math.max(8, Math.min(x, innerWidth - 232));
+  const top = Math.max(8, Math.min(y, innerHeight - 450));
+  return (
+    <div className="ws-picker" ref={ref} role="menu" aria-label={t(locale, "wsEmptyAdd")} style={{ left, top }}>
+      <p className="ws-picker-head">{t(locale, "wsEmptyAdd")}</p>
+      {WIN_IDS.map((id) => (
+        <button type="button" role="menuitem" key={id} data-add={id} onClick={() => onPick(id)}>
+          <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
+            <path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+          </svg>
+          <span>{t(locale, TITLE_KEY[id])}</span>
+          {count(id) ? <span className="ws-picker-n">{count(id)}</span> : null}
+        </button>
+      ))}
+    </div>
   );
 }
 

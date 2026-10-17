@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { parseLayout, serializeLayout, WIN_IDS } from "./layout.ts";
 import { nextName, TEMPLATES, templateJson, templateLayout } from "./templates.ts";
 
-const openIds = (template: (typeof TEMPLATES)[number]) => WIN_IDS.filter((id) => templateLayout(template).wins[id].open);
+const openIds = (template: (typeof TEMPLATES)[number]) =>
+  WIN_IDS.filter((id) => id !== "timeline" && templateLayout(template).wins[id].open);
 
 describe("project template layouts", () => {
   it.each(TEMPLATES)("builds a parseable %s layout that keeps every window reachable", (template) => {
@@ -12,13 +13,19 @@ describe("project template layouts", () => {
     expect(Object.keys(layout.wins).sort()).toEqual([...WIN_IDS].sort());
   });
   it("opens the outbreak evidence together and keeps blank genuinely blank", () => {
-    expect(openIds("outbreak")).toEqual(["signals", "graph", "math", "timeline"]);
+    expect(openIds("outbreak")).toEqual(["signals", "graph", "math"]);
     expect(openIds("blank")).toEqual([]);
-    expect(openIds("regional")).toEqual(["map", "timeline"]);
+    expect(openIds("regional")).toEqual(["map"]);
   });
   it("opens coverage for the patient and antibiogram templates", () => {
     expect(openIds("patient")).toEqual(["coverage"]);
     expect(openIds("antibiogram")).toEqual(["grid", "coverage"]);
+  });
+  it("puts the timeline in every project, across the top", () => {
+    for (const template of TEMPLATES) {
+      const { timeline } = templateLayout(template).wins;
+      expect(timeline).toMatchObject({ open: true, x: 0, y: 0 });
+    }
   });
   it("numbers launched projects after the names already taken", () => {
     const format = (n: number) => `Outbreak investigation ${n}`;

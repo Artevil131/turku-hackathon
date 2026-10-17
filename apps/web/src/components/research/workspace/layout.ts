@@ -24,8 +24,12 @@ export interface WinState extends Rect {
 }
 /** A chart window: its place on the grid and what it shows (serialisable, so it survives a reload). */
 export type ChartWin = WinState & ChartSpec;
+/** A further window of a kind that already has one: windows are not single boxes, any kind can be added as often as the grid allows. */
+export type CopyWin = WinState & { kind: WinId };
 export interface Layout {
   wins: Record<WinId, WinState>;
+  /** The extra windows of a kind, by id (`win:<kind>:<n>`); closing one removes it. */
+  copies: Record<string, CopyWin>;
   /** The chart windows the researcher added, by id (`chart:<n>`); closing one removes it. */
   charts: Record<string, ChartWin>;
   /** Back to front: the last one is on top; chart ids included. */
@@ -35,9 +39,15 @@ export interface Layout {
 export const CHART_PREFIX = "chart:";
 export const isChartId = (id: string) => id.startsWith(CHART_PREFIX);
 /** Every window id, the fixed ones first, then the charts in the order they were added. */
-export const allIds = (l: Layout): string[] => [...WIN_IDS, ...Object.keys(l.charts)];
+export const COPY_PREFIX = "win:";
+export const isCopyId = (id: string) => id.startsWith(COPY_PREFIX);
+export const allIds = (l: Layout): string[] => [...WIN_IDS, ...Object.keys(l.copies), ...Object.keys(l.charts)];
+/** The kind of any window: a copy's kind, the id itself for the fixed windows, null for a chart. */
+export const kindOf = (l: Layout, id: string): WinId | null =>
+  isCopyId(id) ? (l.copies[id]?.kind ?? null) : isChartId(id) ? null : (id as WinId);
 /** The place of any window; a chart's record also carries its spec. */
-export const winOf = (l: Layout, id: string): WinState => (isChartId(id) ? (l.charts[id] as ChartWin) : l.wins[id as WinId]);
+export const winOf = (l: Layout, id: string): WinState =>
+  isChartId(id) ? (l.charts[id] as ChartWin) : isCopyId(id) ? (l.copies[id] as CopyWin) : l.wins[id as WinId];
 
 /** Smallest size of each window, in columns and rows. */
 export const MIN_SIZE: Record<WinId, { w: number; h: number }> = {
@@ -54,7 +64,8 @@ export const MIN_SIZE: Record<WinId, { w: number; h: number }> = {
 };
 
 export const CHART_MIN_SIZE = { w: 4, h: 10 };
-const minSize = (id: string) => (isChartId(id) ? CHART_MIN_SIZE : MIN_SIZE[id as WinId]);
+const minSize = (id: string) =>
+  isChartId(id) ? CHART_MIN_SIZE : isCopyId(id) ? MIN_SIZE[(id.split(":")[1] ?? "signals") as WinId] : MIN_SIZE[id as WinId];
 
 const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
 
@@ -73,6 +84,23 @@ export function clampRect(r: Rect, id: string, rows: number): Rect {
  * the unit grid and Reproduce wait there too. The notebook is open in the centre, beside Signals.
  */
 export function defaultLayout(): Layout {
+  return withTimeline(baseLayout());
+}
+
+/** Rows of the timeline window every project starts with, across the top of the board. */
+export const TIMELINE_ROWS = 11;
+
+/** Opens the timeline across the top of the board and moves every other open window down below it. */
+export function withTimeline(layout: Layout): Layout {
+  const wins = { ...layout.wins };
+  for (const id of WIN_IDS) if (id !== "timeline" && wins[id].open) wins[id] = { ...wins[id], y: wins[id].y + TIMELINE_ROWS };
+  const copies = Object.fromEntries(Object.entries(layout.copies).map(([id, c]) => [id, c.open ? { ...c, y: c.y + TIMELINE_ROWS } : c]));
+  wins.timeline = { x: 0, y: 0, w: COLS, h: TIMELINE_ROWS, open: true };
+  return { ...layout, wins, copies };
+}
+
+/** The arrangement without the timeline: the starting point of the default and the presets. */
+export function baseLayout(): Layout {
   const wins: Record<WinId, WinState> = {
     signals: { x: 0, y: 0, w: 4, h: 40, open: true },
     // The notebook in the centre, as tall as Signals: the page the researcher works on, visible from the start.
@@ -88,18 +116,23 @@ export function defaultLayout(): Layout {
     // The replay timeline: a window of the project, opened by the templates and from the Windows menu.
     timeline: { x: 0, y: 0, w: 12, h: 11, open: false },
   };
-  return { wins, charts: {}, order: ["signals", "map", "graph", "math", "assistant", "grid", "reproduce", "notebook", "coverage", "timeline"] };
+  return {
+    wins,
+    copies: {},
+    charts: {},
+    order: ["signals", "map", "graph", "math", "assistant", "grid", "reproduce", "notebook", "coverage", "timeline"],
+  };
 }
 
 export type Preset = "default" | "map" | "signals" | "units" | "analysis";
 
 /** Ready-made arrangements, one click each; the same grid as the default. */
 export function presetLayout(preset: Preset): Layout {
-  const d = defaultLayout();
+  const d = baseLayout();
   const w = (patch: Partial<Record<WinId, Partial<WinState>>>): Layout => {
     const wins = { ...d.wins };
     for (const id of WIN_IDS) if (patch[id]) wins[id] = { ...wins[id], ...patch[id] };
-    return { wins, charts: {}, order: d.order };
+    return withTimeline({ wins, copies: {}, charts: {}, order: d.order });
   };
   switch (preset) {
     case "map":
@@ -135,7 +168,7 @@ export function presetLayout(preset: Preset): Layout {
         assistant: { open: false },
       });
     default:
-      return d;
+      return withTimeline(d);
   }
 }
 
@@ -257,6 +290,7 @@ export function raise(layout: Layout, id: string): Layout {
 }
 
 function setWin(layout: Layout, id: string, w: WinState): Layout {
+  if (isCopyId(id)) return { ...layout, copies: { ...layout.copies, [id]: { ...(layout.copies[id] as CopyWin), ...w } } };
   return isChartId(id)
     ? { ...layout, charts: { ...layout.charts, [id]: { ...(layout.charts[id] as ChartWin), ...w } } }
     : { ...layout, wins: { ...layout.wins, [id]: w } };
@@ -275,6 +309,52 @@ export function addChart(layout: Layout, spec: ChartSpec): { layout: Layout; id:
   return { layout: raise({ ...layout, charts: { ...layout.charts, [id]: win }, order: [...layout.order, id] }, id), id };
 }
 
+/** A new window's size when the researcher does not draw one: columns and rows. */
+export const DEFAULT_SIZE: Record<WinId, { w: number; h: number }> = {
+  signals: { w: 4, h: 30 },
+  notebook: { w: 5, h: 30 },
+  map: { w: 4, h: 20 },
+  graph: { w: 4, h: 20 },
+  math: { w: 4, h: 16 },
+  assistant: { w: 4, h: 10 },
+  grid: { w: 6, h: 24 },
+  reproduce: { w: 5, h: 14 },
+  coverage: { w: 6, h: 24 },
+  timeline: { w: COLS, h: TIMELINE_ROWS },
+};
+
+/**
+ * Adds a window of `kind` at `at` (a free cell, or the default place). The first window of a kind is the fixed one,
+ * opened where asked; a kind that is already open gets a copy, so the same kind can sit on the board as often as wanted.
+ */
+export function addWindow(layout: Layout, kind: WinId, at?: Partial<Rect>): { layout: Layout; id: string } {
+  const size = DEFAULT_SIZE[kind];
+  const min = MIN_SIZE[kind];
+  const w = clamp(Math.round(at?.w ?? size.w), min.w, COLS);
+  const h = Math.max(min.h, Math.round(at?.h ?? size.h));
+  const rect = { x: clamp(Math.round(at?.x ?? 0), 0, COLS - w), y: Math.max(0, Math.round(at?.y ?? boardRows(layout))), w, h };
+  if (!layout.wins[kind].open) {
+    const next = patchWin(layout, kind, { ...rect, open: true });
+    return { layout: raise(next, kind), id: kind };
+  }
+  const n =
+    Math.max(
+      0,
+      ...Object.keys(layout.copies)
+        .filter((k) => k.startsWith(`${COPY_PREFIX}${kind}:`))
+        .map((k) => Number(k.split(":")[2]) || 0),
+    ) + 1;
+  const id = `${COPY_PREFIX}${kind}:${n}`;
+  const next: Layout = { ...layout, copies: { ...layout.copies, [id]: { ...rect, open: true, kind } }, order: [...layout.order, id] };
+  return { layout: raise(next, id), id };
+}
+
+/** Closing a copy removes it. */
+export function removeCopy(layout: Layout, id: string): Layout {
+  const { [id]: _gone, ...copies } = layout.copies;
+  return { ...layout, copies, order: layout.order.filter((x) => x !== id) };
+}
+
 /** Closing a chart removes it. */
 export function removeChart(layout: Layout, id: string): Layout {
   const { [id]: _gone, ...charts } = layout.charts;
@@ -283,7 +363,13 @@ export function removeChart(layout: Layout, id: string): Layout {
 
 /** The chart windows (and their stacking) of `from`, carried over onto another arrangement of the fixed windows. */
 export function withCharts(layout: Layout, from: Layout): Layout {
-  return { ...layout, charts: from.charts, order: [...layout.order.filter((id) => !isChartId(id)), ...from.order.filter(isChartId)] };
+  const mine = (id: string) => !isChartId(id) && !isCopyId(id);
+  return {
+    ...layout,
+    charts: from.charts,
+    copies: from.copies,
+    order: [...layout.order.filter(mine), ...from.order.filter((id) => !mine(id))],
+  };
 }
 
 const isInt = (n: unknown): n is number => typeof n === "number" && Number.isInteger(n);
@@ -296,6 +382,7 @@ export function parseLayout(raw: string | null): Layout | null {
       v?: number;
       wins?: Record<string, Partial<WinState>>;
       charts?: Record<string, Partial<WinState> & Record<string, unknown>>;
+      copies?: Record<string, Partial<WinState> & { kind?: unknown }>;
       order?: unknown;
     };
     // v3 (2026-10-17): the notebook took the centre column; earlier layouts (v1 card window, v2 notebook below the fold) start over.
@@ -316,9 +403,26 @@ export function parseLayout(raw: string | null): Layout | null {
         continue;
       charts[id] = { ...spec, x: c.x, y: c.y, w: c.w, h: c.h, open: c.open };
     }
-    const order = (v.order as unknown[]).filter((x): x is string => typeof x === "string" && (WIN_IDS.includes(x as WinId) || x in charts));
-    for (const id of [...WIN_IDS, ...Object.keys(charts)]) if (!order.includes(id)) order.push(id);
-    return compactLayout(fitLayout({ wins, charts, order: [...new Set(order)] }));
+    // Extra windows of a kind: a malformed one is dropped, the rest stays.
+    const copies: Record<string, CopyWin> = {};
+    for (const [id, c] of Object.entries(v.copies ?? {})) {
+      if (
+        !isCopyId(id) ||
+        !c ||
+        !isWinId(c.kind) ||
+        !isInt(c.x) ||
+        !isInt(c.y) ||
+        !isInt(c.w) ||
+        !isInt(c.h) ||
+        typeof c.open !== "boolean"
+      )
+        continue;
+      copies[id] = { kind: c.kind, x: c.x, y: c.y, w: c.w, h: c.h, open: c.open };
+    }
+    const known = (x: string) => WIN_IDS.includes(x as WinId) || x in charts || x in copies;
+    const order = (v.order as unknown[]).filter((x): x is string => typeof x === "string" && known(x));
+    for (const id of [...WIN_IDS, ...Object.keys(copies), ...Object.keys(charts)]) if (!order.includes(id)) order.push(id);
+    return compactLayout(fitLayout({ wins, copies, charts, order: [...new Set(order)] }));
   } catch {
     return null;
   }

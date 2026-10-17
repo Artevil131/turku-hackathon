@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { defaultSpec } from "../charts/spec.ts";
 import {
   addChart,
+  addWindow,
   CHART_MIN_SIZE,
   COLS,
   compactLayout,
@@ -13,6 +14,9 @@ import {
   patchWin,
   presetLayout,
   removeChart,
+  removeCopy,
+  serializeLayout,
+  TIMELINE_ROWS,
   WIN_IDS,
   withCharts,
 } from "./layout.ts";
@@ -34,14 +38,14 @@ describe("compactLayout", () => {
   });
   it("floats windows up into a gap", () => {
     const l = patchWin(patchWin(patchWin(defaultLayout(), "graph", { open: false }), "map", { open: false }), "math", { open: true });
-    expect(compactLayout(l).wins.math.y).toBe(0);
+    expect(compactLayout(l).wins.math.y).toBe(TIMELINE_ROWS);
   });
   it("opens with the Signals window large, the notebook wide beside it, and the card and the assistant in the tray", () => {
     const d = defaultLayout();
     expect(d.wins.signals.w).toBeGreaterThanOrEqual(4);
     expect(d.wins.math.open).toBe(false);
     expect(d.wins.assistant.open).toBe(false);
-    expect(WIN_IDS.filter((id) => d.wins[id].open)).toEqual(["signals", "map", "graph", "notebook"]);
+    expect(WIN_IDS.filter((id) => d.wins[id].open)).toEqual(["signals", "map", "graph", "notebook", "timeline"]);
     expect(d.wins.notebook.x).toBe(d.wins.signals.x + d.wins.signals.w);
     expect(d.wins.notebook.w).toBeGreaterThanOrEqual(5);
     noOverlap(d);
@@ -159,5 +163,28 @@ describe("neighbours take the empty columns", () => {
     const f = fillLayout(l);
     expect(f.wins.signals).toMatchObject({ x: 0, w: COLS });
     expect(f.wins.graph).toMatchObject({ x: 0, w: COLS });
+  });
+});
+
+describe("windows of the same kind", () => {
+  it("opens the first window of a kind in place and gives the next one a copy", () => {
+    const first = addWindow(defaultLayout(), "coverage", { x: 0, y: 20 });
+    expect(first.id).toBe("coverage");
+    expect(first.layout.wins.coverage).toMatchObject({ open: true, x: 0, y: 20 });
+    const second = addWindow(first.layout, "coverage", { x: 6, y: 20 });
+    expect(second.id).toBe("win:coverage:1");
+    expect(second.layout.copies[second.id]).toMatchObject({ kind: "coverage", open: true, x: 6 });
+    expect(addWindow(second.layout, "coverage").id).toBe("win:coverage:2");
+  });
+  it("keeps copies through a save, a reload and a layout change, and removes one on close", () => {
+    const { layout, id } = addWindow(addWindow(defaultLayout(), "map").layout, "map", { x: 4, y: 40 });
+    const again = parseLayout(serializeLayout(layout));
+    expect(again?.copies[id]).toMatchObject({ kind: "map", open: true });
+    expect(withCharts(presetLayout("signals"), layout).copies[id]).toBeDefined();
+    expect(removeCopy(layout, id).copies[id]).toBeUndefined();
+  });
+  it("starts every layout with the timeline across the top", () => {
+    for (const l of [defaultLayout(), presetLayout("map"), presetLayout("units"), presetLayout("analysis")])
+      expect(l.wins.timeline).toMatchObject({ open: true, x: 0, y: 0, w: COLS, h: TIMELINE_ROWS });
   });
 });

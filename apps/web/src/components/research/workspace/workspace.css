@@ -578,3 +578,71 @@
   border-color: var(--brand-accent, #635bf1);
   color: #fff;
 }
+
+/* A + on the empty side of a frame: it appears when the pointer is near the edge and the place beside it is free. */
+.ws-plus {
+  position: absolute;
+  z-index: 180;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin: -14px 0 0 -14px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--glass-1);
+  box-shadow: var(--pop-shadow);
+  color: var(--live);
+  cursor: pointer;
+}
+.ws-plus:hover,
+.ws-plus:focus-visible {
+  background: var(--live-soft);
+  border-color: var(--live);
+}
+
+/* What to add in an empty place: one row per window kind, with how many are open. */
+.ws-picker {
+  position: fixed;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  width: 224px;
+  max-height: calc(100vh - 16px);
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--glass-1);
+  box-shadow: var(--pop-shadow);
+}
+.ws-picker-head {
+  margin: 4px 8px 6px;
+  color: var(--ink-3);
+  font-size: var(--t-xs);
+}
+.ws-picker button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--t-s);
+  text-align: left;
+  cursor: pointer;
+}
+.ws-picker button:hover,
+.ws-picker button:focus-visible {
+  background: var(--live-soft);
+}
+.ws-picker-n {
+  margin-left: auto;
+  color: var(--ink-3);
+  font-size: var(--t-xs);
+}
