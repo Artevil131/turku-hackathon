@@ -22,6 +22,21 @@ server {
     proxy_read_timeout 120s;
   }
 
+  # Project contents are live; the rest of JupyterLite is static.
+  location /notebook/api/contents/projects/ {
+    proxy_pass http://${AEI_API_UPSTREAM}/api/lite/contents/projects/;
+    proxy_set_header Host $host;
+  }
+
+  location /notebook/files/projects/ {
+    proxy_pass http://${AEI_API_UPSTREAM}/api/lite/files/projects/;
+    proxy_set_header Host $host;
+  }
+
+  location /notebook/ {
+    try_files $uri $uri/ =404;
+  }
+
   # The language-model proxy, or a 404 when no model is set: written at start by 40-aei-llm.sh.
   include /etc/nginx/aei-llm.inc;
 

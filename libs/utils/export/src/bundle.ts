@@ -4,6 +4,7 @@ export interface ExportColumn {
   type?: "string" | "integer" | "number" | "date" | "datetime" | "boolean";
   description?: string;
   unit?: string;
+  role?: "result";
 }
 
 export interface ExportTable {
@@ -23,6 +24,10 @@ export interface ExportFigure {
 }
 
 export interface ExportNumber {
+  id?: string;
+  recipe?:
+    | { op: "count"; table: string; where?: Record<string, string> }
+    | { op: "distinct"; table: string; column: string; where?: Record<string, string> };
   label: string;
   value: string | number;
   method?: string;

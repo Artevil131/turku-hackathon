@@ -65,6 +65,110 @@ describe("research projects (D-057, D-058)", () => {
     scope: { units: [], organisms: [], phenotypes: [], kinds: [], board: "unit=URO&ph=ESBL" },
   };
 
+  it("serves JupyterLite project listings and reproducible files without reports or figures", async () => {
+    const base = await startApi();
+    const client = createAeiClient({ baseUrl: base });
+    const root = `${base}/api/lite/contents/projects/all.json`;
+    expect(await (await fetch(root)).json()).toMatchObject({
+      name: "projects",
+      path: "projects",
+      type: "directory",
+      format: "json",
+      content: [],
+    });
+    const { project } = await client.createProject({
+      ...input,
+      name: "Study ä",
+      mode: "frozen",
+      asOf: "2025-05-01",
+      scope: { ...input.scope, units: ["ICU"] },
+    });
+    const listing = await (await fetch(root)).json();
+    expect(listing.content).toEqual([
+      expect.objectContaining({
+        name: project.id,
+        path: `projects/${project.id}`,
+        type: "directory",
+        content: null,
+        format: null,
+        mimetype: null,
+        size: null,
+        writable: true,
+        created: project.createdAt,
+        last_modified: project.updatedAt,
+      }),
+    ]);
+    const contentsUrl = `${base}/api/lite/contents/projects/${project.id}/all.json`;
+    const contents = await (await fetch(contentsUrl)).json();
+    expect(contents).toMatchObject({ path: `projects/${project.id}`, name: project.id, type: "directory", format: "json" });
+    expect(contents.content.map((file: { name: string }) => file.name)).toEqual([
+      "datapackage.json",
+      "isolates.csv",
+      "alerts.csv",
+      "methods.json",
+      "README.md",
+      "analysis.py",
+      "analysis.R",
+      "reproduce.ipynb",
+      "reproduce-r.ipynb",
+    ]);
+    const fileBase = `${base}/api/lite/files/projects/${project.id}`;
+    const response = await fetch(`${fileBase}/datapackage.json`);
+    expect(response.headers.get("content-type")).toBe("application/json");
+    const body = await response.text();
+    const descriptor = JSON.parse(body);
+    expect(descriptor.aei).toMatchObject({ asOf: project.asOf, mode: "frozen", scope: project.scope, fingerprint: project.fingerprint });
+    expect(contents.content.find((file: { name: string }) => file.name === "datapackage.json")).toMatchObject({
+      type: "file",
+      format: null,
+      mimetype: "application/json",
+      size: Buffer.byteLength(body),
+      content: null,
+    });
+    const notebookResponse = await fetch(`${fileBase}/reproduce.ipynb`);
+    expect(notebookResponse.headers.get("content-type")).toBe("application/x-ipynb+json");
+    const notebook = await notebookResponse.json();
+    expect(notebook).toMatchObject({ nbformat: 4, metadata: { kernelspec: { language: "python" } } });
+    expect(notebook.cells.some((cell: { source: string }) => cell.source.includes("aei.reproduce(pkg)"))).toBe(true);
+    expect(contents.content.find((file: { name: string }) => file.name === "reproduce.ipynb")).toMatchObject({
+      type: "notebook",
+      mimetype: "application/x-ipynb+json",
+      size: expect.any(Number),
+    });
+    expect(await (await fetch(`${fileBase}/datapackage.json`)).text()).toBe(body); // same cached package
+    const numbers = await (await fetch(`${fileBase}/methods.json`)).json();
+    expect(numbers.find((number: { id: string }) => number.id === "isolates")).toMatchObject({
+      value: 2,
+      recipe: { op: "count", table: "isolates" },
+    });
+    const csv = await (await fetch(`${fileBase}/isolates.csv`)).text();
+    expect(csv).toContain("i0,c0,p0");
+    expect(csv).toContain("i2,c2,p1");
+    expect(csv).not.toContain("i1,c1,p1");
+    expect(csv).not.toContain("i3,c3,p2");
+    // Seeking back cannot expose rows later than the replay clock, even for a frozen project.
+    await client.command({ action: "seek", date: "2025-03-01" });
+    expect((await (await fetch(`${fileBase}/methods.json`)).json()).find((number: { id: string }) => number.id === "isolates").value).toBe(
+      1,
+    );
+    // Edits replace the cached package; unknown projects and non-package paths never resolve.
+    await client.updateProject(project.id, { ...input, name: "Changed", scope: { ...input.scope, units: ["URO"] } });
+    expect((await (await fetch(`${fileBase}/datapackage.json`)).json()).title).toBe("Changed");
+    for (const path of [
+      "/api/lite/contents/projects/missing/all.json",
+      "/api/lite/contents/projects/INVALID/all.json",
+      `/api/lite/contents/projects/${project.id}/extra/all.json`,
+      `/api/lite/files/projects/${project.id}/missing.csv`,
+      `/api/lite/files/projects/${project.id}/report.docx`,
+      `/api/lite/files/projects/${project.id}/figures/a.svg`,
+      `/api/lite/files/projects/${project.id}/%2e%2e%2fdatapackage.json`,
+      "/api/lite/files/projects/missing/datapackage.json",
+    ])
+      expect((await fetch(`${base}${path}`)).status).toBe(404);
+    await client.deleteProject(project.id);
+    expect((await fetch(contentsUrl)).status).toBe(404);
+  }, 15_000);
+
   it("creates, lists, reads, replaces and deletes through the typed client and persists across restart", async () => {
     vi.stubEnv("AEI_STATE_DIR", dir);
     const base = await startApi();
@@ -105,9 +209,14 @@ describe("research projects (D-057, D-058)", () => {
     expect(project.fingerprint?.rows).toBe(2);
     expect(await client.project(project.id)).toEqual({ project, drift: false });
     expect((await client.clock()).asOf).toBe("2025-06-01");
+    const methodsUrl = `${base}/api/lite/files/projects/${project.id}/methods.json`;
+    const exportedIsolates = async () =>
+      (await (await fetch(methodsUrl)).json()).find((number: { id: string }) => number.id === "isolates").value;
+    expect(await exportedIsolates()).toBe(2);
     const body =
       "patient_id,sex,birth_year,culture_id,sample_date,ward,specimen,organism,cpe,MEM\np9,F,1950,c9,2025-05-01,ICU,urine,Klebsiella pneumoniae,1,R\n";
     expect((await client.ingest(body, "text/csv")).status).toBe(200);
+    expect(await exportedIsolates()).toBe(3); // same clock and project version, corrected data invalidate the package
     expect((await client.project(project.id)).drift).toBe(true);
     // A description edit must not erase evidence that the original frozen rows changed.
     expect((await client.updateProject(project.id, { ...frozen, description: "Still frozen" })).project.fingerprint).toEqual(
@@ -154,6 +263,10 @@ describe("research projects (D-057, D-058)", () => {
     });
     expect(project.fingerprint?.rows).toBe((await client.isolates({ site: "sata" })).records.length);
     expect(project.fingerprint?.rows).toBe(1);
+    const exported = await (await fetch(`${base}/api/lite/files/projects/${project.id}/isolates.csv`)).text();
+    expect(exported).toContain("sata/ICU");
+    expect(exported).not.toContain("i0,c0,p0");
+    expect(exported).not.toContain("i2,c2,p1");
     expect((await client.project(project.id)).drift).toBe(false);
     for (const value of [
       { ...input, name: "" },

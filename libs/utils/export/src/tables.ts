@@ -28,6 +28,7 @@ export function isolateTable(records: IsolateRecord[], antibiotics: string[]): E
       ...antibiotics.map((key) => ({
         key,
         label: key,
+        role: "result" as const,
         description: `Susceptibility to ${key}: S = susceptible, R = resistant, blank = not tested.`,
       })),
     ],
