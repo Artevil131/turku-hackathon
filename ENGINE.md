@@ -7,7 +7,8 @@ including every mark on the timeline. Part C is for porting the backend
 into its own container. Part D keeps the proposals that do not run, with
 what the experiments measured. Formulas are in plain notation. Numbers are
 tagged measured (in the data) or computed (by a run), with the record they
-come from; experiments 0012 to 0022 are on branch `overnight/experiments`.
+come from; experiments 0012 to 0022 are in experiments/, with the
+overnight report in benchmarks/overnight-2026-10-17/.
 
 One sentence: the engine keeps one table of isolates as of a date, gives
 the doctor each antibiotic's share of covered first isolates over the last
@@ -20,11 +21,15 @@ researcher. Both read the same rows, released one day at a time.
 |---|---|---|---|---|---|
 | A1 table, first isolates, masks | yes | `@aei/counting`, `@aei/eucast` | all | D-023, D-033 | 0001, 0004 |
 | A2 doctor's coverage list | yes | `@aei/coverage` | `/api/coverage` | D-023, D-026 to D-028, D-033 | 0004, 0010; overnight C1–C8 |
-| A3 signals | yes | `@aei/detect`, `@aei/alerts` | `/api/alerts`, `/api/live` | D-014, D-020 to D-022, D-031, D-034, D-039 | 0002, 0007, 0009, 0011; overnight D1–D7 |
+| A3 signals | yes | `@aei/detect`, `@aei/alerts` | `/api/alerts`, `/api/live` | D-014, D-020 to D-022, D-031, D-034, D-042 | 0002, 0007, 0009, 0011; overnight D1–D7 |
 | A4 flows between units | yes | `@aei/relations` | `/api/relations` | D-009, D-011 to D-013 | 0019 |
 | A5 counties | yes (computed in Python, served as a file) | `aei.regional` | `/api/regional` | D-025, D-037 | 0008 |
-| B2 timeline weekly counts | yes, on branch `overnight/design` | `@aei/viz` `weeklySeries` | `/api/weekly` | D-039 | — |
-| D Beta-binomial, Gamma-Poisson, CUSUM, exposure, forecasts | no | — | — | D-038 accepted the Beta-binomial; the rest open | 0012 to 0022 |
+| A1 plausibility checks on lab rows | yes | `@aei/quality` | `/api/quality` | D-038 | — |
+| B web app reads every number from the server | yes | `libs/utils/contract` | all | D-039 | — |
+| B2 timeline, main's Timeline screen | yes | in the browser, `screens/Timeline/aggregate.ts` | `/api/isolates`, `/api/alerts` | — | — |
+| B2 timeline, the design band | on branch `overnight/design` | `@aei/viz` `weeklySeries` | `/api/weekly` | D-042 | — |
+| C backend container | yes | `deploy/container` | — | D-040 | — |
+| D Beta-binomial, Gamma-Poisson, CUSUM, exposure, forecasts | no | — | — | D-041 accepted the Beta-binomial; the rest open | 0012 to 0022 |
 
 Every gear the app runs has a Python twin in `libs/utils/py/aei` for
 analysis; parity tests require identical output (D-030, D-032).
@@ -60,6 +65,11 @@ analysis; parity tests require identical output (D-030, D-032).
   organisms and is left out "within spectrum"; inferred results (for
   example *S. aureus* β-lactams from cefoxitin) are used; untested
   isolates are left out; urine-only drugs are offered for urine only.
+- **Plausibility checks** (`@aei/quality`, D-038): fifteen checks report
+  rows that cannot be true (missing links, duplicates, impossible dates)
+  and rows to verify (S to an intrinsic resistance, a result without a
+  breakpoint, a phenotype on the wrong organism); they never change or drop
+  a row. The server runs them on every ingest and over all rows.
 
 ## A2. The doctor's coverage list (D-023, D-033)
 
@@ -99,7 +109,7 @@ interval leaves its pre-outbreak value after 47 days.
 
 ## A3. Signals for the researcher
 
-All detectors read raw counts, never the estimates (D-039). Each runs every
+All detectors read raw counts, never the estimates (D-042). Each runs every
 day over the history up to t.
 
 ```
@@ -138,7 +148,9 @@ than 28 days apart form one *episode*; each episode is one alert, dated by
 its first signal and carrying that signal's y, μ and p. Alerts are grouped
 into *incidents* (D-034): same unit, sharing an organism or phenotype (a
 phenotype implies its organisms; sampling alerts share one tag), within 28
-days of the incident's latest alert.
+days of the incident's latest alert. Severity by rule (D-039): high for CPE,
+MRSA or VRE new on an inpatient unit, and same-profile clusters; medium for
+surges, data gaps and trends; an incident takes its highest.
 
 **Kind** (the five of Part D9, by lookup): profile and phenotype excess
 are *cluster*, rising trend *trend*, sampling drop and empty run *data*,
@@ -199,14 +211,37 @@ four weeks differ from the year" is open (QUESTIONS B10, options with
 costs); so is the plain-language reliability label every number should
 carry (B11).
 
-## B2. The timeline (branch `overnight/design`)
+The web app draws every alert and the doctor's list from the server; no
+analysis code is meant to live in `apps/web` (D-039).
 
-The band above every screen: a weekly stream, one lane per unit, and the
+## B2. The timeline
+
+Two timelines exist. **On main**, the Timeline screen
+(`apps/web/src/screens/Timeline/`) reads released isolates (`/api/isolates`
+and the live stream) and the server's alerts, and counts in the browser
+(`aggregate.ts`):
+
+| Mark | What it is, exactly | Statistical? |
+|---|---|---|
+| Weekly total | Isolates sampled per ISO week, all units, up to t | No: raw counts |
+| Flagged share | Per week, the first isolates (patient × organism × specimen, within that week) carrying any resistance flag, over all first isolates of the week | No: a raw share, no interval |
+| Unit lane counts | Isolates per unit per week | No |
+| Lane heat | The week's isolates per released day ÷ the 90th percentile of the unit's daily rate over its earlier complete weeks, capped at 1 | No: a display scale, not a test |
+| Empty weeks | Complete weeks without a result since the unit's first | No (the empty-run rule, A3, is the test) |
+| Signal segments | Each incident from its first to its latest released alert (A3), clipped at t | Yes: A3's alerts, causal |
+
+Two of these are analysis in the browser, which D-039 meant to keep on the
+server: `aggregate.ts` re-implements the first-isolate rule per week
+instead of calling `@aei/counting`, and the heat's 90th-percentile scale is
+nowhere in DECISIONS.md. For the container port both would move to a server
+route (proposed, pending Artem).
+
+**On branch `overnight/design`** (not merged), the band above every screen: a weekly stream, one lane per unit, and the
 alerts as pills, on an axis that ends at the replay date.
 
 | Mark | What it is, exactly | Source | Statistical? |
 |---|---|---|---|
-| Stacked stream (ESBL, MRSA, VRE, CPE) | Per ISO week (Monday to Sunday) up to t: for each phenotype, the sum over units of the distinct patients sampled in that unit that week with an isolate carrying it | `/api/weekly`, `@aei/viz` `weeklySeries` | No: raw counts (D-039) |
+| Stacked stream (ESBL, MRSA, VRE, CPE) | Per ISO week (Monday to Sunday) up to t: for each phenotype, the sum over units of the distinct patients sampled in that unit that week with an isolate carrying it | `/api/weekly`, `@aei/viz` `weeklySeries` | No: raw counts (D-042) |
 | Cultures line | Cultures sampled per week, all units, on its own scale | same | No |
 | Unit lane thickness | That unit's weekly patients, summed over the four phenotypes, one scale for all lanes | same | No |
 | Last week, marked partial | The week containing t, counted up to t | same | — |
@@ -276,19 +311,22 @@ shows the same numbers.
   on the released rows; flows (A4) for the requested window.
 - **Routes** it must serve: `/api/coverage`, `/api/alerts`, `/api/live`,
   `/api/relations`, `/api/isolates`, `/api/regional`, `/api/meta`,
-  `/api/clock`, `/api/ingest`, `/api/explain`, `/api/ask`, and
-  `/api/weekly` once branch `overnight/design` is merged. `apps/api` only
+  `/api/clock`, `/api/ingest`, `/api/quality`, `/api/explain`, `/api/ask`,
+  and `/api/weekly` once branch `overnight/design` is merged. `apps/api` only
   wires gears to routes; logic lives in `libs/utils`.
 - **Port only what is decided** (Part A). Part D stays out, or goes in as
   a marked placeholder naming its QUESTIONS.md item. Each result should
   carry its isolate count, period, fallback level and reliability label
   (Artem, 2026-10-17); the label's rule is QUESTIONS B11. The module and
   route list, with the decision each rests on, is
-  `benchmarks/overnight-2026-10-17/engine-port-plan.md` on branch
-  `overnight/experiments`; changes to `/api/coverage`'s shape need Artem's
+  `benchmarks/overnight-2026-10-17/engine-port-plan.md`; changes to `/api/coverage`'s shape need Artem's
   OK first.
-- **Open for the container itself**: runtime and base image (QUESTIONS F2),
-  storage (F3).
+- **The container** (`deploy/container`, D-040): an API image (Node 22
+  slim running `apps/api` from TypeScript, non-root, with a health check)
+  and a web image (the Vite build served by nginx, proxying `/api` and the
+  unbuffered `/api/live` stream), wired by a compose file for podman or
+  docker. The dataset and THL data are mounted read-only, never built into
+  an image. No auth, TLS or persistence yet; storage is QUESTIONS F3.
 
 ---
 
@@ -299,7 +337,7 @@ Each was tried overnight on 2026-10-17 through one scoring harness
 is `benchmarks/overnight-2026-10-17/README.md`. All are exploratory, and
 nothing replaces Part A until the team decides.
 
-## D1. Beta-binomial with borrowed strength and a weekly discount (D-038)
+## D1. Beta-binomial with borrowed strength and a weekly discount (D-041)
 
 ```
 belief about a cell's share     p ~ Beta(a, b)
@@ -315,7 +353,7 @@ organism mix (Dirichlet)        coverage_d = Σ_o E[π_o]·E[p_o,d], with its cl
 
 The discounted update keeps the Beta exactly (Smith 1979; Harvey and
 Fernandes 1989): it holds the mean and widens the belief, which is close
-to, not exactly, a random walk on the log-odds. D-038 accepted the method;
+to, not exactly, a random walk on the log-odds. D-041 accepted the method;
 M, M_ext, M_π and δ are open (QUESTIONS B1 to B4). Overnight (computed):
 δ 0.95, M 10 chosen on the first year gives Brier +0.0002 (−0.0000 to
 +0.0004) against the hospital year and reacts to E1 in 48 days (0012); the
@@ -381,4 +419,4 @@ is part of the engine port.
 In QUESTIONS.md: A1 lookback, A2 onset, A4 selective testing; B1 to B4
 prior strengths and discount; B6, B7 annotations; B10 the four-week flag;
 B11 the reliability label; C1 to C8 detection settings; D1, D2 edges and
-null; D6 the county forecast; F2, F3 runtime and storage.
+null; D6 the county forecast; F3 storage.

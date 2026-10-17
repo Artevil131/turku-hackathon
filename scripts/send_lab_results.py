@@ -64,7 +64,9 @@ def main() -> None:
             continue
         result = post(a.url, body, CONTENT_TYPES[a.format])
         alerts = result.get("newAlerts", [])
+        checks = result.get("quality", [])
         print(f"{day}: sent {len(day_reports)} cultures; accepted {result.get('accepted', 0)}, clock {result.get('asOf')}, "
+              f"{f'{len(checks)} data-check finding(s)' if checks else 'data checks passed'}, "
               f"{len(alerts)} new alert(s){': ' + ', '.join(alerts) if alerts else ''}"
               f"{'; warnings: ' + '; '.join(result['warnings'][:3]) if result.get('warnings') else ''}")
         if a.pause:

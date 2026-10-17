@@ -1,0 +1,32 @@
+{
+  "name": "@aei/video",
+  "version": "0.0.0",
+  "description": "AEI pitch video (Remotion), built from the server's real numbers",
+  "engines": {
+    "node": "^20.19.0 || ^22.13.0 || >=24"
+  },
+  "private": true,
+  "dependencies": {
+    "@remotion/cli": "4.0.536",
+    "@remotion/google-fonts": "4.0.536",
+    "@remotion/transitions": "4.0.536",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "remotion": "4.0.536"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.7",
+    "@types/web": "0.0.166",
+    "typescript": "5.9.3"
+  },
+  "scripts": {
+    "dev": "remotion studio",
+    "render": "remotion render",
+    "snapshot": "node scripts/snapshot.mjs",
+    "typecheck": "tsc -p ."
+  },
+  "allowScripts": {
+    "esbuild": false
+  },
+  "type": "module"
+}

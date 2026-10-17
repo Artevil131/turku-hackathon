@@ -20,6 +20,8 @@ __pycache__/
 node_modules/
 # build output (vite build in apps/web)
 dist/
+# smoke-test screenshots and report (apps/web/scripts/smoke.mjs)
+apps/web/smoke-out/
 
 # xcode
 DerivedData/
@@ -42,3 +44,6 @@ xcuserdata/
 # impeccable's font index sits in a folder named data/; keep it
 !.claude/skills/impeccable/scripts/data/
 !.agents/skills/impeccable/scripts/data/
+
+# backup demo videos (scripts/record_demo.mjs)
+/demo-*.mp4

@@ -1,11 +1,13 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App.tsx";
-import "./styles.css";
-import "./ai.css";
+import "./styles/tokens.css";
+import "./styles/base.css";
+import "./styles/kit.css";
+import "./styles/app.css";
 
 const root = document.getElementById("root");
-if (!root) throw new Error("index.html has no #root");
+if (!root) throw new Error("missing #root");
 createRoot(root).render(
   <StrictMode>
     <App />

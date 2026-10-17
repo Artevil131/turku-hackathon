@@ -1,0 +1,2908 @@
+{
+  "experiment": "0021-naming-step",
+  "method": "Naming step: a decision list over alert fields gives the kind and the sentence; D7 and D6 on planted and injected events, I1 under incident rules R1 to R7",
+  "family": "interpretation",
+  "tuned_on_test": true,
+  "tuned_on": "none for the rules (written from ENGINE.md 3.6 before any number); the row is the live set as shipped, whose settings were chosen on the scoring period",
+  "metrics": {
+    "D7": 0.973764,
+    "D6": 0.012,
+    "I1": {
+      "alerts": 18,
+      "incidents": 15,
+      "alerts_per_incident": 1.2
+    }
+  },
+  "intervals": {
+    "D7": [
+      0.965758,
+      0.979937
+    ],
+    "D6": [
+      0.00687765,
+      0.0208573
+    ],
+    "I1": {
+      "incidents": [
+        8.39539,
+        24.7402
+      ]
+    }
+  },
+  "n": {
+    "D7": 1982,
+    "D6": 1000,
+    "I1": {
+      "alerts": 18,
+      "incidents": 15
+    }
+  },
+  "runtime_s": 63.5,
+  "cpu_s": 63.3,
+  "seeds": [
+    2026
+  ],
+  "data": "synthetic_microbiology_dataset, seed 2026, as received 2026-10-09",
+  "notes": "D7, D6 and I1 of the live set as shipped read with the rule's names (harness definitions, committed rows beside them in `committed_rows`); the Gamma-Poisson feed (0015's year-1 choice, tuned_on_test false) and every added measure are in by_feed.",
+  "by_feed": {
+    "live_set_as_shipped": {
+      "feed": "live set as shipped",
+      "operating_level": 1.0,
+      "stress_level": 10.0,
+      "D7": 0.973764,
+      "D7_interval": [
+        0.965758,
+        0.979937
+      ],
+      "D7_n": 1982,
+      "D7_first": 0.942987,
+      "D7_first_interval": [
+        0.931896,
+        0.952364
+      ],
+      "D7_all_events": 0.385691,
+      "D7_by_family": {
+        "rare": {
+          "events": 800,
+          "detected": 534,
+          "right": 524,
+          "first_right": 490
+        },
+        "common_resistant": {
+          "events": 800,
+          "detected": 4,
+          "right": 4,
+          "first_right": 4
+        },
+        "wild_type": {
+          "events": 800,
+          "detected": 0,
+          "right": 0,
+          "first_right": 0
+        },
+        "common_esbl": {
+          "events": 800,
+          "detected": 389,
+          "right": 389,
+          "first_right": 389
+        },
+        "two_unit": {
+          "events": 800,
+          "detected": 278,
+          "right": 236,
+          "first_right": 209
+        },
+        "gaps": {
+          "events": 1000,
+          "detected": 773,
+          "right": 773,
+          "first_right": 773
+        }
+      },
+      "D7_planted": {
+        "E1": {
+          "found": true,
+          "kinds_seen": [
+            "cluster"
+          ],
+          "expected": [
+            "cluster"
+          ],
+          "right": true,
+          "first_date": "2025-06-04",
+          "first_right": true
+        },
+        "E2": {
+          "found": true,
+          "kinds_seen": [
+            "cluster",
+            "sentinel"
+          ],
+          "expected": [
+            "sentinel",
+            "cluster"
+          ],
+          "right": true,
+          "first_date": "2026-03-03",
+          "first_right": true
+        },
+        "E3": {
+          "found": true,
+          "kinds_seen": [
+            "data"
+          ],
+          "expected": [
+            "data"
+          ],
+          "right": true,
+          "first_date": "2025-12-08",
+          "first_right": true
+        },
+        "E4": {
+          "found": true,
+          "kinds_seen": [
+            "trend"
+          ],
+          "expected": [
+            "trend"
+          ],
+          "right": true,
+          "first_date": "2026-05-10",
+          "first_right": true
+        }
+      },
+      "D6": 0.012,
+      "D6_interval": [
+        0.00687765,
+        0.0208573
+      ],
+      "D6_annotated": 0.004,
+      "D6_annotated_interval": [
+        0.00155659,
+        0.0102396
+      ],
+      "D6_n": 1000,
+      "D1": {
+        "E1": 0,
+        "E1_corrected": 5,
+        "E2": 0,
+        "E2_corrected": 0,
+        "E3": 0,
+        "E4": "2026-05-10"
+      },
+      "D3": {
+        "gap2": 0.64,
+        "gap3": 0.945,
+        "gap5": 1.0,
+        "gap7": 1.0,
+        "half7": 0.28
+      },
+      "D4": {
+        "episodes_per_year": 4.52166,
+        "sentinel": 1.50722,
+        "cluster": 1.00481,
+        "trend": 0.0,
+        "divergence": 0.0,
+        "data": 2.00963,
+        "alerts_per_week": 0.0866575
+      },
+      "confusion_full_run": {
+        "cluster -> cluster": 319,
+        "data -> data": 23,
+        "sentinel -> sentinel": 8,
+        "trend -> trend": 6
+      },
+      "confusion_trial_signals": {
+        "cluster -> cluster": 13627,
+        "data -> data": 4325,
+        "sentinel -> sentinel": 131
+      },
+      "incidents_per_trial": {
+        "rare": {
+          "trials": 534,
+          "mean_alerts": 1.58989,
+          "R1": {
+            "mean": 1.0,
+            "one": 534
+          },
+          "R2": {
+            "mean": 1.01498,
+            "one": 526
+          },
+          "R3": {
+            "mean": 1.0,
+            "one": 534
+          },
+          "R4": {
+            "mean": 1.0,
+            "one": 534
+          },
+          "R5": {
+            "mean": 1.0,
+            "one": 534
+          }
+        },
+        "common_resistant": {
+          "trials": 4,
+          "mean_alerts": 1.0,
+          "R1": {
+            "mean": 1.0,
+            "one": 4
+          },
+          "R2": {
+            "mean": 1.0,
+            "one": 4
+          },
+          "R3": {
+            "mean": 1.0,
+            "one": 4
+          },
+          "R4": {
+            "mean": 1.0,
+            "one": 4
+          },
+          "R5": {
+            "mean": 1.0,
+            "one": 4
+          }
+        },
+        "wild_type": {
+          "trials": 0,
+          "mean_alerts": null,
+          "R1": {
+            "mean": null,
+            "one": 0
+          },
+          "R2": {
+            "mean": null,
+            "one": 0
+          },
+          "R3": {
+            "mean": null,
+            "one": 0
+          },
+          "R4": {
+            "mean": null,
+            "one": 0
+          },
+          "R5": {
+            "mean": null,
+            "one": 0
+          }
+        },
+        "common_esbl": {
+          "trials": 389,
+          "mean_alerts": 1.50643,
+          "R1": {
+            "mean": 1.0,
+            "one": 389
+          },
+          "R2": {
+            "mean": 1.02571,
+            "one": 379
+          },
+          "R3": {
+            "mean": 1.0,
+            "one": 389
+          },
+          "R4": {
+            "mean": 1.0,
+            "one": 389
+          },
+          "R5": {
+            "mean": 1.0,
+            "one": 389
+          }
+        },
+        "two_unit": {
+          "trials": 278,
+          "mean_alerts": 1.71583,
+          "R1": {
+            "mean": 1.40647,
+            "one": 165
+          },
+          "R2": {
+            "mean": 1.42086,
+            "one": 164
+          },
+          "R3": {
+            "mean": 1.40647,
+            "one": 165
+          },
+          "R4": {
+            "mean": 1.40647,
+            "one": 165
+          },
+          "R5": {
+            "mean": 1.0,
+            "one": 278
+          }
+        }
+      },
+      "slot_coverage": {
+        "alerts": 27,
+        "complete": 26,
+        "by_kind": {
+          "cluster": {
+            "alerts": 7,
+            "incomplete": 0
+          },
+          "data": {
+            "alerts": 6,
+            "incomplete": 0
+          },
+          "sentinel": {
+            "alerts": 13,
+            "incomplete": 0
+          },
+          "trend": {
+            "alerts": 1,
+            "incomplete": 1
+          }
+        },
+        "missing_slots": {
+          "trend:span": 1,
+          "trend:start": 1
+        }
+      },
+      "I1_rules": {
+        "op/no cpe": {
+          "R1": {
+            "alerts": 18,
+            "incidents": 15,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 6,
+            "incidents_ci": [
+              8.39539,
+              24.7402
+            ],
+            "patient_links": 11
+          },
+          "R2": {
+            "alerts": 18,
+            "incidents": 15,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 6,
+            "incidents_ci": [
+              8.39539,
+              24.7402
+            ],
+            "patient_links": 11
+          },
+          "R3": {
+            "alerts": 18,
+            "incidents": 15,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 6,
+            "incidents_ci": [
+              8.39539,
+              24.7402
+            ],
+            "patient_links": 11
+          },
+          "R4": {
+            "alerts": 18,
+            "incidents": 14,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "mixed_incidents": 1,
+            "multi_unit_incidents": 0,
+            "longest_days": 15,
+            "incidents_ci": [
+              7.65393,
+              23.4896
+            ],
+            "patient_links": 11
+          },
+          "R5": {
+            "alerts": 18,
+            "incidents": 13,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 1,
+            "longest_days": 40,
+            "incidents_ci": [
+              6.92195,
+              22.2304
+            ],
+            "patient_links": 11
+          },
+          "R6": {
+            "alerts": 18,
+            "incidents": 15,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 6,
+            "incidents_ci": [
+              8.39539,
+              24.7402
+            ],
+            "patient_links": 11
+          },
+          "R7": {
+            "alerts": 18,
+            "incidents": 15,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 6,
+            "incidents_ci": [
+              8.39539,
+              24.7402
+            ],
+            "patient_links": 11
+          }
+        },
+        "op/cpe": {
+          "R1": {
+            "alerts": 27,
+            "incidents": 24,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 6,
+            "incidents_ci": [
+              15.3773,
+              35.7101
+            ],
+            "patient_links": 20
+          },
+          "R2": {
+            "alerts": 27,
+            "incidents": 24,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 6,
+            "incidents_ci": [
+              15.3773,
+              35.7101
+            ],
+            "patient_links": 20
+          },
+          "R3": {
+            "alerts": 27,
+            "incidents": 24,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 6,
+            "incidents_ci": [
+              15.3773,
+              35.7101
+            ],
+            "patient_links": 20
+          },
+          "R4": {
+            "alerts": 27,
+            "incidents": 22,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "mixed_incidents": 1,
+            "multi_unit_incidents": 0,
+            "longest_days": 15,
+            "incidents_ci": [
+              13.7873,
+              33.3083
+            ],
+            "patient_links": 20
+          },
+          "R5": {
+            "alerts": 27,
+            "incidents": 18,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "mixed_incidents": 2,
+            "multi_unit_incidents": 3,
+            "longest_days": 44,
+            "incidents_ci": [
+              10.6679,
+              28.4478
+            ],
+            "patient_links": 20
+          },
+          "R6": {
+            "alerts": 27,
+            "incidents": 24,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 6,
+            "incidents_ci": [
+              15.3773,
+              35.7101
+            ],
+            "patient_links": 20
+          },
+          "R7": {
+            "alerts": 27,
+            "incidents": 24,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 6,
+            "incidents_ci": [
+              15.3773,
+              35.7101
+            ],
+            "patient_links": 20
+          }
+        },
+        "stress/no cpe": {
+          "R1": {
+            "alerts": 25,
+            "incidents": 22,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 6,
+            "incidents_ci": [
+              13.7873,
+              33.3083
+            ],
+            "patient_links": 18
+          },
+          "R2": {
+            "alerts": 25,
+            "incidents": 22,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 6,
+            "incidents_ci": [
+              13.7873,
+              33.3083
+            ],
+            "patient_links": 18
+          },
+          "R3": {
+            "alerts": 25,
+            "incidents": 22,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 6,
+            "incidents_ci": [
+              13.7873,
+              33.3083
+            ],
+            "patient_links": 18
+          },
+          "R4": {
+            "alerts": 25,
+            "incidents": 21,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "mixed_incidents": 1,
+            "multi_unit_incidents": 0,
+            "longest_days": 17,
+            "incidents_ci": [
+              12.9993,
+              32.1007
+            ],
+            "patient_links": 18
+          },
+          "R5": {
+            "alerts": 25,
+            "incidents": 17,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "mixed_incidents": 1,
+            "multi_unit_incidents": 2,
+            "longest_days": 59,
+            "incidents_ci": [
+              9.90313,
+              27.2186
+            ],
+            "patient_links": 18
+          },
+          "R6": {
+            "alerts": 25,
+            "incidents": 22,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 6,
+            "incidents_ci": [
+              13.7873,
+              33.3083
+            ],
+            "patient_links": 18
+          },
+          "R7": {
+            "alerts": 25,
+            "incidents": 22,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 6,
+            "incidents_ci": [
+              13.7873,
+              33.3083
+            ],
+            "patient_links": 18
+          }
+        },
+        "stress/cpe": {
+          "R1": {
+            "alerts": 34,
+            "incidents": 31,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 6,
+            "incidents_ci": [
+              21.063,
+              44.002
+            ],
+            "patient_links": 27
+          },
+          "R2": {
+            "alerts": 34,
+            "incidents": 31,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 6,
+            "incidents_ci": [
+              21.063,
+              44.002
+            ],
+            "patient_links": 27
+          },
+          "R3": {
+            "alerts": 34,
+            "incidents": 31,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 6,
+            "incidents_ci": [
+              21.063,
+              44.002
+            ],
+            "patient_links": 27
+          },
+          "R4": {
+            "alerts": 34,
+            "incidents": 29,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "mixed_incidents": 1,
+            "multi_unit_incidents": 0,
+            "longest_days": 17,
+            "incidents_ci": [
+              19.4218,
+              41.6488
+            ],
+            "patient_links": 27
+          },
+          "R5": {
+            "alerts": 34,
+            "incidents": 22,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "mixed_incidents": 2,
+            "multi_unit_incidents": 4,
+            "longest_days": 65,
+            "incidents_ci": [
+              13.7873,
+              33.3083
+            ],
+            "patient_links": 27
+          },
+          "R6": {
+            "alerts": 34,
+            "incidents": 31,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 6,
+            "incidents_ci": [
+              21.063,
+              44.002
+            ],
+            "patient_links": 27
+          },
+          "R7": {
+            "alerts": 34,
+            "incidents": 31,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1,
+              "E3": 1,
+              "E4": 1,
+              "Q-MED-A-ecoli": 1,
+              "Q-MED-A-gap": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 6,
+            "incidents_ci": [
+              21.063,
+              44.002
+            ],
+            "patient_links": 27
+          }
+        }
+      }
+    },
+    "gamma_poisson_0015": {
+      "feed": "Gamma-Poisson (0015)",
+      "operating_level": 0.005,
+      "stress_level": 0.05,
+      "D7": 0.998379,
+      "D7_interval": [
+        0.990877,
+        0.999714
+      ],
+      "D7_n": 617,
+      "D7_first": 1.0,
+      "D7_first_interval": [
+        0.993812,
+        1.0
+      ],
+      "D7_all_events": 0.123102,
+      "D7_by_family": {
+        "rare": {
+          "events": 800,
+          "detected": 265,
+          "right": 265,
+          "first_right": 265
+        },
+        "common_resistant": {
+          "events": 800,
+          "detected": 30,
+          "right": 30,
+          "first_right": 30
+        },
+        "wild_type": {
+          "events": 800,
+          "detected": 25,
+          "right": 25,
+          "first_right": 25
+        },
+        "common_esbl": {
+          "events": 800,
+          "detected": 181,
+          "right": 181,
+          "first_right": 181
+        },
+        "two_unit": {
+          "events": 800,
+          "detected": 114,
+          "right": 114,
+          "first_right": 114
+        },
+        "gaps": {
+          "events": 1000,
+          "detected": 0,
+          "right": 0,
+          "first_right": 0
+        }
+      },
+      "D7_planted": {
+        "E1": {
+          "found": true,
+          "kinds_seen": [
+            "cluster"
+          ],
+          "expected": [
+            "cluster"
+          ],
+          "right": true,
+          "first_date": "2025-06-10",
+          "first_right": true
+        },
+        "E2": {
+          "found": true,
+          "kinds_seen": [
+            "cluster"
+          ],
+          "expected": [
+            "sentinel",
+            "cluster"
+          ],
+          "right": false,
+          "first_date": "2026-03-05",
+          "first_right": true
+        },
+        "E3": {
+          "found": false,
+          "kinds_seen": [],
+          "expected": [
+            "data"
+          ],
+          "right": false,
+          "first_date": null,
+          "first_right": null
+        },
+        "E4": {
+          "found": false,
+          "kinds_seen": [],
+          "expected": [
+            "trend"
+          ],
+          "right": false,
+          "first_date": null,
+          "first_right": null
+        }
+      },
+      "D6": 0.019,
+      "D6_interval": [
+        0.0121969,
+        0.0294845
+      ],
+      "D6_annotated": 0.019,
+      "D6_annotated_interval": [
+        0.0121969,
+        0.0294845
+      ],
+      "D6_n": 1000,
+      "D1": {
+        "E1": 6,
+        "E1_corrected": 11,
+        "E2": 2,
+        "E2_corrected": 2,
+        "E3": null,
+        "E4": null
+      },
+      "D3": {
+        "gap2": 0.0,
+        "gap3": 0.0,
+        "gap5": 0.0,
+        "gap7": 0.0,
+        "half7": 0.0
+      },
+      "D4": {
+        "episodes_per_year": 5.02407,
+        "sentinel": 0.0,
+        "cluster": 5.02407,
+        "trend": 0.0,
+        "divergence": 0.0,
+        "data": 0.0,
+        "alerts_per_week": 0.0962861
+      },
+      "confusion_full_run": {
+        "cluster -> cluster": 2148
+      },
+      "confusion_trial_signals": {
+        "cluster -> cluster": 29934
+      },
+      "incidents_per_trial": {
+        "rare": {
+          "trials": 265,
+          "mean_alerts": 1.23774,
+          "R1": {
+            "mean": 1.0,
+            "one": 265
+          },
+          "R2": {
+            "mean": 1.0,
+            "one": 265
+          },
+          "R3": {
+            "mean": 1.0,
+            "one": 265
+          },
+          "R4": {
+            "mean": 1.0,
+            "one": 265
+          },
+          "R5": {
+            "mean": 1.0,
+            "one": 265
+          }
+        },
+        "common_resistant": {
+          "trials": 30,
+          "mean_alerts": 1.0,
+          "R1": {
+            "mean": 1.0,
+            "one": 30
+          },
+          "R2": {
+            "mean": 1.0,
+            "one": 30
+          },
+          "R3": {
+            "mean": 1.0,
+            "one": 30
+          },
+          "R4": {
+            "mean": 1.0,
+            "one": 30
+          },
+          "R5": {
+            "mean": 1.0,
+            "one": 30
+          }
+        },
+        "wild_type": {
+          "trials": 25,
+          "mean_alerts": 1.0,
+          "R1": {
+            "mean": 1.0,
+            "one": 25
+          },
+          "R2": {
+            "mean": 1.0,
+            "one": 25
+          },
+          "R3": {
+            "mean": 1.0,
+            "one": 25
+          },
+          "R4": {
+            "mean": 1.0,
+            "one": 25
+          },
+          "R5": {
+            "mean": 1.0,
+            "one": 25
+          }
+        },
+        "common_esbl": {
+          "trials": 181,
+          "mean_alerts": 1.09945,
+          "R1": {
+            "mean": 1.0,
+            "one": 181
+          },
+          "R2": {
+            "mean": 1.01105,
+            "one": 179
+          },
+          "R3": {
+            "mean": 1.0,
+            "one": 181
+          },
+          "R4": {
+            "mean": 1.0,
+            "one": 181
+          },
+          "R5": {
+            "mean": 1.0,
+            "one": 181
+          }
+        },
+        "two_unit": {
+          "trials": 114,
+          "mean_alerts": 1.26316,
+          "R1": {
+            "mean": 1.12281,
+            "one": 100
+          },
+          "R2": {
+            "mean": 1.13158,
+            "one": 99
+          },
+          "R3": {
+            "mean": 1.12281,
+            "one": 100
+          },
+          "R4": {
+            "mean": 1.12281,
+            "one": 100
+          },
+          "R5": {
+            "mean": 1.0,
+            "one": 114
+          }
+        }
+      },
+      "slot_coverage": {
+        "alerts": 22,
+        "complete": 22,
+        "by_kind": {
+          "cluster": {
+            "alerts": 13,
+            "incomplete": 0
+          },
+          "sentinel": {
+            "alerts": 9,
+            "incomplete": 0
+          }
+        },
+        "missing_slots": {}
+      },
+      "I1_rules": {
+        "op/no cpe": {
+          "R1": {
+            "alerts": 13,
+            "incidents": 12,
+            "zone_alerts": {
+              "E1": 1,
+              "E2": 2
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 13,
+            "incidents_ci": [
+              6.20058,
+              20.9616
+            ],
+            "patient_links": 13
+          },
+          "R2": {
+            "alerts": 13,
+            "incidents": 12,
+            "zone_alerts": {
+              "E1": 1,
+              "E2": 2
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 13,
+            "incidents_ci": [
+              6.20058,
+              20.9616
+            ],
+            "patient_links": 13
+          },
+          "R3": {
+            "alerts": 13,
+            "incidents": 12,
+            "zone_alerts": {
+              "E1": 1,
+              "E2": 2
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 13,
+            "incidents_ci": [
+              6.20058,
+              20.9616
+            ],
+            "patient_links": 13
+          },
+          "R4": {
+            "alerts": 13,
+            "incidents": 12,
+            "zone_alerts": {
+              "E1": 1,
+              "E2": 2
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 13,
+            "incidents_ci": [
+              6.20058,
+              20.9616
+            ],
+            "patient_links": 13
+          },
+          "R5": {
+            "alerts": 13,
+            "incidents": 9,
+            "zone_alerts": {
+              "E1": 1,
+              "E2": 2
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1
+            },
+            "mixed_incidents": 1,
+            "multi_unit_incidents": 2,
+            "longest_days": 17,
+            "incidents_ci": [
+              4.11537,
+              17.0848
+            ],
+            "patient_links": 13
+          },
+          "R6": {
+            "alerts": 13,
+            "incidents": 12,
+            "zone_alerts": {
+              "E1": 1,
+              "E2": 2
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 13,
+            "incidents_ci": [
+              6.20058,
+              20.9616
+            ],
+            "patient_links": 13
+          },
+          "R7": {
+            "alerts": 13,
+            "incidents": 12,
+            "zone_alerts": {
+              "E1": 1,
+              "E2": 2
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 13,
+            "incidents_ci": [
+              6.20058,
+              20.9616
+            ],
+            "patient_links": 13
+          }
+        },
+        "op/cpe": {
+          "R1": {
+            "alerts": 22,
+            "incidents": 21,
+            "zone_alerts": {
+              "E1": 1,
+              "E2": 2
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 13,
+            "incidents_ci": [
+              12.9993,
+              32.1007
+            ],
+            "patient_links": 22
+          },
+          "R2": {
+            "alerts": 22,
+            "incidents": 21,
+            "zone_alerts": {
+              "E1": 1,
+              "E2": 2
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 13,
+            "incidents_ci": [
+              12.9993,
+              32.1007
+            ],
+            "patient_links": 22
+          },
+          "R3": {
+            "alerts": 22,
+            "incidents": 20,
+            "zone_alerts": {
+              "E1": 1,
+              "E2": 2
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 51,
+            "incidents_ci": [
+              12.2165,
+              30.8884
+            ],
+            "patient_links": 22
+          },
+          "R4": {
+            "alerts": 22,
+            "incidents": 20,
+            "zone_alerts": {
+              "E1": 1,
+              "E2": 2
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 22,
+            "incidents_ci": [
+              12.2165,
+              30.8884
+            ],
+            "patient_links": 22
+          },
+          "R5": {
+            "alerts": 22,
+            "incidents": 17,
+            "zone_alerts": {
+              "E1": 1,
+              "E2": 2
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1
+            },
+            "mixed_incidents": 1,
+            "multi_unit_incidents": 3,
+            "longest_days": 30,
+            "incidents_ci": [
+              9.90313,
+              27.2186
+            ],
+            "patient_links": 22
+          },
+          "R6": {
+            "alerts": 22,
+            "incidents": 21,
+            "zone_alerts": {
+              "E1": 1,
+              "E2": 2
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 13,
+            "incidents_ci": [
+              12.9993,
+              32.1007
+            ],
+            "patient_links": 22
+          },
+          "R7": {
+            "alerts": 22,
+            "incidents": 21,
+            "zone_alerts": {
+              "E1": 1,
+              "E2": 2
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 13,
+            "incidents_ci": [
+              12.9993,
+              32.1007
+            ],
+            "patient_links": 22
+          }
+        },
+        "stress/no cpe": {
+          "R1": {
+            "alerts": 88,
+            "incidents": 82,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3
+            },
+            "zone_incidents": {
+              "E1": 2,
+              "E2": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 24,
+            "incidents_ci": [
+              65.217,
+              101.784
+            ],
+            "patient_links": 88
+          },
+          "R2": {
+            "alerts": 88,
+            "incidents": 85,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3
+            },
+            "zone_incidents": {
+              "E1": 2,
+              "E2": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 19,
+            "incidents_ci": [
+              67.895,
+              105.104
+            ],
+            "patient_links": 88
+          },
+          "R3": {
+            "alerts": 88,
+            "incidents": 75,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 93,
+            "incidents_ci": [
+              58.9923,
+              94.0131
+            ],
+            "patient_links": 88
+          },
+          "R4": {
+            "alerts": 88,
+            "incidents": 63,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3
+            },
+            "zone_incidents": {
+              "E1": 2,
+              "E2": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 45,
+            "incidents_ci": [
+              48.4109,
+              80.6044
+            ],
+            "patient_links": 88
+          },
+          "R5": {
+            "alerts": 88,
+            "incidents": 50,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3
+            },
+            "zone_incidents": {
+              "E1": 2,
+              "E2": 1
+            },
+            "mixed_incidents": 2,
+            "multi_unit_incidents": 17,
+            "longest_days": 73,
+            "incidents_ci": [
+              37.111,
+              65.9188
+            ],
+            "patient_links": 88
+          },
+          "R6": {
+            "alerts": 88,
+            "incidents": 63,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3
+            },
+            "zone_incidents": {
+              "E1": 2,
+              "E2": 1
+            },
+            "mixed_incidents": 1,
+            "multi_unit_incidents": 7,
+            "longest_days": 116,
+            "incidents_ci": [
+              48.4109,
+              80.6044
+            ],
+            "patient_links": 88
+          },
+          "R7": {
+            "alerts": 88,
+            "incidents": 63,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3
+            },
+            "zone_incidents": {
+              "E1": 2,
+              "E2": 1
+            },
+            "mixed_incidents": 1,
+            "multi_unit_incidents": 7,
+            "longest_days": 116,
+            "incidents_ci": [
+              48.4109,
+              80.6044
+            ],
+            "patient_links": 88
+          }
+        },
+        "stress/cpe": {
+          "R1": {
+            "alerts": 97,
+            "incidents": 88,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3
+            },
+            "zone_incidents": {
+              "E1": 2,
+              "E2": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 24,
+            "incidents_ci": [
+              70.5786,
+              108.418
+            ],
+            "patient_links": 97
+          },
+          "R2": {
+            "alerts": 97,
+            "incidents": 91,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3
+            },
+            "zone_incidents": {
+              "E1": 2,
+              "E2": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 19,
+            "incidents_ci": [
+              73.2675,
+              111.728
+            ],
+            "patient_links": 97
+          },
+          "R3": {
+            "alerts": 97,
+            "incidents": 81,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 93,
+            "incidents_ci": [
+              64.3257,
+              100.676
+            ],
+            "patient_links": 97
+          },
+          "R4": {
+            "alerts": 97,
+            "incidents": 64,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3
+            },
+            "zone_incidents": {
+              "E1": 2,
+              "E2": 1
+            },
+            "mixed_incidents": 0,
+            "multi_unit_incidents": 0,
+            "longest_days": 45,
+            "incidents_ci": [
+              49.2878,
+              81.7266
+            ],
+            "patient_links": 97
+          },
+          "R5": {
+            "alerts": 97,
+            "incidents": 42,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3
+            },
+            "zone_incidents": {
+              "E1": 1,
+              "E2": 1
+            },
+            "mixed_incidents": 2,
+            "multi_unit_incidents": 15,
+            "longest_days": 173,
+            "incidents_ci": [
+              30.2699,
+              56.7718
+            ],
+            "patient_links": 97
+          },
+          "R6": {
+            "alerts": 97,
+            "incidents": 70,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3
+            },
+            "zone_incidents": {
+              "E1": 2,
+              "E2": 1
+            },
+            "mixed_incidents": 1,
+            "multi_unit_incidents": 7,
+            "longest_days": 116,
+            "incidents_ci": [
+              54.5684,
+              88.4408
+            ],
+            "patient_links": 97
+          },
+          "R7": {
+            "alerts": 97,
+            "incidents": 69,
+            "zone_alerts": {
+              "E1": 2,
+              "E2": 3
+            },
+            "zone_incidents": {
+              "E1": 2,
+              "E2": 1
+            },
+            "mixed_incidents": 1,
+            "multi_unit_incidents": 7,
+            "longest_days": 116,
+            "incidents_ci": [
+              53.6861,
+              87.3239
+            ],
+            "patient_links": 97
+          }
+        }
+      }
+    },
+    "both_feeds_I1_rules": {
+      "op/no cpe": {
+        "R1": {
+          "alerts": 31,
+          "incidents": 25,
+          "zone_alerts": {
+            "E1": 3,
+            "E2": 5,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "zone_incidents": {
+            "E1": 1,
+            "E2": 1,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "mixed_incidents": 0,
+          "multi_unit_incidents": 0,
+          "longest_days": 15,
+          "incidents_ci": [
+            16.1787,
+            36.9049
+          ],
+          "patient_links": 24
+        },
+        "R2": {
+          "alerts": 31,
+          "incidents": 25,
+          "zone_alerts": {
+            "E1": 3,
+            "E2": 5,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "zone_incidents": {
+            "E1": 1,
+            "E2": 1,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "mixed_incidents": 0,
+          "multi_unit_incidents": 0,
+          "longest_days": 15,
+          "incidents_ci": [
+            16.1787,
+            36.9049
+          ],
+          "patient_links": 24
+        },
+        "R3": {
+          "alerts": 31,
+          "incidents": 25,
+          "zone_alerts": {
+            "E1": 3,
+            "E2": 5,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "zone_incidents": {
+            "E1": 1,
+            "E2": 1,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "mixed_incidents": 0,
+          "multi_unit_incidents": 0,
+          "longest_days": 15,
+          "incidents_ci": [
+            16.1787,
+            36.9049
+          ],
+          "patient_links": 24
+        },
+        "R4": {
+          "alerts": 31,
+          "incidents": 23,
+          "zone_alerts": {
+            "E1": 3,
+            "E2": 5,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "zone_incidents": {
+            "E1": 1,
+            "E2": 1,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "mixed_incidents": 1,
+          "multi_unit_incidents": 0,
+          "longest_days": 20,
+          "incidents_ci": [
+            14.58,
+            34.5113
+          ],
+          "patient_links": 24
+        },
+        "R5": {
+          "alerts": 31,
+          "incidents": 18,
+          "zone_alerts": {
+            "E1": 3,
+            "E2": 5,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "zone_incidents": {
+            "E1": 1,
+            "E2": 1,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "mixed_incidents": 1,
+          "multi_unit_incidents": 4,
+          "longest_days": 41,
+          "incidents_ci": [
+            10.6679,
+            28.4478
+          ],
+          "patient_links": 24
+        },
+        "R6": {
+          "alerts": 31,
+          "incidents": 24,
+          "zone_alerts": {
+            "E1": 3,
+            "E2": 5,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "zone_incidents": {
+            "E1": 1,
+            "E2": 1,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "mixed_incidents": 1,
+          "multi_unit_incidents": 1,
+          "longest_days": 15,
+          "incidents_ci": [
+            15.3773,
+            35.7101
+          ],
+          "patient_links": 24
+        },
+        "R7": {
+          "alerts": 31,
+          "incidents": 24,
+          "zone_alerts": {
+            "E1": 3,
+            "E2": 5,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "zone_incidents": {
+            "E1": 1,
+            "E2": 1,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "mixed_incidents": 1,
+          "multi_unit_incidents": 1,
+          "longest_days": 15,
+          "incidents_ci": [
+            15.3773,
+            35.7101
+          ],
+          "patient_links": 24
+        }
+      },
+      "op/cpe": {
+        "R1": {
+          "alerts": 40,
+          "incidents": 34,
+          "zone_alerts": {
+            "E1": 3,
+            "E2": 5,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "zone_incidents": {
+            "E1": 1,
+            "E2": 1,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "mixed_incidents": 0,
+          "multi_unit_incidents": 0,
+          "longest_days": 15,
+          "incidents_ci": [
+            23.546,
+            47.5116
+          ],
+          "patient_links": 33
+        },
+        "R2": {
+          "alerts": 40,
+          "incidents": 34,
+          "zone_alerts": {
+            "E1": 3,
+            "E2": 5,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "zone_incidents": {
+            "E1": 1,
+            "E2": 1,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "mixed_incidents": 0,
+          "multi_unit_incidents": 0,
+          "longest_days": 15,
+          "incidents_ci": [
+            23.546,
+            47.5116
+          ],
+          "patient_links": 33
+        },
+        "R3": {
+          "alerts": 40,
+          "incidents": 33,
+          "zone_alerts": {
+            "E1": 3,
+            "E2": 5,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "zone_incidents": {
+            "E1": 1,
+            "E2": 1,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "mixed_incidents": 0,
+          "multi_unit_incidents": 0,
+          "longest_days": 51,
+          "incidents_ci": [
+            22.7157,
+            46.3443
+          ],
+          "patient_links": 33
+        },
+        "R4": {
+          "alerts": 40,
+          "incidents": 30,
+          "zone_alerts": {
+            "E1": 3,
+            "E2": 5,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "zone_incidents": {
+            "E1": 1,
+            "E2": 1,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "mixed_incidents": 1,
+          "multi_unit_incidents": 0,
+          "longest_days": 42,
+          "incidents_ci": [
+            20.2409,
+            42.8269
+          ],
+          "patient_links": 33
+        },
+        "R5": {
+          "alerts": 40,
+          "incidents": 24,
+          "zone_alerts": {
+            "E1": 3,
+            "E2": 5,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "zone_incidents": {
+            "E1": 1,
+            "E2": 1,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "mixed_incidents": 2,
+          "multi_unit_incidents": 5,
+          "longest_days": 44,
+          "incidents_ci": [
+            15.3773,
+            35.7101
+          ],
+          "patient_links": 33
+        },
+        "R6": {
+          "alerts": 40,
+          "incidents": 33,
+          "zone_alerts": {
+            "E1": 3,
+            "E2": 5,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "zone_incidents": {
+            "E1": 1,
+            "E2": 1,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "mixed_incidents": 1,
+          "multi_unit_incidents": 1,
+          "longest_days": 15,
+          "incidents_ci": [
+            22.7157,
+            46.3443
+          ],
+          "patient_links": 33
+        },
+        "R7": {
+          "alerts": 40,
+          "incidents": 33,
+          "zone_alerts": {
+            "E1": 3,
+            "E2": 5,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "zone_incidents": {
+            "E1": 1,
+            "E2": 1,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "mixed_incidents": 1,
+          "multi_unit_incidents": 1,
+          "longest_days": 15,
+          "incidents_ci": [
+            22.7157,
+            46.3443
+          ],
+          "patient_links": 33
+        }
+      },
+      "stress/no cpe": {
+        "R1": {
+          "alerts": 113,
+          "incidents": 98,
+          "zone_alerts": {
+            "E1": 4,
+            "E2": 6,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "zone_incidents": {
+            "E1": 1,
+            "E2": 1,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "mixed_incidents": 0,
+          "multi_unit_incidents": 0,
+          "longest_days": 29,
+          "incidents_ci": [
+            79.5611,
+            119.431
+          ],
+          "patient_links": 106
+        },
+        "R2": {
+          "alerts": 113,
+          "incidents": 102,
+          "zone_alerts": {
+            "E1": 4,
+            "E2": 6,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "zone_incidents": {
+            "E1": 2,
+            "E2": 1,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "mixed_incidents": 0,
+          "multi_unit_incidents": 0,
+          "longest_days": 21,
+          "incidents_ci": [
+            83.1688,
+            123.821
+          ],
+          "patient_links": 106
+        },
+        "R3": {
+          "alerts": 113,
+          "incidents": 87,
+          "zone_alerts": {
+            "E1": 4,
+            "E2": 6,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "zone_incidents": {
+            "E1": 1,
+            "E2": 1,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "mixed_incidents": 0,
+          "multi_unit_incidents": 0,
+          "longest_days": 93,
+          "incidents_ci": [
+            69.6834,
+            107.314
+          ],
+          "patient_links": 106
+        },
+        "R4": {
+          "alerts": 113,
+          "incidents": 68,
+          "zone_alerts": {
+            "E1": 4,
+            "E2": 6,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "zone_incidents": {
+            "E1": 1,
+            "E2": 1,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "mixed_incidents": 2,
+          "multi_unit_incidents": 0,
+          "longest_days": 94,
+          "incidents_ci": [
+            52.8047,
+            86.2062
+          ],
+          "patient_links": 106
+        },
+        "R5": {
+          "alerts": 113,
+          "incidents": 40,
+          "zone_alerts": {
+            "E1": 4,
+            "E2": 6,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "zone_incidents": {
+            "E1": 1,
+            "E2": 1,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "mixed_incidents": 3,
+          "multi_unit_incidents": 16,
+          "longest_days": 186,
+          "incidents_ci": [
+            28.5766,
+            54.4686
+          ],
+          "patient_links": 106
+        },
+        "R6": {
+          "alerts": 113,
+          "incidents": 78,
+          "zone_alerts": {
+            "E1": 4,
+            "E2": 6,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "zone_incidents": {
+            "E1": 3,
+            "E2": 1,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "mixed_incidents": 2,
+          "multi_unit_incidents": 7,
+          "longest_days": 120,
+          "incidents_ci": [
+            61.6558,
+            97.3475
+          ],
+          "patient_links": 106
+        },
+        "R7": {
+          "alerts": 113,
+          "incidents": 77,
+          "zone_alerts": {
+            "E1": 4,
+            "E2": 6,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "zone_incidents": {
+            "E1": 3,
+            "E2": 1,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "mixed_incidents": 2,
+          "multi_unit_incidents": 7,
+          "longest_days": 140,
+          "incidents_ci": [
+            60.7672,
+            96.2368
+          ],
+          "patient_links": 106
+        }
+      },
+      "stress/cpe": {
+        "R1": {
+          "alerts": 122,
+          "incidents": 104,
+          "zone_alerts": {
+            "E1": 4,
+            "E2": 6,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "zone_incidents": {
+            "E1": 1,
+            "E2": 1,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "mixed_incidents": 0,
+          "multi_unit_incidents": 0,
+          "longest_days": 29,
+          "incidents_ci": [
+            84.9755,
+            126.013
+          ],
+          "patient_links": 115
+        },
+        "R2": {
+          "alerts": 122,
+          "incidents": 108,
+          "zone_alerts": {
+            "E1": 4,
+            "E2": 6,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "zone_incidents": {
+            "E1": 2,
+            "E2": 1,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "mixed_incidents": 0,
+          "multi_unit_incidents": 0,
+          "longest_days": 21,
+          "incidents_ci": [
+            88.5945,
+            130.393
+          ],
+          "patient_links": 115
+        },
+        "R3": {
+          "alerts": 122,
+          "incidents": 93,
+          "zone_alerts": {
+            "E1": 4,
+            "E2": 6,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "zone_incidents": {
+            "E1": 1,
+            "E2": 1,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "mixed_incidents": 0,
+          "multi_unit_incidents": 0,
+          "longest_days": 93,
+          "incidents_ci": [
+            75.063,
+            113.931
+          ],
+          "patient_links": 115
+        },
+        "R4": {
+          "alerts": 122,
+          "incidents": 68,
+          "zone_alerts": {
+            "E1": 4,
+            "E2": 6,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "zone_incidents": {
+            "E1": 1,
+            "E2": 1,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "mixed_incidents": 2,
+          "multi_unit_incidents": 0,
+          "longest_days": 125,
+          "incidents_ci": [
+            52.8047,
+            86.2062
+          ],
+          "patient_links": 115
+        },
+        "R5": {
+          "alerts": 122,
+          "incidents": 42,
+          "zone_alerts": {
+            "E1": 4,
+            "E2": 6,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "zone_incidents": {
+            "E1": 1,
+            "E2": 1,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "mixed_incidents": 3,
+          "multi_unit_incidents": 16,
+          "longest_days": 186,
+          "incidents_ci": [
+            30.2699,
+            56.7718
+          ],
+          "patient_links": 115
+        },
+        "R6": {
+          "alerts": 122,
+          "incidents": 85,
+          "zone_alerts": {
+            "E1": 4,
+            "E2": 6,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "zone_incidents": {
+            "E1": 3,
+            "E2": 1,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "mixed_incidents": 2,
+          "multi_unit_incidents": 7,
+          "longest_days": 120,
+          "incidents_ci": [
+            67.895,
+            105.104
+          ],
+          "patient_links": 115
+        },
+        "R7": {
+          "alerts": 122,
+          "incidents": 83,
+          "zone_alerts": {
+            "E1": 4,
+            "E2": 6,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "zone_incidents": {
+            "E1": 3,
+            "E2": 1,
+            "E3": 1,
+            "E4": 1,
+            "Q-MED-A-ecoli": 1,
+            "Q-MED-A-gap": 1
+          },
+          "mixed_incidents": 2,
+          "multi_unit_incidents": 7,
+          "longest_days": 140,
+          "incidents_ci": [
+            66.109,
+            102.891
+          ],
+          "patient_links": 115
+        }
+      }
+    }
+  },
+  "checks": {
+    "R1_reproduces": {
+      "R1 live: alerts, incidents against committed": [
+        [
+          18,
+          15
+        ],
+        [
+          18,
+          15
+        ]
+      ],
+      "R1 gp: alerts, incidents against committed": [
+        [
+          13,
+          12
+        ],
+        [
+          13,
+          12
+        ]
+      ],
+      "R1 live with CPE finds against I1_full_tool": [
+        [
+          27,
+          24
+        ],
+        [
+          27,
+          24
+        ]
+      ]
+    },
+    "causal": {
+      "grouping_disagreements": {
+        "live/op/no cpe": 0,
+        "gp/op/no cpe": 0,
+        "live/stress/no cpe": 0,
+        "gp/stress/no cpe": 0,
+        "live/op/cpe": 0,
+        "gp/op/cpe": 0,
+        "live/stress/cpe": 0,
+        "gp/stress/cpe": 0
+      },
+      "detector_signals": {
+        "live": [],
+        "gp": []
+      }
+    }
+  },
+  "committed_rows": {
+    "live_D7": 0.973764,
+    "live_I1": {
+      "alerts": 18,
+      "incidents": 15,
+      "alerts_per_incident": 1.2
+    },
+    "gp_D7": 0.998379,
+    "gp_I1": {
+      "alerts": 13,
+      "incidents": 12,
+      "alerts_per_incident": 1.08333
+    }
+  },
+  "rules": {
+    "R1": "D-034: same unit and a shared organism or phenotype, 28 d",
+    "R2": "as R1, 14 d",
+    "R3": "as R1, 56 d",
+    "R4": "same unit only, 28 d",
+    "R5": "shared organism or phenotype in any unit, 28 d",
+    "R6": "shared patient in any unit, 28 d",
+    "R7": "R1 or R6, 28 d"
+  },
+  "figure_rows": [
+    {
+      "date": "2026-03-03",
+      "kind": "sentinel",
+      "en": "First MRSA in Intensive care unit in 180 days",
+      "fi": "Ensimmäinen MRSA yksikössä Teho-osasto 180 päivään",
+      "missing": []
+    },
+    {
+      "date": "2026-03-07",
+      "kind": "cluster",
+      "en": "MRSA in Intensive care unit: 3 isolates in 4 weeks, usual 0.1",
+      "fi": "MRSA yksikössä Teho-osasto: 3 eristettä 4 viikossa, tavallisesti 0,1",
+      "missing": []
+    },
+    {
+      "date": "2026-03-09",
+      "kind": "cluster",
+      "en": "Staphylococcus aureus in Intensive care unit: 3 isolates in 4 weeks, usual 0.0",
+      "fi": "Staphylococcus aureus yksikössä Teho-osasto: 3 eristettä 4 viikossa, tavallisesti 0,0",
+      "missing": []
+    },
+    {
+      "date": "2025-06-04",
+      "kind": "cluster",
+      "en": "Escherichia coli in Urology: 4 isolates in 4 weeks, usual 0.2",
+      "fi": "Escherichia coli yksikössä Urologia: 4 eristettä 4 viikossa, tavallisesti 0,2",
+      "missing": []
+    },
+    {
+      "date": "2025-12-08",
+      "kind": "data",
+      "en": "Health centre South: no samples for 1 day",
+      "fi": "Terveysasema Etelä: ei näytteitä 1 päivään",
+      "missing": []
+    },
+    {
+      "date": "2026-05-10",
+      "kind": "trend",
+      "en": "Escherichia coli TMP resistance rising: — → 23% over —",
+      "fi": "Escherichia coli TMP -resistenssi nousussa: — → 23 % ajalla —",
+      "missing": [
+        "start",
+        "span"
+      ]
+    }
+  ]
+}

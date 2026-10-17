@@ -1,20 +1,24 @@
 {
   "name": "@aei/web",
-  "version": "0.0.0",
   "private": true,
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -p . && vite build",
+    "build": "tsc -p tsconfig.json && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc -p ."
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "smoke": "node scripts/smoke.mjs"
   },
   "dependencies": {
-    "@aei/ask": "workspace:*",
+    "@aei/alerts": "workspace:*",
     "@aei/contract": "workspace:*",
+    "@aei/counting": "workspace:*",
+    "@aei/coverage": "workspace:*",
+    "@aei/detect": "workspace:*",
     "@aei/domain": "workspace:*",
-    "@aei/i18n": "workspace:*",
-    "@aei/relations": "workspace:*",
+    "@aei/eucast": "workspace:*",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },
@@ -22,6 +26,8 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
-    "vite": "^8.3.4"
+    "typescript": "~5.9.3",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.5"
   }
 }

@@ -10,7 +10,9 @@
       "*.json",
       "!**/node_modules",
       "!**/dist",
-      "!!.claude/worktrees"
+      "!apps/web/smoke-out",
+      "!!.claude/worktrees",
+      "!benchmarks/**/*.json"
     ]
   },
   "formatter": {

@@ -23,3 +23,34 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm check
       - run: pnpm test
+
+  # The container files in deploy/container stay buildable (images are not pushed).
+  containers:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - run: docker build -f deploy/container/Containerfile.api -t aei-api:ci .
+      - run: docker build -f deploy/container/Containerfile.web -t aei-web:ci .
+
+  # Every screen rendered in Chrome at desktop and phone size against a small committed fixture
+  # (apps/web/scripts/smoke-fixture), since the organisers' dataset is not in git. The screenshots
+  # and report are kept as the run's "smoke" artifact.
+  smoke:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm smoke -- --fixture
+        env:
+          CHROME: google-chrome
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: smoke
+          path: apps/web/smoke-out/
+          if-no-files-found: warn

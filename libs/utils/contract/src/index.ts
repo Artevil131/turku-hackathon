@@ -2,6 +2,7 @@ import type { Alert } from "@aei/alerts";
 import type { AgeGroup } from "@aei/ask";
 import type { CombinationSuggestion, CoverageResult, CoverageQuery as GearCoverageQuery, Severity, Suggestion } from "@aei/coverage";
 import type { Antibiotic, IsoDate, IsolateRecord, Organism, Sex, Specimen, Ward, WardCode } from "@aei/domain";
+import type { CheckSummary } from "@aei/quality";
 import type { Flow, TrailLink } from "@aei/relations";
 import type { ClockState } from "@aei/replay";
 
@@ -23,6 +24,8 @@ export const ROUTES = {
   ingest: "/api/ingest",
   /** THL county series of MRSA, ESBL, VRE and CPE and their regional signals (D-025, D-037). */
   regional: "/api/regional",
+  /** Plausibility checks over the rows the server holds (D-038). */
+  quality: "/api/quality",
 } as const;
 
 export interface Meta {
@@ -201,6 +204,14 @@ export function regionalUpTo(data: RegionalData, asOf: IsoDate, query: RegionalQ
   };
 }
 
+export type { CheckName, CheckSummary, Finding, Severity as FindingSeverity } from "@aei/quality";
+
+/** Every check run over every row the server holds, grouped by check; no findings means every check passed. */
+export interface QualityResponse {
+  checked: { patients: number; cultures: number; isolates: number; results: number };
+  summary: CheckSummary[];
+}
+
 /** Server-sent events on ROUTES.live. The event name is the `type`. */
 export type LiveEvent =
   | { type: "clock"; clock: ClockState }
@@ -245,6 +256,7 @@ export interface AeiClient {
   alerts(query: AlertsQuery): Promise<AlertsResponse>;
   /** 404 when the server has no regional file. */
   regional(query: RegionalQuery): Promise<RegionalResponse>;
+  quality(): Promise<QualityResponse>;
   /** Opens the live stream; returns a function that closes it. */
   live(onEvent: (event: LiveEvent) => void, onError?: (error: Event) => void): () => void;
 }
@@ -290,6 +302,7 @@ export function createAeiClient(options: AeiClientOptions): AeiClient {
     relations: (query) => json<RelationsResponse>(withQuery(ROUTES.relations, query)),
     alerts: (query) => json<AlertsResponse>(withQuery(ROUTES.alerts, query)),
     regional: (query) => json<RegionalResponse>(withQuery(ROUTES.regional, query)),
+    quality: () => json<QualityResponse>(ROUTES.quality),
     live(onEvent, onError) {
       const source = new ES(url(ROUTES.live));
       for (const type of LIVE_EVENT_TYPES) {

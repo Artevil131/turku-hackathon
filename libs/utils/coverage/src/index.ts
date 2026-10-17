@@ -105,6 +105,29 @@ export function wilson(k: number, n: number, z = 1.959964): [number, number] {
   return [Math.max(0, centre - half), Math.min(1, centre + half)];
 }
 
+/**
+ * Covered and known counts for one antibiotic over a list of isolates, with
+ * the EUCAST rules (`effectiveResult`): untested isolates are left out;
+ * resistance by nature counts as not covered; with `inSpectrumOnly`,
+ * organisms the antibiotic has no breakpoint for are left out too (D-027).
+ */
+export function countCovered(list: readonly IsolateRecord[], antibiotic: AntibioticCode, inSpectrumOnly = false): Counts {
+  let covered = 0;
+  let known = 0;
+  for (const r of list) {
+    const e = effectiveResult(r, antibiotic);
+    if (e.basis === "untested" || (inSpectrumOnly && e.basis === "no-breakpoint")) continue;
+    known++;
+    if (e.result === "S") covered++;
+  }
+  return { covered, known };
+}
+
+/** The antibiotics offered for a specimen, in the dataset's order: suited to it (EUCAST) and not in NOT_OFFERED. */
+export function offeredFor(specimen: Specimen): readonly AntibioticCode[] {
+  return ANTIBIOTICS.filter((a) => suitsSpecimen(a.code, specimen) && !NOT_OFFERED[specimen]?.includes(a.code)).map((a) => a.code);
+}
+
 export function coverage(records: readonly IsolateRecord[], q: CoverageQuery): CoverageResult {
   const windowDays = q.windowDays ?? 365;
   const minTested = q.minTested ?? 30;
@@ -136,43 +159,32 @@ export function coverage(records: readonly IsolateRecord[], q: CoverageQuery): C
     c.known >= minTested
       ? { share: c.covered / c.known, interval: wilson(c.covered, c.known), counts: c }
       : { share: null, interval: null, counts: c };
-  const count = (list: readonly IsolateRecord[], a: AntibioticCode, inSpectrumOnly = false): Counts => {
-    let covered = 0;
-    let known = 0;
-    for (const r of list) {
-      const e = effectiveResult(r, a);
-      if (e.basis === "untested" || (inSpectrumOnly && e.basis === "no-breakpoint")) continue;
-      known++;
-      if (e.result === "S") covered++;
-    }
-    return { covered, known };
-  };
+  const count = countCovered;
   const organismShare = (pred: (r: IsolateRecord) => boolean) => {
     const by = new Map<Organism, number>();
     for (const r of pool) if (pred(r)) by.set(r.organism, (by.get(r.organism) ?? 0) + 1);
     return [...by.entries()].map(([organism, n]) => ({ organism, share: n / pool.length })).sort((a, b) => b.share - a.share);
   };
 
-  const offered = ANTIBIOTICS.filter((a) => suitsSpecimen(a.code, q.specimen) && !NOT_OFFERED[q.specimen]?.includes(a.code));
-  const antibiotics = offered.map(
-    (a): AntibioticCoverage => ({
-      antibiotic: a.code,
-      ...share(count(pool, a.code)),
-      spectrum: share(count(pool, a.code, true)),
-      recent: count(recentPool, a.code),
-      untested: organismShare((r) => effectiveResult(r, a.code).basis === "untested"),
+  const codes = offeredFor(q.specimen);
+  const antibiotics = codes.map(
+    (code): AntibioticCoverage => ({
+      antibiotic: code,
+      ...share(count(pool, code)),
+      spectrum: share(count(pool, code, true)),
+      recent: count(recentPool, code),
+      untested: organismShare((r) => effectiveResult(r, code).basis === "untested"),
       notCovering: organismShare((r) => {
-        const e = effectiveResult(r, a.code);
+        const e = effectiveResult(r, code);
         return e.basis === "intrinsic" || e.basis === "no-breakpoint";
       }),
-      outsideSpectrum: organismShare((r) => effectiveResult(r, a.code).basis === "no-breakpoint"),
+      outsideSpectrum: organismShare((r) => effectiveResult(r, code).basis === "no-breakpoint"),
     }),
   );
 
   // A pair covers an isolate if either antibiotic does, counted only on isolates with a known result for
   // both; how many isolates lack one of them is kept, since that dropout is not random by organism.
   const combinations: CombinationCoverage[] = [];
-  const codes = offered.map((a) => a.code);
   for (let i = 0; i < codes.length; i++) {
     for (let j = i + 1; j < codes.length; j++) {
       const pair: [AntibioticCode, AntibioticCode] = [codes[i] as AntibioticCode, codes[j] as AntibioticCode];
