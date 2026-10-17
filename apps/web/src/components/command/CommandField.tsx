@@ -59,6 +59,26 @@ function typing(target: EventTarget | null): boolean {
  * choosing another unit while it is open leaves the page and comes back,
  * replacing the history entry rather than adding two.
  */
+const RECENT_KEY = "aei.cmd.recent";
+const RECENT_MAX = 3;
+
+function readRecent(): string[] {
+  try {
+    const v = JSON.parse(localStorage.getItem(RECENT_KEY) ?? "[]");
+    return Array.isArray(v) ? v.filter((x): x is string => typeof x === "string").slice(0, RECENT_MAX) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeRecent(ids: string[]): void {
+  try {
+    localStorage.setItem(RECENT_KEY, JSON.stringify(ids));
+  } catch {
+    // storage may be blocked; recents are a convenience only
+  }
+}
+
 function go(href: string): void {
   // Every page listens for hash changes, so this works from any page, the same one included.
   location.hash = href.slice(1);
@@ -84,7 +104,14 @@ export function CommandField({ locale, alerts, asOf = null }: Props) {
   const wrap = useRef<HTMLDivElement>(null);
 
   const entries = useMemo(() => buildEntries(locale, alerts ?? [], asOf), [locale, alerts, asOf]);
-  const results = useMemo(() => search(entries, query), [entries, query]);
+  const [recent, setRecent] = useState<string[]>(readRecent);
+  // With nothing typed, what the user chose last comes first, one click from the board.
+  const results = useMemo(() => {
+    const found = search(entries, query);
+    if (query.trim()) return found;
+    const mine = recent.flatMap((id) => entries.find((e) => e.id === id) ?? []).map((e) => ({ ...e, score: 1 }));
+    return [...mine, ...found.filter((r) => !recent.includes(r.id))];
+  }, [entries, query, recent]);
   const showList = focused;
   const current = results[Math.min(active, results.length - 1)];
 
@@ -140,6 +167,9 @@ export function CommandField({ locale, alerts, asOf = null }: Props) {
 
   const choose = (r: Result | undefined) => {
     if (!r) return;
+    const next = [r.id, ...recent.filter((id) => id !== r.id)].slice(0, RECENT_MAX);
+    setRecent(next);
+    writeRecent(next);
     close();
     go(r.href);
   };
@@ -229,14 +259,16 @@ export function CommandField({ locale, alerts, asOf = null }: Props) {
           {results.length ? (
             <div className="cmd-list" id={listId} role="listbox" aria-label={t(locale, "cmdResults")}>
               {results.map((r, i) => {
-                const header = r.group !== lastGroup;
-                lastGroup = r.group;
+                const isRecent = !query.trim() && i < recent.filter((id) => entries.some((e) => e.id === id)).length;
+                const section = isRecent ? "recent" : r.group;
+                const header = section !== lastGroup;
+                lastGroup = section as Group;
                 const selected = r === current;
                 return (
                   <div key={r.id} role="presentation">
                     {header ? (
                       <div className="cmd-group" role="presentation">
-                        {t(locale, query || r.group !== "alerts" ? GROUP_LABEL[r.group] : "cmdGroupRecent")}
+                        {t(locale, isRecent ? "cmdGroupLast" : query || r.group !== "alerts" ? GROUP_LABEL[r.group] : "cmdGroupRecent")}
                       </div>
                     ) : null}
                     {/* biome-ignore lint/a11y/useKeyWithClickEvents: keys are handled on the combobox input */}
