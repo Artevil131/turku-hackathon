@@ -513,7 +513,7 @@ export function GeoMap({
 
           <details className="geo-lists">
             <summary className="geo-h3">{t(locale, "geoCounties")}</summary>
-            <section aria-label={t(locale, "geoCounties")}>
+            <section className="geo-counties" aria-label={t(locale, "geoCounties")}>
               {rows.length === 0 ? (
                 <p className="geo-faint">
                   {counties.state === "404" ? t(locale, "geoNoCounties") : loading ? t(locale, "mapLoading") : t(locale, "geoNoCases")}

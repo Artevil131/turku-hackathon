@@ -740,11 +740,11 @@
   grid-template-columns: auto minmax(0, 1fr) auto;
   grid-template-areas:
     "code when unit"
-    "name name name"
-    "what what what";
+    "name name name";
   gap: 1px 6px;
   width: 100%;
-  min-width: 164px;
+  min-width: 150px;
+  max-width: 200px;
   padding: 6px 8px;
   border: 1px solid var(--line, #e4e6ee);
   border-radius: 6px;

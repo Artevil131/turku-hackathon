@@ -9,7 +9,7 @@ import { shortTitle, unitLabel } from "./research/feed/names.ts";
 // as tiles, each appearing when its alert arrives. Nothing here is known before
 // the clock reaches it; a tile selects its signal and never moves the clock.
 
-const SHOWN = 6;
+const SHOWN = 4;
 
 interface Props {
   locale: Locale;
@@ -73,6 +73,7 @@ export function EventsStrip({ locale, incidents, selected, disabled, onPick, onM
                 className={`tl-ev${current ? " is-current" : ""}${entering(i.key) ? " is-entering" : ""}`}
                 disabled={disabled}
                 aria-pressed={current}
+                title={alertEvidence(locale, i.lead)}
                 onClick={() => onPick(i.key)}
               >
                 <span className="tl-ev-code">
@@ -81,7 +82,6 @@ export function EventsStrip({ locale, incidents, selected, disabled, onPick, onM
                 <span className="tl-ev-when">{compactDate(i.date)}</span>
                 <span className="tl-ev-unit">{unitLabel(locale, i.ward)}</span>
                 <span className="tl-ev-name">{shortTitle(locale, i.lead)}</span>
-                <span className="tl-ev-what">{alertEvidence(locale, i.lead)}</span>
               </button>
             </li>
           );

@@ -396,6 +396,17 @@ export function Workspace({
   return (
     <div className="ws" data-docked={wide}>
       <div className="ws-toolbar">
+        {/* Ready-made layouts, one click each; the tray keeps the per-window switches. */}
+        <div className="ws-layouts" role="group" aria-label={t(locale, "wsPresets")}>
+          <span className="ws-layouts-label">{t(locale, "wsPresets")}</span>
+          <div className="seg">
+            {PRESETS.map((p) => (
+              <button type="button" key={p} data-preset={p} onClick={() => preset(p)}>
+                {t(locale, PRESET_KEY[p])}
+              </button>
+            ))}
+          </div>
+        </div>
         <Tray locale={locale} layout={layout} onToggle={(id) => (locate(layout, id) ? close(id) : open(id))} onPreset={preset} />
       </div>
       <div

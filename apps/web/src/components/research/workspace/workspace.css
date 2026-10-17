@@ -532,3 +532,103 @@
     transition: none;
   }
 }
+
+/* ---------- Plain panels: the chrome shows on hover or focus, at the top-right corner ----------
+   A window reads as a regular panel. Hover it (or focus inside it) and the move grip, maximize and
+   close appear in its top-right corner; the dividers between windows carry the resize cursor. */
+.ws[data-docked="true"] .ws-win {
+  position: relative;
+}
+.ws[data-docked="true"] .ws-header {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 3;
+  min-height: 0;
+  padding: 2px;
+  gap: 2px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control, 6px);
+  background: color-mix(in oklab, #fff 92%, transparent);
+  box-shadow: 0 1px 3px rgba(7, 8, 28, 0.08);
+  opacity: 0;
+  transition: opacity var(--mo-1, 120ms) var(--mo-ease, ease-out);
+}
+.ws[data-docked="true"] .ws-win:hover .ws-header,
+.ws[data-docked="true"] .ws-win:focus-within .ws-header,
+.ws[data-docked="true"] .ws-win[data-dragging="true"] .ws-header {
+  opacity: 1;
+}
+/* The title is the grip: an icon with the name on hover of the grip itself. */
+.ws[data-docked="true"] .ws-title {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  justify-content: center;
+  border-radius: var(--radius-control, 6px);
+}
+.ws[data-docked="true"] .ws-title span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.ws[data-docked="true"] .ws-body {
+  height: 100%;
+}
+/* Touch screens have no hover: keep the chrome visible. */
+@media (hover: none) {
+  .ws[data-docked="true"] .ws-header {
+    opacity: 1;
+  }
+}
+
+/* The map never scrolls inside its window: the map fills it; the county list and the forecast
+   table belong to the maximized window (and the county detail). */
+.ws[data-docked="true"] .ws-win[data-win="map"] .ws-body {
+  overflow: hidden;
+}
+.ws[data-docked="true"] .ws-area:not([data-maximized="true"]) .ws-win[data-win="map"] .geo-stage {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 240px;
+}
+.ws[data-docked="true"] .ws-area:not([data-maximized="true"]) .ws-win[data-win="map"] :is(.geo-forecast-home, .geo-counties) {
+  display: none;
+}
+
+/* Ready-made layouts in the toolbar. */
+.ws-layouts {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: auto;
+}
+.ws-layouts-label {
+  font-size: var(--t-xs, 12px);
+  font-weight: 600;
+  color: var(--ink-3);
+}
+.ws-layouts .seg button {
+  height: 24px;
+  padding: 0 8px;
+  font-size: var(--t-xs, 12px);
+}
+/* In the docked map window the whole panel is the window's height and the map scales to the room left. */
+.ws[data-docked="true"] .ws-area:not([data-maximized="true"]) .ws-win[data-win="map"] .ws-body > .geo {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+.ws[data-docked="true"] .ws-area:not([data-maximized="true"]) .ws-win[data-win="map"] .geo-stage {
+  flex: 1 1 0;
+  min-height: 120px;
+  overflow: hidden;
+}
+.ws[data-docked="true"] .ws-area:not([data-maximized="true"]) .ws-win[data-win="map"] .geo-svg {
+  width: 100%;
+  height: 100%;
+}
