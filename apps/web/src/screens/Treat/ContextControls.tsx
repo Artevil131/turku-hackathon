@@ -19,14 +19,6 @@ export function ContextControls({
   prefs: TreatChoice;
   onPrefs: (patch: Partial<TreatChoice>) => void;
 }) {
-  const unitPicker = useMemo<PickerGroup<string>[]>(() => {
-    const groups = unitGroups(meta.units);
-    return groups.map((g) => ({
-      label: groups.length > 1 ? institutionLabel(locale, g.institution) : undefined,
-      options: g.units.map((u) => ({ value: u.code, label: named(locale, u), text: `${u.fi} ${u.en} ${u.code}` })),
-    }));
-  }, [meta.units, locale]);
-
   const specimenOptions = meta.specimens.map((s) => ({ value: s.code, label: capFirst(named(locale, s)) }));
   const severityOptions: { value: InfectionSeverity; label: string }[] = [
     { value: "mild", label: t(locale, "treat.severity.mild") },
@@ -35,14 +27,7 @@ export function ContextControls({
 
   return (
     <>
-      <Picker
-        locale={locale}
-        label={t(locale, "treat.patient.unit")}
-        value={prefs.ward}
-        groups={unitPicker}
-        onChange={(ward) => ward && onPrefs({ ward })}
-        icon={<Icon name="users" size={20} />}
-      />
+      <UnitPicker locale={locale} meta={meta} ward={prefs.ward} onChange={(ward) => onPrefs({ ward })} />
 
       {meta.specimens.length <= SEGMENT_MAX ? (
         <Segmented
@@ -70,5 +55,36 @@ export function ContextControls({
         onChange={(severity) => onPrefs({ severity })}
       />
     </>
+  );
+}
+
+export function UnitPicker({
+  locale,
+  meta,
+  ward,
+  onChange,
+}: {
+  locale: Locale;
+  meta: FeedMeta;
+  ward: string;
+  onChange: (ward: string) => void;
+}) {
+  const unitPicker = useMemo<PickerGroup<string>[]>(() => {
+    const groups = unitGroups(meta.units);
+    return groups.map((g) => ({
+      label: groups.length > 1 ? institutionLabel(locale, g.institution) : undefined,
+      options: g.units.map((u) => ({ value: u.code, label: named(locale, u), text: `${u.fi} ${u.en} ${u.code}` })),
+    }));
+  }, [meta.units, locale]);
+
+  return (
+    <Picker
+      locale={locale}
+      label={t(locale, "treat.patient.unit")}
+      value={ward}
+      groups={unitPicker}
+      onChange={(value) => value && onChange(value)}
+      icon={<Icon name="users" size={20} />}
+    />
   );
 }

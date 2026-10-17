@@ -4,6 +4,8 @@
 
 const en = {
   "treat.title": "What has worked here",
+  "treat.first.unit": "Which unit do you work on?",
+  "treat.list.singles": "Single drugs (not reliably enough)",
 
   // ---- Signals strip ----
   "treat.signals.label": "Alerts for this unit",
@@ -65,10 +67,10 @@ const en = {
   "treat.top.allOrganisms": "Covers {percent} of everything that grows here",
   "treat.top.allOrganismsFew": "Too few results to say how much of everything that grows here it covers",
   "treat.top.notFor": "Does not cover: {list}",
-  "treat.top.none": "No single antibiotic reaches {threshold} here.",
+  "treat.top.none": "No single antibiotic reliably reaches {threshold}: for that, its whole 95% range must be above {threshold}.",
   "treat.top.decide": "How often each antibiotic covered what grew in similar samples here. You decide — check your local guideline.",
   "treat.standing.clears": "Reaches {threshold}: the whole 95% range is above it",
-  "treat.standing.borderline": "Around {threshold}: the estimate reaches it, the range does not",
+  "treat.standing.borderline": "Estimate {percent}, but the range {lo}–{hi} dips below {threshold}",
   "treat.standing.below": "Below {threshold}",
   "treat.standing.na": "Not assessable: fewer than {min} results, or over a fifth not tested",
 
@@ -84,7 +86,7 @@ const en = {
   // ---- The other antibiotics ----
   "treat.list.title": "Other antibiotics",
   "treat.list.clears": "Also reach {threshold}",
-  "treat.list.borderline": "Around {threshold}",
+  "treat.list.borderline": "Estimate reaches {threshold}, range dips below",
   "treat.list.below": "Below {threshold}",
   "treat.list.na": "Not assessable",
   "treat.row.details": "Show details",
@@ -94,8 +96,7 @@ const en = {
 
   // ---- Combinations ----
   "treat.combo.title": "Pairs for a severe infection",
-  "treat.combo.lead":
-    "No single antibiotic reaches {threshold}. Pairs that cover at least 2 points more than the better one alone, never two beta-lactams:",
+  "treat.combo.lead": "Pairs that cover at least 2 points more than the better one alone, never two beta-lactams:",
   "treat.combo.gain": "+{points} points over {name} alone",
   "treat.combo.none": "No pair adds enough over a single antibiotic to be suggested.",
 
@@ -126,6 +127,8 @@ const en = {
 
 const fi: Record<keyof typeof en, string> = {
   "treat.title": "Mikä on tehonnut täällä",
+  "treat.first.unit": "Millä yksiköllä työskentelet?",
+  "treat.list.singles": "Yksittäiset lääkkeet (eivät riittävän luotettavasti)",
 
   "treat.signals.label": "Hälytykset tälle yksikölle",
   "treat.signals.more": "+{count} muuta hälytystä",
@@ -184,11 +187,12 @@ const fi: Record<keyof typeof en, string> = {
   "treat.top.allOrganisms": "Tehoaa {percent} kaikista täällä kasvaneista bakteereista",
   "treat.top.allOrganismsFew": "Liian vähän tuloksia sanomaan, kuinka suureen osaan kaikista bakteereista se tehoaa",
   "treat.top.notFor": "Ei tehoa: {list}",
-  "treat.top.none": "Mikään yksittäinen antibiootti ei yllä tähän: {threshold}.",
+  "treat.top.none":
+    "Mikään yksittäinen antibiootti ei yllä luotettavasti tasoon {threshold}: koko 95 %:n vaihteluvälin on oltava tason {threshold} yläpuolella.",
   "treat.top.decide":
     "Kuinka usein kukin antibiootti on tehonnut vastaavissa näytteissä täällä. Sinä päätät – tarkista paikallinen hoito-ohje.",
   "treat.standing.clears": "Yltää tasoon {threshold}: koko 95 %:n vaihteluväli on sen yläpuolella",
-  "treat.standing.borderline": "Noin {threshold}: arvio yltää, vaihteluväli ei",
+  "treat.standing.borderline": "Arvio {percent}, mutta vaihteluväli {lo}–{hi} ulottuu tason {threshold} alapuolelle",
   "treat.standing.below": "Alle {threshold}",
   "treat.standing.na": "Ei arvioitavissa: alle {min} tulosta tai yli viidennes testaamatta",
 
@@ -202,7 +206,7 @@ const fi: Record<keyof typeof en, string> = {
 
   "treat.list.title": "Muut antibiootit",
   "treat.list.clears": "Yltävät myös tasoon {threshold}",
-  "treat.list.borderline": "Noin {threshold}",
+  "treat.list.borderline": "Arvio yltää tasoon {threshold}, vaihteluväli ei",
   "treat.list.below": "Alle {threshold}",
   "treat.list.na": "Ei arvioitavissa",
   "treat.row.details": "Näytä tiedot",
@@ -212,7 +216,7 @@ const fi: Record<keyof typeof en, string> = {
 
   "treat.combo.title": "Yhdistelmät vaikeaan infektioon",
   "treat.combo.lead":
-    "Mikään yksittäinen antibiootti ei yllä tasoon {threshold}. Parit, jotka kattavat vähintään 2 prosenttiyksikköä enemmän kuin parempi yksinään, eivät koskaan kaksi beetalaktaamia:",
+    "Parit, jotka kattavat vähintään 2 prosenttiyksikköä enemmän kuin parempi yksinään, eivät koskaan kaksi beetalaktaamia:",
   "treat.combo.gain": "+{points} %-yks. verrattuna pelkkään: {name}",
   "treat.combo.none": "Mikään pari ei lisää tarpeeksi yksittäiseen antibioottiin verrattuna.",
 

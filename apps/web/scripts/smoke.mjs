@@ -457,8 +457,55 @@ async function main() {
   });
 
   await interaction(
+    "treat-first-use",
+    async (idle, reasons) => {
+      const { identifier } = await cdp.send("Page.addScriptToEvaluateOnNewDocument", { source: `localStorage.removeItem('aei.ward')` });
+      await load(cdp, `${base}/#treat`, idle);
+      await cdp.send("Page.removeScriptToEvaluateOnNewDocument", { identifier });
+      if (!(await evaluate(cdp, `!!document.querySelector('.treat-first-use') && !document.querySelector('.treat-result')`)))
+        reasons.push("fresh Treat must ask for a unit, without an answer");
+      await evaluate(cdp, `document.querySelector('.treat-first-use .k-pick-trigger').click()`);
+      await waitIn(`!!document.querySelector('.k-pick-opt')`);
+      await evaluate(
+        cdp,
+        `(() => {
+      const unit = [...document.querySelectorAll('.k-pick-opt')].find(x => /Urologia|Urology/.test(x.textContent));
+      if (!unit) throw new Error('Urology option missing');
+      unit.click();
+    })()`,
+      );
+      await idle();
+      if (
+        !(await evaluate(
+          cdp,
+          `JSON.parse(localStorage.getItem('aei.ward')) === 'URO' && !document.querySelector('.treat-first-use') && !!document.querySelector('.treat-context')`,
+        ))
+      )
+        reasons.push("choosing a unit must remember it and dismiss the prompt");
+      await load(cdp, `${base}/#treat`, idle);
+      if (await evaluate(cdp, `!!document.querySelector('.treat-first-use')`))
+        reasons.push("remembered unit must skip the prompt after reload");
+      const equal = await evaluate(
+        cdp,
+        `(() => {
+      const figures = [...document.querySelectorAll('.treat-answer-percent')];
+      if (figures.length !== 2) return false;
+      const [a,b] = figures.map(x => ({r:x.getBoundingClientRect(), s:getComputedStyle(x)}));
+      return a.r.y === b.r.y && a.s.fontSize === b.s.fontSize && a.s.fontWeight === b.s.fontWeight;
+    })()`,
+      );
+      if (!equal) reasons.push("mild answer must show two equal-weight figures side by side");
+    },
+    VIEWPORTS[1],
+  );
+
+  await interaction(
     "treat-phone-context",
     async (idle, reasons) => {
+      // This check exercises a returning clinician. Other route checks accept first use.
+      await cdp.send("Page.addScriptToEvaluateOnNewDocument", {
+        source: `localStorage.setItem('aei.ward', JSON.stringify('MED-A'))`,
+      });
       await load(cdp, `${base}/#treat`, idle);
       const initial = await evaluate(
         cdp,
@@ -468,7 +515,7 @@ async function main() {
         const r = document.querySelector(selector)?.getBoundingClientRect();
         return !!r && r.height > 0 && r.top >= 0 && r.bottom <= bar.top;
       };
-      return [".treat-context .k-pick-trigger", ".treat-context [role=radiogroup]", ".treat-context .k-field:last-child", ".treat-top-name", ".treat-top .k-share-pct"].every(fits);
+      return [".treat-context .k-pick-trigger", ".treat-context [role=radiogroup]", ".treat-context .k-field:last-child", ".treat-top-name", ".treat-top .treat-answer-percent, .treat-top .k-share-pct"].every(fits);
     })()`,
       );
       if (!initial) reasons.push("unit, site, severity, answer name and figure must fit above the phone tabs");
@@ -508,6 +555,16 @@ async function main() {
       if (!requests.some((url) => url.includes("specimen=blood") && url.includes("severity=severe")))
         reasons.push("context did not refresh the coverage answer");
       if (!(await evaluate(cdp, `location.hash === '#treat' && window.scrollY === 0`))) reasons.push("context taps scrolled or left Treat");
+      const combinationFits = await evaluate(
+        cdp,
+        `(() => {
+        const first = document.querySelector('.treat-result > article');
+        const range = first?.querySelector('.k-share-meta')?.getBoundingClientRect();
+        const tabs = document.querySelector('.app-tabs.is-bottom').getBoundingClientRect();
+        return first?.classList.contains('treat-pairs') && !!range && range.bottom <= tabs.top;
+      })()`,
+      );
+      if (!combinationFits) reasons.push("MED-A blood severe must lead with the combination and its range above phone tabs");
       const clear = await evaluate(
         cdp,
         `(() => {
@@ -517,6 +574,7 @@ async function main() {
     })()`,
       );
       if (!clear) reasons.push("last Treat control scrolls under the tab bar");
+      await evaluate(cdp, `window.scrollTo({ top: 0, behavior: 'instant' })`);
     },
     VIEWPORTS[1],
   );
