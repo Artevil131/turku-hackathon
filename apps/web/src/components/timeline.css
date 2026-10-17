@@ -466,3 +466,9 @@
     width: 100%;
   }
 }
+
+/* Data-checks status under the date (desktop) or at the foot of the sheet (phone). */
+.tl-quality {
+  display: flex;
+  min-width: 0;
+}
