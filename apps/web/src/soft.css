@@ -47,3 +47,19 @@
 .tl-play {
   border-radius: 12px;
 }
+
+/* Quieter windows: the "i" buttons fade until the window is hovered or focused, so a still screen shows data, not icons. */
+.ws-win .info-btn {
+  opacity: 0.35;
+  transition: opacity 160ms var(--ease-out);
+}
+.ws-win:hover .info-btn,
+.ws-win:focus-within .info-btn,
+.ws-win .info-btn[aria-expanded="true"] {
+  opacity: 1;
+}
+@media (hover: none) {
+  .ws-win .info-btn {
+    opacity: 1;
+  }
+}
