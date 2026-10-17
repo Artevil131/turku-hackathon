@@ -1,14 +1,15 @@
 import type { Alert, RelationsResponse } from "@aei/contract";
 import { WARDS, type WardCode } from "@aei/domain";
 import { t, wardName } from "@aei/i18n";
-import { type KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
+import { type CSSProperties, type KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { AsOf } from "../../AsOf.tsx";
 import { InfoButton } from "../../Info.tsx";
 import { kindOf, type PanelProps, type SignalKind } from "../board.ts";
 import { KindGlyph } from "../feed/glyphs.tsx";
 import { badgeText, shiftDays, signalsOf, type UnitSignals } from "../network/model.ts";
 import "./geo.css";
-import { bandPath, groupFlows, type Item, layoutFlow, type Placed } from "./flowLayout.ts";
+import { FlowMatrix } from "./FlowMatrix.tsx";
+import { bandOpacity, bandPath, groupFlows, type Item, layoutFlow, type Placed } from "./flowLayout.ts";
 import { useLoad } from "./useLoad.ts";
 
 // The researcher's unit graph: one unit at a time, as a small three-column
@@ -16,7 +17,9 @@ import { useLoad } from "./useLoad.ts";
 // to it on the left, the units its patients went to next on the right, each
 // band as thick as the number of patients. Clicking a side unit moves the focus
 // there. Beside a wide panel the columns sit side by side; on a narrow one they
-// stack (in-flows above, out-flows below). Positions are schematic.
+// stack (in-flows above, out-flows below). Positions are schematic. Bands are
+// shaded on one ramp by patients; bands to or from a unit with a resistance
+// signal use the accent. A second view lists all units as a flow matrix.
 
 const WINDOW_DAYS = 28;
 const NARROW = 560;
@@ -63,6 +66,7 @@ function useSize() {
 
 export function UnitGraph({ client, locale, asOf, state, onChange, reducedMotion }: PanelProps) {
   const [hover, setHover] = useState<WardCode | null>(null);
+  const [mode, setMode] = useState<"around" | "all">("around");
   const [attempt, setAttempt] = useState(0);
   const { ref: stage, size } = useSize();
 
@@ -128,7 +132,8 @@ export function UnitGraph({ client, locale, asOf, state, onChange, reducedMotion
     );
     const nIn = sum(ins.map((i) => i.patients));
     const nOut = sum(outs.map((i) => i.patients));
-    return { ins, outs, nIn, nOut };
+    const max = Math.max(1, ...ins.map((i) => i.patients), ...outs.map((i) => i.patients));
+    return { ins, outs, nIn, nOut, max };
   }, [centre, flows, narrow]);
 
   const W = Math.max(size.w, 280);
@@ -205,7 +210,9 @@ export function UnitGraph({ client, locale, asOf, state, onChange, reducedMotion
       const s = unit ? signals.byUnit.get(unit) : undefined;
       const isLit = unit ? lit.has(unit) : false;
       const gk = glyphKind(s);
-      const accent = dir === "out" && isLit;
+      const accent = isLit;
+      const o = accent ? bandOpacity(p.patients, view?.max ?? 1, 0.25, 0.7) : bandOpacity(p.patients, view?.max ?? 1, 0.1, 0.5);
+      const bandStyle = { "--o": o.toFixed(3), "--o-hi": Math.min(0.9, o + 0.3).toFixed(3) } as CSSProperties;
       const label = `${unit ?? t(locale, "netOthers")} · ${pct(p.share)} % · n ${p.patients}`;
       const d = narrow
         ? dir === "in"
@@ -263,13 +270,14 @@ export function UnitGraph({ client, locale, asOf, state, onChange, reducedMotion
         ) : null;
       const content = (
         <>
-          <path d={d} className="ug-band" data-dir={dir} data-accent={accent} data-active={active}>
+          <path d={d} className="ug-band" style={bandStyle} data-dir={dir} data-accent={accent} data-active={active}>
             <title>{bandAria(p, dir)}</title>
           </path>
           <rect
             className="ug-bar"
             data-lit={isLit}
             data-data={!!s?.data && !isLit}
+            data-active={active}
             x={bar.x}
             y={bar.y}
             width={bar.w}
@@ -330,13 +338,20 @@ export function UnitGraph({ client, locale, asOf, state, onChange, reducedMotion
     >
       <header className="ug-head">
         <h2 id="ug-title" className="ug-title">
-          {t(locale, "graphTitle")}
+          {centre ? t(locale, "netGraphHeading", { unit: centre }) : t(locale, "graphTitle")}
         </h2>
         {rel ? <AsOf locale={locale} date={rel.to} pending={updating} clockDate={asOf ?? undefined} /> : null}
         <p className="ug-caption">{t(locale, "netFlowCaption")}</p>
         <InfoButton locale={locale} label={t(locale, "netFlowInfoLabel")} align="end">
           {t(locale, "netFlowInfo")}
         </InfoButton>
+        <fieldset className="ug-seg" aria-label={t(locale, "netViewAria")}>
+          {(["around", "all"] as const).map((m) => (
+            <button key={m} type="button" className="ug-seg-btn" aria-pressed={mode === m} onClick={() => setMode(m)}>
+              {m === "around" ? t(locale, "netViewAround", { unit: centre ?? "" }).trim() : t(locale, "netViewAll")}
+            </button>
+          ))}
+        </fieldset>
         {showBack && home ? (
           <button
             type="button"
@@ -365,9 +380,34 @@ export function UnitGraph({ client, locale, asOf, state, onChange, reducedMotion
         </p>
       ) : null}
 
-      <div className="ug-stage" ref={stage} data-narrow={narrow}>
-        {view && geom && centre && (view.ins.length > 0 || view.outs.length > 0) ? (
-          <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="ug-svg" role="group" aria-label={t(locale, "graphTitle")}>
+      <div className="ug-stage" ref={stage} data-narrow={narrow} data-view={mode}>
+        {mode === "all" ? (
+          rel ? (
+            <FlowMatrix
+              locale={locale}
+              flows={flows}
+              focus={centre}
+              kindOf={(u) => glyphKind(signals.byUnit.get(u))}
+              signalText={(u) => {
+                const sg = signals.byUnit.get(u);
+                return sg ? t(locale, "netNodeSignals", { n: sg.alerts.length, list: sg.badges.map(badgeText).join("; ") }) : null;
+              }}
+              onPick={(u) => {
+                recentre(u);
+                setMode("around");
+              }}
+            />
+          ) : null
+        ) : view && geom && centre && (view.ins.length > 0 || view.outs.length > 0) ? (
+          <svg
+            viewBox={`0 0 ${W} ${H}`}
+            width={W}
+            height={H}
+            className="ug-svg"
+            data-hover={hover !== null}
+            role="group"
+            aria-label={t(locale, "graphTitle")}
+          >
             <g key={centre} className="ug-flow">
               <g className="ug-bands">
                 {renderSide(geom.ins, "in")}
@@ -389,6 +429,7 @@ export function UnitGraph({ client, locale, asOf, state, onChange, reducedMotion
                 ) : null}
                 <rect
                   className="ug-centre-box"
+                  data-hover={hover !== null}
                   data-data={!!cS?.data && !cLit}
                   x={cLeft}
                   y={cTop}

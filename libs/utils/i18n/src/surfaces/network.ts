@@ -1,7 +1,8 @@
 // Copy for the researcher's hospital network panel (spec-research.md). Keys are global: prefix them.
 
 export const networkEn = {
-  graphTitle: "Unit graph",
+  graphTitle: "Patient flow",
+  netGraphHeading: "Patient flow · {unit}",
   netTitle: "Patient flow, {from}–{to}",
   netPanelAria: "Hospital network: units, patient flow and signals",
   netShareNote: "share of patient flow, not exposure",
@@ -67,10 +68,21 @@ export const networkEn = {
   netFlowRecentre: "show its flow",
   netCentreAria: "{unit}, {name}: {nIn} patients in, {nOut} patients out in 28 days",
   netFlowEmpty: "No transfers in or out of {unit} in the last 28 days.",
+  netViewAria: "Patient flow view",
+  netViewAround: "Around {unit}",
+  netViewAll: "All units",
+  netMatrixCaption: "Patients who moved from the unit in the row to the unit in the column, last 28 days",
+  netMatrixCorner: "from ↓ · to →",
+  netMatrixCell: "{from} to {to}: {n} patients",
+  netMatrixCellNone: "{from} to {to}: no patients",
+  netMatrixRowHead: "{unit}, {name}, from",
+  netMatrixColHead: "{unit}, {name}, to",
+  netMatrixRecentre: "show the flow around {unit}",
 } as const;
 
 export const networkFi: Record<keyof typeof networkEn, string> = {
-  graphTitle: "Yksikkökaavio",
+  graphTitle: "Potilasvirta",
+  netGraphHeading: "Potilasvirta · {unit}",
   netTitle: "Potilasvirta {from}–{to}",
   netPanelAria: "Sairaalaverkosto: yksiköt, potilasvirta ja signaalit",
   netShareNote: "osuus potilasvirrasta, ei altistuma",
@@ -136,4 +148,14 @@ export const networkFi: Record<keyof typeof networkEn, string> = {
   netFlowRecentre: "näytä sen virta",
   netCentreAria: "{unit}, {name}: {nIn} potilasta tuli, {nOut} lähti 28 päivässä",
   netFlowEmpty: "Yksikköön {unit} tai sieltä pois ei ollut siirtoja viimeisen 28 päivän aikana.",
+  netViewAria: "Potilasvirran näkymä",
+  netViewAround: "Yksikön {unit} ympärillä",
+  netViewAll: "Kaikki yksiköt",
+  netMatrixCaption: "Potilaat, jotka siirtyivät rivin yksiköstä sarakkeen yksikköön, viimeiset 28 päivää",
+  netMatrixCorner: "mistä ↓ · minne →",
+  netMatrixCell: "{from} yksikköön {to}: {n} potilasta",
+  netMatrixCellNone: "{from} yksikköön {to}: ei potilaita",
+  netMatrixRowHead: "{unit}, {name}, lähtöyksikkö",
+  netMatrixColHead: "{unit}, {name}, kohdeyksikkö",
+  netMatrixRecentre: "näytä yksikön {unit} ympärillä oleva virta",
 };
