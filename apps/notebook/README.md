@@ -42,3 +42,9 @@ The Reproduce window on main (`projects/Reproduce.tsx`) opens
 `lab/index.html?path=projects/<id>/reproduce.ipynb`, or `reproduce-r.ipynb` for R.
 `analysis.ipynb` is the research package's name in RESEARCHER-WORKFLOWS.md; the
 API does not serve it, so the window opens the reproduce notebooks instead.
+
+## The page's own Python kernel
+
+The Notebook window runs Python in the page (D-077, proposed) and installs `aei` from
+`apps/web/public/notebook/pypi`. Without the full build, `apps/notebook/wheel.sh` (or
+`pnpm notebook:wheel`) writes just the wheel and its pointer there; it needs only uv.

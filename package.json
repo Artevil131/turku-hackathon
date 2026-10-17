@@ -13,6 +13,7 @@
     "demo": "bash scripts/demo.sh",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
+    "notebook:wheel": "apps/notebook/wheel.sh",
     "test": "vitest run && uv run pytest -q libs/utils/py/tests",
     "check": "biome check .",
     "format": "biome check --write .",

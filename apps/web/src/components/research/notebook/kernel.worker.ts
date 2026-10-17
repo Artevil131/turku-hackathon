@@ -106,7 +106,9 @@ async function boot(origin: string) {
   py.setStderr({ batched: stream });
   await py.loadPackage(["micropip"], { messageCallback: quiet });
   const pointer = await fetch(`${origin}/notebook/pypi/aei.json`);
-  if (!pointer.ok) throw new Error(`no aei wheel at ${origin}/notebook/pypi (apps/notebook/build.sh builds it)`);
+  // A dev server without the notebook build answers with the app's index.html (status 200): say what is missing.
+  if (!pointer.ok || !(pointer.headers.get("content-type") ?? "").includes("json"))
+    throw new Error(`no aei wheel at ${origin}/notebook/pypi: run apps/notebook/build.sh once, it publishes the notebook and the wheel`);
   const { wheel } = (await pointer.json()) as { wheel: string };
   const micropip = py.runPython("import micropip\nmicropip") as { install(u: string): Promise<void> };
   await micropip.install(`${origin}/notebook/pypi/${wheel}`);
