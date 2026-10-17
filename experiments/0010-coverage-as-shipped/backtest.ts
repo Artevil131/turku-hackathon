@@ -4,7 +4,6 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { firstIsolates } from "../../libs/utils/counting/src/index.ts";
 import {
-  AWARE,
   type CoverageResult,
   coverage,
   IV_ONLY,
@@ -13,6 +12,26 @@ import {
   suggestCombinations,
 } from "../../libs/utils/coverage/src/index.ts";
 import { joinIsolates, loadDataset } from "../../libs/utils/dataset/src/index.ts";
+import type { AntibioticCode } from "../../libs/utils/domain/src/index.ts";
+
+// WHO AWaRe (2023) as @aei/coverage exported it when this experiment ran (2cc7d33, D-026); the gear dropped it in
+// 729f327 (D-050, D-056). Kept here so the record's `aware` column and analysis.py's Access shares still mean what
+// they meant; the suggestion order itself is the live gear's.
+const AWARE: Record<AntibioticCode, "Access" | "Watch"> = {
+  AMP: "Access",
+  MEC: "Access",
+  TMP: "Access",
+  NIT: "Access",
+  CLI: "Access",
+  TZP: "Watch",
+  FOX: "Watch",
+  CXM: "Watch",
+  CRO: "Watch",
+  CAZ: "Watch",
+  MEM: "Watch",
+  CIP: "Watch",
+  VAN: "Watch",
+};
 import { type AntibioticCode, type IsolateRecord, SPECIMENS, type Specimen, WARDS } from "../../libs/utils/domain/src/index.ts";
 import { effectiveResult } from "../../libs/utils/eucast/src/index.ts";
 import { addDays } from "../../libs/utils/replay/src/index.ts";

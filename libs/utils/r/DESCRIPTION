@@ -1,0 +1,14 @@
+Package: aei
+Type: Package
+Title: Read and Verify Antibiotic Efficacy Indicator Research Data
+Version: 0.1.0
+Authors@R: person("AEI", "Team", role = c("aut", "cre"),
+    email = "aei@example.org")
+Description: Read typed research packages and query the Antibiotic Efficacy
+    Indicator API. Verify frozen project data against its recorded SHA-256
+    fingerprint and optionally convert microbiology columns with AMR.
+License: Unlimited
+Encoding: UTF-8
+Imports: jsonlite, digest, utils
+Suggests: AMR, curl, testthat (>= 3.0.0)
+Config/testthat/edition: 3

@@ -1,7 +1,7 @@
 import { t } from "@aei/i18n";
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { currentHospitalName } from "../../sites.ts";
-import { subscribeHash, writeHashParams } from "../../url.ts";
+import { hashParams, subscribeHash, writeHashParams } from "../../url.ts";
 import { Assistant } from "./assistant/Assistant.tsx";
 import { type BoardState, boardFromUrl, boardToParams, type FeedProps } from "./board.ts";
 import { applyFilters } from "./feed/model.ts";
@@ -11,6 +11,8 @@ import { useIncidents } from "./feed/useIncidents.ts";
 import { GeoMap } from "./geo/GeoMap.tsx";
 import { UnitGraph } from "./geo/UnitGraph.tsx";
 import { AlertMath } from "./math/AlertMath.tsx";
+import { ProjectControls } from "./projects/ProjectControls.tsx";
+import { useProject } from "./projects/useProject.ts";
 import { SignalFeed } from "./SignalFeed.tsx";
 import { UnitGrid } from "./UnitGrid.tsx";
 import type { WinId } from "./workspace/layout.ts";
@@ -32,7 +34,9 @@ export function ResearchBoard(props: Props) {
   const { locale, client, asOf, findings, acknowledge, command } = props;
   const [state, setState] = useState<BoardState>(boardFromUrl);
   const onChange = useCallback((patch: Partial<BoardState>) => setState((s) => ({ ...s, ...patch })), []);
-  useEffect(() => writeHashParams(boardToParams(state)), [state]);
+  // The project (the friend's shell, D-057 on main) travels in the hash beside the board's own params.
+  const project = useProject(client, asOf);
+  useEffect(() => writeHashParams({ ...boardToParams(state), project: hashParams().get("project") }), [state]);
   // A link followed inside the app (or the back button) changes the hash without remounting.
   // Also when another component (the timeline's pills and lanes) writes `inc=` or `unit=` through url.ts.
   useEffect(() => {
@@ -138,6 +142,7 @@ export function ResearchBoard(props: Props) {
         content={content}
         initiallyOpen={initiallyOpen.current}
         reveal={reveal}
+        toolbar={<ProjectControls client={client} locale={locale} clock={asOf} board={state} selection={project} />}
         primary={primary}
         answers={ANSWERS}
         lead={lead}

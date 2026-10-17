@@ -16,16 +16,30 @@ import type {
   Ward,
   WardCode,
 } from "@aei/domain";
+import type { Project, ProjectInput } from "@aei/projects";
 import type { CheckSummary, Finding } from "@aei/quality";
 import type { Flow, TrailLink } from "@aei/relations";
 import type { ClockState } from "@aei/replay";
 import type { WeeklySeries } from "@aei/viz";
+
+export type { Project, ProjectInput, ProjectScope } from "@aei/projects";
+
+export interface ProjectsResponse {
+  projects: Project[];
+}
+
+export interface ProjectResponse {
+  project: Project;
+  drift?: boolean;
+}
 
 // The contract between the AEI server and its clients (web, later the
 // phone app). The current server is apps/api in TypeScript; a Rust server
 // can replace it by serving the same routes and events (DECISIONS.md D-006).
 
 export const ROUTES = {
+  /** Server-stored research scopes, continuous or frozen (D-057, D-058). */
+  projects: "/api/projects",
   ask: "/api/ask",
   explain: "/api/explain",
   coverage: "/api/coverage",
@@ -479,6 +493,11 @@ export interface AeiClientOptions {
 }
 
 export interface AeiClient {
+  projects(): Promise<ProjectsResponse>;
+  project(id: string): Promise<ProjectResponse>;
+  createProject(input: ProjectInput): Promise<ProjectResponse>;
+  updateProject(id: string, input: ProjectInput): Promise<ProjectResponse>;
+  deleteProject(id: string): Promise<void>;
   ask(text: string, lang: "en" | "fi"): Promise<AskResponse>;
   /** The code's template by default; `wording: "model"` asks the AI to reword it (D-029). */
   explain(id: string, lang: "en" | "fi", wording?: ExplainWording): Promise<ExplainResponse>;
@@ -527,13 +546,28 @@ export function createAeiClient(options: AeiClientOptions): AeiClient {
   const ES = options.EventSource ?? globalThis.EventSource;
   const url = (path: string) => `${options.baseUrl}${path}`;
 
-  async function json<T>(path: string, init?: RequestInit): Promise<T> {
+  async function request(path: string, init?: RequestInit): Promise<Response> {
     const res = await doFetch(url(path), init);
     if (!res.ok) throw new ApiError(res.status, `${init?.method ?? "GET"} ${path}: ${res.status} ${await res.text()}`);
-    return (await res.json()) as T;
+    return res;
   }
 
+  async function json<T>(path: string, init?: RequestInit): Promise<T> {
+    return (await (await request(path, init)).json()) as T;
+  }
+
+  const projectPath = (id: string) => `${ROUTES.projects}/${encodeURIComponent(id)}`;
+  const projectWrite = (method: "POST" | "PUT", path: string, input: ProjectInput) =>
+    json<ProjectResponse>(path, { method, headers: { "content-type": "application/json" }, body: JSON.stringify(input) });
+
   return {
+    projects: () => json<ProjectsResponse>(ROUTES.projects),
+    project: (id) => json<ProjectResponse>(projectPath(id)),
+    createProject: (input) => projectWrite("POST", ROUTES.projects, input),
+    updateProject: (id, input) => projectWrite("PUT", projectPath(id), input),
+    deleteProject: async (id) => {
+      await request(projectPath(id), { method: "DELETE" });
+    },
     ask: (text, lang) =>
       json<AskResponse>(ROUTES.ask, {
         method: "POST",

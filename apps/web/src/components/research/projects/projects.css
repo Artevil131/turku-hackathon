@@ -1,0 +1,171 @@
+.project-controls,
+.project-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.project-frozen {
+  margin-right: auto;
+  color: var(--ink-2);
+  font-size: var(--t-xs, 12px);
+}
+.project-frozen strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+:is(.project-dialog, .project-export-menu) {
+  box-sizing: border-box;
+  width: min(600px, calc(100vw - 32px));
+  max-height: calc(100dvh - 48px);
+  padding: 20px;
+  overflow-y: auto;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-panel, 10px);
+  background: #fff;
+  color: var(--ink);
+  box-shadow: var(--pop-shadow, 0 8px 32px rgb(7 8 28 / 0.16));
+  font: inherit;
+  font-size: var(--t-s, 13px);
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+.project-dialog::backdrop {
+  background: rgb(7 8 28 / 0.24);
+}
+:is(.project-dialog, .project-export-menu) header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+:is(.project-dialog, .project-export-menu) h2 {
+  margin: 0;
+  font-size: var(--t-l, 18px);
+}
+:is(.project-dialog, .project-export-menu) button {
+  min-height: 36px;
+  padding: 6px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control, 6px);
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+:is(.project-dialog, .project-export-menu) button:hover:not(:disabled) {
+  background: var(--glass-1, #f6f7fa);
+}
+:is(.project-dialog, .project-export-menu) button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+:is(.project-dialog, .project-export-menu) :focus-visible,
+.project-controls > button:focus-visible {
+  outline: 2px solid var(--live);
+  outline-offset: 3px;
+}
+.project-list {
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+}
+.project-list ul {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+}
+.project-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.project-list li > div:first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.project-mode,
+.project-list small {
+  display: block;
+  margin-top: 4px;
+  color: var(--ink-2);
+  font-size: var(--t-xs, 12px);
+  font-variant-numeric: tabular-nums;
+}
+:is(.project-dialog, .project-export-menu) form {
+  display: grid;
+  gap: 16px;
+  margin-top: 20px;
+}
+:is(.project-dialog, .project-export-menu) form > label {
+  display: grid;
+  gap: 6px;
+}
+:is(.project-dialog, .project-export-menu) input:not([type="radio"]),
+:is(.project-dialog, .project-export-menu) textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 36px;
+  padding: 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control, 6px);
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  caret-color: var(--live);
+}
+:is(.project-dialog, .project-export-menu) textarea {
+  resize: vertical;
+}
+:is(.project-dialog, .project-export-menu) fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+}
+.project-radio {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.project-radio input {
+  accent-color: var(--live);
+}
+:is(.project-dialog, .project-export-menu) small {
+  color: var(--ink-2);
+}
+.project-error {
+  color: var(--ink);
+  padding: 12px;
+  border: 1px solid var(--line-strong);
+  background: var(--glass-1, #f6f7fa);
+}
+.project-export-options {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+@media (max-width: 600px) {
+  .project-frozen {
+    max-width: 34vw;
+  }
+}
+
+.project-export-menu {
+  position: fixed;
+  inset: auto;
+  width: min(300px, calc(100vw - 24px));
+  margin: 0;
+  padding: 12px;
+}
+.project-export-status {
+  max-width: 30ch;
+  font-size: var(--t-xs, 12px);
+  color: var(--ink-2);
+}

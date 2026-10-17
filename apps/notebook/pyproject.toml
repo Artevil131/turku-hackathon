@@ -1,0 +1,16 @@
+[project]
+name = "aei-notebook"
+version = "0.0.0"
+description = "Builds the JupyterLite site served as the research workspace's Notebook window (D-062)"
+requires-python = ">=3.12"
+dependencies = [
+  "jupyterlite-core",
+  "jupyterlite-pyodide-kernel",
+  # The R kernel (xeus-r, D-063); needs micromamba on PATH to pack the environment.
+  "jupyterlite-xeus",
+  # Indexes the contents (the starter notebooks) at build time; not served.
+  "jupyter-server",
+]
+
+[tool.uv]
+package = false

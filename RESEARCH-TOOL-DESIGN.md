@@ -416,12 +416,12 @@ export function buildBundle(input: BundleInput): BundleFile[];
   `libs/utils/py`); `method.tex` (the method in LaTeX, constants and their
   D-numbers); `results.json` (`resultsDocument`, the numbers as produced).
 - **Generated from a template, per engine-A tool.** Each tool in the menu
-  (D-057) has one template for its R and Python scripts and its LaTeX; the
+  (D-065) has one template for its R and Python scripts and its LaTeX; the
   builder fills in the tool's parameters. Nothing in a script is typed by
   hand, and no script contains a number the tool did not compute.
 - **Zipped in the app.** `apps/web/src/export.ts` packs the files and saves
   them with `download`; the builder itself never touches a file.
-- **Engine B** (D-057) gets the same bundle once its tools have templates.
+- **Engine B** (D-065) gets the same bundle once its tools have templates.
 
 ## 6. Tools layer, minimal
 
@@ -518,7 +518,7 @@ import and one spread each; agree the surface file names now: `project.ts`,
     extends D-019's rule to every export.
 
 DECISIONS.md numbering: main is at D-056; the first entry from this work
-is D-057.
+is D-065.
 
 ## 9. Growing into the workbench (VISION.md, "The workbench")
 

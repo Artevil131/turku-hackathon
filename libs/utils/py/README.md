@@ -1,7 +1,138 @@
-# libs/utils/py
+# aei: research packages and Python helpers
 
-Python helpers for data analysis (D-024), installed into the root uv
-environment as the package `aei`:
+Install on Python 3.12 or newer directly from git (D-061):
+
+```sh
+pip install "aei @ git+https://github.com/Artevil131/turku-hackathon.git#subdirectory=libs/utils/py"
+# Optional regional modelling and plotting dependencies:
+pip install "aei[analysis] @ git+https://github.com/Artevil131/turku-hackathon.git#subdirectory=libs/utils/py"
+```
+
+## Read a research package
+
+```python
+import aei
+
+pkg = aei.read_package("esbl-urology-spring-2025.zip")  # or its unpacked folder
+print(pkg)                                            # tables and shapes
+print(pkg.meta)                                       # scope, as-of date, fingerprint
+pkg.isolates.groupby("ward").size()                   # also pkg.tables["isolates"]
+print(pkg.fields["isolates"])                         # types, titles, descriptions, units
+print(pkg.methods)                                   # numbers, methods and parameters
+```
+
+The D-060 package contains `datapackage.json`, UTF-8 CSVs, `methods.json`
+and `README.md`. The reader applies nullable string, integer and boolean
+columns, floating-point numbers and parsed dates/datetimes. Empty cells
+become missing values; literal strings such as `NA` and isolate ids with
+leading zeroes stay intact. Units remain in `pkg.fields`; figures and
+reports are not loaded. Unsupported package versions and paths outside
+the package are rejected. Zip files are read without extracting them.
+
+## Reproduce the same data and numbers, offline
+
+```python
+pkg = aei.read_package("research-package.zip")
+pkg.verify()          # ✓ Same data: … rows, fingerprint matches the frozen project.
+aei.reproduce(pkg)    # number, id, shown, recomputed, match, method
+```
+
+Verification recomputes the D-058 row count and SHA-256 from `pkg.isolates`,
+using fields marked `role: "result"` for antibiotic results. It never contacts
+a server. The returned `VerifyResult` exposes `ok`, `rows`, `sha256`,
+`expected_rows`, `expected_sha256` and `message`, and renders in notebooks.
+Changed rows give `ok=False`; continuous packages or packages without a
+frozen fingerprint give `ok=None`, not a claim that the data matches.
+
+`reproduce()` checks the count and distinct recipes recorded in `methods.json`,
+including equality filters in `where`. Distinct counts exclude missing cells;
+a null filter selects missing cells. A wrong shown value gives `match=False`;
+missing or unknown recipes give `match=None` and no recomputed value. These
+are reproducibility checks, not new detector implementations or an assertion
+that unsupported numbers were checked. Both root-layout zips and the writer's
+single-top-folder zips are accepted.
+
+## Connect to the live API
+
+```python
+live = aei.connect("http://localhost:8787", token=None, site="tyks")
+iso = live.isolates(ward="URO", **{"from": "2025-03-01"})
+# `from` is a Python keyword; query names follow the API contract, not `since`.
+print(iso["phenotypes"])       # e.g. "ESBL;CPE"
+print(iso["phenotype_list"])   # e.g. ["ESBL", "CPE"]
+print(live.alerts())
+print(live.weekly())           # one row per ward/week, cultures and phenotype counts
+print(live.clock())
+print(live.sites())
+print(live.projects())
+proj = live.project("esbl-urology-x1y2")
+print(proj.drift)              # server's drift result, when provided
+print(proj.verify())           # frozen only: refetch rows and compare count + SHA-256
+```
+
+`site` defaults data queries to one hospital and can be overridden per
+call (including `site=None` for the route's unfiltered/default behaviour).
+Project verification uses the project's own scope instead. It filters the
+currently released isolates with `to` capped at the frozen `asOf`; it does
+not move the shared replay clock or retrieve rows not yet released. A
+replayed clock before the frozen cut may therefore fail verification.
+Continuous projects cannot be verified. API failures raise
+`aei.AeiApiError`, with `status` and `message` attributes. The HTTP client
+uses only the Python standard library; pandas is imported when a table is
+actually requested, not by `import aei`.
+
+## Methods
+
+`from aei import methods`: each public method below is tested to give the
+app's numbers on the same input (D-061; TypeScript is the reference,
+D-024). They accept plain records in the TypeScript gear's shape, not exported
+CSV rows or DataFrames: isolate records have camelCase keys (`isolateId`,
+`patientId`, `sampleDate`, `admissionDate`, `ward`, `specimen`, `organism`,
+`sex`, `ageYears`, `homeArea`, `cultureId`), lower-case `phenotypes`, and
+`results={"AMP": "S", ...}`. Culture records use the domain's `Culture` fields.
+Dates are ISO `YYYY-MM-DD`; `admissionDate` may be `None`. Outputs are
+JSON-compatible records with the app's field names, ordering and nulls.
+Docstrings specify every parameter, default and result shape.
+
+- `methods.profile_excess`: same-profile patient excess within specimen (D-020, D-044).
+- `methods.phenotype_excess`: ESBL/MRSA/VRE/CPE patient excess (D-020, D-044).
+- `methods.sampling_drop`: daily seven-day culture-count drop (D-020, D-044).
+- `methods.empty_run`: consecutive days without cultures (D-031, D-044).
+- `methods.rising_trend`: raw resistance trend over the 22 surveillance pairs (D-020, D-022, D-044).
+- `methods.live_signals`: the five detectors together, per hospital, excluding detected clusters from trends (D-022, D-051).
+- `methods.cpe_alerts`: one sentinel alert per CPE isolate (D-014).
+- `methods.new_in_unit_alerts`: MRSA/VRE after 180 quiet days in an inpatient unit (D-021, D-034).
+- `methods.coverage`: annual first-isolate coverage, 95 % Wilson intervals, fallback pool and pairs (D-023, D-033, D-044, D-049, D-051, D-053).
+- `methods.suggest`: mild/severe standings and ordering, without an AWaRe tier (D-026, D-027, D-033, D-049, D-056).
+- `methods.suggest_combinations`: useful severe-infection pairs, at most five by default (D-028, D-033, D-056).
+
+```python
+result = methods.coverage(records, as_of="2025-06-30", ward="URO", specimen="urine")
+print(result["level"], result["isolates"])
+print(methods.suggest(result, "mild"))
+signals = methods.live_signals(records, cultures)  # signals, not merged incident alerts
+```
+
+The individual statistical detectors are low-level gears over the supplied
+pool; `live_signals` applies the app's hospital splitting and causal cluster
+exclusion. CPE and new-in-unit are separate sentinel rules (ENGINE.md A3).
+Experimental estimators and detectors are not exported by `aei.methods`.
+`tests/test_methods_parity.py` runs every public method against the actual
+TypeScript gear using JSON fixtures, including a `mulberry32`-seeded series,
+without the organiser's data. Counts/flags match exactly, floats to 1e-12
+relative; these parity tests skip when Node is unavailable.
+
+## Analysis helpers
+
+The modules below are internal analysis interfaces, not the stable public
+method surface above. Their coverage/suggestion and detector helpers retain
+the recorded experiment behaviour by default; `aei.methods` explicitly opts
+into today's app behaviour (`current_app=True`). `coverage_list.month_loop`
+defaults to today's app, like its TypeScript backtest; recorded-figure checks
+select `month_loop(..., current_app=False)`. This keeps D-056's ordering change
+and later hospital/filter rules from rewriting earlier experiment results.
+
+The root uv workspace keeps the experiment dependencies (D-024):
 
     uv sync                                   # once, from the repository root
     uv run python experiments/NNNN-slug/analysis.py
@@ -72,9 +203,25 @@ benchmarks/overnight-2026-10-17/harness-spec.md), Python only:
 - `aei.inject` gained generic trials that take any detector (`seed_trials`, `rare_hits`, `common_hits`,
   `two_unit_hits`, `gap_hits`); its earlier functions are unchanged.
 
+## Parity rule (D-061)
+
+A method becomes public only with a parity test against the TypeScript
+gear on the same input. The app continues to run TypeScript; installability
+does not stabilise the detectors' existing experimental interfaces. The
+client fingerprint test runs `@aei/projects`' actual `fingerprintRows` on
+three fixture records and compares the SHA-256 and count. Fingerprint
+ordering assumes ASCII isolate ids and antibiotic codes (JavaScript uses
+UTF-16 code units, Python uses Unicode code points).
+
 ## Tests
 
-    uv run pytest libs/utils/py/tests         # about 30 s; needs the dataset in data/ and Node 22
+    uv run pytest -q libs/utils/py/tests     # about 30 s with the dataset and Node 22+
+
+Package and HTTP-client tests use temporary fixtures and a local test
+server. The fingerprint parity test skips only when Node is unavailable;
+other dataset-dependent parity tests skip when the dataset is absent. The
+offline package fixture also checks R parity when `Rscript` is on `PATH`
+(or selected by `AEI_RSCRIPT`), using exactly the same exported package.
 
 `tests/ts_dump.ts` runs the TypeScript gears on the full dataset through
 Node (in the background while pytest computes the Python side), and
@@ -89,3 +236,7 @@ compared while their TypeScript existed (D-030) and stand alone since
 
 The live tool does not import these; logic the app needs is ported to the
 TypeScript gears.
+
+## Licence
+
+Not chosen yet (the team decides; work in progress). `DESCRIPTION` says `Unlimited` and `pyproject.toml` names none only as placeholders, not as a choice.

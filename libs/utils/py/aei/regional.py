@@ -15,7 +15,6 @@ import warnings
 
 import numpy as np
 import pandas as pd
-import statsmodels.api as sm
 from scipy import stats
 
 from aei.forecasts import FORECAST_METHOD, monthly_forecasts
@@ -32,7 +31,9 @@ def upper_tail(observed: int, mu: float, phi: float) -> float:
 
 
 def expected_month(counts: np.ndarray, t: int, baseline: int = 36) -> tuple[float, float]:
-    """Expected count and dispersion for month index t from the `baseline` months before it."""
+    """Expected count and dispersion for month index t from the `baseline` months before it. Needs `aei[analysis]`."""
+    import statsmodels.api as sm
+
     y = counts[t - baseline : t]
     if y.sum() == 0:
         return 0.5 / baseline, 1.0

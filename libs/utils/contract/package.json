@@ -15,6 +15,7 @@
     "@aei/coresistance": "workspace:*",
     "@aei/coverage": "workspace:*",
     "@aei/domain": "workspace:*",
+    "@aei/projects": "workspace:*",
     "@aei/quality": "workspace:*",
     "@aei/relations": "workspace:*",
     "@aei/replay": "workspace:*",

@@ -7,6 +7,18 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
-    proxy: { "/api": { target: process.env.AEI_API_URL ?? "http://localhost:8787", changeOrigin: true } },
+    proxy: {
+      "/notebook/api/contents/projects/": {
+        target: process.env.AEI_API_URL ?? "http://localhost:8787",
+        changeOrigin: true,
+        rewrite: (path) => path.replace("/notebook/api/contents/projects/", "/api/lite/contents/projects/"),
+      },
+      "/notebook/files/projects/": {
+        target: process.env.AEI_API_URL ?? "http://localhost:8787",
+        changeOrigin: true,
+        rewrite: (path) => path.replace("/notebook/files/projects/", "/api/lite/files/projects/"),
+      },
+      "/api": { target: process.env.AEI_API_URL ?? "http://localhost:8787", changeOrigin: true },
+    },
   },
 });

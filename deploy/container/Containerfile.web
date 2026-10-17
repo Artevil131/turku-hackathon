@@ -13,6 +13,23 @@ RUN pnpm install --frozen-lockfile --filter "@aei/web..."
 ARG AEI_LLM_PROXY=0
 RUN AEI_LLM_PROXY=$AEI_LLM_PROXY pnpm --filter @aei/web build
 
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS notebook
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl bzip2 \
+    && rm -rf /var/lib/apt/lists/*
+# Pin micromamba, rather than letting a new release change the notebook builder.
+# The binary follows the build host (the OCI host is aarch64); the R kernel it packs is WebAssembly either way.
+ARG TARGETARCH
+RUN case "${TARGETARCH:-$(uname -m)}" in arm64|aarch64) arch=linux-aarch64 ;; *) arch=linux-64 ;; esac \
+    && download="$(mktemp -d)" \
+    && curl -fsSL "https://micro.mamba.pm/api/micromamba/$arch/2.3.3" -o "$download/micromamba.tar.bz2" \
+    && tar -xjf "$download/micromamba.tar.bz2" -C "$download" bin/micromamba \
+    && install "$download/bin/micromamba" /usr/local/bin/micromamba \
+    && rm -rf "$download"
+WORKDIR /app
+COPY apps/notebook apps/notebook
+COPY libs/utils/py libs/utils/py
+RUN apps/notebook/build.sh /notebook
+
 FROM nginx:1.30.6-alpine
 # Rendered at start by the image's entrypoint (envsubst on *.template), so the
 # API's address is set at run time: AEI_API_UPSTREAM, default api:8787.
@@ -20,4 +37,5 @@ ENV AEI_API_UPSTREAM=api:8787
 COPY deploy/container/nginx.conf.template /etc/nginx/templates/default.conf.template
 COPY deploy/container/40-aei-llm.sh /docker-entrypoint.d/40-aei-llm.sh
 COPY --from=build /app/apps/web/dist /usr/share/nginx/html
+COPY --from=notebook /notebook /usr/share/nginx/html/notebook
 EXPOSE 8080

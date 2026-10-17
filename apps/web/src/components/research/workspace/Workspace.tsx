@@ -106,6 +106,7 @@ export function Workspace({
   onClosed,
   initiallyOpen,
   reveal,
+  toolbar,
   primary = null,
   answers = [],
   lead,
@@ -118,6 +119,8 @@ export function Workspace({
   initiallyOpen?: WinId[];
   /** A window to bring forward (opening it if closed) each time `key` changes: the card on a new signal, the map on "Show on map". */
   reveal?: { id: WinId; key: string | null };
+  /** Extra controls for the toolbar row (the project switcher and export). */
+  toolbar?: ReactNode;
   /** The window that holds the selected signal: it gets the accent ring and is what F focuses. */
   primary?: WinId | null;
   /** The windows that answer the selected signal next (full tone); every other window steps back. */
@@ -418,7 +421,12 @@ export function Workspace({
   return (
     <div className="ws" data-float={wide} data-animate={animate} data-focus={focused !== null} data-selection={primary !== null}>
       {wide ? null : <div className="ws-tray-row">{tray}</div>}
-      {wide ? <div className="ws-toolbar">{focusBar ?? layouts}</div> : null}
+      {wide ? (
+        <div className="ws-toolbar">
+          {focusBar ?? layouts}
+          {toolbar}
+        </div>
+      ) : null}
       <div className="ws-area" ref={areaRef} style={wide ? { height: boardRows(layout) * ROW_PX } : undefined}>
         {wide && dragging ? <div className="ws-ghost" aria-hidden="true" style={place(layout.wins[dragging])} /> : null}
         {ids.map((id) => {
