@@ -428,6 +428,7 @@ export function Timeline({
     return (
       <div className="timeline timeline-folded" ref={rootRef} aria-busy={seekingTo ? true : undefined}>
         {playButton}
+        {steps(false)}
         <span className="tl-folded-label">{t(locale, "tlCollapsedLabel")}</span>
         <b className="tl-readout num">{readout}</b>
         {arrivals ? <span className="tl-folded-fresh">{arrivals}</span> : null}

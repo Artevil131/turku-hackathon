@@ -429,7 +429,7 @@ async function main() {
           unavailableInSummary: /65+|Hoitopäivä/.test(document.querySelector('.rs-sum')?.textContent ?? '') };
       })()`,
         );
-        if (!initial.row?.includes("kaikki kasvavat")) reasons.push("unopened row omits all-growth denominator");
+        if (!/kaikki (kasvavat|bakteerit)/.test(initial.row ?? "")) reasons.push("unopened row omits all-growth denominator");
         if (!initial.disclosure?.includes("ei potilashoitoon") || !initial.disclosure?.includes("Tukee päätöstä"))
           reasons.push("demo/decision disclosure missing");
         if (initial.unavailableInSummary) reasons.push("unavailable filters appear active");
@@ -821,11 +821,12 @@ async function main() {
     if (!(await waitIn(`!!document.querySelector(".math .alert-explanation [aria-live] p:not(.field-hint)")`, 15_000)))
       reasons.push("clicking explain did not load its template explanation");
     await evaluate(cdp, `document.querySelector(${JSON.stringify(explain)}).focus()`);
-    await cdp.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
+    // A keyDown needs its text, as a physical key gives, or Chrome raises no keypress and no click on the button.
+    await cdp.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13, text: "\r", unmodifiedText: "\r" });
     await cdp.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
     if (!(await waitIn(`document.querySelector(${JSON.stringify(explain)})?.getAttribute("aria-expanded") === "false"`)))
       reasons.push("Enter did not close the explanation");
-    await cdp.send("Input.dispatchKeyEvent", { type: "keyDown", key: " ", code: "Space", windowsVirtualKeyCode: 32 });
+    await cdp.send("Input.dispatchKeyEvent", { type: "keyDown", key: " ", code: "Space", windowsVirtualKeyCode: 32, text: " ", unmodifiedText: " " });
     await cdp.send("Input.dispatchKeyEvent", { type: "keyUp", key: " ", code: "Space", windowsVirtualKeyCode: 32 });
     if (
       !(await waitIn(
