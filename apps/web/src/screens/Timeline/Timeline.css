@@ -2,8 +2,14 @@
 
 /* ---------- Header ---------- */
 .timeline-title {
-  font-size: var(--fs-xl);
-  letter-spacing: -0.015em;
+  font-size: var(--fs-page);
+  letter-spacing: -0.02em;
+}
+.timeline-period {
+  margin: 0;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold);
+  color: var(--ink-2);
 }
 .timeline-lede {
   max-width: 62ch;

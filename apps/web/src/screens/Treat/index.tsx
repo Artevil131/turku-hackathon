@@ -38,7 +38,7 @@ export function TreatScreen(p: {
       <h1 className="u-sr">{t(locale, "treat.title")}</h1>
       <SignalStrip locale={locale} meta={meta} signals={mine} ward={prefs.ward} min={min} onOpenSignal={onOpenSignal} />
       <div className="treat-cols">
-        <div className="treat-side">
+        <div className="treat-side" id="treat-patient">
           <PatientCard
             locale={locale}
             meta={meta}
@@ -52,6 +52,13 @@ export function TreatScreen(p: {
         </div>
         <div className="treat-main" aria-busy={pending}>
           <ResultView locale={locale} meta={meta} prefs={prefs} data={data} failed={failed} min={min} />
+          <button
+            type="button"
+            className="k-btn is-ghost is-sm treat-jump"
+            onClick={() => document.getElementById("treat-patient")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+          >
+            {t(locale, "treat.jump")}
+          </button>
         </div>
       </div>
     </div>

@@ -24,6 +24,7 @@ const en = {
 
   // ---- Your patient ----
   "treat.patient.title": "Your patient",
+  "treat.jump": "Change unit, site or severity",
   "treat.patient.unit": "Unit",
   "treat.patient.site": "Infection site",
   "treat.patient.severity": "How severe",
@@ -142,6 +143,7 @@ const fi: Record<keyof typeof en, string> = {
   "treat.signal.hospital": "koko sairaalassa",
 
   "treat.patient.title": "Potilaasi",
+  "treat.jump": "Vaihda yksikkö, infektiokohta tai vaikeusaste",
   "treat.patient.unit": "Yksikkö",
   "treat.patient.site": "Infektiokohta",
   "treat.patient.severity": "Vaikeusaste",

@@ -21,7 +21,8 @@
   min-height: var(--tap);
 }
 .alerts-h1 {
-  font-size: var(--fs-xl);
+  font-size: var(--fs-page);
+  letter-spacing: -0.02em;
 }
 .alerts-markall {
   flex-shrink: 0;
@@ -613,7 +614,8 @@
     padding: 6px;
     max-height: calc(100dvh - var(--header-h) - 84px);
     overflow: auto;
-    overscroll-behavior: contain;
+    /* No overscroll containment: once the pane reaches its end the wheel scrolls the page, so the pointer
+       resting on the detail never traps scrolling (it did while the pane had only a few pixels to move). */
     scrollbar-width: thin;
   }
 }

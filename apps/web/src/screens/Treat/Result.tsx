@@ -85,7 +85,14 @@ export function ResultView({
         </Card>
       ) : (
         <>
-          <TopMatch locale={locale} meta={meta} s={top} threshold={threshold} min={min} />
+          <TopMatch
+            key={`${prefs.ward}|${prefs.specimen}|${prefs.severity}|${prefs.sex ?? ""}|${top.antibiotic}`}
+            locale={locale}
+            meta={meta}
+            s={top}
+            threshold={threshold}
+            min={min}
+          />
           {severity === "severe" && top.standing !== "clears" ? (
             <Pairs locale={locale} meta={meta} pairs={combinationSuggestions} threshold={threshold} />
           ) : null}

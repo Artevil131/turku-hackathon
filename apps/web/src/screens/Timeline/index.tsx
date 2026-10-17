@@ -109,9 +109,10 @@ export function TimelineScreen(p: {
       <Card as="header" className="timeline-head" pad="md">
         <div className="timeline-head-top">
           <div className="u-stack-sm">
-            <h1 className="timeline-title u-num">
+            <h1 className="timeline-title">{t(locale, "common.tab.timeline")}</h1>
+            <p className="timeline-period u-num">
               {t(locale, "timeline.period", { start: formatDate(locale, meta.start, "long"), end: formatDate(locale, meta.end, "long") })}
-            </h1>
+            </p>
             <p className="u-soft timeline-lede">{t(locale, "timeline.lede")}</p>
           </div>
         </div>

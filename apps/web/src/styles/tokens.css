@@ -99,7 +99,9 @@
   --fs-md: 1.125rem; /* 18 */
   --fs-lg: 1.25rem; /* 20 */
   --fs-xl: 1.625rem; /* 26 */
-  --fs-2xl: 2.125rem; /* 34: the figure a doctor reads first */
+  --fs-2xl: 2.125rem; /* 34 */
+  --fs-page: 2rem; /* 32: every screen's title */
+  --fs-hero: clamp(2.5rem, 2rem + 1.6vw, 3.25rem); /* 40-52: the figure a doctor reads first */
   --lh-tight: 1.2;
   --lh: 1.45;
   --fw-regular: 400;

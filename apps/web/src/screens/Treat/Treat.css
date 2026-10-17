@@ -16,6 +16,11 @@
 .treat-main {
   min-width: 0;
 }
+.treat-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
 
 /* ---------- Signals strip ---------- */
 .treat-signals {
@@ -225,6 +230,8 @@
   flex-direction: column;
   gap: var(--sp-3);
   padding: var(--sp-4);
+  /* A new answer settles in when the unit, site, sex or severity changes (off with reduced motion). */
+  animation: treat-settle var(--t-slow) var(--ease-out);
   border-radius: var(--r-lg);
   background: linear-gradient(180deg, var(--glass-3), var(--blue-soft));
   -webkit-backdrop-filter: var(--blur-1);
@@ -577,5 +584,27 @@
   .treat-side {
     position: sticky;
     top: calc(var(--header-h) + 64px);
+  }
+}
+
+@keyframes treat-settle {
+  from {
+    opacity: 0;
+    translate: 0 6px;
+  }
+}
+
+/* Phones: the answer first, for the unit the doctor last chose; the patient card follows it. */
+.treat-jump {
+  align-self: flex-start;
+}
+@media (max-width: 1023px) {
+  .treat-main {
+    order: -1;
+  }
+}
+@media (min-width: 1024px) {
+  .treat-jump {
+    display: none;
   }
 }

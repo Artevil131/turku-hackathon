@@ -838,8 +838,9 @@ button.k-chip:hover:not(:disabled):not(.is-on) {
   color: var(--ink);
 }
 .k-share.is-lg .k-share-pct {
-  font-size: var(--fs-2xl);
+  font-size: var(--fs-hero);
   line-height: 1;
+  letter-spacing: -0.02em;
 }
 .k-share.is-sm .k-share-pct {
   font-size: var(--fs-md);
