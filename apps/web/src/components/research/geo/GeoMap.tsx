@@ -6,6 +6,7 @@ import { HOSPITALS, LINKS } from "../../intro/surface.ts";
 import type { PanelProps } from "../board.ts";
 import { centroidOf, pathOf } from "../map/geo.ts";
 import "./geo.css";
+import { CountyForecasts } from "./CountyForecasts.tsx";
 import { type Layout, MAP_LAYOUT, mapPoint } from "./layout.ts";
 import { useLoad } from "./useLoad.ts";
 
@@ -128,7 +129,8 @@ export function GeoMap({ client, locale, asOf, reducedMotion }: PanelProps) {
   const L: Layout = MAP_LAYOUT;
 
   const counties = useLoad<CountiesResponse>(() => client.counties(), [client], attempt);
-  const regional = useLoad<RegionalResponse>(() => client.regional({ group }), [client, group, asOf], attempt);
+  // Keep all phenotype-total forecasts even when the map shows one report group.
+  const regional = useLoad<RegionalResponse>(() => client.regional({}), [client, asOf], attempt);
   const shapes: CountyShape[] = useMemo(() => {
     if (counties.state !== "ok") return [];
     return counties.data.features.map((f) => {
@@ -142,9 +144,15 @@ export function GeoMap({ client, locale, asOf, reducedMotion }: PanelProps) {
   const idx = months.length - 1;
   const month = months[idx] ?? null;
   const monthLong = (m: string) => formatMonth(locale, `${m}-01`, true);
-  const byRegion = useMemo(() => new Map((data?.series ?? []).map((s) => [s.region, s])), [data]);
-  const edges = useMemo(() => stepEdges((data?.series ?? []).filter((s) => s.region !== NATIONAL)), [data]);
-  const signalsAll = useMemo(() => (data && month ? data.signals.filter((s) => s.month <= month) : []), [data, month]);
+  const series = useMemo(() => (data?.series ?? []).filter((s) => s.group === group), [data, group]);
+  const forecasts = data?.forecasts ?? [];
+  const home = "Varsinais-Suomen hyvinvointialue";
+  const byRegion = useMemo(() => new Map(series.map((s) => [s.region, s])), [series]);
+  const edges = useMemo(() => stepEdges(series.filter((s) => s.region !== NATIONAL)), [series]);
+  const signalsAll = useMemo(
+    () => (data && month ? data.signals.filter((s) => s.group === group && s.month <= month) : []),
+    [data, month, group],
+  );
   const signalOf = useMemo(() => {
     const m = new Map<string, RegionalSignal>();
     for (const s of [...signalsAll].sort((a, b) => Number(b.strong) - Number(a.strong) || a.p - b.p))
@@ -254,6 +262,7 @@ export function GeoMap({ client, locale, asOf, reducedMotion }: PanelProps) {
           ) : (
             <p className="geo-faint">{t(locale, "geoNoRegional")}</p>
           )}
+          <CountyForecasts forecasts={forecasts} region={chosen} locale={locale} />
         </>
       ) : (
         <p className="geo-faint">{t(locale, "geoPick")}</p>
@@ -434,6 +443,15 @@ export function GeoMap({ client, locale, asOf, reducedMotion }: PanelProps) {
 
       {legendKeys}
 
+      {forecasts.length > 0 ? (
+        <section className="geo-forecast-home" aria-label={t(locale, "geoForecastHome")}>
+          <h3 className="geo-h3">{t(locale, "geoForecastHome")}</h3>
+          <CountyForecasts forecasts={forecasts} region={home} locale={locale} />
+          <p className="geo-faint">{t(locale, "geoForecastNote")}</p>
+          <p className="geo-faint">{t(locale, "geoForecastCaveat")}</p>
+        </section>
+      ) : null}
+
       <details className="geo-lists">
         <summary className="geo-h3">{t(locale, "geoCounties")}</summary>
         <section aria-label={t(locale, "geoCounties")}>
@@ -460,6 +478,7 @@ export function GeoMap({ client, locale, asOf, reducedMotion }: PanelProps) {
                       {c.rate === null ? "–" : fmt(locale, c.rate)} · n {c.cases ?? 0}
                     </span>
                   </button>
+                  <CountyForecasts forecasts={forecasts} region={c.name} locale={locale} />
                 </li>
               ))}
             </ul>

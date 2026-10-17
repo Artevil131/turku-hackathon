@@ -1,8 +1,8 @@
 """Fetch monthly MRSA, ESBL, VRE and CPE case counts by wellbeing services county from THL (D-025).
 
 Source: THL communicable disease register, cases cube, CC BY 4.0 (c) THL; the logic is in `aei.thl`. Writes one
-long CSV, and the county series with their regional signals (experiments/0008) that the server's /api/regional
-serves (D-037):
+long CSV, and the county series with their regional signals (experiments/0008) and next-month
+phenotype-total forecasts (experiment 0020 R1, D-045; VRE omitted) that /api/regional serves (D-037):
 
     data/external/thl/ttr_monthly.csv
     columns: group_sid, group, region_sid, region, cases, incidence_per_100k, month (YYYY-MM)
@@ -38,7 +38,8 @@ def main() -> None:
     view = regional_view(data, fetched=dt.date.today().isoformat())
     path = out / "regional.json"
     path.write_text(json.dumps(view, ensure_ascii=False))
-    print(f"wrote {path}: {len(view['series'])} series, {view['months'][0]} to {view['months'][-1]}, {len(view['signals'])} signals")
+    print(f"wrote {path}: {len(view['series'])} series, {view['months'][0]} to {view['months'][-1]}, "
+          f"{len(view['signals'])} signals, {len(view['forecasts'])} forecasts")
 
 
 if __name__ == "__main__":

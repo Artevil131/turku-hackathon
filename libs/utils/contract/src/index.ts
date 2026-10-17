@@ -163,6 +163,19 @@ export interface RegionalSignal {
   strong: boolean;
 }
 
+/** One-month-ahead phenotype-total predictive count, experiment 0020 R1 (D-045). VRE is omitted. */
+export interface RegionalForecast {
+  phenotype: "MRSA" | "ESBL" | "CPE";
+  region: string;
+  /** Forecast month, YYYY-MM; trained only on months before it. */
+  month: string;
+  mean: number;
+  low: number;
+  high: number;
+  /** Central predictive interval probability, e.g. 0.9. */
+  level: number;
+}
+
 /** The regional view: the file `scripts/fetch_thl_ttr.py` writes, cut at the clock. */
 export interface RegionalData {
   source: string;
@@ -176,6 +189,8 @@ export interface RegionalData {
     familyAlpha: number;
     /** Series times months tested, the Bonferroni denominator. */
     testedSeriesMonths: number;
+    /** Phenotype-total forecast settings (D-045); absent in pre-forecast files. */
+    forecastMethod?: string;
   };
   /** YYYY-MM, oldest first. */
   months: string[];
@@ -184,6 +199,7 @@ export interface RegionalData {
   series: RegionalSeries[];
   /** Strongest first. */
   signals: RegionalSignal[];
+  forecasts: RegionalForecast[];
 }
 
 /** Optional filters; omitted fields do not filter. */
@@ -199,11 +215,17 @@ export interface RegionalResponse extends RegionalData {
 
 /**
  * The regional data as known on `asOf`: months before the as-of month, and
- * series and signals matching the query. Group and region lists stay whole.
+ * series, signals and forecasts matching the query. Group and region lists stay whole.
+ * Stored forecasts are usable only immediately after the last shown month; earlier
+ * replay cuts omit them rather than exposing a model trained on later counts.
  */
 export function regionalUpTo(data: RegionalData, asOf: IsoDate, query: RegionalQuery = {}): RegionalResponse {
   const month = asOf.slice(0, 7);
   const n = data.months.filter((m) => m < month).length;
+  const last = data.months[n - 1];
+  const next = last ? new Date(`${last}-01T00:00:00Z`) : null;
+  if (next) next.setUTCMonth(next.getUTCMonth() + 1);
+  const forecastMonth = next?.toISOString().slice(0, 7);
   const keep = (x: { group: string; region: string }) =>
     (!query.group || x.group === query.group) && (!query.region || x.region === query.region);
   return {
@@ -214,6 +236,13 @@ export function regionalUpTo(data: RegionalData, asOf: IsoDate, query: RegionalQ
       .filter(keep)
       .map((s) => ({ ...s, cases: s.cases.slice(0, n), incidencePer100k: s.incidencePer100k?.slice(0, n) ?? null })),
     signals: data.signals.filter((s) => keep(s) && s.month < month),
+    // Older fetched files have no forecasts yet.
+    forecasts: (data.forecasts ?? []).filter(
+      (f) =>
+        (!query.group || query.group.startsWith(`${f.phenotype} `)) &&
+        (!query.region || f.region === query.region) &&
+        f.month === forecastMonth,
+    ),
   };
 }
 

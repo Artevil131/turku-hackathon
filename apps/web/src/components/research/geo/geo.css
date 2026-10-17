@@ -345,6 +345,21 @@
   stroke: var(--geo-ink);
   stroke-width: 2;
 }
+.geo-forecast-home {
+  flex: 0 0 auto;
+  display: grid;
+  gap: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--geo-line);
+}
+.geo-forecast {
+  display: grid;
+  gap: 4px;
+  font-size: var(--t-xs, 12px);
+}
+.geo-list-counties .geo-forecast {
+  padding: 2px 6px 8px 26px;
+}
 .geo-lists {
   flex: 0 0 auto;
 }

@@ -40,19 +40,12 @@ from aei.dataset import Culture, IsolateRecord
 from aei.dates import add_days
 from aei.domain import UNITS
 from aei.regional import NATIONAL
-from aei.thl import GROUPS
+from aei.thl import GROUPS, PHENOTYPE_GROUPS
 
 # ---------------------------------------------------------------------------------------------------------------------
 # P2: county series
 # ---------------------------------------------------------------------------------------------------------------------
 
-# The four phenotype series: sums of THL report groups (harness-spec.md "Prediction").
-PHENOTYPE_GROUPS: dict[str, tuple[str, ...]] = {
-    "MRSA": ("MRSA carriage", "MRSA blood/CSF"),
-    "ESBL": ("ESBL carriage, E. coli", "ESBL carriage, K. pneumoniae", "ESBL blood/CSF, E. coli", "ESBL blood/CSF, K. pneumoniae"),
-    "VRE": ("VRE carriage", "VRE blood/CSF"),
-    "CPE": ("CPE carriage, K. pneumoniae", "CPE carriage, E. coli", "CPE carriage, E. cloacae"),
-}
 PHENOTYPES: tuple[str, ...] = tuple(PHENOTYPE_GROUPS)
 assert {g for gs in PHENOTYPE_GROUPS.values() for g in gs} == set(GROUPS.values()), "every THL report group belongs to one phenotype"
 
