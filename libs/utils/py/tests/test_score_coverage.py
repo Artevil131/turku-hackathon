@@ -73,7 +73,7 @@ def shipped_ranked(dataset):
 @pytest.fixture(scope="session")
 def loop_rows(dataset):
     records, _ = dataset
-    return cl.month_loop(records)[0]
+    return cl.month_loop(records, current_app=False)[0]  # 0010's committed figures, not today's live ordering.
 
 
 # --- the baseline and 0004 ---------------------------------------------------------------------------------------------------
