@@ -22,6 +22,10 @@ export interface DoctorPageProps {
   asOf: string | null;
   /** Alerts of the last 28 days, newest first (live). */
   alerts: Alert[];
+  /** Optional: whether `alerts` has loaded (App does not pass it yet). Without it the signals block waits for `asOf`. */
+  alertsStatus?: ListStatus;
+  /** Optional: reloads the alerts backlog; the signals block shows Retry only when given. */
+  onRetryAlerts?: () => void;
   /** Opens the researcher's board filtered to a unit. */
   onOpenSignals: (ward: WardCode) => void;
 }
@@ -29,7 +33,7 @@ export interface DoctorPageProps {
 /** The part of the filters the coverage API understands; age group and onset are shown but not sent. */
 const queryKey = (f: DoctorFilters) => [f.unit, f.site, f.sex, f.sev, f.period].join("|");
 
-export function DoctorPage({ client, locale, asOf, alerts, onOpenSignals }: DoctorPageProps) {
+export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetryAlerts, onOpenSignals }: DoctorPageProps) {
   const [filters, setFilters] = useState<DoctorFilters>(() => filtersFromUrl(hashParams()));
   const [data, setData] = useState<{ key: string; response: CoverageResponse } | null>(null);
   const [status, setStatus] = useState<ListStatus>("loading");
@@ -106,6 +110,10 @@ export function DoctorPage({ client, locale, asOf, alerts, onOpenSignals }: Doct
             asOf={asOf}
             data={current}
             signals={signals}
+            status={current ? status : status === "error" ? "error" : "loading"}
+            onRetry={() => setAttempt((a) => a + 1)}
+            alertsStatus={alertsStatus}
+            onRetryAlerts={onRetryAlerts}
             onOpenSignals={onOpenSignals}
           />
         </div>

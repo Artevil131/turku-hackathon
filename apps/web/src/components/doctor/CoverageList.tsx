@@ -1,7 +1,7 @@
 import type { CoverageResponse } from "@aei/contract";
 import { shortOrganism } from "@aei/domain";
 import { antibioticName, formatDate, type Locale, type MessageKey, specimenName, t, wardName } from "@aei/i18n";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { AsOf } from "../AsOf.tsx";
 import { AlertTri } from "../Icons.tsx";
 import "./CoverageList.css";
@@ -50,6 +50,7 @@ function IntervalBar({ interval, share, bar }: { interval: [number, number] | nu
 
 export function CoverageList({ locale, filters, asOf, status, data, signals, onRetry }: Props) {
   const [open, setOpen] = useState<string | null>(null);
+  const headRef = useRef<HTMLElement>(null);
   const bar = BAR[filters.sev];
   const unit = wardName(locale, filters.unit);
   const site = specimenName(locale, filters.site);
@@ -252,7 +253,7 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, onR
       data-stale={stale ? "" : undefined}
       tabIndex={-1}
     >
-      <header className="cl-head">
+      <header className="cl-head" ref={headRef} tabIndex={-1}>
         <div className="cl-titleline">
           <h2 id="dr-list-title">{t(locale, "drTitle")}</h2>
           <span className="cl-where">
@@ -312,14 +313,21 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, onR
       {status === "error" && !data ? (
         <div className="cl-state" role="alert">
           <p>{t(locale, "drError")}</p>
-          <button type="button" className="btn" onClick={onRetry}>
+          <button
+            type="button"
+            className="btn"
+            onClick={() => {
+              headRef.current?.focus();
+              onRetry();
+            }}
+          >
             {t(locale, "drRetry")}
           </button>
         </div>
       ) : null}
 
       {status === "loading" && !data ? (
-        <ul className="cl-skeleton" aria-hidden="true">
+        <ul className="cl-skeleton" aria-hidden="true" data-busy="">
           {SKELETON.map((i) => (
             <li key={i} />
           ))}
