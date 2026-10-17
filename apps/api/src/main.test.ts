@@ -64,6 +64,37 @@ describe("research projects (D-057, D-058)", () => {
     mode: "continuous",
     scope: { units: [], organisms: [], phenotypes: [], kinds: [], board: "unit=URO&ph=ESBL" },
   };
+  // Projects belong to the browser's anonymous visitor cookie, so these requests carry one, as one browser would.
+  const VISITOR = "0123456789abcdef0123456789abcdef";
+  const realFetch = globalThis.fetch;
+  const withVisitor =
+    (visitor: string): typeof fetch =>
+    (input, init) => {
+      const headers = new Headers(init?.headers);
+      headers.set("cookie", `aei_visitor=${visitor}`);
+      return realFetch(input, { ...init, headers });
+    };
+  beforeEach(() => {
+    globalThis.fetch = withVisitor(VISITOR);
+  });
+  afterEach(() => {
+    globalThis.fetch = realFetch;
+  });
+
+  it("keeps each visitor's projects apart and gives a new browser its cookie", async () => {
+    const base = await startApi();
+    const first = await realFetch(`${base}/api/projects`);
+    expect(first.headers.get("set-cookie")).toMatch(/^aei_visitor=[a-f0-9]{32}; Path=\/; Max-Age=31536000; SameSite=Lax; HttpOnly$/);
+    const mine = createAeiClient({ baseUrl: base });
+    const theirs = createAeiClient({ baseUrl: base, fetch: withVisitor("fedcba9876543210fedcba9876543210") });
+    const { project } = await mine.createProject(input);
+    expect((await mine.projects()).projects.map((p) => p.id)).toEqual([project.id]);
+    expect((await theirs.projects()).projects).toEqual([]);
+    await expect(theirs.project(project.id)).rejects.toThrow();
+    expect(
+      (await withVisitor("fedcba9876543210fedcba9876543210")(`${base}/api/lite/files/projects/${project.id}/reproduce.ipynb`)).status,
+    ).toBe(404);
+  });
 
   it("serves JupyterLite project listings and reproducible files without reports or figures", async () => {
     const base = await startApi();
