@@ -472,3 +472,35 @@
   display: flex;
   min-width: 0;
 }
+
+/* Folded outside the research page: one line with play, the replay date, freshness and the expand control. */
+.timeline.timeline-folded {
+  height: auto;
+  min-height: 44px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  padding: 4px 12px;
+}
+
+.timeline-folded .tl-readout {
+  font-size: var(--t-m, 16px);
+}
+
+.tl-folded-label,
+.tl-folded-fresh {
+  font-size: var(--t-xs, 12px);
+  color: var(--ink-3, #6f7292);
+}
+
+.tl-fold {
+  margin-inline-start: auto;
+}
+
+.tl-fold svg {
+  transition: transform 0.15s;
+}
+
+.timeline-folded .tl-fold svg {
+  transform: rotate(180deg);
+}

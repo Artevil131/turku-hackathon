@@ -64,6 +64,7 @@
 
 .feed-kinds {
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
 }
 
@@ -78,6 +79,21 @@
   background: var(--glass-1, #fff);
   color: var(--ink-2);
   font-size: var(--t-xs, 12px);
+}
+
+.feed-chip {
+  position: relative;
+}
+
+/* A 44 px hit area around the 28 px chip. */
+.feed-chip::after {
+  content: "";
+  position: absolute;
+  inset: -8px -2px;
+}
+
+.feed-chip-name {
+  white-space: nowrap;
 }
 
 .feed-chip:hover {

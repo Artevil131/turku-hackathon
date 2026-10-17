@@ -20,6 +20,7 @@ export function Since({ locale, asOf, changes, state, period, onPeriod, openCoun
         <h1 id="hm-since-title">{openCount === null ? t(locale, "homeResearchWait") : t(locale, "feedOpen", { n: openCount })}</h1>
         {asOf ? <AsOf locale={locale} date={asOf} /> : null}
       </header>
+      <p className="hm-lead">{t(locale, "homeLead")}</p>
       {state === "connecting" ? (
         <p className="hm-note" role="status" aria-live="polite">
           {t(locale, "homeConnecting")}

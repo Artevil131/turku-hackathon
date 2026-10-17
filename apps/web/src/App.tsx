@@ -142,6 +142,7 @@ export function App() {
           lastArrivals={live.lastArrivals}
           command={live.command}
           reducedMotion={reducedMotion}
+          collapsible={page !== "research"}
         />
 
         <main id="main-content" className="page" tabIndex={-1}>

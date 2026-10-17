@@ -47,8 +47,8 @@ export const pct = (x: number | null) => (x === null ? "–" : `${Math.round(x *
 
 // From the experiment records (each experiment's out/results.md), quoted on the closing card.
 export const EVIDENCE = [
-  { claim: "Clusters of 4 patients with a rare resistant strain caught", value: "38 / 40", ref: "0007" },
-  { claim: "A unit going silent for 3 days caught", value: "37 / 40", ref: "0009" },
+  { claim: "Rare identical-profile clusters of 4 patients caught (interval 84 to 93 %)", value: "89 %", ref: "overnight-d5" },
+  { claim: "Median delay to the alert; about 4.5 signal episodes a year", value: "6 days", ref: "overnight-noise" },
   { claim: "Mild picks that clear: covered the next month", value: "96.6%", ref: "0010" },
   { claim: "Clusters of the commonest strain: not caught", value: "1 / 180", ref: "0011" },
 ];

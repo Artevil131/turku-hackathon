@@ -232,3 +232,40 @@
     font-size: var(--t-xs);
   }
 }
+
+.hm-lead {
+  margin: 0;
+  padding: 0 2px;
+  max-width: 68ch;
+  color: var(--ink-2);
+  text-wrap: pretty;
+}
+
+.hm-latest {
+  display: grid;
+  gap: 4px;
+  padding: 12px 16px;
+  border-inline-start: 4px solid var(--st-watch);
+  min-width: 0;
+}
+
+.hm-latest h2 {
+  margin: 0;
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.hm-latest p {
+  margin: 0;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+
+.hm-latest-open {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-weight: 600;
+}

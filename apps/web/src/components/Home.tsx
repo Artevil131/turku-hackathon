@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import type { Connection, Finding } from "../live.ts";
 import { readStoredUnit } from "./doctor/filters.ts";
 import { changesOn } from "./home/changes.ts";
+import { Latest, latestSignal } from "./home/Latest.tsx";
 import { Roles } from "./home/Roles.tsx";
 import { Since } from "./home/Since.tsx";
 import { IncidentRow } from "./research/feed/IncidentRow.tsx";
@@ -42,11 +43,13 @@ export function Home({ locale, clock, findings, lastRole, onRole, connection, al
     [asOf, alerts],
   );
   const signals = asOf && alerts && connection !== "offline" ? open.length : null;
+  const latest = asOf && alerts && connection !== "offline" ? latestSignal(asOf, alerts) : null;
   const state = connection === "offline" ? "offline" : asOf === null || alerts === undefined ? "connecting" : "ready";
 
   return (
     <div className="hm">
       <Since locale={locale} asOf={asOf} changes={changes} state={state} period={period} onPeriod={setPeriod} openCount={signals} />
+      {latest ? <Latest locale={locale} alert={latest} /> : null}
       {state === "ready" && signals !== null && open.length > 0 ? (
         <section className="hm-incidents glass" aria-label={t(locale, "feedOpen", { n: open.length })}>
           <ul className="feed-list">
