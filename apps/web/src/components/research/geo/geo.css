@@ -169,6 +169,12 @@
   stroke: var(--geo-ink);
   stroke-width: 2.5;
 }
+
+/* The selected hospital's county (D-051), shown only with several hospitals. */
+.geo-county[data-site="true"] {
+  stroke: var(--live);
+  stroke-width: 2.5;
+}
 .geo-fill-s0 {
   fill: #f1f1f6;
 }

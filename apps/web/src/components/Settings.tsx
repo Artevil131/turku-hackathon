@@ -1,6 +1,7 @@
 import type { AeiClient } from "@aei/contract";
-import { type Locale, t } from "@aei/i18n";
+import { type Locale, siteName, t } from "@aei/i18n";
 import { useEffect, useRef } from "react";
+import { useSites } from "../sites.ts";
 import { DataQuality } from "./DataQuality.tsx";
 import { InfoButton } from "./Info.tsx";
 
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export function Settings({ client, locale, onLocale, onResetRole }: Props) {
+  const { sites, site, multi, setSite } = useSites();
   const dataRef = useRef<HTMLElement>(null);
   useEffect(() => {
     if (new URLSearchParams(location.hash.split("?")[1]).get("section") === "data") {
@@ -49,6 +51,22 @@ export function Settings({ client, locale, onLocale, onResetRole }: Props) {
           ))}
         </div>
       </fieldset>
+
+      {multi ? (
+        <fieldset className="field setting">
+          <legend className="field-label">
+            {t(locale, "siteLabel")}
+            <InfoButton locale={locale}>{t(locale, "siteSettingHint")}</InfoButton>
+          </legend>
+          <div className="choice-row">
+            {[...sites.map((s) => s.id), null].map((id) => (
+              <button key={id ?? "all"} type="button" className="choice" aria-pressed={site === id} onClick={() => setSite(id)}>
+                {id === null ? t(locale, "siteAll") : siteName(locale, id)}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+      ) : null}
 
       <div className="field setting">
         <span className="field-label">

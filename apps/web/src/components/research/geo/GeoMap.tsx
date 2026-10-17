@@ -7,6 +7,7 @@ import { HOSPITALS, LINKS } from "../../intro/surface.ts";
 import type { PanelProps } from "../board.ts";
 import { centroidOf, pathOf } from "../map/geo.ts";
 import "./geo.css";
+import { allSites, currentSite, homeSite, isMulti } from "../../../sites.ts";
 import { CountyDetail } from "./CountyDetail.tsx";
 import { CountyForecasts } from "./CountyForecasts.tsx";
 import { type Layout, MAP_LAYOUT, mapPoint } from "./layout.ts";
@@ -19,7 +20,8 @@ import { useLoad } from "./useLoad.ts";
 
 const DEFAULT_GROUP = "MRSA carriage";
 const NATIONAL = "Finland (all counties)";
-const TYKS_COUNTY = "Varsinais-Suomen hyvinvointialue";
+/** The selected hospital's county (D-051); the home site's, Varsinais-Suomi, with one hospital or all. */
+const siteCounty = () => (allSites().find((s) => s.id === currentSite()) ?? homeSite()).county;
 
 /** The API's series name stays the key; the label is translated. */
 const SERIES_KEY = {
@@ -123,6 +125,7 @@ function Spark({
 }
 
 export function GeoMap({ client, locale, asOf, reducedMotion }: PanelProps) {
+  const TYKS_COUNTY = siteCounty();
   const [group, setGroup] = useState(DEFAULT_GROUP);
   // The map shows first; the county detail replaces it in the tile once a county is picked.
   const [chosen, setChosen] = useState<string | null>(null);
@@ -167,7 +170,7 @@ export function GeoMap({ client, locale, asOf, reducedMotion }: PanelProps) {
   const monthLong = (m: string) => formatMonth(locale, `${m}-01`, true);
   const series = useMemo(() => (data?.series ?? []).filter((s) => s.group === group), [data, group]);
   const forecasts = data?.forecasts ?? [];
-  const home = "Varsinais-Suomen hyvinvointialue";
+  const home = TYKS_COUNTY;
   const byRegion = useMemo(() => new Map(series.map((s) => [s.region, s])), [series]);
   const edges = useMemo(() => stepEdges(series.filter((s) => s.region !== NATIONAL)), [series]);
   const signalsAll = useMemo(
@@ -370,6 +373,7 @@ export function GeoMap({ client, locale, asOf, reducedMotion }: PanelProps) {
                     d={c.d}
                     className={`geo-county geo-fill-${fillOf(c.name)}`}
                     data-selected={chosen === c.name}
+                    data-site={isMulti() && c.name === TYKS_COUNTY}
                     vectorEffect="non-scaling-stroke"
                     role="button"
                     tabIndex={0}

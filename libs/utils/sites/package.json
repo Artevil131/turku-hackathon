@@ -1,0 +1,17 @@
+{
+  "name": "@aei/sites",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./node": "./src/node.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@aei/domain": "workspace:*",
+    "@aei/ingest": "workspace:*"
+  }
+}

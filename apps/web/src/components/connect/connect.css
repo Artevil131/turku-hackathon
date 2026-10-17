@@ -207,3 +207,533 @@
   border: 1px solid var(--line);
   border-radius: var(--radius-control);
 }
+
+/* Hospitals on this server and "Connect a hospital" (D-051). */
+
+.cx-source[data-current="true"] {
+  border-color: var(--brand-accent-line);
+}
+
+.cx-site-id {
+  margin-left: 4px;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-size: var(--t-xs);
+  font-weight: 400;
+  color: var(--ink-3);
+}
+
+.cx-source p.cx-site-issues {
+  color: var(--st-watch);
+}
+
+.cx-source p.cx-site-county {
+  color: var(--ink-3);
+}
+
+.cx-steps {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 4px;
+  max-width: 68ch;
+  font-size: var(--t-s);
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+.cx-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px 12px;
+}
+
+.cx-field {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+}
+
+.cx-field-wide {
+  grid-column: 1 / -1;
+}
+
+.cx-input {
+  height: var(--control-h);
+  min-width: 0;
+  padding: 0 8px;
+  color: var(--ink);
+  background: var(--chassis);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control);
+  font-size: var(--t-s);
+}
+
+.cx-input:focus-visible {
+  outline: 2px solid var(--live);
+  outline-offset: 1px;
+}
+
+.cx-input[aria-invalid="true"],
+.cx-message[aria-invalid="true"] {
+  border-color: var(--st-alert);
+}
+
+.cx-units {
+  min-height: 96px;
+}
+
+.cx-problem {
+  font-size: var(--t-xs);
+  color: var(--st-alert);
+}
+
+.cx-out-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.cx-out-tools {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.cx-check-site {
+  justify-self: start;
+  min-width: 220px;
+}
+
+/* Primary actions at the top of the page: big targets (44 px and up). */
+
+.cx-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.cx-action {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 10px 14px;
+  text-align: left;
+  color: var(--ink);
+  background: var(--glass-1);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-panel);
+}
+
+.cx-action:hover {
+  border-color: var(--live);
+  background: var(--live-soft);
+}
+
+.cx-action:focus-visible {
+  outline: 2px solid var(--live);
+  outline-offset: 2px;
+}
+
+.cx-action svg {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  color: var(--live);
+}
+
+.cx-action span {
+  display: grid;
+  gap: 2px;
+}
+
+.cx-action b {
+  font-size: var(--t-m);
+  font-weight: 600;
+}
+
+.cx-action small {
+  font-size: var(--t-xs);
+  color: var(--ink-3);
+}
+
+/* Drop zone, inline feedback and sending. */
+
+.cx-drop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  min-height: 64px;
+  padding: 12px 14px;
+  color: var(--ink-2);
+  font-size: var(--t-s);
+  border: 1.5px dashed var(--line-strong);
+  border-radius: var(--radius-panel);
+  background: var(--chassis);
+}
+
+.cx-drop[data-dragging="true"] {
+  border-color: var(--live);
+  background: var(--live-soft);
+  color: var(--ink);
+}
+
+.cx-drop svg {
+  width: 20px;
+  height: 20px;
+  color: var(--ink-3);
+}
+
+.cx-drop .btn {
+  margin-left: auto;
+  min-height: 44px;
+}
+
+.cx-check,
+.cx-send-btn {
+  min-height: 44px;
+  padding: 0 18px;
+}
+
+.cx-feedback {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-control);
+  font-size: var(--t-s);
+  border: 1px solid var(--line);
+}
+
+.cx-feedback[data-ok="true"] {
+  border-color: var(--st-ok);
+}
+
+.cx-feedback[data-ok="false"] {
+  border-color: var(--st-alert);
+  background: var(--st-alert-bg);
+}
+
+.cx-feedback p {
+  margin: 0;
+}
+
+.cx-sent {
+  display: grid;
+  gap: 4px;
+}
+
+.cx-send {
+  display: grid;
+  gap: 8px;
+  padding-top: 4px;
+  border-top: 1px solid var(--line);
+}
+
+.cx-send .cx-field {
+  max-width: 420px;
+}
+
+.cx-send .cx-input {
+  min-height: 44px;
+}
+
+/* The ingest map: sources, the three formats, and the steps inside AEI, drawn with CSS. */
+
+.im {
+  display: grid;
+  gap: 10px;
+}
+
+.im-map {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.7fr) minmax(0, 1.3fr);
+  gap: 28px;
+  padding: 16px;
+  background: var(--glass-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+}
+
+.im-col {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  position: relative;
+}
+
+.im-col ul,
+.im-col ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.im-col-title {
+  margin: 0;
+  font-size: var(--t-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.im-node,
+.im-lane,
+.im-step,
+.im-route {
+  position: relative;
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control);
+  background: var(--chassis);
+  font-size: var(--t-s);
+}
+
+/* Connectors: each source and each lane runs a line into the next column. */
+.im-sources .im-node::after,
+.im-lanes .im-lane::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  width: 28px;
+  border-top: 1.5px solid var(--line-strong);
+}
+
+.im-node[data-status="planned"] {
+  border-style: dashed;
+  background: transparent;
+  color: var(--ink-2);
+}
+
+.im-node[data-status="planned"]::after {
+  border-top-style: dashed;
+}
+
+.im-node[data-status="connected"],
+.im-node[data-status="home"] {
+  border-color: var(--st-ok);
+}
+
+.im-node-name {
+  font-weight: 600;
+}
+
+.im-node-sub {
+  font-size: var(--t-xs);
+  color: var(--ink-3);
+}
+
+.im-lanes ul {
+  height: 100%;
+  align-content: center;
+}
+
+.im-lane {
+  text-align: center;
+}
+
+.im-lane b {
+  font-size: var(--t-s);
+}
+
+.im-lane span {
+  font-size: var(--t-xs);
+  color: var(--ink-3);
+}
+
+.im-lane[data-used="true"] {
+  border-color: var(--live);
+  background: var(--live-soft);
+}
+
+.im-route {
+  margin: 0;
+  border-color: var(--live);
+}
+
+.im-route code {
+  font-weight: 600;
+}
+
+.im-route span {
+  font-size: var(--t-xs);
+  color: var(--ink-3);
+}
+
+.im-steps {
+  counter-reset: step;
+}
+
+/* Each step leads down to the next. */
+.im-step {
+  counter-increment: step;
+  padding-left: 32px;
+}
+
+.im-step::before {
+  content: counter(step);
+  position: absolute;
+  left: 10px;
+  top: 8px;
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--live);
+}
+
+.im-step + .im-step::after,
+.im-route + .im-steps .im-step:first-child::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  height: 8px;
+  border-left: 1.5px solid var(--line-strong);
+}
+
+.im-step-name {
+  font-weight: 500;
+}
+
+.im-step-detail {
+  font-size: var(--t-xs);
+  color: var(--ink-2);
+}
+
+.im-tags {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.im-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--t-xs);
+  color: var(--ink-3);
+}
+
+.im-tag i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--line-strong);
+}
+
+.im-tag[data-tag="live"] {
+  color: var(--ink);
+}
+
+.im-tag[data-tag="live"] i {
+  background: var(--st-ok);
+}
+
+.im-tag[data-tag="off"] i {
+  background: var(--st-alert);
+}
+
+.im-tag[data-tag="demo"],
+.im-tag[data-tag="planned"] {
+  padding: 0 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+}
+
+.im-tag[data-tag="planned"] {
+  border-style: dashed;
+}
+
+/* One card per hospital. */
+
+.im-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 12px;
+  margin: 4px 0 0;
+}
+
+.im-facts div {
+  display: grid;
+  gap: 1px;
+}
+
+.im-facts dt {
+  font-size: var(--t-xs);
+  color: var(--ink-3);
+}
+
+.im-facts dd {
+  margin: 0;
+  font-size: var(--t-s);
+  color: var(--ink);
+}
+
+.im-facts dd[data-warn="true"] {
+  color: var(--st-watch);
+}
+
+.im-spark-fig {
+  margin: 4px 0 0;
+  display: grid;
+  gap: 2px;
+}
+
+.im-spark {
+  width: 100%;
+  height: 28px;
+}
+
+.im-spark rect {
+  fill: var(--live);
+}
+
+.im-spark-fig figcaption {
+  font-size: var(--t-xs);
+  color: var(--ink-3);
+}
+
+@media (max-width: 720px) {
+  .im-map {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+  .im-sources .im-node::after,
+  .im-lanes .im-lane::after {
+    display: none;
+  }
+  /* Stacked, each column leads down to the next. */
+  .im-col + .im-col::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: 100%;
+    height: 24px;
+    border-left: 1.5px solid var(--line-strong);
+  }
+  .im-lanes ul {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .cx-drop .btn {
+    margin-left: 0;
+  }
+}
+
+/* Long code lines scroll inside their block; they never widen the page (phones). */
+.connect,
+.cx-try,
+.im,
+.cx-send {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.connect > *,
+.cx-try > *,
+.im > * {
+  min-width: 0;
+}

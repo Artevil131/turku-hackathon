@@ -1,4 +1,4 @@
-import type { AntibioticCode, Culture, IsoDate, IsolateRecord, Organism, Phenotype, WardCode } from "@aei/domain";
+import type { AntibioticCode, Culture, IsoDate, IsolateRecord, Organism, Phenotype, SiteId, WardCode } from "@aei/domain";
 import { isIntrinsic } from "@aei/eucast";
 import { addDays, daysBetween } from "@aei/replay";
 import { cochranArmitageRising, poissonLower, poissonUpper } from "./stats.ts";
@@ -17,6 +17,8 @@ export interface Signal {
   key: string;
   date: IsoDate;
   ward: WardCode | null;
+  /** The site of a hospital-wide signal (no unit) of a site other than the home site (D-051). */
+  site?: SiteId;
   organism?: Organism;
   antibiotic?: AntibioticCode;
   phenotype?: Phenotype;

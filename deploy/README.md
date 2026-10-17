@@ -29,7 +29,7 @@ the THL county file. Both are mounted read-only at run time:
 |---|---|---|
 | `/data` | `data/synthetic_microbiology_dataset` | `AEI_DATASET` |
 | `/regional` | `data/external/thl` (from `scripts/fetch_thl_ttr.py` and `scripts/fetch_finres.py`; without them `/api/regional` and `/api/national` answer 404) | `AEI_THL_DIR` |
-| `/config` | `deploy/container/config` (a site's code map) | `AEI_CONFIG_DIR` |
+| `/config` | `deploy/container/config` (a site's code map; the sites file `AEI_SITES`) | `AEI_CONFIG_DIR` |
 
 The API runs as the image's user `node`, who must be able to read the
 dataset. If its files are private to you (mode 600), either make them
@@ -49,7 +49,10 @@ smoke tests (`SMOKE_URL=http://localhost:8080 pnpm smoke`) 13 of 13.
 The compose file passes the server's variables through: `AEI_REPLAY_START`,
 `AEI_LOAD_UNTIL` (load results up to a date, the rest can arrive through
 `/api/ingest`), `AEI_TICK_MS`, `AEI_DAYS_PER_TICK`, `AEI_GUIDELINE`,
-`AEI_CODE_MAP` (e.g. `/config/codes.json`) and the optional language model
+`AEI_CODE_MAP` (e.g. `/config/codes.json`), `AEI_SITES` (other hospitals
+sending to this server, e.g. `/config/sites.json` started from
+`config/sites.example.json`; deploy/integration.md, "Connecting a second
+hospital", D-051) and the optional language model
 (`AEI_LLM_URL`, `AEI_LLM_MODEL`, `AEI_LLM_KEY`, `AEI_LLM_ACCESS_ID`,
 `AEI_LLM_ACCESS_SECRET`). Ports: `AEI_WEB_PORT` (8080) and `AEI_API_PORT`
 (8787, published on 127.0.0.1 only, for `scripts/send_lab_results.py`).
@@ -59,8 +62,12 @@ drop the image's `HEALTHCHECK`; for a plain `podman build`, add
 `--format docker` to keep it.
 
 This is demo and pilot packaging, not a hardened deployment: no
-authentication, no TLS, no persistence (results posted to `/api/ingest`
-live in memory until restart), one API process. The web image has no
+authentication beyond the sites file's tokens, no TLS, no persistence
+(results posted to `/api/ingest` live in memory until restart), one API
+process. A site's token is a plain shared secret sent as `Authorization:
+Bearer`, kept in the sites file (mode 600; the server warns at startup if
+others can read it); it says which hospital sent a result, it is not
+hardened authentication, and without TLS it crosses the network in clear. The web image has no
 `/llm` proxy, so the web app's own AI questions stay off in it; the API's
 `/api/ask` uses the `AEI_LLM_*` variables. CI builds both images on every
 push (`.github/workflows/check.yml`, job `containers`); nothing is pushed

@@ -143,6 +143,41 @@ export const Gear = (p: P) => (
   </svg>
 );
 
+/** A plug: data coming in (the Connect page). */
+export const Plug = (p: P) => (
+  <svg {...base} {...p}>
+    <path d="M9 3v4M15 3v4M7 7h10v3a5 5 0 0 1-10 0V7ZM12 15v6" />
+  </svg>
+);
+
+/** An upward tray: import a file. */
+export const Upload = (p: P) => (
+  <svg {...base} {...p}>
+    <path d="M12 15V4M7.5 8.5 12 4l4.5 4.5M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" />
+  </svg>
+);
+
+/** A clipboard: paste a message. */
+export const Paste = (p: P) => (
+  <svg {...base} {...p}>
+    <path d="M9 4h6v3H9zM9 5.5H6.5A1.5 1.5 0 0 0 5 7v12.5A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5V7a1.5 1.5 0 0 0-1.5-1.5H15M8.5 12h7M8.5 16h5" />
+  </svg>
+);
+
+/** A building with a cross: connect a hospital. */
+export const Hospital = (p: P) => (
+  <svg {...base} {...p}>
+    <path d="M4 21V7l8-4 8 4v14M2 21h20M12 8v6M9 11h6M9 21v-3h6v3" />
+  </svg>
+);
+
+/** A terminal prompt: a command to run. */
+export const Terminal = (p: P) => (
+  <svg {...base} {...p}>
+    <path d="M4 5h16v14H4zM7.5 9.5 10 12l-2.5 2.5M12 15h4" />
+  </svg>
+);
+
 /** The info glyph behind every ⓘ button. */
 export const Info = (p: P) => (
   <svg {...base} {...p}>

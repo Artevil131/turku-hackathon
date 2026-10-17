@@ -1,7 +1,8 @@
 import type { AeiClient, Alert } from "@aei/contract";
-import { isWardCode, PHENOTYPES, type Phenotype, type WardCode } from "@aei/domain";
+import { PHENOTYPES, type Phenotype, type WardCode } from "@aei/domain";
 import type { Locale } from "@aei/i18n";
 import type { Finding } from "../../live.ts";
+import { knownWard } from "../../sites.ts";
 import { hashParams } from "../../url.ts";
 
 // Shared state and props of the researcher's board (spec-research.md). The
@@ -59,11 +60,11 @@ export function boardFromUrl(): BoardState {
   return {
     weeks: GRID_WEEKS.find((w) => w === weeks) ?? DEFAULT_WEEKS,
     panel: panel === "grid" ? "grid" : "geo",
-    unit: unit && isWardCode(unit) ? unit : null,
+    unit: unit && knownWard(unit) ? unit : null,
     kinds: (p.get("kind") ?? "").split(",").filter((k): k is SignalKind => KINDS.includes(k as SignalKind)),
     phenotype: PHENOTYPES.includes(ph as Phenotype) ? (ph as Phenotype) : null,
     incident: p.get("inc") ?? p.get("incident"),
-    focus: focus && isWardCode(focus) ? focus : null,
+    focus: focus && knownWard(focus) ? focus : null,
   };
 }
 

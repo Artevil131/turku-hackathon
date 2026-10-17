@@ -1,6 +1,7 @@
 import type { Alert } from "@aei/contract";
-import { ANTIBIOTICS, ORGANISMS, PHENOTYPES, WARDS } from "@aei/domain";
+import { ANTIBIOTICS, ORGANISMS, PHENOTYPES } from "@aei/domain";
 import { formatDate, type Locale, type MessageKey, phenotypeName, t, wardName } from "@aei/i18n";
+import { allWards, isMulti } from "../../sites.ts";
 import { signalLabel } from "../doctor/signals.ts";
 
 // What the search field can reach, and how a typed query ranks it. Pure: no
@@ -78,7 +79,7 @@ export function recentAlerts(alerts: readonly Alert[], asOf: string | null): Ale
 export function buildEntries(locale: Locale, alerts: readonly Alert[], asOf: string | null): Entry[] {
   const out: Entry[] = [];
 
-  for (const w of WARDS) {
+  for (const w of allWards()) {
     const unit = wardName(locale, w.code);
     const names = [w.code, w.fi, w.en];
     out.push({
@@ -86,7 +87,7 @@ export function buildEntries(locale: Locale, alerts: readonly Alert[], asOf: str
       group: "units",
       label: t(locale, "cmdDoctorFor", { unit }),
       sub: t(locale, "cmdDoctorForSub"),
-      href: `#doctor?unit=${w.code}`,
+      href: `#doctor?unit=${encodeURIComponent(w.code)}${isMulti() ? `&hospital=${w.site}` : ""}`,
       terms: norm([...names, t("fi", "cmdDoctorFor", { unit: w.fi }), t("en", "cmdDoctorFor", { unit: w.en })]),
     });
     out.push({

@@ -62,6 +62,9 @@ importers:
       '@aei/replay':
         specifier: workspace:*
         version: link:../../libs/utils/replay
+      '@aei/sites':
+        specifier: workspace:*
+        version: link:../../libs/utils/sites
       '@aei/viz':
         specifier: workspace:*
         version: link:../../libs/utils/viz
@@ -123,6 +126,9 @@ importers:
       '@aei/relations':
         specifier: workspace:*
         version: link:../../libs/utils/relations
+      '@aei/sites':
+        specifier: workspace:*
+        version: link:../../libs/utils/sites
       '@aei/viz':
         specifier: workspace:*
         version: link:../../libs/utils/viz
@@ -302,6 +308,15 @@ importers:
         version: link:../replay
 
   libs/utils/replay: {}
+
+  libs/utils/sites:
+    dependencies:
+      '@aei/domain':
+        specifier: workspace:*
+        version: link:../domain
+      '@aei/ingest':
+        specifier: workspace:*
+        version: link:../ingest
 
   libs/utils/viz:
     dependencies:

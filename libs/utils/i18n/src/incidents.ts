@@ -1,5 +1,5 @@
-import { WARDS, type WardCode } from "@aei/domain";
-import { formatDateNumeric, type Locale, t, wardName } from "./index.ts";
+import type { WardCode } from "@aei/domain";
+import { formatDateNumeric, type Locale, t, wardInfo, wardName } from "./index.ts";
 
 /** The existing alert fields needed for presentation; no detector is run here. */
 interface AlertFacts {
@@ -16,7 +16,7 @@ interface AlertFacts {
 export function alertPriority(a: AlertFacts): "high" | "medium" {
   if (a.severity) return a.severity;
   if (a.kind === "cpe" || a.detector === "profile-excess") return "high";
-  const inpatient = WARDS.some((w) => w.code === a.ward && w.type === "in");
+  const inpatient = a.ward !== null && wardInfo(a.ward)?.type === "in";
   return inpatient && a.kind === "new-in-unit" ? "high" : "medium";
 }
 

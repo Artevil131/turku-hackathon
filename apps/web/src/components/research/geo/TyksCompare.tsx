@@ -1,6 +1,7 @@
 import type { WeeklyResponse } from "@aei/contract";
 import { formatDate, type Locale, t } from "@aei/i18n";
 import { addDaysIso, phenotypeOfSeries, phenotypeWindows } from "@aei/viz";
+import { currentHospitalName } from "../../../sites.ts";
 import "./geo.css";
 
 /** For Varsinais-Suomi's county detail only. The caller supplies clock-current /api/weekly data. */
@@ -15,8 +16,11 @@ export function TyksCompare({ weekly, group, locale }: { weekly: WeeklyResponse;
   const number = (n: number) => new Intl.NumberFormat(locale === "fi" ? "fi-FI" : "en-GB").format(n);
 
   return (
-    <section className="tyks-compare" aria-label={t(locale, "tyksCompareTitle", { phenotype: phenotype?.toUpperCase() ?? "—" })}>
-      <h3>{t(locale, "tyksCompareTitle", { phenotype: phenotype?.toUpperCase() ?? "—" })}</h3>
+    <section
+      className="tyks-compare"
+      aria-label={t(locale, "tyksCompareTitle", { phenotype: phenotype?.toUpperCase() ?? "—", hospital: currentHospitalName(locale) })}
+    >
+      <h3>{t(locale, "tyksCompareTitle", { phenotype: phenotype?.toUpperCase() ?? "—", hospital: currentHospitalName(locale) })}</h3>
       <p className="geo-faint">{t(locale, "tyksCompareSynthetic")}</p>
       {windows ? (
         <dl>

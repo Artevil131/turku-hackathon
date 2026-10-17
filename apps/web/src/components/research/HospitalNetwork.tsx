@@ -27,8 +27,8 @@ type Loaded = { relations: RelationsResponse; alerts: Alert[] };
 
 /** A directed trail path from one unit's edge to the other's, bent aside so it does not sit on the tube. */
 function trail(from: WardCode, to: WardCode, bend: number) {
-  const [x1, y1] = POS[from];
-  const [x2, y2] = POS[to];
+  const [x1, y1] = POS[from] ?? [0, 0];
+  const [x2, y2] = POS[to] ?? [0, 0];
   const cx = (x1 + x2) / 2 - (y2 - y1) * bend;
   const cy = (y1 + y2) / 2 + (x2 - x1) * bend;
   const trim = (px: number, py: number, qx: number, qy: number) => {
@@ -226,7 +226,7 @@ export function HospitalNetwork({ client, locale, asOf, state, onChange }: Panel
         ) : null}
 
         {WARDS.map((w) => {
-          const [cx, cy] = POS[w.code];
+          const [cx, cy] = POS[w.code] ?? [0, 0];
           const s = signals.byUnit.get(w.code);
           const ds = downstream.get(w.code);
           const top = ds?.[0];

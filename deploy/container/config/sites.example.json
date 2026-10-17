@@ -1,0 +1,22 @@
+{
+  "sites": [
+    {
+      "id": "sata",
+      "fi": "Satasairaala",
+      "en": "Satasairaala",
+      "county": "Satakunnan hyvinvointialue",
+      "token": "example-sata-token-replace-me-7f3c91d2a4b8e605",
+      "wards": [
+        { "code": "ED", "fi": "Päivystys", "en": "Emergency department", "type": "out", "institution": "hospital" },
+        { "code": "MED-A", "fi": "Sisätaudit A", "en": "Internal medicine A", "type": "in", "institution": "hospital" },
+        { "code": "MED-B", "fi": "Sisätaudit B", "en": "Internal medicine B", "type": "in", "institution": "hospital" },
+        { "code": "SURG", "fi": "Kirurgia", "en": "Surgery", "type": "in", "institution": "hospital" },
+        { "code": "URO", "fi": "Urologia", "en": "Urology", "type": "in", "institution": "hospital" },
+        { "code": "ICU", "fi": "Teho-osasto", "en": "Intensive care unit", "type": "in", "institution": "hospital" },
+        { "code": "GER", "fi": "Geriatria", "en": "Geriatrics", "type": "in", "institution": "hospital" },
+        { "code": "PHC-N", "fi": "Terveysasema Pohjoinen", "en": "Health centre North", "type": "out", "institution": "primary_care" },
+        { "code": "PHC-S", "fi": "Terveysasema Etelä", "en": "Health centre South", "type": "out", "institution": "primary_care" }
+      ]
+    }
+  ]
+}

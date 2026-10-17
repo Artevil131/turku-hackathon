@@ -1,7 +1,8 @@
 import type { Alert, RelationsResponse } from "@aei/contract";
-import { WARDS, type WardCode } from "@aei/domain";
+import type { WardCode } from "@aei/domain";
 import { t, wardName } from "@aei/i18n";
 import { type CSSProperties, type KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
+import { currentHospitalName, networkUnits } from "../../../sites.ts";
 import { AsOf } from "../../AsOf.tsx";
 import { InfoButton } from "../../Info.tsx";
 import { kindOf, type PanelProps, type SignalKind } from "../board.ts";
@@ -102,7 +103,7 @@ export function UnitGraph({ client, locale, asOf, state, onChange, reducedMotion
       load.set(f.from, (load.get(f.from) ?? 0) + f.patients);
       load.set(f.to, (load.get(f.to) ?? 0) + f.patients);
     }
-    return WARDS.map((w) => w.code).sort((a, b) => (load.get(b) ?? 0) - (load.get(a) ?? 0) || a.localeCompare(b))[0] ?? null;
+    return networkUnits(flows).sort((a, b) => (load.get(b) ?? 0) - (load.get(a) ?? 0) || a.localeCompare(b))[0] ?? null;
   }, [flows]);
 
   // The signal's own unit, remembered: a click here moves `focus`, which is also where the signal's unit lives.
@@ -341,7 +342,7 @@ export function UnitGraph({ client, locale, asOf, state, onChange, reducedMotion
           {centre ? t(locale, "netGraphHeading", { unit: centre }) : t(locale, "graphTitle")}
         </h2>
         {rel ? <AsOf locale={locale} date={rel.to} pending={updating} clockDate={asOf ?? undefined} /> : null}
-        <p className="ug-caption">{t(locale, "geoTyksSource")}</p>
+        <p className="ug-caption">{t(locale, "geoTyksSource", { hospital: currentHospitalName(locale) })}</p>
         <p className="ug-caption">{t(locale, "netFlowCaption")}</p>
         <InfoButton locale={locale} label={t(locale, "netFlowInfoLabel")} align="end">
           {t(locale, "netFlowInfo")}

@@ -1,7 +1,8 @@
-import { PHENOTYPES, type Phenotype, WARDS } from "@aei/domain";
+import { PHENOTYPES, type Phenotype } from "@aei/domain";
 import { formatDate, phenotypeName, t, wardName } from "@aei/i18n";
 import { useEffect, useRef } from "react";
 import { useAiStatus, useQuestion } from "../../ai.ts";
+import { networkUnits } from "../../sites.ts";
 import { Ask, AskedResults } from "../Ask.tsx";
 import { AsOf } from "../AsOf.tsx";
 import { type FeedProps, KINDS, type SignalKind } from "./board.ts";
@@ -53,7 +54,7 @@ export function SignalFeed(props: Props) {
   const unitCounts = countBy(applyFilters(incidents, filters, "unit"), (i) => (i.ward ? [i.ward] : []));
   const kindCounts = countBy(applyFilters(incidents, filters, "kind"), (i) => [i.kind]);
   const phenoCounts = countBy(applyFilters(incidents, filters, "phenotype"), (i) => i.phenotypes);
-  const units = WARDS.map((w) => w.code).filter((c) => unitCounts.has(c) || state.unit === c);
+  const units = networkUnits([]).filter((c) => unitCounts.has(c) || state.unit === c);
   const phenotypes = [...new Set<Phenotype>([...phenoCounts.keys(), ...(state.phenotype ? [state.phenotype] : [])])].sort();
   const filtered = state.unit !== null || state.kinds.length > 0 || state.phenotype !== null;
   const clearAll = () => onChange({ unit: null, kinds: [], phenotype: null });

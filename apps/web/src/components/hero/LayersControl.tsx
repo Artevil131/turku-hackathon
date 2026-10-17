@@ -2,7 +2,7 @@ import { type Locale, phenotypeName, t, wardName } from "@aei/i18n";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { InfoButton } from "../Info.tsx";
 import { PHENOTYPE_ORDER } from "./geometry.ts";
-import { DEFAULT_LAYERS, encodeLayers, type Layers, type LineKey, PILL_KINDS, WARD_CODES, WINDOWS } from "./layers.ts";
+import { DEFAULT_LAYERS, encodeLayers, type Layers, type LineKey, PILL_KINDS, WINDOWS, wardCodes } from "./layers.ts";
 
 const Sliders = () => (
   <svg
@@ -77,7 +77,7 @@ export function LayersControl({ locale, layers, onChange, withLabel }: Props) {
 
   const set = (patch: Partial<Layers>) => onChange({ ...layers, ...patch });
   const setLine = (k: LineKey) => set({ lines: { ...layers.lines, [k]: !layers.lines[k] } });
-  const setUnits = (on: boolean) => set({ units: Object.fromEntries(WARD_CODES.map((u) => [u, on])) });
+  const setUnits = (on: boolean) => set({ units: Object.fromEntries(wardCodes().map((u) => [u, on])) });
   const changed = encodeLayers(layers) !== "";
   const label = t(locale, "tlLayers");
 
@@ -163,12 +163,12 @@ export function LayersControl({ locale, layers, onChange, withLabel }: Props) {
                 </button>
               </span>
             </legend>
-            {WARD_CODES.map((u) => (
+            {wardCodes().map((u) => (
               <Chip
                 key={u}
                 type="checkbox"
                 checked={layers.units[u] !== false}
-                onChange={() => set({ units: { ...layers.units, [u]: !layers.units[u] } })}
+                onChange={() => set({ units: { ...layers.units, [u]: layers.units[u] === false } })}
               >
                 <span title={wardName(locale, u)}>{u}</span>
               </Chip>

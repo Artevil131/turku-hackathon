@@ -8,6 +8,7 @@ import {
   type Specimen,
   type SR,
   WARDS,
+  type Ward,
   type WardCode,
 } from "@aei/domain";
 import THL_CODES from "./thl-codes.json" with { type: "json" };
@@ -32,6 +33,12 @@ export interface CodeMaps {
   /** Locations (ward codes, names, a site's location identifiers) to units. */
   wards: Record<string, WardCode>;
   phenotypes: Record<string, Phenotype>;
+  /**
+   * Keep a location that maps to no unit as the code it was sent with, instead
+   * of skipping the culture. A connected site's maps set it (D-051): its rows are
+   * kept as sent and the unregistered unit is reported by @aei/sites.
+   */
+  keepUnknownWards?: boolean;
 }
 
 const norm = (s: string) =>
@@ -159,13 +166,7 @@ function defaults(): CodeMaps {
     [`${SNOMED}|258530009`]: "wound",
   } satisfies Record<string, Specimen>);
 
-  const wards: Record<string, WardCode> = {};
-  for (const w of WARDS) {
-    wards[w.code] = w.code;
-    wards[norm(w.code)] = w.code;
-    wards[norm(w.en)] = w.code;
-    wards[norm(w.fi)] = w.code;
-  }
+  const wards = wardCodeMap(WARDS);
 
   const phenotypes: Record<string, Phenotype> = {
     esbl: "esbl",
@@ -177,6 +178,18 @@ function defaults(): CodeMaps {
     "extended spectrum beta lactamase": "esbl",
   };
   return { organisms, antibiotics, specimens, wards, phenotypes };
+}
+
+/** A ward map from a list of units: each by its code and its Finnish and English names. */
+export function wardCodeMap(wards: readonly Pick<Ward, "code" | "fi" | "en">[]): Record<string, WardCode> {
+  const out: Record<string, WardCode> = {};
+  for (const w of wards) {
+    out[w.code] = w.code;
+    out[norm(w.code)] = w.code;
+    out[norm(w.en)] = w.code;
+    out[norm(w.fi)] = w.code;
+  }
+  return out;
 }
 
 export const DEFAULT_CODE_MAPS: CodeMaps = defaults();
@@ -200,13 +213,16 @@ export function extendCodeMaps(extra: Partial<CodeMaps>, base: CodeMaps = DEFAUL
     specimens: { ...base.specimens, ...normaliseKeys(extra.specimens) },
     wards: { ...base.wards, ...normaliseKeys(extra.wards) },
     phenotypes: { ...base.phenotypes, ...normaliseKeys(extra.phenotypes) },
+    ...((extra.keepUnknownWards ?? base.keepUnknownWards) ? { keepUnknownWards: true } : {}),
   };
 }
 
 export const mapOrganism = (m: CodeMaps, c: readonly Coding[]) => lookup(m.organisms, c);
 export const mapAntibiotic = (m: CodeMaps, c: readonly Coding[]) => lookup(m.antibiotics, c);
 export const mapSpecimen = (m: CodeMaps, c: readonly Coding[]) => lookup(m.specimens, c);
-export const mapWard = (m: CodeMaps, c: readonly Coding[]) => lookup(m.wards, c);
+/** The unit a location maps to; with `keepUnknownWards`, else the first code (or text) it was sent with. */
+export const mapWard = (m: CodeMaps, c: readonly Coding[]): WardCode | undefined =>
+  lookup(m.wards, c) ?? (m.keepUnknownWards ? (c.map((x) => (x.code ?? x.display ?? "").trim()).find((x) => x) ?? undefined) : undefined);
 export const mapPhenotype = (m: CodeMaps, c: readonly Coding[]) => lookup(m.phenotypes, c);
 
 /**
