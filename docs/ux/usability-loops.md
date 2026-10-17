@@ -43,3 +43,18 @@ Branch `ux/judge-fixes` (worktree, compared against `ux/usability-loop`), after 
 
 Not checked: a drug searched alone lands on the default case, where it may not be a row (meropenem is not offered for mild cystitis); the one project-less view tab keeps one layout for both the patient and the research view; no real user.
 | `ux-loop-14` | After a question (search result, a question chip) the drawn hand points at the answer: the drug's selected row, the highlighted organism, the doctor's headline, or the first window. The doctor's answer states its data: "Results up to 12 May 2025, the last 365 days, Urology." Every window carries one heading of one size (Notebook, Signals, Map, Patient flow…). Start page centred on wide screens, demo cards share the row, no automatic tour popup on a first visit | user: "cursor showing the answer when you have a question", "some basic data like time so doctors know it is relevant", "make it more clear what each section is", "why is it so uneven" |
+
+Merged from the main working branch (uncommitted there at the time):
+
+| `ux-loop-15` | Add-a-window names lead with the window's own title, then what it shows ("Timeline: weeks by ward", "Treat a patient: which antibiotic"). A click on the timeline's weekly chart moves the replay clock to the end of that week (a drag still chooses weeks; pills, lanes and the chosen weeks keep their clicks) | user could not find the timeline: the menu called it "Weeks of resistance by ward" while the window says "Timeline"; clicking the timeline did nothing to the date |
+
+Not checked with a real user.
+
+| `ux-loop-16` | Patient flow: the paragraph that repeated the numbers is gone, the column heads read "Sampled before / after MED-A", the info text is one short block. Map: with a signal selected, the map switches to the THL series of the same phenotype (as before) and now draws a red ring on Tyks with a dashed line to a chip naming the unit and the series; clicking the chip opens Varsinais-Suomi's detail. The caption and how-to lines and the signal banner are gone (their facts sit behind the ⓘ); referral lines and hospital labels are fainter; county detail keeps its marker and VRE lines, the forecast caveats sit behind an ⓘ | the map showed a different dataset with no visible tie to the signal; both windows carried prose that restated the picture |
+
+Checked in the browser (map with the ESBL signal selected at normal and focus size; patient flow at normal size). Not checked: the other windows were audited by their copy only and left as they were; patient flow in focus mode renders far too tall in my test browser, which I did not trace.
+
+| `ux-loop-17` | Tools: the method line under every result is gone (the Method block has it), the notebook no longer shows the method twice or a second Copy as Python, tool names and hints lose their decision ids and statistics terms ("Find clusters", "Share estimate", "Unusual counts in this slice"). Add-a-window: only the title is bold, the entries are ordered answer, evidence, time and place, workbench, and two labels that promised what the window does not do are fixed (the explanation window has no question box; the unit grid is weeks down, units across). Infection-control demo: the evidence window opens at the head of the right column instead of as a narrow tall strip that pushed the signal list down, so the board has two aligned columns and no hole (demo version 12) | the demo showed a gap beside the notebook; a pasted review found the two untrue labels |
+
+Checked in the browser: the control demo replayed with the new columns. Not checked on screen: the new picker order and weights (typecheck and tests only), the tool result cards after the cut.
+

@@ -934,6 +934,50 @@
   font-size: var(--t-xs);
 }
 
+/* Watch a demo fill in again: a quiet icon at the row's end, there when the row is hovered or focused. */
+.sb-demo-row {
+  position: relative;
+}
+.sb-replay {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: none;
+  color: var(--ink-3);
+  opacity: 0;
+  transform: translateY(-50%);
+  transition: opacity 120ms var(--mo-ease);
+  cursor: pointer;
+}
+.sb-replay svg {
+  width: 16px;
+  height: 16px;
+}
+.sb-demo-row:hover .sb-replay,
+.sb-replay:focus-visible {
+  opacity: 1;
+}
+.sb-replay:hover {
+  background: var(--chassis);
+  color: var(--ink);
+}
+.sb-replay:focus-visible {
+  outline: 2px solid var(--live);
+  outline-offset: 1px;
+}
+@media (hover: none) {
+  .sb-replay {
+    opacity: 0.6;
+  }
+}
+
 .sb-tour {
   color: var(--live);
 }

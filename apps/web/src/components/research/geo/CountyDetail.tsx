@@ -1,6 +1,7 @@
 import type { RegionalForecast, RegionalSignal } from "@aei/contract";
 import { countyName, formatMonth, type Locale, t } from "@aei/i18n";
 import type { ReactNode, Ref } from "react";
+import { InfoButton } from "../../Info.tsx";
 import { CountyForecasts } from "./CountyForecasts.tsx";
 
 /** Replaces the map in its tile, rather than opening below its visible bounds. */
@@ -58,12 +59,15 @@ export function CountyDetail({
         ) : (
           <p className="geo-faint">{t(locale, "mapFocusNoSignal")}</p>
         )}
-        <h4 className="geo-h3">{t(locale, "geoDetailForecast")}</h4>
+        <h4 className="geo-h3">
+          {t(locale, "geoDetailForecast")}
+          <InfoButton locale={locale}>
+            {t(locale, "geoForecastNote")} {t(locale, "geoForecastCaveat")}
+          </InfoButton>
+        </h4>
         <CountyForecasts forecasts={forecasts} region={region} locale={locale} />
         {!forecasts.some((f) => f.region === region) ? <p className="geo-faint">{t(locale, "geoForecastUnavailable")}</p> : null}
         <p className="geo-faint">{t(locale, "geoVreNoForecast")}</p>
-        <p className="geo-faint">{t(locale, "geoForecastNote")}</p>
-        <p className="geo-faint">{t(locale, "geoForecastCaveat")}</p>
         {children}
       </div>
     </section>

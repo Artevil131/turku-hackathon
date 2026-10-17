@@ -837,3 +837,8 @@
 .ws-picker {
   min-width: 300px;
 }
+
+.ws-pick-rest {
+  color: var(--ink-3);
+  font-weight: 400;
+}

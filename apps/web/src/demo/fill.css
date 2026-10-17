@@ -21,7 +21,7 @@
 
 /* ---------- notebook cells ---------- */
 .ws[data-fill] .nb-slot {
-  animation: fill-fade 320ms var(--mo-ease) both;
+  animation: fill-fade 160ms var(--mo-ease) both;
 }
 /* A cell's body waits until the colleague reaches it (its title is already there). */
 .ws[data-fill] .nb-cell:not([data-fill-active]):not([data-fill-done]) .nb-body {
@@ -56,7 +56,7 @@
 
 /* A slice being placed: the sentence grows a field at a time; its buttons arrive when the sentence is whole. */
 .ws[data-fill] .nb-actions {
-  transition: opacity 320ms var(--mo-ease);
+  transition: opacity 160ms var(--mo-ease);
 }
 .ws[data-fill] .nb-cell[data-fill-placing] .nb-actions {
   opacity: 0;
@@ -90,8 +90,8 @@
 /* ---------- the coverage window: the answer waits for the case ---------- */
 .ws[data-fill] .ws-win[data-win="coverage"] :is(.dr-answer > :not(.dr-answer-case), .cl) {
   transition:
-    opacity 450ms var(--mo-ease),
-    transform 450ms var(--mo-ease);
+    opacity 240ms var(--mo-ease),
+    transform 240ms var(--mo-ease);
 }
 .ws[data-fill] .ws-win[data-fill-veil="answer"] :is(.dr-answer > :not(.dr-answer-case), .cl) {
   opacity: 0;

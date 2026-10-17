@@ -466,6 +466,10 @@ export function Timeline({
         disabled={!ready}
         label={t(locale, "tlStream")}
         onActivate={() => setSheet(true)}
+        onSeek={(iso) => {
+          command({ action: "pause" });
+          seek(iso);
+        }}
         selected={inc}
         selectedUnit={selectedUnit}
         focusUnit={focusUnit}

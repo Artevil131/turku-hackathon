@@ -69,7 +69,7 @@ export class Hand {
     const dy = y - y0;
     const dist = Math.hypot(dx, dy);
     if (dist < 1.5) return Promise.resolve();
-    const ms = Math.min(pace.max, pace.min + 90 * Math.log2(dist / 16 + 1));
+    const ms = Math.min(pace.max, pace.min + 55 * Math.log2(dist / 16 + 1));
     // The arc: the path bows to one side by a tenth or so of the distance.
     const side = this.noise() < 0.5 ? -1 : 1;
     const bow = dist * (0.07 + 0.09 * this.noise()) * side;

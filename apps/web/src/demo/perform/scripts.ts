@@ -36,8 +36,11 @@ function control(locale: Locale): Screenplay {
       { do: "click", at: added(".nb-run"), wait: added(".tl-cell"), timeout: 10000 },
       // The numbers are read; then the method behind them is opened: the formula and the code that reproduce it.
       { do: "think", ms: 600 },
+      { do: "click", at: added(".tl-cell-method > summary"), wait: added(".nb-more > summary") },
+      { do: "think", ms: 500 },
       { do: "click", at: added(".nb-more > summary"), wait: added(".nb-pre") },
-      { do: "think", ms: 1000 },
+      // The view follows to the code: the hand reads along it.
+      { do: "look", at: added(".nb-pre"), ms: 2200 },
       // The detector the same way: is the count more than this unit usually has?
       { do: "click", at: "[data-add-more]", wait: ".nb-menu", mark: true },
       { do: "click", at: '.nb-menu [data-add="detector"]', wait: added(".nb-run") },
@@ -88,11 +91,14 @@ function researcher(locale: Locale): Screenplay {
       { do: "click", at: added(".nb-run"), wait: added(".tl-cell"), timeout: 10000 },
       { do: "think", ms: 700 },
       // The method opened: the formula sits typeset, the Python that reproduces the number unrolls under it.
+      { do: "click", at: added(".tl-cell-method > summary"), wait: added(".nb-more > summary") },
+      { do: "think", ms: 500 },
       { do: "click", at: added(".nb-more > summary"), wait: added(".nb-pre") },
-      { do: "think", ms: 1100 },
+      // The view follows to the code: the hand reads along it.
+      { do: "look", at: added(".nb-pre"), ms: 2200 },
       // A chart of the share, fortnight by fortnight, from the result's own button: it draws itself in.
-      { do: "click", at: added("[data-add-chart]"), wait: '.nb-cell[data-kind="chart"] .ch-line', timeout: 8000 },
-      { do: "think", ms: 1000 },
+      { do: "click", at: added("[data-add-chart]"), wait: '.nb-cell[data-kind="chart"] svg', timeout: 8000 },
+      { do: "look", at: last('.nb-cell[data-kind="chart"] svg'), ms: 1600 },
     ],
   };
 }
@@ -133,6 +139,15 @@ function clinician(): Screenplay {
   };
 }
 
+/** The pauses between decisions are a third of what they were written at: the show moves, the app still gets time to paint. */
+const BREATH = 0.35;
+
 export function screenplayFor(id: DemoId, locale: Locale): Screenplay {
-  return id === "clinician" ? clinician() : id === "control" ? control(locale) : researcher(locale);
+  const play = id === "clinician" ? clinician() : id === "control" ? control(locale) : researcher(locale);
+  return {
+    ...play,
+    beats: play.beats.map((b) =>
+      b.do === "think" ? { ...b, ms: Math.max(60, b.ms * BREATH) } : b.do === "look" ? { ...b, ms: (b.ms ?? 1000) * 0.5 } : b,
+    ),
+  };
 }

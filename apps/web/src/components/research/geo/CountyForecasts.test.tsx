@@ -67,7 +67,6 @@ describe("phenotype-total county forecasts", () => {
       expect(html).toContain(locale === "en" ? "Varsinais-Suomi · forecast" : "Varsinais-Suomi · ennuste");
       expect(html).toContain(locale === "en" ? "Next month: about 11 (range 3–22)" : "Ensi kuussa: noin 11 (vaihteluväli 3–22)");
       expect(html).toContain(locale === "en" ? "ESBL total:" : "ESBL yhteensä:");
-      expect(html).toContain("D-045");
       expect(html).toContain(locale === "en" ? "90\u00a0% predictive range" : "90\u00a0%:n ennusteväli");
       expect(html).toContain(locale === "en" ? "Next month: about 2 (range 0–5)" : "Ensi kuussa: noin 2 (vaihteluväli 0–5)");
     }

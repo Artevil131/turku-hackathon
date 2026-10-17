@@ -37,13 +37,15 @@ export function boxOf(el: Element | null): Box | null {
  * with `visible` false, one that merely exists (a result that has arrived, wherever the page put it).
  */
 export function until(target: Target, ms: number, clock: Clock, visible = true): Promise<Element | null> {
-  let scrolled = false;
+  let lastScroll = 0;
   return clock.waitFor(() => {
     const el = resolveTarget(target);
     if (el && (!visible || boxOf(el))) return el;
-    if (el?.isConnected && !scrolled && !el.closest("[inert], [hidden]")) {
-      scrolled = true;
-      el.scrollIntoView({ block: "nearest", inline: "nearest" });
+    // Out of view: bring it in, and again a moment later if the layout grew under it (a result arriving pushes it down).
+    const now = performance.now();
+    if (el?.isConnected && now - lastScroll > 200 && !el.closest("[inert], [hidden]")) {
+      lastScroll = now;
+      el.scrollIntoView({ block: "center", inline: "nearest", behavior: "instant" });
     }
     return null;
   }, ms);
@@ -97,7 +99,7 @@ export function typeText(el: Element | null, text: string, cps: number, clock: C
       const elapsed = (now - t0) / 1000;
       let moved = false;
       // At most two characters a frame: after a slow frame the typing carries on rather than catching up in a burst.
-      for (let n = 0; n < 2 && k < total && (times[k + 1] ?? Number.POSITIVE_INFINITY) <= elapsed; n++) {
+      for (let n = 0; n < 8 && k < total && (times[k + 1] ?? Number.POSITIVE_INFINITY) <= elapsed; n++) {
         k++;
         moved = true;
       }
@@ -105,7 +107,7 @@ export function typeText(el: Element | null, text: string, cps: number, clock: C
       const next = base + text.slice(0, k);
       // A render of React's own could put the field back to what it last heard: the typed text is kept up every frame.
       if (moved || field.value !== next) {
-        if (k >= total || now - flushed > 90) {
+        if (k >= total || now - flushed > 160) {
           setValue(field, next);
           flushed = now;
         } else {

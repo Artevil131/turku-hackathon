@@ -54,6 +54,18 @@ const analysis = (
   result: null,
 });
 
+/**
+ * The signal's evidence opens beside the Summary and the timeline when "Show the evidence" is pressed. Its closed place is
+ * reserved at the top right in the same columns as the signal list and the patient flow below it (7 to 12), so it opens as
+ * the head of that column: the notebook keeps its columns and no hole opens between them. Left as it was, it opened as a
+ * narrow column that pushed the signal list far down.
+ */
+function reserveEvidence(layout: Layout): Layout {
+  const top = layout.wins.answer;
+  const band = layout.wins.timeline.y + layout.wins.timeline.h - top.y;
+  return { ...layout, wins: { ...layout.wins, math: { x: 7, y: top.y, w: 5, h: band, open: false } } };
+}
+
 export const DEMOS: readonly DemoSpec[] = [
   {
     id: "clinician",
@@ -72,13 +84,15 @@ export const DEMOS: readonly DemoSpec[] = [
     blurbKey: "demoControlBlurb",
     mode: "continuous",
     board: "unit=MED-A&ph=esbl",
-    layout: gridLayout({
-      answer: { x: 0, y: 0, w: 12, h: 9 },
-      // The notebook is where you write, so it is the widest and sits first; the evidence stacks beside it.
-      notebook: { x: 0, y: 9, w: 7, h: 56 },
-      signals: { x: 7, y: 9, w: 5, h: 28 },
-      graph: { x: 7, y: 37, w: 5, h: 28 },
-    }),
+    layout: reserveEvidence(
+      gridLayout({
+        answer: { x: 0, y: 0, w: 12, h: 9 },
+        // The notebook is where you write, so it is the widest and sits first; the evidence stacks beside it.
+        notebook: { x: 0, y: 9, w: 7, h: 56 },
+        signals: { x: 7, y: 9, w: 5, h: 28 },
+        graph: { x: 7, y: 37, w: 5, h: 28 },
+      }),
+    ),
     page: (locale, site) => {
       const s = slice(site, { from: "2025-02-17", to: "2025-05-11", unit: "MED-A", phenotype: "esbl" });
       return page([

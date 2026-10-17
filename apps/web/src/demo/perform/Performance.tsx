@@ -42,7 +42,8 @@ class Fatal extends Error {}
 function inView(el: Element): boolean {
   const r = el.getBoundingClientRect();
   const b = boxOf(el);
-  return !!b && r.top >= 0 && r.bottom <= innerHeight && Math.abs(b.h - r.height) < 1 && Math.abs(b.w - r.width) < 1;
+  // Clear of the board's floating bars at the bottom and the top edge, not merely inside the window.
+  return !!b && r.top >= 70 && r.bottom <= innerHeight - 110 && Math.abs(b.h - r.height) < 1 && Math.abs(b.w - r.width) < 1;
 }
 
 /** The hand presses Escape: whatever menu or popover it opened closes, as the app's own handlers see fit. */
@@ -133,9 +134,13 @@ export function Performance({
         lastBox = null;
       }
     };
-    clock.tick(() => {
+    let measured = 0;
+    clock.tick((now) => {
       const s = spot.current;
       if (!s) return !clock.stopped;
+      // boxOf reads layout (every scrolling ancestor): a few times a second is plenty for a ring that glides anyway.
+      if (now - measured < 70) return !clock.stopped;
+      measured = now;
       const b = boxOf(ringed);
       if (!b) {
         if (lastBox) {
@@ -162,13 +167,14 @@ export function Performance({
       cursorEl.setAttribute("data-pressed", "");
       await clock.wait(pace.press);
       cursorEl.removeAttribute("data-pressed");
-      void clock.wait(420).then(() => r.remove());
+      void clock.wait(300).then(() => r.remove());
     };
     /** Brings the element into view and walks the hand to it; resolves with where it is, or null if it has gone. */
     const moveTo = async (el: Element, aim: "centre" | "start" = "centre") => {
       if (!inView(el)) {
-        el.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
-        await clock.wait(300);
+        // At once and to the middle: a smooth scroll still running would leave the hand where the target was.
+        el.scrollIntoView({ block: "center", inline: "nearest", behavior: "instant" });
+        await clock.wait(34);
       }
       const b = boxOf(el);
       if (!b) return null;
@@ -226,7 +232,7 @@ export function Performance({
           if (!(await moveTo(el, "start"))) return;
           await clock.wait(pace.dwell);
           await typeText(el, beat.text, beat.cps ?? pace.cps, clock);
-          await clock.wait(240);
+          await clock.wait(100);
           ring(null);
           return;
         }
@@ -238,7 +244,7 @@ export function Performance({
           if (el instanceof HTMLSelectElement || el instanceof HTMLInputElement) {
             el.focus();
             setValue(el, beat.value);
-            await clock.wait(320);
+            await clock.wait(140);
             el.blur();
           }
           ring(null);
@@ -269,7 +275,7 @@ export function Performance({
           return;
         case "escape":
           pressEscape();
-          return clock.wait(220);
+          return clock.wait(100);
       }
     };
 
@@ -282,7 +288,7 @@ export function Performance({
       const b = boxOf(stage);
       if (b) hand.set(b.x + b.w * 0.6, b.y + Math.min(b.h, 160), false);
       hand.show();
-      await clock.wait(260);
+      await clock.wait(120);
       for (const [index, beat] of beats.entries()) {
         if (clock.stopped) return;
         // A beat's start is announced (for anyone timing the show from the console); nothing listens by default.
@@ -294,7 +300,7 @@ export function Performance({
       ring(null);
       pressEscape();
       hand.hide();
-      await clock.wait(340);
+      await clock.wait(200);
       end("done");
     })().catch((e: unknown) => {
       // The plain fill-in takes over; the reason stays in the console for whoever tunes the screenplay.
@@ -322,6 +328,7 @@ export function Performance({
           <path
             d="M4 2.5l15 9.2-6.6 1.4 3.9 7.2-2.7 1.4-3.9-7.2-4.7 4.8z"
             fill="#07081c"
+            paintOrder="stroke"
             stroke="#fff"
             strokeWidth="1.4"
             strokeLinejoin="round"

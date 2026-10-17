@@ -220,7 +220,6 @@ export function GeoMap({
   const monthLong = (m: string) => formatMonth(locale, `${m}-01`, true);
   const series = useMemo(() => (data?.series ?? []).filter((s) => s.group === group), [data, group]);
   const forecasts = data?.forecasts ?? [];
-  const home = TYKS_COUNTY;
   const byRegion = useMemo(() => new Map(series.map((s) => [s.region, s])), [series]);
   const edges = useMemo(() => stepEdges(series.filter((s) => s.region !== NATIONAL)), [series]);
   const signalsAll = useMemo(
@@ -249,6 +248,26 @@ export function GeoMap({
   const tyks = hospitals.get("Tyks")?.p ?? [0, 0];
 
   const retry = () => setAttempt((n) => n + 1);
+
+  // The map is scaled to its stage; the signal's chip is HTML over it, placed from the measured scale.
+  const stage = useRef<HTMLDivElement>(null);
+  const [box, setBox] = useState<{ w: number; h: number } | null>(null);
+  useEffect(() => {
+    const el = stage.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const read = () => setBox({ w: el.clientWidth, h: el.clientHeight });
+    read();
+    const ro = new ResizeObserver(read);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const k = box ? Math.min(box.w / L.w, box.h / L.h) : 0;
+  const tyksPx: [number, number] = box ? [(box.w - L.w * k) / 2 + tyks[0] * k, (box.h - L.h * k) / 2 + tyks[1] * k] : [0, 0];
+  const chipTop = box ? Math.min(tyksPx[1] + 30, box.h - 76) : 0;
+  const openTyks = () => {
+    if (signalSeries) setGroup(signalSeries);
+    setChosen(TYKS_COUNTY);
+  };
 
   const loading = counties.state === "loading" || regional.state === "loading";
   const updating = (regional.fetching && data !== null) || (!!asOf && !!data && asOf !== data.asOf);
@@ -332,6 +351,9 @@ export function GeoMap({
             {month ? <span className="geo-month">{monthLong(month)}</span> : null}
           </span>
         ) : null}
+        <InfoButton locale={locale} align="end">
+          {t(locale, "geoCaption", { month: month ? monthLong(month) : "–" })} {t(locale, "geoCaptionSource")}
+        </InfoButton>
         <label className="geo-field">
           <span className="visually-hidden">{t(locale, "mapGroup")}</span>
           <select value={group} onChange={(e) => setGroup(e.target.value)} aria-label={t(locale, "mapGroup")}>
@@ -343,26 +365,6 @@ export function GeoMap({
           </select>
         </label>
       </header>
-      <p className="geo-caption">
-        {t(locale, "geoCaptionShort", { month: month ? monthLong(month) : "–" })}
-        <InfoButton locale={locale}>
-          {t(locale, "geoCaption", { month: month ? monthLong(month) : "–" })} {t(locale, "geoCaptionSource")}
-        </InfoButton>
-      </p>
-      {signal && signalSeries ? (
-        <div className="geo-signal" role="status">
-          <strong>{t(locale, "geoSignalHead", { series: seriesLabel(locale, signalSeries), unit: signal.ward ?? "" })}</strong>
-          <span>{t(locale, signalSeries === group ? "geoSignalBody" : "geoSignalOther", { county: TYKS_COUNTY })}</span>
-          {signalSeries !== group ? (
-            <button type="button" className="geo-chip" onClick={() => setGroup(signalSeries)}>
-              {t(locale, "geoSignalShow")}
-            </button>
-          ) : null}
-        </div>
-      ) : (
-        <p className="geo-caption">{t(locale, "geoHowTo")}</p>
-      )}
-
       {hasError ? (
         <div className="geo-state" role="alert">
           <span>{t(locale, "mapError")}</span>
@@ -425,7 +427,7 @@ export function GeoMap({
       ) : null}
       {
         <>
-          <div className="geo-stage">
+          <div className="geo-stage" ref={stage}>
             <svg
               viewBox={`0 0 ${L.w} ${L.h}`}
               preserveAspectRatio="xMidYMid meet"
@@ -552,9 +554,23 @@ export function GeoMap({
                   })}
               </g>
 
-              <circle cx={tyks[0]} cy={tyks[1]} r={11} className="geo-anchor" />
+              <circle cx={tyks[0]} cy={tyks[1]} r={11} className="geo-anchor" data-signal={signal && signalSeries ? "" : undefined} />
             </svg>
 
+            {signal && signalSeries && box ? (
+              <>
+                <svg className="geo-callout-svg" width={box.w} height={box.h} aria-hidden="true">
+                  <path d={`M${24},${chipTop} Q${24},${tyksPx[1]} ${tyksPx[0] - 12},${tyksPx[1]}`} className="geo-callout-line" />
+                </svg>
+                <button type="button" className="geo-callout" style={{ left: 8, top: chipTop }} onClick={openTyks}>
+                  <Glyph strong size={14} />
+                  <span className="geo-callout-text">
+                    <strong>{signal.ward ?? ""}</strong>
+                    <span>{seriesLabel(locale, signalSeries)}</span>
+                  </span>
+                </button>
+              </>
+            ) : null}
             {edgeMax > 0 ? <div className="geo-overlay-legend">{legendScale}</div> : null}
           </div>
 
@@ -562,10 +578,13 @@ export function GeoMap({
 
           {forecasts.length > 0 ? (
             <section className="geo-forecast-home" aria-label={t(locale, "geoForecastHome")}>
-              <h3 className="geo-h3">{t(locale, "geoForecastHome")}</h3>
-              <CountyForecasts forecasts={forecasts} region={home} locale={locale} />
-              <p className="geo-faint">{t(locale, "geoForecastNote")}</p>
-              <p className="geo-faint">{t(locale, "geoForecastCaveat")}</p>
+              <h3 className="geo-h3">
+                {t(locale, "geoForecastHome")}
+                <InfoButton locale={locale}>
+                  {t(locale, "geoForecastNote")} {t(locale, "geoForecastCaveat")}
+                </InfoButton>
+              </h3>
+              <CountyForecasts forecasts={forecasts} region={TYKS_COUNTY} locale={locale} />
             </section>
           ) : null}
 

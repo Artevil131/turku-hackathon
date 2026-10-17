@@ -4,6 +4,8 @@ import { Fragment, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useS
 import { CommandField } from "./components/command/CommandField.tsx";
 import { doctorParamsToWindow } from "./components/doctor/filters.ts";
 import { useMedia } from "./components/doctor/useMedia.ts";
+import { PAGE_VERSION } from "./components/research/notebook/model.ts";
+import { PAGE_EVENT } from "./components/research/notebook/usePage.ts";
 import { projectHash } from "./components/research/projects/useProject.ts";
 import { SiteLine } from "./components/SitePicker.tsx";
 import { PHONE } from "./components/shell/Menu.tsx";
@@ -381,16 +383,20 @@ export function App() {
       </Suspense>
     );
 
-  const openDemoFile = (demo: DemoSpec) => {
+  const openDemoFile = (demo: DemoSpec, replay = false) => {
     // The full tour opens demo files itself and keeps playing, so those open already filled. Otherwise the demo
-    // fills itself in the first time it opens (or every time, or never, per the setting); a later open just points.
-    const wanted = fillMode === "always" || (fillMode === "first" && !filledDemos().has(demo.id));
+    // fills itself in the first time it opens (or every time, or never, per the setting); a replay always fills;
+    // any other open just points.
+    const wanted = replay || fillMode === "always" || (fillMode === "first" && !filledDemos().has(demo.id));
     const fill = tour?.demo !== "overview" && !reducedMotion && wanted;
-    openDemo(client, locale, demo, { fill })
+    openDemo(client, locale, demo, { fill, replay })
       .then(({ project, plan }) => {
         shell.openProject(project);
         // A "Take the tour?" left from a previous demo must not sit on the stage while this one plays.
         if (plan) setTour((current) => (current?.demo === "overview" ? current : null));
+        // A replay starts from an empty notebook: the open page holds its cells in memory, so it is told to let go of them.
+        if (plan && replay)
+          dispatchEvent(new CustomEvent(PAGE_EVENT, { detail: { slot: plan.slot, page: { v: PAGE_VERSION, cells: [] } } }));
         if (plan) setFilling({ demo: demo.id, plan, key: Date.now() });
         else if (tour?.demo !== "overview" && !reducedMotion) setPointer(Date.now());
       })

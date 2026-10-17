@@ -45,11 +45,11 @@ export interface Screenplay {
 }
 
 export const PACE: Pace = {
-  min: 220,
-  max: 680,
-  dwell: 120,
-  press: 120,
-  cps: 40,
+  min: 130,
+  max: 420,
+  dwell: 50,
+  press: 80,
+  cps: 95,
   timeout: 6000,
 };
 

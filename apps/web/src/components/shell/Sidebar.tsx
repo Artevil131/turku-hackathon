@@ -1,6 +1,7 @@
 import { type Locale, t } from "@aei/i18n";
 import { type KeyboardEvent, useEffect, useRef } from "react";
 import { DEMOS, type DemoSpec } from "../../demo/demos.ts";
+import { copy } from "../../demo/fillCopy.ts";
 import type { DocTab } from "../../shell/tabs.ts";
 import { useMedia } from "../doctor/useMedia.ts";
 import { Gear } from "../Icons.tsx";
@@ -40,6 +41,7 @@ const VIEW = "M3.5 12S6.5 6 12 6s8.5 6 8.5 6-3 6-8.5 6-8.5-6-8.5-6ZM12 14.5a2.5 
 const FROZEN = "M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5";
 const PLUS = "M12 5v14M5 12h14";
 const PLAY = "M8 5.5v13l10.5-6.5z";
+const REPLAY = "M4.5 12a7.5 7.5 0 1 0 2.4-5.5L4.5 8.5M4.5 4v4.5H9";
 const DEMO = "M5 4.5h10l4 4v11h-14zM15 4.5v4h4M8.5 13h7M8.5 16h5";
 
 /** Opens the command palette (the search over units, antibiotics, signals and pages). */
@@ -93,7 +95,7 @@ export function Sidebar({
   onCloseTab: (tab: DocTab) => void;
   onNew: () => void;
   /** Opens a demo file (creating its project the first time). */
-  onDemo: (demo: DemoSpec) => void;
+  onDemo: (demo: DemoSpec, replay?: boolean) => void;
   /** Starts the full presentation. */
   onTour: () => void;
   onPage: (page: "data" | "settings") => void;
@@ -309,12 +311,22 @@ export function Sidebar({
                 </button>
               </li>
               {DEMOS.map((demo) => (
-                <li key={demo.id}>
+                <li key={demo.id} className="sb-demo-row">
                   <button type="button" className="sb-item sb-demo" data-demo={demo.id} onClick={() => onDemo(demo)}>
                     <span className="sb-icon">
                       <Svg d={DEMO} />
                     </span>
                     <span className="sb-label">{t(locale, demo.roleKey)}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="sb-replay"
+                    data-replay={demo.id}
+                    aria-label={`${t(locale, demo.roleKey)}: ${copy(locale, "replay")}`}
+                    title={copy(locale, "replay")}
+                    onClick={() => onDemo(demo, true)}
+                  >
+                    <Svg d={REPLAY} />
                   </button>
                 </li>
               ))}

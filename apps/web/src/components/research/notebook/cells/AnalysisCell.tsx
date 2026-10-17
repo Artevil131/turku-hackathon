@@ -232,7 +232,7 @@ export function AnalysisCellBody({
       </div>
       {result && (
         <>
-          <ResultCell cell={{ id: 0, result }} locale={locale} removable={false} onChart={onChart} />
+          <ResultCell cell={{ id: 0, result }} locale={locale} removable={false} inNotebook onChart={onChart} />
           <MethodBlock id={id} locale={locale} result={result} />
         </>
       )}

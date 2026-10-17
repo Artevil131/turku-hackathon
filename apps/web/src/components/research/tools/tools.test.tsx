@@ -98,7 +98,7 @@ describe("tool 4: Beta posterior", () => {
     expect(out).toContain("27.3");
     expect(out).toContain("5 of 20");
     expect(out).toContain('role="img"');
-    expect(out).not.toContain("accepted (D-041)");
+    expect(out).not.toContain("Not used for alerts");
     expect(pythonScript(result)).toContain("aei.compare.beta_posterior");
   });
   it("discounted: labelled accepted, with δ, m and the parent share", () => {
@@ -106,7 +106,7 @@ describe("tool 4: Beta posterior", () => {
     const result = computeBeta(rows, parent, slice, { type: "phenotype", code: "esbl" }, { delta: 0.95, m: 30 });
     expect(result.discounted?.parentShare).toBeCloseTo(0.1, 10);
     const out = html({ id: 4, result });
-    expect(out).toContain("accepted (D-041), not in the live list");
+    expect(out).toContain("Not used for alerts");
     expect(out).toContain("δ 0.95");
     expect(out).toContain("m 30");
     expect(pythonScript(result)).toContain("0.1");
@@ -117,7 +117,7 @@ describe("tool 5: detector here", () => {
   it("is labelled exploratory and lists nothing for quiet data", () => {
     const result = computeDetector(batch(60, 1), slice, "phenotype", ["esbl"]);
     const out = html({ id: 5, result });
-    expect(out).toContain("exploratory: live thresholds (D-020)");
+    expect(out).toContain("Exploratory: live alert rules");
     expect(pythonScript(result)).toContain("aei.detect.phenotype_excess(records");
   });
 });
@@ -140,7 +140,7 @@ describe("the inspector", () => {
       /^Intensive care unit · Escherichia coli · .+ · ESBL · .+ · first isolates$/,
     );
     expect(rate).toContain("All units · ");
-    expect(rate).toContain("How many per week in this frame, with its interval.");
+    expect(rate).toContain("Isolates per week in this slice, with a 95 % interval.");
     expect(rate).not.toContain("tl-empty");
     expect(rate).toMatch(/>Run<kbd>/);
     expect(rate).not.toContain('type="date"');
