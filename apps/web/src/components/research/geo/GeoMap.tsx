@@ -303,9 +303,9 @@ export function GeoMap({
         </label>
       </header>
       <p className="geo-caption">
-        {t(locale, "geoCaption", { month: month ? monthLong(month) : "–" })}
-        <InfoButton locale={locale} label={t(locale, "geoCaptionSource")}>
-          {t(locale, "geoCaptionSource")}
+        {t(locale, "geoCaptionShort", { month: month ? monthLong(month) : "–" })}
+        <InfoButton locale={locale}>
+          {t(locale, "geoCaption", { month: month ? monthLong(month) : "–" })} {t(locale, "geoCaptionSource")}
         </InfoButton>
       </p>
 

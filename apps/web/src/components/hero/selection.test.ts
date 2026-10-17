@@ -1,9 +1,17 @@
 import type { Alert } from "@aei/contract";
+import type { WardCode } from "@aei/domain";
 import { describe, expect, it } from "vitest";
 import { incidentKey, isKinPill, isSelectedPill, unitOfIncident } from "./selection.ts";
 
-const a = (id: string, incident: string | undefined, ward: string, date = "2025-06-01") =>
-  ({ id, incident, ward, date }) as unknown as Alert;
+const a = (id: string, incident: string | undefined, ward: WardCode | null, date = "2025-06-01"): Alert => ({
+  kind: "detector",
+  id,
+  incident,
+  date,
+  ward,
+  detector: "phenotype-excess",
+  observed: 1,
+});
 
 describe("selection", () => {
   it("keys an alert by incident, else id", () => {
@@ -18,10 +26,10 @@ describe("selection", () => {
   });
   it("marks kin in the same unit, never the selected pill", () => {
     const m = [a("1", "i1", "URO")];
-    expect(isKinPill(m, "URO" as never, "i2", "URO" as never)).toBe(true);
-    expect(isKinPill(m, "URO" as never, "i1", "URO" as never)).toBe(false);
-    expect(isKinPill(m, "ED" as never, "i2", "URO" as never)).toBe(false);
-    expect(isKinPill(m, "URO" as never, null, null)).toBe(false);
+    expect(isKinPill(m, "URO", "i2", "URO")).toBe(true);
+    expect(isKinPill(m, "URO", "i1", "URO")).toBe(false);
+    expect(isKinPill(m, "ED", "i2", "URO")).toBe(false);
+    expect(isKinPill(m, "URO", null, null)).toBe(false);
   });
   it("finds the unit of an incident", () => {
     const h = [a("1", "i1", "URO"), a("2", undefined, "ED")];

@@ -5,6 +5,7 @@ import { useAiStatus, useQuestion } from "../../ai.ts";
 import { networkUnits } from "../../sites.ts";
 import { Ask, AskedResults } from "../Ask.tsx";
 import { AsOf } from "../AsOf.tsx";
+import { InfoButton } from "../Info.tsx";
 import { type FeedProps, KINDS, type SignalKind } from "./board.ts";
 import { KindGlyph } from "./feed/glyphs.tsx";
 import { IncidentRow } from "./feed/IncidentRow.tsx";
@@ -188,8 +189,10 @@ export function SignalFeed(props: Props) {
           </p>
         ) : (
           <>
-            <h2 className="feed-section-title">{t(locale, "feedOpen", { n: open.length })}</h2>
-            <p className="feed-section-note">{t(locale, "feedOpenNote")}</p>
+            <h2 className="feed-section-title">
+              {t(locale, "feedOpen", { n: open.length })}
+              <InfoButton locale={locale}>{t(locale, "feedOpenNote")}</InfoButton>
+            </h2>
             {[open, history].map((list, index) => (
               <section
                 key={index === 0 ? "open" : "history"}

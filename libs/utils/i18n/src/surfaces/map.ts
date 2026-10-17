@@ -52,6 +52,7 @@ export const mapEn = {
   geoTitle: "Regional picture · THL open data",
   geoCaption:
     "THL notified cases per county, {month}. Colour: cases per 100 000 a year. Dots: county signals, filled when the signal survives correction.",
+  geoCaptionShort: "THL cases per county, {month} · colour: per 100 000 a year",
   geoCaptionSource: "Source: THL notified cases and Statistics Finland county boundaries, CC BY 4.0.",
   geoSchematic: "schematic positions",
   geoUnits: "Units",
@@ -175,6 +176,7 @@ export const mapFi: Record<keyof typeof mapEn, string> = {
   geoTitle: "Alueellinen tilanne · THL, avoin data",
   geoCaption:
     "THL:n ilmoitetut tapaukset hyvinvointialueittain, {month}. Väri: tapauksia 100 000:ta kohti vuodessa. Pisteet: alueen signaalit, täytetty, kun signaali kestää korjauksen.",
+  geoCaptionShort: "THL:n tapaukset alueittain, {month} · väri: 100 000:ta kohti vuodessa",
   geoCaptionSource: "Lähde: THL:n ilmoitetut tapaukset ja Tilastokeskuksen aluejako, CC BY 4.0.",
   geoSchematic: "kaaviomaiset sijainnit",
   geoUnits: "Yksiköt",

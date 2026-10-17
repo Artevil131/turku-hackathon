@@ -6,14 +6,16 @@ import { createPortal } from "react-dom";
 import { type LiveAlerts, useAlertsSinceStart } from "../alertsSince.ts";
 import type { Connection } from "../live.ts";
 import { currentHospitalName, siteWards } from "../sites.ts";
-import { hashPage, useHashParam } from "../url.ts";
+import { hashPage, sharedQuery, useHashParam } from "../url.ts";
 import { EventsStrip } from "./EventsStrip.tsx";
+import { Gloss } from "./Gloss.tsx";
 import { compactDate, dayNumber, isoFromDay } from "./hero/geometry.ts";
 import { useLayers } from "./hero/layers.ts";
 import { unitOfIncident } from "./hero/selection.ts";
 import { useWeekly } from "./hero/useWeekly.ts";
 import { WeeklyBand } from "./hero/WeeklyBand.tsx";
 import { Chevron, Pause, Play, StepDay, StepWeek } from "./Icons.tsx";
+import { InfoButton } from "./Info.tsx";
 import { QualityStatus } from "./quality/QualityStatus.tsx";
 import { useQuality } from "./quality/useQuality.ts";
 import { groupIncidents } from "./research/feed/model.ts";
@@ -199,13 +201,13 @@ export function Timeline({
   // What the detectors have found up to the clock, newest first; a tile selects, it never seeks.
   const incidents = useMemo(() => groupIncidents(alerts), [alerts]);
   const pickIncident = (key: string) => {
-    setInc(key);
     setSheet(false);
-    if (hashPage() !== "research") location.hash = `research?inc=${encodeURIComponent(key)}`;
+    if (hashPage() === "research") setInc(key);
+    else location.hash = `research?inc=${encodeURIComponent(key)}${sharedQuery().replace("?", "&")}`;
   };
   const openList = () => {
     setSheet(false);
-    if (hashPage() !== "research") location.hash = "research";
+    if (hashPage() !== "research") location.hash = `research${sharedQuery()}`;
   };
 
   const hospital = currentHospitalName(locale);
@@ -586,10 +588,31 @@ export function Timeline({
       </div>
       <div className="tl-band-col">
         {band(false)}
-        <p className="tl-legend">{t(locale, "tlLaneLegend")}</p>
+        <p className="tl-legend">
+          {t(locale, "tlLaneLegendShort")}
+          <InfoButton locale={locale}>
+            <GlossedLegend locale={locale} />
+          </InfoButton>
+        </p>
       </div>
       {eventsStrip()}
     </div>
+  );
+}
+
+/** The lane legend with its one glossary word ("usual", Finnish "tavalliseen") as a gloss; the rest is plain. */
+function GlossedLegend({ locale }: { locale: Locale }) {
+  const text = t(locale, "tlLaneLegend");
+  const m = (locale === "fi" ? /tavalliseen/ : /\busual\b/).exec(text);
+  if (!m) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, m.index)}
+      <Gloss term="usual" locale={locale}>
+        {m[0]}
+      </Gloss>
+      {text.slice(m.index + m[0].length)}
+    </>
   );
 }
 

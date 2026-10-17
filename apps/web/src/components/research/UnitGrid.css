@@ -395,7 +395,13 @@ tfoot .ugrid-rowhead {
   opacity: var(--dim-text, 0.7);
 }
 
+.ugrid.has-unit th:not([data-selected="true"]) {
+  opacity: 0.6;
+  transition: opacity var(--mo-2, 200ms) var(--mo-ease, ease-out);
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .ugrid.has-unit th:not([data-selected="true"]),
   .ugrid-cell,
   .ugrid-td,
   .ugrid-colhead,
