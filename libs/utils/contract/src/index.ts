@@ -1,7 +1,7 @@
-import type { Alert } from "@aei/alerts";
+import type { Alert, PatientFinding } from "@aei/alerts";
 import type { AgeGroup } from "@aei/ask";
 import type { CombinationSuggestion, CoverageResult, CoverageQuery as GearCoverageQuery, Severity, Suggestion } from "@aei/coverage";
-import type { Antibiotic, IsoDate, IsolateRecord, Organism, Sex, Specimen, Ward, WardCode } from "@aei/domain";
+import type { Antibiotic, AntibioticCode, IsoDate, IsolateRecord, Organism, Phenotype, Sex, Specimen, Ward, WardCode } from "@aei/domain";
 import type { CheckSummary } from "@aei/quality";
 import type { Flow, TrailLink } from "@aei/relations";
 import type { ClockState } from "@aei/replay";
@@ -37,6 +37,8 @@ export const ROUTES = {
   weekly: "/api/weekly",
   /** Plausibility checks over the rows the server holds (D-038). */
   quality: "/api/quality",
+  /** A patient's ESBL, MRSA, VRE and CPE findings of the year before the replay date (D-050). */
+  patientFindings: "/api/patient/findings",
 } as const;
 
 export interface Meta {
@@ -70,9 +72,12 @@ export interface IsolateQuery {
   ageMax?: number;
 }
 
-export type { AntibioticCoverage, CombinationSuggestion, Counts, CoverageResult, Level, Severity, Suggestion } from "@aei/coverage";
-/** The bar each severity is judged against (D-026, D-027), so clients label it from the same source. */
-export { THRESHOLDS } from "@aei/coverage";
+export type { AntibioticCoverage, CombinationSuggestion, Counts, CoverageResult, Level, Onset, Severity, Suggestion } from "@aei/coverage";
+/**
+ * The bar each severity is judged against (D-026, D-027), so clients label it from the same source;
+ * `barFor` gives the one a query uses (hospital onset: 90 % whatever the severity, D-049).
+ */
+export { barFor, ONSETS, THRESHOLDS } from "@aei/coverage";
 
 /** The doctor's coverage list (D-023). The server sets the as-of date from its clock. */
 export type CoverageQuery = Omit<GearCoverageQuery, "asOf" | "minTested"> & {
@@ -83,11 +88,28 @@ export type CoverageQuery = Omit<GearCoverageQuery, "asOf" | "minTested"> & {
 export interface CoverageResponse {
   asOf: IsoDate;
   severity: Severity;
+  /**
+   * The bar the suggestions were judged against: `barFor(coverage.query, severity)` (D-049). Optional so
+   * servers and fixtures from before D-049 still type; a client missing it computes `barFor` itself.
+   */
+  bar?: number;
   coverage: CoverageResult;
   /** Ordered: clears, borderline, below, not assessable. Decision support only. */
   suggestions: Suggestion[];
   /** Pairs, only when no single antibiotic clears (D-028). */
   combinationSuggestions: CombinationSuggestion[];
+}
+
+export type { PatientFinding } from "@aei/alerts";
+
+/** A patient's earlier resistant findings (D-050), from released records only. */
+export interface PatientFindingsResponse {
+  asOf: IsoDate;
+  patientId: string;
+  /** ESBL, MRSA, VRE and CPE isolates sampled in the 365 days up to and including `asOf`, newest first. */
+  findings: PatientFinding[];
+  /** For each phenotype found, the antibiotics `@aei/eucast` infers resistant from it (empty when none). */
+  affects: Partial<Record<Phenotype, AntibioticCode[]>>;
 }
 
 export interface AskResponse {
@@ -327,6 +349,8 @@ export interface AeiClient {
   /** Weekly raw counts per unit up to the clock (optional route). */
   weekly(query: WeeklyQuery): Promise<WeeklyResponse>;
   quality(): Promise<QualityResponse>;
+  /** The patient's prior resistant findings (D-050); 400 without an id, an empty list for an unknown one. */
+  patientFindings(id: string): Promise<PatientFindingsResponse>;
   /** Opens the live stream; returns a function that closes it. */
   live(onEvent: (event: LiveEvent) => void, onError?: (error: Event) => void): () => void;
 }
@@ -375,6 +399,7 @@ export function createAeiClient(options: AeiClientOptions): AeiClient {
     counties: () => json<CountiesResponse>(ROUTES.counties),
     weekly: (query) => json<WeeklyResponse>(withQuery(ROUTES.weekly, query)),
     quality: () => json<QualityResponse>(ROUTES.quality),
+    patientFindings: (id) => json<PatientFindingsResponse>(withQuery(ROUTES.patientFindings, { id })),
     live(onEvent, onError) {
       const source = new ES(url(ROUTES.live));
       for (const type of LIVE_EVENT_TYPES) {

@@ -70,6 +70,40 @@ describe("weekly counts route", () => {
   });
 });
 
+describe("patient findings route (D-050)", () => {
+  it("lists the patient's released findings of the past year, newest first, and never one after the clock", async () => {
+    const base = await startApi();
+    const body = await (await fetch(`${base}/api/patient/findings?id=p1`)).json();
+    expect(body.asOf).toBe("2025-05-01");
+    expect(body.patientId).toBe("p1");
+    expect(body.findings.map((f: { isolateId: string; phenotype: string }) => `${f.isolateId}:${f.phenotype}`)).toEqual([
+      "i2:esbl",
+      "i2:cpe",
+      "i1:esbl",
+    ]);
+    expect(body.findings[2]).toEqual({ phenotype: "esbl", date: "2025-03-01", ward: "URO", organism: "Escherichia coli", isolateId: "i1" });
+    // EUCAST infers nothing from ESBL or CPE in this dataset's rules; only the phenotypes found are keyed.
+    expect(body.affects).toEqual({ esbl: [], cpe: [] });
+    // p2's CPE isolate of 2025-06-01 lies after the clock: an empty list, not 404.
+    const p2 = await fetch(`${base}/api/patient/findings?id=p2`);
+    expect(p2.status).toBe(200);
+    expect((await p2.json()).findings).toEqual([]);
+    expect((await fetch(`${base}/api/patient/findings`)).status).toBe(400);
+    expect((await fetch(`${base}/api/patient/findings?id=`)).status).toBe(400);
+  });
+});
+
+describe("coverage onset (D-049)", () => {
+  it("parses the onset, records it, and judges hospital onset against 90 % whatever the severity", async () => {
+    const base = await startApi();
+    const any = await (await fetch(`${base}/api/coverage?ward=ICU&specimen=urine`)).json();
+    expect([any.bar, any.coverage.query.onset, any.coverage.onsetApplied]).toEqual([0.8, "any", false]);
+    const hospital = await (await fetch(`${base}/api/coverage?ward=ICU&specimen=urine&onset=hospital&severity=mild`)).json();
+    expect([hospital.bar, hospital.coverage.query.onset]).toEqual([0.9, "hospital"]);
+    expect((await fetch(`${base}/api/coverage?ward=ICU&specimen=urine&onset=nosocomial`)).status).toBe(400);
+  });
+});
+
 describe("county geometry route", () => {
   it("serves the polygons when the file exists and answers 404 without it", async () => {
     const file = join(dir, "counties.geojson");

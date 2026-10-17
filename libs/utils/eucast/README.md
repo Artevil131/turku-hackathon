@@ -22,4 +22,10 @@ Entries marked `check` rest on our reading of EUCAST and await review:
 *E. faecalis* and trimethoprim. Over the full dataset no intrinsic pair is
 reported S.
 
-Relies on: D-004. Tests: `src/eucast.test.ts`.
+`inferredResistantFrom(phenotype)` lists the antibiotics `effectiveResult`
+infers resistant from a phenotype, read from the same inference rules: for
+MRSA (cefoxitin R) the beta-lactams the screen decides; nothing for ESBL,
+VRE or CPE, which no rule here infers from. The doctor's screen uses it to
+mark rows a patient's earlier finding affects (D-050).
+
+Relies on: D-004, D-050. Tests: `src/eucast.test.ts`.

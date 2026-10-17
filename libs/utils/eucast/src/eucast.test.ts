@@ -1,6 +1,6 @@
 import { ANTIBIOTICS, ORGANISMS } from "@aei/domain";
 import { describe, expect, it } from "vitest";
-import { effectiveResult, INTRINSIC, inferredResult, isIntrinsic, NO_BREAKPOINT, suitsSpecimen } from "./index.ts";
+import { effectiveResult, INTRINSIC, inferredResistantFrom, inferredResult, isIntrinsic, NO_BREAKPOINT, suitsSpecimen } from "./index.ts";
 
 describe("rule tables", () => {
   it("name only the dataset's organisms and antibiotics, each pair once", () => {
@@ -57,5 +57,15 @@ describe("effectiveResult", () => {
     expect(effectiveResult({ organism: "Pseudomonas aeruginosa", results: {} }, "MEC").basis).toBe("no-breakpoint");
     expect(effectiveResult({ organism: "Escherichia coli", results: {} }, "CAZ").basis).toBe("untested");
     expect(effectiveResult({ organism: "Escherichia coli", results: { CIP: "R" } }, "CIP")).toEqual({ result: "R", basis: "tested" });
+  });
+});
+
+describe("inferredResistantFrom (D-050)", () => {
+  it("gives the beta-lactams the cefoxitin screen decides for MRSA, and nothing for the other phenotypes", () => {
+    expect([...inferredResistantFrom("mrsa")].sort()).toEqual(["AMP", "CAZ", "CRO", "CXM", "MEC", "MEM", "TZP"]);
+    expect(inferredResistantFrom("mrsa")).not.toContain("FOX"); // tested, not inferred
+    expect(inferredResistantFrom("esbl")).toEqual([]);
+    expect(inferredResistantFrom("vre")).toEqual([]);
+    expect(inferredResistantFrom("cpe")).toEqual([]);
   });
 });
