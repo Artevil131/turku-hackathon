@@ -174,15 +174,15 @@ export function AlertMath({
 
         <Numbers locale={locale} alert={lead} />
 
-        <section className="sig-how" aria-labelledby="sig-how-head">
-          <h4 className="sig-how-head" id="sig-how-head">
-            {t(locale, "cardHow")}
-            <HowFigure locale={locale} alert={lead} />
-          </h4>
-          <p className="sig-how-text">{howSentence(locale, lead)}</p>
+        {/* Concise first: the method opens on request (Artem, 2026-10-17: detail only when the researcher asks). */}
+        <details className="sig-how">
+          <summary className="sig-how-head">{t(locale, "cardHow")}</summary>
+          <p className="sig-how-text">
+            {howSentence(locale, lead)} <HowFigure locale={locale} alert={lead} />
+          </p>
           <p className="feed-evidence">{t(locale, "feedLatestEvidence", { evidence: alertEvidence(locale, lead) })}</p>
           <p className="feed-owner">{incidentResponsibility(locale, inc.members)}</p>
-        </section>
+        </details>
 
         <div className="math-explain">
           <AlertExplanation client={client} id={lead.id} locale={locale} />

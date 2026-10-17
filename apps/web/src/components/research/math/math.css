@@ -19,3 +19,24 @@
 .sig-how-head .info-btn {
   align-self: center;
 }
+
+/* "How we calculate it" is closed until asked for; the summary reads as the section heading. */
+.sig-how > summary {
+  cursor: pointer;
+  list-style: none;
+}
+.sig-how > summary::-webkit-details-marker {
+  display: none;
+}
+.sig-how > summary::before {
+  content: "▸";
+  margin-right: 4px;
+  color: var(--ink-3);
+  font-size: 11px;
+}
+.sig-how[open] > summary::before {
+  content: "▾";
+}
+.sig-how-text .info {
+  vertical-align: middle;
+}
