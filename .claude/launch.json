@@ -46,6 +46,33 @@
         "--strictPort"
       ],
       "port": 5180
+    },
+    {
+      "name": "web-ux",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "AEI_API_URL=http://localhost:8795",
+        "pnpm",
+        "--filter",
+        "@aei/web",
+        "exec",
+        "vite",
+        "--port",
+        "5181",
+        "--strictPort"
+      ],
+      "port": 5181
+    },
+    {
+      "name": "api-ux",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "AEI_PORT=8795",
+        "pnpm",
+        "dev:api"
+      ],
+      "port": 8795,
+      "autoPort": false
     }
   ]
 }
