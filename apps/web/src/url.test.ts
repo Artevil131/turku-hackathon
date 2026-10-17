@@ -7,6 +7,11 @@ describe("mergeHash", () => {
       "#research?inc=x%3A1&tl=abc&hospital=sata",
     );
   });
+  it("keeps the chosen weeks when a page writes its own params", () => {
+    expect(mergeHash("#research?focus=ED&from=2024-02-26&to=2024-03-10", { focus: "URO" })).toBe(
+      "#research?focus=URO&from=2024-02-26&to=2024-03-10",
+    );
+  });
   it("drops empty values and leaves no query when nothing is left", () => {
     expect(mergeHash("#doctor?unit=ED", { unit: "" })).toBe("#doctor");
     expect(mergeHash("research", {})).toBe("#research");

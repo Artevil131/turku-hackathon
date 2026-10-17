@@ -588,6 +588,22 @@
   background: var(--brand-accent-soft, #ecebfc);
 }
 
+/* The chosen weeks, under the title. */
+.tl-range {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  margin: -2px 0 0;
+  font-size: var(--t-xs, 12px);
+  line-height: 20px;
+  color: var(--brand-accent, #635bf1);
+}
+.tl-range .tl-title-clear {
+  width: 18px;
+  height: 18px;
+}
+
 /* Step and speed as two labelled groups. */
 .tl-ctl-group {
   display: inline-flex;

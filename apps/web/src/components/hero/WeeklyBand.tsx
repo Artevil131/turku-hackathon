@@ -40,6 +40,7 @@ import {
 import { LayersControl } from "./LayersControl.tsx";
 import { type Layers, type LineKey, type ViewRow, viewRows, windowRows, windowStart } from "./layers.ts";
 import { incidentKey, isKinPill, isSelectedPill } from "./selection.ts";
+import { type BandGeom, type BandRange, rangeSentence, rangeText, rangeX, snapRange, stretchRange, useBandRange } from "./useBandRange.ts";
 import "./WeeklyBand.css";
 
 // The hero band: the weekly stream (resistant finds stacked by phenotype, cultures on its own
@@ -96,6 +97,10 @@ interface Props {
   onFocusUnit?: (ward: WardCode | null) => void;
   /** Escape on the band: clear the selection. */
   onClear?: () => void;
+  /** Wide band only: the chosen weeks, drawn as a shade across the lanes. */
+  range?: BandRange | null;
+  /** A drag, an edge, Shift+arrows or the ✕ chose new weeks, or null to clear. */
+  onRange?: (r: BandRange | null) => void;
 }
 
 interface PillPlace {
@@ -720,6 +725,77 @@ function Legend({
   );
 }
 
+/** The chosen weeks under everything: one soft shade across the stream and every lane. */
+function RangeShade({ g, r, top, bottom }: { g: BandGeom; r: BandRange; top: number; bottom: number }) {
+  const { x0, x1 } = rangeX(g, r);
+  return <rect className="hs-range" x={x0} y={top - 1} width={Math.max(2, x1 - x0)} height={bottom - top + 1} />;
+}
+
+/**
+ * Over everything: the two grab edges (an edge the window cuts off is drawn dashed) and the dates,
+ * centred over the shade at the top of the stream, with a ✕ that clears.
+ */
+function RangeMarks({
+  g,
+  r,
+  top,
+  bottom,
+  label,
+  live,
+  clearLabel,
+  onClear,
+}: {
+  g: BandGeom;
+  r: BandRange;
+  top: number;
+  bottom: number;
+  label: string;
+  live: boolean;
+  clearLabel: string;
+  onClear?: () => void;
+}) {
+  const { x0, x1, clipL, clipR } = rangeX(g, r);
+  const chip = onClear && !live ? 16 : 0;
+  const w = Math.ceil(label.length * 5.6 + 12 + chip);
+  const lx = Math.min(g.right - w, Math.max(g.gutter, (x0 + x1) / 2 - w / 2));
+  const ly = top + 1;
+  return (
+    <g className="hs-range-marks" data-live={live || undefined}>
+      <rect className="hs-range-edge" data-clip={clipL || undefined} x={x0 - 1} y={top - 1} width={2} height={bottom - top + 1} />
+      <rect className="hs-range-edge" data-clip={clipR || undefined} x={x1 - 1} y={top - 1} width={2} height={bottom - top + 1} />
+      <g className="hs-range-label">
+        <rect className="hs-range-label-bg" x={lx} y={ly} width={w} height={13} rx={3} />
+        <text className="hs-range-label-text" x={lx + 6} y={ly + 9.5}>
+          {label}
+        </text>
+        {chip ? (
+          <g
+            className="hs-range-x"
+            role="button"
+            tabIndex={0}
+            aria-label={clearLabel}
+            onClick={(e) => {
+              e.stopPropagation();
+              onClear?.();
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                e.stopPropagation();
+                onClear?.();
+              }
+            }}
+          >
+            <title>{clearLabel}</title>
+            <rect className="hs-range-x-hit" x={lx + w - chip - 2} y={ly - 2} width={chip + 2} height={17} />
+            <path className="hs-range-x-glyph" d={`M${lx + w - 11} ${ly + 3.5}l5 5m0 -5l-5 5`} />
+          </g>
+        ) : null}
+      </g>
+    </g>
+  );
+}
+
 function summaryText(locale: Locale, rows: WeekRow[], asOf: string, layers: Layers): string {
   const usable = rows.filter((r) => !r.hidden).slice(-4);
   if (!usable.length) return t(locale, "tlSummaryNone");
@@ -737,6 +813,7 @@ export function WeeklyBand(p: Props) {
   const focusUnit = p.focusUnit ?? null;
   const id = `hs${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   const wrap = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
   const readRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(600);
   const [hover, setHover] = useState<{ idx: number; kbd: boolean } | null>(null);
@@ -772,6 +849,17 @@ export function WeeklyBand(p: Props) {
     [layers, onLayers],
   );
 
+  const asOfDay = dayNumber(asOf);
+  const anchor = m.weekDays[0];
+  const geom = useMemo<BandGeom | null>(
+    () => (compact || anchor === undefined ? null : { gutter: L.gutter, right: m.right, d0, asOfDay, anchor }),
+    [compact, anchor, L.gutter, m.right, d0, asOfDay],
+  );
+  const rangeOn = !compact && !disabled && p.onRange !== undefined;
+  const band = useBandRange({ svg: svgRef, geom, bottom: L.lanesEnd, range: p.range ?? null, onRange: p.onRange, enabled: rangeOn });
+  const shownRange = compact ? null : band.shown;
+  const rangeLabel = shownRange ? rangeText(locale, shownRange) : "";
+
   const idxAt = (clientX: number) => {
     const r = wrap.current?.getBoundingClientRect();
     if (!r || m.weekDays.length === 0) return -1;
@@ -789,6 +877,7 @@ export function WeeklyBand(p: Props) {
   idxAtRef.current = idxAt;
   useEffect(() => () => cancelAnimationFrame(frame.current), []);
   const onMove = (e: PointerEvent) => {
+    if (!compact) band.onHover(e);
     if (compact || disabled || e.pointerType !== "mouse") return;
     pending.current = e.clientX;
     if (frame.current) return;
@@ -803,6 +892,7 @@ export function WeeklyBand(p: Props) {
       p.onActivate?.();
       return;
     }
+    band.onDown(e);
     if (e.pointerType === "mouse" || disabled || (e.target as Element).closest(".hs-pill, .hs-leg")) return;
     const idx = idxAt(e.clientX);
     setHover(idx < 0 ? null : { idx, kbd: false });
@@ -817,6 +907,14 @@ export function WeeklyBand(p: Props) {
   const lastIdx = m.rows.length - 1;
   const onSliderKey = (e: KeyboardEvent) => {
     const at = hover?.idx ?? lastIdx;
+    // Shift+arrows: the chosen weeks end one week later or earlier; with none, they start at this week.
+    if (e.shiftKey && (e.key === "ArrowLeft" || e.key === "ArrowRight") && rangeOn && geom) {
+      e.preventDefault();
+      e.stopPropagation();
+      const week = m.rows[at]?.day ?? geom.anchor;
+      p.onRange?.(p.range ? stretchRange(geom, p.range, e.key === "ArrowLeft" ? -1 : 1) : snapRange(geom, week, week));
+      return;
+    }
     let to = at;
     if (e.key === "ArrowLeft") to = Math.max(0, at - 1);
     else if (e.key === "ArrowRight") to = Math.min(lastIdx, at + 1);
@@ -831,7 +929,7 @@ export function WeeklyBand(p: Props) {
     setHover({ idx: to, kbd: true });
   };
 
-  const row = hover ? m.rows[hover.idx] : undefined;
+  const row = hover && !band.dragging ? m.rows[hover.idx] : undefined;
   const lanesEnd = L.lanesEnd;
   const cx = row ? m.xOf(row.day + 3.5) : 0;
   const hx0 = row ? m.xOf(row.day) : 0;
@@ -894,12 +992,16 @@ export function WeeklyBand(p: Props) {
         className="hs-svg"
         width={width}
         height={L.height}
+        ref={svgRef}
         role="group"
-        aria-label={p.label}
+        aria-label={shownRange ? `${p.label}. ${rangeSentence(locale, shownRange)}` : p.label}
         aria-describedby={`${id}-sum`}
         onPointerMove={onMove}
         onKeyDown={(e) => {
-          if (e.key === "Escape" && selected && p.onClear) p.onClear();
+          if (e.key !== "Escape") return;
+          // Esc peels one layer: the chosen weeks first, then the selected signal.
+          if (p.range && p.onRange) p.onRange(null);
+          else if (selected && p.onClear) p.onClear();
         }}
         onPointerDown={onDown}
         onFocus={(e) => {
@@ -927,6 +1029,7 @@ export function WeeklyBand(p: Props) {
             onFocus={() => setHover((h) => h ?? { idx: lastIdx, kbd: true })}
           />
         ) : null}
+        {shownRange && geom ? <RangeShade g={geom} r={shownRange} top={L.top} bottom={lanesEnd} /> : null}
         <StaticLayer
           m={m}
           L={L}
@@ -950,6 +1053,18 @@ export function WeeklyBand(p: Props) {
             <rect className="hs-cross-week" x={hx0} y={L.top - 1} width={Math.max(3, hx1 - hx0)} height={lanesEnd - L.top + 1} />
             <line className="hs-cross-line" x1={cx} x2={cx} y1={L.top - 1} y2={lanesEnd} />
           </g>
+        ) : null}
+        {shownRange && geom ? (
+          <RangeMarks
+            g={geom}
+            r={shownRange}
+            top={L.top}
+            bottom={lanesEnd}
+            label={rangeLabel}
+            live={band.dragging}
+            clearLabel={t(locale, "tlRangeClear")}
+            onClear={rangeOn ? () => p.onRange?.(null) : undefined}
+          />
         ) : null}
       </svg>
       <span id={`${id}-sum`} className="visually-hidden">

@@ -18,8 +18,8 @@ export function hashParams(): URLSearchParams {
   return new URLSearchParams(query ?? "");
 }
 
-/** Params that belong to the whole app (the timeline's layers, the hospital), kept when a page writes its own. */
-const SHARED_PARAMS = ["tl", "hospital"] as const;
+/** Params that belong to the whole app (the timeline's layers, the hospital, the chosen weeks), kept when a page writes its own. */
+const SHARED_PARAMS = ["tl", "hospital", "from", "to"] as const;
 
 /**
  * Pure: `hash` (with or without the leading `#`) with `params` set, empty or null
@@ -91,6 +91,17 @@ export function writeHashParam(key: string, value: string | null): void {
   const search = hashParams();
   if (value) search.set(key, value);
   else search.delete(key);
+  const qs = search.toString();
+  replaceHash(`#${hashPage()}${qs ? `?${qs}` : ""}`);
+}
+
+/** Sets or removes several params of the current page at once, keeping the others. */
+export function patchHashParams(params: Record<string, string | null>): void {
+  const search = hashParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value) search.set(key, value);
+    else search.delete(key);
+  }
   const qs = search.toString();
   replaceHash(`#${hashPage()}${qs ? `?${qs}` : ""}`);
 }
