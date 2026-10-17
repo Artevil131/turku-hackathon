@@ -24,6 +24,26 @@ interface TimelineProps {
   client?: AeiClient;
   /** The app's live alert list; the history appends from it instead of opening its own stream. */
   liveAlerts: LiveAlerts;
+  /** Outside the research page the chart can be folded to one line; the choice is remembered. */
+  collapsible?: boolean;
+}
+
+const COLLAPSE_KEY = "aei.timeline.collapsed";
+
+function readCollapsed(): boolean {
+  try {
+    return localStorage.getItem(COLLAPSE_KEY) !== "0";
+  } catch {
+    return true;
+  }
+}
+
+function writeCollapsed(value: boolean) {
+  try {
+    localStorage.setItem(COLLAPSE_KEY, value ? "1" : "0");
+  } catch {
+    // Storage can be unavailable; the choice just won't persist.
+  }
 }
 
 const clampDate = (iso: string, start: string, end: string) => (iso < start ? start : iso > end ? end : iso);
@@ -92,13 +112,18 @@ const Info = () => (
   </svg>
 );
 
-export function Timeline({ locale, clock, connection, lastArrivals, command, reducedMotion, client, liveAlerts }: TimelineProps) {
+export function Timeline({ locale, clock, connection, lastArrivals, command, reducedMotion, client, liveAlerts, collapsible = false }: TimelineProps) {
   const phone = useMediaQuery("(max-width: 760px)");
   const rootRef = useRef<HTMLDivElement>(null);
   const [seekingTo, setSeekingTo] = useState<string | null>(null);
   const [sheet, setSheet] = useState(false);
   const [menu, setMenu] = useState(false);
   const [stepStop, setStepStop] = useState(1);
+  const [folded, setFolded] = useState(readCollapsed);
+  const fold = (value: boolean) => {
+    setFolded(value);
+    writeCollapsed(value);
+  };
 
   const ready = connection === "open" && clock !== null;
   const start = clock?.start ?? "";
@@ -389,6 +414,28 @@ export function Timeline({ locale, clock, connection, lastArrivals, command, red
     );
   }
 
+  if (collapsible && folded) {
+    return (
+      <div className="timeline timeline-folded" ref={rootRef} aria-busy={seekingTo ? true : undefined}>
+        {playButton}
+        <span className="tl-folded-label">{t(locale, "tlCollapsedLabel")}</span>
+        <b className="tl-readout num">{readout}</b>
+        {arrivals ? <span className="tl-folded-fresh">{arrivals}</span> : null}
+        {status}
+        <button
+          type="button"
+          className="tl-btn tl-fold"
+          aria-expanded={false}
+          onClick={() => fold(false)}
+          aria-label={t(locale, "tlExpand")}
+          title={t(locale, "tlExpand")}
+        >
+          <Chevron />
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="timeline" ref={rootRef} aria-busy={seekingTo ? true : undefined}>
       <div className="tl-left">
@@ -404,6 +451,18 @@ export function Timeline({ locale, clock, connection, lastArrivals, command, red
             {arrivals ? <p>{arrivals}</p> : null}
           </InfoPopover>
           {status}
+          {collapsible ? (
+            <button
+              type="button"
+              className="tl-btn tl-fold tl-fold-open"
+              aria-expanded={true}
+              onClick={() => fold(true)}
+              aria-label={t(locale, "tlCollapse")}
+              title={t(locale, "tlCollapse")}
+            >
+              <Chevron />
+            </button>
+          ) : null}
         </div>
         <div className="tl-quality">
           <QualityStatus locale={locale} state={quality} />

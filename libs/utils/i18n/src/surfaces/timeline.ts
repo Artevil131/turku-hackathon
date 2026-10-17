@@ -2,6 +2,9 @@
 
 export const timelineEn = {
   tlToday: "Today",
+  tlExpand: "Show the replay timeline",
+  tlCollapse: "Hide the replay timeline",
+  tlCollapsedLabel: "Replay",
   tlStream: "Weekly resistant finds and cultures, by unit",
   tlResistant: "Resistant finds",
   tlCultures: "Cultures",
@@ -61,6 +64,9 @@ export const timelineEn = {
 
 export const timelineFi: Record<keyof typeof timelineEn, string> = {
   tlToday: "Tänään",
+  tlExpand: "Näytä toistoaikajana",
+  tlCollapse: "Piilota toistoaikajana",
+  tlCollapsedLabel: "Toisto",
   tlStream: "Resistentit löydökset ja viljelyt viikoittain, yksiköittäin",
   tlResistant: "Resistentit löydökset",
   tlCultures: "Viljelyt",
