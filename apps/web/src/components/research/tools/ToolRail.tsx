@@ -183,7 +183,7 @@ export function ToolRail(props: ToolRailProps) {
           </button>
         </header>
         <div className="ws-inspector-body" hidden={active === "chart"}>
-          <ToolInspector {...props} tool={body} resetKey={resetKey} onEditSlice={() => choose("data")} />
+          <ToolInspector {...props} tool={body} resetKey={resetKey} onEditSlice={() => choose("data")} onPickTool={(id) => choose(id)} />
         </div>
         {active === "chart" && chartMenu ? <div className="ws-inspector-body">{chartMenu(close)}</div> : null}
       </aside>

@@ -23,6 +23,7 @@ import {
   parseEvent,
   prepare,
   type Slice,
+  TOOL_IDS,
   type ToolId,
 } from "./model.ts";
 import { ResultCell } from "./ResultCell.tsx";
@@ -50,6 +51,8 @@ export interface InspectorProps extends ToolsProps {
   tool: InspectorTool;
   /** Opens the slice editor (the sentence's Change link). */
   onEditSlice?: () => void;
+  /** "Run on this data" in the Data panel: show this tool's inspector (the run follows by itself). */
+  onPickTool?: (id: ToolId) => void;
   /** Each new value puts the slice back to where its frame came from (the rail's Reset). */
   resetKey?: number;
 }
@@ -145,7 +148,7 @@ function EventSelect({ locale, id, value, onChange }: { locale: Locale; id: stri
 const ORIGIN_KEY = { timeline: "toolsFrameTimeline", signal: "toolsFrameSignal", default: "toolsFrameDefault" } as const;
 
 export function ToolInspector(props: InspectorProps) {
-  const { client, locale, asOf, state, window: win, preset, onAddChart, onCells, tool, onEditSlice, resetKey = 0 } = props;
+  const { client, locale, asOf, state, window: win, preset, onAddChart, onCells, tool, onEditSlice, onPickTool, resetKey = 0 } = props;
   const [hashFrom] = useHashParam("from");
   const [hashTo] = useHashParam("to");
   const { frame, origin } = pickFrame(hashFrom, hashTo, win);
@@ -264,6 +267,52 @@ export function ToolInspector(props: InspectorProps) {
     }
   };
 
+  // "Run on this data": the tool's inspector opens and runs once it is the one shown.
+  const autorun = useRef<ToolId | null>(null);
+  const runRef = useRef(run);
+  runRef.current = run;
+  useEffect(() => {
+    if (tool !== "data" && autorun.current === tool) {
+      autorun.current = null;
+      void runRef.current(tool);
+    }
+  }, [tool]);
+  const pickAndRun = (id: ToolId) => {
+    autorun.current = id;
+    onPickTool?.(id);
+  };
+
+  // What the slice holds, counted as the slice changes (after a short pause), so choosing data has a visible effect.
+  const [count, setCount] = useState<{ key: string; isolates: number; patients: number } | null>(null);
+  const sliceKey = JSON.stringify(slice);
+  useEffect(() => {
+    if (tool !== "data" || !valid) return;
+    let stale = false;
+    const timer = setTimeout(() => {
+      const f = { from: slice.from, to: slice.to, unit: slice.unit };
+      client
+        .isolates({
+          from: f.from,
+          to: f.to,
+          ...(f.unit ? { ward: f.unit } : {}),
+          ...(slice.organism ? { organism: slice.organism as never } : {}),
+          ...(slice.specimen ? { specimen: slice.specimen as never } : {}),
+        })
+        .then((r) => {
+          if (stale) return;
+          let rows = prepare(r.records, f, slice.firstOnly);
+          if (slice.phenotype) rows = rows.filter((x) => x.phenotypes.includes(slice.phenotype as Phenotype));
+          setCount({ key: sliceKey, isolates: rows.length, patients: new Set(rows.map((x) => x.patientId)).size });
+        })
+        .catch(() => undefined);
+    }, 350);
+    return () => {
+      stale = true;
+      clearTimeout(timer);
+    };
+    // biome-ignore lint/correctness/useExhaustiveDependencies: sliceKey stands for the slice's fields.
+  }, [tool, valid, sliceKey, client]);
+
   const dateField = (id: string, label: string, value: string, onChange: (v: string) => void) => (
     <label className="tl-field" htmlFor={id}>
       <span>{label}</span>
@@ -292,6 +341,13 @@ export function ToolInspector(props: InspectorProps) {
     return (
       <div className="tl tl-inspect" data-tool="data">
         <p className="tl-sentence">{sliceSentence(locale, slice)}</p>
+        <p className="tl-count" aria-live="polite">
+          {count && count.key === sliceKey
+            ? t(locale, "toolsCount", { isolates: count.isolates, patients: count.patients })
+            : valid
+              ? t(locale, "toolsCounting")
+              : ""}
+        </p>
         <p className="tl-origin">
           <span>{t(locale, shownOrigin)}</span>
           {differs && signal && (
@@ -305,6 +361,7 @@ export function ToolInspector(props: InspectorProps) {
             {dateField("tl-from", t(locale, "toolsFrom"), slice.from, (v) => set("from", v))}
             {dateField("tl-to", t(locale, "toolsTo"), slice.to, (v) => set("to", v))}
           </div>
+          <p className="tl-hint tl-drag-hint">{t(locale, "toolsDragHint")}</p>
           <div className="tl-fields tl-fields-1">
             <label className="tl-field" htmlFor="tl-unit">
               <span>{t(locale, "toolsUnit")}</span>
@@ -353,6 +410,17 @@ export function ToolInspector(props: InspectorProps) {
           </label>
         </div>
         {warn}
+        {onPickTool && (
+          <section className="tl-next" aria-label={t(locale, "toolsNext")}>
+            <h3 className="tl-h">{t(locale, "toolsNext")}</h3>
+            {TOOL_IDS.map((id) => (
+              <button key={id} type="button" className="tl-next-btn" disabled={!valid} onClick={() => pickAndRun(id)}>
+                <b>{t(locale, `toolsRail_${id}` as "toolsRail_rate")}</b>
+                <span>{t(locale, `toolsHint_${id}` as "toolsHint_rate")}</span>
+              </button>
+            ))}
+          </section>
+        )}
       </div>
     );
   }
