@@ -171,10 +171,10 @@ Every flattened metric key (dotted path into `metrics`) for every row, by family
 
 | key | [baseline-live-set-retuned-year1](baselines/live-set-retuned-year1.json) | [baseline-live-set-shipped](baselines/live-set-shipped.json) | [0015-gamma-poisson-guard-band](../../experiments/0015-gamma-poisson-guard-band/) | [0016-cusum](../../experiments/0016-cusum/) | [0017-farrington-noufaily](../../experiments/0017-farrington-noufaily/) | [0018-bocpd](../../experiments/0018-bocpd/) | [0022-ensemble](../../experiments/0022-ensemble/) |
 |---|---|---|---|---|---|---|---|
-| mark | baseline | baseline, tuned on test |  |  | proposed |  | proposed |
+| mark | baseline | baseline, tuned on test |  |  |  |  |  |
 | method | The live detector set with cluster and data alphas re-tuned on year 1 (Choices 5), trend and new-in-unit as shipped | The live detector set as shipped (D-020, D-021, D-022, D-031, D-034), scored on D1 to D7 and I1 over 2024-10-01 to 2026-09-27 | Gamma-Poisson surprise (negative binomial predictive), baseline 26 weeks, guard band 0 weeks, window 1 weeks, k 0.1, minimum count 2, Benjamini-Hochberg q-values over the series tested each day (unit x phenotype and unit x organism x specimen), read at q < 0.005 (the loosest level whose year-1 noise was at most 5 episodes a year); D5 is read at its own headline level as the harness defines it. | Poisson CUSUM (theta 8, weekly, guard 0 wk) and Bernoulli CUSUM (theta 8, guard 4 wk) per unit x series, limits from Siegmund's run length, operating level by simulation on year 1 | Improved Farrington (Noufaily 2013) on weekly unit series, trailing 26 wk, guard 4, plain | Bayesian online change-point detection (Adams and MacKay 2007), counts and %R, H = 1/26, w = 2, p < 0.5 | rank product (live set A, CUSUM B, 7-day join) |
-| runtime_s | 93.3 | 115 | 328 | 77 | 57.6 | 249 | 177 |
-| cpu_s | 93.2 | 114 | 320 | 71 | 56.8 | 246 | 173 |
+| runtime_s | 93.3 | 115 | 328 | 77 | 50.9 | 249 | 168 |
+| cpu_s | 93.2 | 114 | 320 | 71 | 50.4 | 246 | 166 |
 | D1.E1 | 0 | 0 | 6 | 4 | 18 | n/a | 4 |
 | D1.E1_corrected | 5 | 5 | 11 | 9 | 23 | n/a | 9 |
 | D1.E2 | 0 | 0 | 2 | 4 | 5 | 4 | 5 |
@@ -360,3 +360,17 @@ Every flattened metric key (dotted path into `metrics`) for every row, by family
 | P2.mae_skill_seasonal | 0.0867 (0.0136–0.155) | 0 (0–0) | – | – | 0.219 (0.159–0.272) |
 | P2.national_log_skill | 0 (0–0) | -1.97 (-3.13 to -0.872) | – | – | 1.55 (0.809–2.33) |
 | P2.national_mae_skill | 0 (0–0) | -0.397 (-0.887 to -0.0713) | – | – | -0.126 (-0.489 to 0.134) |
+
+## Interpretation
+
+| key | [0021-naming-step](../../experiments/0021-naming-step/) |
+|---|---|
+| mark | tuned on test, proposed |
+| method | Naming step: a decision list over alert fields gives the kind and the sentence; D7 and D6 on planted and injected events, I1 under incident rules R1 to R7 |
+| runtime_s | 75.2 |
+| cpu_s | 74.6 |
+| D6 | 0.0120 (0.00688–0.0209) |
+| D7 | 0.974 (0.966–0.980) |
+| I1.alerts | 18 |
+| I1.alerts_per_incident | 1.20 |
+| I1.incidents | 15 (8.40–24.7) |

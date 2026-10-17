@@ -1,5 +1,5 @@
 ---
-status: proposed    # proposed, then accepted, rejected or superseded
+status: accepted    # proposed, then accepted, rejected or superseded
 by: Claude Code, operated by Artem (overnight run)
 data: [synthetic_microbiology_dataset, seed 2026, as received 2026-10-09]
 parent: 0008
@@ -228,4 +228,207 @@ The sketch `out/figure.png` draws it from the headline setting.
 
 ## Result
 
+`uv run python experiments/0017-farrington-noufaily/run.py` ran in 51 s wall and
+50 s of CPU (measured; budget 10 minutes, estimate about 6 minutes, assumed in
+the plan: a trial cost 1 to 3 ms, not 18 ms, computed from about 23,000 fast-path
+detector runs in about 45 s). No cut of the plan's cut order was made. Seed 2026
+only, 200 trials per cell for the headline, paired and extra rows, 100 for the
+year-back rows; seeds 2027 to 2030 unused. Counts, rates and episodes are
+measured by the replay, intervals (Wilson 95 %, exact Poisson 95 %) computed;
+anything else is tagged. `out/results.md` has every table and interval,
+`out/metrics.json` the headline row, `out/figure.png` the card.
+
+**Setting chosen on year 1 (measured; 40 rare + 40 common ESBL clusters of k = 4,
+2024-04-01 to 2024-08-15, noise 2024-04-01 to 2024-09-30).** All eight settings
+reached "noise at most 5 a year" only at tail level 1e-4 (1 to 2 episodes in the
+half year); there rare clusters were found 4 to 6 of 40 and common ESBL 8 to 11 of
+40. By the plan's rule the choice is trailing H = 26, g = 4, plain (6/40 and
+11/40); the other seven are within sampling noise of it, and down-weighting
+changed nothing in any of the four pairs. Year 1 was noisier than the scoring
+period at the same level: the chosen setting at 1e-3 gave 9.98 episodes a year in
+year 1 (5 episodes) against 4.52 on the scoring period (9 episodes), so the
+year-1 level 1e-4 reads 0.50 a year (1 episode) on the scoring period, far
+stricter than the 5 a year it was meant to meet. D2 to D4, D6, D7 and I1 of the
+headline row are therefore at a very quiet operating point; the comparison that
+matches noise is D5, and an extra row (not in the plan) reads the same setting at
+D5's level 1e-3.
+
+**D5 at about 5 episodes a year (k = 4; Wilson 95 %; delay in days).**
+
+| row | level | noise a year (episodes) | rare | delay | common ESBL | delay |
+|---|---|---|---|---|---|---|
+| headline: trailing 26 wk, guard 4, plain | 1e-3 | 4.52 (9) | 0.310 [0.250, 0.377] | 6 | 0.240 [0.186, 0.304] | 6 |
+| same, reweighted (paired) | 1e-3 | 4.52 (9) | 0.310 [0.250, 0.377] | 6 | 0.240 [0.186, 0.304] | 6 |
+| year-back, plain (100 per cell) | 1e-3 | 3.52 (7) | 0.410 [0.319, 0.508] | 6 | 0.270 [0.193, 0.364] | 6 |
+| year-back, reweighted (100 per cell) | 1e-3 | 3.52 (7) | 0.410 [0.319, 0.508] | 6 | 0.270 [0.193, 0.364] | 6 |
+| live re-tuned year 1 (reference) | 0.3 x alphas | 3.01 (6) | 0.920 [0.874, 0.950] | 6 | 0.750 [0.686, 0.805] | 6 |
+| live shipped (tuned on test) | 3 x alphas | 3.01 (6) | 0.920 [0.874, 0.950] | 6 | 0.750 [0.686, 0.805] | 6 |
+
+Along the headline row's curve (noise a year, rare, common ESBL; measured): 62.8
+(125 episodes) 0.825, 0.785 at 3e-2; 23.1, 0.615, 0.555 at 1e-2; 9.04, 0.420,
+0.385 at 3e-3; 4.52, 0.310, 0.240 at 1e-3; 2.01, 0.230, 0.160 at 3e-4; 0.50, 0.180,
+0.105 at 1e-4. Interpolated to exactly 5 a year: about 0.32 and 0.25 (derived).
+The reference's common ESBL rate 0.75 is reached near 60 episodes a year; its
+rare rate 0.92 is not reached at the loosest level.
+
+**D2 at k = 3 and 4, rate (median delay in days).** Headline at its year-1 level
+1e-4 (0.50 episodes a year), the same setting at D5's level 1e-3 (4.52 a year;
+Wilson 95 % for k = 4), and the two live rows at their own operating levels (D4
+over all kinds 9.55 and 4.52 episodes a year).
+
+| family | k | headline 1e-4 | headline 1e-3 | live re-tuned | live shipped |
+|---|---|---|---|---|---|
+| rare | 3 | 0.055 (5) | 0.190 (5) | 0.860 (7) | 0.615 (7) |
+| rare | 4 | 0.180 (6) | 0.310 [0.250, 0.377] (6) | 0.980 [0.950, 0.992] (5) | 0.890 [0.839, 0.926] (6) |
+| common resistant | 3 | 0.000 | 0.015 | 0.020 (8) | 0.005 (23) |
+| common resistant | 4 | 0.000 [0.000, 0.019] | 0.035 [0.017, 0.070] (10) | 0.010 [0.003, 0.036] (6) | 0.005 [0.001, 0.028] (25) |
+| wild type | 3 | 0.005 (6) | 0.015 (1) | 0.005 (0) | 0.000 |
+| wild type | 4 | 0.015 (7) | 0.035 [0.017, 0.070] (8) | 0.000 | 0.000 |
+| common ESBL | 3 | 0.050 (6) | 0.125 (6) | 0.700 (6) | 0.345 (8) |
+| common ESBL | 4 | 0.105 [0.070, 0.155] (6) | 0.240 [0.186, 0.304] (6) | 0.880 [0.828, 0.918] (6) | 0.610 [0.541, 0.675] (7) |
+| two unit | 3 | 0.015 (4) | 0.130 (5) | 0.475 (4) | 0.210 (3) |
+| two unit | 4 | 0.010 [0.003, 0.036] (6) | 0.160 [0.116, 0.217] (7) | 0.565 [0.496, 0.632] (7) | 0.240 [0.186, 0.304] (3) |
+
+Controls (k = 0): 0.000 to 0.000 at 1e-4, 0.000 to 0.020 at 1e-3 (live: 0.000 to
+0.075). The two-unit family sits near the common-resistant one: a cluster split in
+two gives each unit 2 isolates, under the y of at least 2 and p filters.
+
+**D4, D6, D7, I1, D1 (headline at 1e-4 / extra at 1e-3 / re-tuned / shipped).**
+D4 episodes a year over 2024-10-01 to 2026-09-27: all 0.50 [0.01, 2.80] (1
+episode, SURG) / 4.52 [2.07, 8.58] (9: ED 2, GER 3, MED-A 1, SURG 3) / 9.55
+[5.75, 14.91] / 4.52 [2.07, 8.58]; the method raises only cluster signals (no
+sentinel, data, trend or divergence kind), against 1.51 sentinel and 2.0 to 3.5
+data episodes a year for the live rows. D6 0.004 [0.002, 0.010] / 0.014 [0.008,
+0.023] / 0.026 / 0.012 (1,000 gap trials). D7 0.995 [0.974, 0.999] (218) / 0.998 /
+0.987 / 0.974. I1 3 alerts in 3 incidents / 12 in 11 / 29 in 26 / 18 in 15. D1
+(demonstration; delay in days from onset, at 1e-4): E1 18 (corrected onset 23), E2
+5, E3 and E4 not found (data and trend kinds, not this method's); year-back E1 4
+(9), E2 5; live re-tuned E1 0 (5), E2 0, E3 0; shipped E1 0 (5), E2 0, E3 0.
+
+**Down-weighting (measured).** Plain and reweighted rows are identical in every
+D2 cell, D4 count, D5 curve point at all nine levels, D1 and I1; the year-back
+pair likewise. The Anscombe pass was almost never active: of 3,980 tested
+unit-series windows of the real data at the headline H and g, 131 had one weight
+below 1, none below 0.5, the lowest 0.642, and none of them was a URO x ESBL
+window, so E1's weeks (5, 5, 6, 6, 5) were not down-weighted. At the last as-of
+week of the figure (2025-12-14) the window holds those weeks with mean 1.42 and
+fitted dispersion 3.33, the standardised residuals stay under 2.58, and the
+threshold stays at 23 or 24 isolates a week (plain and reweighted alike), against 5
+to 9 earlier in 2025 (measured, the figure).
+
+**Year-back design (100 per cell).** D5 0.410 [0.319, 0.508] and 0.270 [0.193,
+0.364] at 3.52 a year, against 0.310 and 0.240 at 4.52 a year for the trailing
+headline; the intervals overlap. D4 at 1e-4 1.00 [0.12, 3.63] (SURG 1, PHC-N 1),
+D1 E1 at 4 days. It is silent until week 55 (2024-10-21).
+
+**Hospital scope (D4 and I1 only; 13 series).** Episodes a year at tail levels
+1e-2 / 1e-3 / 1e-4 (count): trailing 5.53 (11) / 1.00 (2) / 1.00 (2) plain and 5.53
+/ 1.51 / 1.00 reweighted; year-back 4.52 / 0.50 / 0.00; seasonal GLM 2.51 / 0.00 /
+0.00. At 1e-4 the trailing design raised one E. coli signal in E1's window
+(2025-06-29, p 6.4e-5, 25 days after 2025-06-04; hospital-wide signals are not
+excluded by D4's zones, so it is one of its 2 episodes) and none for E2; year-back
+and seasonal raised none at 1e-3. I1 2 alerts in 2 incidents (trailing), 0
+otherwise. D2 and D5 are zero by construction and D1 cannot match E1 or E2 (ward
+None).
+
+**Checks (all passed).** `check_causal` at 2025-03-26, 2025-12-31 and 2026-06-30 on
+the headline detector, year-back and hospital S built from the rows they are given:
+no differences. Fast path against a run from the rows given, focused against
+unfocused and filtered as the harness's matcher does, 3 rare, 3 two-unit and 3 gap
+trials: no differences. Closed form against statsmodels weighted GLM on 9
+reference windows (two with inserted outbreak weeks, 2 weights below 1): largest
+differences 1.4e-14 in mu0, 1.6e-15 in phi, 2.2e-16 in weights; design S IRLS
+against statsmodels, 1.1e-15 relative. Calibration on simulated negative
+binomial weeks (20,000 a cell): with known Poisson counts the plug-in tail is
+conservative (share with p below 1e-2: 0.0029 to 0.0075; below 1e-3: 0.0004 to
+0.0012); with overdispersion 2 it is anti-conservative: 0.010 to 0.017 below 1e-2
+and 0.0014 to 0.0102 below 1e-3, worst (10 times nominal) at mean 0.1 and 26
+reference weeks, still 3.3 times at mean 50 and 26 weeks.
+
+**Deviations from plan.**
+
+- Design Y is tested from week 55 with its 7 weeks (the plan's 13-week minimum is
+  for T and S), and b_eff = 2 starts at week 107, 2025-10-20; the plan's
+  "2025-10-13" is a slip, the rule t - 52j - 3 >= 0 gives 107.
+- Design S fits the harmonic only when the reference holds at least 20 events,
+  otherwise the level alone (VRE and CPE hospital-wide).
+- Extra row, not in the plan: the headline setting read at D5's level 1e-3
+  (`metrics-noise-matched.json`), and the count of how often down-weighting acts,
+  because the year-1 level gave 0.50 episodes a year on the scoring period.
+- The statsmodels check used 9 windows, 2 with inserted outbreak weeks, not 5
+  real ones: the real windows had no weight below 1, so the Anscombe step was
+  untested by them.
+- The headline setting is plain, so the figure (as the plan describes, drawn
+  from the headline setting) shows no hollow bar: the lowest weight at the last
+  as-of week is 1.00, and the threshold is clipped at the top of the axis.
+- CPU far below the estimate; no cut was made.
+
 ## Interpretation
+
+Against METRICS.md "Decision rules" the algorithm does not reach the live set. At
+about 5 episodes a year (4.52, 9 episodes) D5 is rare 0.310 [0.250, 0.377] and
+common ESBL 0.240 [0.186, 0.304], against 0.920 and 0.750 at 3.0 for the
+reference, intervals far apart; the reference's common ESBL rate needs about 60
+episodes a year from this method and its rare rate is not reached at any level
+swept. In the rare, common ESBL and two-unit families every D2 cell from k = 3 up
+is below the reference and below the shipped row. In the two families no count
+test sees, it is no better: common resistant 0.035 and wild type 0.035 at k = 4
+(live 0.010 and 0.000). Delay is the same, 6 days. It raises no data, sentinel,
+trend or divergence signals, so its D4 is only the cluster kind and its D6 and I1
+are not comparable with a tool that also raises them. This is screening, not
+selection: one seed, held-out seeds unused, a result beside 0015 and 0016 and not
+a winner.
+
+Hypotheses (exploratory, as written in the plan). (1) Held: rare 0.310 and common
+ESBL 0.240 sit inside the assumed ranges (0.30 to 0.60 and 0.10 to 0.40), rare at
+the lower edge, below the reference with disjoint intervals, and not refuted (the
+refutation bars were 0.80 and 0.65). (2) Refuted: median delay at k = 4 is 6 days
+for both families, under the predicted 7 to 14. The delay is a median over the
+trials that were detected, which are the ones where 3 or more isolates landed in
+the first closed week. (3) Held in a trivial sense: down-weighting moved nothing,
+because it never acted on E1 (above). The plan's reason for the feature, that E1's
+five weeks of 5 to 6 would keep inflating a plain baseline, is true (the
+threshold sits at 23 to 24 for months, figure) but the Anscombe step as specified
+does not remove it: the outbreak is a quarter of a 26-week window, so it inflates
+the dispersion that standardises its own residuals (derived: at the last as-of
+week mean 1.42, dispersion 3.33, so a count of 6 has a standardised residual
+under 2.58). (4) Held: common resistant 0.000 and wild type 0.015 at k = 4 at the
+year-1 level, 0.035 and 0.035 at D5's level, all at or under 0.05.
+
+Strongest alternative explanation of the gap: structure, not the Farrington
+family. A cluster of 4 over 14 days puts 3 or more in one ISO week only half the
+time (derived, plan), and the method sees a phenotype or an organism per unit,
+never the 13-drug profile the live profile test uses (the same information
+argument as 0016). A throwaway Poisson simulation with the true mean known gave
+rare k = 4 0.47 at 1e-3 (plan, derived); the measured 0.310 at that level is below
+it, the cost of fitting a mean and a dispersion from 26 sparse weeks, which the
+calibration shows as a heavier real tail at overdispersion 2 and a lighter one
+for Poisson counts. Second, the setting choice rests on 1 to 2 year-1 episodes and
+40 + 40 trials: all eight settings chose the same level, 4 to 6 of 40 rare
+clusters separate nothing, and year 1 was twice as noisy as the scoring period at
+equal level, so the plan's operating level was too strict by a factor near 10 and
+the D2 to D7 cells at 1e-4 describe a very quiet detector. D5, level-matched, is
+not affected. Third, the trailing and the year-back design are not separated
+(0.310 and 0.240 against 0.410 and 0.270, intervals overlapping, the latter at 100
+trials a cell), and the health centres' summer volume peak shows in no unit's
+episode count (ED 2, GER 3, MED-A 1, SURG 3, none for PHC at 1e-3), so the plan's
+seasonal reason for design Y is untested here, not refuted.
+
+What this says for the hospital-wide use the brief assumed: the series that suit
+the algorithm (counts of tens a week) did raise 1 to 1.5 episodes a year at 1e-3
+(trailing; E1 shows once, in E. coli, 25 days after its start), fewer than 1 for
+year-back, 0 for the seasonal GLM, and none of this can find an injected cluster
+because the harness credits a unit; a hospital-wide injection (a cluster
+spread over several units, or a rise in a large organism) would be the fair test
+of that scope, and the harness does not have one.
+
+Next. (1) Put 0015's Gamma prior inside the Farrington baseline (or the delta-method
+variance of the fitted mean) so the sparse unit series have an honest tail, and
+compare with the 0015 result at the same noise. (2) Evaluate every day on the
+trailing 7 days (reference weeks aligned to the day) to remove the Sunday-bin
+dilution and the weekly delay. (3) A weight rule that can act on an 8-week
+outbreak (a robust dispersion, median or 52-week, in the standardised residual)
+and a test on an E1-like injected outbreak followed by a second cluster, the case
+the feature is for and the harness does not inject. (4) A hospital-wide injection
+family for D2, so that hospital scope can be scored. (5) Nothing here changes the
+live tool.
