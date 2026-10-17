@@ -15,6 +15,7 @@ import {
   useState,
 } from "react";
 import { allWards, currentSite, isMulti, siteWards } from "../../sites.ts";
+import { hashPage } from "../../url.ts";
 import {
   bandPath,
   compactDate,
@@ -38,6 +39,7 @@ import {
 } from "./geometry.ts";
 import { LayersControl } from "./LayersControl.tsx";
 import { type Layers, type LineKey, type ViewRow, viewRows, windowRows, windowStart } from "./layers.ts";
+import { incidentKey, isKinPill, isSelectedPill } from "./selection.ts";
 import "./WeeklyBand.css";
 
 // The hero band: the weekly stream (resistant finds stacked by phenotype, cultures on its own
@@ -82,6 +84,18 @@ interface Props {
   label: string;
   /** Compact strip only: a press on the band. */
   onActivate?: () => void;
+  /** The selected incident key (`alert.incident ?? alert.id`): its pill is ringed, the rest step back. */
+  selected?: string | null;
+  /** The selected incident's unit: the other pills there carry the kin mark. */
+  selectedUnit?: WardCode | null;
+  /** The focused unit: its lane lifts, the others step back. */
+  focusUnit?: WardCode | null;
+  /** A pill was pressed. Never moves the replay clock. */
+  onSelect?: (key: string) => void;
+  /** A lane label was pressed: the unit to focus, or null to clear. */
+  onFocusUnit?: (ward: WardCode | null) => void;
+  /** Escape on the band: clear the selection. */
+  onClear?: () => void;
 }
 
 interface PillPlace {
@@ -126,7 +140,7 @@ interface Model {
   lanes: { ward: WardCode; mid: number; path: string }[];
   ticks: { x: number; year: boolean; label: string | null }[];
   pills: PillPlace[];
-  dots: { x: number; kind: PillKind; id: string }[];
+  dots: { x: number; kind: PillKind; id: string; key: string }[];
 }
 
 function build(
@@ -260,7 +274,7 @@ function build(
   const pills: PillPlace[] = [];
   const dots: Model["dots"] = [];
   const order = [...shown].sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
-  if (compact) for (const a of order) dots.push({ x: xOf(dayNumber(a.date) + 0.5), kind: pillKind(a), id: a.id });
+  if (compact) for (const a of order) dots.push({ x: xOf(dayNumber(a.date) + 0.5), kind: pillKind(a), id: a.id, key: incidentKey(a) });
   else {
     // One row per lane. A pill that would touch the one before it joins it: the run becomes one "n signals" pill.
     const lanesAlerts = new Map<number, { members: Alert[]; right: number; w: number; label: string }[]>();
@@ -372,6 +386,11 @@ interface StaticProps {
   onToggle: (k: LineKey) => void;
   /** A pill was opened: the pointer readout goes away. */
   onOpen: () => void;
+  selected: string | null;
+  selectedUnit: WardCode | null;
+  focusUnit: WardCode | null;
+  onSelect?: (key: string) => void;
+  onFocusUnit?: (ward: WardCode | null) => void;
 }
 
 /** Everything that does not change with the pointer; re-rendered only when the data, width or date change. */
@@ -387,14 +406,22 @@ const StaticLayer = memo(function StaticLayer({
   reserve,
   onToggle,
   onOpen,
+  selected,
+  selectedUnit,
+  focusUnit,
+  onSelect,
+  onFocusUnit,
 }: StaticProps) {
   const lanesEnd = L.lanesEnd;
   const todayLabel = `${t(locale, "tlToday")} · ${compactDate(asOf)}`;
   const todayW = Math.ceil(todayLabel.length * 6.6 + 10);
   const open = (a: Alert) => {
     onOpen();
-    location.hash = `research?inc=${encodeURIComponent(a.incident ?? a.id)}`;
+    const key = incidentKey(a);
+    if (onSelect) onSelect(key);
+    if (!onSelect || hashPage() !== "research") location.hash = `research?inc=${encodeURIComponent(key)}`;
   };
+  const pressLane = (ward: WardCode) => onFocusUnit?.(ward === focusUnit ? null : ward);
   return (
     <g>
       <line className="hs-base" x1={L.gutter} x2={m.right} y1={L.base} y2={L.base} />
@@ -448,9 +475,28 @@ const StaticLayer = memo(function StaticLayer({
 
       {!compact
         ? m.lanes.map((l) => (
-            <g key={l.ward}>
+            <g key={l.ward} className={`hs-lane${l.ward === focusUnit ? " is-focus" : ""}`} data-ward={l.ward}>
               <line className="hs-lane-line" x1={L.gutter} x2={m.right} y1={l.mid} y2={l.mid} />
               {l.path ? <path className="hs-ribbon" d={l.path} /> : null}
+              <rect
+                className="hs-lane-hit"
+                x={0}
+                y={l.mid - 22}
+                width={L.gutter}
+                height={44}
+                role="button"
+                tabIndex={disabled ? -1 : 0}
+                aria-pressed={l.ward === focusUnit}
+                aria-label={wardName(locale, l.ward)}
+                onClick={() => pressLane(l.ward)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    pressLane(l.ward);
+                  }
+                }}
+              />
               <text className="hs-lane-label" x={L.gutter - 6} y={l.mid + 4} textAnchor="end">
                 <title>{wardName(locale, l.ward)}</title>
                 {currentSite() === null ? l.ward : bareWardCode(l.ward)}
@@ -496,7 +542,7 @@ const StaticLayer = memo(function StaticLayer({
         ? m.dots.map((d) => (
             <path
               key={d.id}
-              className="hs-dot"
+              className={`hs-dot${selected !== null && d.key === selected ? " is-selected" : ""}`}
               data-kind={d.kind}
               d={d.kind === "sentinel" ? `M${d.x} ${L.base + 2}l3 5h-6z` : `M${d.x - 2.5} ${L.base + 2}h5v5h-5z`}
             />
@@ -506,7 +552,7 @@ const StaticLayer = memo(function StaticLayer({
       {m.pills.map((p) => (
         <g
           key={p.a.id}
-          className="hs-pill"
+          className={`hs-pill${isSelectedPill(p.members, selected) ? " is-selected" : isKinPill(p.members, p.a.ward as WardCode | undefined, selected, selectedUnit) ? " is-kin" : ""}`}
           data-kind={p.kind}
           data-count={p.members.length > 1 ? p.members.length : undefined}
           role="button"
@@ -682,6 +728,9 @@ function summaryText(locale: Locale, rows: WeekRow[], asOf: string, layers: Laye
 
 export function WeeklyBand(p: Props) {
   const { locale, start, asOf, weekly, alerts, layers, onLayers, compact = false, disabled = false } = p;
+  const selected = p.selected ?? null;
+  const selectedUnit = p.selectedUnit ?? null;
+  const focusUnit = p.focusUnit ?? null;
   const id = `hs${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   const wrap = useRef<HTMLDivElement>(null);
   const readRef = useRef<HTMLDivElement>(null);
@@ -825,7 +874,7 @@ export function WeeklyBand(p: Props) {
 
   return (
     <div
-      className="hs"
+      className={`hs${selected ? " has-selection" : ""}${focusUnit ? " has-unit" : ""}`}
       ref={wrap}
       style={{ height: L.height }}
       data-compact={compact || undefined}
@@ -844,6 +893,9 @@ export function WeeklyBand(p: Props) {
         aria-label={p.label}
         aria-describedby={`${id}-sum`}
         onPointerMove={onMove}
+        onKeyDown={(e) => {
+          if (e.key === "Escape" && selected && p.onClear) p.onClear();
+        }}
         onPointerDown={onDown}
         onFocus={(e) => {
           const w = Number((e.target as Element).getAttribute("data-week") ?? "-1");
@@ -882,6 +934,11 @@ export function WeeklyBand(p: Props) {
           reserve={reserve}
           onToggle={onToggle}
           onOpen={clearHover}
+          selected={selected}
+          selectedUnit={selectedUnit}
+          focusUnit={focusUnit}
+          onSelect={p.onSelect}
+          onFocusUnit={p.onFocusUnit}
         />
         {row && !row.hidden ? (
           <g className="hs-cross">

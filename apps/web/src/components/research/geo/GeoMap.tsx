@@ -124,7 +124,7 @@ function Spark({
   );
 }
 
-export function GeoMap({ client, locale, asOf, reducedMotion }: PanelProps) {
+export function GeoMap({ client, locale, asOf, reducedMotion, hasSelection = false }: PanelProps) {
   const TYKS_COUNTY = siteCounty();
   const [group, setGroup] = useState(DEFAULT_GROUP);
   // The map shows first; the county detail replaces it in the tile once a county is picked.
@@ -263,7 +263,7 @@ export function GeoMap({ client, locale, asOf, reducedMotion }: PanelProps) {
 
   return (
     <section
-      className="board-panel geo"
+      className={`board-panel geo${hasSelection ? " has-selection" : ""}`}
       aria-labelledby="geo-title"
       aria-busy={loading || updating}
       data-stale={updating}
@@ -371,7 +371,7 @@ export function GeoMap({ client, locale, asOf, reducedMotion }: PanelProps) {
                   <path
                     key={c.name}
                     d={c.d}
-                    className={`geo-county geo-fill-${fillOf(c.name)}`}
+                    className={`geo-county geo-fill-${fillOf(c.name)}${hasSelection && c.name === TYKS_COUNTY ? " is-focus" : ""}`}
                     data-selected={chosen === c.name}
                     data-site={isMulti() && c.name === TYKS_COUNTY}
                     vectorEffect="non-scaling-stroke"

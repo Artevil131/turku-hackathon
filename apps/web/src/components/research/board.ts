@@ -90,6 +90,10 @@ export interface PanelProps {
   state: BoardState;
   onChange: (patch: Partial<BoardState>) => void;
   reducedMotion: boolean;
+  /** The units the selected signal reaches (its span chips): the kin marks of the grid and the flow. */
+  kin?: WardCode[];
+  /** An incident is selected: panels dim what is not it or its kin. */
+  hasSelection?: boolean;
 }
 
 /** The feed also gets the live findings, to mark isolates seen. */

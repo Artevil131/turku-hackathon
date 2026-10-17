@@ -403,3 +403,8 @@ tfoot .ugrid-rowhead {
     transition: none;
   }
 }
+
+/* A unit the selected signal reaches: a thin accent rule under its column head. */
+.ugrid-colhead.is-kin {
+  box-shadow: inset 0 -2px 0 var(--live, #635bf1);
+}

@@ -55,7 +55,9 @@ export function ResearchBoard(props: Props) {
     setState((s) => (s.focus === selectedWard ? s : { ...s, focus: selectedWard }));
   }, [ready, selectedWard]);
 
-  const panelProps = { ...props, state, onChange };
+  // The units the selected incident reaches (its span chips) are the kin of the grid and the flow.
+  const kin = useMemo(() => (selected ? spansOf(selected).units : []), [selected, spansOf]);
+  const panelProps = { ...props, state, onChange, kin, hasSelection: selected !== null };
   const loading = load.status === "loading";
 
   const content: Record<WinId, ReactNode> = {

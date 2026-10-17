@@ -1,4 +1,5 @@
 import type { AeiClient, ClockCommand, ClockState } from "@aei/contract";
+import type { WardCode } from "@aei/domain";
 import { type Locale, t } from "@aei/i18n";
 import { type KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -9,6 +10,7 @@ import { EventsStrip } from "./EventsStrip.tsx";
 import { type ResolvedEvent, resolveEvents } from "./events.ts";
 import { compactDate, dayNumber, isoFromDay } from "./hero/geometry.ts";
 import { useLayers } from "./hero/layers.ts";
+import { unitOfIncident } from "./hero/selection.ts";
 import { useWeekly } from "./hero/useWeekly.ts";
 import { WeeklyBand } from "./hero/WeeklyBand.tsx";
 import { Chevron, Pause, Play, StepDay, StepWeek } from "./Icons.tsx";
@@ -138,6 +140,19 @@ export function Timeline({
   const alerts = useAlertsSinceStart(client, clock?.start, clock?.asOf, liveAlerts);
   const weekly = useWeekly(client, clock?.start, clock?.asOf);
   const [layers, setLayers] = useLayers();
+  // The selected signal and focused unit live in the URL hash, shared with the research board; selecting never moves the clock.
+  const [inc, setInc] = useHashParam("inc");
+  const [unit, setUnit] = useHashParam("unit");
+  const selectedUnit = unitOfIncident(alerts, inc);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the band scrolls only when the selection changes
+  useEffect(() => {
+    if (!inc) return;
+    const scroller = document.querySelector<HTMLElement>(".hs:not([data-compact])");
+    if (!scroller || scroller.scrollWidth <= scroller.clientWidth) return;
+    scroller
+      .querySelector(".hs-pill.is-selected")
+      ?.scrollIntoView({ inline: "center", block: "nearest", behavior: reducedMotion ? "auto" : "smooth" });
+  }, [inc]);
   const quality = useQuality(client, clock?.asOf);
 
   // A new clock state (or reset) from the server ends "seeking".
@@ -172,7 +187,6 @@ export function Timeline({
   );
 
   const events = useMemo(() => resolveEvents(alerts), [alerts]);
-  const [inc, setInc] = useHashParam("inc");
   const pickEvent = (ev: ResolvedEvent) => {
     command({ action: "pause" });
     seek(ev.date);
@@ -336,6 +350,12 @@ export function Timeline({
         disabled={!ready}
         label={t(locale, "tlStream")}
         onActivate={() => setSheet(true)}
+        selected={inc}
+        selectedUnit={selectedUnit}
+        focusUnit={(unit as WardCode | null) ?? null}
+        onSelect={setInc}
+        onFocusUnit={setUnit}
+        onClear={() => setInc(null)}
       />
     ) : (
       <div className="tl-band-empty" />
