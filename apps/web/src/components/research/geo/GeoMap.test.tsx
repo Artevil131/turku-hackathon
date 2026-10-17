@@ -55,7 +55,7 @@ describe("map source labels and initial county", () => {
     expect(html).toContain(locale === "fi" ? "Alueellinen tilanne · THL, avoin data" : "Regional picture · THL open data");
     expect(html).toContain(locale === "fi" ? "hoitoketju (kaavio, ei potilasdataa)" : "referral chain (diagram, not patient data)");
     expect(html).toContain("CC BY 4.0");
-    expect(html).toContain('aria-label="Pirkanmaan"');
+    expect(html).toContain('aria-label="Pirkanmaa"');
     expect(html).not.toContain('data-selected="true"');
   });
   it.each(["fi", "en"] as const)("labels the separate Tyks unit view as synthetic hospital data (%s)", (locale) => {

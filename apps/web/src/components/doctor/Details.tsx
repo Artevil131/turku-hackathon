@@ -24,7 +24,7 @@ export function Details({ client, locale, filters, data, item, signals }: Props)
   const w = halfWidth(item.interval);
   const flags = row ? flagsOf(row) : null;
   const list = (orgs: { organism: string; share: number }[]) =>
-    orgs.map((o) => `${shortOrganism(o.organism as never)} ${pct(o.share)} %`).join(", ");
+    orgs.map((o) => `${shortOrganism(o.organism as never)} ${pct(o.share)}\u00a0%`).join(", ");
   const mine = row ? signals.filter((s) => "antibiotic" in s.alert && s.alert.antibiotic === row.antibiotic) : [];
   const gain = Math.round((item.pair?.gain ?? 0) * 100);
   return (
@@ -51,7 +51,7 @@ export function Details({ client, locale, filters, data, item, signals }: Props)
       <p className="dt-fig num">
         {item.share !== null ? (
           <>
-            <b>{pct(item.share)} %</b>
+            <b>{pct(item.share)}&nbsp;%</b>
             {item.interval ? ` (${pct(item.interval[0])}–${pct(item.interval[1])})` : ""}
             {" · "}
           </>
@@ -69,7 +69,7 @@ export function Details({ client, locale, filters, data, item, signals }: Props)
             {t(locale, "drAllOrg")}{" "}
             {row.allOrganisms.share === null
               ? "–"
-              : `${pct(row.allOrganisms.share)} %${row.allOrganisms.interval ? ` (${pct(row.allOrganisms.interval[0])}–${pct(row.allOrganisms.interval[1])})` : ""}`}{" "}
+              : `${pct(row.allOrganisms.share)}\u00a0%${row.allOrganisms.interval ? ` (${pct(row.allOrganisms.interval[0])}–${pct(row.allOrganisms.interval[1])})` : ""}`}{" "}
             · n {num(locale, row.coverage.counts.known)}
           </li>
         ) : null}
