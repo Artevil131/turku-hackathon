@@ -24,3 +24,7 @@ Added at the user's request (no judge run):
 | `ux-loop-6` | Start page asks "I work as…" (7 professions: ward doctor, infection control, stewardship, microbiology lab, researcher, regional surveillance, management). The choice (kept in the browser) reorders templates, picks the example questions and the suggested demo. Recent projects, demos and templates stay for everyone | the page serves one reader at a time without hiding anything; doctors keep their projects |
 
 Not checked: the chips for stewardship, lab, surveillance and management open existing views (antibiogram, unit grid, map, data page) rather than purpose-made answers; no real user from those professions has said these are their questions.
+
+| `ux-loop-7` | "Add a window" menu names what each window shows, with one line under it ("Which antibiotic to start", "Alerts and clusters", "Finnish county map"…) instead of internal names ("Treat a patient", "Signal", "Summary") | the names told a new user nothing |
+
+Only the add-a-window picker and the Windows tray use the new names; the window titles themselves are unchanged.

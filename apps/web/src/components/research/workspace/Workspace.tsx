@@ -639,7 +639,13 @@ export function Workspace({
           </button>
         ))}
       </div>
-      <button type="button" className="ws-find" data-find onClick={() => dispatchEvent(new CustomEvent("aei:command"))} title={`${t(locale, "wsFind")} (/ · Ctrl+K)`}>
+      <button
+        type="button"
+        className="ws-find"
+        data-find
+        onClick={() => dispatchEvent(new CustomEvent("aei:command"))}
+        title={`${t(locale, "wsFind")} (/ · Ctrl+K)`}
+      >
         {t(locale, "wsFind")} <kbd>/</kbd>
       </button>
     </div>
@@ -1075,7 +1081,7 @@ function Tray({
               <li key={id}>
                 <label className="ws-pop-row">
                   <input type="checkbox" checked={open(id)} data-toggle={id} onChange={() => onToggle(id)} />
-                  <span>{t(locale, TITLE_KEY[id])}</span>
+                  <span>{t(locale, `pick_${id}` as "pick_signals")}</span>
                 </label>
               </li>
             ))}
@@ -1134,7 +1140,7 @@ function WindowPicker({
     };
   }, [onClose]);
   const left = Math.max(8, Math.min(x, innerWidth - 232));
-  const top = Math.max(8, Math.min(y, innerHeight - 450));
+  const top = Math.max(8, Math.min(y, innerHeight - 640));
   return (
     <div className="ws-picker" ref={ref} role="menu" aria-label={t(locale, "wsEmptyAdd")} style={{ left, top }}>
       <p className="ws-picker-head">{t(locale, "wsEmptyAdd")}</p>
@@ -1143,7 +1149,10 @@ function WindowPicker({
           <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
             <path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
           </svg>
-          <span>{t(locale, TITLE_KEY[id])}</span>
+          <span className="ws-picker-text">
+            <strong>{t(locale, `pick_${id}` as "pick_signals")}</strong>
+            <small>{t(locale, `pick_${id}_sub` as "pick_signals_sub")}</small>
+          </span>
           {count(id) ? <span className="ws-picker-n">{count(id)}</span> : null}
         </button>
       ))}

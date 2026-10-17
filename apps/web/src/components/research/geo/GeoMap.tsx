@@ -41,7 +41,8 @@ const SERIES_KEY = {
 /** The THL series that matches a hospital signal: same phenotype, carriage, same organism where THL has it. */
 export function seriesForSignal(phenotypes: readonly string[], organism?: string): string | null {
   const kpn = organism?.includes("pneumoniae");
-  if (phenotypes.includes("cpe")) return organism?.includes("cloacae") ? "CPE carriage, E. cloacae" : kpn ? "CPE carriage, K. pneumoniae" : "CPE carriage, E. coli";
+  if (phenotypes.includes("cpe"))
+    return organism?.includes("cloacae") ? "CPE carriage, E. cloacae" : kpn ? "CPE carriage, K. pneumoniae" : "CPE carriage, E. coli";
   if (phenotypes.includes("esbl")) return kpn ? "ESBL carriage, K. pneumoniae" : "ESBL carriage, E. coli";
   if (phenotypes.includes("mrsa")) return "MRSA carriage";
   if (phenotypes.includes("vre")) return "VRE carriage";
@@ -350,9 +351,7 @@ export function GeoMap({
       </p>
       {signal && signalSeries ? (
         <div className="geo-signal" role="status">
-          <strong>
-            {t(locale, "geoSignalHead", { series: seriesLabel(locale, signalSeries), unit: signal.ward ?? "" })}
-          </strong>
+          <strong>{t(locale, "geoSignalHead", { series: seriesLabel(locale, signalSeries), unit: signal.ward ?? "" })}</strong>
           <span>{t(locale, signalSeries === group ? "geoSignalBody" : "geoSignalOther", { county: TYKS_COUNTY })}</span>
           {signalSeries !== group ? (
             <button type="button" className="geo-chip" onClick={() => setGroup(signalSeries)}>
