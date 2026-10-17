@@ -1,12 +1,13 @@
 import type { CoverageResponse } from "@aei/contract";
 import { shortOrganism } from "@aei/domain";
-import { antibioticName, formatDate, type Locale, type MessageKey, specimenName, t, wardName } from "@aei/i18n";
-import { useRef, useState } from "react";
-import { AsOf } from "../AsOf.tsx";
-import { AlertTri } from "../Icons.tsx";
+import { antibioticName, type Locale, specimenName, t, wardName } from "@aei/i18n";
+import { type KeyboardEvent, type ReactNode, useMemo, useRef } from "react";
 import "./CoverageList.css";
-import { AGE_KEYS, BAR, certaintyOf, type DoctorFilters, halfWidth, num, pct, type Row, rowN, sexWord } from "./filters.ts";
-import { signalDate, type UnitSignal } from "./signals.ts";
+import { BAR, certaintyOf, type DoctorFilters, dmy, num, pct } from "./filters.ts";
+import { InfoIcon, Popover } from "./Popover.tsx";
+import { PrintSheet } from "./PrintSheet.tsx";
+import { flagsOf, type Item, reasonOf, STANDING } from "./reason.ts";
+import type { UnitSignal } from "./signals.ts";
 
 export type ListStatus = "loading" | "error" | "ready";
 
@@ -17,297 +18,207 @@ interface Props {
   status: ListStatus;
   data: CoverageResponse | null;
   signals: UnitSignal[];
+  selected: string | null;
+  onSelect: (id: string | null) => void;
   onRetry: () => void;
 }
 
-const STANDING: Record<Row["standing"], { key: MessageKey; glyph: string }> = {
-  clears: { key: "drStandingClears", glyph: "✓" },
-  borderline: { key: "drStandingBorderline", glyph: "≈" },
-  below: { key: "drStandingBelow", glyph: "✕" },
-  "not assessable": { key: "drStandingNA", glyph: "–" },
-};
+const SKELETON = [0, 1, 2, 3, 4, 5];
+const TICKS = [50, 60, 70, 80, 90, 100];
 
-const LEVEL_KEYS = {
-  unit: "drLevelUnitShort",
-  "ward type": "drLevelWardTypeShort",
-  hospital: "drLevelHospitalShort",
-} as const;
+/** Position on the 50-100 % axis, as a percentage of the bar area; values below 50 sit at the left edge. */
+const at = (share: number): number => Math.max(0, Math.min(100, (share - 0.5) * 200));
 
-const SKELETON = [0, 1, 2, 3];
-
-/** The bar for the interval: a thick band on a 0-100 track, a tick at the bar, a marker at the estimate. */
-function IntervalBar({ interval, share, bar }: { interval: [number, number] | null; share: number | null; bar: number }) {
-  return (
-    <span className="cl-track" aria-hidden="true">
-      <i className="cl-tick" style={{ left: `${bar}%` }} />
-      {interval ? (
-        <i className="cl-band" style={{ left: `${interval[0] * 100}%`, width: `max(4px, ${(interval[1] - interval[0]) * 100}%)` }} />
-      ) : null}
-      {share !== null ? <i className="cl-point" style={{ left: `${share * 100}%` }} /> : null}
-    </span>
-  );
+export function itemsOf(data: CoverageResponse, locale: Locale): { singles: Item[]; pairs: Item[] } {
+  const singles = data.suggestions.map<Item>((row) => ({
+    id: row.antibiotic,
+    name: antibioticName(locale, row.antibiotic),
+    aware: row.aware,
+    standing: row.standing,
+    share: row.share,
+    interval: row.interval,
+    n: row.basis === "spectrum" ? row.coverage.spectrum.counts.known : row.coverage.counts.known,
+    row,
+    pair: null,
+  }));
+  const pairs = data.combinationSuggestions.map<Item>((p) => ({
+    id: p.antibiotics.join("+"),
+    name: p.antibiotics.map((a) => antibioticName(locale, a)).join(" + "),
+    aware: null,
+    standing: p.standing,
+    share: p.coverage.share,
+    interval: p.coverage.interval,
+    n: p.coverage.counts.known,
+    row: null,
+    pair: p,
+  }));
+  return { singles, pairs };
 }
 
-export function CoverageList({ locale, filters, asOf, status, data, signals, onRetry }: Props) {
-  const [open, setOpen] = useState<string | null>(null);
+/** The forest plot: one row per antibiotic, its 95 % interval against the bar line, one glance per row. */
+export function CoverageList({ locale, filters, asOf, status, data, signals, selected, onSelect, onRetry }: Props) {
   const headRef = useRef<HTMLElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
   const bar = BAR[filters.sev];
   const unit = wardName(locale, filters.unit);
   const site = specimenName(locale, filters.site);
   const cov = data?.coverage;
   const level = cov ? certaintyOf(cov.level) : null;
-  const unitSignalsHere = signals.slice(0, 2);
-  const firstBelow = data ? data.suggestions.findIndex((s) => s.standing !== "clears") : -1;
-  const accessClears = data?.suggestions.some((s) => s.standing === "clears" && s.aware === "Access") ?? false;
   const ready = status === "ready" && data && cov;
   const stale = status === "loading" && data;
+  const { singles, pairs } = useMemo(() => (data ? itemsOf(data, locale) : { singles: [], pairs: [] }), [data, locale]);
+  const firstBelow = singles.findIndex((s) => s.standing !== "clears");
+  const all = [...singles, ...pairs];
+  const focusId = selected && all.some((i) => i.id === selected) ? selected : (all[0]?.id ?? null);
+  const date = data?.asOf ?? asOf;
 
   const ageChosen = filters.age !== "any";
-  const notAppliedKey: MessageKey | null =
+  const notApplied =
     ageChosen && filters.onset ? "drNotAppliedBoth" : ageChosen ? "drNotAppliedAge" : filters.onset ? "drNotAppliedDay3" : null;
 
-  const reasonOf = (row: Row): string => {
-    const lo = row.interval ? pct(row.interval[0]) : 0;
-    const hi = row.interval ? pct(row.interval[1]) : 0;
-    if (row.standing === "clears") {
-      const base = t(locale, "drReasonClears", {
-        bar,
-        n: num(locale, rowN(row)),
-        specimen: site.toLowerCase(),
-        level: t(locale, LEVEL_KEYS[cov?.level ?? "unit"]),
-        from: cov ? formatDate(locale, cov.from, "long") : "",
-        tier: row.aware,
-      });
-      return row.aware === "Watch" && accessClears ? `${base}; ${t(locale, "drAfterAccess")}` : base;
+  const onKeyDown = (e: KeyboardEvent<HTMLUListElement>) => {
+    if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(e.key)) return;
+    const opts = Array.from(listRef.current?.querySelectorAll<HTMLElement>('[role="option"]') ?? []);
+    const i = opts.indexOf(document.activeElement as HTMLElement);
+    if (i < 0) return;
+    e.preventDefault();
+    const last = opts.length - 1;
+    const next = e.key === "ArrowDown" ? Math.min(last, i + 1) : e.key === "ArrowUp" ? Math.max(0, i - 1) : e.key === "Home" ? 0 : last;
+    opts[next]?.focus();
+  };
+
+  const whyOf = (item: Item): ReactNode => {
+    if (!data) return null;
+    if (item.row) {
+      const flags = flagsOf(item.row);
+      return (
+        <>
+          <p>{reasonOf(locale, item.row, data, filters)}</p>
+          {flags.notCovering.map((o) => (
+            <p key={`n${o.organism}`}>
+              <span aria-hidden="true">⊘</span> {t(locale, "drNotFor", { organism: shortOrganism(o.organism), share: pct(o.share) })}
+            </p>
+          ))}
+          {flags.untested.map((o) => (
+            <p key={`u${o.organism}`}>
+              <span aria-hidden="true">?</span> {t(locale, "drUntestedOn", { organism: shortOrganism(o.organism), share: pct(o.share) })}
+            </p>
+          ))}
+        </>
+      );
     }
-    if (row.standing === "borderline") return t(locale, "drReasonBorderline", { lo, hi, bar });
-    if (row.standing === "below") return t(locale, "drReasonBelow", { share: pct(row.share ?? 0), bar });
-    const untested = row.coverage.untested.reduce((s, u) => s + u.share, 0);
-    return row.share === null ? t(locale, "drNaFew") : t(locale, "drNaUntested", { pct: pct(untested) });
-  };
-
-  // Organisms a row leaves out, as text: only the ones that are a real share of the pool.
-  const flagsOf = (row: Row) => {
-    const notCovering = row.coverage.notCovering.filter((o) => o.share >= 0.05);
-    const untested = row.standing === "not assessable" ? [] : row.coverage.untested.filter((o) => o.share >= 0.05);
-    return { notCovering, untested };
-  };
-
-  const renderRow = (row: Row) => {
-    const id = row.antibiotic;
-    const isOpen = open === id;
-    const st = STANDING[row.standing];
-    const flags = flagsOf(row);
-    const n = rowN(row);
-    const assessable = row.standing !== "not assessable" && row.share !== null;
-    const hidden = Math.max(0, flags.notCovering.length - 2) + Math.max(0, flags.untested.length - 2);
-    const w = halfWidth(row.interval);
-    const rowSignals = signals.filter((s) => "antibiotic" in s.alert && s.alert.antibiotic === row.antibiotic);
-    const c = row.coverage;
+    const gain = Math.round((item.pair?.gain ?? 0) * 100);
     return (
-      <li key={id} className="cl-row" data-standing={row.standing} data-open={isOpen}>
-        <button
-          type="button"
-          className="cl-main"
-          aria-expanded={isOpen}
-          aria-controls={`cl-detail-${id}`}
-          onClick={() => setOpen(isOpen ? null : id)}
+      <p>
+        {t(locale, gain === 1 ? "drGainOne" : "drGain", { gain })} · {t(locale, "drAccessCount", { n: item.pair?.access ?? 0 })}
+      </p>
+    );
+  };
+
+  const renderItem = (item: Item) => {
+    const st = STANDING[item.standing];
+    const assessable = item.standing !== "not assessable" && item.share !== null;
+    const isSel = selected === item.id;
+    const range = item.interval ? `${pct(item.interval[0])}–${pct(item.interval[1])}` : "";
+    return (
+      <li key={item.id} className="cl-li" role="presentation">
+        <div
+          role="option"
+          tabIndex={focusId === item.id ? 0 : -1}
+          aria-selected={isSel}
+          data-row={item.id}
+          className="cl-row"
+          data-standing={item.standing}
+          data-selected={isSel ? "" : undefined}
+          onClick={() => onSelect(isSel ? null : item.id)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onSelect(isSel ? null : item.id);
+            }
+          }}
         >
           <span className="cl-name">
-            <b>{antibioticName(locale, row.antibiotic)}</b>
-            <span className="cl-tier" data-tier={row.aware}>
-              {row.aware}
-            </span>
-          </span>
-          <span className="cl-cov">
-            {assessable && row.share !== null ? <b className="num">{pct(row.share)} %</b> : null}
-            <small className="num">{t(locale, "drN", { n: num(locale, n) })}</small>
-          </span>
-          <span className="cl-barcell">
-            {assessable ? (
-              <>
-                <IntervalBar interval={row.interval} share={row.share} bar={bar} />
-                <small className="num">
-                  {row.interval ? t(locale, "drIntervalText", { lo: pct(row.interval[0]), hi: pct(row.interval[1]) }) : ""}
-                </small>
-              </>
+            <b title={item.name}>{item.name}</b>
+            {item.aware ? (
+              <span className="cl-tier" data-tier={item.aware} title={item.aware === "Access" ? "AWaRe Access" : "AWaRe Watch"}>
+                {item.aware[0]}
+              </span>
             ) : null}
           </span>
-          <span className="cl-standing" data-standing={row.standing}>
+          <span className="cl-plot" aria-hidden="true">
+            <i className="cl-axis" />
+            <i className="cl-tau" style={{ left: `${at(bar / 100)}%` }} />
+            {assessable && item.interval ? (
+              <i
+                className="cl-band"
+                style={{ left: `${at(item.interval[0])}%`, width: `max(4px, ${at(item.interval[1]) - at(item.interval[0])}%)` }}
+              />
+            ) : null}
+            {assessable && item.share !== null ? <i className="cl-point" style={{ left: `${at(item.share)}%` }} /> : null}
+          </span>
+          <span className="cl-num num" title={range ? `95 %: ${range}` : undefined}>
+            {assessable && item.share !== null ? <b>{pct(item.share)} %</b> : null}
+            {assessable ? <span className="cl-dot"> · </span> : null}
+            <span className="cl-n">n {num(locale, item.n)}</span>
+          </span>
+          <span className="cl-lvl" title={level ? t(locale, level.label) : undefined}>
+            <span aria-hidden="true">{level?.glyph}</span>
+            <span className="dp-sr">{level ? t(locale, level.short) : ""}</span>
+          </span>
+          <span className="cl-res" data-standing={item.standing} title={t(locale, st.long)}>
             <span className="cl-glyph" aria-hidden="true">
               {st.glyph}
             </span>
-            {t(locale, st.key)}
+            {t(locale, st.short)}
           </span>
-          <span className="cl-why">{reasonOf(row)}</span>
-          <span className="cl-meta">
-            <span className="cl-date num">{t(locale, "drResultsTo", { date: formatDate(locale, data?.asOf ?? asOf ?? "", "long") })}</span>
-            {level ? (
-              <span className="cl-badge" title={t(locale, level.label)}>
-                <span aria-hidden="true">{level.glyph}</span> {t(locale, level.short)}
-                {w !== null ? ` · ${t(locale, "drWidth", { w })}` : ""}
-              </span>
-            ) : null}
-            {flags.notCovering.slice(0, 2).map((o) => (
-              <span key={`n${o.organism}`} className="cl-flag">
-                <span aria-hidden="true">⊘</span> {t(locale, "drNotFor", { organism: shortOrganism(o.organism), share: pct(o.share) })}
-              </span>
-            ))}
-            {flags.untested.slice(0, 2).map((o) => (
-              <span key={`u${o.organism}`} className="cl-flag">
-                <span aria-hidden="true">?</span> {t(locale, "drUntestedOn", { organism: shortOrganism(o.organism), share: pct(o.share) })}
-              </span>
-            ))}
-            {hidden > 0 ? <span className="cl-flag cl-flag-more">{t(locale, "drMore", { n: hidden })}</span> : null}
-            {rowSignals.map((s) => (
-              <span key={s.alert.id} className="cl-flag cl-flag-signal">
-                <AlertTri /> {t(locale, "drSignalHere", { label: s.label, date: signalDate(locale, s) })}
-              </span>
-            ))}
-          </span>
-          <span className="cl-chev" aria-hidden="true">
-            {isOpen ? "▴" : "▾"}
-          </span>
-        </button>
-        {isOpen ? (
-          <div className="cl-detail" id={`cl-detail-${id}`}>
-            <dl>
-              <div>
-                <dt>{t(locale, "drCovers")}</dt>
-                <dd className="num">
-                  {t(locale, "drCoveredOf", {
-                    covered: num(locale, row.basis === "spectrum" ? c.spectrum.counts.covered : c.counts.covered),
-                    known: num(locale, n),
-                  })}
-                  <small> {row.basis === "spectrum" ? t(locale, "drBasisSpectrum") : t(locale, "drBasisAll")}</small>
-                </dd>
-              </div>
-              <div>
-                <dt>{t(locale, "drCertaintyCol")}</dt>
-                <dd>{level ? `${level.glyph} ${t(locale, level.label)}` : ""}</dd>
-              </div>
-              {row.basis === "spectrum" ? (
-                <div>
-                  <dt>{t(locale, "drCovers")}</dt>
-                  <dd className="num">
-                    {t(locale, "drAllOrganisms", {
-                      share: row.allOrganisms.share === null ? "–" : pct(row.allOrganisms.share),
-                      lo: row.allOrganisms.interval ? pct(row.allOrganisms.interval[0]) : "–",
-                      hi: row.allOrganisms.interval ? pct(row.allOrganisms.interval[1]) : "–",
-                      n: num(locale, c.counts.known),
-                    })}
-                  </dd>
-                </div>
-              ) : null}
-              <div>
-                <dt>{t(locale, "drLabelRecent")}</dt>
-                <dd className="num">
-                  {t(locale, "drRecent", { covered: num(locale, c.recent.covered), known: num(locale, c.recent.known) })}
-                </dd>
-              </div>
-              <div>
-                <dt>{t(locale, "drOrgNotCovered")}</dt>
-                <dd>
-                  {c.notCovering.length ? (
-                    <ul className="cl-orgs">
-                      {c.notCovering.map((o) => (
-                        <li key={o.organism} className="num">
-                          <i>{shortOrganism(o.organism)}</i> {pct(o.share)} %
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    t(locale, "drOrgNone")
-                  )}
-                </dd>
-              </div>
-              <div>
-                <dt>{t(locale, "drOrgUntested")}</dt>
-                <dd>
-                  {c.untested.length ? (
-                    <ul className="cl-orgs">
-                      {c.untested.map((o) => (
-                        <li key={o.organism} className="num">
-                          <i>{shortOrganism(o.organism)}</i> {pct(o.share)} %
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    t(locale, "drOrgNone")
-                  )}
-                </dd>
-              </div>
-            </dl>
-          </div>
-        ) : null}
+        </div>
+        <Popover className="info-btn cl-info" label={`${t(locale, "drInfo")}: ${item.name}`} content={whyOf(item)}>
+          <InfoIcon />
+        </Popover>
       </li>
     );
   };
 
+  const renderGroup = (items: Item[], dividerAt: number, divider: string | null) =>
+    items.map((item, i) => (
+      <ListFragment key={item.id} divider={i === dividerAt ? divider : null}>
+        {renderItem(item)}
+      </ListFragment>
+    ));
+
   return (
     <section
       id="dr-list"
-      className="cl glass ply-2"
+      className="cl dp-panel"
       aria-labelledby="dr-list-title"
       aria-busy={status === "loading"}
       data-stale={stale ? "" : undefined}
       tabIndex={-1}
     >
       <header className="cl-head" ref={headRef} tabIndex={-1}>
-        <div className="cl-titleline">
-          <h2 id="dr-list-title">{t(locale, "drTitle")}</h2>
-          <span className="cl-where">
-            {unit} · {site}
-          </span>
-          {asOf ? <AsOf locale={locale} date={data?.asOf ?? asOf} pending={!!data && data.asOf !== asOf} clockDate={asOf} /> : null}
-        </div>
-        {ready ? (
-          <p className="cl-pool">
-            <span className="cl-badge cl-badge-lg">
-              <span aria-hidden="true">{level?.glyph}</span> {level ? t(locale, level.label) : ""}
-            </span>{" "}
-            <span className="num">
-              {t(locale, cov.isolates === 1 ? "drPoolLineOne" : "drPoolLine", {
-                n: num(locale, cov.isolates),
-                level: t(locale, LEVEL_KEYS[cov.level]),
-                from: formatDate(locale, cov.from, "long"),
-              })}
-            </span>
-          </p>
-        ) : (
-          <p className="cl-pool" role="status">
-            {status === "loading" ? t(locale, "drLoading", { unit }) : null}
-          </p>
-        )}
-        <p className="cl-print-record print-only">
-          {[
-            unit,
-            site,
-            filters.sex === "any" ? `${t(locale, "drSex").toLowerCase()} ${sexWord(locale, "any")}` : sexWord(locale, filters.sex),
-            ageChosen ? `${t(locale, "drPrintAge", { age: t(locale, AGE_KEYS[filters.age]) })} (${t(locale, "drNotApplied")})` : null,
-            filters.onset ? `${t(locale, "drOnset")} (${t(locale, "drNotApplied")})` : null,
-            t(locale, filters.sev === "mild" ? "drSevMild" : "drSevSevere"),
-            t(locale, filters.period === 365 ? "drPeriodYear" : "drPeriodMonth"),
-            asOf ? t(locale, "drPrintAsOf", { date: formatDate(locale, data?.asOf ?? asOf, "long") }) : null,
-          ]
-            .filter(Boolean)
-            .join(" · ")}
-          . {t(locale, "drPrintDisclaimer")}
-        </p>
-        {notAppliedKey ? (
-          <p className="cl-note">
-            <span className="rs-tag">{t(locale, "drNotApplied")}</span> {t(locale, notAppliedKey)}
-          </p>
-        ) : null}
-        {ready && filters.sex !== "any" && !cov.sexApplied ? <p className="cl-note">{t(locale, "drSexDropped")}</p> : null}
-        {unitSignalsHere.map((s) => (
-          <p key={s.alert.id} className="cl-note cl-note-signal">
-            <AlertTri />{" "}
-            {s.feeder
-              ? t(locale, "drSignalFeeder", { unit: wardName(locale, s.feeder), label: s.label, date: signalDate(locale, s) })
-              : t(locale, "drSignalHere", { label: s.label, date: signalDate(locale, s) })}
-          </p>
-        ))}
+        <h2 id="dr-list-title">{t(locale, "drCoverage")}</h2>
+        {date ? <span className="cl-date num">{dmy(date)}</span> : null}
+        <span className="cl-where">
+          {unit} · {site}
+        </span>
+        <span className="cl-status" role="status">
+          {status === "loading" ? t(locale, "drLoading", { unit }) : null}
+        </span>
+        <Popover
+          className="info-btn"
+          label={t(locale, "drInfo")}
+          content={
+            <>
+              <p>{t(locale, "drForestInfo", { period: t(locale, filters.period === 365 ? "drPeriodYear" : "drPeriodMonth") })}</p>
+              {notApplied ? <p>{t(locale, notApplied)}</p> : null}
+              {ready && filters.sex !== "any" && !cov.sexApplied ? <p>{t(locale, "drSexDropped")}</p> : null}
+              <p>{t(locale, "drFoot", { mild: BAR.mild, severe: BAR.severe })}</p>
+            </>
+          }
+        >
+          <InfoIcon />
+        </Popover>
       </header>
 
       {status === "error" && !data ? (
@@ -334,83 +245,50 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, onR
         </ul>
       ) : null}
 
-      {data && cov && data.suggestions.length === 0 ? (
-        <p className="cl-state">{t(locale, "drEmpty", { site: site.toLowerCase(), date: formatDate(locale, data.asOf, "long") })}</p>
+      {data && cov && all.length === 0 ? (
+        <p className="cl-state">{t(locale, "drEmpty", { site: site.toLowerCase(), date: dmy(data.asOf) })}</p>
       ) : null}
 
-      {data && cov && data.suggestions.length > 0 ? (
-        <>
+      {data && cov && all.length > 0 ? (
+        <div className="cl-scroll">
           <div className="cl-cols" aria-hidden="true">
             <span>{t(locale, "drAntibioticCol")}</span>
-            <span>{t(locale, "drCovers")}</span>
-            <span>
-              {t(locale, "drInterval")} · <span className="cl-barkey">{t(locale, "drBarLegend", { bar })}</span>
+            <span className="cl-axis-head">
+              {TICKS.map((v) =>
+                v === bar ? (
+                  <b key={v} className="cl-tau-label" style={{ left: `${at(v / 100)}%` }}>
+                    {t(locale, "drBarName", { bar })}
+                  </b>
+                ) : (
+                  <span key={v} style={{ left: `${at(v / 100)}%` }}>
+                    {v}
+                  </span>
+                ),
+              )}
             </span>
+            <span className="cl-r">{t(locale, "drCovers")}</span>
+            <span />
             <span>{t(locale, "drStandingCol")}</span>
           </div>
-          <ul className="cl-rows">
-            {data.suggestions.map((row, i) => (
-              <RowWithDivider key={row.antibiotic} divider={i === firstBelow ? t(locale, "drBelowDivider", { bar }) : null}>
-                {renderRow(row)}
-              </RowWithDivider>
-            ))}
+          {/* biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: a listbox of rows with arrow-key movement */}
+          <ul className="cl-rows" role="listbox" aria-label={t(locale, "drCoverage")} ref={listRef} onKeyDown={onKeyDown}>
+            {renderGroup(singles, firstBelow, t(locale, "drBelowDivider", { bar }))}
+            {pairs.length > 0 ? renderGroup(pairs, 0, t(locale, "drTwoTogether")) : null}
           </ul>
-          {data.combinationSuggestions.length > 0 ? (
-            <>
-              <h3 className="cl-pairs-title">{t(locale, "drTwoTogether")}</h3>
-              <ul className="cl-rows cl-pairs">
-                {data.combinationSuggestions.map((p) => {
-                  const st = STANDING[p.standing];
-                  const c = p.coverage;
-                  return (
-                    <li key={p.antibiotics.join("+")} className="cl-row cl-pair" data-standing={p.standing}>
-                      <div className="cl-main">
-                        <span className="cl-name">
-                          <b>{p.antibiotics.map((a) => antibioticName(locale, a)).join(" + ")}</b>
-                        </span>
-                        <span className="cl-cov">
-                          <b className="num">{c.share === null ? "–" : `${pct(c.share)} %`}</b>
-                          <small className="num">{t(locale, "drN", { n: num(locale, c.counts.known) })}</small>
-                        </span>
-                        <span className="cl-barcell">
-                          <IntervalBar interval={c.interval} share={c.share} bar={bar} />
-                          <small className="num">
-                            {c.interval ? t(locale, "drIntervalText", { lo: pct(c.interval[0]), hi: pct(c.interval[1]) }) : ""}
-                          </small>
-                        </span>
-                        <span className="cl-standing" data-standing={p.standing}>
-                          <span className="cl-glyph" aria-hidden="true">
-                            {st.glyph}
-                          </span>
-                          {t(locale, st.key)}
-                        </span>
-                        <span className="cl-why">
-                          {t(locale, Math.round(p.gain * 100) === 1 ? "drGainOne" : "drGain", { gain: Math.round(p.gain * 100) })} ·{" "}
-                          {t(locale, "drAccessCount", { n: p.access })}
-                        </span>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            </>
-          ) : null}
-        </>
+        </div>
       ) : null}
-
-      <footer className="cl-foot">
-        <p>{t(locale, "drFoot", { mild: BAR.mild, severe: BAR.severe })}</p>
-        {asOf ? <p className="print-only">{t(locale, "drPrinted", { date: formatDate(locale, asOf, "long") })}</p> : null}
-      </footer>
+      {data && cov ? (
+        <PrintSheet locale={locale} filters={filters} data={data} asOf={asOf} signals={signals} singles={singles} pairs={pairs} />
+      ) : null}
     </section>
   );
 }
 
-function RowWithDivider({ divider, children }: { divider: string | null; children: React.ReactNode }) {
+function ListFragment({ divider, children }: { divider: string | null; children: ReactNode }) {
   return (
     <>
       {divider ? (
-        <li className="cl-divider">
+        <li className="cl-divider" role="presentation">
           <span>{divider}</span>
         </li>
       ) : null}

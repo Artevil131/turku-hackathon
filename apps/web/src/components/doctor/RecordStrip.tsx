@@ -15,11 +15,9 @@ interface Props {
 function Group({ label, tag, inline, children }: { label: string; tag?: string | false; inline?: boolean; children: ReactNode }) {
   return (
     <div className="rs-group" data-inline={inline ? "" : undefined} role="group" aria-label={label}>
-      <span className="rs-label">
-        {label}
-        {tag ? <span className="rs-tag">{tag}</span> : null}
-      </span>
+      <span className="rs-label">{label}</span>
       {children}
+      {tag ? <span className="rs-tag">{tag}</span> : null}
     </div>
   );
 }
@@ -51,13 +49,9 @@ function Choices<T extends string | number>(props: {
 export function RecordStrip({ locale, filters, onChange }: Props) {
   const tr = (key: MessageKey) => t(locale, key);
   const notApplied = tr("drNotApplied");
-  const wide = useMedia("(min-width: 701px)");
+  const wide = useMedia("(min-width: 960px)");
   const [more, setMore] = useState(false);
-  // On the phone a change made behind "More filters" folds the panel again, so the list stays in view.
-  const change = (patch: Partial<DoctorFilters>) => {
-    onChange(patch);
-    if (!wide) setMore(false);
-  };
+  const change = onChange;
   const summary = [
     wardName(locale, filters.unit),
     specimenName(locale, filters.site),
@@ -129,8 +123,8 @@ export function RecordStrip({ locale, filters, onChange }: Props) {
     <Group label={tr("drPeriod")}>
       <Choices<Period>
         options={[
-          [365, tr("drPeriodYear")],
-          [28, tr("drPeriodMonth")],
+          [365, wide ? tr("drPeriodYearShort") : tr("drPeriodYear"), tr("drPeriodYear")],
+          [28, wide ? tr("drPeriodMonthShort") : tr("drPeriodMonth"), tr("drPeriodMonth")],
         ]}
         value={filters.period}
         onPick={(v) => change({ period: v })}
@@ -140,7 +134,7 @@ export function RecordStrip({ locale, filters, onChange }: Props) {
   const age = (
     <Group label={tr("drAge")} tag={filters.age !== "any" && notApplied}>
       <Choices<AgeGroup>
-        options={AGE_GROUPS.map((a) => [a, tr(AGE_KEYS[a])] as const)}
+        options={AGE_GROUPS.map((a) => [a, wide && a === "any" ? tr("drAgeLabel") : tr(AGE_KEYS[a]), tr("drAge")] as const)}
         value={filters.age}
         onPick={(v) => onChange({ age: v })}
       />
@@ -148,53 +142,49 @@ export function RecordStrip({ locale, filters, onChange }: Props) {
   );
   const onset = (
     <Group label={tr("drOnset")} tag={filters.onset && notApplied}>
-      <Choices<"0" | "1">
-        options={[
-          ["0", tr("drOff")],
-          ["1", tr("drOn")],
-        ]}
-        value={filters.onset ? "1" : "0"}
-        onPick={(v) => change({ onset: v === "1" })}
-      />
+      <button
+        type="button"
+        className="rs-choice rs-toggle"
+        title={tr("drOnset")}
+        aria-pressed={filters.onset}
+        onClick={() => change({ onset: !filters.onset })}
+      >
+        {tr("drOnsetShort")}
+      </button>
     </Group>
   );
 
-  // Laptop: every filter in one wrapping row. Phone: the patient's own filters stay open under a one-line
-  // summary so the list is in view while choosing; unit, specimen, period and day 3 sit behind "More filters".
+  // Laptop: every filter in one 40 px row. Phone: a one-line summary that opens the filters, so the list comes first.
   if (wide) {
     return (
-      <form className="rs glass ply-2" aria-label={tr("drRecord")} onSubmit={(e) => e.preventDefault()}>
+      <form className="rs" data-wide="" aria-label={tr("drRecord")} onSubmit={(e) => e.preventDefault()}>
         <div className="rs-body">
           {unit}
           {site}
           {sex}
           {severity}
-          {period}
           {age}
           {onset}
+          {period}
         </div>
       </form>
     );
   }
   return (
-    <form className="rs glass ply-2" aria-label={tr("drRecord")} onSubmit={(e) => e.preventDefault()}>
-      <div className="rs-sumrow">
-        <p className="rs-sum" aria-live="polite">
+    <form className="rs" aria-label={tr("drRecord")} onSubmit={(e) => e.preventDefault()}>
+      <button type="button" className="rs-sumrow" aria-expanded={more} aria-controls="rs-more" onClick={() => setMore(!more)}>
+        <span className="rs-sum" aria-live="polite">
           <span className="rs-sum-label">{tr("drFilters")}</span> {summary}
-        </p>
-      </div>
-      <div className="rs-body">
-        {sex}
-        {age}
-        {severity}
-      </div>
-      <button type="button" className="rs-morebtn" aria-expanded={more} aria-controls="rs-more" onClick={() => setMore(!more)}>
-        {more ? tr("drFewerFilters") : tr("drMoreFilters")} <span aria-hidden="true">{more ? "▴" : "▾"}</span>
+        </span>
+        <span aria-hidden="true">{more ? "▴" : "▾"}</span>
       </button>
       {more ? (
         <div className="rs-body rs-more" id="rs-more">
           {unit}
           {site}
+          {sex}
+          {severity}
+          {age}
           {period}
           {onset}
         </div>

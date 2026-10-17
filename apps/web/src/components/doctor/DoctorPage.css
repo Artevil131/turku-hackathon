@@ -1,44 +1,295 @@
+/* Doctor workspace: one screen, a 40 px banner over two columns, inner panels scroll themselves. */
 .doctor {
+  --d-ink: var(--ink, #07081c);
+  --d-ink-2: var(--ink-2, #1d204e);
+  --d-ink-3: var(--ink-3, #6f7292);
+  --d-line: var(--line, #e4e6ee);
+  --d-line-strong: var(--line-strong, #aebecb);
+  --d-acc: var(--brand-accent, #635bf1);
+  --d-acc-soft: var(--brand-accent-soft, #ecebfc);
+  --d-acc-ink: var(--brand-accent-ink, #fff);
+  --d-panel: var(--glass-3, #fff);
+  --d-ok: var(--st-ok, #17784a);
+  --d-watch: var(--st-watch, #94590a);
+  --d-alert: var(--st-alert, #d0004b);
+  --d-xs: var(--t-xs, 12px);
+  --d-s: var(--t-s, 13px);
+  --d-m: var(--t-m, 15px);
   min-height: 0;
+  height: 100%;
   overflow: auto;
   position: relative;
+  font-size: var(--d-s);
+}
+
+.dp-panel {
+  background: var(--d-panel);
+  border: 1px solid var(--d-line);
+  border-radius: var(--brand-radius, 10px);
+  box-shadow: none;
+  min-width: 0;
+}
+
+.dp-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 .doctor-main {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  max-width: 1480px;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 8px;
+  max-width: 1600px;
   margin: 0 auto;
-  padding-bottom: 12px;
+  min-height: 100%;
 }
 
 .doctor-body {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 12px;
+  gap: 8px;
   align-items: start;
+  min-height: 0;
+}
+
+.dp-side {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  min-height: 0;
 }
 
 .doctor-skip {
-  font-size: var(--step-0);
+  font-size: var(--d-m);
   min-height: 44px;
   position: absolute;
   left: 8px;
   top: -60px;
   z-index: 5;
   padding: 10px 14px;
-  border-radius: var(--radius-control);
-  background: var(--glass-3);
-  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--d-panel);
+  border: 1px solid var(--d-line-strong);
 }
 
 .doctor-skip:focus {
   top: 8px;
 }
 
-@media (min-width: 1100px) {
+.info-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--d-ink-3);
+  cursor: pointer;
+}
+
+.info-btn:hover,
+.info-btn[aria-expanded="true"] {
+  color: var(--d-acc);
+  background: var(--d-acc-soft);
+}
+
+.info-btn:focus-visible {
+  outline: 2px solid var(--d-acc);
+  outline-offset: 2px;
+}
+
+/* Wide: no page scroll; the two columns fill the height and scroll inside. */
+@media (min-width: 960px) {
+  .doctor {
+    height: calc(100dvh - 120px);
+    overflow: hidden;
+  }
+  .doctor-main {
+    grid-template-rows: 40px minmax(0, 1fr);
+    height: 100%;
+    min-height: 0;
+  }
   .doctor-body {
-    grid-template-columns: minmax(0, 8fr) minmax(300px, 4fr);
+    grid-template-columns: minmax(0, 62fr) minmax(0, 38fr);
+    height: 100%;
+    align-items: stretch;
+  }
+  .dp-side {
+    overflow-y: auto;
+    padding-right: 1px;
+  }
+  .dp-side > .dt-panel {
+    flex: 1 0 auto;
+  }
+}
+
+/* Details as a bottom sheet on narrow screens. */
+.dp-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  max-height: 60dvh;
+  overflow-y: auto;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  background: var(--d-panel);
+  border-top: 1px solid var(--d-line-strong);
+  border-radius: var(--brand-radius, 10px) var(--brand-radius, 10px) 0 0;
+  box-shadow: var(--pop-shadow, 0 4px 16px rgb(7 8 28 / 0.12));
+}
+
+.dp-sheet-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.dp-sheet-head h2 {
+  margin: 0;
+  font-size: var(--d-xs);
+  font-weight: 600;
+  color: var(--d-ink-3);
+}
+
+.dp-close {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--d-line-strong);
+  border-radius: 6px;
+  background: var(--d-panel);
+  color: var(--d-ink);
+  font-size: var(--d-s);
+  cursor: pointer;
+}
+
+.dp-close:focus-visible {
+  outline: 2px solid var(--d-acc);
+  outline-offset: 2px;
+}
+
+/* Details pane (desktop right column). */
+.dt-panel {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 140px;
+}
+
+.dt-title,
+.uc-title {
+  margin: 0;
+  font-size: var(--d-xs);
+  font-weight: 600;
+  color: var(--d-ink-3);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.dt-empty {
+  margin: 0;
+  color: var(--d-ink-3);
+}
+
+.dt {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dt-name {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  font-size: var(--d-m);
+  font-weight: 600;
+}
+
+.dt-why {
+  margin: 0;
+  color: var(--d-ink-2);
+}
+
+.dt-fig {
+  margin: 0;
+  color: var(--d-ink-2);
+}
+
+.dt-chips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.dt-chips li {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border: 1px solid var(--d-line);
+  border-radius: 999px;
+  font-size: var(--d-xs);
+  color: var(--d-ink-2);
+}
+
+.dt-chips .dt-sig {
+  border-color: var(--d-alert);
+}
+
+.dt-chips svg {
+  width: 14px;
+  height: 14px;
+}
+
+@media print {
+  html,
+  body,
+  #root {
+    height: auto !important;
+    background: #fff !important;
+  }
+  .chassis,
+  .banner,
+  .console > :not(.page),
+  .page > :not(.doctor) {
+    display: none !important;
+  }
+  .console,
+  .page,
+  .doctor,
+  .doctor-main,
+  .doctor-body {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+  .doctor-skip,
+  .dp-side,
+  .dp-sheet,
+  .cl-head,
+  .cl-scroll,
+  .cl-skeleton,
+  .cl-state,
+  .rs {
+    display: none !important;
+  }
+  .dp-panel {
+    border: 0;
   }
 }

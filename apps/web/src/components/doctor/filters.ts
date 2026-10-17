@@ -134,3 +134,9 @@ export function sexLabel(locale: Locale, sex: Sex | "any"): string {
 export function sexWord(locale: Locale, sex: Sex | "any"): string {
   return t(locale, sex === "any" ? "drSexAny" : sex === "F" ? "drSexFWord" : "drSexMWord");
 }
+
+/** A date as d.m.yyyy (12.5.2025), the compact form of the redesign's text budget. */
+export function dmy(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  return `${d}.${m}.${y}`;
+}

@@ -2,18 +2,20 @@ import type { AeiClient, Alert, CoverageResponse } from "@aei/contract";
 import type { WardCode } from "@aei/domain";
 import type { Locale } from "@aei/i18n";
 import { t } from "@aei/i18n";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { previousUnits, useFlows } from "../../relations.ts";
 import { hashPage, hashParams, writeHashParams } from "../../url.ts";
-import { CoverageList, type ListStatus } from "./CoverageList.tsx";
+import { CoverageList, itemsOf, type ListStatus } from "./CoverageList.tsx";
+import { Details } from "./Details.tsx";
 import "./DoctorPage.css";
 import { type DoctorFilters, filtersFromUrl, filtersToParams, storeUnit } from "./filters.ts";
 import { RecordStrip } from "./RecordStrip.tsx";
 import { unitSignals } from "./signals.ts";
 import { UnitContext } from "./UnitContext.tsx";
+import { useMedia } from "./useMedia.ts";
 
-// The doctor's list (spec-doctor.md with spec-amendments.md): a record strip of one-click filters over
-// the coverage list, fed by GET /api/coverage only. The doctor types nothing.
+// The doctor's workspace (spec-v2.md section 4): a banner of one-click filters over a forest plot of the coverage list
+// and a right column of context, on one screen. Fed by GET /api/coverage only. The doctor types nothing.
 
 export interface DoctorPageProps {
   client: AeiClient;
@@ -39,6 +41,9 @@ export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetry
   const [status, setStatus] = useState<ListStatus>("loading");
   const [attempt, setAttempt] = useState(0);
   const flows = useFlows();
+  const [selected, setSelected] = useState<string | null>(null);
+  const wide = useMedia("(min-width: 960px)");
+  const sheetRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     storeUnit(filters.unit);
@@ -86,6 +91,23 @@ export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetry
   const feeders = useMemo(() => previousUnits(flows, filters.unit, 3).map((p) => p.ward), [flows, filters.unit]);
   const signals = useMemo(() => unitSignals(alerts, filters.unit, feeders, locale), [alerts, filters.unit, feeders, locale]);
 
+  const status2 = current ? status : status === "error" ? "error" : "loading";
+  const items = useMemo(() => {
+    if (!current) return [];
+    const { singles, pairs } = itemsOf(current, locale);
+    return [...singles, ...pairs];
+  }, [current, locale]);
+  const item = items.find((i) => i.id === selected) ?? null;
+  const closeSheet = () => {
+    const id = selected;
+    setSelected(null);
+    if (id) requestAnimationFrame(() => document.querySelector<HTMLElement>(`[data-row="${CSS.escape(id)}"]`)?.focus());
+  };
+  // The sheet takes focus when it opens; Esc closes it and focus returns to the row.
+  useEffect(() => {
+    if (!wide && item) sheetRef.current?.focus();
+  }, [wide, item]);
+
   return (
     <div className="doctor">
       <button type="button" className="doctor-skip" onClick={() => document.getElementById("dr-list")?.focus()}>
@@ -98,26 +120,62 @@ export function DoctorPage({ client, locale, asOf, alerts, alertsStatus, onRetry
             locale={locale}
             filters={filters}
             asOf={asOf}
-            status={current ? status : status === "error" ? "error" : "loading"}
+            status={status2}
             data={current}
             signals={signals}
+            selected={item ? item.id : null}
+            onSelect={setSelected}
             onRetry={() => setAttempt((a) => a + 1)}
           />
-          <UnitContext
-            client={client}
-            locale={locale}
-            filters={filters}
-            asOf={asOf}
-            data={current}
-            signals={signals}
-            status={current ? status : status === "error" ? "error" : "loading"}
-            onRetry={() => setAttempt((a) => a + 1)}
-            alertsStatus={alertsStatus}
-            onRetryAlerts={onRetryAlerts}
-            onOpenSignals={onOpenSignals}
-          />
+          <aside className="dp-side" aria-label={t(locale, "drInUnit")}>
+            <UnitContext
+              client={client}
+              locale={locale}
+              filters={filters}
+              asOf={asOf}
+              data={current}
+              signals={signals}
+              status={status2}
+              onRetry={() => setAttempt((a) => a + 1)}
+              alertsStatus={alertsStatus}
+              onRetryAlerts={onRetryAlerts}
+              onOpenSignals={onOpenSignals}
+            />
+            {wide ? (
+              <section className="dt-panel dp-panel" aria-labelledby="dt-title" aria-live="polite">
+                <h3 id="dt-title" className="dt-title">
+                  {t(locale, "drDetails")}
+                </h3>
+                {current && item ? (
+                  <Details client={client} locale={locale} filters={filters} data={current} item={item} signals={signals} />
+                ) : (
+                  <p className="dt-empty">{t(locale, "drSelectRow")}</p>
+                )}
+              </section>
+            ) : null}
+          </aside>
         </div>
       </div>
+      {!wide && current && item ? (
+        <div
+          className="dp-sheet"
+          role="dialog"
+          aria-label={t(locale, "drDetails")}
+          tabIndex={-1}
+          ref={sheetRef}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") closeSheet();
+          }}
+        >
+          <div className="dp-sheet-head">
+            <h2>{t(locale, "drDetails")}</h2>
+            <button type="button" className="dp-close" onClick={closeSheet}>
+              {t(locale, "drClose")}
+            </button>
+          </div>
+          <Details client={client} locale={locale} filters={filters} data={current} item={item} signals={signals} />
+        </div>
+      ) : null}
     </div>
   );
 }
