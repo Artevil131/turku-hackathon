@@ -920,3 +920,21 @@
   color: var(--brand-accent, #635bf1);
   cursor: pointer;
 }
+
+/* A tile: glyph and date on the first line, the unit on the second, the title on the third. */
+.tl-ev {
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    "code when"
+    "unit unit"
+    "name name";
+}
+.tl-ev-when {
+  white-space: nowrap;
+}
+.tl-ev-unit {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}

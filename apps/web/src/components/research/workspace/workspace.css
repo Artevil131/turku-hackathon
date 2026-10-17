@@ -632,3 +632,46 @@
   width: 100%;
   height: 100%;
 }
+
+/* ---------- Flowing board: windows at their own height, the page scrolls ----------
+   Columns stay side by side; nothing is squashed to fit a fixed board, nothing scrolls inside a
+   window except the long signal list, and the map keeps a fixed height. */
+.ws[data-docked="true"] {
+  height: auto;
+}
+.ws[data-docked="true"] .ws-area {
+  height: auto;
+  min-height: 0;
+  align-items: flex-start;
+}
+.ws[data-docked="true"] .ws-column {
+  height: auto;
+  overflow: visible;
+}
+.ws[data-docked="true"] .ws-area:not([data-maximized="true"]) .ws-win {
+  flex: 0 0 auto;
+  flex-basis: auto;
+  min-height: 0;
+}
+.ws[data-docked="true"] .ws-area:not([data-maximized="true"]) .ws-body {
+  flex: none;
+  height: auto;
+  overflow: visible;
+}
+.ws[data-docked="true"] .ws-area:not([data-maximized="true"]) .ws-body > :is(.math, .ug, .geo, .assist, .ugrid) {
+  min-height: 0;
+  height: auto;
+}
+.ws[data-docked="true"] .ws-area:not([data-maximized="true"]) .ws-body > .feed {
+  height: auto;
+  max-height: 72vh;
+  overflow: auto;
+}
+.ws[data-docked="true"] .ws-area:not([data-maximized="true"]) .ws-win[data-win="map"] .ws-body {
+  height: 480px;
+  overflow: hidden;
+}
+/* Row splitters have nothing to divide once windows take their own height. */
+.ws[data-docked="true"] .ws-area:not([data-maximized="true"]) .ws-splitter-row {
+  display: none;
+}

@@ -145,7 +145,8 @@ export function Workspace({
     if (!reveal || reveal.key === revealed.current) return;
     revealed.current = reveal.key;
     if (reveal.key === null || !layout.closed[reveal.id]) return;
-    reflow(reopenWindow(layout, reveal.id));
+    // No view transition here: it runs on mount and a stuck snapshot covered the page (smoke caught it).
+    commit(reopenWindow(layout, reveal.id));
     onOpened?.(reveal.id);
   });
   /** Per-window floors for the two windows beside a stack splitter, as fractions of the stack. */
