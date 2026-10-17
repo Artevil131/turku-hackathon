@@ -16,6 +16,7 @@ import {
   type RateResult,
   type SharesResult,
 } from "./model.ts";
+import { ChartIcon, CopyIcon, DownloadIcon } from "./ToolIcons.tsx";
 
 // One result cell: a title in words, the numbers, one method line, Copy as Python, Export CSV, remove.
 // Everything shown is a field of the gear's result; nothing is computed here but formatting.
@@ -93,6 +94,12 @@ function Compare({ r, locale }: { r: CompareResult; locale: Locale }) {
     `${formatDate(locale, f.frame.from)}–${formatDate(locale, f.frame.to)} · ${f.frame.unit ? wardName(locale, f.frame.unit as never) : t(locale, "toolsUnitAll")}`;
   return (
     <>
+      {d && (
+        <p className="tl-words tl-verdict">
+          {t(locale, r.higher === "same" ? "toolsCmpSame" : r.higher === "a" ? "toolsCmpHigherA" : "toolsCmpHigherB", { event: name })}{" "}
+          {t(locale, r.excludesZero ? "toolsCmpExcludes" : "toolsCmpIncludes")}
+        </p>
+      )}
       <dl className="tl-nums">
         <Row label={t(locale, "toolsFrameA", { frame: frame(r.a) })}>
           <b>{pct(d?.p1 ?? Number.NaN, locale)}</b>{" "}
@@ -142,12 +149,6 @@ function Compare({ r, locale }: { r: CompareResult; locale: Locale }) {
           )}
         </Row>
       </dl>
-      {d && (
-        <p className="tl-words">
-          {t(locale, r.higher === "same" ? "toolsCmpSame" : r.higher === "a" ? "toolsCmpHigherA" : "toolsCmpHigherB", { event: name })}{" "}
-          {t(locale, r.excludesZero ? "toolsCmpExcludes" : "toolsCmpIncludes")}
-        </p>
-      )}
       <p className="tl-method">{t(locale, "toolsMethodCompare")}</p>
     </>
   );
@@ -258,12 +259,15 @@ export function ResultCell({
   locale,
   onRemove,
   onChart,
+  fresh = false,
 }: {
   cell: Cell;
   locale: Locale;
   onRemove?: (id: number) => void;
   /** Adds this result as a chart window; not offered for a detector run (it is a table). */
   onChart?: (result: Cell["result"]) => void;
+  /** The newest result: it gets the short entrance. */
+  fresh?: boolean;
 }) {
   const r = cell.result;
   const [copied, setCopied] = useState(false);
@@ -284,11 +288,11 @@ export function ResultCell({
     }
   };
   return (
-    <article className="tl-cell" aria-label={title} data-kind={r.kind}>
+    <article className="tl-cell" aria-label={title} data-kind={r.kind} data-fresh={fresh || undefined}>
       <header className="tl-cell-head">
         <div>
           <h3>{title}</h3>
-          <p className="tl-slice">{sliceWords(locale, r)}</p>
+          <p className="tl-slice-line">{sliceWords(locale, r)}</p>
         </div>
         <button
           type="button"
@@ -306,14 +310,17 @@ export function ResultCell({
       {r.kind === "beta" && <Beta r={r} locale={locale} />}
       {r.kind === "detector" && <Detector r={r} locale={locale} />}
       <footer className="tl-cell-foot">
-        <button type="button" className="btn" onClick={copy}>
+        <button type="button" className="btn tl-act" onClick={copy}>
+          <CopyIcon />
           {copied ? t(locale, "toolsCopied") : t(locale, "toolsCopyPython")}
         </button>
-        <button type="button" className="btn" onClick={() => downloadFile(toCsv(cellTable(r)))}>
+        <button type="button" className="btn tl-act" onClick={() => downloadFile(toCsv(cellTable(r)))}>
+          <DownloadIcon />
           {t(locale, "toolsExportCsv")}
         </button>
         {onChart && r.kind !== "detector" && (
-          <button type="button" className="btn" data-add-chart onClick={() => onChart(r)}>
+          <button type="button" className="btn tl-act" data-add-chart onClick={() => onChart(r)}>
+            <ChartIcon />
             {t(locale, "chartAddAs")}
           </button>
         )}

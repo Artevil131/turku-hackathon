@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { cellTable, computeBeta, computeCompare, computeDetector, computeRate, poissonInterval, pythonCall, type Slice } from "./model.ts";
 import { ResultCell } from "./ResultCell.tsx";
+import { previousFrame, sliceSentence, type ToolsProps, ToolsWindow } from "./ToolsWindow.tsx";
 
 // Fixed inputs: every number the cells show comes from the gear calls, so the tests pin the figures.
 
@@ -76,6 +77,7 @@ describe("tool 2: compare two frames", () => {
     expect(out).toContain("6/40");
     expect(out).toContain("ESBL is higher in frame A.");
     expect(out).toContain("The interval includes zero");
+    expect(out.indexOf("ESBL is higher in frame A.")).toBeLessThan(out.indexOf("Frame A:"));
     expect(pythonCall(result)).toContain("aei.compare.proportion_difference(k1=5, n1=20, k2=6, n2=40)");
     expect(html({ id: 2, result }, "fi")).toContain("on suurempi jaksossa A.");
   });
@@ -112,5 +114,43 @@ describe("tool 5: detector here", () => {
     const out = html({ id: 5, result });
     expect(out).toContain("exploratory: live thresholds (D-020)");
     expect(pythonCall(result)).toContain("aei.detect.phenotype_excess(records");
+  });
+});
+
+describe("the Tools window", () => {
+  const props = {
+    client: {},
+    locale: "en",
+    asOf: "2025-04-30",
+    state: {},
+    onChange: () => {},
+    reducedMotion: true,
+    window: null,
+  } as unknown as ToolsProps;
+  const out = renderToStaticMarkup(<ToolsWindow {...props} />);
+
+  it("says the slice in one sentence and offers Edit, not a form", () => {
+    expect(sliceSentence("en", { ...slice, organism: "Escherichia coli", specimen: "urine" })).toMatch(
+      /^Intensive care unit · Escherichia coli · .+ · ESBL · .+ · first isolates$/,
+    );
+    expect(out).toContain("All units · ");
+    expect(out).toContain("Edit");
+    expect(out).not.toContain('type="date"');
+  });
+  it("shows one tool at a time: a picker of five, the tool's line, an empty state in words and Run", () => {
+    for (const name of ["Rate", "Compare", "Share over time", "Beta posterior", "Run a detector"])
+      expect(out).toContain(`>${name}</button>`);
+    expect(out.match(/role="tab"/g)).toHaveLength(5);
+    expect(out).toContain("How many per week in this frame, with its interval.");
+    expect(out).toContain("Choose a tool and run it on the slice above");
+    expect(out).toContain(">Run</button>");
+    expect(out).not.toContain("tl-tool");
+  });
+  it("puts frame B right before frame A, of the same length", () => {
+    expect(previousFrame({ ...slice, from: "2026-09-01", to: "2026-09-28" })).toEqual({
+      from: "2026-08-04",
+      to: "2026-08-31",
+      unit: "ICU",
+    });
   });
 });
