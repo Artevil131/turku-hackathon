@@ -500,7 +500,6 @@ export function Timeline({
             <Chevron />
           </button>
         </div>
-        {eventsStrip()}
         {sheet ? (
           <Sheet locale={locale} onClose={() => setSheet(false)} still={reducedMotion}>
             {title}
@@ -513,6 +512,7 @@ export function Timeline({
               <QualityStatus locale={locale} state={quality} />
             </div>
             <div className="tl-sheet-band">{band(false)}</div>
+            {eventsStrip()}
             <div className="tl-sheet-ctl">
               {transport(true)}
               {ctlGroups}
