@@ -62,10 +62,10 @@
   --font-data: var(--brand-font-data);
   --font-display: var(--brand-font-display);
 
-  /* Four sizes. The old --step-* names alias them. */
-  --t-xs: 12px;
-  --t-s: 13px;
-  --t-m: 15px;
+  /* Four sizes. The old --step-* names alias them. Nothing in the app is set below 12 px. */
+  --t-xs: 13px;
+  --t-s: 14px;
+  --t-m: 16px;
   --t-l: 22px;
   --step--1: var(--t-xs);
   --step-0: var(--t-s);

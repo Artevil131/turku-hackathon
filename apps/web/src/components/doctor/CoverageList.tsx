@@ -219,11 +219,11 @@ export function CoverageList({
       </header>
       {data && cov ? <GuideSummary locale={locale} syndrome={syndrome} singles={singles} bar={bar} /> : null}
 
-      <div className="cl-disclosure">
-        <p>{t(locale, "drDemo")}</p>
-        <p>{t(locale, "drDecisionSupport")}</p>
+      {/* The one disclaimer is in the answer card above; the data checks stay one click away. */}
+      <details className="cl-checks">
+        <summary>{t(locale, "drChecks")}</summary>
         {source}
-      </div>
+      </details>
       {bestPair && status === "ready" ? (
         <div className="cl-pair-summary">
           <p>{t(locale, "drNoSingle")}</p>

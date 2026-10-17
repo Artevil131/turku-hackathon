@@ -56,6 +56,23 @@ export const shellEn = {
   startNewBlank: "Project",
   boardTimeline: "Timeline",
   boardAnswer: "Summary",
+  guideLabel: "What this window is",
+  guideAnswer: 'The one thing to know right now. Read the sentence, then press "Show the evidence" to see why.',
+  guideTimeline:
+    "The whole period at a glance. Each row is a unit and each coloured pill is a signal. Press play to replay time, or click a pill to open that signal.",
+  guideSignals: "Every signal found so far, newest first. Click one to see its numbers. Filter by unit or kind at the top.",
+  guideMath:
+    'How a signal was calculated: what was seen, what was usual, and how surprising that is. Open "How we calculate it" for the formula.',
+  guideGraph:
+    "Where the unit's patients came from (top) and where they went next (bottom). A wider band means more patients. Click a unit to centre it.",
+  guideMap: "County resistance signals from THL for the same month. Darker means more cases. Click a county for details.",
+  guideGrid: "Every unit side by side over recent weeks, so you can see which ones differ from the rest.",
+  guideAssistant: "Ask a question in words, for example about a ward or an antibiotic. It answers from the data and shows how.",
+  guideNotebook:
+    "Your working page: slices of data, notes, analyses, code and charts, saved with the project. Add a cell with the + between cells.",
+  guideReproduce: "Open the same analysis as code in Python or R, from the same data cut, to check it or build on it.",
+  guideCoverage: "Which antibiotics are likely to work for a case. Start with the top answer; change the case if it does not fit.",
+
   wsEmptyAdd: "Add a window",
   wsEmptyBlank: "This project has no windows yet.",
   dataTitle: "Data",
@@ -139,6 +156,23 @@ export const shellFi: Record<keyof typeof shellEn, string> = {
   startNewBlank: "Projekti",
   boardTimeline: "Aikajana",
   boardAnswer: "Yhteenveto",
+  guideLabel: "Mikä tämä ikkuna on",
+  guideAnswer: 'Tärkein asia juuri nyt. Lue lause ja paina "Näytä perustelut" nähdäksesi miksi.',
+  guideTimeline:
+    "Koko jakso yhdellä silmäyksellä. Jokainen rivi on yksikkö ja jokainen värillinen merkki signaali. Paina play toistaaksesi ajan tai napsauta merkkiä avataksesi signaalin.",
+  guideSignals: "Kaikki löydetyt signaalit, uusin ensin. Napsauta nähdäksesi luvut. Rajaa yksikön tai tyypin mukaan ylhäällä.",
+  guideMath:
+    'Miten signaali laskettiin: mitä havaittiin, mikä on tavallista ja kuinka yllättävää se on. Avaa "Miten laskemme" nähdäksesi kaavan.',
+  guideGraph:
+    "Mistä yksikön potilaat tulivat (ylhäällä) ja minne he menivät seuraavaksi (alhaalla). Leveämpi nauha tarkoittaa useampia potilaita. Napsauta yksikköä keskittääksesi.",
+  guideMap: "THL:n maakuntasignaalit samalta kuukaudelta. Tummempi tarkoittaa enemmän tapauksia. Napsauta maakuntaa nähdäksesi tiedot.",
+  guideGrid: "Kaikki yksiköt rinnakkain viime viikoilta, jotta näet mitkä poikkeavat muista.",
+  guideAssistant: "Kysy sanoin esimerkiksi osastosta tai antibiootista. Vastaus tulee datasta ja näyttää miten.",
+  guideNotebook:
+    "Työsivusi: aineistoleikkaukset, muistiinpanot, analyysit, koodi ja kaaviot, tallennettuna projektin kanssa. Lisää solu solujen välisestä +:sta.",
+  guideReproduce: "Avaa sama analyysi koodina Pythonilla tai R:llä samasta aineistoleikkauksesta tarkistaaksesi tai jatkaaksesi.",
+  guideCoverage: "Mitkä antibiootit todennäköisesti tehoavat tapaukseen. Aloita ylimmästä; muuta tapausta jos se ei sovi.",
+
   wsEmptyAdd: "Lisää ikkuna",
   wsEmptyBlank: "Tässä projektissa ei ole vielä ikkunoita.",
   dataTitle: "Aineisto",

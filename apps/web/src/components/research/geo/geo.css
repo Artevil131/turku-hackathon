@@ -113,11 +113,11 @@
   left: 0;
   right: 0;
   bottom: 0;
-  font-size: 11px;
+  font-size: 12px;
 }
 .geo-overlay-legend .geo-legend {
   background: transparent;
-  font-size: 11px;
+  font-size: 12px;
 }
 .geo-overlay-legend .geo-swatch {
   width: 12px;
@@ -678,7 +678,7 @@
   table-layout: fixed;
   border-collapse: separate;
   border-spacing: 2px;
-  font-size: 11px;
+  font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
 .fm-corner,
@@ -687,7 +687,7 @@
 }
 .fm-corner {
   color: var(--ink-3, #6f7292);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 400;
   text-align: left;
   line-height: 1.2;
@@ -717,7 +717,7 @@
   margin: 0 auto;
 }
 .fm-code {
-  font-size: 10.5px;
+  font-size: 12px;
 }
 .fm-ch[data-focus="true"],
 .fm-rh[data-focus="true"] {
@@ -756,7 +756,7 @@
   border-radius: 3px;
   background: var(--chassis, #f8f8f8);
   color: var(--ink, #07081c);
-  font-size: 11px;
+  font-size: 12px;
   text-align: center;
   cursor: pointer;
   outline: none;
@@ -876,7 +876,7 @@
   fill: #fff;
 }
 .ug-centre-n {
-  font-size: 11.5px;
+  font-size: 12px;
   fill: #fff;
   font-variant-numeric: tabular-nums;
 }
@@ -885,7 +885,7 @@
   fill: var(--ink-2, #1d204e);
 }
 .ug-centre-name[data-in="true"] {
-  font-size: 11.5px;
+  font-size: 12px;
   fill: #fff;
 }
 .ug-chip rect {

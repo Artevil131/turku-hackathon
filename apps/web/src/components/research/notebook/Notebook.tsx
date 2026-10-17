@@ -199,7 +199,7 @@ function firstLine(text: string): string {
   );
 }
 
-export function Notebook({ client, locale, asOf, page, update, projectId, signal, railCells, onReproduce }: NotebookProps) {
+export function Notebook({ client, locale, asOf, page, update, signal, railCells, onReproduce }: NotebookProps) {
   const [hashFrom] = useHashParam("from");
   const [hashTo] = useHashParam("to");
   const picked = pickFrame(hashFrom, hashTo, null);
@@ -387,8 +387,7 @@ export function Notebook({ client, locale, asOf, page, update, projectId, signal
         <div className="nb-bar-text">
           <h2 className="nb-h">{t(locale, "notebookWindow")}</h2>
           <p className="nb-muted">
-            {t(locale, "nbCount", { n: cells.length, slices })} ·{" "}
-            {projectId ? t(locale, "nbSavedProject", { id: projectId }) : t(locale, "nbSaved")}
+            {t(locale, "nbCount", { n: cells.length, slices })} · {t(locale, "nbSaved")}
           </p>
         </div>
         {py.phase !== "off" && (

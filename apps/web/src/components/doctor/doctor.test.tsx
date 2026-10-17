@@ -109,8 +109,8 @@ describe("doctor list disclosure", () => {
     const html = list(data);
     expect(html.indexOf("Yksikään antibiootti ei yksin")).toBeLessThan(html.indexOf('class="cl-scroll"'));
     expect(html).toContain("100\u00a0%, n 65 — tiedot");
-    expect(html).toContain("Synteettinen demoaineisto · ei potilashoitoon");
-    expect(html).toContain("Tukee päätöstä; lääkäri päättää.");
+    // The one disclaimer is in the answer card (DoctorAnswer); the list keeps its data checks one click away.
+    expect(html).toContain("<summary>Datatarkistukset</summary>");
     const first = data.combinationSuggestions[0];
     if (!first) throw new Error("fixture must include a pair");
     const borderline = {

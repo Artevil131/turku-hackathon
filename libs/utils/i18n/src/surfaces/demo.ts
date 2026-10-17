@@ -17,7 +17,7 @@ export const demoEn = {
   demoSuggestNote: "{title}: a ready-made project with a two-minute guided tour. Your own projects will appear here.",
   demoSuggestOpen: "Open the {role} demo",
   demoRoleClinician: "Doctor",
-  demoRoleControl: "Infection control, continuous watch",
+  demoRoleControl: "Infection control · continuous review",
   demoRoleResearcher: "Researcher",
   demoClinicianTitle: "Empiric therapy at the bedside",
   demoClinicianBlurb:
@@ -56,7 +56,7 @@ export const demoFi: Record<keyof typeof demoEn, string> = {
   demoSuggestNote: "{title}: valmis projekti ja kahden minuutin esittely. Omat projektisi näkyvät tässä.",
   demoSuggestOpen: "Avaa esimerkki: {role}",
   demoRoleClinician: "Lääkäri",
-  demoRoleControl: "Infektioiden torjunta, jatkuva seuranta",
+  demoRoleControl: "Infektioiden torjunta · jatkuva seuranta",
   demoRoleResearcher: "Tutkija",
   demoClinicianTitle: "Empiirinen hoito potilaan luona",
   demoClinicianBlurb:

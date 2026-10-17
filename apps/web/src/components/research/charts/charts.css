@@ -47,7 +47,7 @@
 }
 .ch-tick {
   fill: var(--ink-3);
-  font-size: 10px;
+  font-size: 12px;
 }
 .ch-panel-name {
   fill: var(--ink-2);

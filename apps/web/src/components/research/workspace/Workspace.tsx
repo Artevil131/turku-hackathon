@@ -13,6 +13,7 @@ import {
   useState,
 } from "react";
 import { hashParams } from "../../../url.ts";
+import { InfoButton } from "../../Info.tsx";
 import { chartTitle } from "../charts/model.ts";
 import type { ChartSpec } from "../charts/spec.ts";
 import {
@@ -88,6 +89,21 @@ const TITLE_KEY = {
   coverage: "boardCoverage",
   timeline: "boardTimeline",
   answer: "boardAnswer",
+} as const;
+
+/** What each window kind is, for its ⓘ. */
+const GUIDE_KEY = {
+  signals: "guideSignals",
+  map: "guideMap",
+  graph: "guideGraph",
+  math: "guideMath",
+  assistant: "guideAssistant",
+  grid: "guideGrid",
+  reproduce: "guideReproduce",
+  notebook: "guideNotebook",
+  coverage: "guideCoverage",
+  timeline: "guideTimeline",
+  answer: "guideAnswer",
 } as const;
 
 /** A request to add a chart window: a new `key` adds `spec`. */
@@ -842,6 +858,13 @@ export function Workspace({
                       onKeyDown={(e) => onHandleKey(e, id)}
                     />
                   </>
+                ) : null}
+                {kind ? (
+                  <span className="ws-guide">
+                    <InfoButton locale={locale} label={t(locale, "guideLabel")} align="end">
+                      {t(locale, GUIDE_KEY[kind])}
+                    </InfoButton>
+                  </span>
                 ) : null}
                 {wide ? (
                   <button

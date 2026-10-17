@@ -344,7 +344,6 @@ export function UnitGraph({ client, locale, asOf, state, onChange, reducedMotion
         {rel ? <AsOf locale={locale} date={rel.to} pending={updating} clockDate={asOf ?? undefined} /> : null}
         <p className="ug-caption">{t(locale, "geoTyksSource", { hospital: currentHospitalName(locale) })}</p>
         <p className="ug-caption">{t(locale, "netFlowCaption")}</p>
-        <p className="ug-caption">{t(locale, "netFlowHowTo")}</p>
         <InfoButton locale={locale} label={t(locale, "netFlowInfoLabel")} align="end">
           {t(locale, "netFlowInfo")}
         </InfoButton>
@@ -385,8 +384,7 @@ export function UnitGraph({ client, locale, asOf, state, onChange, reducedMotion
 
       {mode === "around" && view && centre ? (
         <p className="ug-story">
-          {t(locale, "netStory", { unit: centre, nIn: view.nIn, nOut: view.nOut })}{" "}
-          {(() => {
+          {t(locale, "netStory", { unit: centre, nIn: view.nIn, nOut: view.nOut })} {(() => {
             const top = (xs: typeof view.ins) => xs.filter((x) => x.unit).sort((a, b) => b.patients - a.patients)[0];
             const a = top(view.ins);
             const b = top(view.outs);

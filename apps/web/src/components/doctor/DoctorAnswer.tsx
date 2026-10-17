@@ -2,7 +2,22 @@ import { type Locale, specimenName, t, wardName } from "@aei/i18n";
 import { type DoctorFilters, num, pct } from "./filters.ts";
 import type { Item } from "./reason.ts";
 
-// The top of the coverage window, before any control: what to start with, in words. The list below is the evidence.
+// The top of the coverage window, before any control: what to start with, then the others in rows of one shape
+// (glyph, name, share). The list below is the evidence.
+
+function Rows({ items, mark }: { items: readonly Item[]; mark: string }) {
+  return (
+    <ul className="dr-answer-rows">
+      {items.map((i) => (
+        <li key={i.id}>
+          <span aria-hidden="true">{mark}</span>
+          <span>{i.name}</span>
+          <b>{pct(i.share ?? 0)}&nbsp;%</b>
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 export function DoctorAnswer({
   locale,
@@ -26,7 +41,6 @@ export function DoctorAnswer({
   const clears = singles.filter((i) => i.standing === "clears");
   const below = singles.filter((i) => i.standing === "below");
   const first = clears[0] ?? null;
-  const list = (rows: readonly Item[]) => rows.map((i) => `${i.name} ${pct(i.share ?? 0)} %`).join(", ");
   const where = [wardName(locale, filters.unit as never), specimenName(locale, filters.site).toLowerCase()].join(" · ");
   return (
     <section className="dr-answer" aria-label={t(locale, "drAnswerLabel")} aria-busy={loading || undefined}>
@@ -40,11 +54,20 @@ export function DoctorAnswer({
         <p className="dr-answer-head">…</p>
       ) : first ? (
         <>
-          <p className="dr-answer-head">
-            {t(locale, "drAnswerStart", { name: first.name, share: pct(first.share ?? 0), n: num(locale, first.n) })}
-          </p>
-          {clears.length > 1 ? <p className="dr-answer-line">{t(locale, "drAnswerAlso", { bar, list: list(clears.slice(1)) })}</p> : null}
-          {below.length ? <p className="dr-answer-line dr-answer-low">{t(locale, "drAnswerBelow", { bar, list: list(below) })}</p> : null}
+          <p className="dr-answer-head">{t(locale, "drAnswerStart", { name: first.name })}</p>
+          <p className="dr-answer-line">{t(locale, "drAnswerCovers", { share: pct(first.share ?? 0), n: num(locale, first.n) })}</p>
+          {clears.length > 1 ? (
+            <>
+              <h3 className="dr-answer-sub">{t(locale, "drAnswerAlsoHead", { bar })}</h3>
+              <Rows items={clears.slice(1)} mark="✓" />
+            </>
+          ) : null}
+          {below.length ? (
+            <>
+              <h3 className="dr-answer-sub dr-answer-low">{t(locale, "drAnswerBelowHead", { bar })}</h3>
+              <Rows items={below} mark="✕" />
+            </>
+          ) : null}
         </>
       ) : (
         <p className="dr-answer-head">{t(locale, "drAnswerNone", { bar })}</p>

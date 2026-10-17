@@ -316,14 +316,11 @@ export function StartPage({
         </section>
         <section id="start-demos" tabIndex={-1}>
           <h2>{t(locale, "demoSection")}</h2>
-          <p className="start-demos-note">{t(locale, "demoHint")}</p>
           <div className="start-demo-grid">
             {DEMOS.map((demo) => (
               <button type="button" className="start-demo" key={demo.id} data-demo={demo.id} onClick={() => onDemo(demo)}>
                 <TemplateArt demo={demo.id} />
-                <span className="start-demo-role">{t(locale, demo.roleKey)}</span>
-                <strong>{t(locale, demo.titleKey)}</strong>
-                <span className="start-demo-blurb">{t(locale, demo.blurbKey)}</span>
+                <strong>{t(locale, demo.roleKey)}</strong>
               </button>
             ))}
           </div>

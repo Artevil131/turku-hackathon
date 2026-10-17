@@ -524,7 +524,7 @@
   padding: 0 5px;
   border: 1px solid var(--d-acc);
   border-radius: 4px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   line-height: 1;
   color: var(--d-acc);
@@ -623,4 +623,42 @@
 }
 .dr-case:not([data-open]) {
   display: none;
+}
+
+.dr-answer-sub {
+  margin: 8px 0 0;
+  color: var(--ink-3);
+  font-size: var(--t-s);
+  font-weight: 600;
+}
+.dr-answer-rows {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-width: 420px;
+}
+.dr-answer-rows li {
+  display: grid;
+  grid-template-columns: 20px 1fr auto;
+  align-items: baseline;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: var(--t-m);
+}
+.dr-answer-rows b {
+  font-variant-numeric: tabular-nums;
+}
+.dr-answer-low + .dr-answer-rows {
+  color: var(--ink-3);
+}
+.cl-checks {
+  margin: 0 0 8px;
+  color: var(--ink-3);
+  font-size: var(--t-s);
+}
+.cl-checks summary {
+  cursor: pointer;
 }

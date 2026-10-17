@@ -282,20 +282,11 @@ export function Sidebar({
             <ul className="sb-list">
               {DEMOS.map((demo) => (
                 <li key={demo.id}>
-                  <button
-                    type="button"
-                    className="sb-item sb-demo"
-                    data-demo={demo.id}
-                    onClick={() => onDemo(demo)}
-                    title={t(locale, demo.blurbKey)}
-                  >
+                  <button type="button" className="sb-item sb-demo" data-demo={demo.id} onClick={() => onDemo(demo)}>
                     <span className="sb-icon">
                       <Svg d={DEMO} />
                     </span>
-                    <span className="sb-label sb-demo-label">
-                      <span>{t(locale, demo.titleKey)}</span>
-                      <small>{t(locale, demo.roleKey)}</small>
-                    </span>
+                    <span className="sb-label">{t(locale, demo.roleKey)}</span>
                   </button>
                 </li>
               ))}

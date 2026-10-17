@@ -258,7 +258,7 @@
   border-radius: 4px;
   background: var(--surface-2, #f4f4f4);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 11px;
+  font-size: 12px;
   white-space: pre;
   user-select: all;
 }
@@ -322,7 +322,7 @@
   background: var(--surface-1, #fff);
   color: var(--ink-2);
   font: inherit;
-  font-size: 11px;
+  font-size: 12px;
   cursor: pointer;
 }
 .sig-copy:hover {
@@ -352,7 +352,7 @@
   color: var(--ink-1, #1b1b1f);
 }
 .sig-constants .sig-decision {
-  font-size: 10px;
+  font-size: 12px;
 }
 .sig-code {
   display: grid;
@@ -371,7 +371,7 @@
   background: var(--surface-1, #fff);
   color: var(--ink-2);
   font: inherit;
-  font-size: 11px;
+  font-size: 12px;
   cursor: pointer;
 }
 .sig-seg button + button {
@@ -387,7 +387,7 @@
 }
 .sig-code-note {
   margin: 0;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--ink-3);
 }
 .sig-plain > summary {

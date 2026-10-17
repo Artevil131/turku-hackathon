@@ -510,7 +510,7 @@
   background: var(--chassis, #f8f8f8);
   color: var(--ink-3);
   font-family: inherit;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 16px;
 }
 .ws-win[data-focus="true"] .ws-frame {
@@ -761,4 +761,25 @@
     min-height: 36px;
     padding: 0 12px;
   }
+}
+
+/* The ⓘ of a window: always visible, left of the focus and close marks. */
+.ws-guide {
+  position: absolute;
+  top: 3px;
+  right: 52px;
+  z-index: 3;
+}
+.ws .feed-header,
+.ws .math-head,
+.ws .sig-head {
+  padding-right: 84px;
+}
+.ws .hnet-head,
+.ws .geo-head,
+.ws .ug-head,
+.ws .ugrid-head,
+.ws .map-head,
+.ws .assist-title {
+  padding-right: 76px;
 }
