@@ -23,17 +23,33 @@ Pages (URL hash; each page keeps its view state in the hash, so any view is a li
   %, 95 % interval against the bar, n, the level the data came from,
   standing in words and glyph, and why it sits where it does. Likely
   organisms for the specimen on the unit beside the list. Printable.
-- **Research** (`#research?panel&unit&kind&ph&inc`): the signal feed
-  (incidents, pinned sentinels, one click to the isolates behind an alert)
-  beside one of the unit grid (counts per unit-week), the hospital network
-  (patient flow, alert-lit units) and the regional map (THL county series,
-  `/api/regional` and `/api/counties`).
+- **Research** (`#research?panel&unit&kind&ph&inc`): windows on one board,
+  each a plain panel. One selection is shared by the timeline and every
+  window: `inc=` for a signal, `unit=` for a unit. A click on a pill, a feed
+  row, a lane label or a map glyph selects it and the others follow;
+  Escape clears. Selecting never moves the replay clock; only "Go to this
+  day" does. The windows are the signal feed (incidents, pinned sentinels,
+  one click to the isolates behind an alert), the signal card (window
+  "Signal": observed against usual, the surprise as "1 in N by chance", one
+  sentence on how that detector calculates it, reach chips, the isolates
+  behind it, and the actions Go to this day, Show on map, Method), the
+  hospital network (patient flow, alert-lit units), the unit grid (counts
+  per unit-week) and the regional map (THL county series, `/api/regional`
+  and `/api/counties`, with a caption naming its source). A window's move,
+  maximise and close controls appear at its top right on hover. Ready-made
+  layouts sit in the toolbar; the layout is remembered in the browser.
 - **Settings** (`#settings`): language, remembered view, about the data.
 - **Intro** (`#intro`): the pitch opening, a terraced picture of county
   pressure; not a working view.
 
-The replay timeline sits under the top bar on every working page. Every
-figure comes from the API; nothing on screen is example data.
+The replay timeline sits under the top bar on every working page. Its title
+names the hospital and the number of units, or the unit in focus. Step
+(day, week, month) and Speed are two labelled groups. A lane legend says in
+words what a bump and a pill are. The "Found so far" strip lists what the
+detectors have raised as the replay reaches each alert, newest first; it
+holds no events known in advance. Abbreviations on screen carry their long
+form and meaning from the glossary (`libs/utils/i18n` `surfaces/glossary.ts`).
+Every figure comes from the API; nothing on screen is example data.
 
 Design: Impeccable (D-008). Product context in /PRODUCT.md, the direction
 contract in `.impeccable/surfaces/`. Light mode only for now; dark tokens

@@ -53,6 +53,11 @@ on purpose. (Open question 2 below.)
 
 ### 3.1 Selection wiring (UI, no decision needed)
 
+Built (2026-10-17): `Timeline.tsx`, `hero/WeeklyBand.tsx`, `hero/selection.ts`
+(pill and kin rings), `research/board.ts`, `url.ts` (`useHashParam`). One
+selection in the hash as `inc=` and `unit=`, read by the timeline and every
+window; Escape clears. Selecting does not move the clock.
+
 - Timeline pills become selectable: click sets `inc=` in the hash; the
   timeline reads `inc=` and marks the selected pill (ring, lane lift) and
   the other pills of the same incident.
@@ -67,6 +72,11 @@ on purpose. (Open question 2 below.)
 
 ### 3.2 The signal card (replaces "What these signals may mean" + "Alert math")
 
+Built (2026-10-17): `research/math/AlertMath.tsx` as the window "Signal",
+with `feed/SpanChips.tsx` for reach and the per-detector sentence and
+actions (Go to this day, Show on map, Method). Copy in
+`libs/utils/i18n/src/surfaces/`, both languages.
+
 - One card, one column, in the reading order of depth 2 above. The current
   "Alert math" content (two bars, surprise, test line, isolates) is the
   core; it gains a title in words, the "how we calculate it" sentence, the
@@ -80,6 +90,12 @@ on purpose. (Open question 2 below.)
 
 ### 3.3 Events strip (the four planted events)
 
+Built (2026-10-17) as a live log, not the four planted events: `components/EventsStrip.tsx`
+lists what the detectors have found so far, newest first, each tile
+appearing as its alert arrives; a tile selects its signal and never moves
+the clock. The strip shows the latest four tiles (`SHOWN`). The planted
+events are no longer listed in advance (Artem's request, 2026-10-17).
+
 - "Demo jumps" becomes a visible strip of the four events from
   `benchmarks/planted-events/README.md` (E1 URO ESBL cluster, E2 ICU MRSA,
   E3 PHC-S sampling gap, E4 the slow TMP/TZP rises), each with a date, a
@@ -90,6 +106,12 @@ on purpose. (Open question 2 below.)
 - The strip is the presenter's path through the demo. Not hidden in a menu.
 
 ### 3.4 Timeline controls and legends
+
+Built (2026-10-17): `components/Timeline.tsx`, `hero/WeeklyBand.tsx` and
+`components/timeline.css` (title with hospital and units or the focused
+unit, Step and Speed as two labelled groups, lane legend in words, clickable
+lane labels that set `unit=`). Map caption in
+`research/geo/GeoMap.tsx` (`geo-caption`), legend unchanged.
 
 - Step and speed as two visible controls: Step `day · week · month`
   (buttons), Speed `slow · normal · fast`; "1 day / 2 s" explained in words
@@ -111,6 +133,10 @@ on purpose. (Open question 2 below.)
 
 ### 3.5 Abbreviations and figures
 
+Built (2026-10-17): the glossary is `libs/utils/i18n/src/surfaces/glossary.ts`
+(tested in `glossary.test.ts`); abbreviations on screen carry their long form
+and meaning. Ratios on the card name what they are a ratio of.
+
 - A glossary (one i18n surface): ESBL, MRSA, VRE, CPE, n, %S, %R, usual,
   surprise, first isolate, day 3, unit codes (PHC-N = Health centre North).
   Any abbreviation on screen gets an `<abbr>` with the full name and a
@@ -119,6 +145,10 @@ on purpose. (Open question 2 below.)
   0.2 usual", never bare "5/0.2" without the legend in reach).
 
 ### 3.6 Motion
+
+Built (2026-10-17): CSS in `apps/web/src/styles.css`, `components/timeline.css`
+and `components/research/workspace/workspace.css`, all under
+`prefers-reduced-motion`; no dependency added (D-058).
 
 - A motion system in `styles.css`: three durations (120, 200, 320 ms), one
   easing, all behind `prefers-reduced-motion`. No new dependency: CSS
@@ -185,6 +215,10 @@ card names its county's signal.
    colleague's connection work?
 2. Should selecting a signal ever move the replay clock, or only the
    explicit "go to this day"?
+   **Answered (2026-10-17):** selection never moves the clock; only "Go to
+   this day" does.
 3. Are the four planted events the canonical event strip, and should the
    slow trend (E4) be shown as a hospital-level signal?
 4. Motion with no new dependency (CSS + View Transitions), or add a library?
+   **Answered (2026-10-17):** no motion dependency; CSS transitions and View
+   Transitions, three duration tokens, behind `prefers-reduced-motion` (D-058).

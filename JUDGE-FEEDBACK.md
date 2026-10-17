@@ -1,8 +1,9 @@
 # Judge feedback, 2026-10-17: points to work on
 
-Written after the presentation, not yet acted on. Nothing here is fixed yet.
-Each point says what the judge said, what we saw in the researcher view, and
-what would need to change. Where we have not checked the code, that is said.
+Written after the presentation. Each point says what the judge said, what we
+saw in the researcher view, and what would need to change. Where we have not
+checked the code, that is said. Status lines ("Done" or "Open", dated) were
+added 2026-10-17 under each point.
 
 ## 1. Explain what the map is
 
@@ -15,6 +16,11 @@ what would need to change. Where we have not checked the code, that is said.
   (a ward, a count per day?), what the bar height and width encode, and what
   the scale 0 to 12 counts.
 
+Done (2026-10-17): the map has a caption above it naming the month, the
+colour and the source (`research/geo/GeoMap.tsx`, `geo-caption`), and the
+legend stays at the bottom. What the bar and the 0 to 12 scale count is not
+yet stated on screen.
+
 ## 2. Connect the Finnish map with the hospital timeline
 
 - The judge wants the national signal (the Finnish map) and the hospital
@@ -23,6 +29,11 @@ what would need to change. Where we have not checked the code, that is said.
 - To do: agree how a hospital is identified on both views (one shared ID or
   name list), and decide what a click on one view does in the other.
   Coordinate with the colleague before changing either view.
+
+Open: the hospital ID shared by the Finnish map and the hospital timeline is
+not agreed. It belongs to the colleague's multi-hospital work (D-051 has
+`Meta.sites` and `hospital=` on main; the link from a county signal to a
+site is not part of this branch). Nothing here changes either view for it.
 
 ## 3. Make the researcher page more interactive
 
@@ -34,6 +45,14 @@ what would need to change. Where we have not checked the code, that is said.
 - To do: a "signal" view that links the timeline, the map, the alert list
   and the filters, so selecting one updates the others.
 
+Done (2026-10-17): one selection in the URL (`inc=`, `unit=`) is read by the
+timeline and every window. A pill, a feed row, a lane label or a map glyph
+selects it, and the others follow (`hero/selection.ts`, `research/board.ts`,
+`url.ts`). Selecting does not move the clock. The signal card ("Signal"
+window, `research/math/AlertMath.tsx`) shows the signal's bars, surprise,
+reach chips and isolates. Stacking several filters on one signal was not part
+of the selection work.
+
 ## 4. Explain the numbers and abbreviations
 
 - The judge found some numbers and abbreviations confusing (for example
@@ -44,6 +63,12 @@ what would need to change. Where we have not checked the code, that is said.
   wording with the team, since the calculations are in the detectors and
   alerts code (libs/utils/detect, libs/utils/alerts).
 
+Done (2026-10-17): the signal card gives the surprise as "1 in N by chance",
+one "how we calculate it" sentence per detector, and the actions Go to this
+day, Show on map and Method. Abbreviations come from a glossary with long
+form and meaning (`libs/utils/i18n/src/surfaces/glossary.ts`). The wording is
+ours; the team has not yet reviewed it against the detectors.
+
 ## 5. Finding the four events was hard
 
 - In the presentation the judge had trouble finding the four events. The
@@ -52,6 +77,14 @@ what would need to change. Where we have not checked the code, that is said.
   (12.5.2025) and a "Data checks passed" tick, but no list of the events.
 - To do: add a summary panel listing the four events with date, unit,
   signal type, and a link that jumps the timeline to that date.
+
+Done (2026-10-17, changed at Artem's request): the "Found so far" strip
+(`components/EventsStrip.tsx`) replaces the four prepared events. It lists
+the incidents the detectors have raised as the replay reaches them, newest
+first, and a tile selects its signal without moving the clock. There is no
+list of the four events before the replay reaches them. Open: the strip
+shows only the latest four tiles (`SHOWN` in `EventsStrip.tsx`), so an early
+event scrolls out of view as the replay runs on.
 
 ## 6. Step size control is hard to find
 
@@ -62,6 +95,10 @@ what would need to change. Where we have not checked the code, that is said.
 - To do: make the control clearer (a label such as "Step: 1 day" and
   "Speed: 2 s per step"), and check whether the options are enough.
   Not yet checked in the code.
+
+Done (2026-10-17): Step (day, week, month) and Speed are two labelled groups
+on the timeline (`components/Timeline.tsx`), each with its own label, so
+"1 day / 2 s" is no longer one dropdown. The option set itself is unchanged.
 
 ## Open questions for the team
 

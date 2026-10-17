@@ -117,6 +117,33 @@ What the workbench does:
 The judge's near-term points (JUDGE-FEEDBACK.md) are the first cells of
 this: a signal selected anywhere is the pinned signal card.
 
+## Reproducible export and the analysis library (direction, 2026-10-17)
+
+The judge's direction, taken by Artem the same evening: a researcher can
+take a result out of the tool as a bundle that someone else can run again
+and get the same numbers.
+
+- **The bundle.** One export per view or project holds: a data CSV with the
+  rows behind the screen, cut at the floors the screen uses (the reporting
+  floor and any minimum count shown), so the file and the picture agree;
+  `analysis.R`; `analysis.py`; `method.tex`; `results.json`; and an `.ipynb`
+  that runs the Python version. `results.json` carries the method, its
+  parameters and the decision that chose them.
+- **R first for statistics.** Biomedical researchers use R, so the statistics
+  in the bundle are written in R first, with base R and `stats` only (no
+  packages to install). The Python script follows for pipelines.
+- **Python and the `aei` package for pipelines.** The Python side is the
+  `aei` package in `libs/utils/py`: the same gears as the web (counting,
+  detection, coverage) for loading the data and running the pipeline. It
+  becomes public later, with an R mirror if the team wants one.
+- **The method in LaTeX.** `method.tex` states the test or interval in
+  words and symbols, with the constants and their D-numbers, so the method
+  can go into a paper unchanged.
+- **The local model's rule.** A local model may draft code against the `aei`
+  library, for the researcher to read and run. It never supplies a number or
+  a test. Every number in a bundle comes from a gear and is reproducible
+  from the CSV; this extends D-019's rule to every export.
+
 ## What stays the same
 
 - The current researcher UI is good; the judge did not ask to replace it.
@@ -156,3 +183,10 @@ None of these are decided. Each one goes into DECISIONS.md when it is.
   R, per the judge); ask them before choosing.
 - How a researcher's own table joins the data (keys: date, unit, patient
   id), what it may contain, and whether it is stored with the project.
+- Bundle contents and floors: which files a bundle holds, and which
+  reporting floor and minimum counts cut the data CSV so it matches the
+  screen (RESEARCH-TOOL-DESIGN.md section 5).
+- `aei` as a public package: whether it is published with its own version
+  and licence, and when an R mirror of the same functions follows.
+- The model's rule: confirm that a local model may only draft code against
+  `aei` and never supply a number or a test, as an extension of D-019.
