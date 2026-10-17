@@ -149,14 +149,12 @@ export function AlertMath({
   onOpenTools,
 }: Props) {
   const key = inc?.key ?? null;
-  const how = useRef<HTMLDetailsElement | null>(null);
+  const plainFold = useRef<HTMLDetailsElement | null>(null);
   useEffect(() => {
-    if (explain <= 0 || !how.current) return;
-    how.current.open = true;
-    // The explanation lives in the "In plain words" fold; the request opens it too.
-    const fold = how.current.querySelector<HTMLDetailsElement>(".sig-plain");
-    if (fold) fold.open = true;
-    how.current.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    if (explain <= 0 || !plainFold.current) return;
+    // The explanation stands open under the numbers; the request makes sure of it and brings it into view.
+    plainFold.current.open = true;
+    plainFold.current.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }, [explain]);
   // The body of a new incident fades in (keyed, so it remounts; the class leaves on animationend); the frame and the action row stay put.
   const [entered, setEntered] = useState<string | null>(null);
@@ -268,25 +266,25 @@ export function AlertMath({
 
         <Numbers locale={locale} alert={lead} />
 
-        {/* The method stands open in the layer; the row's "Open calculation and explanation" opens it in the window too. */}
-        <section className="sig-how-section" aria-labelledby={`sig-how-${inc.key}`}>
-          <details className="sig-how" ref={how} open={onBack ? true : undefined}>
-            <summary className="sig-how-head">
-              <h3 className="sig-section-title" id={`sig-how-${inc.key}`}>
-                {t(locale, "cardHow")}
-              </h3>
-            </summary>
-            {method ? (
-              <MethodEntry locale={locale} method={method} values={snippetValues} alert={lead} plain={plain} explain={explanation} />
-            ) : (
-              <details className="sig-plain">
-                <summary>{t(locale, "cardPlainWords")}</summary>
-                {plain}
-                {explanation}
-              </details>
-            )}
-          </details>
-        </section>
+        {/* The words come first, open; the method (name, formula, constants, code) is one closed fold below. */}
+        <details className="sig-plain" ref={plainFold} open>
+          <summary>{t(locale, "cardPlainWords")}</summary>
+          {plain}
+          {explanation}
+        </details>
+
+        {method ? (
+          <section className="sig-how-section" aria-labelledby={`sig-how-${inc.key}`}>
+            <details className="sig-how">
+              <summary className="sig-how-head">
+                <h3 className="sig-section-title" id={`sig-how-${inc.key}`}>
+                  {t(locale, "cardHow")}
+                </h3>
+              </summary>
+              <MethodEntry locale={locale} method={method} values={snippetValues} alert={lead} />
+            </details>
+          </section>
+        ) : null}
 
         <DataBehind
           locale={locale}
@@ -465,31 +463,25 @@ function WithThisSignal({ locale, alert: a }: { locale: Locale; alert: Alert }) 
 /**
  * The method block under "How we calculate it": the test's name, the formula (MathML, LaTeX one click away),
  * this signal's numbers in it, the constants with their decisions, the code that runs it in TypeScript and
- * Python with copy, and the figure. The prose waits in "In plain words".
+ * Python with copy, and the figure. The prose stands open above it, outside this fold.
  */
 export function MethodEntry({
   locale,
   method,
   values,
   alert: a,
-  plain,
-  explain,
 }: {
   locale: Locale;
   method: Method;
   values: SnippetValues;
   alert?: Alert;
-  /** The sentence and detail in words, shown under "In plain words". */
-  plain?: ReactNode;
-  /** The plain explanation component (the server's template), also under "In plain words". */
-  explain?: ReactNode;
 }) {
   const [lang, setLang] = useState<"py" | "r" | "ts">("py");
   const code = lang === "ts" ? `${method.code.fn}()  // ${method.code.ts}` : fillSnippet(method, values, lang);
   const figure = a?.kind === "detector" && COUNT_DETECTORS.includes(a.detector) && a.p !== undefined && a.expected !== undefined;
   const note =
     lang === "r"
-      ? t(locale, "cardCodeRuns", { fn: "read_package(), as_amr()", path: "libs/utils/r (D-063)" })
+      ? t(locale, "cardCodeRuns", { fn: "read_package(), as_amr()", path: "libs/utils/r" })
       : lang === "ts" || method.code.py
         ? t(locale, "cardCodeRuns", { fn: lang === "py" ? method.code.py : method.code.fn, path: lang === "py" ? "aei" : method.code.ts })
         : t(locale, "cardCodeNoPy");
@@ -504,16 +496,21 @@ export function MethodEntry({
       {a ? <WithThisSignal locale={locale} alert={a} /> : null}
       <dl className="sig-constants">
         {method.constants.map((k) => (
-          <div key={k.name} title={k.decision}>
+          <div key={k.name}>
             <dt>{k.name}</dt>
-            <dd>
-              {String(k.value)} <span className="sig-decision">{k.decision}</span>
-            </dd>
+            <dd>{String(k.value)}</dd>
           </div>
         ))}
       </dl>
       {figure && a?.kind === "detector" ? (
-        <PoissonTail observed={a.observed} expected={a.expected as number} p={a.p as number} detector={a.detector} locale={locale} />
+        <PoissonTail
+          observed={a.observed}
+          expected={a.expected as number}
+          p={a.p as number}
+          detector={a.detector}
+          locale={locale}
+          showDecisions={false}
+        />
       ) : null}
       <div className="sig-code">
         <div className="sig-code-head">
@@ -532,13 +529,6 @@ export function MethodEntry({
         </pre>
         <p className="sig-code-note">{note}</p>
       </div>
-      {plain || explain ? (
-        <details className="sig-plain">
-          <summary>{t(locale, "cardPlainWords")}</summary>
-          {plain}
-          {explain}
-        </details>
-      ) : null}
     </div>
   );
 }
@@ -590,7 +580,7 @@ export function countRows(locale: Locale, a: Alert, method: Method | null): Coun
     // The p row is named by the tail it is, the formula's own words.
     const tail = trend ? t(locale, "cardRowPTrend") : gap ? "e^(−λL)" : a.detector === "sampling-drop" ? "P(Y ≤ y)" : "P(Y ≥ y)";
     if (a.p !== undefined) rows.push({ sym: "p", name: tail, value: a.p < 0.001 ? a.p.toExponential(2) : a.p.toPrecision(3) });
-    if (alpha) rows.push({ sym: "α", name: `${t(locale, "cardRowAlpha")} (${alpha.decision})`, value: String(alpha.value) });
+    if (alpha) rows.push({ sym: "α", name: t(locale, "cardRowAlpha"), value: String(alpha.value) });
     const w = testWindows(a);
     if (w) {
       rows.push({ name: t(locale, "cardRowWindow"), value: range(w.window) });

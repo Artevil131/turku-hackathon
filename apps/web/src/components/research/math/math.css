@@ -4,8 +4,8 @@
   font-size: var(--t-xs, 12px);
 }
 
-.sig-how .feed-evidence,
-.sig-how .feed-owner {
+.sig-plain .feed-evidence,
+.sig-plain .feed-owner {
   margin: 0;
   font-size: var(--t-xs, 12px);
   color: var(--ink-2);

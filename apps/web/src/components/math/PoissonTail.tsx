@@ -9,6 +9,8 @@ export interface PoissonTailProps {
   p: number;
   /** DetectorAlert.detector */
   detector: string;
+  /** Name the decisions (D-numbers) in the caption; the signal window leaves them out. */
+  showDecisions?: boolean;
   locale: Locale;
 }
 
@@ -20,11 +22,11 @@ const T = 22;
 const B = 28;
 
 /** The live detector's Poisson test (D-020) drawn: mass of Poisson(expected), the tail that gave p shaded (ENGINE.md section 2). */
-export function PoissonTail({ observed, expected, p, detector, locale }: PoissonTailProps) {
+export function PoissonTail({ observed, expected, p, detector, locale, showDecisions = true }: PoissonTailProps) {
   const plan = poissonPlan(detector, observed, expected);
   if (!plan) return <p className="math-note">{t(locale, "mathNoCount")}</p>;
   const methodId = detectorMethodIds[detector as keyof typeof detectorMethodIds];
-  const decisions = methodId ? methods[methodId].decisions.join(" · ") : "";
+  const decisions = methodId && showDecisions ? methods[methodId].decisions.join(" · ") : "";
   const n = plan.bars.length;
   const pw = W - L - R;
   const bw = pw / n;
@@ -79,9 +81,7 @@ export function PoissonTail({ observed, expected, p, detector, locale }: Poisson
           ))}
       </svg>
       <figcaption className="math-poisson-cap">
-        <span className="math-poisson-test">
-          {t(locale, "mathTestLabel")} · {decisions}
-        </span>
+        <span className="math-poisson-test">{decisions ? `${t(locale, "mathTestLabel")} · ${decisions}` : t(locale, "mathTestLabel")}</span>
         <span className="math-poisson-formula">{caption}</span>
         <span className="math-poisson-legend">
           <i className="mp-sw mp-sw-tail" aria-hidden="true" /> {tailText}

@@ -105,7 +105,7 @@ describe("the signal card", () => {
     expect(html).toContain("Poisson upper tail, hospital-wide baseline");
     expect(html).toContain("<math ");
     expect(html).toContain("Copy LaTeX");
-    expect(html).toContain('<dt>alpha</dt><dd>0.0001 <span class="sig-decision">D-020</span>');
+    expect(html).toContain("<dt>alpha</dt><dd>0.0001");
     expect(html).toContain("aei.detect.profile_excess");
     expect(html).toContain("s.ward == &quot;URO&quot;");
     const noPy = renderToStaticMarkup(
@@ -128,7 +128,7 @@ describe("the signal card", () => {
 
   it("as a layer: the method open, the data section with its counts and copy buttons, no reading in words", () => {
     const html = card(cluster, "en", "2025-06-09", true);
-    expect(html).toMatch(/<details class="sig-how" open="">/);
+    expect(html).toContain('<details class="sig-how">');
     expect(html).toContain(
       '<section class="sig-data" aria-labelledby="sig-data-c1"><h3 class="sig-section-title" id="sig-data-c1">Data behind it</h3>',
     );
@@ -144,10 +144,12 @@ describe("the signal card", () => {
     expect(html).toContain(">R</button>");
     for (const gone of ["What this signal may mean", "interpretation, not a diagnosis", "More of one rare", "sig-means"])
       expect(html).not.toContain(gone);
-    // The sentence in words lives only inside the "In plain words" fold.
-    const fold = html.indexOf('<details class="sig-plain">');
+    // The sentence in words stands open, before the closed method fold.
+    const fold = html.indexOf('<details class="sig-plain" open="">');
     expect(fold).toBeGreaterThan(0);
     expect(html.indexOf('class="sig-how-text"')).toBeGreaterThan(fold);
+    expect(html.indexOf('class="sig-how-text"')).toBeLessThan(html.indexOf('<details class="sig-how">'));
+    expect(html).not.toMatch(/D-0\d\d/);
   });
 
   it("reads the counts off the alert and cites the method with its decisions", () => {

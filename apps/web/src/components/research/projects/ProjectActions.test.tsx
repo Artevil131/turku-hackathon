@@ -86,6 +86,7 @@ describe("project actions in the sidebar", () => {
           onDrawer={noop}
           onCollapsed={noop}
           onHome={noop}
+          onPatient={noop}
           onTab={noop}
           onCloseTab={noop}
           onNew={noop}
