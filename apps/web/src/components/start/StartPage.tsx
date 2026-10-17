@@ -170,7 +170,7 @@ export function StartPage({
               </button>
             </p>
           ) : projects === null ? (
-            <div aria-busy="true" />
+            <div aria-busy="true" className="start-loading" />
           ) : projects.length === 0 ? (
             <div className="start-empty">
               <h3>{t(locale, "startEmpty")}</h3>

@@ -845,3 +845,10 @@
     transition: none;
   }
 }
+
+@media (max-width: 760px) {
+  /* Scrolled into view, a window starts below the sticky phone bar. */
+  .ws-win {
+    scroll-margin-top: 64px;
+  }
+}

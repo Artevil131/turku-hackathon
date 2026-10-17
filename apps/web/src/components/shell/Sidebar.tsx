@@ -239,7 +239,16 @@ export function Sidebar({
                         className="sb-tab-close"
                         aria-label={t(locale, "shellCloseTab", { name })}
                         title={t(locale, "shellCloseTab", { name })}
-                        onClick={() => onCloseTab(tab)}
+                        onClick={() => {
+                          onCloseTab(tab);
+                          // The button goes with its row: keep focus in the list, on the project now shown, else Home.
+                          requestAnimationFrame(() =>
+                            (
+                              root.current?.querySelector<HTMLElement>(".sb-tab[data-current] .sb-item") ??
+                              root.current?.querySelector<HTMLElement>(".sb-home")
+                            )?.focus(),
+                          );
+                        }}
                       >
                         <Svg d="M7 7l10 10M17 7 7 17" />
                       </button>

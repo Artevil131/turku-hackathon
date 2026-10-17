@@ -551,3 +551,15 @@
     grid-template-columns: 1fr;
   }
 }
+/* Hold the recent row's height while the list loads, so the templates below do not jump under a pointer. */
+.start-loading {
+  min-height: 248px;
+}
+@media (max-width: 760px) {
+  .start-layout {
+    height: 64px;
+  }
+  .start-loading {
+    min-height: 212px;
+  }
+}

@@ -3,12 +3,12 @@ import { describe, expect, it, vi } from "vitest";
 import { notebookUrl, Reproduce, ReproduceHost } from "./Reproduce.tsx";
 
 describe("Reproduce window", () => {
-  it("offers a project dialog and explains the fingerprint before a project is open", () => {
+  it("offers to save the view as a project and explains the fingerprint before a project is open", () => {
     const html = renderToStaticMarkup(<Reproduce locale="en" language="python" onLanguage={vi.fn()} />);
     expect(html).toContain(
       "Save or open a project to reproduce its numbers: the same rows, checked by fingerprint, and the same methods, recomputed in Python or R.",
     );
-    expect(html).toContain(">Project</button>");
+    expect(html).toContain(">Save as project…</button>");
     expect(html).not.toContain("data-reproduce-slot");
   });
   it("renders a slot, language controls and a standalone notebook link, never an iframe in the dock", () => {

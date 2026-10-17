@@ -1,7 +1,7 @@
 export const projectsEn = {
   projectButton: "Project",
   projectTitle: "Research projects",
-  projectEmpty: "No saved projects yet. Save this workspace to return to it later.",
+  projectEmpty: "No saved projects yet. Open a template on Home, or save this view as a project.",
   projectLoading: "Loading projects…",
   projectOpen: "Open",
   projectSave: "Save current as new",
@@ -24,7 +24,7 @@ export const projectsEn = {
   projectRefresh: "Refresh",
   projectClose: "Close",
   exportButton: "Export",
-  exportTitle: "Export workspace",
+  exportTitle: "Export this view",
   exportDefaultTitle: "AEI research export {date}",
   exportFormatzip: "Research package (.zip) — recommended",
   exportFormatcsv: "CSV",
@@ -37,7 +37,7 @@ export const projectsEn = {
   exportPng: "Figures (PNG)",
   exportBuilding: "Preparing export…",
   exportError: "Export failed. Check the connection and try again.",
-  exportNoFigures: "No figures are visible. Open a workspace window with a chart first.",
+  exportNoFigures: "No figures are visible. Open a window with a chart first.",
   exportDone: "Export ready. Downloads started.",
   exportIsolates: "Isolates",
   exportPatients: "Patients",
@@ -49,13 +49,13 @@ export const projectsEn = {
     "Number of alert rows in the selected date window, site, units, organisms, phenotypes and signal kinds; not deduplicated by incident.",
   exportFrozenNote:
     "The fingerprint describes the saved project scope at freezing, not necessarily the current board filters or the alert table. Figures retain their displayed date ranges.",
-  exportFigureNote: "Figure captured from the open workspace window; its own displayed filters and date range apply.",
+  exportFigureNote: "Figure captured from the open window; its own displayed filters and date range apply.",
 } as const;
 
 export const projectsFi: Record<keyof typeof projectsEn, string> = {
   projectButton: "Projekti",
   projectTitle: "Tutkimusprojektit",
-  projectEmpty: "Ei tallennettuja projekteja. Tallenna työtila, jotta voit palata siihen myöhemmin.",
+  projectEmpty: "Ei vielä tallennettuja projekteja. Avaa pohja etusivulta tai tallenna tämä näkymä projektiksi.",
   projectLoading: "Ladataan projekteja…",
   projectOpen: "Avaa",
   projectSave: "Tallenna nykyinen uutena",
@@ -78,7 +78,7 @@ export const projectsFi: Record<keyof typeof projectsEn, string> = {
   projectRefresh: "Päivitä lista",
   projectClose: "Sulje",
   exportButton: "Vie",
-  exportTitle: "Vie työtila",
+  exportTitle: "Vie tämä näkymä",
   exportDefaultTitle: "AEI-tutkimusvienti {date}",
   exportFormatzip: "Tutkimuspaketti (.zip) — suositeltu",
   exportFormatcsv: "CSV",
@@ -91,7 +91,7 @@ export const projectsFi: Record<keyof typeof projectsEn, string> = {
   exportPng: "Kuviot (PNG)",
   exportBuilding: "Valmistellaan vientiä…",
   exportError: "Vienti epäonnistui. Tarkista yhteys ja yritä uudelleen.",
-  exportNoFigures: "Näkyvissä ei ole kuvioita. Avaa ensin kaavion sisältävä työtilan ikkuna.",
+  exportNoFigures: "Näkyvissä ei ole kuvioita. Avaa ensin ikkuna, jossa on kaavio.",
   exportDone: "Vienti valmis. Lataukset käynnistetty.",
   exportIsolates: "Isolaatit",
   exportPatients: "Potilaat",
@@ -103,5 +103,5 @@ export const projectsFi: Record<keyof typeof projectsEn, string> = {
     "Hälytysrivien määrä valitulla aikavälillä, sairaalassa, yksiköissä, organismeissa, fenotyypeissä ja signaalityypeissä; ei yhdistämistä tapahtuman mukaan.",
   exportFrozenNote:
     "Sormenjälki kuvaa projektin tallennettua rajausta jäädytyshetkellä, ei välttämättä nykyisiä suodattimia tai hälytystaulukkoa. Kuvioiden omat aikavälit säilyvät.",
-  exportFigureNote: "Kuvio tallennettu avoimesta työtilan ikkunasta; kuvion omat suodattimet ja aikaväli pätevät.",
+  exportFigureNote: "Kuvio tallennettu avoimesta ikkunasta; kuvion omat suodattimet ja aikaväli pätevät.",
 };

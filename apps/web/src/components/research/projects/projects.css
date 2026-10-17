@@ -169,3 +169,37 @@
   font-size: var(--t-xs, 12px);
   color: var(--ink-2);
 }
+/* The Open dialog's list stands alone (the save form has its own dialog now). */
+.project-dialog .project-list {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+.project-form {
+  display: grid;
+  gap: 14px;
+}
+.project-note {
+  margin: 0;
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+.project-dialog .project-primary {
+  border-color: var(--live);
+  background: var(--live);
+  color: var(--live-ink);
+  font-weight: 600;
+}
+.project-dialog .project-primary:hover:not(:disabled) {
+  background: var(--live);
+  filter: brightness(1.08);
+}
+.project-dialog .project-danger {
+  border-color: var(--st-alert);
+  background: var(--st-alert);
+  color: #fff;
+  font-weight: 600;
+}
+.project-dialog .project-danger:hover:not(:disabled) {
+  background: var(--st-alert);
+  filter: brightness(1.08);
+}

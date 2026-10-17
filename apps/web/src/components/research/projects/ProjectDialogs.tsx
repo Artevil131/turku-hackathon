@@ -135,7 +135,7 @@ export function SaveProjectDialog({
         ) : null}
         <div className="project-actions">
           <button type="submit" className="project-primary" disabled={busy || invalid}>
-            {t(locale, busy ? "projectBusy" : "projectSave")}
+            {t(locale, busy ? "projectBusy" : "pmSave")}
           </button>
           <button type="button" onClick={onClose}>
             {t(locale, "startCancel")}
