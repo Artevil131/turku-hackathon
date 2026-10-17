@@ -512,3 +512,22 @@
   color: var(--d-ink-3);
   pointer-events: none;
 }
+
+.cl-recent {
+  margin: 0 0 6px;
+  color: var(--d-watch);
+  font-size: var(--d-xs);
+  font-weight: 600;
+}
+
+.cl-note {
+  margin: 8px 0 0;
+  color: var(--d-ink-2);
+  font-size: var(--d-xs);
+  line-height: 1.4;
+}
+
+.cl-meta {
+  display: block;
+  color: var(--d-ink-2);
+}

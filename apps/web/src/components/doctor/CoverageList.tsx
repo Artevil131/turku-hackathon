@@ -78,6 +78,14 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
     });
   };
 
+  const annual = filters.period === 365;
+  const meta = [
+    t(locale, "drPeriodDays", { days: filters.period }),
+    cov && cov.level !== "unit" ? t(locale, cov.level === "ward type" ? "drLevelWardTypeShort" : "drLevelHospitalShort") : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   const renderItem = (item: Item) => {
     const st = STANDING[item.standing];
     const assessable = item.standing !== "not assessable" && item.share !== null;
@@ -116,17 +124,18 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
           </span>
           <span className="cl-num num">
             <span>
-              {t(locale, item.row?.basis === "spectrum" ? "drTargetMicrobes" : "drAllGrowing")}{" "}
+              {t(locale, item.row?.basis === "spectrum" ? "drWithinSpectrum" : "drAllOrgShort")}{" "}
               <b>{assessable && item.share !== null ? `${pct(item.share)} %` : "–"}</b>
               {item.standing === "borderline" && range ? ` (${range} %)` : ""}
               <span className="cl-n"> · n {num(locale, item.n)}</span>
             </span>
             {item.row?.basis === "spectrum" ? (
               <span className="cl-secondary">
-                {t(locale, "drAllGrowing")} {item.row.allOrganisms.share === null ? "–" : `${pct(item.row.allOrganisms.share)} %`}
+                {t(locale, "drAllOrgShort")} {item.row.allOrganisms.share === null ? "–" : `${pct(item.row.allOrganisms.share)} %`}
                 <span className="cl-n"> · n {num(locale, item.row.coverage.counts.known)}</span>
               </span>
             ) : null}
+            <span className="cl-secondary cl-meta">{meta}</span>
           </span>
           <span className="cl-res" data-standing={item.standing} title={t(locale, st.long)}>
             <span className="cl-glyph" aria-hidden="true">
@@ -247,10 +256,12 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
             <span className="cl-r">{t(locale, "drCovers")}</span>
             <span>{t(locale, "drStandingCol")}</span>
           </div>
+          {annual ? null : <p className="cl-recent">{t(locale, "drRecentContext")}</p>}
           <ul className="cl-rows" aria-label={t(locale, "drCoverage")}>
             {renderGroup(singles, firstBelow, t(locale, "drBelowDivider", { bar }))}
             {pairs.length > 0 ? renderGroup(pairs, 0, t(locale, "drTwoTogether")) : null}
           </ul>
+          <p className="cl-note">{t(locale, "drListNote")}</p>
         </div>
       ) : null}
       {data && cov ? (

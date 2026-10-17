@@ -3,6 +3,12 @@
 export const doctorEn = {
   drSevereBlood: "Severe blood infection",
   drTargetMicrobes: "target organisms",
+  drWithinSpectrum: "within spectrum",
+  drAllOrgShort: "all organisms",
+  drPeriodDays: "{days} days",
+  drRecentContext: "Recent context, not the validated ranking: only the annual ranking was validated (experiment 0010).",
+  drListNote:
+    "Susceptibility shares of past isolates, not the chance treatment works. Urine is a specimen, not a diagnosis; this does not know the patient's allergies, kidney function or earlier findings.",
   drAllGrowing: "all growth",
   drBorderlineWhy: "The 95 % interval crosses the {bar} % bar.",
   drNoSingle: "No single antibiotic clears the bar with certainty.",
@@ -150,6 +156,12 @@ export const doctorEn = {
 export const doctorFi: Record<keyof typeof doctorEn, string> = {
   drSevereBlood: "Vaikea veri-infektio",
   drTargetMicrobes: "kohdemikrobit",
+  drWithinSpectrum: "kattavuusalueella",
+  drAllOrgShort: "kaikki bakteerit",
+  drPeriodDays: "{days} päivää",
+  drRecentContext: "Tuoretta taustaa, ei validoitu järjestys: vain vuoden järjestys on validoitu (koe 0010).",
+  drListNote:
+    "Aiempien löydösten herkkyysosuuksia, ei todennäköisyys sille, että hoito tehoaa. Virtsa on näytetyyppi, ei diagnoosi; tämä ei tiedä potilaan allergioita, munuaisten toimintaa eikä aiempia löydöksiä.",
   drAllGrowing: "kaikki kasvavat",
   drBorderlineWhy: "95 %:n väli ulottuu rajan {bar} % molemmille puolille.",
   drNoSingle: "Yksikään antibiootti ei yksin ylitä rajaa varmuudella.",

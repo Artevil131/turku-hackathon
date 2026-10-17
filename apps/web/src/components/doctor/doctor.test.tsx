@@ -60,13 +60,15 @@ describe("doctor list disclosure", () => {
     );
     const html = list(data);
     const row = html.slice(html.indexOf('data-row="MEC"'), html.indexOf("</button>", html.indexOf('data-row="MEC"')));
-    expect(row).toMatch(/kohdemikrobit.*95 %/);
-    expect(row).toMatch(/kaikki kasvavat.*75 %/);
+    expect(row).toMatch(/kattavuusalueella.*95 %/);
+    expect(row).toMatch(/kaikki bakteerit.*75 %/);
     expect(row).toContain("Tiedot");
     expect(html).not.toContain('class="info-btn cl-info"');
     expect(itemsOf(data, "fi").singles.map((item) => item.id)).toEqual(data.suggestions.map((item) => item.antibiotic));
-    expect(list(data, "en")).toContain("target organisms");
-    expect(list(data, "en")).toContain("all growth");
+    expect(list(data, "en")).toContain("within spectrum");
+    expect(list(data, "en")).toContain("all organisms");
+    expect(list(data, "en")).toContain("365 days");
+    expect(list(data, "en")).toContain("not the chance treatment works");
   });
   it("explains a borderline row and its interval without a popover", () => {
     const data = response(

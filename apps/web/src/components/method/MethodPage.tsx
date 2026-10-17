@@ -26,11 +26,11 @@ const FIGS = {
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 
-function Candidate({ fig, locale, eager }: { fig: Fig; locale: Locale; eager?: boolean }) {
+function Candidate({ fig, locale, eager, shipped }: { fig: Fig; locale: Locale; eager?: boolean; shipped?: boolean }) {
   const name = t(locale, `methodName${fig.n}` as MessageKey);
   return (
     <figure className="mt-fig">
-      <span className="mt-tag">{t(locale, "methodCandidate")}</span>
+      <span className="mt-tag">{t(locale, shipped ? "methodShipped" : "methodCandidate")}</span>
       <img
         src={`${base}/method/${fig.n}.${fig.ext}`}
         width={fig.w}
@@ -220,6 +220,13 @@ export function MethodPage({ client, locale, asOf }: { client: AeiClient; locale
       </>
     );
   }
+  detection = (
+    <>
+      {detection}
+      <p className="mt-note">{t(locale, "methodShippedFigures")}</p>
+      <p className="mt-note">{t(locale, "methodPNote")}</p>
+    </>
+  );
 
   return (
     <main className="method" id="main">
@@ -277,7 +284,7 @@ export function MethodPage({ client, locale, asOf }: { client: AeiClient; locale
             </div>
             <div>
               <h3 className="mt-label">{t(locale, "methodRegional")}</h3>
-              <Candidate fig={FIGS["0020"]} locale={locale} />
+              <Candidate fig={FIGS["0020"]} locale={locale} shipped />
             </div>
           </>
         }

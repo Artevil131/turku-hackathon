@@ -9,15 +9,19 @@ CONTEXT.md; who we build for and what they need is in AUDIENCE.md.
 ## What we built: alerts we measured
 
 We didn't stop at building alerts. We measured them. We planted 200
-synthetic outbreaks for each scenario into the data. Our detector catches
-a cluster of 4 patients carrying a rare resistant clone 89 % of the time
-(95 % interval 84 to 93), with a median delay of 6 days, at about 4.5
-signal episodes a year. We tested 8 alternative methods from the
-surveillance literature: five detectors (CUSUM, improved Farrington,
-Bayesian online change-point detection, Gamma-Poisson with FDR, and an
-ensemble) and three coverage estimators. None beat ours. These rates
-apply to outbreaks shaped like our injections, which are identical copies
-of one isolate. The full results are in
+synthetic outbreaks for each scenario into the data. For four-patient
+injections of a rare, identical resistance profile into this synthetic
+dataset (a planted rare resistant clone; detection is by identical
+profile), our detector at the shipped settings finds the cluster 89 % of the
+time (95 % interval 84 to 93), with a median delay of 6 days, at about 4.5
+signal episodes a year, about 1.0 of them cluster episodes. We tested 8
+alternative methods from the surveillance literature: five detectors
+(CUSUM, improved Farrington, Bayesian online change-point detection,
+Gamma-Poisson with FDR, and an ensemble) and three coverage estimators. No
+tested replacement met the predefined criteria at the shipped operating
+point on this benchmark; that is not proof the method outperforms those
+statistical families in general. These rates apply to outbreaks shaped like
+our injections, which are identical copies of one isolate. The full results are in
 [benchmarks/overnight-2026-10-17](benchmarks/overnight-2026-10-17/README.md).
 
 ## The repository

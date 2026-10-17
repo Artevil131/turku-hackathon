@@ -210,8 +210,12 @@ function AlertNumbers({ locale, alert: a }: { locale: Locale; alert: Alert }) {
   const fmtObs = (n: number) => (trend ? fmt(n) : String(n));
   const obs = a.observed;
   const exp = a.expected;
-  const max = Math.max(obs, exp ?? 0) || 1;
+  // A share is already on a 0 to 1 scale; counts are scaled to the larger of the two.
+  const max = trend ? 1 : Math.max(obs, exp ?? 0) || 1;
   const s = surpriseOf(a);
+  // An empty-run alert has two facts in two units (days without cultures, cultures per day):
+  // no shared bar, each fact in a sentence.
+  const empty = a.detector === "empty-run";
   return (
     <div className="math-block">
       <div className="math-big">
@@ -225,15 +229,25 @@ function AlertNumbers({ locale, alert: a }: { locale: Locale; alert: Alert }) {
           </>
         ) : null}
       </div>
-      <div
-        className="math-bars"
-        role="group"
-        aria-label={`${t(locale, "feedBarObserved")} ${fmtObs(obs)}${exp !== undefined ? `, ${t(locale, "feedUsual")} ${fmt(exp)}` : ""}`}
-      >
-        <Bar label={t(locale, "feedBarObserved")} value={fmtObs(obs)} share={obs / max} tone="obs" />
-        {exp !== undefined ? <Bar label={t(locale, "feedUsual")} value={fmt(exp)} share={exp / max} tone="usual" /> : null}
-      </div>
-      <p className="math-line">{t(locale, TEST[a.detector])}</p>
+      {empty ? (
+        <p className="math-line">
+          {t(locale, "feedEmptyRun", {
+            days: obs,
+            rate: oneDecimal(locale, exp ?? 0),
+            p: a.p !== undefined ? formatP(locale, a.p).replace("= ", "") : "",
+          })}
+        </p>
+      ) : (
+        <div
+          className="math-bars"
+          role="group"
+          aria-label={`${t(locale, "feedBarObserved")} ${fmtObs(obs)}${exp !== undefined ? `, ${t(locale, "feedUsual")} ${fmt(exp)}` : ""}`}
+        >
+          <Bar label={t(locale, "feedBarObserved")} value={fmtObs(obs)} share={obs / max} tone="obs" />
+          {exp !== undefined ? <Bar label={t(locale, "feedUsual")} value={fmt(exp)} share={exp / max} tone="usual" /> : null}
+        </div>
+      )}
+      {empty ? null : <p className="math-line">{t(locale, TEST[a.detector])}</p>}
       {a.detector === "profile-excess" && a.profile ? (
         <p className="math-line">{t(locale, "feedResistantTo", { names: resistantFromProfile(locale, a.profile).join(", ") })}</p>
       ) : null}
