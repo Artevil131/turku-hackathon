@@ -5,7 +5,7 @@ All numbers are computed by this run through `aei.score_coverage`, except the tw
 Intervals are 95 % bootstrap intervals over target windows (C1, C2, C3(a), C8) or target months (C4, C7), 1,000 resamples, seed 2026.
 Exploratory (PROTOCOL.md): every grid row was scored on the scoring period; only the chosen row was chosen without it.
 
-Run time 32.5 s CPU (computed, `aei.harness.Clock`).
+Run time 34.0 s CPU (computed, `aei.harness.Clock`).
 
 ## Choosing a setting on the TUNE windows
 

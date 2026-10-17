@@ -145,18 +145,22 @@
       "mild_obs": 0,
       "mild_exp": 0.23128,
       "mild_ratio": 0.0,
+      "mild_tail_p": 1.0,
       "severe_obs": 14,
       "severe_exp": 7.27818,
       "severe_ratio": 1.92356,
+      "severe_tail_p": 0.0172529,
       "pass": false
     },
     "C3b_bb": {
       "mild_obs": 0,
       "mild_exp": 0.777856,
       "mild_ratio": 0.0,
+      "mild_tail_p": 1.0,
       "severe_obs": 14,
       "severe_exp": 9.57179,
       "severe_ratio": 1.46263,
+      "severe_tail_p": 0.106353,
       "pass": true
     },
     "C7_lower_bound": {
@@ -172,7 +176,10 @@
       "b": 0.814815,
       "a_literal": 0.611641,
       "b_literal": 0.62963,
-      "pass_a": true
+      "pass_a": true,
+      "a_expected": 0.907689,
+      "b_expected": 0.901381,
+      "a_minus_expected": 0.0215631
     },
     "C6": {
       "E1_CRO": 48,
@@ -311,6 +318,10 @@
       "a_literal": [
         0.574056,
         0.646643
+      ],
+      "a_minus_expected": [
+        -0.000568413,
+        0.0408678
       ]
     }
   },
@@ -446,11 +457,14 @@
       "a": 1993,
       "b": 27,
       "a_literal": 1993,
-      "b_literal": 27
+      "b_literal": 27,
+      "a_expected": 1993,
+      "b_expected": 27,
+      "a_minus_expected": 1993
     }
   },
-  "runtime_s": 32.8,
-  "cpu_s": 32.5,
+  "runtime_s": 34.4,
+  "cpu_s": 34.0,
   "seeds": [
     2026
   ],
