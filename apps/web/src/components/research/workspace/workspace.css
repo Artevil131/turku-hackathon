@@ -667,11 +667,38 @@
 }
 
 /* "+ Add a window": the bottom left corner of the project screen, always in view. */
-.ws-add-float {
+.ws-float-bar {
   position: fixed;
   bottom: 16px;
   left: calc(var(--sb-w, 232px) + 16px);
   z-index: 190;
+  display: flex;
+  gap: 8px;
+}
+.ws-tool-float {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--line-strong, var(--line));
+  border-radius: 999px;
+  background: var(--glass-1);
+  box-shadow: var(--pop-shadow);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--t-s);
+  font-weight: 600;
+  cursor: pointer;
+}
+.ws-tool-float:hover,
+.ws-tool-float:focus-visible {
+  border-color: var(--live);
+  color: var(--live);
+}
+.ws-tool-float[aria-pressed="true"] {
+  border-color: var(--live);
+  background: var(--live-soft);
+  color: var(--live);
+}
+.ws-add-float {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -692,7 +719,7 @@
   filter: brightness(1.1);
 }
 @media (max-width: 760px) {
-  .ws-add-float {
+  .ws-float-bar {
     left: 16px;
   }
 }

@@ -693,18 +693,6 @@ export function Workspace({
           >
             + {t(locale, "wsEmptyAdd")}
           </button>
-          {rail ? (
-            <button
-              type="button"
-              className="ws-tool-open"
-              aria-pressed={railOpen}
-              aria-keyshortcuts="T"
-              title={`${t(locale, railOpen ? "toolsRailHide" : "toolsRailShow")} · T`}
-              onClick={() => toggleRail()}
-            >
-              {t(locale, "toolsWindow")}
-            </button>
-          ) : null}
         </div>
       ) : null}
       {rail ? (
@@ -852,21 +840,35 @@ export function Workspace({
         })}
       </div>
       {wide ? <div className="ws-traydock">{tray}</div> : null}
-      {/* The one plain way to make a window: bottom left of the project screen, always in view. */}
-      <button
-        type="button"
-        className="ws-add-float"
-        data-add-window
-        onClick={(e) => {
-          const b = e.currentTarget.getBoundingClientRect();
-          setPicker({ x: b.left, y: b.top - 440, at: {} });
-        }}
-      >
-        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false">
-          <path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-        </svg>
-        {t(locale, "wsEmptyAdd")}
-      </button>
+      {/* The two things you reach for most, bottom left of the project screen and always in view: add a window, the tools. */}
+      <div className="ws-float-bar">
+        <button
+          type="button"
+          className="ws-add-float"
+          data-add-window
+          onClick={(e) => {
+            const b = e.currentTarget.getBoundingClientRect();
+            setPicker({ x: b.left, y: b.top - 440, at: {} });
+          }}
+        >
+          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false">
+            <path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+          {t(locale, "wsEmptyAdd")}
+        </button>
+        {rail ? (
+          <button
+            type="button"
+            className="ws-tool-float"
+            aria-pressed={railOpen}
+            aria-keyshortcuts="T"
+            title={`${t(locale, railOpen ? "toolsRailHide" : "toolsRailShow")} · T`}
+            onClick={() => toggleRail()}
+          >
+            {t(locale, "toolsWindow")}
+          </button>
+        ) : null}
+      </div>
       {picker ? (
         <WindowPicker
           locale={locale}

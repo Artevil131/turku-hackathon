@@ -1,6 +1,6 @@
 import type { AeiClient, Project } from "@aei/contract";
 import { formatDate, type Locale, siteName, t, wardName } from "@aei/i18n";
-import { useEffect, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { useShell } from "../../shell/context.ts";
 import { launchTemplate } from "../../shell/launch.ts";
 import { DeleteProjectDialog } from "../research/projects/ProjectDialogs.tsx";
@@ -50,6 +50,52 @@ function LayoutPreview({ layout }: { layout?: Record<string, unknown> }) {
           <i />
         </span>
       ))}
+    </div>
+  );
+}
+/** A row of cards you scroll sideways through (swipe, wheel, or the arrows); the scrollbar itself is hidden. */
+function ScrollRow({ locale, children }: { locale: Locale; children: ReactNode }) {
+  const row = useRef<HTMLDivElement>(null);
+  const [edge, setEdge] = useState({ left: false, right: false });
+  const measure = useCallback(() => {
+    const el = row.current;
+    if (el) setEdge({ left: el.scrollLeft > 4, right: el.scrollLeft + el.clientWidth < el.scrollWidth - 4 });
+  }, []);
+  useEffect(() => {
+    const el = row.current;
+    if (!el) return;
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [measure]);
+  const by = (dir: 1 | -1) =>
+    row.current?.scrollBy({ left: dir * Math.max(240, (row.current?.clientWidth ?? 0) * 0.8), behavior: "smooth" });
+  return (
+    <div className="start-scroll" data-left={edge.left || undefined} data-right={edge.right || undefined}>
+      <div className="start-project-grid" ref={row} onScroll={measure}>
+        {children}
+      </div>
+      <button
+        type="button"
+        className="start-scroll-btn"
+        data-dir="left"
+        aria-label={t(locale, "startScrollLeft")}
+        onClick={() => by(-1)}
+        tabIndex={edge.left ? 0 : -1}
+      >
+        ‹
+      </button>
+      <button
+        type="button"
+        className="start-scroll-btn"
+        data-dir="right"
+        aria-label={t(locale, "startScrollRight")}
+        onClick={() => by(1)}
+        tabIndex={edge.right ? 0 : -1}
+      >
+        ›
+      </button>
     </div>
   );
 }
@@ -149,7 +195,7 @@ export function StartPage({
               </button>
             </div>
           ) : (
-            <div className="start-project-grid">
+            <ScrollRow locale={locale}>
               {projects.map((project) => (
                 <article className="start-card" key={project.id} data-project-card={project.id}>
                   <button type="button" className="start-card-open" onClick={() => shell.openProject(project)}>
@@ -215,7 +261,7 @@ export function StartPage({
                   </details>
                 </article>
               ))}
-            </div>
+            </ScrollRow>
           )}
         </section>
         <section id="start-templates" tabIndex={-1}>
