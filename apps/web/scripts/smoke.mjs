@@ -610,7 +610,10 @@ async function main() {
   };
   const cleanWorkspace = async (idle) => {
     await load(cdp, urlOf("research"), idle);
-    await evaluate(cdp, `localStorage.removeItem('aei.research.layout'); localStorage.removeItem('aei.research.focus')`);
+    await evaluate(
+      cdp,
+      `localStorage.removeItem('aei.research.layout'); localStorage.removeItem('aei.research.focus'); localStorage.removeItem('aei.research.rail')`,
+    );
     await cdp.send("Page.navigate", { url: "about:blank" });
     await load(cdp, urlOf("research"), idle);
   };
@@ -649,6 +652,23 @@ async function main() {
       await key("Escape");
       if (!(await waitIn(`${open} === 'assistant,graph,map,math,signals'`, 1500)))
         reasons.push(`Esc did not restore the layout (open: ${await evaluate(cdp, open)})`);
+      // The tool rail: Rate opens the inspector with the slice sentence, Rate again closes it; the toolbar's
+      // Tools button hides the rail and T shows it again.
+      if (!(await waitIn(`!!document.querySelector('.ws-rail [data-tool="rate"]')`, 1500))) reasons.push("no tool rail with a Rate tool");
+      await click('.ws-rail [data-tool="rate"]');
+      if (
+        !(await waitIn(
+          `!!document.querySelector('#ws-inspector:not([hidden]) .tl-inspect[data-tool="rate"] .tl-sentence')?.textContent`,
+          1500,
+        ))
+      )
+        reasons.push("the Rate tool opened no inspector with the slice sentence");
+      await click('.ws-rail [data-tool="rate"]');
+      if (!(await waitIn(`document.querySelector('#ws-inspector').hidden`, 1500))) reasons.push("Rate again did not close the inspector");
+      await click(".ws-tool-open");
+      if (!(await waitIn(`!!document.querySelector('.ws-dock[hidden]')`, 1500))) reasons.push("the Tools button did not hide the rail");
+      await key("t");
+      if (!(await waitIn(`!!document.querySelector('.ws-dock:not([hidden])')`, 1500))) reasons.push("T did not show the rail again");
       await idle();
     },
     { name: "desktop-900", width: 1440, height: 900, mobile: false },
