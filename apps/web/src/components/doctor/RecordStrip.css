@@ -102,6 +102,27 @@
   font-weight: 600;
 }
 
+.rs-input {
+  height: 28px;
+  width: 9rem;
+  padding: 0 8px;
+  border-radius: 6px;
+  border: 1px solid var(--line-strong, #aebecb);
+  background: var(--glass-3, #fff);
+  color: var(--ink, #07081c);
+  font: inherit;
+  font-size: var(--t-s, 13px);
+}
+
+.rs-input::placeholder {
+  color: var(--ink-3, #6f7292);
+}
+
+.rs-input:focus-visible {
+  outline: 2px solid var(--brand-accent, #635bf1);
+  outline-offset: 2px;
+}
+
 /* Wide: a single 40 px row, labels only as titles. */
 .rs[data-wide] {
   display: flex;

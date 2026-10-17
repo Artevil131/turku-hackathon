@@ -1,10 +1,11 @@
-import type { CoverageResponse } from "@aei/contract";
+import type { CoverageResponse, PatientFindingsResponse } from "@aei/contract";
 import type { Syndrome } from "@aei/guideline";
 import { antibioticName, type Locale, specimenName, t, wardName } from "@aei/i18n";
 import { cloneElement, isValidElement, type ReactNode, useMemo, useRef } from "react";
 import "./CoverageList.css";
 import { BAR, barOf, type DoctorFilters, dmy, num, pct } from "./filters.ts";
 import { GuideSummary, guideCodes } from "./Guide.tsx";
+import { priorText, withPrior } from "./Patient.tsx";
 import { InfoIcon, Popover } from "./Popover.tsx";
 import { PrintSheet } from "./PrintSheet.tsx";
 import { type Item, STANDING } from "./reason.ts";
@@ -25,6 +26,8 @@ interface Props {
   source?: ReactNode;
   /** The guide's syndrome (D-047): marks its first choices and adds its line under the header; never reorders. */
   syndrome?: Syndrome | null;
+  /** The patient's findings (D-050): affected rows are annotated and placed below the unaffected of their standing. */
+  patient?: PatientFindingsResponse | null;
 }
 
 const SKELETON = [0, 1, 2, 3, 4, 5];
@@ -32,7 +35,11 @@ const SKELETON = [0, 1, 2, 3, 4, 5];
 /** Position on the 50-100 % axis, as a percentage of the bar area; values below 50 sit at the left edge. */
 const at = (share: number): number => Math.max(0, Math.min(100, (share - 0.5) * 200));
 
-export function itemsOf(data: CoverageResponse, locale: Locale): { singles: Item[]; pairs: Item[] } {
+export function itemsOf(
+  data: CoverageResponse,
+  locale: Locale,
+  patient?: PatientFindingsResponse | null,
+): { singles: Item[]; pairs: Item[] } {
   const singles = data.suggestions.map<Item>((row) => ({
     id: row.antibiotic,
     name: antibioticName(locale, row.antibiotic),
@@ -55,11 +62,24 @@ export function itemsOf(data: CoverageResponse, locale: Locale): { singles: Item
     row: null,
     pair: p,
   }));
-  return { singles, pairs };
+  return withPrior(singles, pairs, patient);
 }
 
 /** The forest plot: one row per antibiotic, its 95 % interval against the bar line, one glance per row. */
-export function CoverageList({ locale, filters, asOf, status, data, signals, selected, onSelect, onRetry, source, syndrome }: Props) {
+export function CoverageList({
+  locale,
+  filters,
+  asOf,
+  status,
+  data,
+  signals,
+  selected,
+  onSelect,
+  onRetry,
+  source,
+  syndrome,
+  patient,
+}: Props) {
   const headRef = useRef<HTMLElement>(null);
   const bar = barOf(data, filters);
   const unit = wardName(locale, filters.unit);
@@ -67,7 +87,7 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
   const cov = data?.coverage;
   const ready = status === "ready" && data && cov;
   const stale = status === "loading" && data;
-  const { singles, pairs } = useMemo(() => (data ? itemsOf(data, locale) : { singles: [], pairs: [] }), [data, locale]);
+  const { singles, pairs } = useMemo(() => (data ? itemsOf(data, locale, patient) : { singles: [], pairs: [] }), [data, locale, patient]);
   const firstBelow = singles.findIndex((s) => s.standing !== "clears");
   const all = [...singles, ...pairs];
   const date = data?.asOf ?? asOf;
@@ -157,6 +177,7 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
               {t(locale, item.interval ? "drBorderlineWhyLow" : "drBorderlineWhy", { bar, lo: item.interval ? pct(item.interval[0]) : "" })}
             </span>
           ) : null}
+          {item.prior ? <span className="cl-prior">{priorText(locale, item.prior)}</span> : null}
         </button>
       </li>
     );
@@ -288,6 +309,7 @@ export function CoverageList({ locale, filters, asOf, status, data, signals, sel
           singles={singles}
           pairs={pairs}
           syndrome={syndrome ?? null}
+          patient={patient ?? null}
         />
       ) : null}
     </section>

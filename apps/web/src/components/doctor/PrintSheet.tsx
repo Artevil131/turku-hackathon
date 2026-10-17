@@ -1,9 +1,10 @@
-import type { CoverageResponse } from "@aei/contract";
+import type { CoverageResponse, PatientFindingsResponse } from "@aei/contract";
 import { shortOrganism } from "@aei/domain";
 import type { Syndrome } from "@aei/guideline";
 import { type Locale, specimenName, t, wardName } from "@aei/i18n";
 import { BAR, barOf, certaintyOf, type DoctorFilters, dmy, num, pct, sexWord } from "./filters.ts";
 import { guideCodes, guideLines } from "./Guide.tsx";
+import { carrierLines, findingLines, priorText } from "./Patient.tsx";
 import { flagsOf, type Item, levelKey, reasonOf, STANDING } from "./reason.ts";
 import { signalDate, type UnitSignal } from "./signals.ts";
 
@@ -16,10 +17,11 @@ interface Props {
   singles: Item[];
   pairs: Item[];
   syndrome: Syndrome | null;
+  patient: PatientFindingsResponse | null;
 }
 
 /** The A4 print of the list: sentences and flags written out, since the plot and the details pane do not print. Hidden on screen. */
-export function PrintSheet({ locale, filters, data, asOf, signals, singles, pairs, syndrome }: Props) {
+export function PrintSheet({ locale, filters, data, asOf, signals, singles, pairs, syndrome, patient }: Props) {
   const guided = guideCodes(syndrome);
   const guide = syndrome ? guideLines(locale, syndrome, singles, barOf(data, filters)) : null;
   const cov = data.coverage;
@@ -57,6 +59,7 @@ export function PrintSheet({ locale, filters, data, asOf, signals, singles, pair
           {st.glyph} {t(locale, st.long)}
         </span>
         <span className="pr-why">
+          {item.prior ? `${priorText(locale, item.prior)}; ` : ""}
           {item.row
             ? reasonOf(locale, item.row, data, filters)
             : `${t(locale, Math.round((item.pair?.gain ?? 0) * 100) === 1 ? "drGainOne" : "drGain", { gain: Math.round((item.pair?.gain ?? 0) * 100) })} · ${t(locale, "drAccessCount", { n: item.pair?.access ?? 0 })}`}
@@ -98,6 +101,14 @@ export function PrintSheet({ locale, filters, data, asOf, signals, singles, pair
       {syndrome && guide ? (
         <p>
           {syndrome.name[locale]}: {[...guide.lines, ...(guide.also ? [guide.also] : [])].join("; ")}.
+        </p>
+      ) : null}
+      {patient ? (
+        <p>
+          {patient.findings.length === 0
+            ? t(locale, "drPatientNone")
+            : t(locale, "drPatientPrint", { list: findingLines(locale, patient).join("; ") })}
+          {carrierLines(locale, syndrome, patient).map((line) => ` ${line}`)}
         </p>
       ) : null}
       {signals.slice(0, 2).map((s) => (

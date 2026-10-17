@@ -7,6 +7,7 @@ import { AlertTri } from "../Icons.tsx";
 import { certaintyOf, type DoctorFilters, halfWidth, num, pct } from "./filters.ts";
 import { GuideDetails } from "./Guide.tsx";
 import { NationalLines } from "./National.tsx";
+import { priorText } from "./Patient.tsx";
 import { flagsOf, type Item, reasonOf, STANDING } from "./reason.ts";
 import { signalDate, type UnitSignal } from "./signals.ts";
 
@@ -54,6 +55,7 @@ export function Details({ client, locale, filters, data, item, signals, syndrome
           ? reasonOf(locale, row, data, filters)
           : `${t(locale, gain === 1 ? "drGainOne" : "drGain", { gain })} · ${t(locale, "drAccessCount", { n: item.pair?.access ?? 0 })}`}
       </p>
+      {item.prior ? <p className="dt-prior">{priorText(locale, item.prior)}</p> : null}
       <p className="dt-fig num">
         {item.share !== null ? (
           <>

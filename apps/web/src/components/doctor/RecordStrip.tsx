@@ -10,6 +10,11 @@ interface Props {
   locale: Locale;
   filters: DoctorFilters;
   onChange: (patch: Partial<DoctorFilters>) => void;
+  /** The optional patient id (D-050): typed or scanned, never stored in the URL or localStorage. */
+  patientId?: string;
+  onPatientId?: (id: string) => void;
+  /** Looks the id up now (Enter or leaving the field); typing alone looks it up after a pause. */
+  onPatientCommit?: () => void;
 }
 
 function Group({ label, tag, inline, children }: { label: string; tag?: string | false; inline?: boolean; children: ReactNode }) {
@@ -49,7 +54,7 @@ function Choices<T extends string | number>(props: {
 }
 
 /** The patient record as a row of one-click filters, each with its default already chosen. The doctor types nothing. */
-export function RecordStrip({ locale, filters, onChange }: Props) {
+export function RecordStrip({ locale, filters, onChange, patientId = "", onPatientId, onPatientCommit }: Props) {
   const tr = (key: MessageKey) => t(locale, key);
   const wide = useMedia("(min-width: 960px)");
   const [more, setMore] = useState(false);
@@ -160,6 +165,26 @@ export function RecordStrip({ locale, filters, onChange }: Props) {
     </button>
   );
 
+  const patient = onPatientId ? (
+    <label className="rs-group rs-patient" title={tr("drPatientHint")}>
+      <span className="rs-label">{tr("drPatientId")}</span>
+      <input
+        type="text"
+        className="rs-input"
+        name="aei-patient"
+        value={patientId}
+        placeholder={tr("drPatientOptional")}
+        autoComplete="off"
+        spellCheck={false}
+        onChange={(e) => onPatientId(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") onPatientCommit?.();
+        }}
+        onBlur={() => onPatientCommit?.()}
+      />
+    </label>
+  ) : null;
+
   // Keep the severe blood shortcut visible even when phone filters are collapsed.
   if (wide) {
     return (
@@ -171,6 +196,7 @@ export function RecordStrip({ locale, filters, onChange }: Props) {
           {severity}
           {onset}
           {period}
+          {patient}
         </div>
         {severeBlood}
       </form>
@@ -193,6 +219,7 @@ export function RecordStrip({ locale, filters, onChange }: Props) {
           {severity}
           {period}
           {onset}
+          {patient}
           <button
             type="button"
             className="rs-done"

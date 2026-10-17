@@ -334,3 +334,20 @@
   color: var(--d-alert);
   font-weight: 600;
 }
+
+/* The Patient panel (D-050): the findings, newest first, and the guide's carrier rule. */
+.pt-findings {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-weight: 600;
+  color: var(--d-alert);
+}
+
+.pt-rule {
+  margin: 4px 0 0;
+  color: var(--d-ink-2);
+}

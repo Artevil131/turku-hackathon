@@ -1,4 +1,4 @@
-import type { CoverageResponse, NationalResponse, Severity } from "@aei/contract";
+import type { CoverageResponse, NationalResponse, PatientFindingsResponse, Severity } from "@aei/contract";
 import type { IsolateRecord } from "@aei/domain";
 import { guide } from "@aei/guideline";
 import type { ComponentProps } from "react";
@@ -8,6 +8,7 @@ import { coverage, suggest, suggestCombinations } from "../../../../../libs/util
 import { CoverageList, itemsOf } from "./CoverageList.tsx";
 import { Details } from "./Details.tsx";
 import { barOf, chooseSyndrome, coverageQuery, DEFAULTS, filtersFromUrl, filtersToParams, patchFilters, syndromeOf } from "./filters.ts";
+import { PatientPanel } from "./Patient.tsx";
 import { RecordStrip } from "./RecordStrip.tsx";
 import { SyndromePicker } from "./SyndromePicker.tsx";
 import { UnitContext } from "./UnitContext.tsx";
@@ -285,5 +286,50 @@ describe("national line (D-048)", () => {
   it("shows nothing without a national figure", () => {
     expect(details(urine(), "MEC", NATIONAL)).not.toContain("dt-national");
     expect(details(urine(), "NIT", null)).not.toContain("dt-national");
+  });
+});
+
+const PATIENT: PatientFindingsResponse = {
+  asOf: "2026-06-30",
+  patientId: "P1",
+  findings: [
+    { phenotype: "esbl", date: "2025-03-12", ward: "URO", organism: "Escherichia coli", isolateId: "C1-1" },
+    { phenotype: "esbl", date: "2026-02-01", ward: "MED-A", organism: "Klebsiella pneumoniae", isolateId: "C2-1" },
+  ],
+  affects: { esbl: ["MEC", "CIP"] },
+};
+
+describe("patient's prior finding (D-050)", () => {
+  it("annotates affected rows and places them below the unaffected rows of the same standing, shares unchanged", () => {
+    const data = urine();
+    const before = itemsOf(data, "en").singles;
+    const after = itemsOf(data, "en", PATIENT).singles;
+    const standing = (items: typeof before) => items.map((i) => i.standing);
+    expect(standing(after)).toEqual(standing(before));
+    const clears = after.filter((i) => i.standing === "clears");
+    const firstAffected = clears.findIndex((i) => i.prior);
+    expect(firstAffected).toBeGreaterThan(0);
+    expect(clears.slice(firstAffected).every((i) => i.prior)).toBe(true);
+    expect(after.filter((i) => i.prior).map((i) => i.id)).toEqual(before.filter((i) => ["MEC", "CIP"].includes(i.id)).map((i) => i.id));
+    for (const item of after) expect(item.share).toBe(before.find((b) => b.id === item.id)?.share);
+    const html = list(data, "en", { patient: PATIENT });
+    expect(rowOf(html, "MEC")).toContain("patient&#x27;s ESBL finding 1.2.2026: inferred resistant");
+    expect(rowOf(html, "NIT")).not.toContain("cl-prior");
+    expect(itemsOf(data, "en", { ...PATIENT, findings: [], affects: {} }).singles).toEqual(before);
+  });
+  it("lists the findings newest first with the guide's carrier rule, or says there are none", () => {
+    const html = renderToStaticMarkup(
+      <PatientPanel locale="en" state={{ status: "ready", response: PATIENT }} syndrome={syndromeOf("cystitis-woman") ?? null} />,
+    );
+    expect(html.indexOf("ESBL 1.2.2026")).toBeLessThan(html.indexOf("ESBL 12.3.2025"));
+    expect(html).toContain("The guide, Acute cystitis in a woman, ESBL carrier: ESBL cystitis: by susceptibility");
+    const none = renderToStaticMarkup(
+      <PatientPanel locale="en" state={{ status: "ready", response: { ...PATIENT, findings: [], affects: {} } }} syndrome={null} />,
+    );
+    expect(none).toContain("No ESBL, MRSA, VRE or CPE finding in the past year");
+    expect(renderToStaticMarkup(<PatientPanel locale="en" state={null} syndrome={null} />)).toBe("");
+  });
+  it("never puts the patient id in the URL", () => {
+    expect(Object.keys(filtersToParams(filters))).not.toContain("patient");
   });
 });
