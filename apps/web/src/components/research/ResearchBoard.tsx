@@ -4,6 +4,9 @@ import { currentHospitalName } from "../../sites.ts";
 import { hashParams, subscribeHash, writeHashParams } from "../../url.ts";
 import { Assistant } from "./assistant/Assistant.tsx";
 import { type BoardState, boardFromUrl, boardToParams, type FeedProps } from "./board.ts";
+import { ChartForm } from "./charts/ChartForm.tsx";
+import { ChartWindow } from "./charts/ChartWindow.tsx";
+import type { ChartSpec } from "./charts/spec.ts";
 import { applyFilters } from "./feed/model.ts";
 import { unitLabel } from "./feed/names.ts";
 import { computeSpans, useRelations } from "./feed/spans.ts";
@@ -15,10 +18,11 @@ import { ProjectControls } from "./projects/ProjectControls.tsx";
 import { type NotebookLanguage, Reproduce, ReproduceHost } from "./projects/Reproduce.tsx";
 import { useProject } from "./projects/useProject.ts";
 import { SignalFeed } from "./SignalFeed.tsx";
+import type { Cell } from "./tools/model.ts";
 import { ToolsWindow } from "./tools/ToolsWindow.tsx";
 import { UnitGrid } from "./UnitGrid.tsx";
 import type { WinId } from "./workspace/layout.ts";
-import { Workspace } from "./workspace/Workspace.tsx";
+import { type ChartRequest, Workspace } from "./workspace/Workspace.tsx";
 import "./ResearchBoard.css";
 
 // The researcher's workspace (spec-v2 5, with Artem's corrections): the
@@ -111,7 +115,18 @@ export function ResearchBoard(props: Props) {
 
   // The Tools window's frame follows the selected signal: the window its relations cover.
   const selectedSpans = explicit && selected ? spansOf(selected) : null;
-  const toolsWindow = selectedSpans?.from && selectedSpans.to ? { from: selectedSpans.from, to: selectedSpans.to } : null;
+  const signalWindow = selectedSpans?.from && selectedSpans.to ? { from: selectedSpans.from, to: selectedSpans.to } : null;
+
+  // Charts: "Add as chart" and the tray form add a window; a clicked period becomes the Tools slice (the latest
+  // of that and the selected signal's window wins), a clicked unit is selected in the board.
+  const [chartRequest, setChartRequest] = useState<ChartRequest | null>(null);
+  const chartKeys = useRef(0);
+  const addChart = useCallback((spec: ChartSpec) => setChartRequest({ key: ++chartKeys.current, spec }), []);
+  const [cells, setCells] = useState<Cell[]>([]);
+  const [picked, setPicked] = useState<{ from: string; to: string } | null>(null);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a new signal replaces a picked period.
+  useEffect(() => setPicked(null), [state.incident]);
+  const toolsWindow = picked ?? signalWindow;
 
   const content: Record<WinId, ReactNode> = {
     signals: (
@@ -141,7 +156,7 @@ export function ResearchBoard(props: Props) {
     assistant: (
       <Assistant client={client} locale={locale} incident={selected} spans={selected ? spansOf(selected) : null} waiting={loading} />
     ),
-    tools: <ToolsWindow {...panelProps} window={toolsWindow} />,
+    tools: <ToolsWindow {...panelProps} window={toolsWindow} onAddChart={addChart} onCells={setCells} />,
   };
 
   // The URL's `panel` follows the last of the map and the unit grid that was opened or closed.
@@ -167,6 +182,29 @@ export function ResearchBoard(props: Props) {
         primary={primary}
         answers={ANSWERS}
         lead={lead}
+        chartRequest={chartRequest}
+        chartContent={(_id, spec) => (
+          <ChartWindow
+            client={client}
+            locale={locale}
+            asOf={asOf}
+            spec={spec}
+            onPeriod={(f) => setPicked(f)}
+            onUnit={(unit) => onChange({ unit: unit as never })}
+          />
+        )}
+        chartMenu={(done) => (
+          <ChartForm
+            locale={locale}
+            cells={cells}
+            unit={state.unit ?? ""}
+            phenotype={state.phenotype ?? ""}
+            onAdd={(spec) => {
+              addChart(spec);
+              done();
+            }}
+          />
+        )}
         onOpened={(id) => (id === "grid" ? onChange({ panel: "grid" }) : id === "map" ? onChange({ panel: "geo" }) : undefined)}
         onClosed={(id) => (id === "grid" ? onChange({ panel: "geo" }) : undefined)}
       />

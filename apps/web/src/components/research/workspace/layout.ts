@@ -8,6 +8,8 @@ export const STORAGE_KEY = "aei.research.layout";
 /** The board grows downward as windows move down; this is only a sanity limit. */
 export const MAX_ROWS = 160;
 
+import { type ChartSpec, parseSpec } from "../charts/spec.ts";
+
 export const WIN_IDS = ["signals", "map", "graph", "math", "assistant", "grid", "reproduce", "tools"] as const;
 export type WinId = (typeof WIN_IDS)[number];
 
@@ -20,11 +22,22 @@ export interface Rect {
 export interface WinState extends Rect {
   open: boolean;
 }
+/** A chart window: its place on the grid and what it shows (serialisable, so it survives a reload). */
+export type ChartWin = WinState & ChartSpec;
 export interface Layout {
   wins: Record<WinId, WinState>;
-  /** Back to front: the last one is on top. */
-  order: WinId[];
+  /** The chart windows the researcher added, by id (`chart:<n>`); closing one removes it. */
+  charts: Record<string, ChartWin>;
+  /** Back to front: the last one is on top; chart ids included. */
+  order: string[];
 }
+
+export const CHART_PREFIX = "chart:";
+export const isChartId = (id: string) => id.startsWith(CHART_PREFIX);
+/** Every window id, the fixed ones first, then the charts in the order they were added. */
+export const allIds = (l: Layout): string[] => [...WIN_IDS, ...Object.keys(l.charts)];
+/** The place of any window; a chart's record also carries its spec. */
+export const winOf = (l: Layout, id: string): WinState => (isChartId(id) ? (l.charts[id] as ChartWin) : l.wins[id as WinId]);
 
 /** Smallest size of each window, in columns and rows. */
 export const MIN_SIZE: Record<WinId, { w: number; h: number }> = {
@@ -38,11 +51,14 @@ export const MIN_SIZE: Record<WinId, { w: number; h: number }> = {
   tools: { w: 4, h: 10 },
 };
 
+export const CHART_MIN_SIZE = { w: 4, h: 10 };
+const minSize = (id: string) => (isChartId(id) ? CHART_MIN_SIZE : MIN_SIZE[id as WinId]);
+
 const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
 
 /** Keeps a rectangle at least its minimum size and inside the board. */
-export function clampRect(r: Rect, id: WinId, rows: number): Rect {
-  const min = MIN_SIZE[id];
+export function clampRect(r: Rect, id: string, rows: number): Rect {
+  const min = minSize(id);
   const w = clamp(Math.round(r.w), Math.min(min.w, COLS), COLS);
   const h = clamp(Math.round(r.h), Math.min(min.h, rows), Math.max(rows, 1));
   return { w, h, x: clamp(Math.round(r.x), 0, COLS - w), y: clamp(Math.round(r.y), 0, Math.max(0, rows - h)) };
@@ -64,7 +80,7 @@ export function defaultLayout(): Layout {
     reproduce: { x: 0, y: 0, w: 12, h: 32, open: false },
     tools: { x: 0, y: 40, w: 12, h: 36, open: false },
   };
-  return { wins, order: ["signals", "map", "graph", "math", "assistant", "grid", "reproduce", "tools"] };
+  return { wins, charts: {}, order: ["signals", "map", "graph", "math", "assistant", "grid", "reproduce", "tools"] };
 }
 
 export type Preset = "default" | "map" | "signals" | "units" | "analysis";
@@ -75,7 +91,7 @@ export function presetLayout(preset: Preset): Layout {
   const w = (patch: Partial<Record<WinId, Partial<WinState>>>): Layout => {
     const wins = { ...d.wins };
     for (const id of WIN_IDS) if (patch[id]) wins[id] = { ...wins[id], ...patch[id] };
-    return { wins, order: d.order };
+    return { wins, charts: {}, order: d.order };
   };
   switch (preset) {
     case "map":
@@ -125,38 +141,49 @@ const overlaps = (a: Rect, b: Rect) => a.x < b.x + b.w && a.x + a.w > b.x && a.y
  * is pushed down past anything it overlaps. No overlaps remain and no gap that a window could rise into.
  * Closed windows keep their rectangle and are left out.
  */
-export function compactLayout(layout: Layout, moved?: WinId): Layout {
-  const open = WIN_IDS.filter((id) => layout.wins[id].open).sort(
-    (a, b) =>
-      layout.wins[a].y - layout.wins[b].y ||
-      (a === moved ? -1 : b === moved ? 1 : 0) ||
-      layout.wins[a].x - layout.wins[b].x ||
-      WIN_IDS.indexOf(a) - WIN_IDS.indexOf(b),
-  );
+export function compactLayout(layout: Layout, moved?: string): Layout {
+  const ids = allIds(layout);
+  const open = ids
+    .filter((id) => winOf(layout, id).open)
+    .sort(
+      (a, b) =>
+        winOf(layout, a).y - winOf(layout, b).y ||
+        (a === moved ? -1 : b === moved ? 1 : 0) ||
+        winOf(layout, a).x - winOf(layout, b).x ||
+        ids.indexOf(a) - ids.indexOf(b),
+    );
   const placed: Rect[] = [];
-  const wins = { ...layout.wins };
+  let next = layout;
   for (const id of open) {
-    const w = layout.wins[id];
+    const w = winOf(layout, id);
     const r: Rect = { x: w.x, y: Math.max(0, w.y), w: w.w, h: w.h };
     const blocked = (y: number) => placed.some((p) => overlaps({ ...r, y }, p));
     while (r.y > 0 && !blocked(r.y - 1)) r.y--;
     while (blocked(r.y)) r.y++;
     placed.push(r);
-    wins[id] = { ...w, y: r.y };
+    next = setWin(next, id, { ...w, y: r.y });
   }
-  return { wins, order: layout.order };
+  return next;
 }
 
 /** The layout as it must be drawn: every window inside the board. */
 export function fitLayout(layout: Layout): Layout {
-  const wins = { ...layout.wins };
-  for (const id of WIN_IDS) wins[id] = { ...wins[id], ...clampRect(wins[id], id, MAX_ROWS) };
-  return { wins, order: layout.order };
+  let next = layout;
+  for (const id of allIds(layout)) {
+    const w = winOf(layout, id);
+    next = setWin(next, id, { ...w, ...clampRect(w, id, MAX_ROWS) });
+  }
+  return next;
 }
 
 /** Rows the board needs: the lowest open window's bottom edge. */
 export function boardRows(layout: Layout): number {
-  return Math.max(12, ...WIN_IDS.filter((id) => layout.wins[id].open).map((id) => layout.wins[id].y + layout.wins[id].h));
+  return Math.max(
+    12,
+    ...allIds(layout)
+      .filter((id) => winOf(layout, id).open)
+      .map((id) => winOf(layout, id).y + winOf(layout, id).h),
+  );
 }
 
 export const FOCUS_KEY = "aei.research.focus";
@@ -166,12 +193,12 @@ export const FOCUS_KEY = "aei.research.focus";
  * the others are taken off the board. Derived from the user's layout, which is left untouched, so leaving
  * focus restores it exactly.
  */
-export function focusLayout(layout: Layout, id: WinId, rows: number): Layout {
-  const wins = { ...layout.wins };
-  for (const w of WIN_IDS) if (w !== id) wins[w] = { ...wins[w], open: false };
-  const own = wins[id];
-  wins[id] = { ...own, x: 0, y: 0, w: COLS, h: Math.max(own.h, rows, MIN_SIZE[id].h), open: true };
-  return { wins, order: raise(layout, id).order };
+export function focusLayout(layout: Layout, id: string, rows: number): Layout {
+  let next = layout;
+  for (const w of allIds(layout)) if (w !== id) next = setWin(next, w, { ...winOf(next, w), open: false });
+  const own = winOf(next, id);
+  next = setWin(next, id, { ...own, x: 0, y: 0, w: COLS, h: Math.max(own.h, rows, minSize(id).h), open: true });
+  return { ...next, order: raise(layout, id).order };
 }
 
 const isWinId = (v: unknown): v is WinId => typeof v === "string" && WIN_IDS.includes(v as WinId);
@@ -185,22 +212,49 @@ export function loadFocus(): WinId | null {
   }
 }
 
-export function saveFocus(id: WinId | null): void {
+/** Only the fixed windows are remembered: a chart's id is not kept across a reload. */
+export function saveFocus(id: string | null): void {
   try {
-    if (id === null) localStorage.removeItem(FOCUS_KEY);
+    if (id === null || !isWinId(id)) localStorage.removeItem(FOCUS_KEY);
     else localStorage.setItem(FOCUS_KEY, id);
   } catch {
     // Private mode or blocked storage: focus simply does not persist.
   }
 }
 
-export function raise(layout: Layout, id: WinId): Layout {
+export function raise(layout: Layout, id: string): Layout {
   if (layout.order[layout.order.length - 1] === id) return layout;
   return { ...layout, order: [...layout.order.filter((x) => x !== id), id] };
 }
 
-export function patchWin(layout: Layout, id: WinId, patch: Partial<WinState>): Layout {
-  return { ...layout, wins: { ...layout.wins, [id]: { ...layout.wins[id], ...patch } } };
+function setWin(layout: Layout, id: string, w: WinState): Layout {
+  return isChartId(id)
+    ? { ...layout, charts: { ...layout.charts, [id]: { ...(layout.charts[id] as ChartWin), ...w } } }
+    : { ...layout, wins: { ...layout.wins, [id]: w } };
+}
+
+export function patchWin(layout: Layout, id: string, patch: Partial<WinState>): Layout {
+  return setWin(layout, id, { ...winOf(layout, id), ...patch });
+}
+
+/** Adds a chart window under everything else (compaction floats it up into a gap) and raises it. */
+export function addChart(layout: Layout, spec: ChartSpec): { layout: Layout; id: string } {
+  const n = Math.max(0, ...Object.keys(layout.charts).map((k) => Number(k.slice(CHART_PREFIX.length)) || 0)) + 1;
+  const id = `${CHART_PREFIX}${n}`;
+  const count = Object.keys(layout.charts).length;
+  const win: ChartWin = { ...spec, x: (count % 2) * 6, y: boardRows(layout), w: 6, h: 16, open: true };
+  return { layout: raise({ ...layout, charts: { ...layout.charts, [id]: win }, order: [...layout.order, id] }, id), id };
+}
+
+/** Closing a chart removes it. */
+export function removeChart(layout: Layout, id: string): Layout {
+  const { [id]: _gone, ...charts } = layout.charts;
+  return { ...layout, charts, order: layout.order.filter((x) => x !== id) };
+}
+
+/** The chart windows (and their stacking) of `from`, carried over onto another arrangement of the fixed windows. */
+export function withCharts(layout: Layout, from: Layout): Layout {
+  return { ...layout, charts: from.charts, order: [...layout.order.filter((id) => !isChartId(id)), ...from.order.filter(isChartId)] };
 }
 
 const isInt = (n: unknown): n is number => typeof n === "number" && Number.isInteger(n);
@@ -209,7 +263,12 @@ const isInt = (n: unknown): n is number => typeof n === "number" && Number.isInt
 export function parseLayout(raw: string | null): Layout | null {
   if (!raw) return null;
   try {
-    const v = JSON.parse(raw) as { v?: number; wins?: Record<string, Partial<WinState>>; order?: unknown };
+    const v = JSON.parse(raw) as {
+      v?: number;
+      wins?: Record<string, Partial<WinState>>;
+      charts?: Record<string, Partial<WinState> & Record<string, unknown>>;
+      order?: unknown;
+    };
     if (v.v !== 1 || !v.wins || !Array.isArray(v.order)) return null;
     const wins = {} as Record<WinId, WinState>;
     for (const id of WIN_IDS) {
@@ -217,9 +276,17 @@ export function parseLayout(raw: string | null): Layout | null {
       if (!w || !isInt(w.x) || !isInt(w.y) || !isInt(w.w) || !isInt(w.h) || typeof w.open !== "boolean") return null;
       wins[id] = { x: w.x, y: w.y, w: w.w, h: w.h, open: w.open };
     }
-    const order = (v.order as unknown[]).filter((x): x is WinId => WIN_IDS.includes(x as WinId));
-    for (const id of WIN_IDS) if (!order.includes(id)) order.push(id);
-    return compactLayout(fitLayout({ wins, order: [...new Set(order)] }));
+    // Layouts saved before chart windows have no `charts`; a malformed chart is dropped, the rest stays.
+    const charts: Record<string, ChartWin> = {};
+    for (const [id, c] of Object.entries(v.charts ?? {})) {
+      const spec = parseSpec(c);
+      if (!isChartId(id) || !spec || !c || !isInt(c.x) || !isInt(c.y) || !isInt(c.w) || !isInt(c.h) || typeof c.open !== "boolean")
+        continue;
+      charts[id] = { ...spec, x: c.x, y: c.y, w: c.w, h: c.h, open: c.open };
+    }
+    const order = (v.order as unknown[]).filter((x): x is string => typeof x === "string" && (WIN_IDS.includes(x as WinId) || x in charts));
+    for (const id of [...WIN_IDS, ...Object.keys(charts)]) if (!order.includes(id)) order.push(id);
+    return compactLayout(fitLayout({ wins, charts, order: [...new Set(order)] }));
   } catch {
     return null;
   }

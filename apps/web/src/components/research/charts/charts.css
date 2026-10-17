@@ -1,0 +1,138 @@
+/* Chart windows (D-072 motion: tokens, off under reduced motion). Tokens only; the workspace supplies the frame. */
+.ch {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  height: 100%;
+  padding: var(--pad);
+  color: var(--ink);
+  font-size: var(--t-s);
+  overflow: auto;
+}
+.ch-head h2 {
+  margin: 0;
+  font: 600 var(--t-m) var(--font-display);
+}
+.ch-sub,
+.ch-read,
+.ch-empty {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--t-xs);
+}
+.ch-error {
+  color: var(--st-alert);
+}
+.ch-body {
+  flex: 1;
+  min-height: 0;
+}
+.ch-figure {
+  margin: 0;
+}
+.ch-fig {
+  display: block;
+  width: 100%;
+  max-width: 640px;
+  height: auto;
+  animation: ch-in var(--mo-3) var(--mo-ease);
+}
+.ch-read {
+  min-height: 2.6em;
+  margin-top: 4px;
+  color: var(--ink-2);
+}
+.ch-grid {
+  stroke: var(--line);
+}
+.ch-tick {
+  fill: var(--ink-3);
+  font-size: 10px;
+}
+.ch-panel-name {
+  fill: var(--ink-2);
+}
+.ch-band {
+  fill: var(--live-soft);
+}
+.ch-line {
+  stroke: var(--live);
+  stroke-width: 2;
+}
+.ch-dot {
+  fill: var(--live);
+}
+.ch-bar {
+  fill: var(--live);
+  fill-opacity: 0.8;
+  transition: fill-opacity var(--mo-1) var(--mo-ease);
+}
+.ch-hit {
+  fill: transparent;
+  cursor: pointer;
+}
+.ch-hit:hover,
+.ch-hit:focus-visible {
+  fill: var(--live-soft);
+  fill-opacity: 0.5;
+  outline: none;
+}
+.ch-panel {
+  cursor: pointer;
+}
+.ch-panel-bg {
+  fill: transparent;
+  stroke: var(--line);
+  transition: stroke var(--mo-1) var(--mo-ease);
+}
+.ch-panel:hover .ch-panel-bg,
+.ch-panel:focus-visible .ch-panel-bg {
+  stroke: var(--live);
+}
+.ch-panel:focus-visible {
+  outline: none;
+}
+.ch-foot {
+  display: flex;
+  gap: var(--gap);
+}
+@keyframes ch-in {
+  from {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ch-fig {
+    animation: none;
+  }
+}
+
+/* The "+ Chart" form in the workspace tray. */
+.ch-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  margin-top: var(--gap);
+  padding-top: var(--gap);
+  border-top: 1px solid var(--line);
+}
+.ch-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--t-xs);
+  color: var(--ink-3);
+}
+.ch-form select {
+  height: var(--control-h);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control);
+  background: var(--glass-3);
+  color: var(--ink);
+  padding: 0 8px;
+  font: inherit;
+  font-size: var(--t-s);
+}
+.ch-add {
+  align-self: flex-start;
+}

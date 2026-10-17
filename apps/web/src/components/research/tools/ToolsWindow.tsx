@@ -4,6 +4,8 @@ import { antibioticName, type Locale, phenotypeName, specimenName, t, wardName }
 import { useEffect, useMemo, useRef, useState } from "react";
 import { siteWards } from "../../../sites.ts";
 import type { PanelProps } from "../board.ts";
+import { specFromResult, specFromSlice } from "../charts/model.ts";
+import type { ChartSpec } from "../charts/spec.ts";
 import { shift } from "../feed/model.ts";
 import {
   baselineStart,
@@ -32,6 +34,10 @@ import "./tools.css";
 export interface ToolsProps extends PanelProps {
   /** The selected signal's window; null falls back to the last 12 weeks to the clock. */
   window: { from: string; to: string } | null;
+  /** Adds a chart window (the Add as chart buttons). */
+  onAddChart?: (spec: ChartSpec) => void;
+  /** The result cells as they change, for the "+ Chart" form's sources. */
+  onCells?: (cells: Cell[]) => void;
 }
 
 const DEFAULT_WEEKS = 12;
@@ -72,7 +78,7 @@ function EventSelect({ locale, id, value, onChange }: { locale: Locale; id: stri
 }
 
 export function ToolsWindow(props: ToolsProps) {
-  const { client, locale, asOf, state, window: win } = props;
+  const { client, locale, asOf, state, window: win, onAddChart, onCells } = props;
   const [slice, setSlice] = useState<Slice>(() => initialSlice(win, asOf, state));
   const winKey = win ? `${win.from}|${win.to}` : "";
   const firstKey = useRef(winKey);
@@ -87,6 +93,7 @@ export function ToolsWindow(props: ToolsProps) {
   }, [asOf, win, state]);
 
   const [cells, setCells] = useState<Cell[]>([]);
+  useEffect(() => onCells?.(cells), [cells, onCells]);
   const next = useRef(1);
   const [busy, setBusy] = useState<ToolId | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -240,7 +247,19 @@ export function ToolsWindow(props: ToolsProps) {
           <p className="tl-empty">{t(locale, "toolsEmpty")}</p>
         ) : (
           cells.map((c) => (
-            <ResultCell key={c.id} cell={c} locale={locale} onRemove={(id) => setCells((all) => all.filter((x) => x.id !== id))} />
+            <ResultCell
+              key={c.id}
+              cell={c}
+              locale={locale}
+              onChart={
+                onAddChart &&
+                ((r) => {
+                  const spec = specFromResult(r);
+                  if (spec) onAddChart(spec);
+                })
+              }
+              onRemove={(id) => setCells((all) => all.filter((x) => x.id !== id))}
+            />
           ))
         )}
       </section>
@@ -354,6 +373,16 @@ export function ToolsWindow(props: ToolsProps) {
               </div>
             )}
             {runButton(tool)}
+            {onAddChart && (tool === "shares" || tool === "beta") && (
+              <button
+                type="button"
+                className="btn tl-run"
+                disabled={!valid}
+                onClick={() => onAddChart(specFromSlice(slice, event, tool === "shares" ? "share" : "beta", period))}
+              >
+                {t(locale, "chartAddAs")}
+              </button>
+            )}
           </form>
         ))}
       </section>

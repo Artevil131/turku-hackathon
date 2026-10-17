@@ -9,14 +9,19 @@ import {
   useRef,
   useState,
 } from "react";
+import { chartTitle } from "../charts/model.ts";
+import type { ChartSpec } from "../charts/spec.ts";
 import {
+  addChart,
   boardRows,
+  CHART_MIN_SIZE,
   COLS,
   clampRect,
   compactLayout,
   defaultLayout,
   fitLayout,
   focusLayout,
+  isChartId,
   type Layout,
   loadFocus,
   loadLayout,
@@ -27,10 +32,13 @@ import {
   presetLayout,
   ROW_PX,
   raise,
+  removeChart,
   saveFocus,
   saveLayout,
   WIN_IDS,
   type WinId,
+  winOf,
+  withCharts,
 } from "./layout.ts";
 import "./workspace.css";
 
@@ -65,6 +73,12 @@ const TITLE_KEY = {
   tools: "toolsWindow",
 } as const;
 
+/** A request to add a chart window: a new `key` adds `spec`. */
+export interface ChartRequest {
+  key: number;
+  spec: ChartSpec;
+}
+
 /** The stacked order under 1100 px: the list first, the map last (as before). */
 const STACK_ORDER: readonly WinId[] = ["signals", "math", "assistant", "map", "graph", "grid", "reproduce", "tools"];
 
@@ -83,10 +97,11 @@ function useWide(): boolean {
 }
 
 type Rect = { x: number; y: number; w: number; h: number };
+const CHART_MIN = CHART_MIN_SIZE;
 
 type Drag = {
   kind: "move" | "size" | "sizeX" | "sizeY";
-  id: WinId;
+  id: string;
   x0: number;
   y0: number;
   scroll0: number;
@@ -113,6 +128,9 @@ export function Workspace({
   primary = null,
   answers = [],
   lead,
+  chartRequest = null,
+  chartContent,
+  chartMenu,
 }: {
   locale: Locale;
   content: Record<WinId, ReactNode>;
@@ -132,6 +150,12 @@ export function Workspace({
   answers?: readonly WinId[];
   /** One line per window saying what it answers for the selected signal, shown at its top. */
   lead?: Partial<Record<WinId, string>>;
+  /** Adds a chart window each time `key` changes (the Add as chart buttons). */
+  chartRequest?: ChartRequest | null;
+  /** The body of a chart window. */
+  chartContent?: (id: string, spec: ChartSpec) => ReactNode;
+  /** The form behind "+ Chart" in the tray; `done` closes the tray. */
+  chartMenu?: (done: () => void) => ReactNode;
 }) {
   const wide = useWide();
   const areaRef = useRef<HTMLDivElement>(null);
@@ -139,13 +163,13 @@ export function Workspace({
   const [saved, setSaved] = useState<Layout | null>(loadLayout);
   // The layout previewed while a window is being dragged or resized; committed on release.
   const [draft, setDraft] = useState<Layout | null>(null);
-  const [dragging, setDragging] = useState<WinId | null>(null);
+  const [dragging, setDragging] = useState<string | null>(null);
   const [areaW, setAreaW] = useState(0);
   // Rows from the board's top edge to the bottom of its scroll viewport: the height of a focused window.
   const [viewRows, setViewRows] = useState(24);
   const [animate, setAnimate] = useState(false);
   const [status, setStatus] = useState("");
-  const [focus, setFocus] = useState<WinId | null>(loadFocus);
+  const [focus, setFocus] = useState<string | null>(loadFocus);
   const drag = useRef<Drag | null>(null);
   const focusAfter = useRef<string | null>(null);
 
@@ -182,29 +206,33 @@ export function Workspace({
     return () => cancelAnimationFrame(raf);
   }, [areaW, animate]);
 
-  const commit = (next: Layout, moved?: WinId) => {
+  const commit = (next: Layout, moved?: string) => {
     const c = compactLayout(fitLayout(next), moved);
     setSaved(c);
     saveLayout(c);
     return c;
   };
-  const update = (fn: (l: Layout) => Layout, moved?: WinId) => commit(fn(base), moved);
+  const update = (fn: (l: Layout) => Layout, moved?: string) => commit(fn(base), moved);
 
   // Focus mode: remembered apart from the layout, so it survives a reload but never rewrites the user's grid.
-  const setFocusTo = (id: WinId | null) => {
+  const titleOf = (id: string): string => {
+    const c = layout.charts[id] ?? base.charts[id];
+    return c ? chartTitle(locale, c, null) : t(locale, TITLE_KEY[id as WinId]);
+  };
+  const setFocusTo = (id: string | null) => {
     setFocus(id);
     saveFocus(id);
     if (id) {
       focusAfter.current = `ws-win-${id}`;
-      setStatus(t(locale, "wsFocusStatus", { title: t(locale, TITLE_KEY[id]) }));
+      setStatus(t(locale, "wsFocusStatus", { title: titleOf(id) }));
     } else if (focus) {
       focusAfter.current = `ws-win-${focus}`;
       setStatus(t(locale, "wsFocusLeft"));
     }
   };
-  const toggleFocus = (id?: WinId) => {
+  const toggleFocus = (id?: string) => {
     if (focus && (!id || id === focus)) return setFocusTo(null);
-    const active = (document.activeElement as HTMLElement | null)?.closest<HTMLElement>(".ws-win")?.dataset.win as WinId | undefined;
+    const active = (document.activeElement as HTMLElement | null)?.closest<HTMLElement>(".ws-win")?.dataset.win;
     const target = id ?? (primary && base.wins[primary].open ? primary : (active ?? primary ?? "math"));
     setFocusTo(target);
   };
@@ -241,11 +269,13 @@ export function Workspace({
     document.getElementById(id)?.focus();
   });
 
-  const close = (id: WinId) => {
+  const close = (id: string) => {
     focusAfter.current = "ws-tray-button";
     if (focus === id) setFocusTo(null);
+    // A chart is not kept in the tray: closing it removes it.
+    if (isChartId(id)) return void update((l) => removeChart(l, id));
     update((l) => patchWin(l, id, { open: false }));
-    onClosed?.(id);
+    onClosed?.(id as WinId);
   };
   const open = (id: WinId) => {
     focusAfter.current = `ws-win-${id}`;
@@ -255,6 +285,17 @@ export function Workspace({
     onOpened?.(id);
   };
   const toggle = (id: WinId) => (base.wins[id].open ? close(id) : open(id));
+  // "Add as chart" and the tray form: a new window, brought forward (and focused when the board is in focus mode).
+  const lastChart = useRef(chartRequest?.key ?? null);
+  useEffect(() => {
+    if (!chartRequest || chartRequest.key === lastChart.current) return;
+    lastChart.current = chartRequest.key;
+    const added = addChart(base, chartRequest.spec);
+    commit(added.layout, added.id);
+    focusAfter.current = `ws-win-${added.id}`;
+    if (focus) setFocusTo(added.id);
+    setStatus(t(locale, "chartAdded", { title: chartTitle(locale, chartRequest.spec, null) }));
+  });
   const revealed = useRef(reveal?.key ?? null);
   useEffect(() => {
     if (!reveal || reveal.key === revealed.current) return;
@@ -267,7 +308,7 @@ export function Workspace({
   const PRESETS: readonly Preset[] = ["default", "map", "signals", "units", "analysis"];
   const PRESET_KEY = { default: "wsDefault", map: "wsMap", signals: "wsSignals", units: "wsUnits", analysis: "wsAnalysis" } as const;
   const applyPreset = (p: Preset) => {
-    const l = presetLayout(p);
+    const l = withCharts(presetLayout(p), base);
     setSaved(l);
     saveLayout(l);
     if (focus) setFocusTo(null);
@@ -289,13 +330,15 @@ export function Workspace({
   const focusBar = focused ? (
     <div className="ws-focusbar" role="group" aria-label={t(locale, "wsFocusOn")}>
       <span className="ws-layouts-label">{t(locale, "wsFocusOn")}</span>
-      <strong className="ws-focusbar-current">{t(locale, TITLE_KEY[focused])}</strong>
+      <strong className="ws-focusbar-current">{titleOf(focused)}</strong>
       <span className="ws-focusbar-rail">
-        {WIN_IDS.filter((id) => id !== focused && base.wins[id].open).map((id) => (
-          <button type="button" key={id} className="ws-focusbar-win" data-focus-win={id} onClick={() => setFocusTo(id)}>
-            {t(locale, TITLE_KEY[id])}
-          </button>
-        ))}
+        {[...WIN_IDS, ...Object.keys(base.charts)]
+          .filter((id) => id !== focused && winOf(base, id).open)
+          .map((id) => (
+            <button type="button" key={id} className="ws-focusbar-win" data-focus-win={id} onClick={() => setFocusTo(id)}>
+              {titleOf(id)}
+            </button>
+          ))}
       </span>
       <button type="button" className="ws-focusbar-leave" data-focus-leave onClick={() => setFocusTo(null)}>
         {t(locale, "wsFocusLeave")}
@@ -304,24 +347,26 @@ export function Workspace({
     </div>
   ) : null;
   const reset = () => {
-    setSaved(null);
-    saveLayout(null);
+    // The fixed windows go back to the default; the charts the researcher added stay.
+    const keep = Object.keys(base.charts).length > 0 ? withCharts(defaultLayout(), base) : null;
+    setSaved(keep);
+    saveLayout(keep);
     setStatus("");
   };
-  const focusWin = (id: WinId) => {
+  const focusWin = (id: string) => {
     if (base.order[base.order.length - 1] !== id) update((l) => raise(l, id));
   };
 
-  const announce = (id: WinId, r: Rect) =>
-    setStatus(t(locale, "wsStatus", { title: t(locale, TITLE_KEY[id]), x: r.x + 1, y: r.y + 1, w: r.w, h: r.h }));
+  const announce = (id: string, r: Rect) =>
+    setStatus(t(locale, "wsStatus", { title: titleOf(id), x: r.x + 1, y: r.y + 1, w: r.w, h: r.h }));
 
-  const begin = (e: PointerEvent, kind: Drag["kind"], id: WinId) => {
+  const begin = (e: PointerEvent, kind: Drag["kind"], id: string) => {
     if (e.button !== 0 || !areaRef.current) return;
     if ((e.target as HTMLElement).closest("button") && kind === "move") return;
     e.preventDefault();
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     focusWin(id);
-    const w = base.wins[id];
+    const w = winOf(base, id);
     const area = areaRef.current.getBoundingClientRect().width;
     const cw = area / COLS;
     const el = (e.currentTarget as HTMLElement).closest<HTMLElement>(".ws-win");
@@ -366,7 +411,7 @@ export function Workspace({
       d.el?.style.setProperty("--ty", `${py}px`);
       next = { ...d.rect, x: Math.round(px / d.colW), y: Math.round(py / ROW_PX) };
     } else {
-      const min = MIN_SIZE[d.id];
+      const min = isChartId(d.id) ? CHART_MIN : MIN_SIZE[d.id as WinId];
       const pw = Math.min(Math.max(min.w * d.colW, w0 + (d.kind === "sizeY" ? 0 : dx)), d.areaW - left0);
       const ph = Math.max(min.h * ROW_PX, h0 + (d.kind === "sizeX" ? 0 : dy));
       d.el?.style.setProperty("--tw", `${pw}px`);
@@ -396,27 +441,28 @@ export function Workspace({
     const c = commit(patchWin(d.base, d.id, d.last), d.id);
     setDraft(null);
     setDragging(null);
-    announce(d.id, c.wins[d.id]);
+    announce(d.id, winOf(c, d.id));
   };
 
-  const onHandleKey = (e: KeyboardEvent, id: WinId) => {
+  const onHandleKey = (e: KeyboardEvent, id: string) => {
     const dir = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
     if (!dir) return;
     e.preventDefault();
-    const w = base.wins[id];
+    const w = winOf(base, id);
     const r = e.shiftKey
       ? { ...w, x: w.x + (dir[0] as number), y: w.y + (dir[1] as number) }
       : { ...w, w: w.w + (dir[0] as number), h: w.h + (dir[1] as number) };
     const next = clampRect(r, id, MAX_ROWS);
     const c = update((l) => patchWin(l, id, next), id);
-    announce(id, c.wins[id]);
+    announce(id, winOf(c, id));
   };
 
   // A fixed DOM order; the stacking comes from `order` through z-index (see the note at the top).
-  const ids = wide ? WIN_IDS : STACK_ORDER;
-  const tray = <Tray locale={locale} open={(id) => base.wins[id].open} onToggle={toggle} onReset={reset} />;
-  const roleOf = (id: WinId): "primary" | "answer" | "quiet" | undefined =>
-    primary === null ? undefined : id === primary ? "primary" : answers.includes(id) ? "answer" : "quiet";
+  const chartIds = Object.keys(layout.charts);
+  const ids: readonly string[] = wide ? [...WIN_IDS, ...chartIds] : [...STACK_ORDER, ...chartIds];
+  const tray = <Tray locale={locale} open={(id) => base.wins[id].open} onToggle={toggle} onReset={reset} chartMenu={chartMenu} />;
+  const roleOf = (id: string): "primary" | "answer" | "quiet" | undefined =>
+    primary === null ? undefined : id === primary ? "primary" : answers.includes(id as WinId) ? "answer" : "quiet";
   const place = (r: Rect): CSSProperties => ({
     transform: `translate3d(${r.x * colW}px,${r.y * ROW_PX}px,0)`,
     width: r.w * colW,
@@ -433,11 +479,12 @@ export function Workspace({
         </div>
       ) : null}
       <div className="ws-area" ref={areaRef} style={wide ? { height: boardRows(layout) * ROW_PX } : undefined}>
-        {wide && dragging ? <div className="ws-ghost" aria-hidden="true" style={place(layout.wins[dragging])} /> : null}
+        {wide && dragging ? <div className="ws-ghost" aria-hidden="true" style={place(winOf(layout, dragging))} /> : null}
         {ids.map((id) => {
-          const w = layout.wins[id];
+          const w = winOf(layout, id);
           if (!w.open) return null;
-          const title = t(locale, TITLE_KEY[id]);
+          const chart = layout.charts[id];
+          const title = titleOf(id);
           const z = layout.order.indexOf(id);
           const isFocus = focused === id;
           const style = wide
@@ -472,8 +519,8 @@ export function Workspace({
               onFocusCapture={wide ? () => focusWin(id) : undefined}
             >
               <div className="ws-frame">
-                {lead?.[id] ? <p className="ws-lead">{lead[id]}</p> : null}
-                <div className="ws-body">{content[id]}</div>
+                {lead?.[id as WinId] ? <p className="ws-lead">{lead[id as WinId]}</p> : null}
+                <div className="ws-body">{chart ? chartContent?.(id, chart) : content[id as WinId]}</div>
                 {wide && !focused ? (
                   <>
                     <div className="ws-grip" aria-hidden="true" {...drags("move")} />
@@ -555,13 +602,16 @@ function Tray({
   open,
   onToggle,
   onReset,
+  chartMenu,
 }: {
   locale: Locale;
   open: (id: WinId) => boolean;
   onToggle: (id: WinId) => void;
   onReset: () => void;
+  chartMenu?: (done: () => void) => ReactNode;
 }) {
   const [shown, setShown] = useState(false);
+  const [adding, setAdding] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!shown) return;
@@ -610,6 +660,19 @@ function Tray({
               </li>
             ))}
           </ul>
+          {chartMenu ? (
+            <>
+              <button type="button" className="ws-pop-reset ws-pop-chart" aria-expanded={adding} onClick={() => setAdding((v) => !v)}>
+                {t(locale, "chartTray")}
+              </button>
+              {adding
+                ? chartMenu(() => {
+                    setAdding(false);
+                    setShown(false);
+                  })
+                : null}
+            </>
+          ) : null}
           <p className="ws-pop-hint">{t(locale, "wsHint")}</p>
           <button type="button" className="ws-pop-reset" onClick={onReset}>
             {t(locale, "wsReset")}
