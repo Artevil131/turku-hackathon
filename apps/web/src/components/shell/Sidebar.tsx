@@ -26,6 +26,7 @@ const Svg = ({ d }: { d: string }) => (
   </svg>
 );
 const HOME = "M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H5a1 1 0 0 1-1-1z";
+const PATIENT = "M12 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM5 20c0-3.9 3.1-6.5 7-6.5s7 2.6 7 6.5";
 const DATA = "M12 4c4.4 0 8 1.3 8 3s-3.6 3-8 3-8-1.3-8-3 3.6-3 8-3ZM4 7v5c0 1.7 3.6 3 8 3s8-1.3 8-3V7M4 12v5c0 1.7 3.6 3 8 3s8-1.3 8-3v-5";
 const SEARCH = "M10.5 17a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13ZM15.5 15.5 20 20";
 const GLOBE = "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18ZM3 12h18M12 3c-2.8 2.6-2.8 15.4 0 18M12 3c2.8 2.6 2.8 15.4 0 18";
@@ -67,6 +68,7 @@ export function Sidebar({
   onDrawer,
   onCollapsed,
   onHome,
+  onPatient,
   onTab,
   onCloseTab,
   onNew,
@@ -86,6 +88,7 @@ export function Sidebar({
   onDrawer: (open: boolean) => void;
   onCollapsed: (value: boolean) => void;
   onHome: () => void;
+  onPatient: () => void;
   onTab: (tab: DocTab) => void;
   onCloseTab: (tab: DocTab) => void;
   onNew: () => void;
@@ -198,6 +201,19 @@ export function Sidebar({
               <Svg d={HOME} />
             </span>
             <span className="sb-label">{t(locale, "shellHome")}</span>
+          </button>
+
+          <button
+            type="button"
+            className="sb-item"
+            aria-current={active?.quick === "patient" ? "page" : undefined}
+            onClick={onPatient}
+            title={t(locale, "startPatient")}
+          >
+            <span className="sb-icon">
+              <Svg d={PATIENT} />
+            </span>
+            <span className="sb-label">{t(locale, "startPatient")}</span>
           </button>
 
           <section className="sb-section" aria-labelledby="sb-open-title">

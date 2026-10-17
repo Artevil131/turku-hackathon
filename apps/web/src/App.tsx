@@ -388,6 +388,7 @@ export function App() {
                 onDrawer={setDrawer}
                 onCollapsed={setCollapsed}
                 onHome={() => navigate("home")}
+                onPatient={() => shell.openView("patient")}
                 onTab={activate}
                 onCloseTab={(tab) => close(tab.key)}
                 onDemo={openDemoFile}
