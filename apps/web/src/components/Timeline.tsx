@@ -205,9 +205,24 @@ export function Timeline({
     if (hashPage() === "research") setInc(key);
     else location.hash = `research?inc=${encodeURIComponent(key)}${sharedQuery().replace("?", "&")}`;
   };
+  // "n more in the list": the full list is the Signals window. Elsewhere, go to the research page;
+  // there, raise it, flash it once (it may already be in view) and focus its first row.
   const openList = () => {
     setSheet(false);
-    if (hashPage() !== "research") location.hash = `research${sharedQuery()}`;
+    if (hashPage() !== "research") {
+      location.hash = `research${sharedQuery()}`;
+      return;
+    }
+    const win = document.getElementById("ws-win-signals");
+    if (!win) {
+      document.getElementById("ws-tray-button")?.click();
+      return;
+    }
+    win.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });
+    win.classList.add("ws-flash");
+    setTimeout(() => win.classList.remove("ws-flash"), 1200);
+    const row = win.querySelector<HTMLElement>(".feed-row");
+    (row ?? win).focus({ preventScroll: true });
   };
 
   const hospital = currentHospitalName(locale);
