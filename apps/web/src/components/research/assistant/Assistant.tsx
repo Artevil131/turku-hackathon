@@ -24,6 +24,7 @@ export function Assistant({
   incident,
   spans,
   waiting,
+  inline = false,
 }: {
   client: AeiClient;
   locale: Locale;
@@ -31,6 +32,8 @@ export function Assistant({
   spans: Spans | null;
   /** The incident list is still loading. */
   waiting: boolean;
+  /** Inside the signal card: no heading and no who-line, the card names the signal; the readings only. */
+  inline?: boolean;
 }) {
   // Model wording only while the model answers (D-049); the template otherwise.
   const { status } = useAiStatus(client);
@@ -62,21 +65,26 @@ export function Assistant({
 
   return (
     <section
-      className="assist"
-      aria-labelledby="assist-title"
+      className={`assist${inline ? " assist-inline" : ""}`}
+      aria-labelledby={inline ? undefined : "assist-title"}
+      aria-label={inline ? t(locale, "wsLeadAssistant") : undefined}
       aria-busy={ai === null || alerts.some((a) => entries[a.id]?.status === "loading")}
     >
-      <h2 id="assist-title" className="assist-title">
-        {t(locale, "assistIntro")}
-      </h2>
+      {inline ? null : (
+        <h2 id="assist-title" className="assist-title">
+          {t(locale, "assistIntro")}
+        </h2>
+      )}
       {!incident ? (
         <p className="assist-empty">{waiting ? t(locale, "assistLoading") : t(locale, "assistPick")}</p>
       ) : (
         <>
-          <p className="assist-who">
-            <strong>{kindLabel(locale, incident.kind)}</strong> · {unitLabel(locale, incident.ward)} · {formatDate(locale, incident.date)}
-          </p>
-          {units || incident.phenotypes.length > 0 ? (
+          {inline ? null : (
+            <p className="assist-who">
+              <strong>{kindLabel(locale, incident.kind)}</strong> · {unitLabel(locale, incident.ward)} · {formatDate(locale, incident.date)}
+            </p>
+          )}
+          {!inline && (units || incident.phenotypes.length > 0) ? (
             <p className="assist-spans">
               {units ? t(locale, "assistUnits", { units }) : null}
               {units && incident.phenotypes.length > 0 ? " · " : null}

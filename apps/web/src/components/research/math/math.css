@@ -16,17 +16,15 @@
   margin-bottom: 8px;
 }
 
-/* The title line: the kind's glyph, the priority dot, the one title (signals-redesign.md). */
+/* The title line: the kind's glyph, the priority dot, the one title (signals-redesign.md); the title wraps
+   as one run of text, so the glyph and the dot are inline. */
 .sig-title {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
   outline-offset: 4px;
 }
 .sig-title-glyph {
   display: inline-flex;
-  flex: none;
-  align-self: center;
+  margin-right: 6px;
+  vertical-align: -3px;
   color: var(--ink-2);
 }
 .sig[data-kind="sentinel"] .sig-title-glyph {
@@ -36,9 +34,122 @@
   color: var(--ink-3);
 }
 .sig-title .feed-dot {
-  flex: none;
-  align-self: center;
+  margin: 0 6px 2px 0;
+}
+
+/* As a layer inside the Signals window: the Back control and the title share the head. */
+.sig-layer .sig-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 4px 8px;
+  padding-right: 12px;
+}
+.sig-back {
+  display: inline-flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  gap: 4px;
+  width: fit-content;
+  padding: 2px 6px 2px 2px;
+  margin-left: -4px;
+  border: 0;
+  border-radius: var(--radius-control, 6px);
+  background: none;
+  font: inherit;
+  font-size: var(--t-xs, 12px);
+  font-weight: 500;
+  color: var(--live);
+  cursor: pointer;
+}
+.sig-back:hover {
+  background: var(--brand-accent-soft, #ecebfc);
+}
+.sig-layer .sig-head h2.sig-title {
+  min-width: 0;
   margin: 0;
+  font-size: var(--t-m, 15px);
+  line-height: 1.3;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+.sig-layer .sig-head .info {
+  align-self: start;
+  margin-top: 1px;
+}
+
+/* The open sections: the assistant's reading, the analysis; one quiet heading each. */
+.sig-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+.sig-section-title {
+  margin: 0;
+  font-size: var(--t-s, 13px);
+  font-weight: 600;
+}
+.sig-analyse {
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+.sig-analyse > summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: var(--t-s, 13px);
+  font-weight: 600;
+  list-style: none;
+}
+.sig-analyse > summary::-webkit-details-marker {
+  display: none;
+}
+.sig-analyse > summary::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-right: 1.6px solid currentColor;
+  border-bottom: 1.6px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform var(--mo-1, 120ms) var(--mo-ease, ease-out);
+}
+.sig-analyse[open] > summary::before {
+  transform: rotate(45deg);
+}
+.sig-analysis {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+.sig-result {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.sig-result-title {
+  margin: 0;
+  font-size: var(--t-xs, 12px);
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.sig-result-words {
+  margin: 0;
+  font-size: var(--t-xs, 12px);
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.sig-result .tl-fig {
+  width: 100%;
+  max-width: 480px;
+  height: auto;
+}
+.sig-tools {
+  align-self: flex-start;
 }
 
 /* What it means, in words: the one sentence between the numbers and the sections. */

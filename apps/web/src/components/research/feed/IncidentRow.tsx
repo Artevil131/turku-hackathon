@@ -31,23 +31,18 @@ interface Props {
   kin?: boolean;
   spans: Spans | null;
   onSelect: (key: string) => void;
-  /** "Open the card": brings the signal card into view. Without it the link is not shown. */
-  onOpenCard?: () => void;
 }
 
 /**
  * One line per signal (signals-redesign.md §2.2): glyph · title · date, and the measure under it.
- * Selected, the row adds only the reach chips and "Open the card"; the card holds the rest.
+ * Selected, the row adds only the summary line and the reach chips; the card layer holds the rest.
  * The article takes the click, so a click anywhere on the row (or the smoke's `.feed-row.click()`) selects.
  */
-export function IncidentRow({ locale, incident: inc, selected, kin = false, spans, onSelect, onOpenCard }: Props) {
+export function IncidentRow({ locale, incident: inc, selected, kin = false, spans, onSelect }: Props) {
   const high = incidentPriority(inc.members) === "high";
   const title = signalTitle(locale, inc.kind, inc.lead);
   const owner = incidentResponsibility(locale, inc.members);
-  const onClick = (e: MouseEvent<HTMLElement>) => {
-    if ((e.target as HTMLElement).closest(".feed-open")) return;
-    onSelect(inc.key);
-  };
+  const onClick = (_e: MouseEvent<HTMLElement>) => onSelect(inc.key);
   return (
     // biome-ignore lint/a11y/useSemanticElements: the row holds a button and a link, so it cannot be one button itself
     // biome-ignore lint/a11y/noStaticElementInteractions: the click is delegated from the row's own button
@@ -90,11 +85,6 @@ export function IncidentRow({ locale, incident: inc, selected, kin = false, span
                 <span className="feed-row-bottom">
                   <SpanLine locale={locale} spans={spans} ward={inc.ward} />
                 </span>
-              ) : null}
-              {onOpenCard ? (
-                <button type="button" className="feed-open" onClick={onOpenCard}>
-                  {t(locale, "feedOpenCard")} →
-                </button>
               ) : null}
             </>
           ) : null}

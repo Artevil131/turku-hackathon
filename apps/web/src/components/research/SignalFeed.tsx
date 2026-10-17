@@ -16,7 +16,9 @@ import "./SignalFeed.css";
 
 // The researcher's signal list (signals-redesign.md): one line per signal, grouped by time
 // relative to the clock (this week, this month, earlier), one Filter button whose choices
-// show as removable chips. The selected row opens; the card holds the rest.
+// show as removable chips. A selected signal (inc= in the URL, from a row, a pill or the map)
+// opens the signal card as a layer in this same window: the list slides left, the card slides
+// in with a Back control; Escape or Back returns to the list and clears the selection.
 
 interface Props extends FeedProps {
   load: IncidentLoad;
@@ -25,6 +27,11 @@ interface Props extends FeedProps {
   spansOf: (i: Incident) => Spans | null;
   /** The incident the math panel shows. */
   selected: string | null;
+  /** The signal card, rendered as the layer over the list while `layer` is true. */
+  card?: ReactNode;
+  layer?: boolean;
+  /** Back from the card layer: clears the selection. */
+  onBack?: () => void;
 }
 
 const GROUP_KEY: Record<TimeGroup, "feedGroupWeek" | "feedGroupMonth" | "feedGroupEarlier"> = {
@@ -34,19 +41,6 @@ const GROUP_KEY: Record<TimeGroup, "feedGroupWeek" | "feedGroupMonth" | "feedGro
 };
 
 const SHOWN_KINDS = KINDS.filter((k) => k !== "divergence");
-
-/** Brings a workspace window into view and flashes it once, as "n more in the list" does for this list. */
-function raiseWindow(id: string, reducedMotion: boolean) {
-  const win = document.getElementById(id);
-  if (!win) {
-    document.getElementById("ws-tray-button")?.click();
-    return;
-  }
-  win.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "nearest" });
-  win.classList.add("ws-flash");
-  setTimeout(() => win.classList.remove("ws-flash"), 1200);
-  win.querySelector<HTMLElement>(".sig-title, h2")?.focus?.({ preventScroll: true });
-}
 
 export function SignalFeed(props: Props) {
   const {
@@ -62,9 +56,41 @@ export function SignalFeed(props: Props) {
     selected,
     kin = [],
     hasSelection = false,
-    reducedMotion,
+    card,
+    layer = false,
+    onBack,
   } = props;
   const rootRef = useRef<HTMLElement>(null);
+
+  // The layer: Escape anywhere outside a popover goes back to the list; opening it moves focus to the card's
+  // heading, closing it returns focus to the row that was open.
+  const wasLayer = useRef(layer);
+  useEffect(() => {
+    if (wasLayer.current === layer) return;
+    wasLayer.current = layer;
+    const root = rootRef.current;
+    if (!root) return;
+    const target = layer
+      ? root.querySelector<HTMLElement>(".feed-pane-card .sig-title, .feed-pane-card .sig-back")
+      : root.querySelector<HTMLElement>('.feed-row[aria-current="true"] .feed-row-main, .feed-row .feed-row-main');
+    // preventScroll: a focus into the sliding pane would scroll the overflow-hidden stack sideways mid-slide.
+    target?.focus({ preventScroll: true });
+    root.scrollLeft = 0;
+    for (const el of root.querySelectorAll<HTMLElement>(".feed-stack, .feed-pane")) el.scrollLeft = 0;
+  }, [layer]);
+  useEffect(() => {
+    if (!layer || !onBack) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape" || e.defaultPrevented) return;
+      const el = e.target instanceof Element ? e.target : null;
+      if (el?.closest(".ws-pop, .info, .feed-pop, .geo-detail, dialog")) return;
+      if (!rootRef.current?.contains(el) && el !== document.body && el !== null) return;
+      e.preventDefault();
+      onBack();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [layer, onBack]);
 
   // The Ask field appears when the API reports the assistant answering (Meta.aiStatus "ready"); while
   // a configured model is offline one line says so, and the field returns by itself (D-049).
@@ -112,6 +138,7 @@ export function SignalFeed(props: Props) {
     return () => cancelAnimationFrame(id);
   }, [filterKey, selected]);
 
+  const listHidden = layer && card !== undefined;
   return (
     <section
       ref={rootRef}
@@ -119,143 +146,151 @@ export function SignalFeed(props: Props) {
       aria-labelledby="feed-title"
       aria-busy={load.status === "loading"}
     >
-      <header className="feed-header">
-        <div className="feed-headline">
-          <h1 id="feed-title">{t(locale, "feedTitle")}</h1>
-          {readyAsOf ? (
-            <>
-              <AsOf locale={locale} date={readyAsOf} pending={asOf !== null && asOf !== readyAsOf} clockDate={asOf ?? undefined} />
-              <FilterButton locale={locale} count={active.length}>
-                <label className="feed-pop-field">
-                  <span>{t(locale, "feedFilterUnit")}</span>
-                  <select
-                    className="feed-select"
-                    value={state.unit ?? ""}
-                    onChange={(e) => onChange({ unit: (e.target.value || null) as typeof state.unit })}
-                  >
-                    <option value="">{t(locale, "feedAllUnits")}</option>
-                    {units.map((c) => (
-                      <option key={c} value={c}>
-                        {wardName(locale, c)} · {unitCounts.get(c) ?? 0}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <fieldset className="feed-pop-kinds">
-                  <legend>{t(locale, "feedFilterKind")}</legend>
-                  {SHOWN_KINDS.map((k) => (
-                    <label key={k} className="feed-pop-kind">
-                      <input type="checkbox" checked={state.kinds.includes(k)} onChange={() => toggleKind(k)} />
-                      <KindGlyph kind={k} />
-                      <span className="feed-pop-kind-name">{kindLabel(locale, k)}</span>
-                      <span className="feed-pop-count">{kindCounts.get(k) ?? 0}</span>
+      <div className="feed-stack" data-layer={listHidden ? "card" : "list"}>
+        <div className="feed-pane feed-pane-list" inert={listHidden || undefined} aria-hidden={listHidden || undefined}>
+          <header className="feed-header">
+            <div className="feed-headline">
+              <h1 id="feed-title">{t(locale, "feedTitle")}</h1>
+              {readyAsOf ? (
+                <>
+                  <AsOf locale={locale} date={readyAsOf} pending={asOf !== null && asOf !== readyAsOf} clockDate={asOf ?? undefined} />
+                  <FilterButton locale={locale} count={active.length}>
+                    <label className="feed-pop-field">
+                      <span>{t(locale, "feedFilterUnit")}</span>
+                      <select
+                        className="feed-select"
+                        value={state.unit ?? ""}
+                        onChange={(e) => onChange({ unit: (e.target.value || null) as typeof state.unit })}
+                      >
+                        <option value="">{t(locale, "feedAllUnits")}</option>
+                        {units.map((c) => (
+                          <option key={c} value={c}>
+                            {wardName(locale, c)} · {unitCounts.get(c) ?? 0}
+                          </option>
+                        ))}
+                      </select>
                     </label>
-                  ))}
-                </fieldset>
-                <label className="feed-pop-field">
-                  <span>{t(locale, "feedFilterPhenotype")}</span>
-                  <select
-                    className="feed-select"
-                    value={state.phenotype ?? ""}
-                    onChange={(e) => onChange({ phenotype: (e.target.value || null) as Phenotype | null })}
-                  >
-                    <option value="">{t(locale, "feedAllPhenotypes")}</option>
-                    {phenotypes.map((p) => (
-                      <option key={p} value={p}>
-                        {phenotypeName(p)} · {phenoCounts.get(p) ?? 0}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </FilterButton>
-            </>
-          ) : null}
-        </div>
-        {question.available || question.offline || question.active || question.error ? (
-          <div className="feed-ask">
-            <Ask locale={locale} question={question} />
-            {question.active ? (
-              <AskedResults
-                locale={locale}
-                records={question.records}
-                loading={question.loading}
-                error={question.loadError}
-                asOf={question.answer?.asOf}
-              />
+                    <fieldset className="feed-pop-kinds">
+                      <legend>{t(locale, "feedFilterKind")}</legend>
+                      {SHOWN_KINDS.map((k) => (
+                        <label key={k} className="feed-pop-kind">
+                          <input type="checkbox" checked={state.kinds.includes(k)} onChange={() => toggleKind(k)} />
+                          <KindGlyph kind={k} />
+                          <span className="feed-pop-kind-name">{kindLabel(locale, k)}</span>
+                          <span className="feed-pop-count">{kindCounts.get(k) ?? 0}</span>
+                        </label>
+                      ))}
+                    </fieldset>
+                    <label className="feed-pop-field">
+                      <span>{t(locale, "feedFilterPhenotype")}</span>
+                      <select
+                        className="feed-select"
+                        value={state.phenotype ?? ""}
+                        onChange={(e) => onChange({ phenotype: (e.target.value || null) as Phenotype | null })}
+                      >
+                        <option value="">{t(locale, "feedAllPhenotypes")}</option>
+                        {phenotypes.map((p) => (
+                          <option key={p} value={p}>
+                            {phenotypeName(p)} · {phenoCounts.get(p) ?? 0}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </FilterButton>
+                </>
+              ) : null}
+            </div>
+            {question.available || question.offline || question.active || question.error ? (
+              <div className="feed-ask">
+                <Ask locale={locale} question={question} />
+                {question.active ? (
+                  <AskedResults
+                    locale={locale}
+                    records={question.records}
+                    loading={question.loading}
+                    error={question.loadError}
+                    asOf={question.answer?.asOf}
+                  />
+                ) : null}
+              </div>
             ) : null}
-          </div>
-        ) : null}
-        {active.length > 0 ? (
-          <ul className="feed-active" aria-label={t(locale, "feedFilters")}>
-            {active.map((a) => (
-              <li key={a.key}>
-                <button
-                  type="button"
-                  className="feed-active-chip"
-                  aria-label={t(locale, "feedRemoveFilter", { filter: a.label })}
-                  onClick={a.clear}
-                >
-                  {a.label}
-                  <span aria-hidden="true">×</span>
-                </button>
-              </li>
-            ))}
-            {active.length > 1 ? (
-              <li>
-                <button type="button" className="link feed-active-clear" onClick={clearAll}>
-                  {t(locale, "feedClearFilters")}
-                </button>
-              </li>
+            {active.length > 0 ? (
+              <ul className="feed-active" aria-label={t(locale, "feedFilters")}>
+                {active.map((a) => (
+                  <li key={a.key}>
+                    <button
+                      type="button"
+                      className="feed-active-chip"
+                      aria-label={t(locale, "feedRemoveFilter", { filter: a.label })}
+                      onClick={a.clear}
+                    >
+                      {a.label}
+                      <span aria-hidden="true">×</span>
+                    </button>
+                  </li>
+                ))}
+                {active.length > 1 ? (
+                  <li>
+                    <button type="button" className="link feed-active-clear" onClick={clearAll}>
+                      {t(locale, "feedClearFilters")}
+                    </button>
+                  </li>
+                ) : null}
+              </ul>
             ) : null}
-          </ul>
-        ) : null}
-      </header>
+          </header>
 
-      <div className="feed-scroll">
-        {load.status === "loading" ? (
-          <ul className="feed-list">
-            {[0, 1, 2, 3].map((n) => (
-              <li key={n} className="feed-skeleton" aria-hidden="true">
-                <span />
-                <span />
-              </li>
-            ))}
-          </ul>
-        ) : load.status === "error" ? (
-          <div className="feed-state" role="alert">
-            <p>{t(locale, "feedError")}</p>
-            <button type="button" className="feed-btn" onClick={retry}>
-              {t(locale, "retry")}
-            </button>
+          <div className="feed-scroll">
+            {load.status === "loading" ? (
+              <ul className="feed-list">
+                {[0, 1, 2, 3].map((n) => (
+                  <li key={n} className="feed-skeleton" aria-hidden="true">
+                    <span />
+                    <span />
+                  </li>
+                ))}
+              </ul>
+            ) : load.status === "error" ? (
+              <div className="feed-state" role="alert">
+                <p>{t(locale, "feedError")}</p>
+                <button type="button" className="feed-btn" onClick={retry}>
+                  {t(locale, "retry")}
+                </button>
+              </div>
+            ) : shown.length === 0 ? (
+              <p className="feed-state" role="status">
+                {t(locale, "feedEmpty", { date: formatDate(locale, load.asOf, "long") })}
+              </p>
+            ) : groups ? (
+              TIME_GROUPS.filter((g) => groups[g].length > 0).map((g) => {
+                const title = t(locale, GROUP_KEY[g], { n: groups[g].length });
+                return (
+                  <section key={g} className="feed-group" aria-label={title}>
+                    <h2 className="feed-group-title">{title}</h2>
+                    <ul className="feed-list">
+                      {groups[g].map((i) => (
+                        <li key={i.key}>
+                          <IncidentRow
+                            locale={locale}
+                            incident={i}
+                            selected={selected === i.key}
+                            kin={hasSelection && selected !== i.key && i.ward !== null && kin.includes(i.ward)}
+                            spans={spansOf(i)}
+                            onSelect={(key) => onChange({ incident: key })}
+                          />
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                );
+              })
+            ) : null}
           </div>
-        ) : shown.length === 0 ? (
-          <p className="feed-state" role="status">
-            {t(locale, "feedEmpty", { date: formatDate(locale, load.asOf, "long") })}
-          </p>
-        ) : groups ? (
-          TIME_GROUPS.filter((g) => groups[g].length > 0).map((g) => {
-            const title = t(locale, GROUP_KEY[g], { n: groups[g].length });
-            return (
-              <section key={g} className="feed-group" aria-label={title}>
-                <h2 className="feed-group-title">{title}</h2>
-                <ul className="feed-list">
-                  {groups[g].map((i) => (
-                    <li key={i.key}>
-                      <IncidentRow
-                        locale={locale}
-                        incident={i}
-                        selected={selected === i.key}
-                        kin={hasSelection && selected !== i.key && i.ward !== null && kin.includes(i.ward)}
-                        spans={spansOf(i)}
-                        onSelect={(key) => onChange({ incident: key })}
-                        onOpenCard={() => raiseWindow("ws-win-math", reducedMotion)}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            );
-          })
+        </div>
+        {card !== undefined ? (
+          <div className="feed-pane feed-pane-card" inert={!listHidden || undefined} aria-hidden={!listHidden || undefined}>
+            {listHidden ? card : null}
+          </div>
         ) : null}
       </div>
     </section>

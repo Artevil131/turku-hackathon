@@ -21,7 +21,9 @@ Screenshots (1440×900 and 390×844, English, the MED-A ESBL incident selected)
 live outside the repo in the session notes folder
 `~/Library/Application Support/Claude/side-session-notes/local_c5d48446-493c-44e0-8404-4a3d8db8bbe5/m8-signals-shots/`:
 `before-1440.png`, `before-signals-1440.png`, `before-card-1440.png`,
-`before-strip-1440.png`, `before-390.png`, and the matching `after-*.png`.
+`before-strip-1440.png`, `before-390.png`, and the matching `after-*.png`
+(`after-card-1440.png` is the layer in focus mode with its sections open,
+`after-filter-1440.png` the open Filter popover).
 
 ## 1. What confuses today
 
@@ -54,6 +56,20 @@ live outside the repo in the session notes folder
 
 ## 2. The rules
 
+0. **The card is a layer, not a window.** Clicking a row goes one level
+   deeper in the same Signals window: the list slides left, the card slides
+   in (`--mo-3`, instant under reduced motion) with "Back to the list" and
+   the row's title as its heading. `inc=` in the URL drives it, so a pill
+   or a map click opens the same layer; Escape or Back returns to the list
+   and clears `inc=`. The Signals window is therefore large by default
+   (5 of 12 columns, full height); the card's own window and the assistant
+   stay in the tray as pop-outs, closed by default. Inside the layer, under
+   the measure: "What this signal may mean" (the assistant's reading,
+   template text by default, the model's wording when the API offers it)
+   and "Analyse this signal" (the event's share by week over 26 weeks with
+   its chart, and the rate in the signal's window with its interval, both
+   from the Tools model on the signal's own slice) with "Open in Tools",
+   which presets the Tools window's slice and brings it forward.
 1. **One voice.** Every surface shows the same title, built once in
    `feed/names.ts` (`signalTitle`): `{kind in plain words} · {what} ·
    {unit}`. "Cluster · ESBL · Internal medicine A", "New carrier · MRSA ·
@@ -153,6 +169,12 @@ trend is hospital-wide.
   `ul.feed-active` › `li` › `button.feed-active-chip`.
 - Strip tile: `button.tl-ev` › `.tl-ev-code` (glyph) · `.tl-ev-name` ·
   `.tl-ev-what` (measure) · `.tl-ev-when`.
-- Card: `h3.sig-title` (glyph, dot, title) › `p.sig-where` (window, fired)
-  › `.sig-bars` › `.sig-surprise` › `p.sig-means` › `details.sig-how` ›
-  `details.sig-reach` › `details.sig-isolates` › `.math-explain`.
+- Layer: `.feed-stack[data-layer=list|card]` › `.feed-pane-list` (header,
+  groups) and `.feed-pane-card` (the card, `inert` when not shown).
+- Card (`aside.sig.math`, `.sig-layer` inside the list): `.sig-head`
+  (`button.sig-back`, `h2.sig-title` with glyph, dot, title) › `p.sig-where`
+  (window, fired) › `.sig-bars` › `.sig-surprise` › `p.sig-means` ›
+  `section.sig-section` (assistant inline) › `details.sig-analyse`
+  (`.sig-result` ×2, `button.sig-tools`) › `details.sig-how` ›
+  `details.sig-reach` › `details.sig-isolates` › `.math-explain` ›
+  `footer.sig-actions`.

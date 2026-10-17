@@ -621,12 +621,12 @@ async function main() {
     async (idle, reasons) => {
       await cleanWorkspace(idle);
       const open = `[...document.querySelectorAll('.ws-win')].map(w => w.dataset.win).sort().join(',')`;
-      if (!(await waitIn(`!!document.querySelector('#ws-win-math')`, 3000))) reasons.push("the Signal window is not open by default");
-      await click("#ws-win-math .ws-close");
-      if (!(await waitIn(`!document.querySelector('#ws-win-math')`, 1500))) reasons.push("the Signal window did not close");
+      if (!(await waitIn(`!!document.querySelector('#ws-win-map')`, 3000))) reasons.push("the Map window is not open by default");
+      await click("#ws-win-map .ws-close");
+      if (!(await waitIn(`!document.querySelector('#ws-win-map')`, 1500))) reasons.push("the Map window did not close");
       await click("#ws-tray-button");
-      await click('[data-toggle="math"]');
-      if (!(await waitIn(`!!document.querySelector('#ws-win-math')`, 1500))) reasons.push("the Signal window did not reopen from the tray");
+      await click('[data-toggle="map"]');
+      if (!(await waitIn(`!!document.querySelector('#ws-win-map')`, 1500))) reasons.push("the Map window did not reopen from the tray");
       await cdp.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape" });
       await cdp.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Escape" });
       const before = await evaluate(cdp, `document.querySelector('#ws-win-map').getBoundingClientRect().width`);
@@ -635,20 +635,27 @@ async function main() {
         reasons.push("the Map layout did not widen the map window");
       if (!(await evaluate(cdp, `localStorage.getItem('aei.research.layout') !== null`))) reasons.push("the layout was not saved");
       await click('[data-preset="default"]');
-      if (!(await waitIn(`${open} === 'assistant,graph,map,math,signals'`, 1500)))
+      if (!(await waitIn(`${open} === 'graph,map,signals'`, 1500)))
         reasons.push(`default layout: open windows ${await evaluate(cdp, open)}`);
-      // Focus mode: F enlarges the selected window and leaves the others in the rail; Esc restores.
+      // A selected row opens the card as a layer inside the Signals window (the primary window); Back returns.
       await evaluate(cdp, `document.querySelector('.feed-row')?.click()`);
       if (!(await waitIn(`!!document.querySelector('.ws-win[data-role="primary"]')`, 3000)))
         reasons.push("selecting a signal gave no primary window");
+      if (!(await waitIn(`!!document.querySelector('#ws-win-signals .feed-pane-card .math .sig-back')`, 3000)))
+        reasons.push("the signal card did not open as a layer in the Signals window");
+      // Focus mode: F enlarges the selected window and leaves the others in the rail; Esc leaves focus, then
+      // closes the card layer (the layer's own Escape is left to it once focus mode is gone).
       await key("f");
-      if (!(await waitIn(`${open} === 'math' && document.querySelector('#ws-win-math').getBoundingClientRect().width > 1000`, 1500)))
-        reasons.push(`F did not focus the Signal window (open: ${await evaluate(cdp, open)})`);
+      if (!(await waitIn(`${open} === 'signals' && document.querySelector('#ws-win-signals').getBoundingClientRect().width > 1000`, 1500)))
+        reasons.push(`F did not focus the Signals window (open: ${await evaluate(cdp, open)})`);
       if (!(await waitIn(`!!document.querySelector('[data-focus-leave]') && !!document.querySelector('[data-focus-win="map"]')`, 1500)))
         reasons.push("focus mode shows no rail of the other windows");
       await key("Escape");
-      if (!(await waitIn(`${open} === 'assistant,graph,map,math,signals'`, 1500)))
+      if (!(await waitIn(`${open} === 'graph,map,signals'`, 1500)))
         reasons.push(`Esc did not restore the layout (open: ${await evaluate(cdp, open)})`);
+      await click("#ws-win-signals .sig-back");
+      if (!(await waitIn(`!location.hash.includes('inc=') && !document.querySelector('#ws-win-signals .feed-pane-card .math')`, 1500)))
+        reasons.push("Back did not return to the list and clear inc=");
       await idle();
     },
     { name: "desktop-900", width: 1440, height: 900, mobile: false },

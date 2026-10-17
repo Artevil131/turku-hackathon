@@ -30,8 +30,11 @@ import "./tools.css";
 // form with a Run button; a run adds a result cell above the older ones. No code is typed.
 
 export interface ToolsProps extends PanelProps {
-  /** The selected signal's window; null falls back to the last 12 weeks to the clock. */
-  window: { from: string; to: string } | null;
+  /**
+   * The selected signal's window; null falls back to the last 12 weeks to the clock. "Open in Tools" on the
+   * signal card also sends the signal's unit, phenotype and organism, which then preset the slice.
+   */
+  window: { from: string; to: string; unit?: string; phenotype?: Phenotype | ""; organism?: string } | null;
 }
 
 const DEFAULT_WEEKS = 12;
@@ -74,13 +77,22 @@ function EventSelect({ locale, id, value, onChange }: { locale: Locale; id: stri
 export function ToolsWindow(props: ToolsProps) {
   const { client, locale, asOf, state, window: win } = props;
   const [slice, setSlice] = useState<Slice>(() => initialSlice(win, asOf, state));
-  const winKey = win ? `${win.from}|${win.to}` : "";
+  const winKey = win ? `${win.from}|${win.to}|${win.unit ?? "-"}|${win.phenotype ?? "-"}|${win.organism ?? "-"}` : "";
   const firstKey = useRef(winKey);
-  // A newly selected signal moves the frame to its window; the researcher's own edits stay until then.
+  // A newly selected signal moves the frame to its window (and, from "Open in Tools", the slice to the
+  // signal's unit, phenotype and organism); the researcher's own edits stay until then.
   useEffect(() => {
     if (firstKey.current === winKey) return;
     firstKey.current = winKey;
-    if (win) setSlice((s) => ({ ...s, from: win.from, to: win.to }));
+    if (win)
+      setSlice((s) => ({
+        ...s,
+        from: win.from,
+        to: win.to,
+        ...(win.unit !== undefined ? { unit: win.unit } : {}),
+        ...(win.phenotype !== undefined ? { phenotype: win.phenotype } : {}),
+        ...(win.organism !== undefined ? { organism: win.organism } : {}),
+      }));
   }, [winKey, win]);
   useEffect(() => {
     if (!win && asOf) setSlice((s) => (s.to > asOf && s.from > asOf ? initialSlice(null, asOf, state) : s));

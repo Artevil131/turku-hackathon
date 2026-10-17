@@ -6,6 +6,14 @@
   font-size: var(--t-s, 13px);
   color: var(--ink);
 }
+/* Inside the signal card: no panel padding, the card's own rhythm. */
+.assist-inline {
+  padding: 0;
+  gap: 6px;
+}
+.assist-inline .assist-item {
+  padding: 8px 10px;
+}
 .assist-title {
   margin: 0;
   font-size: var(--t-m, 15px);

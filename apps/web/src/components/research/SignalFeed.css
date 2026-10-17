@@ -5,10 +5,49 @@
   flex-direction: column;
   min-height: 0;
   height: 100%;
+  /* The sliding stack inside is twice as wide; the panel never grows with it (the phone's stacked windows). */
+  contain: inline-size;
   border: 1px solid var(--line);
   border-radius: var(--radius-panel, 10px);
   background: var(--glass-1, #fff);
   overflow: hidden;
+}
+
+/* The list and the card are two panes of one sliding stack: the card layer slides in from the right
+   (research-unified.md §7: --mo-3, the one easing); reduced motion swaps instantly. */
+.feed-stack {
+  display: flex;
+  width: 200%;
+  height: 100%;
+  min-height: 0;
+  transition: transform var(--mo-3, 320ms) var(--mo-ease, ease-out);
+}
+.feed-stack[data-layer="card"] {
+  transform: translateX(-50%);
+}
+.feed-pane {
+  display: flex;
+  flex: 0 0 50%;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+.feed-pane[inert] {
+  visibility: hidden;
+  transition: visibility 0s var(--mo-3, 320ms);
+}
+.feed-pane-card > .sig {
+  flex: 1 1 auto;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+@media (prefers-reduced-motion: reduce) {
+  .feed-stack,
+  .feed-pane[inert] {
+    transition: none;
+  }
 }
 
 .feed-header {
@@ -484,23 +523,6 @@
   font-size: 11px;
   color: var(--ink-3);
   overflow-wrap: anywhere;
-}
-
-.feed-open {
-  align-self: flex-start;
-  padding: 0;
-  border: 0;
-  background: none;
-  font: inherit;
-  font-size: var(--t-xs, 12px);
-  font-weight: 500;
-  color: var(--live);
-  cursor: pointer;
-}
-
-.feed-open:hover {
-  text-decoration: underline;
-  text-underline-offset: 2px;
 }
 
 .feed-note {

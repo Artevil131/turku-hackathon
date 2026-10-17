@@ -19,6 +19,7 @@ import { allSites, currentSite, homeSite } from "../../../sites.ts";
 import { AlertExplanation } from "../../AlertExplanation.tsx";
 import { InfoButton } from "../../Info.tsx";
 import { PoissonTail, SurpriseScale } from "../../math/index.ts";
+import { Assistant } from "../assistant/Assistant.tsx";
 import type { BoardState } from "../board.ts";
 import { KindGlyph } from "../feed/glyphs.tsx";
 import { GlossedTitle } from "../feed/IncidentRow.tsx";
@@ -27,6 +28,8 @@ import { type Incident, oneDecimal, windowOf } from "../feed/model.ts";
 import { signalTitle, surpriseOf } from "../feed/names.ts";
 import { SpanGroups } from "../feed/SpanChips.tsx";
 import type { Spans } from "../feed/spans.ts";
+import type { Slice } from "../tools/model.ts";
+import { SignalAnalysis } from "./SignalAnalysis.tsx";
 import "./math.css";
 
 // The signal card (research-unified.md section 3, signals-redesign.md section 2.6): the one
@@ -53,6 +56,10 @@ interface Props {
   command?: (c: ClockCommand) => void;
   /** Opens the map window on this county. */
   onShowMap?: (county: string) => void;
+  /** As a layer inside the Signals window: a Back control, the signal's title as the heading. */
+  onBack?: () => void;
+  /** "Open in Tools": the Tools window takes this signal's slice and comes forward. */
+  onOpenTools?: (slice: Slice) => void;
 }
 
 /** The selected site's county (D-051), as the map keeps it. */
@@ -156,6 +163,8 @@ export function AlertMath({
   asOf = null,
   command,
   onShowMap,
+  onBack,
+  onOpenTools,
 }: Props) {
   const key = inc?.key ?? null;
   // The body of a new incident fades in (keyed, so it remounts; the class leaves on animationend); the frame and the action row stay put.
@@ -168,10 +177,20 @@ export function AlertMath({
     return s;
   }, [iso.matched, inc]);
 
+  const back = onBack ? (
+    <button type="button" className="sig-back" onClick={onBack}>
+      <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false">
+        <path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      {t(locale, "feedBack")}
+    </button>
+  ) : null;
+
   if (!inc)
     return (
       <aside className="sig math" aria-labelledby="sig-title" aria-busy={empty === "loading"}>
         <header className="sig-head">
+          {back}
           <h2 id="sig-title">{t(locale, "cardTitle")}</h2>
         </header>
         <p className="sig-empty">{empty === "loading" ? t(locale, "feedIsolatesLoading") : t(locale, "cardEmpty")}</p>
@@ -196,10 +215,29 @@ export function AlertMath({
     to: win.to,
   };
 
+  const high = incidentPriority(inc.members) === "high";
+  const title = (
+    <>
+      <span className="sig-title-glyph" aria-hidden="true">
+        <KindGlyph kind={inc.kind} />
+      </span>
+      {high ? (
+        <span className="feed-dot" title={incidentResponsibility(locale, inc.members)}>
+          <span className="visually-hidden">{t(locale, "feedSeverityHigh")}. </span>
+        </span>
+      ) : null}
+      <GlossedTitle locale={locale} title={signalTitle(locale, inc.kind, lead)} />
+    </>
+  );
+
   return (
-    <aside className="sig math" aria-labelledby="sig-title" data-kind={inc.kind}>
+    <aside className={`sig math${onBack ? " sig-layer" : ""}`} aria-labelledby="sig-title" data-kind={inc.kind}>
       <header className="sig-head">
-        <h2 id="sig-title">{t(locale, "cardTitle")}</h2>
+        {back}
+        {/* As a layer the row's title is the heading; as a window the window is called Signal and the title opens the body. */}
+        <h2 id="sig-title" className={onBack ? "sig-title" : undefined} tabIndex={onBack ? -1 : undefined}>
+          {onBack ? title : t(locale, "cardTitle")}
+        </h2>
         <InfoButton locale={locale} align="end">
           {t(locale, "feedMathHelp")}
         </InfoButton>
@@ -212,23 +250,31 @@ export function AlertMath({
       >
         <div>
           {/* The same title as the row and the tile, the kind's glyph before it, the red dot for high priority. */}
-          <h3 className="sig-title" tabIndex={-1}>
-            <span className="sig-title-glyph" aria-hidden="true">
-              <KindGlyph kind={inc.kind} />
-            </span>
-            {incidentPriority(inc.members) === "high" ? (
-              <span className="feed-dot" title={incidentResponsibility(locale, inc.members)}>
-                <span className="visually-hidden">{t(locale, "feedSeverityHigh")}. </span>
-              </span>
-            ) : null}
-            <GlossedTitle locale={locale} title={signalTitle(locale, inc.kind, lead)} />
-          </h3>
+          {onBack ? null : (
+            <h3 className="sig-title" tabIndex={-1}>
+              {title}
+            </h3>
+          )}
           <p className="sig-where">{whereLine(locale, inc, win)}</p>
         </div>
 
         <Numbers locale={locale} alert={lead} />
 
         <p className="sig-means">{meaningSentence(locale, lead)}</p>
+
+        {/* The assistant's reading of this signal: template text by default, the model's wording when the API offers it (D-049). */}
+        <section className="sig-section" aria-labelledby={`sig-assist-${inc.key}`}>
+          <h4 className="sig-section-title" id={`sig-assist-${inc.key}`}>
+            {t(locale, "wsLeadAssistant")}
+          </h4>
+          <Assistant client={client} locale={locale} incident={inc} spans={spans} waiting={false} inline />
+        </section>
+
+        {/* Two ready results on the signal's own slice, from the Tools model; "Open in Tools" continues there. */}
+        <details className="sig-analyse" open>
+          <summary>{t(locale, "cardAnalyse")}</summary>
+          <SignalAnalysis client={client} locale={locale} incident={inc} onOpenTools={onOpenTools} />
+        </details>
 
         {/* Concise first: the method opens on request (Artem, 2026-10-17: detail only when the researcher asks). */}
         <details className="sig-how">
