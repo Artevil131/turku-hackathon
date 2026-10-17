@@ -1,0 +1,76 @@
+.math-cshape {
+  margin: 0;
+  max-width: 480px;
+  font-family: var(--brand-font-data, system-ui, sans-serif);
+  color: var(--ink, #07081c);
+}
+.cs-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.cs-band {
+  fill: var(--live-soft, #ecebfc);
+  stroke: var(--brand-accent-line, #c6c4ed);
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+}
+.cs-area {
+  fill: var(--line, #e4e6ee);
+  opacity: 0.8;
+}
+.cs-curve {
+  fill: none;
+  stroke: var(--ink-2, #1d204e);
+  stroke-width: 1.5;
+}
+.cs-axis {
+  stroke: var(--line-strong, #aebecb);
+}
+.cs-bar {
+  stroke: var(--ink, #07081c);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 3;
+}
+.cs-dot {
+  fill: var(--live, #635bf1);
+  stroke: #fff;
+  stroke-width: 1.5;
+}
+.cs-tick {
+  font-size: var(--t-xs, 12px);
+  fill: var(--ink-3, #6f7292);
+  font-variant-numeric: tabular-nums;
+}
+.cs-cap {
+  display: grid;
+  gap: 2px;
+  margin-top: 4px;
+  font-size: var(--t-xs, 12px);
+  color: var(--ink-3, #6f7292);
+}
+.cs-int {
+  color: var(--ink, #07081c);
+  font-size: var(--t-s, 13px);
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.cs-sw {
+  width: 14px;
+  height: 8px;
+  background: var(--live-soft, #ecebfc);
+  border: 1px dashed var(--brand-accent-line, #c6c4ed);
+  display: inline-block;
+}
+.cs-text {
+  overflow-wrap: anywhere;
+}
+.cs-note {
+  font-size: var(--t-s, 13px);
+  color: var(--ink-3, #6f7292);
+  margin: 0;
+}

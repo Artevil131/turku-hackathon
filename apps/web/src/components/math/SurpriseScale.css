@@ -1,0 +1,58 @@
+.math-surprise {
+  display: inline-grid;
+  gap: 2px;
+  width: 100%;
+  max-width: 240px;
+  font-size: var(--t-xs, 12px);
+  color: var(--ink-3, #6f7292);
+  font-family: var(--brand-font-data, system-ui, sans-serif);
+  font-variant-numeric: tabular-nums;
+}
+.ms-head {
+  display: flex;
+  justify-content: space-between;
+}
+.ms-value {
+  color: var(--ink, #07081c);
+  font-weight: 600;
+}
+.ms-track {
+  position: relative;
+  height: 8px;
+  background: var(--line, #e4e6ee);
+  border-radius: 4px;
+}
+.ms-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: var(--ink-2, #1d204e);
+  border-radius: 4px;
+  transition: width 0.2s;
+}
+.ms-thr {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--live, #635bf1);
+}
+.ms-foot {
+  display: flex;
+  justify-content: space-between;
+}
+.ms-thr-label {
+  display: block;
+  box-sizing: border-box;
+  text-align: right;
+  white-space: nowrap;
+  color: var(--live, #635bf1);
+  font-weight: 500;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ms-fill {
+    transition: none;
+  }
+}

@@ -1,0 +1,80 @@
+.math-poisson {
+  margin: 0;
+  max-width: 480px;
+  font-family: var(--brand-font-data, system-ui, sans-serif);
+  color: var(--ink, #07081c);
+}
+.math-poisson-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.mp-axis {
+  stroke: var(--line-strong, #aebecb);
+  stroke-width: 1;
+}
+.mp-bar {
+  fill: var(--line-strong, #aebecb);
+}
+.mp-bar-tail {
+  fill: var(--ink-2, #1d204e);
+}
+.mp-obs {
+  fill: none;
+  stroke: var(--live, #635bf1);
+  stroke-width: 2;
+}
+.mp-mark {
+  fill: var(--live, #635bf1);
+}
+.mp-usual {
+  stroke: var(--ink-3, #6f7292);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+.mp-label,
+.mp-tick {
+  font-size: var(--t-xs, 12px);
+  fill: var(--ink-3, #6f7292);
+  font-variant-numeric: tabular-nums;
+}
+.math-poisson-cap {
+  display: grid;
+  gap: 2px;
+  margin-top: 4px;
+  font-size: var(--t-s, 13px);
+}
+.math-poisson-test {
+  font-size: var(--t-xs, 12px);
+  color: var(--ink-3, #6f7292);
+}
+.math-poisson-formula {
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.math-poisson-legend {
+  font-size: var(--t-xs, 12px);
+  color: var(--ink-3, #6f7292);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.mp-sw {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+}
+.mp-sw-tail {
+  background: var(--live-soft, #ecebfc);
+  border: 1px solid var(--live, #635bf1);
+}
+.math-note {
+  font-size: var(--t-s, 13px);
+  color: var(--ink-3, #6f7292);
+  margin: 0;
+}
+.mp-band {
+  fill: var(--live-soft, #ecebfc);
+}

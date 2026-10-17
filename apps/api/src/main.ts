@@ -22,6 +22,7 @@ import { antibioticName, phenotypeName, specimenName, wardName } from "@aei/i18n
 import { asResult, type CodeMaps, DEFAULT_CODE_MAPS, detectFormat, extendCodeMaps, ingest, mergeResults } from "@aei/ingest";
 import { countFlows, patientMoves, phenotypeTrails, trailLinks } from "@aei/relations";
 import { addDays, createReleaseIndex, createReplayClock } from "@aei/replay";
+import { type WeeklySeries, weeklySeries } from "@aei/viz";
 
 // Development server for the AEI contract (libs/utils/contract). It loads
 // the synthetic dataset, replays it day by day and pushes arrivals to
@@ -89,6 +90,7 @@ function derive(d: Dataset) {
   };
 }
 let state = derive(dataset);
+const weeklyCache = new Map<string, WeeklySeries>();
 const DEFAULT_RELATION_DAYS = 28;
 
 function relations(asOf: string, days: number): RelationsResponse {
@@ -321,6 +323,20 @@ export const server = createServer(async (req, res) => {
       const data = JSON.parse(readFileSync(config.regionalFile, "utf8")) as RegionalData;
       const query: RegionalQuery = { group: url.searchParams.get("group") ?? "", region: url.searchParams.get("region") ?? "" };
       return send(res, 200, regionalUpTo(data, clock.state().asOf, query));
+    }
+    if (url.pathname === ROUTES.weekly) {
+      const asOf = clock.state().asOf;
+      const from = url.searchParams.get("from") || datasetStart;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(from)) return send(res, 400, { error: "from must be YYYY-MM-DD" });
+      const key = `${asOf}|${from}`;
+      let series = weeklyCache.get(key);
+      if (!series) {
+        if (weeklyCache.size > 50) weeklyCache.clear();
+        // Only released rows: the series ends at the clock and never shows later days.
+        series = weeklySeries(state.released.upTo(asOf), dataset.cultures, from, asOf);
+        weeklyCache.set(key, series);
+      }
+      return send(res, 200, { asOf, ...series });
     }
     if (url.pathname === ROUTES.counties) {
       if (!existsSync(config.countiesFile))

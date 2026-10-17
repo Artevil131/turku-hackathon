@@ -1,0 +1,80 @@
+.math-weekly {
+  margin: 0;
+  max-width: 480px;
+  font-family: var(--brand-font-data, system-ui, sans-serif);
+  color: var(--ink, #07081c);
+}
+.ww-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.ww-grid {
+  stroke: var(--line, #e4e6ee);
+}
+.ww-bar {
+  fill: var(--line-strong, #aebecb);
+  stroke: var(--ink-3, #6f7292);
+  stroke-width: 0.5;
+}
+.ww-bar-win {
+  fill: var(--ink, #07081c);
+  stroke: var(--ink, #07081c);
+}
+.ww-win {
+  stroke: var(--ink-3, #6f7292);
+  stroke-width: 1;
+  stroke-dasharray: 1 3;
+}
+.ww-usual {
+  stroke: var(--live, #635bf1);
+  stroke-width: 2;
+  stroke-dasharray: 5 3;
+}
+.ww-sig {
+  fill: var(--live, #635bf1);
+}
+.ww-tick {
+  font-size: var(--t-xs, 12px);
+  fill: var(--ink-3, #6f7292);
+  font-variant-numeric: tabular-nums;
+}
+.ww-sig-label {
+  fill: var(--live, #635bf1);
+  font-weight: 500;
+}
+.ww-cap {
+  display: grid;
+  gap: 2px;
+  margin-top: 4px;
+  font-size: var(--t-s, 13px);
+}
+.ww-formula {
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.ww-legend {
+  font-size: var(--t-xs, 12px);
+  color: var(--ink-3, #6f7292);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+}
+.ww-sw {
+  width: 10px;
+  height: 10px;
+  display: inline-block;
+  background: var(--line-strong, #aebecb);
+  border: 1px solid var(--ink-3, #6f7292);
+}
+.ww-sw-win {
+  background: var(--ink, #07081c);
+}
+.ww-note {
+  font-size: var(--t-s, 13px);
+  color: var(--ink-3, #6f7292);
+  margin: 0;
+}

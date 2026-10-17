@@ -4,6 +4,7 @@ import type { CombinationSuggestion, CoverageResult, CoverageQuery as GearCovera
 import type { Antibiotic, IsoDate, IsolateRecord, Organism, Sex, Specimen, Ward, WardCode } from "@aei/domain";
 import type { Flow, TrailLink } from "@aei/relations";
 import type { ClockState } from "@aei/replay";
+import type { WeeklySeries } from "@aei/viz";
 
 // The contract between the AEI server and its clients (web, later the
 // phone app). The current server is apps/api in TypeScript; a Rust server
@@ -28,6 +29,11 @@ export const ROUTES = {
    * GeoJSON. Optional: 404 when the server has no geometry file. Proposed by Claude Code, pending Artem.
    */
   counties: "/api/counties",
+  /**
+   * Raw weekly counts per unit up to the clock: distinct patients per resistant phenotype and
+   * cultures sampled (D-039). Optional; proposed by Claude Code, pending Artem.
+   */
+  weekly: "/api/weekly",
 } as const;
 
 export interface Meta {
@@ -221,6 +227,17 @@ export interface CountiesResponse {
   features: CountyFeature[];
 }
 
+export type { UnitWeeks, WeeklySeries } from "@aei/viz";
+
+/** Weeks from `from` (default: the dataset start) up to the clock's as-of date, never later. */
+export interface WeeklyQuery {
+  from?: IsoDate;
+}
+
+export interface WeeklyResponse extends WeeklySeries {
+  asOf: IsoDate;
+}
+
 /** Server-sent events on ROUTES.live. The event name is the `type`. */
 export type LiveEvent =
   | { type: "clock"; clock: ClockState }
@@ -267,6 +284,8 @@ export interface AeiClient {
   regional(query: RegionalQuery): Promise<RegionalResponse>;
   /** County polygons for the regional map; 404 when the server has no geometry file. */
   counties(): Promise<CountiesResponse>;
+  /** Weekly raw counts per unit up to the clock (optional route). */
+  weekly(query: WeeklyQuery): Promise<WeeklyResponse>;
   /** Opens the live stream; returns a function that closes it. */
   live(onEvent: (event: LiveEvent) => void, onError?: (error: Event) => void): () => void;
 }
@@ -313,6 +332,7 @@ export function createAeiClient(options: AeiClientOptions): AeiClient {
     alerts: (query) => json<AlertsResponse>(withQuery(ROUTES.alerts, query)),
     regional: (query) => json<RegionalResponse>(withQuery(ROUTES.regional, query)),
     counties: () => json<CountiesResponse>(ROUTES.counties),
+    weekly: (query) => json<WeeklyResponse>(withQuery(ROUTES.weekly, query)),
     live(onEvent, onError) {
       const source = new ES(url(ROUTES.live));
       for (const type of LIVE_EVENT_TYPES) {

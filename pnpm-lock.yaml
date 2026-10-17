@@ -53,6 +53,9 @@ importers:
       '@aei/replay':
         specifier: workspace:*
         version: link:../../libs/utils/replay
+      '@aei/viz':
+        specifier: workspace:*
+        version: link:../../libs/utils/viz
 
   apps/web:
     dependencies:
@@ -62,6 +65,9 @@ importers:
       '@aei/contract':
         specifier: workspace:*
         version: link:../../libs/utils/contract
+      '@aei/detect':
+        specifier: workspace:*
+        version: link:../../libs/utils/detect
       '@aei/domain':
         specifier: workspace:*
         version: link:../../libs/utils/domain
@@ -135,6 +141,9 @@ importers:
       '@aei/replay':
         specifier: workspace:*
         version: link:../replay
+      '@aei/viz':
+        specifier: workspace:*
+        version: link:../viz
 
   libs/utils/counting:
     dependencies:
@@ -208,6 +217,15 @@ importers:
         version: link:../replay
 
   libs/utils/replay: {}
+
+  libs/utils/viz:
+    dependencies:
+      '@aei/domain':
+        specifier: workspace:*
+        version: link:../domain
+      '@aei/replay':
+        specifier: workspace:*
+        version: link:../replay
 
 packages:
 

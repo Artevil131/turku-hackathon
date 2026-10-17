@@ -55,6 +55,21 @@ async function startApi() {
   return origin(api);
 }
 
+describe("weekly counts route", () => {
+  it("counts per unit and week up to the clock and never after it", async () => {
+    const base = await startApi();
+    const body = await (await fetch(`${base}/api/weekly?from=2025-02-24`)).json();
+    expect(body.asOf).toBe("2025-05-01");
+    expect(body.weeks.at(-1)).toBe("2025-04-28");
+    // URO had one ESBL patient on 2025-03-01; ICU's ESBL+CPE isolate of 2025-05-01 is the as-of day itself.
+    expect(body.units.URO.phenotypes.esbl.reduce((a: number, b: number) => a + b, 0)).toBe(1);
+    expect(body.units.ICU.phenotypes.cpe.at(-1)).toBe(1);
+    // ICU cultures of 2025-03-01 and 2025-05-01 count; the one of 2025-06-01 lies after the clock.
+    expect(body.units.ICU.cultures.reduce((a: number, b: number) => a + b, 0)).toBe(2);
+    expect((await fetch(`${base}/api/weekly?from=oops`)).status).toBe(400);
+  });
+});
+
 describe("county geometry route", () => {
   it("serves the polygons when the file exists and answers 404 without it", async () => {
     const file = join(dir, "counties.geojson");
