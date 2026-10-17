@@ -14,6 +14,7 @@ services:
     # is the image's unprivileged user `node`.
     user: ${AEI_API_USER:-node}
     environment:
+      AEI_STATE_DIR: /state
       AEI_REPLAY_START: ${AEI_REPLAY_START:-2025-05-12}
       AEI_LOAD_UNTIL: ${AEI_LOAD_UNTIL:-}
       AEI_TICK_MS: ${AEI_TICK_MS:-2000}
@@ -32,6 +33,7 @@ services:
       AEI_LLM_ACCESS_ID: ${AEI_LLM_ACCESS_ID:-}
       AEI_LLM_ACCESS_SECRET: ${AEI_LLM_ACCESS_SECRET:-}
     volumes:
+      - aei-state:/state
       # The organisers' dataset, read-only (z: relabel for SELinux hosts).
       - ${AEI_DATASET:-../../data/synthetic_microbiology_dataset}:/data:ro,z
       # THL data from scripts/fetch_thl_ttr.py and scripts/fetch_finres.py; without them /api/regional and /api/national answer 404.
@@ -71,3 +73,6 @@ services:
     depends_on:
       - api
     restart: unless-stopped
+
+volumes:
+  aei-state:

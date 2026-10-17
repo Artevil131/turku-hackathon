@@ -20,6 +20,8 @@ COPY libs/utils libs/utils
 COPY apps/api apps/api
 RUN pnpm install --frozen-lockfile --prod --filter "@aei/api..." && rm -rf /root/.local/share/pnpm /root/.cache
 
+# A fresh named volume inherits this ownership, so the unprivileged API can save projects.
+RUN mkdir -p /state && chown node:node /state
 USER node
 WORKDIR /app/apps/api
 EXPOSE 8787

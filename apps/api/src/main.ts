@@ -52,6 +52,8 @@ import {
 import { defeatedBy } from "@aei/eucast";
 import { antibioticName, phenotypeName, registerSites, registerWards, specimenName, wardName } from "@aei/i18n";
 import { asResult, type CodeMaps, DEFAULT_CODE_MAPS, detectFormat, extendCodeMaps, ingest, mergeResults } from "@aei/ingest";
+import { isProjectId, matchesScope, type Project, type ProjectInput, parseProjectInput } from "@aei/projects";
+import { createProjectStore, fingerprintRows, newProjectId } from "@aei/projects/node";
 import { checkRows, type Finding, summarize } from "@aei/quality";
 import { countFlows, patientMoves, phenotypeTrails, trailLinks } from "@aei/relations";
 import { addDays, createReleaseIndex, createReplayClock } from "@aei/replay";
@@ -96,6 +98,7 @@ const coverages = new Map<string, CoverageResult>();
 const failsTogethers = new Map<string, FailsTogetherResponse>();
 const config = {
   port: Number(env.AEI_PORT ?? 8787),
+  stateDir: env.AEI_STATE_DIR || undefined,
   dataDir: resolve(env.AEI_DATA_DIR ?? "../../data/synthetic_microbiology_dataset"),
   // Where the replay starts (D-015): by default three weeks before the
   // Urology ESBL E. coli cluster of June 2025 (experiments/0001), so the
@@ -118,6 +121,7 @@ const config = {
   // THL Finres national reference, written by scripts/fetch_finres.py (D-048); read on each request.
   nationalFile: resolve(env.AEI_NATIONAL ?? "../../data/external/thl/finres.json"),
 };
+const projects = createProjectStore(config.stateDir);
 const codeMaps: CodeMaps = config.codeMapFile
   ? extendCodeMaps(JSON.parse(readFileSync(resolve(config.codeMapFile), "utf8")) as Partial<CodeMaps>)
   : DEFAULT_CODE_MAPS;
@@ -244,6 +248,15 @@ function matches(r: IsolateRecord, q: IsolateQuery): boolean {
     (q.ageMin === undefined || r.ageYears >= q.ageMin) &&
     (q.ageMax === undefined || r.ageYears <= q.ageMax) &&
     (!q.site || registry.siteOfWard(r.ward) === q.site)
+  );
+}
+
+/** Frozen cuts do not seek the shared clock (D-058); site uses the same predicate as /api/isolates. */
+function projectFingerprint(input: ProjectInput) {
+  return fingerprintRows(
+    state.released
+      .upTo(input.asOf as string)
+      .filter((r) => matches(r, { site: input.scope.site }) && matchesScope(r, input.scope, input.asOf)),
   );
 }
 
@@ -395,10 +408,52 @@ export const server = createServer(async (req, res) => {
   // The web dev server proxies /api, so CORS is only for other local clients.
   res.setHeader("access-control-allow-origin", "*");
   res.setHeader("access-control-allow-headers", "content-type, authorization");
+  res.setHeader("access-control-allow-methods", "GET, POST, PUT, DELETE, OPTIONS");
   if (req.method === "OPTIONS") return void res.writeHead(204).end();
 
   const url = new URL(req.url ?? "/", "http://localhost");
   try {
+    if (url.pathname === ROUTES.projects || url.pathname.startsWith(`${ROUTES.projects}/`)) {
+      const id = url.pathname === ROUTES.projects ? undefined : decodeURIComponent(url.pathname.slice(ROUTES.projects.length + 1));
+      if (id !== undefined && !isProjectId(id)) return send(res, 400, { error: "invalid project id" });
+      if (id === undefined && req.method === "GET") return send(res, 200, { projects: projects.list() });
+      const previous = id === undefined ? undefined : projects.get(id);
+      if (id !== undefined && !previous) return send(res, 404, { error: "unknown project" });
+      if (previous && req.method === "GET") {
+        const fingerprint = previous.mode === "frozen" ? projectFingerprint(previous) : undefined;
+        const drift =
+          fingerprint && (fingerprint.rows !== previous.fingerprint?.rows || fingerprint.sha256 !== previous.fingerprint?.sha256);
+        return send(res, 200, { project: previous, ...(fingerprint ? { drift } : {}) });
+      }
+      if (previous && req.method === "DELETE") {
+        projects.delete(previous.id);
+        return void res.writeHead(204).end();
+      }
+      if ((id === undefined && req.method === "POST") || (previous && req.method === "PUT")) {
+        const input = parseProjectInput(await readJson(req));
+        if (input.scope.site !== undefined && !registry.site(input.scope.site)) {
+          return send(res, 400, { error: `unknown site ${input.scope.site}` });
+        }
+        const timestamp = new Date().toISOString();
+        const fingerprint =
+          input.mode === "frozen"
+            ? previous?.mode === "frozen" && previous.asOf === input.asOf && JSON.stringify(previous.scope) === JSON.stringify(input.scope)
+              ? previous.fingerprint
+              : projectFingerprint(input)
+            : undefined;
+        const project: Project = {
+          ...input,
+          id: previous?.id ?? newProjectId(input.name),
+          description: input.description ?? "",
+          createdAt: previous?.createdAt ?? timestamp,
+          updatedAt: timestamp,
+          ...(fingerprint ? { fingerprint } : {}),
+        };
+        projects.put(project);
+        return send(res, previous ? 200 : 201, { project });
+      }
+      return send(res, 405, { error: "method not allowed" });
+    }
     if (url.pathname === ROUTES.ask && req.method === "POST") {
       if (!llm) return send(res, 503, { error: "AI is not configured" });
       const body = (await readJson(req)) as { text?: unknown; lang?: unknown } | null;
