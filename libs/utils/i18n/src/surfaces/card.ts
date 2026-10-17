@@ -58,6 +58,15 @@ export const cardEn = {
   cardMethod: "Method",
   cardEmpty: "Pick a signal: a pill on the timeline, a row in the list, a unit on the flow or a dot on the map.",
   cardFired: "fired {date}",
+  cardRegistryFormula: "Formula",
+  cardRegistryConstants: "Constants",
+  cardRegistryDecisions: "Decisions {list}",
+  cardRegistryCode: "TypeScript: {ts} · Python: {py}",
+  cardRegistryCodeNoPy: "TypeScript: {ts} · no Python function yet",
+  cardRegistryCopy: "Copy to notebook",
+  cardRegistryCopied: "Copied",
+  cardRegistryManual: "Select and copy this by hand:",
+  cardRegistryFallbackNote: "The clipboard is not available here.",
 } as const;
 
 export const cardFi: Record<keyof typeof cardEn, string> = {
@@ -111,4 +120,13 @@ export const cardFi: Record<keyof typeof cardEn, string> = {
   cardMethod: "Menetelmä",
   cardEmpty: "Valitse signaali: merkki aikajanalta, rivi listasta, yksikkö virtauksesta tai piste kartalta.",
   cardFired: "hälytti {date}",
+  cardRegistryFormula: "Kaava",
+  cardRegistryConstants: "Vakiot",
+  cardRegistryDecisions: "Päätökset {list}",
+  cardRegistryCode: "TypeScript: {ts} · Python: {py}",
+  cardRegistryCodeNoPy: "TypeScript: {ts} · Python-funktiota ei vielä ole",
+  cardRegistryCopy: "Kopioi muistioon",
+  cardRegistryCopied: "Kopioitu",
+  cardRegistryManual: "Valitse ja kopioi tämä käsin:",
+  cardRegistryFallbackNote: "Leikepöytä ei ole käytettävissä tässä.",
 };

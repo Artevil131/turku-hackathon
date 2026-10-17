@@ -2,6 +2,7 @@ import { NEW_IN_UNIT_DAYS } from "@aei/alerts";
 import type { AeiClient, Alert, ClockCommand } from "@aei/contract";
 import { LIVE_SETTINGS } from "@aei/detect";
 import { alertEvidence, formatDate, type GlossTerm, incidentResponsibility, type Locale, phenotypeName, t } from "@aei/i18n";
+import { fillSnippet, type Method, methodOf } from "@aei/method";
 import { formatNum } from "@aei/viz";
 import { type ReactNode, useMemo, useState } from "react";
 import type { Finding } from "../../../live.ts";
@@ -171,6 +172,12 @@ export function AlertMath({
       ? t(locale, "feedNoIsolatesData", { observed: lead.observed, expected: oneDecimal(locale, lead.expected ?? 0) })
       : "";
   const onDay = asOf === lead.date;
+  const snippetValues = {
+    ward: inc.ward ?? "",
+    organism: "organism" in lead ? (lead.organism ?? "") : "",
+    from: win.from,
+    to: win.to,
+  };
 
   return (
     <aside className="sig math" aria-labelledby="sig-title" data-kind={inc.kind}>
@@ -203,7 +210,7 @@ export function AlertMath({
         <details className="sig-how">
           <summary className="sig-how-head">{t(locale, "cardHow")}</summary>
           <p className="sig-how-text">{howSentence(locale, lead)}</p>
-          <HowFigure locale={locale} alert={lead} />
+          <HowFigure locale={locale} alert={lead} values={snippetValues} />
           <p className="feed-evidence">{t(locale, "feedLatestEvidence", { evidence: alertEvidence(locale, lead) })}</p>
           <p className="feed-owner">{incidentResponsibility(locale, inc.members)}</p>
         </details>
@@ -272,18 +279,71 @@ function whereLine(locale: Locale, inc: Incident, win: { from: string; to: strin
   return parts.join(" · ");
 }
 
-/** The ⓘ of the how-section: the Poisson tail for the count detectors; sentinels and trends have none. */
-function HowFigure({ locale, alert: a }: { locale: Locale; alert: Alert }): ReactNode {
+/** The ⓘ of the how-section: the Poisson tail for the count detectors; sentinels and trends have none. The registry entry follows (D-070). */
+function HowFigure({ locale, alert: a, values }: { locale: Locale; alert: Alert; values: SnippetValues }): ReactNode {
   const detail = howDetail(locale, a);
   if (!detail) return null;
   const figure = a.kind === "detector" && COUNT_DETECTORS.includes(a.detector) && a.p !== undefined && a.expected !== undefined;
+  const method = methodOf(a);
   return (
     <InfoButton locale={locale} align="end" label={t(locale, "cardHowInfo")}>
       <p className="sig-detail">{detail}</p>
       {figure && a.kind === "detector" ? (
         <PoissonTail observed={a.observed} expected={a.expected as number} p={a.p as number} detector={a.detector} locale={locale} />
       ) : null}
+      {method ? <MethodEntry locale={locale} method={method} values={values} /> : null}
     </InfoButton>
+  );
+}
+
+/** What the notebook snippet fills in: this card's unit, organism and window. */
+type SnippetValues = Record<"ward" | "organism" | "from" | "to", string>;
+
+/** The registry entry (@aei/method): formula, constants with their decisions, code location, and the notebook snippet. */
+export function MethodEntry({ locale, method, values }: { locale: Locale; method: Method; values: SnippetValues }) {
+  const [state, setState] = useState<"idle" | "copied" | "manual">("idle");
+  const snippet = fillSnippet(method, values);
+  const copy = () => {
+    const clip = typeof navigator === "undefined" ? undefined : navigator.clipboard;
+    if (!clip) {
+      setState("manual");
+      return;
+    }
+    clip.writeText(snippet).then(
+      () => setState("copied"),
+      () => setState("manual"),
+    );
+  };
+  return (
+    <div className="sig-method">
+      <p className="sig-method-plain">{method.plain[locale]}</p>
+      <p className="sig-method-label">{t(locale, "cardRegistryFormula")}</p>
+      <code className="sig-formula">{method.latex}</code>
+      <p className="sig-method-label">{t(locale, "cardRegistryConstants")}</p>
+      <ul className="sig-constants">
+        {method.constants.map((k) => (
+          <li key={k.name}>
+            {k.name} = {String(k.value)} <span className="sig-decision">({k.decision})</span>
+          </li>
+        ))}
+      </ul>
+      <p className="sig-method-decisions">{t(locale, "cardRegistryDecisions", { list: method.decisions.join(", ") })}</p>
+      <p className="sig-code">
+        {method.code.py
+          ? t(locale, "cardRegistryCode", { ts: method.code.ts, py: method.code.py })
+          : t(locale, "cardRegistryCodeNoPy", { ts: method.code.ts })}
+      </p>
+      <button type="button" className="sig-btn" onClick={copy}>
+        {state === "copied" ? t(locale, "cardRegistryCopied") : t(locale, "cardRegistryCopy")}
+      </button>
+      {state === "manual" ? (
+        <>
+          <p className="sig-note">{t(locale, "cardRegistryFallbackNote")}</p>
+          <p className="sig-note">{t(locale, "cardRegistryManual")}</p>
+          <pre className="sig-snippet">{snippet}</pre>
+        </>
+      ) : null}
+    </div>
   );
 }
 

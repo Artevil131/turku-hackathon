@@ -135,6 +135,9 @@ importers:
       '@aei/ingest':
         specifier: workspace:*
         version: link:../../libs/utils/ingest
+      '@aei/method':
+        specifier: workspace:*
+        version: link:../../libs/utils/method
       '@aei/projects':
         specifier: workspace:*
         version: link:../../libs/utils/projects
@@ -324,6 +327,15 @@ importers:
       '@aei/domain':
         specifier: workspace:*
         version: link:../domain
+
+  libs/utils/method:
+    dependencies:
+      '@aei/alerts':
+        specifier: workspace:*
+        version: link:../alerts
+      '@aei/detect':
+        specifier: workspace:*
+        version: link:../detect
 
   libs/utils/projects:
     dependencies:
