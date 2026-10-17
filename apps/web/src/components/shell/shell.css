@@ -859,3 +859,25 @@
     scroll-margin-top: 64px;
   }
 }
+
+/* Demo files: a title with the role underneath. */
+.sb-demos .sb-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sb-demo {
+  align-items: flex-start;
+  height: auto;
+  min-height: 44px;
+  padding-block: 6px;
+}
+.sb-demo-label {
+  display: grid;
+  gap: 1px;
+  line-height: 1.25;
+}
+.sb-demo-label small {
+  color: var(--ink-3);
+  font-size: var(--t-xs);
+}

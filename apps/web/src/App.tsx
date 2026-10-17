@@ -10,6 +10,8 @@ import { PHONE } from "./components/shell/Menu.tsx";
 import { Sidebar, tabName } from "./components/shell/Sidebar.tsx";
 import { type Audience, storedAudience } from "./components/start/audience.ts";
 import { StartPage } from "./components/start/StartPage.tsx";
+import type { DemoSpec } from "./demo/demos.ts";
+import { openDemo } from "./demo/openDemo.ts";
 import { useLive } from "./live.ts";
 import { FlowsContext } from "./relations.ts";
 import { type Shell, ShellContext, type Slots, SlotsContext } from "./shell/context.ts";
@@ -335,6 +337,11 @@ export function App() {
       </Suspense>
     );
 
+  const openDemoFile = (demo: DemoSpec) => {
+    openDemo(client, locale, demo)
+      .then(shell.openProject)
+      .catch(() => setNotice(t(locale, "demoOpenError")));
+  };
   return (
     <ShellContext.Provider value={shell}>
       <SlotsContext.Provider value={slots}>
@@ -358,6 +365,7 @@ export function App() {
                 onHome={() => navigate("home")}
                 onTab={activate}
                 onCloseTab={(tab) => close(tab.key)}
+                onDemo={openDemoFile}
                 onNew={() => {
                   launchTemplate(client, locale, "blank")
                     .then(shell.openProject)
@@ -422,7 +430,7 @@ export function App() {
                   <SiteLine locale={locale} />
                   <Fragment key={siteKey}>
                     {page === "home" ? (
-                      <StartPage client={client} locale={locale} clock={live.clock?.asOf ?? null} audience={audience} />
+                      <StartPage client={client} locale={locale} clock={live.clock?.asOf ?? null} audience={audience} onDemo={openDemoFile} />
                     ) : null}
                     <Suspense fallback={<div className="section" aria-busy="true" />}>
                       {page === "project" ? (

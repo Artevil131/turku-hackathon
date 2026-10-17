@@ -3,6 +3,7 @@ import { cardEn } from "./surfaces/card.ts";
 import { chartsEn } from "./surfaces/charts.ts";
 import { commandEn } from "./surfaces/command.ts";
 import { connectEn } from "./surfaces/connect.ts";
+import { demoEn } from "./surfaces/demo.ts";
 import { doctorEn } from "./surfaces/doctor.ts";
 import { failsTogetherEn } from "./surfaces/failsTogether.ts";
 import { feedEn } from "./surfaces/feed.ts";
@@ -278,6 +279,7 @@ export const en = {
   ...gridEn,
   ...networkEn,
   ...mapEn,
+  ...demoEn,
   ...homeEn,
   ...introEn,
   ...cardEn,

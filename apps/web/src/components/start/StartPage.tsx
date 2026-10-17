@@ -1,6 +1,7 @@
 import type { AeiClient, Project } from "@aei/contract";
 import { formatDate, type Locale, siteName, t, wardName } from "@aei/i18n";
 import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { DEMOS, type DemoSpec } from "../../demo/demos.ts";
 import { useShell } from "../../shell/context.ts";
 import { launchTemplate } from "../../shell/launch.ts";
 import { DeleteProjectDialog } from "../research/projects/ProjectDialogs.tsx";
@@ -104,11 +105,13 @@ export function StartPage({
   locale,
   clock,
   audience,
+  onDemo,
 }: {
   client: AeiClient;
   locale: Locale;
   clock: string | null;
   audience: Audience;
+  onDemo: (demo: DemoSpec) => void;
 }) {
   const [projects, setProjects] = useState<Project[] | null>(null);
   const [failed, setFailed] = useState(false);
@@ -263,6 +266,19 @@ export function StartPage({
               ))}
             </ScrollRow>
           )}
+        </section>
+        <section id="start-demos" tabIndex={-1}>
+          <h2>{t(locale, "demoSection")}</h2>
+          <p className="start-demos-note">{t(locale, "demoHint")}</p>
+          <div className="start-demo-grid">
+            {DEMOS.map((demo) => (
+              <button type="button" className="start-demo" key={demo.id} data-demo={demo.id} onClick={() => onDemo(demo)}>
+                <span className="start-demo-role">{t(locale, demo.roleKey)}</span>
+                <strong>{t(locale, demo.titleKey)}</strong>
+                <span className="start-demo-blurb">{t(locale, demo.blurbKey)}</span>
+              </button>
+            ))}
+          </div>
         </section>
         <section id="start-templates" tabIndex={-1}>
           <h2>{t(locale, "startTemplates")}</h2>

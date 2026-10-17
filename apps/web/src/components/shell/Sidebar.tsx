@@ -1,5 +1,6 @@
 import { type Locale, t } from "@aei/i18n";
 import { type KeyboardEvent, useEffect, useRef } from "react";
+import { DEMOS, type DemoSpec } from "../../demo/demos.ts";
 import type { DocTab } from "../../shell/tabs.ts";
 import { useMedia } from "../doctor/useMedia.ts";
 import { Gear } from "../Icons.tsx";
@@ -31,6 +32,7 @@ const DOC = "M7 3.5h7l4 4V20a.5.5 0 0 1-.5.5h-10.5A.5.5 0 0 1 6.5 20V4a.5.5 0 0 
 const VIEW = "M3.5 12S6.5 6 12 6s8.5 6 8.5 6-3 6-8.5 6-8.5-6-8.5-6ZM12 14.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z";
 const FROZEN = "M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5";
 const PLUS = "M12 5v14M5 12h14";
+const DEMO = "M5 4.5h10l4 4v11h-14zM15 4.5v4h4M8.5 13h7M8.5 16h5";
 
 /** Opens the command palette (the search over units, antibiotics, signals and pages). */
 export function openSearch() {
@@ -61,6 +63,7 @@ export function Sidebar({
   onTab,
   onCloseTab,
   onNew,
+  onDemo,
   onPage,
   setActionsSlot,
   setWindowsSlot,
@@ -77,6 +80,8 @@ export function Sidebar({
   onTab: (tab: DocTab) => void;
   onCloseTab: (tab: DocTab) => void;
   onNew: () => void;
+  /** Opens a demo file (creating its project the first time). */
+  onDemo: (demo: DemoSpec) => void;
   onPage: (page: "data" | "settings") => void;
   setActionsSlot: (el: HTMLElement | null) => void;
   setWindowsSlot: (el: HTMLElement | null) => void;
@@ -259,6 +264,34 @@ export function Sidebar({
             ) : (
               <p className="sb-empty">{t(locale, "shellNoOpen")}</p>
             )}
+          </section>
+
+          {/* Ready-made projects for each kind of user, filled in as if used. */}
+          <section className="sb-section sb-demos" aria-labelledby="sb-demo-title">
+            <h2 id="sb-demo-title" className="sb-heading" title={t(locale, "demoHint")}>
+              {t(locale, "demoSection")}
+            </h2>
+            <ul className="sb-list">
+              {DEMOS.map((demo) => (
+                <li key={demo.id}>
+                  <button
+                    type="button"
+                    className="sb-item sb-demo"
+                    data-demo={demo.id}
+                    onClick={() => onDemo(demo)}
+                    title={t(locale, demo.blurbKey)}
+                  >
+                    <span className="sb-icon">
+                      <Svg d={DEMO} />
+                    </span>
+                    <span className="sb-label sb-demo-label">
+                      <span>{t(locale, demo.titleKey)}</span>
+                      <small>{t(locale, demo.roleKey)}</small>
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
           </section>
 
           {/* The open project's actions; the project view fills these slots. */}
