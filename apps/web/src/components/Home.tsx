@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import type { Connection, Finding } from "../live.ts";
 import { readStoredUnit } from "./doctor/filters.ts";
 import { changesOn, openSignals } from "./home/changes.ts";
+import { Latest, latestSignal } from "./home/Latest.tsx";
 import { Roles } from "./home/Roles.tsx";
 import { Since } from "./home/Since.tsx";
 import "./home/home.css";
@@ -31,11 +32,13 @@ export function Home({ locale, clock, findings, lastRole, onRole, connection, al
   const unit = useMemo(() => readStoredUnit(), []);
   const changes = useMemo(() => (asOf && alerts ? changesOn(asOf, findings, alerts, records) : null), [asOf, findings, alerts, records]);
   const signals = asOf && alerts && connection !== "offline" ? openSignals(asOf, alerts) : null;
+  const latest = asOf && alerts && connection !== "offline" ? latestSignal(asOf, alerts) : null;
   const state = asOf === null ? (connection === "offline" ? "offline" : "connecting") : connection === "offline" ? "offline" : "ready";
 
   return (
     <div className="hm">
       <Since locale={locale} asOf={asOf} changes={changes} state={state} />
+      {latest ? <Latest locale={locale} alert={latest} /> : null}
       <Roles locale={locale} lastRole={lastRole} unit={unit} asOf={asOf} signals={signals} onRole={onRole} />
     </div>
   );

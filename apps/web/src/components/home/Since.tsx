@@ -17,6 +17,7 @@ export function Since({ locale, asOf, changes, state }: Props) {
         <h1 id="hm-since-title">{t(locale, "homeSinceTitle")}</h1>
         {asOf ? <AsOf locale={locale} date={asOf} /> : null}
       </header>
+      <p className="hm-lead">{t(locale, "homeLead")}</p>
       {state === "connecting" ? (
         <p className="hm-note" role="status" aria-live="polite">
           {t(locale, "homeConnecting")}

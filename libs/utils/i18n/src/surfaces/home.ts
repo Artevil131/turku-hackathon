@@ -22,6 +22,17 @@ export const homeEn = {
   homeResearchOpen: "Open the signals",
   homeLast: "Last",
   homeIntro: "Pitch intro",
+  homeLead: "AEI turns incoming lab results into a ward-level resistance view and an infection-control worklist, updated continuously instead of once a year.",
+  homeLatestTitle: "Latest open signal",
+  homeLatestOpen: "Open this signal",
+  homeLatestCluster: "Possible cluster: {n} patients with the same resistant {what} profile in {unit}, about {expected} expected, first seen {date}.",
+  homeLatestExcess: "Possible cluster: {n} {what} isolates in {unit} within 28 days, about {expected} expected, first seen {date}.",
+  homeLatestCpe: "Sentinel finding: carbapenemase-producing {organism} (CPE) in {unit}, first seen {date}.",
+  homeLatestNew: "Sentinel finding: the first {phenotype} in {unit} {since}, first seen {date}.",
+  homeLatestNewSince: "since {date}",
+  homeLatestNewNone: "in the data",
+  homeLatestTrend: "Rising resistance: {antibiotic} resistance in {organism} at {observed}, about {expected} expected, first seen {date}.",
+  homeLatestData: "Data check: {unit} sent {observed} samples, about {expected} expected, first seen {date}.",
 } as const;
 
 export const homeFi: Record<keyof typeof homeEn, string> = {
@@ -46,4 +57,15 @@ export const homeFi: Record<keyof typeof homeEn, string> = {
   homeResearchOpen: "Avaa signaalit",
   homeLast: "Viimeksi",
   homeIntro: "Esittelyanimaatio",
+  homeLead: "AEI muuttaa saapuvat laboratoriotulokset osastotason resistenssinäkymäksi ja infektiontorjunnan työlistaksi, ja päivittyy jatkuvasti, ei kerran vuodessa.",
+  homeLatestTitle: "Uusin avoin signaali",
+  homeLatestOpen: "Avaa tämä signaali",
+  homeLatestCluster: "Mahdollinen kasauma: {n} potilasta, joilla sama resistentti {what}-profiili yksikössä {unit}, odotettu noin {expected}, ensimmäinen havainto {date}.",
+  homeLatestExcess: "Mahdollinen kasauma: {n} {what}-löydöstä yksikössä {unit} 28 päivässä, odotettu noin {expected}, ensimmäinen havainto {date}.",
+  homeLatestCpe: "Vartijalöydös: karbapenemaasia tuottava {organism} (CPE) yksikössä {unit}, ensimmäinen havainto {date}.",
+  homeLatestNew: "Vartijalöydös: ensimmäinen {phenotype} yksikössä {unit} {since}, ensimmäinen havainto {date}.",
+  homeLatestNewSince: "{date} jälkeen",
+  homeLatestNewNone: "aineistossa",
+  homeLatestTrend: "Resistenssi nousee: {antibiotic}-resistenssi, {organism}, nyt {observed}, odotettu noin {expected}, ensimmäinen havainto {date}.",
+  homeLatestData: "Datatarkistus: {unit} lähetti {observed} näytettä, odotettu noin {expected}, ensimmäinen havainto {date}.",
 };
