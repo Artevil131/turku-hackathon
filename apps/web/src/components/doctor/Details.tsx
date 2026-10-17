@@ -38,11 +38,7 @@ export function Details({ client, locale, filters, data, item, signals }: Props)
           {t(locale, st.long)}
         </span>
       </h3>
-      <p className="dt-why">
-        {row
-          ? reasonOf(locale, row, data, filters)
-          : `${t(locale, gain === 1 ? "drGainOne" : "drGain", { gain })} · ${t(locale, "drAccessCount", { n: item.pair?.access ?? 0 })}`}
-      </p>
+      <p className="dt-why">{row ? reasonOf(locale, row, data, filters) : t(locale, gain === 1 ? "drGainOne" : "drGain", { gain })}</p>
       <p className="dt-fig num">
         {item.share !== null ? (
           <>

@@ -18,7 +18,7 @@ ceftazidime (tested only on *Pseudomonas*) can be labelled.
     suggest(result, "mild" | "severe")     // ordered for an empirical choice (D-026)
 
 `suggest` puts first the antibiotics whose whole 95 % interval clears 80 %
-(mild) or 90 % (severe), WHO AWaRe Access before Watch, then those whose
+(mild) or 90 % (severe), by coverage (no WHO AWaRe tier, D-050), then those whose
 estimate clears but interval does not, then the rest; "not assessable"
 when no level has 30 results or over 20 % of the pool is untested.
 

@@ -275,24 +275,7 @@ export function coverage(records: readonly IsolateRecord[], q: CoverageQuery): C
   };
 }
 
-// ---------- suggestion order (D-026, provisional) ----------
-
-/** WHO AWaRe classification (2023) of the dataset's antibiotics: Access first, Watch kept for when Access falls short. */
-export const AWARE: Record<AntibioticCode, "Access" | "Watch"> = {
-  AMP: "Access",
-  MEC: "Access",
-  TMP: "Access",
-  NIT: "Access",
-  CLI: "Access",
-  TZP: "Watch",
-  FOX: "Watch",
-  CXM: "Watch",
-  CRO: "Watch",
-  CAZ: "Watch",
-  MEM: "Watch",
-  CIP: "Watch",
-  VAN: "Watch",
-};
+// ---------- suggestion order (D-026, D-050) ----------
 
 /** Expected coverage a choice should reach: 80 % for mild or moderate infections, 90 % for severe ones (Artem's notes, A3). */
 export const THRESHOLDS = { mild: 0.8, severe: 0.9 } as const;
@@ -311,7 +294,6 @@ export const MIN_PARTNER_GAIN = 0.02;
 
 export interface Suggestion {
   antibiotic: AntibioticCode;
-  aware: "Access" | "Watch";
   standing: Standing;
   /** The share the standing rests on: within the intended spectrum (mild) or all organisms (severe), D-027. */
   basis: "spectrum" | "all organisms";
@@ -337,8 +319,8 @@ const RANK: Record<Standing, number> = { clears: 0, borderline: 1, below: 2, "no
 
 /**
  * Orders the coverage list the way an empirical choice is made: antibiotics
- * whose whole 95 % interval clears the threshold first, Access before
- * Watch, then by coverage; then those whose estimate clears it but whose
+ * whose whole 95 % interval clears the threshold first, by coverage (no WHO
+ * AWaRe tier, D-050); then those whose estimate clears it but whose
  * interval does not; then the rest. "Not assessable" when fewer than 30
  * isolates have a result or over a fifth of the level's pool is untested.
  * Mild infections are judged within each antibiotic's intended spectrum and
@@ -356,7 +338,6 @@ export function suggest(result: CoverageResult, severity: Severity): Suggestion[
       const { share, interval } = basis === "spectrum" ? c.spectrum : c;
       return {
         antibiotic: c.antibiotic,
-        aware: AWARE[c.antibiotic],
         standing: standingOf(share, interval, untested, threshold),
         basis,
         share,
@@ -365,18 +346,11 @@ export function suggest(result: CoverageResult, severity: Severity): Suggestion[
         coverage: c,
       };
     })
-    .sort(
-      (a, b) =>
-        RANK[a.standing] - RANK[b.standing] ||
-        (a.standing === "clears" ? (a.aware === b.aware ? 0 : a.aware === "Access" ? -1 : 1) : 0) ||
-        (b.share ?? -1) - (a.share ?? -1),
-    );
+    .sort((a, b) => RANK[a.standing] - RANK[b.standing] || (b.share ?? -1) - (a.share ?? -1));
 }
 
 export interface CombinationSuggestion {
   antibiotics: [AntibioticCode, AntibioticCode];
-  /** Access antibiotics in the pair (0 to 2). */
-  access: number;
   standing: Standing;
   /** How much more the pair covers than its better antibiotic alone, on the same isolates. */
   gain: number;
@@ -389,7 +363,7 @@ export interface CombinationSuggestion {
  * partner covers at least two points more than the better antibiotic alone,
  * when it is not two beta-lactams, and when neither is a urine-only agent.
  * Not assessable when over a fifth of the pool lacks a result for either.
- * Clears before borderline, then by coverage, then Access count. Severe
+ * Clears before borderline, then by coverage. Severe
  * infections only: a mild one is treated with one antibiotic.
  */
 export function suggestCombinations(result: CoverageResult, severity: Severity, limit = 5): CombinationSuggestion[] {
@@ -405,13 +379,12 @@ export function suggestCombinations(result: CoverageResult, severity: Severity, 
       const gain = c.counts.known ? (c.counts.covered - Math.max(...c.alone)) / c.counts.known : 0;
       return {
         antibiotics: c.antibiotics,
-        access: c.antibiotics.filter((a) => AWARE[a] === "Access").length,
         standing: standingOf(c.share, c.interval, c.untested, threshold),
         gain,
         coverage: c,
       };
     })
     .filter((c) => (c.standing === "clears" || c.standing === "borderline") && c.gain >= MIN_PARTNER_GAIN)
-    .sort((a, b) => RANK[a.standing] - RANK[b.standing] || (b.coverage.share ?? -1) - (a.coverage.share ?? -1) || b.access - a.access)
+    .sort((a, b) => RANK[a.standing] - RANK[b.standing] || (b.coverage.share ?? -1) - (a.coverage.share ?? -1))
     .slice(0, limit);
 }

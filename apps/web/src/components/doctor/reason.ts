@@ -50,7 +50,6 @@ export function flagsOf(row: Row) {
 export interface Item {
   id: string;
   name: string;
-  aware: "Access" | "Watch" | null;
   standing: Row["standing"];
   share: number | null;
   interval: [number, number] | null;

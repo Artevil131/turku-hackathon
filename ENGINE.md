@@ -96,8 +96,7 @@ per drug d offered for the specimen, on the chosen level's pool:
 90 % for severe. A drug *clears* when its interval's lower end reaches the
 threshold, is *borderline* when its share does, *below* otherwise, and *not
 assessable* without 30 results or with over 20 % of the pool untested.
-Clearing drugs come first, Access before Watch (WHO AWaRe 2023), then by
-share. Mild leaves out injection-only drugs; vancomycin and clindamycin
+Clearing drugs come first, by share (no WHO AWaRe tier, D-050). Mild leaves out injection-only drugs; vancomycin and clindamycin
 are not offered for urine. Pairs, for severe infections
 only and only when no single drug clears: covered if either drug covers the
 isolate, counted on isolates known for both; the partner must add 2 points;

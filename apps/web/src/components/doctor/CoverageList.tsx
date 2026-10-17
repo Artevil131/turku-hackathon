@@ -32,7 +32,6 @@ export function itemsOf(data: CoverageResponse, locale: Locale): { singles: Item
   const singles = data.suggestions.map<Item>((row) => ({
     id: row.antibiotic,
     name: antibioticName(locale, row.antibiotic),
-    aware: row.aware,
     standing: row.standing,
     share: row.share,
     interval: row.interval,
@@ -43,7 +42,6 @@ export function itemsOf(data: CoverageResponse, locale: Locale): { singles: Item
   const pairs = data.combinationSuggestions.map<Item>((p) => ({
     id: p.antibiotics.join("+"),
     name: p.antibiotics.map((a) => antibioticName(locale, a)).join(" + "),
-    aware: null,
     standing: p.standing,
     share: p.coverage.share,
     interval: p.coverage.interval,

@@ -70,14 +70,15 @@ describe("coverage", () => {
 });
 
 describe("suggest", () => {
-  it("puts Access before Watch among those that clear, and marks borderline and untested", () => {
+  it("orders those that clear by coverage, with no WHO tier, and marks borderline and untested", () => {
     const records = Array.from({ length: 200 }, (_, i) =>
       iso({ results: { NIT: i < 196 ? "S" : "R", CIP: i < 198 ? "S" : "R", TMP: i < 170 ? "S" : "R", MEC: i < 184 ? "S" : "R" } }),
     );
     const list = suggest(coverage(records, { asOf: "2026-06-30", ward: "URO", specimen: "urine" }), "severe");
     const standing = Object.fromEntries(list.map((s) => [s.antibiotic, s.standing]));
-    expect(list[0]?.antibiotic).toBe("NIT"); // Access, 98 %, clears 90 %
-    expect(list.findIndex((s) => s.antibiotic === "NIT")).toBeLessThan(list.findIndex((s) => s.antibiotic === "CIP")); // CIP is Watch
+    expect(list[0]?.antibiotic).toBe("CIP"); // 99 %, the highest that clears 90 %
+    expect(list.findIndex((s) => s.antibiotic === "CIP")).toBeLessThan(list.findIndex((s) => s.antibiotic === "NIT")); // 98 %
+    expect(list.some((s) => "aware" in s)).toBe(false);
     expect(standing.MEC).toBe("borderline"); // 92 %, interval reaches below 90 %
     expect(standing.TMP).toBe("below"); // 85 %
     expect(standing.CAZ).toBe("not assessable"); // never tested on E. coli

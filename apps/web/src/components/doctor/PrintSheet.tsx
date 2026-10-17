@@ -51,7 +51,9 @@ export function PrintSheet({ locale, filters, data, asOf, signals, singles, pair
         <span className="pr-why">
           {item.row
             ? reasonOf(locale, item.row, data, filters)
-            : `${t(locale, Math.round((item.pair?.gain ?? 0) * 100) === 1 ? "drGainOne" : "drGain", { gain: Math.round((item.pair?.gain ?? 0) * 100) })} · ${t(locale, "drAccessCount", { n: item.pair?.access ?? 0 })}`}
+            : t(locale, Math.round((item.pair?.gain ?? 0) * 100) === 1 ? "drGainOne" : "drGain", {
+                gain: Math.round((item.pair?.gain ?? 0) * 100),
+              })}
           {flags
             ? flags.notCovering
                 .slice(0, 2)

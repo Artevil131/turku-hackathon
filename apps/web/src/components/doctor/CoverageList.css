@@ -179,24 +179,6 @@
   overflow-wrap: anywhere;
 }
 
-.cl-tier {
-  flex: none;
-  display: inline-grid;
-  place-items: center;
-  width: 16px;
-  height: 16px;
-  border: 1px solid var(--d-line-strong);
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--d-ink-2);
-}
-
-.cl-tier[data-tier="Watch"] {
-  color: var(--d-watch);
-  border-color: var(--d-watch);
-}
-
 /* Plot area: axis 50-100 %, interval bar, point, dashed bar line. */
 .cl-plot {
   position: relative;
