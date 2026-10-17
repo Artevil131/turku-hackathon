@@ -34,6 +34,8 @@ interface Props {
   onChange: (next: Layers) => void;
   /** Show the word next to the icon (wide bands only). */
   withLabel: boolean;
+  /** The units that have a signal in view: one click shows only those. */
+  signalUnits?: readonly string[];
 }
 
 function Chip({
@@ -58,7 +60,7 @@ function Chip({
 }
 
 /** The quiet "Layers" button on the band and its small popover: checkboxes and radio groups, Esc closes. */
-export function LayersControl({ locale, layers, onChange, withLabel }: Props) {
+export function LayersControl({ locale, layers, onChange, withLabel, signalUnits }: Props) {
   const [open, setOpen] = useState(false);
   const id = useId();
   const root = useRef<HTMLDivElement>(null);
@@ -158,6 +160,14 @@ export function LayersControl({ locale, layers, onChange, withLabel }: Props) {
                 <button type="button" onClick={() => setUnits(true)}>
                   {t(locale, "tlLyAll")}
                 </button>
+                {signalUnits ? (
+                  <button
+                    type="button"
+                    onClick={() => set({ units: Object.fromEntries(wardCodes().map((u) => [u, signalUnits.includes(u)])) })}
+                  >
+                    {t(locale, "tlLySignals")}
+                  </button>
+                ) : null}
                 <button type="button" onClick={() => setUnits(false)}>
                   {t(locale, "tlLyNone")}
                 </button>

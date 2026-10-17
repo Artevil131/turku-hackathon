@@ -1073,7 +1073,22 @@ export function WeeklyBand(p: Props) {
       <span id={`${id}-sum`} className="visually-hidden">
         {summary}
       </span>
-      {control && onLayers ? <LayersControl locale={locale} layers={layers} onChange={onLayers} withLabel={withLabel} /> : null}
+      {control && onLayers ? (
+        <LayersControl
+          locale={locale}
+          layers={layers}
+          onChange={onLayers}
+          withLabel={withLabel}
+          signalUnits={[
+            ...new Set(
+              shownAlerts
+                .filter((a) => dayNumber(a.date) > dayNumber(asOf) - 28)
+                .map((a) => a.ward)
+                .filter((w): w is NonNullable<typeof w> => w !== null),
+            ),
+          ]}
+        />
+      ) : null}
       {row && !compact ? (
         <div
           className="hs-read"
