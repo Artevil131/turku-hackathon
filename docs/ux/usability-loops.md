@@ -16,3 +16,7 @@ A Sonnet judge read the diffs after loop 3 and scored usability 6/10, pointing
 to loop 4 as the next best change. Not run by the judge: the app. Not done:
 the dense research board itself (window count, repeated signal in 5 places;
 see overwhelm-analysis.md cuts 1, 2, 3, 4), no test with a real user.
+
+Added at the user's request (no judge run):
+
+| `ux-loop-5` | Windows grow to fit their content instead of scrolling inside (not saved; Notebook, Timeline, Signals and Assistant keep their own scroll) | "I don't like scrolling inside the windows" |

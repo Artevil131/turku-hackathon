@@ -191,6 +191,10 @@ interface Between {
   axis: "x" | "y";
 }
 
+// Windows with their own scrolling by design (a list or a page), which keep their size.
+const GROWS_NOT = new Set<string>(["notebook", "timeline", "signals", "assistant"]);
+const MAX_GROW_ROWS = 60;
+
 export function Workspace({
   projectId,
   project,
@@ -325,7 +329,16 @@ export function Workspace({
   const focusAfter = useRef<string | null>(null);
 
   // The user's own layout (or the drag preview of it), and the layout drawn: in focus mode, derived from it.
-  const base: Layout = compactLayout(fitLayout(draft ?? saved ?? defaultLayout()));
+  // A window never makes you scroll inside it: where its content is taller than its frame, the frame grows (not saved).
+  const [needed, setNeeded] = useState<Record<string, number>>({});
+  const own = draft ?? saved ?? defaultLayout();
+  const grown = wide
+    ? Object.entries(needed).reduce((l, [id, h]) => {
+        const w = allIds(l).includes(id) ? winOf(l, id) : null;
+        return w?.open && h > w.h ? patchWin(l, id, { h }) : l;
+      }, own)
+    : own;
+  const base: Layout = compactLayout(fitLayout(grown));
   const focused = wide && focus !== null ? focus : null;
   const layout: Layout = focused ? compactLayout(fitLayout(focusLayout(base, focused, viewRows))) : base;
   const colW = areaW / COLS;
@@ -350,6 +363,37 @@ export function Workspace({
       window.removeEventListener("resize", measure);
     };
   }, []);
+  useLayoutEffect(() => {
+    if (!wide || typeof ResizeObserver !== "function") return;
+    const root = areaRef.current;
+    if (!root) return;
+    const measure = () => {
+      const next: Record<string, number> = {};
+      for (const win of root.querySelectorAll<HTMLElement>(".ws-win[data-win]")) {
+        const id = win.dataset.win ?? "";
+        if (GROWS_NOT.has(kindOf(base, id) ?? id)) continue;
+        const frame = win.querySelector<HTMLElement>(".ws-frame");
+        const body = win.querySelector<HTMLElement>(".ws-body");
+        if (!frame || !body || body.scrollHeight <= body.clientHeight + 1) continue;
+        next[id] = Math.min(MAX_GROW_ROWS, Math.ceil((frame.clientHeight - body.clientHeight + body.scrollHeight + 4) / ROW_PX));
+      }
+      setNeeded((prev) => {
+        const merged = { ...prev };
+        let changed = false;
+        for (const [id, h] of Object.entries(next)) if (h > (merged[id] ?? 0)) (merged[id] = h), (changed = true);
+        return changed ? merged : prev;
+      });
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    for (const body of root.querySelectorAll(".ws-body")) {
+      ro.observe(body);
+      for (const child of Array.from(body.children)) ro.observe(child);
+    }
+    return () => ro.disconnect();
+  });
+  // A narrower or wider board reflows the content, so what was needed is measured again.
+  useEffect(() => setNeeded({}), [areaW]);
   // Position changes animate, but not the first placement.
   useEffect(() => {
     if (areaW <= 0 || animate) return;
