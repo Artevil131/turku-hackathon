@@ -84,6 +84,10 @@ function Stats({ locale, changes }: { locale: Locale; changes: Changes }) {
           <a className="hm-stat" href={s.href} data-zero={s.n === 0} title={s.title}>
             <b className="hm-n">{s.n}</b>
             <span className="hm-label">{s.label}</span>
+            <span className="hm-date">
+              <span className="visually-hidden">{spoken}</span>
+              <span aria-hidden="true">{date}</span>
+            </span>
           </a>
         </li>
       ))}
