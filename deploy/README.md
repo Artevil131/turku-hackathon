@@ -66,3 +66,28 @@ live in memory until restart), one API process. The web image has no
 push (`.github/workflows/check.yml`, job `containers`); nothing is pushed
 to a registry.
 
+
+### The language model through the web container
+
+With `AEI_LLM_URL` (and the Cloudflare Access `AEI_LLM_ACCESS_ID` and
+`AEI_LLM_ACCESS_SECRET`, see `deploy/myy-llm/README.md`) in the compose
+environment and `AEI_LLM_PROXY=1` at build time, the web container passes the
+app's two model calls (`GET /llm/v1/models`, `POST /llm/v1/chat/completions`)
+to the model and adds the token itself (`40-aei-llm.sh`), so the token never
+reaches the browser; every other `/llm` path is a 404. Without `AEI_LLM_URL`
+`/llm` is a 404 and the app shows its AI questions as off.
+
+### Running on the team's OCI server
+
+The stack runs on Aapo's OCI host (Oracle Linux 8, aarch64, docker compose)
+from a clone in `~/aei`, with the dataset and THL file uploaded under
+`~/aei/data`, the model served from Myy, and its settings in
+`~/aei/deploy/container/.env` (mode 600, git-ignored). Both ports are bound to
+127.0.0.1 there (web 8097, API 8796), so it is reached through SSH:
+
+    ssh -N -L 8097:127.0.0.1:8097 oci      # then http://localhost:8097
+    ssh oci 'cd aei && git pull && docker compose -p aei -f deploy/container/compose.yaml up -d --build'   # update
+
+Checked on 2026-10-17: all routes answer through the proxy, the model
+answers at `/llm`, and `SMOKE_URL=http://localhost:8097 pnpm smoke` passes
+14 of 14. It is not published on a public address.
