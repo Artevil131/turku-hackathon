@@ -25,7 +25,7 @@ const FIGS = {
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 
-function Candidate({ fig, locale }: { fig: Fig; locale: Locale }) {
+function Candidate({ fig, locale, eager }: { fig: Fig; locale: Locale; eager?: boolean }) {
   const name = t(locale, `methodName${fig.n}` as MessageKey);
   return (
     <figure className="mt-fig">
@@ -34,7 +34,7 @@ function Candidate({ fig, locale }: { fig: Fig; locale: Locale }) {
         src={`${base}/method/${fig.n}.${fig.ext}`}
         width={fig.w}
         height={fig.h}
-        loading="lazy"
+        loading={eager ? "eager" : "lazy"}
         decoding="async"
         alt={t(locale, `methodAlt${fig.n}` as MessageKey)}
       />
@@ -95,7 +95,14 @@ function useAlert(client: AeiClient, asOf: string | null) {
       .then(async (r) => {
         const found = r.alerts
           .filter(
-            (a): a is CountAlert => a.kind === "detector" && a.detector !== "rising-trend" && a.p !== undefined && a.expected !== undefined,
+            (a): a is CountAlert =>
+              a.kind === "detector" &&
+              a.detector !== "rising-trend" &&
+              a.p !== undefined &&
+              a.expected !== undefined &&
+              a.ward !== undefined &&
+              a.phenotype !== undefined &&
+              a.date <= asOf,
           )
           .sort((a, b) => (a.date < b.date ? 1 : -1))[0];
         if (stale) return;
@@ -207,8 +214,8 @@ export function MethodPage({ client, locale, asOf }: { client: AeiClient; locale
         live={coverage}
         candidates={
           <>
-            <Candidate fig={FIGS["0012"]} locale={locale} />
-            <Candidate fig={FIGS["0014"]} locale={locale} />
+            <Candidate fig={FIGS["0012"]} locale={locale} eager />
+            <Candidate fig={FIGS["0014"]} locale={locale} eager />
           </>
         }
       />
