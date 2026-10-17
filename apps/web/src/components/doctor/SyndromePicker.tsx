@@ -25,7 +25,6 @@ export function SyndromePicker({ locale, value, onPick }: Props) {
       <span className="sp-label">{t(locale, "drSyndrome")}</span>
       <div className="sp-row">
         {groups.map(({ site, syndromes }) => (
-          // biome-ignore lint/a11y/useSemanticElements: a fieldset would need a form; the group only names its chips.
           <div key={site} className="sp-group" role="group" aria-label={specimenName(locale, site)}>
             <span className="sp-site" aria-hidden="true">
               {specimenName(locale, site)}
