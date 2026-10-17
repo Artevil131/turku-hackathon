@@ -114,7 +114,7 @@
 }
 .hs-lane-label,
 .hs-ylab {
-  font: 500 11px var(--brand-font-ui, system-ui, sans-serif);
+  font: 500 12px var(--brand-font-ui, system-ui, sans-serif);
   fill: var(--ink-2, #1d204e);
 }
 .hs-yaxis {
@@ -128,7 +128,7 @@
   opacity: 0.8;
 }
 .hs-legend {
-  font: 500 11px var(--brand-font-ui, system-ui, sans-serif);
+  font: 500 12px var(--brand-font-ui, system-ui, sans-serif);
   fill: var(--ink-2, #1d204e);
 }
 .hs-swatch {
@@ -136,7 +136,7 @@
   stroke-width: 0.5;
 }
 .hs-axis-text {
-  font: 500 11px var(--brand-font-ui, system-ui, sans-serif);
+  font: 500 12px var(--brand-font-ui, system-ui, sans-serif);
   fill: var(--ink-3, #6f7292);
 }
 .hs-tick {
@@ -159,7 +159,7 @@
   fill: var(--brand-accent, #635bf1);
 }
 .hs-today-text {
-  font: 700 11px var(--brand-font-ui, system-ui, sans-serif);
+  font: 700 12px var(--brand-font-ui, system-ui, sans-serif);
   fill: #fff;
 }
 
@@ -175,7 +175,7 @@
   filter: drop-shadow(0 1px 1.5px rgb(7 8 28 / 0.25));
 }
 .hs-pill-text {
-  font: 600 11px var(--brand-font-ui, system-ui, sans-serif);
+  font: 600 12px var(--brand-font-ui, system-ui, sans-serif);
   fill: #fff;
   pointer-events: none;
 }
@@ -258,7 +258,7 @@
   fill: var(--brand-accent, #635bf1);
 }
 .hs-range-label-text {
-  font-size: 9.5px;
+  font-size: 11px;
   font-weight: 600;
   fill: #fff;
 }
@@ -447,7 +447,7 @@
   border-radius: 5px;
   background: none;
   color: var(--ink-3, #5c6080);
-  font: 500 11px var(--brand-font-ui, system-ui, sans-serif);
+  font: 500 12px var(--brand-font-ui, system-ui, sans-serif);
   cursor: pointer;
 }
 .ly-btn:hover,
@@ -482,7 +482,7 @@
   background: var(--glass-1, #fff);
   box-shadow: var(--pop-shadow, 0 4px 16px rgb(7 8 28 / 0.12));
   color: var(--ink, #07081c);
-  font: 400 11px / 1.4 var(--brand-font-ui, system-ui, sans-serif);
+  font: 400 12px / 1.4 var(--brand-font-ui, system-ui, sans-serif);
 }
 .ly-group {
   display: flex;
@@ -544,7 +544,7 @@
 }
 .ly-chip[data-type="radio"] input:checked + span::before {
   content: "●";
-  font-size: 8px;
+  font-size: 10px;
 }
 .ly-note {
   flex-basis: 100%;
