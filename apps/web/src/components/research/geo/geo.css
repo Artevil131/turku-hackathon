@@ -1,5 +1,6 @@
 /* One geographic panel (D2). Tokens come from styles.css, with fallbacks. */
-.geo {
+.geo,
+.ug {
   --geo-ink: var(--ink, #07081c);
   --geo-ink2: var(--ink-2, #1d204e);
   --geo-ink3: var(--ink-3, #5c6080);
@@ -80,12 +81,45 @@
 
 .geo-stage {
   position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
   width: 100%;
 }
 .geo-svg {
   display: block;
   width: 100%;
+  height: 100%;
+}
+.ws[data-float="false"] .geo-stage {
+  flex: none;
+}
+.ws[data-float="false"] .geo-svg {
   height: auto;
+}
+.geo-overlay-legend {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  font-size: 11px;
+}
+.geo-overlay-legend .geo-legend {
+  background: transparent;
+  font-size: 11px;
+}
+.geo-overlay-legend .geo-swatch {
+  width: 12px;
+  height: 9px;
+}
+.geo-overlay-card {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: min(210px, 60%);
+  max-height: 70%;
+  overflow: auto;
+  box-shadow: var(--pop-shadow, 0 4px 16px rgb(7 8 28 / 0.12));
+  border-radius: var(--radius-control, 6px);
 }
 .geo-overlay {
   position: absolute;
@@ -197,7 +231,7 @@
   stroke-width: 2;
 }
 .geo-hosp-label {
-  font-size: 13px;
+  font-size: 19px;
   font-weight: 600;
   fill: var(--geo-ink);
   paint-order: stroke;
@@ -214,27 +248,8 @@
   stroke: var(--geo-accent);
   stroke-width: 2;
 }
-.geo-cone {
-  fill: color-mix(in oklab, var(--geo-accent) 10%, transparent);
-  stroke: var(--brand-accent-line, #c6c4ed);
-  stroke-width: 1;
-}
 
 /* the Tyks lens */
-.geo-lens {
-  fill: #fff;
-  stroke: var(--geo-accent);
-  stroke-width: 2;
-}
-.geo-lens-title {
-  font-size: 15px;
-  font-weight: 600;
-  fill: var(--geo-accent);
-}
-.geo-lens-note {
-  font-size: 12px;
-  fill: var(--geo-ink3);
-}
 .geo-tube {
   fill: none;
   stroke: var(--geo-ink3);
@@ -287,6 +302,7 @@
   fill: #fff;
   stroke: var(--geo-ink2);
   stroke-width: 1.5;
+  filter: none;
 }
 .geo-box.geo-lit {
   stroke: var(--geo-alert);
@@ -303,6 +319,9 @@
   fill: #fff;
   stroke: var(--geo-alert);
   stroke-width: 1.5;
+}
+.geo-badge-glyph {
+  color: var(--geo-alert);
 }
 .geo-badge-text {
   font-size: 12px;
@@ -427,9 +446,11 @@
   stroke-width: 2;
 }
 .geo-lists {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  flex: 0 0 auto;
+}
+.geo-lists > summary {
+  cursor: pointer;
+  margin: 0;
 }
 .geo-h3 {
   margin: 0 0 4px;
@@ -494,4 +515,82 @@
   .geo-lists {
     grid-template-columns: 1fr;
   }
+}
+
+/* the unit graph window */
+.ug {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap, 8px);
+  height: 100%;
+  min-height: 0;
+  padding: var(--pad, 12px);
+  color: var(--ink, #07081c);
+  font-size: var(--t-s, 13px);
+}
+.ug[data-stale="true"] .ug-svg {
+  opacity: 0.7;
+}
+.ug-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px var(--gap, 8px);
+}
+.ug-title {
+  margin: 0;
+  font-size: var(--t-m, 15px);
+  font-weight: 600;
+}
+.ug-window {
+  color: var(--ink-3, #6f7292);
+  font-size: var(--t-xs, 12px);
+}
+.ug-head .geo-chip {
+  margin-left: auto;
+}
+.ug-stage {
+  flex: 1 1 auto;
+  min-height: 140px;
+  display: flex;
+  border: 1px solid var(--line, #e4e6ee);
+  border-radius: var(--radius-control, 6px);
+  background: color-mix(in oklab, var(--brand-accent-soft, #ecebfc) 35%, #fff);
+}
+.ug-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+.ug-keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--t-xs, 12px);
+  color: var(--ink-2, #1d204e);
+}
+.ug-keys li {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.ug-keys .ug-schematic {
+  margin-left: auto;
+  color: var(--ink-3, #6f7292);
+  font-style: italic;
+}
+.geo-tube {
+  stroke-opacity: 0.32;
+}
+
+.ws-body .ug-title,
+.ws-body .geo-title {
+  display: none;
+}
+.ug-head {
+  min-height: 28px;
 }

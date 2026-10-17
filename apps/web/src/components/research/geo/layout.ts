@@ -1,9 +1,10 @@
 import type { WardCode } from "@aei/domain";
 import { MAP_H, MAP_W, PAD, project } from "../map/geo.ts";
 
-// Geometry of the one panel: the map of Finland on one side, the Tyks inset
-// (a magnified circle anchored at Turku) on the other. Wide puts them side by
-// side, narrow stacks the inset under the map. All in viewBox units.
+// Geometry of the map window: the map of Finland, either alone at full width
+// (narrow) or on the left with room on the right for the legend and the card
+// (wide). The unit graph has its own geometry (unitPoint below). All in
+// viewBox units.
 
 export interface Layout {
   wide: boolean;
@@ -11,54 +12,44 @@ export interface Layout {
   h: number;
   /** Scale applied to the map. */
   s: number;
-  circle: { cx: number; cy: number; r: number };
 }
 
-export function layoutFor(width: number): Layout {
-  if (width >= 560) {
-    // The map keeps the left of the sheet, the inset the right; legend scale and card sit above the inset.
-    const sc = 0.78;
-    const w = 700;
-    const r = 176;
-    const h = Math.round((MAP_H + 2 * PAD) * sc);
-    return { wide: true, w, h, s: sc, circle: { cx: w - r - 2, cy: h - r - 2, r } };
-  }
-  // Phone: the inset stacks under the map at full width.
-  const sc = 0.82;
-  const w = MAP_W + 2 * PAD - 80;
-  const r = 206;
-  const mapH = Math.round((MAP_H + 2 * PAD) * sc);
-  return { wide: false, w, h: mapH + 24 + 2 * r + 8, s: sc, circle: { cx: w / 2, cy: mapH + 24 + r, r } };
-}
+/** The map fills its panel: one viewBox, scaled by the browser; the bottom strip is room for the legend. */
+export const MAP_LAYOUT: Layout = { wide: true, w: MAP_W + 2 * PAD, h: MAP_H + 2 * PAD + 34, s: 1 };
 
 export const mapPoint = (l: Layout, lon: number, lat: number): [number, number] => {
   const [x, y] = project(lon, lat);
   return [x * l.s, y * l.s];
 };
 
+/** The unit graph's drawing area, in viewBox units. */
+export const GRAPH_W = 480;
+export const GRAPH_H = 190;
+
 /**
- * Fixed unit positions as fractions of the circle radius. Hand-set, not taken from the home schematic:
- * the two busiest units (ED, ICU) get a gap wide enough for a spread label, and no two boxes touch.
+ * Unit positions as fractions of the graph's area: the patient route runs left to right (health centres, the
+ * emergency department, then the wards, the intensive care unit in the middle). Hand-set and schematic, not
+ * geography; the two busiest units (ED, ICU) get a gap wide enough for a spread label.
  */
 const UNIT_FRAC: Record<WardCode, [number, number]> = {
-  "PHC-N": [-0.66, -0.44],
-  "PHC-S": [-0.66, 0.44],
-  ED: [-0.38, 0],
-  ICU: [0.22, 0],
-  "MED-A": [-0.04, -0.62],
-  URO: [0.58, -0.44],
-  SURG: [0.75, 0],
-  GER: [0.58, 0.44],
-  "MED-B": [-0.04, 0.64],
+  "PHC-N": [0.09, 0.2],
+  "PHC-S": [0.09, 0.8],
+  ED: [0.31, 0.5],
+  ICU: [0.58, 0.5],
+  "MED-A": [0.47, 0.15],
+  URO: [0.84, 0.16],
+  SURG: [0.9, 0.5],
+  GER: [0.84, 0.84],
+  "MED-B": [0.47, 0.85],
 };
 
-export const unitPoint = (l: Layout, code: WardCode): [number, number] => {
+export const unitPoint = (code: WardCode): [number, number] => {
   const [fx, fy] = UNIT_FRAC[code];
-  return [l.circle.cx + fx * l.circle.r, l.circle.cy + fy * l.circle.r];
+  return [fx * GRAPH_W, fy * GRAPH_H];
 };
 
-export const NODE_HALF_W = 30;
-export const NODE_HALF_H = 13;
+export const NODE_HALF_W = 32;
+export const NODE_HALF_H = 14;
 
 /** A curved path from node a to node b, trimmed to leave both node boxes, and its midpoint. */
 export function bendPath(a: [number, number], b: [number, number], bend: number): string {
@@ -98,19 +89,6 @@ export function arc(a: [number, number], b: [number, number], bend: number) {
   };
 }
 
-/** The callout cone from a point to a circle: the two tangent points. */
-export function cone(p: [number, number], c: { cx: number; cy: number; r: number }): string {
-  const dx = c.cx - p[0];
-  const dy = c.cy - p[1];
-  const d = Math.hypot(dx, dy);
-  const a = Math.atan2(dy, dx);
-  const half = Math.asin(Math.min(1, c.r / d));
-  const len = Math.sqrt(Math.max(0, d * d - c.r * c.r));
-  const t1: [number, number] = [p[0] + len * Math.cos(a + half), p[1] + len * Math.sin(a + half)];
-  const t2: [number, number] = [p[0] + len * Math.cos(a - half), p[1] + len * Math.sin(a - half)];
-  return `M${p[0].toFixed(1)},${p[1].toFixed(1)} L${t1[0].toFixed(1)},${t1[1].toFixed(1)} L${t2[0].toFixed(1)},${t2[1].toFixed(1)}Z`;
-}
-
 export interface Rect {
   x0: number;
   y0: number;
@@ -126,7 +104,7 @@ export interface TagSpot {
   from: [number, number] | null;
 }
 
-const TAG_H = 18;
+const TAG_H = 20;
 const hits = (a: Rect, b: Rect, pad: number) => a.x0 < b.x1 + pad && a.x1 > b.x0 - pad && a.y0 < b.y1 + pad && a.y1 > b.y0 - pad;
 
 /** The box a unit node occupies, with room above it for its alert glyphs. */
@@ -140,22 +118,16 @@ export const nodeRect = (p: [number, number]): Rect => ({
 /**
  * Deterministic label placement. Items are placed in the order given; each tries positions along its curve
  * (middle first, then toward the ends), then offsets to either side of it, and takes the cheapest one that
- * stays inside the circle and overlaps no node, glyph or earlier label. A label off its curve gets a leader line.
+ * stays inside the bounds and overlaps no node, glyph or earlier label. A label off its curve gets a leader line.
  */
 export function placeTags(
   items: { id: string; w: number; at: (u: number) => [number, number]; tan: (u: number) => [number, number] }[],
   obstacles: Rect[],
-  circle: { cx: number; cy: number; r: number },
+  bounds: Rect,
 ): Map<string, TagSpot> {
   const placed: Rect[] = [];
   const out = new Map<string, TagSpot>();
-  const fits = (r: Rect) =>
-    [
-      [r.x0, r.y0],
-      [r.x1, r.y0],
-      [r.x0, r.y1],
-      [r.x1, r.y1],
-    ].every(([x, y]) => Math.hypot((x as number) - circle.cx, (y as number) - circle.cy) < circle.r - 6);
+  const fits = (r: Rect) => r.x0 >= bounds.x0 + 4 && r.x1 <= bounds.x1 - 4 && r.y0 >= bounds.y0 + 4 && r.y1 <= bounds.y1 - 4;
   for (const it of items) {
     let best: { cost: number; rect: Rect; spot: TagSpot } | null = null;
     for (const u of [0.5, 0.4, 0.6, 0.3, 0.7, 0.22, 0.78]) {

@@ -1,28 +1,12 @@
-import type { Alert, CountiesResponse, RegionalResponse, RegionalSeries, RegionalSignal, RelationsResponse } from "@aei/contract";
-import { WARDS, type WardCode } from "@aei/domain";
-import { formatMonth, type Locale, phenotypeName, t, wardName } from "@aei/i18n";
-import { nextUnits, undirectedFlows } from "@aei/relations";
-import { type KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
+import type { CountiesResponse, RegionalResponse, RegionalSeries, RegionalSignal } from "@aei/contract";
+import { formatMonth, type Locale, t } from "@aei/i18n";
+import { useMemo, useState } from "react";
 import { AsOf } from "../../AsOf.tsx";
 import { HOSPITALS, LINKS } from "../../intro/surface.ts";
-import { tubeWidth } from "../../Network.tsx";
 import type { PanelProps } from "../board.ts";
 import { centroidOf, pathOf } from "../map/geo.ts";
-import { badgeText, KIND_GLYPH, shiftDays, signalsOf } from "../network/model.ts";
 import "./geo.css";
-import {
-  arc,
-  bendPath,
-  cone,
-  type Layout,
-  layoutFor,
-  mapPoint,
-  NODE_HALF_H,
-  NODE_HALF_W,
-  nodeRect,
-  placeTags,
-  unitPoint,
-} from "./layout.ts";
+import { type Layout, MAP_LAYOUT, mapPoint } from "./layout.ts";
 import { useLoad } from "./useLoad.ts";
 
 // One geographic panel (redesign D2): Finland's wellbeing counties filled by
@@ -33,11 +17,25 @@ import { useLoad } from "./useLoad.ts";
 
 const DEFAULT_GROUP = "MRSA carriage";
 const NATIONAL = "Finland (all counties)";
-const WINDOW_DAYS = 28;
-const MAX_SPREAD = 3;
+
+/** The API's series name stays the key; the label is translated. */
+const SERIES_KEY = {
+  "CPE carriage, E. cloacae": "mapSeriesCpeEcl",
+  "CPE carriage, E. coli": "mapSeriesCpeEco",
+  "CPE carriage, K. pneumoniae": "mapSeriesCpeKpn",
+  "ESBL blood/CSF, E. coli": "mapSeriesEsblBloodEco",
+  "ESBL blood/CSF, K. pneumoniae": "mapSeriesEsblBloodKpn",
+  "ESBL carriage, E. coli": "mapSeriesEsblCarrEco",
+  "ESBL carriage, K. pneumoniae": "mapSeriesEsblCarrKpn",
+  "MRSA blood/CSF": "mapSeriesMrsaBlood",
+  "MRSA carriage": "mapSeriesMrsaCarr",
+  "VRE blood/CSF": "mapSeriesVreBlood",
+  "VRE carriage": "mapSeriesVreCarr",
+} as const;
+const seriesLabel = (locale: Locale, group: string) =>
+  group in SERIES_KEY ? t(locale, SERIES_KEY[group as keyof typeof SERIES_KEY]) : group;
 
 const shortName = (region: string) => region.replace(/ hyvinvointialue$/, "");
-const pct = (v: number) => Math.round(v * 100);
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 const fmt = (locale: Locale, v: number, digits = 1) =>
   new Intl.NumberFormat(locale === "fi" ? "fi-FI" : "en-GB", { maximumFractionDigits: digits }).format(v);
@@ -67,8 +65,6 @@ interface CountyShape {
   cx: number;
   cy: number;
 }
-
-type Net = { relations: RelationsResponse; alerts: Alert[] };
 
 function Glyph({ strong, size = 16 }: { strong: boolean; size?: number }) {
   return (
@@ -124,39 +120,15 @@ function Spark({
   );
 }
 
-export function GeoMap({ client, locale, asOf, state, onChange, reducedMotion }: PanelProps) {
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const [width, setWidth] = useState(700);
+export function GeoMap({ client, locale, asOf, reducedMotion }: PanelProps) {
   const [group, setGroup] = useState(DEFAULT_GROUP);
   const [chosen, setChosen] = useState<string | null>(null);
-  const [hover, setHover] = useState<WardCode | null>(null);
-  const [showTrail, setShowTrail] = useState(false);
   const [attempt, setAttempt] = useState(0);
 
-  useEffect(() => {
-    const el = wrapRef.current;
-    if (!el || typeof ResizeObserver === "undefined") return;
-    const ro = new ResizeObserver(([e]) => e && setWidth(Math.round(e.contentRect.width)));
-    ro.observe(el);
-    setWidth(Math.round(el.getBoundingClientRect().width) || 700);
-    return () => ro.disconnect();
-  }, []);
-
-  const L: Layout = useMemo(() => layoutFor(width), [width]);
+  const L: Layout = MAP_LAYOUT;
 
   const counties = useLoad<CountiesResponse>(() => client.counties(), [client], attempt);
   const regional = useLoad<RegionalResponse>(() => client.regional({ group }), [client, group, asOf], attempt);
-  const net = useLoad<Net>(
-    () =>
-      asOf
-        ? Promise.all([client.relations({ days: WINDOW_DAYS }), client.alerts({ from: shiftDays(asOf, -(WINDOW_DAYS - 1)) })]).then(
-            ([relations, al]) => ({ relations, alerts: al.alerts }),
-          )
-        : new Promise<Net>(() => {}),
-    [client, asOf],
-    attempt,
-  );
-
   const shapes: CountyShape[] = useMemo(() => {
     if (counties.state !== "ok") return [];
     return counties.data.features.map((f) => {
@@ -191,64 +163,14 @@ export function GeoMap({ client, locale, asOf, state, onChange, reducedMotion }:
     return v === null ? "norate" : `s${stepOf(v, edges)}`;
   };
 
-  const rel = net.state === "ok" ? net.data.relations : null;
-  const flows = rel?.flows ?? [];
-  const signals = useMemo(() => signalsOf(locale, net.state === "ok" ? net.data.alerts : []), [locale, net]);
-  const pairs = useMemo(() => undirectedFlows(flows), [flows]);
-  const maxPair = pairs[0]?.patients ?? 0;
-  const sel = hover ?? state.unit;
-
-  const spread = useMemo(() => {
-    const out: { from: WardCode; to: WardCode; share: number; n: number; total: number }[] = [];
-    for (const [unit, s] of signals.byUnit) {
-      if (!s.resistance) continue;
-      for (const n of nextUnits(flows, unit, MAX_SPREAD)) {
-        out.push({ from: unit, to: n.ward, share: n.share, n: n.patients, total: n.share ? Math.round(n.patients / n.share) : n.patients });
-      }
-    }
-    return out;
-  }, [signals, flows]);
-
-  const inOut = (code: WardCode) => ({
-    out: sum(flows.filter((f) => f.from === code).map((f) => f.patients)),
-    inn: sum(flows.filter((f) => f.to === code).map((f) => f.patients)),
-  });
-
-  const hospitals = useMemo(() => new Map(HOSPITALS.map((h) => [h.id, { ...h, p: mapPoint(L, h.lon, h.lat) }])), [L]);
+  const hospitals = useMemo(() => new Map(HOSPITALS.map((h) => [h.id, { ...h, p: mapPoint(L, h.lon, h.lat) }])), []);
   const tyks = hospitals.get("Tyks")?.p ?? [0, 0];
+
   const retry = () => setAttempt((n) => n + 1);
 
-  const chooseUnit = (code: WardCode) => {
-    setHover(code);
-    onChange({ unit: state.unit === code ? null : code });
-  };
-  const onKey = (e: KeyboardEvent, code: WardCode) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      chooseUnit(code);
-    }
-  };
-
-  const spreadTags = useMemo(() => {
-    const list = [...spread]
-      .sort((x, y) => x.from.localeCompare(y.from) || x.to.localeCompare(y.to))
-      .map((sp) => {
-        const g = arc(unitPoint(L, sp.from), unitPoint(L, sp.to), -0.22);
-        const label = t(locale, "geoSpread", { share: pct(sp.share), n: sp.n });
-        return { sp, g, label, w: Math.round(label.length * 6.6 + 16) };
-      });
-    const obstacles = WARDS.map((w) => nodeRect(unitPoint(L, w.code)));
-    const spots = placeTags(
-      list.map((x) => ({ id: `${x.sp.from}|${x.sp.to}`, w: x.w, at: x.g.at, tan: x.g.tan })),
-      obstacles,
-      L.circle,
-    );
-    return list.map((x) => ({ ...x, spot: spots.get(`${x.sp.from}|${x.sp.to}`) as NonNullable<ReturnType<typeof spots.get>> }));
-  }, [spread, L, locale]);
-
-  const loading = counties.state === "loading" || regional.state === "loading" || net.state === "loading";
-  const updating = (regional.fetching && data !== null) || (net.fetching && rel !== null) || (!!asOf && !!data && asOf !== data.asOf);
-  const hasError = counties.state === "error" || regional.state === "error" || net.state === "error";
+  const loading = counties.state === "loading" || regional.state === "loading";
+  const updating = (regional.fetching && data !== null) || (!!asOf && !!data && asOf !== data.asOf);
+  const hasError = counties.state === "error" || regional.state === "error";
   const edgeMax = (edges[2] as number) ?? 0;
   const steps = [
     { cls: "s0", label: "0" },
@@ -292,33 +214,6 @@ export function GeoMap({ client, locale, asOf, state, onChange, reducedMotion }:
           </svg>
           {t(locale, "geoLegendRef")}
         </li>
-        <li>
-          <svg width="22" height="12" viewBox="0 0 22 12" aria-hidden="true">
-            <line x1="1" x2="21" y1="6" y2="6" className="geo-tube" strokeWidth="5" />
-          </svg>
-          {t(locale, "geoLegendFlow")}
-        </li>
-        <li>
-          <svg width="22" height="12" viewBox="0 0 22 12" aria-hidden="true">
-            <rect x="2" y="1" width="18" height="10" rx="4" className="geo-box geo-lit" />
-          </svg>
-          {t(locale, "geoLegendLit")}
-        </li>
-        <li>
-          <svg width="22" height="12" viewBox="0 0 22 12" aria-hidden="true">
-            <line x1="1" x2="19" y1="6" y2="6" className="geo-spread" strokeWidth="2" />
-            <path d="M15 2 L21 6 L15 10Z" className="geo-spread-head" />
-          </svg>
-          {t(locale, "geoLegendSpread")}
-        </li>
-        {showTrail ? (
-          <li>
-            <svg width="22" height="12" viewBox="0 0 22 12" aria-hidden="true">
-              <line x1="1" x2="21" y1="6" y2="6" className="geo-trail" strokeWidth="2" />
-            </svg>
-            {t(locale, "geoLegendTrail")}
-          </li>
-        ) : null}
       </ul>
     </div>
   );
@@ -370,8 +265,6 @@ export function GeoMap({ client, locale, asOf, state, onChange, reducedMotion }:
     .map((c) => ({ ...c, rate: rateAt(c.name), cases: casesAt(c.name) }))
     .sort((x, y) => (y.rate ?? -1) - (x.rate ?? -1) || x.name.localeCompare(y.name));
 
-  const { cx: ccx, cy: ccy, r: cr } = L.circle;
-
   return (
     <section
       className="board-panel geo"
@@ -395,17 +288,11 @@ export function GeoMap({ client, locale, asOf, state, onChange, reducedMotion }:
           <select value={group} onChange={(e) => setGroup(e.target.value)} aria-label={t(locale, "mapGroup")}>
             {(data?.groups ?? [DEFAULT_GROUP]).map((g) => (
               <option key={g} value={g}>
-                {g}
+                {seriesLabel(locale, g)}
               </option>
             ))}
           </select>
         </label>
-        <button type="button" className="geo-chip" aria-pressed={showTrail} onClick={() => setShowTrail((v) => !v)}>
-          <svg viewBox="0 0 28 10" width="28" height="10" aria-hidden="true">
-            <path d="M1 5 H27" stroke="currentColor" strokeWidth="2" strokeDasharray="5 3" />
-          </svg>
-          {t(locale, "netTrailLayer")}
-        </button>
       </header>
 
       {hasError ? (
@@ -429,9 +316,7 @@ export function GeoMap({ client, locale, asOf, state, onChange, reducedMotion }:
         </p>
       ) : null}
 
-      {!L.wide ? legendScale : null}
-
-      <div className="geo-stage" ref={wrapRef} data-wide={L.wide}>
+      <div className="geo-stage">
         <svg viewBox={`0 0 ${L.w} ${L.h}`} className="geo-svg" role="group" aria-label={t(locale, "geoTitle")}>
           <defs>
             <marker id="geo-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
@@ -454,8 +339,8 @@ export function GeoMap({ client, locale, asOf, state, onChange, reducedMotion }:
                 tabIndex={-1}
                 aria-label={shortName(c.name)}
                 aria-pressed={chosen === c.name}
-                onClick={() => setChosen(c.name)}
-                onKeyDown={(e) => e.key === "Enter" && setChosen(c.name)}
+                onClick={() => setChosen((cur) => (cur === c.name ? null : c.name))}
+                onKeyDown={(e) => e.key === "Enter" && setChosen((cur) => (cur === c.name ? null : c.name))}
               >
                 <title>
                   {data && month
@@ -470,8 +355,6 @@ export function GeoMap({ client, locale, asOf, state, onChange, reducedMotion }:
               </path>
             ))}
           </g>
-
-          <path d={cone(tyks as [number, number], L.circle)} className="geo-cone" />
 
           <g className="geo-refs">
             {LINKS.map(([a, b, w]) => {
@@ -543,210 +426,21 @@ export function GeoMap({ client, locale, asOf, state, onChange, reducedMotion }:
           </g>
 
           <circle cx={tyks[0]} cy={tyks[1]} r={11} className="geo-anchor" />
-
-          <circle cx={ccx} cy={ccy} r={cr} className="geo-lens" />
-          <text x={ccx} y={ccy - cr + 22} textAnchor="middle" className="geo-lens-title">
-            Tyks
-          </text>
-          <text x={ccx} y={ccy + cr - 12} textAnchor="middle" className="geo-lens-note">
-            {t(locale, "geoSchematic")}
-          </text>
-
-          <g className="geo-tubes">
-            {pairs.map(({ a, b, patients }) => {
-              const active = sel === a || sel === b;
-              if (patients < 0.2 * maxPair && !active) return null;
-              return (
-                <path
-                  key={`${a}|${b}`}
-                  d={bendPath(unitPoint(L, a), unitPoint(L, b), 0.1)}
-                  className="geo-tube"
-                  data-active={active}
-                  strokeWidth={tubeWidth(patients, maxPair) * 0.9 + 0.6}
-                >
-                  <title>{t(locale, "netEdgeTitle", { a, b, patients, from: rel?.from ?? "", to: rel?.to ?? "" })}</title>
-                </path>
-              );
-            })}
-          </g>
-
-          {showTrail ? (
-            <g className="geo-trails">
-              {(rel?.links ?? []).map((l, i, all) => {
-                const same = all.filter((o, j) => j < i && o.from === l.from && o.to === l.to).length;
-                const g = arc(unitPoint(L, l.from), unitPoint(L, l.to), 0.3 + 0.15 * same);
-                return (
-                  <g key={`${l.from}|${l.to}|${l.phenotype}`}>
-                    <title>
-                      {t(locale, "netTrailEdge", { phenotype: phenotypeName(l.phenotype), patients: l.patients, confirmed: l.confirmed })}
-                    </title>
-                    <path
-                      d={g.d}
-                      className="geo-trail"
-                      strokeWidth={1.5 + Math.min(l.patients, 6) * 0.4}
-                      markerEnd="url(#geo-arrow-trail)"
-                    />
-                    <text x={g.mx} y={g.my + 4} textAnchor="middle" className="geo-tag-text">
-                      {phenotypeName(l.phenotype)} · n {l.patients}
-                    </text>
-                  </g>
-                );
-              })}
-            </g>
-          ) : null}
-
-          <g className="geo-spreads">
-            {spreadTags.map(({ sp, g, label, w, spot }) => (
-              <g key={`${sp.from}|${sp.to}`} data-active={sel === sp.from || sel === sp.to}>
-                <title>{t(locale, "geoSpreadTitle", { share: pct(sp.share), from: sp.from, n: sp.n, total: sp.total, to: sp.to })}</title>
-                <path d={g.d} className="geo-spread" strokeWidth={2 + sp.share * 7} markerEnd="url(#geo-arrow)" />
-                {spot.from ? <line x1={spot.from[0]} y1={spot.from[1]} x2={spot.x} y2={spot.y} className="geo-leader" /> : null}
-                <rect x={spot.x - w / 2} y={spot.y - 9} width={w} height="18" rx="9" className="geo-tag" />
-                <text x={spot.x} y={spot.y + 4} textAnchor="middle" className="geo-tag-text">
-                  {label}
-                </text>
-              </g>
-            ))}
-          </g>
-
-          {WARDS.map((w) => {
-            const [x, y] = unitPoint(L, w.code);
-            const s = signals.byUnit.get(w.code);
-            const lit = s?.resistance ?? false;
-            const dataOnly = !!s?.data && !lit;
-            const kinds = [...new Set((s?.badges ?? []).map((b) => b.kind))].slice(0, 3);
-            const aria = [
-              t(locale, "netNodeAria", { unit: w.code, name: wardName(locale, w.code) }),
-              s
-                ? t(locale, "netNodeSignals", { n: s.alerts.length, list: s.badges.map(badgeText).join("; ") })
-                : rel
-                  ? t(locale, "netNodeNoSignals")
-                  : null,
-              state.unit === w.code ? t(locale, "geoUnitSelected") : null,
-              state.focus === w.code ? t(locale, "geoUnitFocus") : null,
-            ]
-              .filter(Boolean)
-              .join(". ");
-            return (
-              <g
-                key={w.code}
-                className="geo-node"
-                role="button"
-                tabIndex={0}
-                aria-pressed={state.unit === w.code}
-                aria-label={aria}
-                data-selected={state.unit === w.code}
-                data-focus={state.focus === w.code}
-                onClick={() => chooseUnit(w.code)}
-                onKeyDown={(e) => onKey(e, w.code)}
-                onMouseEnter={() => setHover(w.code)}
-                onMouseLeave={() => setHover(null)}
-                onFocus={() => setHover(w.code)}
-                onBlur={() => setHover(null)}
-              >
-                <title>{aria}</title>
-                <rect
-                  className="geo-ring"
-                  x={x - NODE_HALF_W - 5}
-                  y={y - NODE_HALF_H - 5}
-                  width={NODE_HALF_W * 2 + 10}
-                  height={NODE_HALF_H * 2 + 10}
-                  rx="11"
-                />
-                <rect
-                  className={lit ? "geo-box geo-lit" : "geo-box"}
-                  x={x - NODE_HALF_W}
-                  y={y - NODE_HALF_H}
-                  width={NODE_HALF_W * 2}
-                  height={NODE_HALF_H * 2}
-                  rx="7"
-                  strokeDasharray={dataOnly ? "5 3" : undefined}
-                />
-                <text x={x} y={y + 4.5} textAnchor="middle" className="geo-code">
-                  {w.code}
-                </text>
-                {kinds.length > 0 ? (
-                  <g>
-                    <rect
-                      x={x + NODE_HALF_W - 6 - kinds.length * 12}
-                      y={y - NODE_HALF_H - 11}
-                      width={kinds.length * 12 + 8}
-                      height="16"
-                      rx="8"
-                      className="geo-badge"
-                    />
-                    <text
-                      x={x + NODE_HALF_W - 2 - (kinds.length * 12) / 2}
-                      y={y - NODE_HALF_H + 1}
-                      textAnchor="middle"
-                      className="geo-badge-text"
-                    >
-                      {kinds.map((k) => KIND_GLYPH[k]).join("")}
-                    </text>
-                  </g>
-                ) : null}
-              </g>
-            );
-          })}
         </svg>
 
-        {L.wide ? (
-          <div className="geo-overlay">
-            {legendScale}
-            {card}
-          </div>
-        ) : null}
+        {edgeMax > 0 ? <div className="geo-overlay-legend">{legendScale}</div> : null}
+        {chosen ? <div className="geo-overlay-card">{card}</div> : null}
       </div>
 
-      {!L.wide ? card : null}
       {legendKeys}
 
-      <div className="geo-lists">
-        <section aria-labelledby="geo-units-h">
-          <h3 id="geo-units-h" className="geo-h3">
-            {t(locale, "geoUnits")}
-            {rel ? <span className="geo-faint"> · {t(locale, "netWindowNote")}</span> : null}
-          </h3>
-          {net.state === "error" ? (
-            <p className="geo-faint">{t(locale, "netError")}</p>
-          ) : (
-            <ul className="geo-list">
-              {WARDS.map((w) => {
-                const s = signals.byUnit.get(w.code);
-                const f = inOut(w.code);
-                return (
-                  <li key={w.code}>
-                    <button
-                      type="button"
-                      className="geo-row"
-                      aria-pressed={state.unit === w.code}
-                      data-focus={state.focus === w.code}
-                      data-lit={s?.resistance ?? false}
-                      onClick={() => chooseUnit(w.code)}
-                      onMouseEnter={() => setHover(w.code)}
-                      onMouseLeave={() => setHover(null)}
-                    >
-                      <span className="geo-row-code">{w.code}</span>
-                      <span className="geo-row-name">{wardName(locale, w.code)}</span>
-                      <span className="geo-row-glyphs" aria-hidden="true">
-                        {[...new Set((s?.badges ?? []).map((b) => b.kind))].map((k) => KIND_GLYPH[k]).join(" ")}
-                      </span>
-                      <span className="geo-row-figs">{rel ? t(locale, "geoFlowOutIn", { out: f.out, in: f.inn }) : ""}</span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-          {signals.hospitalWide > 0 ? <p className="geo-faint">{t(locale, "netHospitalWide", { n: signals.hospitalWide })}</p> : null}
-        </section>
-
-        <section aria-labelledby="geo-counties-h">
-          <h3 id="geo-counties-h" className="geo-h3">
-            {t(locale, "geoCounties")}
-          </h3>
+      <details className="geo-lists">
+        <summary className="geo-h3">{t(locale, "geoCounties")}</summary>
+        <section aria-label={t(locale, "geoCounties")}>
           {rows.length === 0 ? (
-            <p className="geo-faint">{counties.state === "404" ? t(locale, "geoNoCounties") : t(locale, "mapLoading")}</p>
+            <p className="geo-faint">
+              {counties.state === "404" ? t(locale, "geoNoCounties") : loading ? t(locale, "mapLoading") : t(locale, "geoNoCases")}
+            </p>
           ) : (
             <ul className="geo-list geo-list-counties">
               {rows.map((c) => (
@@ -771,7 +465,7 @@ export function GeoMap({ client, locale, asOf, state, onChange, reducedMotion }:
             </ul>
           )}
         </section>
-      </div>
+      </details>
     </section>
   );
 }

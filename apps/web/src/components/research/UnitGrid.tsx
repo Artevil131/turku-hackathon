@@ -2,6 +2,7 @@ import { type IsolateRecord, PHENOTYPES, type Phenotype, WARDS, type WardCode } 
 import { formatDate, phenotypeName, t } from "@aei/i18n";
 import { type KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AsOf } from "../AsOf.tsx";
+import { InfoButton } from "../Info.tsx";
 import { GRID_WEEKS, kindOf, type PanelProps } from "./board.ts";
 import "./UnitGrid.css";
 
@@ -178,8 +179,8 @@ export function UnitGrid({ client, locale, asOf, state, onChange }: PanelProps) 
             {t(locale, "gridTitle", { phenotype: ph })}
           </h2>
           {shown ? <AsOf locale={locale} date={shown.asOf} pending={updating} clockDate={asOf ?? undefined} /> : null}
+          <InfoButton locale={locale}>{t(locale, "gridNote")}</InfoButton>
         </div>
-        <p className="ugrid-note">{t(locale, "gridNote")}</p>
         {first !== undefined && last !== undefined ? (
           <p className="ugrid-window">
             {t(locale, "gridWeeks", { n: shown?.weeks ?? weeks })} ·{" "}

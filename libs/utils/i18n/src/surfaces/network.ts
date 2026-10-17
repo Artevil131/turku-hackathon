@@ -1,6 +1,7 @@
 // Copy for the researcher's hospital network panel (spec-research.md). Keys are global: prefix them.
 
 export const networkEn = {
+  graphTitle: "Unit graph",
   netTitle: "Patient flow, {from}–{to}",
   netPanelAria: "Hospital network: units, patient flow and signals",
   netShareNote: "share of patient flow, not exposure",
@@ -53,6 +54,7 @@ export const networkEn = {
 } as const;
 
 export const networkFi: Record<keyof typeof networkEn, string> = {
+  graphTitle: "Yksikkökaavio",
   netTitle: "Potilasvirta {from}–{to}",
   netPanelAria: "Sairaalaverkosto: yksiköt, potilasvirta ja signaalit",
   netShareNote: "osuus potilasvirrasta, ei altistuma",

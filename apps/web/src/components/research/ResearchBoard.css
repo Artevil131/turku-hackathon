@@ -1,85 +1,20 @@
-/* The researcher's workspace: incidents 340 px, the centre view, the math
-   300 px, one screen under the top bar and the timeline. Under 1100 px the
-   three stack: list, math, panel. */
+/* The researcher's board. At 1100 px and wider the panels float inside the
+   workspace (workspace/workspace.css), which is as tall as its lowest panel;
+   the page area scrolls under the timeline. Narrower, the panels stack. */
 
 .board {
-  display: grid;
-  grid-template-columns: 340px minmax(0, 1fr) 300px;
-  gap: 12px;
-  height: var(--board-h, calc(100dvh - 200px));
-  min-height: 0;
-}
-
-.board-feed,
-.board-main,
-.board-math {
+  display: block;
   min-width: 0;
-  min-height: 0;
+  position: relative;
+  /* Room under the lowest panel. */
+  padding-bottom: 12px;
 }
 
-.board-main {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.board-tabs {
-  display: inline-flex;
-  gap: 4px;
-  align-self: flex-start;
-}
-
-.board-tab {
-  height: var(--control-h, 28px);
-  padding: 0 12px;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-control, 6px);
-  background: var(--glass-1, #fff);
-  color: var(--ink-2);
-  font-size: var(--t-s, 13px);
-  font-weight: 500;
-}
-
-.board-tab:hover {
-  color: var(--ink);
-  border-color: var(--live);
-}
-
-.board-tab[aria-selected="true"] {
-  background: var(--live);
-  border-color: var(--live);
-  color: var(--live-ink, #fff);
-}
-
-.board-view {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: auto;
-}
-
-/* Panels fill the view and scroll themselves. */
-.board-view > .board-panel {
-  min-height: 100%;
-}
-
-@media (max-width: 1099px) {
-  .board {
-    display: flex;
-    flex-direction: column;
-    height: auto;
-  }
-  .board-feed {
-    order: 1;
-    height: min(60dvh, 520px);
-  }
-  .board-math {
-    order: 2;
-  }
-  .board-main {
-    order: 3;
-    min-height: 480px;
-  }
-  .board-view {
-    overflow: visible;
+@media (min-width: 1100px) {
+  /* The timeline stays put; the board scrolls under it. Never sideways. */
+  .page:has(> .board) {
+    display: block;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 }
