@@ -39,7 +39,16 @@ const ANSWERS: readonly WinId[] = ["graph", "map"];
 export function ResearchBoard(props: Props) {
   const { locale, client, asOf, findings, acknowledge, command } = props;
   const [state, setState] = useState<BoardState>(boardFromUrl);
-  const onChange = useCallback((patch: Partial<BoardState>) => setState((s) => ({ ...s, ...patch })), []);
+  // Choosing the signal that is already chosen ("Open calculation and explanation" on its row) changes no
+  // state, so the card is revealed by hand: opened, raised and flashed.
+  const incidentRef = useRef<string | null>(state.incident);
+  incidentRef.current = state.incident;
+  const onChange = useCallback((patch: Partial<BoardState>) => {
+    if (patch.incident !== undefined && patch.incident !== null && patch.incident === incidentRef.current) {
+      setReveal({ id: "math", key: `math-${Date.now()}` });
+    }
+    setState((s) => ({ ...s, ...patch }));
+  }, []);
   // The project (the friend's shell, D-057 on main) travels in the hash beside the board's own params.
   const project = useProject(client, asOf);
   const [notebookLanguage, setNotebookLanguage] = useState<NotebookLanguage>("python");

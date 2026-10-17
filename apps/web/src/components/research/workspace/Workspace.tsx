@@ -304,6 +304,13 @@ export function Workspace({
     if (!base.wins[reveal.id].open) open(reveal.id);
     else if (focus && focus !== reveal.id) setFocusTo(reveal.id);
     else focusWin(reveal.id);
+    // An already visible window is brought into view and flashed once, so a repeated ask is still answered.
+    const el = document.getElementById(`ws-win-${reveal.id}`);
+    if (el) {
+      el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      el.classList.add("ws-flash");
+      setTimeout(() => el.classList.remove("ws-flash"), 1200);
+    }
   });
   const PRESETS: readonly Preset[] = ["default", "map", "signals", "units", "analysis"];
   const PRESET_KEY = { default: "wsDefault", map: "wsMap", signals: "wsSignals", units: "wsUnits", analysis: "wsAnalysis" } as const;
