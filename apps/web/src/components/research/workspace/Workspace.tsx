@@ -195,6 +195,17 @@ interface Between {
 const GROWS_NOT = new Set<string>(["notebook", "timeline", "signals", "assistant"]);
 const MAX_GROW_ROWS = 60;
 
+/** Companion windows (the signal explained, map, patient flow, assistant) open beside the first window, not under everything. */
+const SIDE_KINDS: ReadonlySet<WinId> = new Set<WinId>(["math", "map", "graph", "assistant"]);
+function sideSlot(layout: Layout, id: WinId): Partial<Rect> {
+  const here = layout.wins[id];
+  if (!SIDE_KINDS.has(id) || here.open) return {};
+  const others = WIN_IDS.filter((k) => k !== id && k !== "timeline" && layout.wins[k].open).map((k) => layout.wins[k]);
+  if (!others.length) return {};
+  const w = Math.max(MIN_SIZE[id].w, Math.min(5, here.w));
+  return { x: COLS - w, y: Math.min(...others.map((o) => o.y)), w };
+}
+
 export function Workspace({
   projectId,
   project,
@@ -491,7 +502,7 @@ export function Workspace({
   };
   const open = (id: WinId) => {
     focusAfter.current = `ws-win-${id}`;
-    update((l) => raise(patchWin(l, id, { open: true }), id), id);
+    update((l) => raise(patchWin(l, id, { open: true, ...sideSlot(l, id) }), id), id);
     // While focused, an opened window is the one to look at.
     if (focus && focus !== id) setFocusTo(id);
     onOpened?.(id);

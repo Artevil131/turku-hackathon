@@ -62,7 +62,7 @@ export const DEMOS: readonly DemoSpec[] = [
     blurbKey: "demoClinicianBlurb",
     mode: "continuous",
     board: "unit=MED-A&cov.unit=MED-A&cov.site=urine&cov.sev=mild",
-    layout: gridLayout({ coverage: { x: 0, y: 0, w: 12, h: 40 } }, "bottom"),
+    layout: gridLayout({ coverage: { x: 0, y: 0, w: 12, h: 40 } }, "none"),
     page: null,
   },
   {
