@@ -35,7 +35,6 @@ export function Home({ locale, clock, findings, lastRole, onRole, connection, al
 
   return (
     <div className="hm">
-      <h1 className="visually-hidden">{t(locale, "home")}</h1>
       <Since locale={locale} asOf={asOf} changes={changes} state={state} />
       <Roles locale={locale} lastRole={lastRole} unit={unit} asOf={asOf} signals={signals} onRole={onRole} />
     </div>

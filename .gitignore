@@ -47,3 +47,4 @@ xcuserdata/
 
 # backup demo videos (scripts/record_demo.mjs)
 /demo-*.mp4
+# smoke-test screenshots and report (apps/web/scripts/smoke.mjs)

@@ -16,7 +16,8 @@
     "test": "vitest run && uv run pytest -q libs/utils/py/tests",
     "check": "biome check .",
     "format": "biome check --write .",
-    "test:ts": "vitest run"
+    "test:ts": "vitest run",
+    "smoke": "pnpm --filter @aei/web smoke"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",

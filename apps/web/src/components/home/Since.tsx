@@ -14,7 +14,7 @@ export function Since({ locale, asOf, changes, state }: Props) {
   return (
     <section className="hm-since glass" aria-labelledby="hm-since-title">
       <header className="hm-head">
-        <h2 id="hm-since-title">{t(locale, "homeSinceTitle")}</h2>
+        <h1 id="hm-since-title">{t(locale, "homeSinceTitle")}</h1>
         {asOf ? <AsOf locale={locale} date={asOf} /> : null}
       </header>
       {state === "connecting" ? (

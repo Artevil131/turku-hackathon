@@ -10,6 +10,7 @@ import {
 import type { IsolateRecord, Phenotype } from "@aei/domain";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { backoffDelay } from "./backoff.ts";
+import { SharedEventSource } from "./feed/SharedEventSource.ts";
 
 // Connects the web app to the AEI server through the shared contract
 // client. Isolates carrying a resistant phenotype become findings that stay
@@ -54,7 +55,10 @@ function toFindings(records: IsolateRecord[], seenBefore: string | null): Findin
 const API_BASE_URL: string = import.meta.env.VITE_AEI_API_URL ?? "";
 
 export function useLive(baseUrl = API_BASE_URL) {
-  const client: AeiClient = useMemo(() => createAeiClient({ baseUrl }), [baseUrl]);
+  const client: AeiClient = useMemo(
+    () => createAeiClient({ baseUrl, EventSource: SharedEventSource as unknown as typeof EventSource }),
+    [baseUrl],
+  );
   const [meta, setMeta] = useState<Meta | null>(null);
   const [clock, setClock] = useState<ClockState | null>(null);
   const [connection, setConnection] = useState<Connection>("connecting");

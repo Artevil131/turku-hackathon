@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc -p . && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc -p ."
+    "typecheck": "tsc -p .",
+    "smoke": "node scripts/smoke.mjs"
   },
   "dependencies": {
     "@aei/ask": "workspace:*",
