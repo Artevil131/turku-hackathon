@@ -71,8 +71,7 @@ esbl-urology-spring-2025/
   report.docx           the same content for Word
   figures/*.svg, *.png  the views as they were on screen
   analysis.py           loads everything into pandas
-  analysis.R            loads everything into R, typed for the AMR package
-  analysis.qmd          a Quarto starting point that renders a report
+  analysis.ipynb        a Jupyter starting point (also renders with Quarto)
 ```
 
 `datapackage.json` is a recognised standard for describing tables, and both
@@ -81,14 +80,11 @@ data in a form tools understand, not just in a README. The single-format
 downloads we built today (CSV, JSON, Markdown, LaTeX, Word, Python) stay;
 the package bundles them.
 
-### 2. R first-class, ready for the `AMR` package
+### 2. R: not now
 
-Since R is the field's main language, `analysis.R` should do more than
-`read.csv`: turn the results columns into `sir` objects with `as.sir()`, the
-organism names into `mo` codes with `as.mo()`, and the dates into dates, so
-`first_isolate()`, `antibiogram()` and `eucast_rules()` work at once. Then
-a researcher can check our coverage figure against the field's reference
-implementation in two lines, which is good for both trust and peer review.
+Aapo, 2026-10-17: we do not build for R. The CSVs and `datapackage.json`
+load in R with standard readers, so an R user is not locked out; we ship no
+R script or R package, and Python is where our own code is importable.
 
 ### 3. The Python package: our code, importable
 
@@ -129,13 +125,19 @@ Three parts, each small:
   generator, which such tests need). Without that, the Python and the app can
   disagree and nobody notices.
 
-### 4. Notebook and report templates
+### 4. A Jupyter notebook template
 
-`analysis.qmd`, and later a Jupyter notebook, opens with the data loaded,
-the scope and fingerprint printed, and the views on screen redrawn as
-plain ggplot or matplotlib code. The researcher edits from there, not from
-an empty file. This is the hand-over that most shortens the time from
-"interesting signal" to "figure in my report".
+`analysis.ipynb` opens with the data loaded through `aei.read_package`, the
+scope and fingerprint printed, and the views on screen redrawn as plain
+matplotlib code. The researcher edits from there, not from an empty file.
+This is the hand-over that most shortens the time from "interesting signal"
+to "figure in my report".
+
+Jupyter rather than Quarto (Aapo, 2026-10-17): Jupyter is the default in
+Python and opens in JupyterLab, VS Code and Colab, which suits exploring.
+Quarto is for the finished, top-to-bottom report and runs Python through a
+Jupyter kernel anyway; `quarto render analysis.ipynb` turns the same
+notebook into HTML, PDF or Word, so we keep one template, not two.
 
 ### 5. Back into the tool
 
@@ -146,7 +148,9 @@ keyed on `isolateId` can be shown in the line list and used as a filter. This
 closes the loop, since the outbreak line list is exactly the table people
 edit by hand.
 
-### 6. Exchange formats for the networks
+### 6. Exchange formats for the networks (later)
+
+Deferred (Aapo, 2026-10-17): useful in some cases, not planned yet.
 
 Labs already move data in WHONET-style flat files, and we already ingest
 that format (D-035). Exporting the line list in the same layout lets a lab
@@ -168,13 +172,11 @@ still needs:
 
 1. The research package zip with `datapackage.json`, `methods.json`,
    README and the formats we have, which mostly reuses what is built today.
-2. `analysis.R` typed for the `AMR` package, beside the existing
-   `analysis.py`.
-3. The installable `aei` Python package: `read_package` and `connect`
+2. The installable `aei` Python package: `read_package` and `connect`
    first, then the methods with parity tests.
-4. The Quarto template.
-5. Derived columns and notes coming back in.
-6. WHONET-layout export, and Excel if the team wants it.
+3. The Jupyter notebook template.
+4. Derived columns and notes coming back in.
+5. Later: WHONET-layout export, and Excel if the team wants it.
 
 ## Open questions for the team
 
@@ -190,8 +192,6 @@ still needs:
 - **Python package**: split `libs/utils/py` into its own installable
   `pyproject` (name `aei`?), published from git or to PyPI; which modules
   become the public API, and the parity-test rule for them.
-- **R**: a script only, or later an R package (`aei` on r-universe) with
-  `read_package()` and `connect()`.
 - **API for scripts**: an OpenAPI file generated from the contract, and
   per-researcher tokens (today only sites have tokens, D-051).
 - **Licence and data**: the organisers' dataset is not redistributable,
