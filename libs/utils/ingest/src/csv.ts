@@ -1,4 +1,5 @@
-import { parseCsv } from "@aei/dataset";
+// The CSV parser alone, so the browser (the Connect page) can parse without the file loader.
+import { parseCsv } from "@aei/dataset/csv";
 import type { AntibioticCode, Phenotype, Sex } from "@aei/domain";
 import {
   type CodeMaps,

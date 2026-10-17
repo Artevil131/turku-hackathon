@@ -12,6 +12,7 @@ import { hashPage } from "./url.ts";
 
 // Pages a first visit rarely opens load on demand, so home and the doctor's list paint sooner.
 const ResearchBoard = lazy(() => import("./components/research/ResearchBoard.tsx").then((m) => ({ default: m.ResearchBoard })));
+const ConnectPage = lazy(() => import("./components/connect/ConnectPage.tsx").then((m) => ({ default: m.ConnectPage })));
 const MethodPage = lazy(() => import("./components/method/MethodPage.tsx").then((m) => ({ default: m.MethodPage })));
 const Settings = lazy(() => import("./components/Settings.tsx").then((m) => ({ default: m.Settings })));
 const PitchIntro = lazy(() => import("./components/intro/PitchIntro.tsx").then((m) => ({ default: m.PitchIntro })));
@@ -22,7 +23,7 @@ const NO_FLOWS: readonly Flow[] = [];
 // [data-theme="dark"]; switch this (or add a toggle) to bring them back.
 const THEME: "light" | "dark" = "light";
 
-const PAGES: readonly Page[] = ["home", "doctor", "research", "method", "settings", "intro"];
+const PAGES: readonly Page[] = ["home", "doctor", "research", "method", "connect", "settings", "intro"];
 
 function stored<T extends string>(key: string, fallback: T, valid: (v: string) => boolean): T {
   try {
@@ -178,6 +179,7 @@ export function App() {
               />
             ) : null}
             {page === "method" ? <MethodPage client={live.client} locale={locale} asOf={live.clock?.asOf ?? null} /> : null}
+            {page === "connect" ? <ConnectPage client={live.client} locale={locale} /> : null}
             {page === "settings" ? (
               <Settings client={live.client} locale={locale} onLocale={setLocale} onResetRole={() => setLastRole(null)} />
             ) : null}

@@ -1,0 +1,1266 @@
+{
+ "resourceType": "Bundle",
+ "type": "collection",
+ "entry": [
+  {
+   "fullUrl": "urn:uuid:patient-P004209",
+   "resource": {
+    "resourceType": "Patient",
+    "id": "P004209",
+    "identifier": [
+     {
+      "system": "urn:oid:1.2.246.21",
+      "value": "P004209"
+     }
+    ],
+    "gender": "female",
+    "birthDate": "1957"
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:encounter-C0025808",
+   "resource": {
+    "resourceType": "Encounter",
+    "id": "C0025808",
+    "status": "in-progress",
+    "class": {
+     "code": "AMB"
+    },
+    "location": [
+     {
+      "location": {
+       "identifier": {
+        "value": "PHC-N"
+       },
+       "display": "PHC-N"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:specimen-C0025808",
+   "resource": {
+    "resourceType": "Specimen",
+    "id": "C0025808",
+    "type": {
+     "coding": [
+      {
+       "system": "http://snomed.info/sct",
+       "code": "122575003",
+       "display": "Urine specimen"
+      }
+     ]
+    },
+    "collection": {
+     "collectedDateTime": "2025-06-03T08:00:00+03:00"
+    }
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:observation-C0025808-1-AMP",
+   "resource": {
+    "resourceType": "Observation",
+    "id": "C0025808-1-AMP",
+    "status": "final",
+    "code": {
+     "coding": [
+      {
+       "system": "urn:oid:1.2.246.537.6.249",
+       "code": "2",
+       "display": "Ampisilliini"
+      }
+     ]
+    },
+    "interpretation": [
+     {
+      "coding": [
+       {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+        "code": "S"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:observation-C0025808-1-MEC",
+   "resource": {
+    "resourceType": "Observation",
+    "id": "C0025808-1-MEC",
+    "status": "final",
+    "code": {
+     "coding": [
+      {
+       "system": "urn:oid:1.2.246.537.6.249",
+       "code": "17",
+       "display": "Mesillinaami"
+      }
+     ]
+    },
+    "interpretation": [
+     {
+      "coding": [
+       {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+        "code": "S"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:observation-C0025808-1-TZP",
+   "resource": {
+    "resourceType": "Observation",
+    "id": "C0025808-1-TZP",
+    "status": "final",
+    "code": {
+     "coding": [
+      {
+       "system": "urn:oid:1.2.246.537.6.249",
+       "code": "27",
+       "display": "Piperasilliini-tatsobaktaami"
+      }
+     ]
+    },
+    "interpretation": [
+     {
+      "coding": [
+       {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+        "code": "S"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:observation-C0025808-1-CXM",
+   "resource": {
+    "resourceType": "Observation",
+    "id": "C0025808-1-CXM",
+    "status": "final",
+    "code": {
+     "coding": [
+      {
+       "system": "urn:oid:1.2.246.537.6.249",
+       "code": "13",
+       "display": "Kefuroksiimi"
+      }
+     ]
+    },
+    "interpretation": [
+     {
+      "coding": [
+       {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+        "code": "S"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:observation-C0025808-1-CRO",
+   "resource": {
+    "resourceType": "Observation",
+    "id": "C0025808-1-CRO",
+    "status": "final",
+    "code": {
+     "coding": [
+      {
+       "system": "urn:oid:1.2.246.537.6.249",
+       "code": "12",
+       "display": "Keftriaksoni"
+      }
+     ]
+    },
+    "interpretation": [
+     {
+      "coding": [
+       {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+        "code": "S"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:observation-C0025808-1-MEM",
+   "resource": {
+    "resourceType": "Observation",
+    "id": "C0025808-1-MEM",
+    "status": "final",
+    "code": {
+     "coding": [
+      {
+       "system": "urn:oid:1.2.246.537.6.249",
+       "code": "16",
+       "display": "Meropeneemi"
+      }
+     ]
+    },
+    "interpretation": [
+     {
+      "coding": [
+       {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+        "code": "S"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:observation-C0025808-1-CIP",
+   "resource": {
+    "resourceType": "Observation",
+    "id": "C0025808-1-CIP",
+    "status": "final",
+    "code": {
+     "coding": [
+      {
+       "system": "urn:oid:1.2.246.537.6.249",
+       "code": "29",
+       "display": "Siprofloksasiini"
+      }
+     ]
+    },
+    "interpretation": [
+     {
+      "coding": [
+       {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+        "code": "S"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:observation-C0025808-1-TMP",
+   "resource": {
+    "resourceType": "Observation",
+    "id": "C0025808-1-TMP",
+    "status": "final",
+    "code": {
+     "coding": [
+      {
+       "system": "urn:oid:1.2.246.537.6.249",
+       "code": "33",
+       "display": "Trimetopriimi"
+      }
+     ]
+    },
+    "interpretation": [
+     {
+      "coding": [
+       {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+        "code": "S"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:observation-C0025808-1-NIT",
+   "resource": {
+    "resourceType": "Observation",
+    "id": "C0025808-1-NIT",
+    "status": "final",
+    "code": {
+     "coding": [
+      {
+       "system": "urn:oid:1.2.246.537.6.249",
+       "code": "21",
+       "display": "Nitrofurantoiini"
+      }
+     ]
+    },
+    "interpretation": [
+     {
+      "coding": [
+       {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+        "code": "S"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:observation-C0025808-1-panel",
+   "resource": {
+    "resourceType": "Observation",
+    "id": "C0025808-1-panel",
+    "status": "final",
+    "code": {
+     "coding": [
+      {
+       "system": "http://loinc.org",
+       "code": "29576-6",
+       "display": "Bacterial susceptibility panel"
+      }
+     ]
+    },
+    "hasMember": [
+     {
+      "reference": "urn:uuid:observation-C0025808-1-AMP"
+     },
+     {
+      "reference": "urn:uuid:observation-C0025808-1-MEC"
+     },
+     {
+      "reference": "urn:uuid:observation-C0025808-1-TZP"
+     },
+     {
+      "reference": "urn:uuid:observation-C0025808-1-CXM"
+     },
+     {
+      "reference": "urn:uuid:observation-C0025808-1-CRO"
+     },
+     {
+      "reference": "urn:uuid:observation-C0025808-1-MEM"
+     },
+     {
+      "reference": "urn:uuid:observation-C0025808-1-CIP"
+     },
+     {
+      "reference": "urn:uuid:observation-C0025808-1-TMP"
+     },
+     {
+      "reference": "urn:uuid:observation-C0025808-1-NIT"
+     }
+    ]
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:observation-C0025808-1",
+   "resource": {
+    "resourceType": "Observation",
+    "id": "C0025808-1",
+    "status": "final",
+    "code": {
+     "coding": [
+      {
+       "system": "http://loinc.org",
+       "code": "634-6",
+       "display": "Bacteria identified"
+      }
+     ]
+    },
+    "valueCodeableConcept": {
+     "coding": [
+      {
+       "system": "urn:oid:1.2.246.537.6.241",
+       "code": "7640-22",
+       "display": "Escherichia coli"
+      }
+     ],
+     "text": "Escherichia coli"
+    },
+    "hasMember": [
+     {
+      "reference": "urn:uuid:observation-C0025808-1-panel"
+     }
+    ]
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:diagnosticreport-C0025808",
+   "resource": {
+    "resourceType": "DiagnosticReport",
+    "id": "C0025808",
+    "identifier": [
+     {
+      "value": "C0025808"
+     }
+    ],
+    "status": "final",
+    "category": [
+     {
+      "coding": [
+       {
+        "system": "http://terminology.hl7.org/CodeSystem/v2-0074",
+        "code": "MB"
+       }
+      ]
+     }
+    ],
+    "code": {
+     "text": "Bacterial culture"
+    },
+    "subject": {
+     "reference": "urn:uuid:patient-P004209"
+    },
+    "encounter": {
+     "reference": "urn:uuid:encounter-C0025808"
+    },
+    "specimen": [
+     {
+      "reference": "urn:uuid:specimen-C0025808"
+     }
+    ],
+    "effectiveDateTime": "2025-06-03T08:00:00+03:00",
+    "result": [
+     {
+      "reference": "urn:uuid:observation-C0025808-1"
+     }
+    ]
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:patient-P002757",
+   "resource": {
+    "resourceType": "Patient",
+    "id": "P002757",
+    "identifier": [
+     {
+      "system": "urn:oid:1.2.246.21",
+      "value": "P002757"
+     }
+    ],
+    "gender": "female",
+    "birthDate": "1983"
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:encounter-C0025811",
+   "resource": {
+    "resourceType": "Encounter",
+    "id": "C0025811",
+    "status": "in-progress",
+    "class": {
+     "code": "IMP"
+    },
+    "period": {
+     "start": "2025-06-02"
+    },
+    "location": [
+     {
+      "location": {
+       "identifier": {
+        "value": "MED-A"
+       },
+       "display": "MED-A"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:specimen-C0025811",
+   "resource": {
+    "resourceType": "Specimen",
+    "id": "C0025811",
+    "type": {
+     "coding": [
+      {
+       "system": "http://snomed.info/sct",
+       "code": "122575003",
+       "display": "Urine specimen"
+      }
+     ]
+    },
+    "collection": {
+     "collectedDateTime": "2025-06-03T08:00:00+03:00"
+    }
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:observation-C0025811-1-AMP",
+   "resource": {
+    "resourceType": "Observation",
+    "id": "C0025811-1-AMP",
+    "status": "final",
+    "code": {
+     "coding": [
+      {
+       "system": "urn:oid:1.2.246.537.6.249",
+       "code": "2",
+       "display": "Ampisilliini"
+      }
+     ]
+    },
+    "interpretation": [
+     {
+      "coding": [
+       {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+        "code": "S"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:observation-C0025811-1-MEC",
+   "resource": {
+    "resourceType": "Observation",
+    "id": "C0025811-1-MEC",
+    "status": "final",
+    "code": {
+     "coding": [
+      {
+       "system": "urn:oid:1.2.246.537.6.249",
+       "code": "17",
+       "display": "Mesillinaami"
+      }
+     ]
+    },
+    "interpretation": [
+     {
+      "coding": [
+       {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+        "code": "S"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:observation-C0025811-1-TZP",
+   "resource": {
+    "resourceType": "Observation",
+    "id": "C0025811-1-TZP",
+    "status": "final",
+    "code": {
+     "coding": [
+      {
+       "system": "urn:oid:1.2.246.537.6.249",
+       "code": "27",
+       "display": "Piperasilliini-tatsobaktaami"
+      }
+     ]
+    },
+    "interpretation": [
+     {
+      "coding": [
+       {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+        "code": "R"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:observation-C0025811-1-CXM",
+   "resource": {
+    "resourceType": "Observation",
+    "id": "C0025811-1-CXM",
+    "status": "final",
+    "code": {
+     "coding": [
+      {
+       "system": "urn:oid:1.2.246.537.6.249",
+       "code": "13",
+       "display": "Kefuroksiimi"
+      }
+     ]
+    },
+    "interpretation": [
+     {
+      "coding": [
+       {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+        "code": "S"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:observation-C0025811-1-CRO",
+   "resource": {
+    "resourceType": "Observation",
+    "id": "C0025811-1-CRO",
+    "status": "final",
+    "code": {
+     "coding": [
+      {
+       "system": "urn:oid:1.2.246.537.6.249",
+       "code": "12",
+       "display": "Keftriaksoni"
+      }
+     ]
+    },
+    "interpretation": [
+     {
+      "coding": [
+       {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+        "code": "S"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:observation-C0025811-1-MEM",
+   "resource": {
+    "resourceType": "Observation",
+    "id": "C0025811-1-MEM",
+    "status": "final",
+    "code": {
+     "coding": [
+      {
+       "system": "urn:oid:1.2.246.537.6.249",
+       "code": "16",
+       "display": "Meropeneemi"
+      }
+     ]
+    },
+    "interpretation": [
+     {
+      "coding": [
+       {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+        "code": "S"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:observation-C0025811-1-CIP",
+   "resource": {
+    "resourceType": "Observation",
+    "id": "C0025811-1-CIP",
+    "status": "final",
+    "code": {
+     "coding": [
+      {
+       "system": "urn:oid:1.2.246.537.6.249",
+       "code": "29",
+       "display": "Siprofloksasiini"
+      }
+     ]
+    },
+    "interpretation": [
+     {
+      "coding": [
+       {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+        "code": "S"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:observation-C0025811-1-TMP",
+   "resource": {
+    "resourceType": "Observation",
+    "id": "C0025811-1-TMP",
+    "status": "final",
+    "code": {
+     "coding": [
+      {
+       "system": "urn:oid:1.2.246.537.6.249",
+       "code": "33",
+       "display": "Trimetopriimi"
+      }
+     ]
+    },
+    "interpretation": [
+     {
+      "coding": [
+       {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+        "code": "S"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:observation-C0025811-1-NIT",
+   "resource": {
+    "resourceType": "Observation",
+    "id": "C0025811-1-NIT",
+    "status": "final",
+    "code": {
+     "coding": [
+      {
+       "system": "urn:oid:1.2.246.537.6.249",
+       "code": "21",
+       "display": "Nitrofurantoiini"
+      }
+     ]
+    },
+    "interpretation": [
+     {
+      "coding": [
+       {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+        "code": "S"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:observation-C0025811-1-panel",
+   "resource": {
+    "resourceType": "Observation",
+    "id": "C0025811-1-panel",
+    "status": "final",
+    "code": {
+     "coding": [
+      {
+       "system": "http://loinc.org",
+       "code": "29576-6",
+       "display": "Bacterial susceptibility panel"
+      }
+     ]
+    },
+    "hasMember": [
+     {
+      "reference": "urn:uuid:observation-C0025811-1-AMP"
+     },
+     {
+      "reference": "urn:uuid:observation-C0025811-1-MEC"
+     },
+     {
+      "reference": "urn:uuid:observation-C0025811-1-TZP"
+     },
+     {
+      "reference": "urn:uuid:observation-C0025811-1-CXM"
+     },
+     {
+      "reference": "urn:uuid:observation-C0025811-1-CRO"
+     },
+     {
+      "reference": "urn:uuid:observation-C0025811-1-MEM"
+     },
+     {
+      "reference": "urn:uuid:observation-C0025811-1-CIP"
+     },
+     {
+      "reference": "urn:uuid:observation-C0025811-1-TMP"
+     },
+     {
+      "reference": "urn:uuid:observation-C0025811-1-NIT"
+     }
+    ]
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:observation-C0025811-1",
+   "resource": {
+    "resourceType": "Observation",
+    "id": "C0025811-1",
+    "status": "final",
+    "code": {
+     "coding": [
+      {
+       "system": "http://loinc.org",
+       "code": "634-6",
+       "display": "Bacteria identified"
+      }
+     ]
+    },
+    "valueCodeableConcept": {
+     "coding": [
+      {
+       "system": "urn:oid:1.2.246.537.6.241",
+       "code": "7640-22",
+       "display": "Escherichia coli"
+      }
+     ],
+     "text": "Escherichia coli"
+    },
+    "hasMember": [
+     {
+      "reference": "urn:uuid:observation-C0025811-1-panel"
+     }
+    ]
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:diagnosticreport-C0025811",
+   "resource": {
+    "resourceType": "DiagnosticReport",
+    "id": "C0025811",
+    "identifier": [
+     {
+      "value": "C0025811"
+     }
+    ],
+    "status": "final",
+    "category": [
+     {
+      "coding": [
+       {
+        "system": "http://terminology.hl7.org/CodeSystem/v2-0074",
+        "code": "MB"
+       }
+      ]
+     }
+    ],
+    "code": {
+     "text": "Bacterial culture"
+    },
+    "subject": {
+     "reference": "urn:uuid:patient-P002757"
+    },
+    "encounter": {
+     "reference": "urn:uuid:encounter-C0025811"
+    },
+    "specimen": [
+     {
+      "reference": "urn:uuid:specimen-C0025811"
+     }
+    ],
+    "effectiveDateTime": "2025-06-03T08:00:00+03:00",
+    "result": [
+     {
+      "reference": "urn:uuid:observation-C0025811-1"
+     }
+    ]
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:patient-P004629",
+   "resource": {
+    "resourceType": "Patient",
+    "id": "P004629",
+    "identifier": [
+     {
+      "system": "urn:oid:1.2.246.21",
+      "value": "P004629"
+     }
+    ],
+    "gender": "female",
+    "birthDate": "1941"
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:encounter-C0025814",
+   "resource": {
+    "resourceType": "Encounter",
+    "id": "C0025814",
+    "status": "in-progress",
+    "class": {
+     "code": "AMB"
+    },
+    "location": [
+     {
+      "location": {
+       "identifier": {
+        "value": "PHC-S"
+       },
+       "display": "PHC-S"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:specimen-C0025814",
+   "resource": {
+    "resourceType": "Specimen",
+    "id": "C0025814",
+    "type": {
+     "coding": [
+      {
+       "system": "http://snomed.info/sct",
+       "code": "122575003",
+       "display": "Urine specimen"
+      }
+     ]
+    },
+    "collection": {
+     "collectedDateTime": "2025-06-03T08:00:00+03:00"
+    }
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:observation-C0025814-1-AMP",
+   "resource": {
+    "resourceType": "Observation",
+    "id": "C0025814-1-AMP",
+    "status": "final",
+    "code": {
+     "coding": [
+      {
+       "system": "urn:oid:1.2.246.537.6.249",
+       "code": "2",
+       "display": "Ampisilliini"
+      }
+     ]
+    },
+    "interpretation": [
+     {
+      "coding": [
+       {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+        "code": "S"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:observation-C0025814-1-MEC",
+   "resource": {
+    "resourceType": "Observation",
+    "id": "C0025814-1-MEC",
+    "status": "final",
+    "code": {
+     "coding": [
+      {
+       "system": "urn:oid:1.2.246.537.6.249",
+       "code": "17",
+       "display": "Mesillinaami"
+      }
+     ]
+    },
+    "interpretation": [
+     {
+      "coding": [
+       {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+        "code": "S"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:observation-C0025814-1-TZP",
+   "resource": {
+    "resourceType": "Observation",
+    "id": "C0025814-1-TZP",
+    "status": "final",
+    "code": {
+     "coding": [
+      {
+       "system": "urn:oid:1.2.246.537.6.249",
+       "code": "27",
+       "display": "Piperasilliini-tatsobaktaami"
+      }
+     ]
+    },
+    "interpretation": [
+     {
+      "coding": [
+       {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+        "code": "S"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:observation-C0025814-1-CXM",
+   "resource": {
+    "resourceType": "Observation",
+    "id": "C0025814-1-CXM",
+    "status": "final",
+    "code": {
+     "coding": [
+      {
+       "system": "urn:oid:1.2.246.537.6.249",
+       "code": "13",
+       "display": "Kefuroksiimi"
+      }
+     ]
+    },
+    "interpretation": [
+     {
+      "coding": [
+       {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+        "code": "S"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:observation-C0025814-1-CRO",
+   "resource": {
+    "resourceType": "Observation",
+    "id": "C0025814-1-CRO",
+    "status": "final",
+    "code": {
+     "coding": [
+      {
+       "system": "urn:oid:1.2.246.537.6.249",
+       "code": "12",
+       "display": "Keftriaksoni"
+      }
+     ]
+    },
+    "interpretation": [
+     {
+      "coding": [
+       {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+        "code": "S"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:observation-C0025814-1-MEM",
+   "resource": {
+    "resourceType": "Observation",
+    "id": "C0025814-1-MEM",
+    "status": "final",
+    "code": {
+     "coding": [
+      {
+       "system": "urn:oid:1.2.246.537.6.249",
+       "code": "16",
+       "display": "Meropeneemi"
+      }
+     ]
+    },
+    "interpretation": [
+     {
+      "coding": [
+       {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+        "code": "S"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:observation-C0025814-1-CIP",
+   "resource": {
+    "resourceType": "Observation",
+    "id": "C0025814-1-CIP",
+    "status": "final",
+    "code": {
+     "coding": [
+      {
+       "system": "urn:oid:1.2.246.537.6.249",
+       "code": "29",
+       "display": "Siprofloksasiini"
+      }
+     ]
+    },
+    "interpretation": [
+     {
+      "coding": [
+       {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+        "code": "S"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:observation-C0025814-1-TMP",
+   "resource": {
+    "resourceType": "Observation",
+    "id": "C0025814-1-TMP",
+    "status": "final",
+    "code": {
+     "coding": [
+      {
+       "system": "urn:oid:1.2.246.537.6.249",
+       "code": "33",
+       "display": "Trimetopriimi"
+      }
+     ]
+    },
+    "interpretation": [
+     {
+      "coding": [
+       {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+        "code": "S"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:observation-C0025814-1-NIT",
+   "resource": {
+    "resourceType": "Observation",
+    "id": "C0025814-1-NIT",
+    "status": "final",
+    "code": {
+     "coding": [
+      {
+       "system": "urn:oid:1.2.246.537.6.249",
+       "code": "21",
+       "display": "Nitrofurantoiini"
+      }
+     ]
+    },
+    "interpretation": [
+     {
+      "coding": [
+       {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+        "code": "R"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:observation-C0025814-1-panel",
+   "resource": {
+    "resourceType": "Observation",
+    "id": "C0025814-1-panel",
+    "status": "final",
+    "code": {
+     "coding": [
+      {
+       "system": "http://loinc.org",
+       "code": "29576-6",
+       "display": "Bacterial susceptibility panel"
+      }
+     ]
+    },
+    "hasMember": [
+     {
+      "reference": "urn:uuid:observation-C0025814-1-AMP"
+     },
+     {
+      "reference": "urn:uuid:observation-C0025814-1-MEC"
+     },
+     {
+      "reference": "urn:uuid:observation-C0025814-1-TZP"
+     },
+     {
+      "reference": "urn:uuid:observation-C0025814-1-CXM"
+     },
+     {
+      "reference": "urn:uuid:observation-C0025814-1-CRO"
+     },
+     {
+      "reference": "urn:uuid:observation-C0025814-1-MEM"
+     },
+     {
+      "reference": "urn:uuid:observation-C0025814-1-CIP"
+     },
+     {
+      "reference": "urn:uuid:observation-C0025814-1-TMP"
+     },
+     {
+      "reference": "urn:uuid:observation-C0025814-1-NIT"
+     }
+    ]
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:observation-C0025814-1",
+   "resource": {
+    "resourceType": "Observation",
+    "id": "C0025814-1",
+    "status": "final",
+    "code": {
+     "coding": [
+      {
+       "system": "http://loinc.org",
+       "code": "634-6",
+       "display": "Bacteria identified"
+      }
+     ]
+    },
+    "valueCodeableConcept": {
+     "coding": [
+      {
+       "system": "urn:oid:1.2.246.537.6.241",
+       "code": "6986-58",
+       "display": "Proteus mirabilis"
+      }
+     ],
+     "text": "Proteus mirabilis"
+    },
+    "hasMember": [
+     {
+      "reference": "urn:uuid:observation-C0025814-1-panel"
+     }
+    ]
+   }
+  },
+  {
+   "fullUrl": "urn:uuid:diagnosticreport-C0025814",
+   "resource": {
+    "resourceType": "DiagnosticReport",
+    "id": "C0025814",
+    "identifier": [
+     {
+      "value": "C0025814"
+     }
+    ],
+    "status": "final",
+    "category": [
+     {
+      "coding": [
+       {
+        "system": "http://terminology.hl7.org/CodeSystem/v2-0074",
+        "code": "MB"
+       }
+      ]
+     }
+    ],
+    "code": {
+     "text": "Bacterial culture"
+    },
+    "subject": {
+     "reference": "urn:uuid:patient-P004629"
+    },
+    "encounter": {
+     "reference": "urn:uuid:encounter-C0025814"
+    },
+    "specimen": [
+     {
+      "reference": "urn:uuid:specimen-C0025814"
+     }
+    ],
+    "effectiveDateTime": "2025-06-03T08:00:00+03:00",
+    "result": [
+     {
+      "reference": "urn:uuid:observation-C0025814-1"
+     }
+    ]
+   }
+  }
+ ]
+}

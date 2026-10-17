@@ -1,5 +1,6 @@
 import { boardEn } from "./surfaces/board.ts";
 import { commandEn } from "./surfaces/command.ts";
+import { connectEn } from "./surfaces/connect.ts";
 import { doctorEn } from "./surfaces/doctor.ts";
 import { feedEn } from "./surfaces/feed.ts";
 import { gridEn } from "./surfaces/grid.ts";
@@ -261,6 +262,7 @@ export const en = {
   ...qualityEn,
   ...mathEn,
   ...methodEn,
+  ...connectEn,
   ...feedEn,
   ...gridEn,
   ...networkEn,

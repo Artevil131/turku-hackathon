@@ -108,6 +108,9 @@ importers:
       '@aei/i18n':
         specifier: workspace:*
         version: link:../../libs/utils/i18n
+      '@aei/ingest':
+        specifier: workspace:*
+        version: link:../../libs/utils/ingest
       '@aei/relations':
         specifier: workspace:*
         version: link:../../libs/utils/relations

@@ -1,0 +1,16 @@
+patient_id,sex,birth_year,specimen_number,spec_date,ward,admission_date,spec_type,organism,esbl,mrsa,vre,cpe,AMP,MEC,TZP,FOX,CXM,CRO,CAZ,MEM,CIP,TMP,NIT,VAN,CLI
+P004209,F,1957,C0025808,2025-06-03,PHC-N,,urine,Escherichia coli,0,0,0,0,S,S,S,,S,S,,S,S,S,S,,
+P002757,F,1983,C0025811,2025-06-03,MED-A,2025-06-02,urine,Escherichia coli,0,0,0,0,S,S,R,,S,S,,S,S,S,S,,
+P004629,F,1941,C0025814,2025-06-03,PHC-S,,urine,Proteus mirabilis,0,0,0,0,S,S,S,,S,S,,S,S,S,R,,
+P006600,F,1959,C0025819,2025-06-03,PHC-N,,urine,Escherichia coli,0,0,0,0,S,S,S,,S,S,,S,S,S,S,,
+P007428,F,1943,C0025820,2025-06-03,MED-A,2025-06-02,urine,Pseudomonas aeruginosa,0,0,0,0,,,S,,,,S,R,S,,,,
+P009436,F,1967,C0025825,2025-06-03,PHC-S,,urine,Escherichia coli,0,0,0,0,S,S,S,,S,S,,S,S,S,S,,
+P005967,M,1957,C0025848,2025-06-03,MED-A,2025-05-22,urine,,,,,,,,,,,,,,,,,,
+P008767,F,1935,C0025854,2025-06-03,GER,2025-05-22,urine,,,,,,,,,,,,,,,,,,
+P000997,M,1978,C0025858,2025-06-03,SURG,2025-06-02,urine,,,,,,,,,,,,,,,,,,
+P003250,F,1949,C0025860,2025-06-03,ED,,urine,,,,,,,,,,,,,,,,,,
+P006867,F,1990,C0025861,2025-06-03,MED-B,2025-05-22,urine,Escherichia coli,0,0,0,0,S,S,S,,S,S,,S,S,S,S,,
+P005684,F,1980,C0025877,2025-06-03,PHC-S,,urine,,,,,,,,,,,,,,,,,,
+P005880,F,1952,C0025885,2025-06-03,URO,2025-05-27,urine,Staphylococcus aureus,0,0,0,0,,,,S,,,,,,S,S,S,S
+P004837,F,2019,C0025890,2025-06-03,PHC-N,,urine,Klebsiella pneumoniae,0,0,0,0,R,S,S,,S,S,,S,S,S,S,,
+P004126,M,1984,C0025893,2025-06-03,PHC-S,,urine,Escherichia coli,0,0,0,0,S,S,S,,S,S,,S,S,S,S,,

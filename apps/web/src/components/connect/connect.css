@@ -1,0 +1,209 @@
+/* The Connect page: live source status and a message checker. */
+
+.connect {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+  max-width: 960px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.cx-head {
+  display: grid;
+  gap: 8px;
+}
+
+.cx-lead {
+  margin: 0;
+  max-width: 68ch;
+  color: var(--ink-2);
+  font-size: var(--t-s);
+  line-height: 1.5;
+}
+
+.cx-note {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--t-xs);
+}
+
+.cx-h2 {
+  margin: 8px 0 0;
+  font-size: var(--t-m);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.cx-h3 {
+  margin: 12px 0 0;
+  font-size: var(--t-s);
+  font-weight: 600;
+}
+
+.cx-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.cx-source {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  padding: 14px;
+  background: var(--glass-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+}
+
+.cx-source[data-status="planned"] {
+  background: transparent;
+  border-style: dashed;
+}
+
+.cx-source-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cx-source h3 {
+  margin: 0;
+  font-size: var(--t-s);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.cx-source p {
+  margin: 0;
+  font-size: var(--t-xs);
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+.cx-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  font-size: var(--t-xs);
+  font-weight: 500;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+.cx-status i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--line-strong);
+}
+
+.cx-status[data-status="on"] i,
+.cx-status[data-status="ready"] i {
+  background: var(--st-ok);
+}
+
+.cx-status[data-status="on"],
+.cx-status[data-status="ready"] {
+  color: var(--ink);
+}
+
+.cx-status[data-status="off"] i {
+  background: var(--st-alert);
+}
+
+.cx-status[data-status="planned"] i {
+  background: transparent;
+  border: 1px solid var(--ink-3);
+}
+
+.cx-try {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  background: var(--glass-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+}
+
+.cx-label {
+  font-size: var(--t-xs);
+  font-weight: 500;
+  color: var(--ink-3);
+}
+
+.cx-message {
+  width: 100%;
+  min-height: 200px;
+  resize: vertical;
+  padding: 10px;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink);
+  background: var(--chassis);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control);
+  white-space: pre;
+  overflow: auto;
+}
+
+.cx-message:focus-visible {
+  outline: 2px solid var(--live);
+  outline-offset: 1px;
+}
+
+.cx-check {
+  justify-self: start;
+}
+
+.cx-result {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  background: var(--chassis);
+  border-radius: var(--radius-control);
+  font-size: var(--t-s);
+}
+
+.cx-result p {
+  margin: 0;
+}
+
+.cx-result-head {
+  font-weight: 600;
+}
+
+.cx-result-counts {
+  font-variant-numeric: tabular-nums;
+}
+
+.cx-result ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  font-size: var(--t-xs);
+  color: var(--ink-2);
+}
+
+.cx-k {
+  color: var(--ink-3);
+}
+
+.cx-code {
+  margin: 0;
+  padding: 12px;
+  overflow-x: auto;
+  font-size: 12px;
+  line-height: 1.5;
+  background: var(--chassis);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+}

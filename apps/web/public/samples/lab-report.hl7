@@ -1,0 +1,51 @@
+MSH|^~\&|MYPLUS|TYKSLAB|AEI|VARHA|20250603080000||ORU^R01^ORU_R01|C0025808|P|2.5.1
+PID|1||P004209^^^VARHA^PI||||19570101|F
+PV1|1|O|PHC-N^^^TYKS|||||||||||||||||||||||||||||||||||||||||
+OBR|1|PL-C0025808|C0025808|BAKTVI^Bakteeriviljely^L|||202506030800|||||||||||||||202506030800||MB|F
+SPM|1|||UR^Urine^HL70487|||||||||||||202506030800
+OBX|1|CWE|BAKTVI^Bakteeriviljely^L|1|7640-22^Escherichia coli^1.2.246.537.6.241||||||F
+OBR|2|PL-C0025808|C0025808-1|AST^Herkkyys^L|||202506030800||||G|||||||||||202506030800||MB|F|BAKTVI&Bakteeriviljely&L^1^Escherichia coli|||PL-C0025808&C0025808
+OBX|1|ST|2^Ampisilliini^1.2.246.537.6.249|1||||S|||F
+OBX|2|ST|17^Mesillinaami^1.2.246.537.6.249|1||||S|||F
+OBX|3|ST|27^Piperasilliini-tatsobaktaami^1.2.246.537.6.249|1||||S|||F
+OBX|4|ST|13^Kefuroksiimi^1.2.246.537.6.249|1||||S|||F
+OBX|5|ST|12^Keftriaksoni^1.2.246.537.6.249|1||||S|||F
+OBX|6|ST|16^Meropeneemi^1.2.246.537.6.249|1||||S|||F
+OBX|7|ST|29^Siprofloksasiini^1.2.246.537.6.249|1||||S|||F
+OBX|8|ST|33^Trimetopriimi^1.2.246.537.6.249|1||||S|||F
+OBX|9|ST|21^Nitrofurantoiini^1.2.246.537.6.249|1||||S|||F
+
+MSH|^~\&|MYPLUS|TYKSLAB|AEI|VARHA|20250603080000||ORU^R01^ORU_R01|C0025811|P|2.5.1
+PID|1||P002757^^^VARHA^PI||||19830101|F
+PV1|1|I|MED-A^^^TYKS|||||||||||||||||||||||||||||||||||||||||20250602
+OBR|1|PL-C0025811|C0025811|BAKTVI^Bakteeriviljely^L|||202506030800|||||||||||||||202506030800||MB|F
+SPM|1|||UR^Urine^HL70487|||||||||||||202506030800
+OBX|1|CWE|BAKTVI^Bakteeriviljely^L|1|7640-22^Escherichia coli^1.2.246.537.6.241||||||F
+OBR|2|PL-C0025811|C0025811-1|AST^Herkkyys^L|||202506030800||||G|||||||||||202506030800||MB|F|BAKTVI&Bakteeriviljely&L^1^Escherichia coli|||PL-C0025811&C0025811
+OBX|1|ST|2^Ampisilliini^1.2.246.537.6.249|1||||S|||F
+OBX|2|ST|17^Mesillinaami^1.2.246.537.6.249|1||||S|||F
+OBX|3|ST|27^Piperasilliini-tatsobaktaami^1.2.246.537.6.249|1||||R|||F
+OBX|4|ST|13^Kefuroksiimi^1.2.246.537.6.249|1||||S|||F
+OBX|5|ST|12^Keftriaksoni^1.2.246.537.6.249|1||||S|||F
+OBX|6|ST|16^Meropeneemi^1.2.246.537.6.249|1||||S|||F
+OBX|7|ST|29^Siprofloksasiini^1.2.246.537.6.249|1||||S|||F
+OBX|8|ST|33^Trimetopriimi^1.2.246.537.6.249|1||||S|||F
+OBX|9|ST|21^Nitrofurantoiini^1.2.246.537.6.249|1||||S|||F
+
+MSH|^~\&|MYPLUS|TYKSLAB|AEI|VARHA|20250603080000||ORU^R01^ORU_R01|C0025814|P|2.5.1
+PID|1||P004629^^^VARHA^PI||||19410101|F
+PV1|1|O|PHC-S^^^TYKS|||||||||||||||||||||||||||||||||||||||||
+OBR|1|PL-C0025814|C0025814|BAKTVI^Bakteeriviljely^L|||202506030800|||||||||||||||202506030800||MB|F
+SPM|1|||UR^Urine^HL70487|||||||||||||202506030800
+OBX|1|CWE|BAKTVI^Bakteeriviljely^L|1|6986-58^Proteus mirabilis^1.2.246.537.6.241||||||F
+OBR|2|PL-C0025814|C0025814-1|AST^Herkkyys^L|||202506030800||||G|||||||||||202506030800||MB|F|BAKTVI&Bakteeriviljely&L^1^Proteus mirabilis|||PL-C0025814&C0025814
+OBX|1|ST|2^Ampisilliini^1.2.246.537.6.249|1||||S|||F
+OBX|2|ST|17^Mesillinaami^1.2.246.537.6.249|1||||S|||F
+OBX|3|ST|27^Piperasilliini-tatsobaktaami^1.2.246.537.6.249|1||||S|||F
+OBX|4|ST|13^Kefuroksiimi^1.2.246.537.6.249|1||||S|||F
+OBX|5|ST|12^Keftriaksoni^1.2.246.537.6.249|1||||S|||F
+OBX|6|ST|16^Meropeneemi^1.2.246.537.6.249|1||||S|||F
+OBX|7|ST|29^Siprofloksasiini^1.2.246.537.6.249|1||||S|||F
+OBX|8|ST|33^Trimetopriimi^1.2.246.537.6.249|1||||S|||F
+OBX|9|ST|21^Nitrofurantoiini^1.2.246.537.6.249|1||||R|||F
+

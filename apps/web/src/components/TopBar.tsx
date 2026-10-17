@@ -5,7 +5,7 @@ import { CommandField } from "./command/CommandField.tsx";
 import { openSignals } from "./home/changes.ts";
 import { Gear } from "./Icons.tsx";
 
-export type Page = "home" | "doctor" | "research" | "method" | "settings" | "intro";
+export type Page = "home" | "doctor" | "research" | "method" | "connect" | "settings" | "intro";
 
 interface Props {
   locale: Locale;
@@ -52,6 +52,7 @@ export function TopBar(props: Props) {
           ) : null,
         )}
         {tab("method", t(locale, "methodNav"))}
+        {tab("connect", t(locale, "connectNav"))}
       </nav>
 
       <div className="top-tools">
