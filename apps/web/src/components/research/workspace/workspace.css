@@ -58,7 +58,8 @@
   display: flex;
   align-items: center;
   flex: none;
-  min-height: 32px;
+  min-height: 40px;
+  gap: 4px;
   padding: 0 4px 0 8px;
   border-bottom: 1px solid var(--line);
   background: var(--glass-1, #fff);
@@ -94,6 +95,7 @@
   cursor: grabbing;
 }
 .ws-action {
+  position: relative;
   display: grid;
   place-items: center;
   flex: 0 0 28px;
@@ -104,6 +106,12 @@
   background: none;
   color: var(--ink-3);
   cursor: pointer;
+}
+/* A 44 px hit area around the 28 px button. */
+.ws-action::after {
+  content: "";
+  position: absolute;
+  inset: -8px;
 }
 .ws-action:hover,
 .ws-title:hover {
