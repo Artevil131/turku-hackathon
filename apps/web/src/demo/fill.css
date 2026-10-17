@@ -1,0 +1,40 @@
+/* While a demo fills itself in: windows wait invisible until their turn, and the lock catches every press. */
+.ws[data-fill] .ws-win:not([data-shown]) {
+  opacity: 0;
+  pointer-events: none;
+}
+.ws[data-fill] .ws-win[data-shown] {
+  animation: appear-fade 600ms var(--mo-ease) both;
+}
+.fill-lock {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: grid;
+  align-items: end;
+  justify-items: center;
+  padding-bottom: 28px;
+  cursor: progress;
+}
+.fill-pill {
+  position: relative;
+  overflow: hidden;
+  padding: 10px 20px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--glass-1);
+  box-shadow: var(--pop-shadow);
+  color: var(--ink);
+  font-size: var(--t-s);
+  font-weight: 600;
+}
+.fill-pill span {
+  position: relative;
+  z-index: 1;
+}
+.fill-pill i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--live-soft);
+  transition: width 600ms var(--mo-ease);
+}

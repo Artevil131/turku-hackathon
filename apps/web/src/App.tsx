@@ -10,7 +10,9 @@ import { PHONE } from "./components/shell/Menu.tsx";
 import { Sidebar, tabName } from "./components/shell/Sidebar.tsx";
 import { type Audience, storedAudience } from "./components/start/audience.ts";
 import { StartPage } from "./components/start/StartPage.tsx";
-import type { DemoSpec, TourId } from "./demo/demos.ts";
+import type { DemoId, DemoSpec, TourId } from "./demo/demos.ts";
+import { FillOverlay } from "./demo/FillOverlay.tsx";
+import type { FillPlan } from "./demo/openDemo.ts";
 import { openDemo } from "./demo/openDemo.ts";
 import { DemoTour } from "./demo/tour/Tour.tsx";
 import { useLive } from "./live.ts";
@@ -141,6 +143,8 @@ export function App() {
     if (page === "home" && stored("yl.welcomed", "", () => true) === "") setTour({ demo: "overview", key: Date.now() });
     // biome-ignore lint/correctness/useExhaustiveDependencies: only on first load
   }, []);
+  // A demo filling itself in: the screen is locked until it is done, then the tour is offered.
+  const [filling, setFilling] = useState<{ demo: DemoId; plan: FillPlan; key: number } | null>(null);
   const startTour = () => {
     setPage("home");
     history.pushState(null, "", "#home");
@@ -351,11 +355,13 @@ export function App() {
     );
 
   const openDemoFile = (demo: DemoSpec) => {
-    openDemo(client, locale, demo)
-      .then((project) => {
+    // The full tour opens demo files itself and keeps playing, so those open already filled; any other demo fills itself in first.
+    const fill = tour?.demo !== "overview" && !reducedMotion;
+    openDemo(client, locale, demo, { fill })
+      .then(({ project, plan }) => {
         shell.openProject(project);
-        // The full tour opens demo files itself and keeps playing; any other tour starts with the file.
-        setTour((current) => (current?.demo === "overview" ? current : { demo: demo.id, key: Date.now() }));
+        if (plan) setFilling({ demo: demo.id, plan, key: Date.now() });
+        else setTour((current) => (current?.demo === "overview" ? current : { demo: demo.id, key: Date.now() }));
       })
       .catch(() => setNotice(t(locale, "demoOpenError")));
   };
@@ -508,6 +514,17 @@ export function App() {
                   ×
                 </button>
               </p>
+            ) : null}
+            {filling ? (
+              <FillOverlay
+                key={filling.key}
+                locale={locale}
+                plan={filling.plan}
+                onDone={() => {
+                  setTour({ demo: filling.demo, key: Date.now() });
+                  setFilling(null);
+                }}
+              />
             ) : null}
             {tour && (page === "project" || tour.demo === "overview") ? (
               <DemoTour

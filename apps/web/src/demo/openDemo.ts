@@ -33,7 +33,7 @@ async function runPage(client: AeiClient, cells: NbCell[]): Promise<NbCell[]> {
  * Bump when a demo's layout, notes or analyses change: a demo opened before is then rebuilt once (its layout, board and
  * notebook reset to the new version), so everyone sees the current demo, not the one first created in their browser.
  */
-const DEMO_VERSION = "7";
+const DEMO_VERSION = "8";
 const versionKey = (projectId: string) => `yl.demo.${projectId}`;
 const storedVersion = (projectId: string) => {
   try {
@@ -54,14 +54,46 @@ const storeVersion = (projectId: string) => {
  * Opens a demo file as an ordinary project: the first time it creates the project (layout, board, frozen cut) and
  * fills its notebook; afterwards it just returns the project it made, so the visitor's edits are kept.
  */
-export async function openDemo(client: AeiClient, locale: Locale, demo: DemoSpec): Promise<Project> {
+export interface FillPlan {
+  slot: string;
+  /** The whole notebook, results included; it is handed over one cell at a time. */
+  cells: NbCell[];
+  /** The windows in the order they appear. */
+  windows: string[];
+}
+
+/** The open windows of a demo's layout, in reading order. */
+const windowOrder = (demo: DemoSpec): string[] =>
+  Object.entries(demo.layout.wins)
+    .filter(([, w]) => w.open)
+    .sort(([, a], [, b]) => a.y - b.y || a.x - b.x)
+    .map(([id]) => id);
+
+export async function openDemo(
+  client: AeiClient,
+  locale: Locale,
+  demo: DemoSpec,
+  opts: { fill?: boolean } = {},
+): Promise<{ project: Project; plan: FillPlan | null }> {
   const name = t(locale, demo.titleKey);
   const description = t(locale, demo.blurbKey);
   const { projects } = await client.projects();
   const existing = projects.find((p) => p.name === name && p.description === description);
   const site = currentSite() ?? homeSite().id;
+  // Fills the notebook: at once, or (with `fill`) left empty and handed back as a plan the screen plays out.
+  const seed = async (projectId: string): Promise<FillPlan | null> => {
+    const slot = pageSlot(currentSite(), projectId);
+    const built = demo.page ? demo.page(locale, site) : null;
+    const cells = built ? await runPage(client, built.cells) : [];
+    if (opts.fill) {
+      if (built) savePage(slot, { ...built, cells: [] });
+      return { slot, cells, windows: windowOrder(demo) };
+    }
+    if (built) savePage(slot, { ...built, cells });
+    return null;
+  };
   if (existing) {
-    if (storedVersion(existing.id) === DEMO_VERSION) return existing;
+    if (storedVersion(existing.id) === DEMO_VERSION) return { project: existing, plan: null };
     // An older demo: bring it to the current version once.
     const fresh = (await client.project(existing.id)).project;
     const updated = await client.updateProject(existing.id, {
@@ -69,12 +101,9 @@ export async function openDemo(client: AeiClient, locale: Locale, demo: DemoSpec
       layout: JSON.parse(serializeLayout(demo.layout)) as Record<string, unknown>,
       scope: { ...fresh.scope, board: demo.board },
     });
-    if (demo.page) {
-      const built = demo.page(locale, site);
-      savePage(pageSlot(currentSite(), existing.id), { ...built, cells: await runPage(client, built.cells) });
-    }
+    const plan = await seed(existing.id);
     storeVersion(existing.id);
-    return updated.project;
+    return { project: updated.project, plan };
   }
   const input = {
     name,
@@ -89,13 +118,8 @@ export async function openDemo(client: AeiClient, locale: Locale, demo: DemoSpec
         .catch(() => client.createProject({ ...input, mode: "continuous" }))
     : client.createProject({ ...input, mode: "continuous" }));
   const project = created.project;
-  if (demo.page) {
-    const slot = pageSlot(currentSite(), project.id);
-    if (loadPage(slot).cells.length === 0) {
-      const built = demo.page(locale, site);
-      savePage(slot, { ...built, cells: await runPage(client, built.cells) });
-    }
-  }
+  const slot = pageSlot(currentSite(), project.id);
+  const plan = demo.page && loadPage(slot).cells.length > 0 ? null : await seed(project.id);
   storeVersion(project.id);
-  return project;
+  return { project, plan };
 }

@@ -1,6 +1,7 @@
 // Copy for the demo files: ready-made projects that show what the tool does for each kind of user. Keys are global: prefix them `demo`.
 
 export const demoEn = {
+  demoFilling: "Filling in the demo…",
   answerNone: "Nothing unusual right now",
   answerNoneNote: "No open signals {where} as of this date.",
   answerEverywhere: "anywhere in the hospital",
@@ -40,6 +41,7 @@ export const demoEn = {
 };
 
 export const demoFi: Record<keyof typeof demoEn, string> = {
+  demoFilling: "Täytetään esimerkkiä…",
   answerNone: "Ei mitään epätavallista juuri nyt",
   answerNoneNote: "Ei avoimia signaaleja {where} tähän päivään mennessä.",
   answerEverywhere: "missään sairaalassa",
