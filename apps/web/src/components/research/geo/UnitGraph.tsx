@@ -341,6 +341,7 @@ export function UnitGraph({ client, locale, asOf, state, onChange, reducedMotion
           {centre ? t(locale, "netGraphHeading", { unit: centre }) : t(locale, "graphTitle")}
         </h2>
         {rel ? <AsOf locale={locale} date={rel.to} pending={updating} clockDate={asOf ?? undefined} /> : null}
+        <p className="ug-caption">{t(locale, "geoTyksSource")}</p>
         <p className="ug-caption">{t(locale, "netFlowCaption")}</p>
         <InfoButton locale={locale} label={t(locale, "netFlowInfoLabel")} align="end">
           {t(locale, "netFlowInfo")}

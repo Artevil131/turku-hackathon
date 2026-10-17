@@ -52,7 +52,8 @@ beforeEach(() => {
   loaded.chosen = null;
 });
 vi.mock("./useLoad.ts", () => ({
-  useLoad: (_load: unknown, deps: unknown[]) => ({ state: "ok", data: deps.length === 1 ? loaded.counties : loaded.regional }),
+  useLoad: (_load: unknown, deps: unknown[]) =>
+    deps.length === 3 ? { state: "ok", data: null } : { state: "ok", data: deps.length === 1 ? loaded.counties : loaded.regional },
 }));
 
 describe("phenotype-total county forecasts", () => {

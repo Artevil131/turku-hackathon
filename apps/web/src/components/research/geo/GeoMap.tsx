@@ -1,5 +1,6 @@
-import type { CountiesResponse, RegionalResponse, RegionalSeries, RegionalSignal } from "@aei/contract";
+import type { CountiesResponse, RegionalResponse, RegionalSeries, RegionalSignal, WeeklyResponse } from "@aei/contract";
 import { formatMonth, type Locale, t } from "@aei/i18n";
+import { addDaysIso } from "@aei/viz";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AsOf } from "../../AsOf.tsx";
 import { HOSPITALS, LINKS } from "../../intro/surface.ts";
@@ -9,16 +10,16 @@ import "./geo.css";
 import { CountyDetail } from "./CountyDetail.tsx";
 import { CountyForecasts } from "./CountyForecasts.tsx";
 import { type Layout, MAP_LAYOUT, mapPoint } from "./layout.ts";
+import { TyksCompare } from "./TyksCompare.tsx";
 import { useLoad } from "./useLoad.ts";
 
-// One geographic panel (redesign D2): Finland's wellbeing counties filled by
-// the THL rate of the replay month, the referral tree of the university and
-// central hospitals as a graph on top, and Tyks magnified into an inset with
-// its nine units, patient flow, the last 28 days of alerts, where the patients
-// of a lit unit go next, and the phenotype trail.
+// Finland's wellbeing counties filled by the THL rate of the replay month.
+// The hospital referral hierarchy is a hand-drawn diagram, not patient data;
+// the separate unit graph shows Tyks's own (synthetic demo) data.
 
 const DEFAULT_GROUP = "MRSA carriage";
 const NATIONAL = "Finland (all counties)";
+const TYKS_COUNTY = "Varsinais-Suomen hyvinvointialue";
 
 /** The API's series name stays the key; the label is translated. */
 const SERIES_KEY = {
@@ -124,6 +125,7 @@ function Spark({
 
 export function GeoMap({ client, locale, asOf, reducedMotion }: PanelProps) {
   const [group, setGroup] = useState(DEFAULT_GROUP);
+  // The map shows first; the county detail replaces it in the tile once a county is picked.
   const [chosen, setChosen] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
   const detailHeading = useRef<HTMLHeadingElement>(null);
@@ -145,6 +147,12 @@ export function GeoMap({ client, locale, asOf, reducedMotion }: PanelProps) {
   const counties = useLoad<CountiesResponse>(() => client.counties(), [client], attempt);
   // Keep all phenotype-total forecasts even when the map shows one report group.
   const regional = useLoad<RegionalResponse>(() => client.regional({}), [client, asOf], attempt);
+  // Tyks's own weekly counts, beside Varsinais-Suomi's county figures only: nine weeks give two four-week totals.
+  const weekly = useLoad<WeeklyResponse | null>(
+    () => (chosen === TYKS_COUNTY && asOf ? client.weekly({ from: addDaysIso(asOf, -7 * 9) }) : Promise.resolve(null)),
+    [client, asOf, chosen === TYKS_COUNTY],
+    attempt,
+  );
   const shapes: CountyShape[] = useMemo(() => {
     if (counties.state !== "ok") return [];
     return counties.data.features.map((f) => {
@@ -237,6 +245,7 @@ export function GeoMap({ client, locale, asOf, reducedMotion }: PanelProps) {
           {t(locale, "geoLegendRef")}
         </li>
       </ul>
+      <p className="geo-faint">{t(locale, "geoThlCredit")}</p>
     </div>
   );
 
@@ -326,6 +335,9 @@ export function GeoMap({ client, locale, asOf, reducedMotion }: PanelProps) {
               <Spark locale={locale} series={fs} months={months} signals={signalsAll.filter((s) => s.region === chosen)} />
               <p className="geo-faint">{t(locale, "geoExpectedTick")}</p>
             </>
+          ) : null}
+          {chosen === TYKS_COUNTY && weekly.state === "ok" && weekly.data ? (
+            <TyksCompare weekly={weekly.data} group={group} locale={locale} />
           ) : null}
         </CountyDetail>
       ) : (

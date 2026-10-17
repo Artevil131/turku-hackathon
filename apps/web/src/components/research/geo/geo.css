@@ -219,19 +219,18 @@
   vertical-align: -3px;
 }
 
-/* referral graph */
+/* Referral hierarchy is a diagram, not measured patient flow. */
 .geo-ref {
-  stroke: var(--geo-ink2);
+  stroke: var(--geo-ink3);
   stroke-width: 0.8;
-  stroke-opacity: 0.4;
+  stroke-opacity: 0.28;
+  stroke-dasharray: 4 4;
 }
 .geo-ref[data-uni="true"] {
-  stroke-width: 1.2;
-  stroke-opacity: 0.5;
+  stroke-width: 1;
 }
 .geo-ref[data-tyks="true"] {
-  stroke: var(--geo-accent);
-  stroke-opacity: 0.6;
+  stroke-opacity: 0.35;
 }
 .geo-hosp {
   fill: var(--geo-ink2);
@@ -331,6 +330,60 @@
   display: flex;
   align-items: center;
   gap: 6px;
+}
+.geo-card-close {
+  margin-left: auto;
+  padding: 4px;
+  border: 0;
+  background: transparent;
+  color: var(--geo-ink3);
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.geo-card-close:hover {
+  color: var(--geo-ink);
+}
+.geo-card-close:focus-visible {
+  outline: 2px solid var(--geo-accent);
+  outline-offset: 2px;
+}
+.tyks-compare {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--geo-line, var(--line, #e4e6ee));
+  font-size: var(--t-xs, 12px);
+}
+.tyks-compare h3,
+.tyks-compare p,
+.tyks-compare dl,
+.tyks-compare dd {
+  margin: 0;
+}
+.tyks-compare h3 {
+  font: inherit;
+  font-weight: 600;
+}
+.tyks-compare dl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  font-variant-numeric: tabular-nums;
+}
+.tyks-compare dt,
+.tyks-compare .geo-faint {
+  color: var(--geo-ink3, var(--ink-3, #5c6080));
+}
+.tyks-compare dd {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.tyks-compare strong {
+  color: var(--geo-ink, var(--ink, #07081c));
 }
 .geo-card-figs {
   margin: 0;
