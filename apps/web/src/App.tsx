@@ -507,7 +507,12 @@ export function App() {
               </div>
             </div>
             <div className="palette">
-              <CommandField locale={locale} alerts={live.alertsLoaded ? alerts : undefined} asOf={live.clock?.asOf ?? null} />
+              <CommandField
+                locale={locale}
+                alerts={live.alertsLoaded ? alerts : undefined}
+                asOf={live.clock?.asOf ?? null}
+                client={client}
+              />
             </div>
             {notice ? (
               <p className="toast" role="status">

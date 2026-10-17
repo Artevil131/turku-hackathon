@@ -1,6 +1,7 @@
-import type { Alert } from "@aei/contract";
+import type { AeiClient, Alert } from "@aei/contract";
 import { type Locale, type MessageKey, t } from "@aei/i18n";
 import { type KeyboardEvent, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { type AnswerCache, AnswerPreview } from "./AnswerPreview.tsx";
 import "./command.css";
 import { buildEntries, type Group, type Result, search } from "./match.ts";
 
@@ -108,9 +109,11 @@ interface Props {
   alerts?: readonly Alert[];
   /** The replay clock's as-of date; the 28 days of alerts end on it. */
   asOf?: string | null;
+  /** Asked for the doctor's numbers of a compound query's live answer; without it no answer is shown. */
+  client?: Pick<AeiClient, "coverage">;
 }
 
-export function CommandField({ locale, alerts, asOf = null }: Props) {
+export function CommandField({ locale, alerts, asOf = null, client }: Props) {
   const uid = useId();
   const listId = `${uid}-list`;
   const [query, setQuery] = useState("");
@@ -119,6 +122,7 @@ export function CommandField({ locale, alerts, asOf = null }: Props) {
   const [active, setActive] = useState(0);
   const [ping, setPing] = useState(0);
   const input = useRef<HTMLInputElement>(null);
+  const answers = useRef<AnswerCache>(new Map());
   const wrap = useRef<HTMLDivElement>(null);
 
   const entries = useMemo(() => buildEntries(locale, alerts ?? [], asOf), [locale, alerts, asOf]);
@@ -311,6 +315,9 @@ export function CommandField({ locale, alerts, asOf = null }: Props) {
                     >
                       <span className="cmd-label">{r.label}</span>
                       <span className="cmd-sub">{r.sub}</span>
+                      {r.group === "queries" ? (
+                        <AnswerPreview href={r.href} locale={locale} client={client} alerts={alerts} cache={answers.current} />
+                      ) : null}
                     </div>
                   </div>
                 );
