@@ -621,3 +621,233 @@
   width: auto;
   max-width: 128px;
 }
+
+/* ---------- Title, control groups, legend and the events strip (research-unified.md §4, §5) ---------- */
+
+/* Whose timeline: "Tyks · 9 units", or "Tyks · Urology" with the unit in the accent. */
+.tl-title {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+  font-family: var(--brand-font-display, inherit);
+  font-size: var(--t-m, 15px);
+  font-weight: 600;
+  line-height: 20px;
+  color: var(--ink, #07081c);
+  white-space: nowrap;
+}
+
+.tl-title-unit {
+  color: var(--brand-accent, #635bf1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tl-title-clear {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--ink-3, #6f7292);
+  transition:
+    color var(--mo-1, 120ms) var(--mo-ease, ease-out),
+    background-color var(--mo-1, 120ms) var(--mo-ease, ease-out);
+}
+
+.tl-title-clear:hover {
+  color: var(--ink, #07081c);
+  background: var(--brand-accent-soft, #ecebfc);
+}
+
+/* Step and speed as two labelled groups. */
+.tl-ctl-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tl-ctl-label {
+  font-size: var(--t-xs, 12px);
+  font-weight: 600;
+  color: var(--ink-3, #6f7292);
+}
+
+.tl-ctl-group .seg button {
+  height: 22px;
+  padding: 0 8px;
+  font-size: var(--t-xs, 12px);
+  transition:
+    background-color var(--mo-1, 120ms) var(--mo-ease, ease-out),
+    color var(--mo-1, 120ms) var(--mo-ease, ease-out);
+}
+
+/* The lane legend, in words, left-aligned with the lanes. */
+.tl-legend {
+  margin: 0;
+  font-size: var(--t-xs, 12px);
+  line-height: 1.4;
+  color: var(--ink-3, #6f7292);
+  max-width: 72ch;
+}
+
+.tl-legend b {
+  font-weight: 600;
+  color: var(--ink-2, #1d204e);
+}
+
+/* The events strip: four tiles, visible, the presenter's path. */
+.tl-events {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 4px;
+  align-self: center;
+  min-width: 0;
+}
+
+.tl-events-label {
+  margin: 0;
+  font-size: var(--t-xs, 12px);
+  font-weight: 600;
+  color: var(--ink-3, #6f7292);
+}
+
+.tl-events-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tl-ev {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "code when unit"
+    "name name name"
+    "what what what";
+  gap: 1px 6px;
+  width: 100%;
+  min-width: 164px;
+  padding: 6px 8px;
+  border: 1px solid var(--line, #e4e6ee);
+  border-radius: 6px;
+  background: var(--glass-1, #fff);
+  text-align: left;
+  color: var(--ink, #07081c);
+  outline-offset: 2px;
+  transition:
+    border-color var(--mo-1, 120ms) var(--mo-ease, ease-out),
+    background-color var(--mo-1, 120ms) var(--mo-ease, ease-out),
+    box-shadow var(--mo-1, 120ms) var(--mo-ease, ease-out),
+    opacity var(--mo-2, 200ms) var(--mo-ease, ease-out);
+}
+
+.tl-ev:hover:not(:disabled) {
+  border-color: var(--line-strong, #aebecb);
+}
+
+.tl-ev:disabled {
+  opacity: 0.5;
+}
+
+.tl-ev-code {
+  grid-area: code;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: var(--t-xs, 12px);
+  font-weight: 600;
+  color: var(--ink-2, #1d204e);
+}
+
+.tl-ev-when {
+  grid-area: when;
+  font-size: var(--t-xs, 12px);
+  color: var(--ink-3, #6f7292);
+  white-space: nowrap;
+}
+
+.tl-ev-unit {
+  grid-area: unit;
+  font-size: var(--t-xs, 12px);
+  font-weight: 600;
+  color: var(--ink-2, #1d204e);
+}
+
+.tl-ev-name {
+  grid-area: name;
+  font-size: var(--t-s, 13px);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.tl-ev-what {
+  grid-area: what;
+  font-size: var(--t-xs, 12px);
+  line-height: 1.35;
+  color: var(--ink-2, #1d204e);
+}
+
+/* The tile whose incident is selected: the selection ring and the soft fill. */
+.tl-ev.is-current {
+  border-color: var(--brand-accent, #635bf1);
+  background: var(--brand-accent-soft, #ecebfc);
+  box-shadow: 0 0 0 1px var(--brand-accent, #635bf1);
+}
+
+/* Passed by the clock: a quiet check before the code. */
+.tl-ev.is-past .tl-ev-code::before {
+  content: "";
+  width: 5px;
+  height: 8px;
+  margin-right: 2px;
+  border-right: 1.5px solid var(--st-ok, #17784a);
+  border-bottom: 1.5px solid var(--st-ok, #17784a);
+  transform: translateY(-1px) rotate(45deg);
+}
+
+/* The other tiles step back by weight and tone, never by opacity: their text stays readable. */
+.tl-events.has-selection .tl-ev:not(.is-current) .tl-ev-name {
+  font-weight: 500;
+  color: var(--ink-2, #1d204e);
+}
+
+.tl-events.has-selection .tl-ev:not(.is-current) .tl-ev-what {
+  color: var(--ink-3, #6f7292);
+}
+
+/* Phone: the strip scrolls sideways under the sticky bar. */
+.timeline-phone .tl-events-list,
+.tl-sheet .tl-events-list {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+
+.timeline-phone .tl-events-list > li,
+.tl-sheet .tl-events-list > li {
+  flex: 0 0 min(72vw, 260px);
+  scroll-snap-align: start;
+}
+
+.timeline-phone .tl-ev,
+.tl-sheet .tl-ev {
+  min-height: 44px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tl-ev,
+  .tl-title-clear {
+    transition: none;
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          "apps/web/.impeccable/mock/research-unified.html"
+        ],
+        "createdAt": "2026-10-17T10:55:10.413Z",
+        "reason": "Claude: the mock copies the app's existing .seg segmented control (2 px padding, styles.css) verbatim; the finding is about that incumbent pattern, not this session's work"
+      }
+    ]
+  }
+}

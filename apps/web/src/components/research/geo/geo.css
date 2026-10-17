@@ -895,3 +895,68 @@
   font-weight: 600;
   fill: var(--ink, #07081c);
 }
+
+/* ---------- Caption, county focus and glyph selection (research-unified.md §2, §5.4, §7) ---------- */
+
+.geo-caption {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  margin: 0;
+  padding: 0 12px 6px;
+  font-size: var(--t-xs, 12px);
+  line-height: 1.4;
+  color: var(--geo-ink2, var(--ink-2));
+  max-width: 72ch;
+}
+
+/* County fills transition when the month changes; the focused county is the darkest shape. */
+.geo-county {
+  transition:
+    fill var(--mo-2, 200ms) var(--mo-ease, ease-out),
+    fill-opacity var(--mo-2, 200ms) var(--mo-ease, ease-out),
+    stroke-width var(--mo-1, 120ms) var(--mo-ease, ease-out);
+}
+.geo-county.is-focus {
+  stroke: var(--geo-ink, var(--ink));
+  stroke-width: 2.5;
+}
+.geo.has-selection .geo-county:not(.is-focus):not([data-selected="true"]) {
+  fill-opacity: 0.7;
+}
+
+/* Glyphs: the selected one gets the accent halo, the others step back. */
+.geo-glyph,
+.geo-hosp {
+  paint-order: stroke;
+  transition:
+    opacity var(--mo-2, 200ms) var(--mo-ease, ease-out),
+    stroke-width var(--mo-1, 120ms) var(--mo-ease, ease-out);
+}
+.geo-glyph.is-selected,
+.geo-hosp.is-selected {
+  stroke: var(--live, #635bf1);
+  stroke-width: 2.5;
+}
+.geo-halo {
+  fill: none;
+  stroke: var(--live, #635bf1);
+  stroke-width: 2;
+  opacity: 0;
+  transition: opacity var(--mo-1, 120ms) var(--mo-ease, ease-out);
+}
+.geo-halo.is-selected {
+  opacity: 1;
+}
+.geo.has-selection .geo-glyph:not(.is-selected):not(.is-kin) {
+  opacity: var(--dim-mark, 0.42);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .geo-county,
+  .geo-glyph,
+  .geo-hosp,
+  .geo-halo {
+    transition: none;
+  }
+}

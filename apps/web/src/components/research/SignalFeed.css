@@ -565,3 +565,68 @@
   font-size: var(--t-xs, 12px);
   color: var(--ink-2);
 }
+
+/* ---------- Selection states (research-unified.md §2) ---------- */
+
+.feed-row {
+  position: relative;
+  transition:
+    background-color var(--mo-1, 120ms) var(--mo-ease, ease-out),
+    border-color var(--mo-1, 120ms) var(--mo-ease, ease-out),
+    color var(--mo-2, 200ms) var(--mo-ease, ease-out);
+}
+
+.feed-row .feed-kind,
+.feed-row .feed-name,
+.feed-row .feed-n,
+.feed-row .feed-date,
+.feed-row .feed-bar,
+.feed-row .feed-surp-n {
+  transition:
+    opacity var(--mo-2, 200ms) var(--mo-ease, ease-out),
+    color var(--mo-2, 200ms) var(--mo-ease, ease-out);
+}
+
+/* Kin: the same incident seen elsewhere, or a unit it reaches: a dot in the gutter, no lift. */
+.feed-row.is-kin::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  margin-top: -3px;
+  border-radius: 50%;
+  background: var(--live);
+}
+
+/* Dimmed: text steps back, backgrounds stay so the list still scans. */
+.feed.has-selection .feed-row:not([aria-current="true"]):not(.is-kin) .feed-name,
+.feed.has-selection .feed-row:not([aria-current="true"]):not(.is-kin) .feed-n,
+.feed.has-selection .feed-row:not([aria-current="true"]):not(.is-kin) .feed-date,
+.feed.has-selection .feed-row:not([aria-current="true"]):not(.is-kin) .sp-line {
+  color: var(--ink-3);
+}
+
+/* Icons and bars fade; the number keeps its contrast. */
+.feed.has-selection .feed-row:not([aria-current="true"]):not(.is-kin) .feed-kind,
+.feed.has-selection .feed-row:not([aria-current="true"]):not(.is-kin) .feed-bar {
+  opacity: 0.5;
+}
+
+.feed.has-selection .feed-row:not([aria-current="true"]):not(.is-kin) .feed-surp-n {
+  color: var(--ink-3);
+}
+
+.feed.has-selection .feed-row:not([aria-current="true"]):hover .feed-name,
+.feed.has-selection .feed-row:not([aria-current="true"]):hover .feed-kind {
+  color: var(--ink);
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feed-row,
+  .feed-row > * > * {
+    transition: none;
+  }
+}

@@ -506,3 +506,29 @@
     flex-wrap: wrap;
   }
 }
+
+/* ---------- Dock and resize ease (research-unified.md §7) ---------- */
+
+.ws-win,
+.ws-column {
+  transition:
+    flex-basis var(--mo-3, 320ms) var(--mo-ease, ease-out),
+    opacity var(--mo-2, 200ms) var(--mo-ease, ease-out);
+}
+/* Direct while the pointer drags a splitter or a window. */
+.ws[data-resizing="true"] .ws-win,
+.ws[data-resizing="true"] .ws-column,
+.ws-win[data-dragging="true"] {
+  transition: none;
+}
+.ws-splitter::after {
+  transition: background-color var(--mo-1, 120ms) var(--mo-ease, ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ws-win,
+  .ws-column,
+  .ws-splitter::after {
+    transition: none;
+  }
+}

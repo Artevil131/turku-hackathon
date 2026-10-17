@@ -379,3 +379,27 @@ tfoot .ugrid-rowhead {
     transition: filter 0.12s;
   }
 }
+
+/* ---------- Unit focus and cell transitions (research-unified.md §2, §7) ---------- */
+
+.ugrid-cell,
+.ugrid-td,
+.ugrid-colhead,
+.ugrid-sum {
+  transition:
+    background-color var(--mo-2, 200ms) var(--mo-ease, ease-out),
+    opacity var(--mo-2, 200ms) var(--mo-ease, ease-out);
+}
+.ugrid.has-unit .ugrid-colhead:not([data-selected="true"]),
+.ugrid.has-unit .ugrid-td:not([data-selected="true"]) .ugrid-cell {
+  opacity: var(--dim-text, 0.7);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ugrid-cell,
+  .ugrid-td,
+  .ugrid-colhead,
+  .ugrid-sum {
+    transition: none;
+  }
+}

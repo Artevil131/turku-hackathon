@@ -560,3 +560,113 @@
   font-size: 12px;
   line-height: 1.4;
 }
+
+/* ---------- Selection, lanes and playhead (research-unified.md §2, §7) ---------- */
+
+/* The pill rings and lifts; its lane line comes forward. */
+.hs-pill {
+  transition:
+    transform var(--mo-2, 200ms) var(--mo-ease, ease-out),
+    opacity var(--mo-1, 120ms) var(--mo-ease, ease-out);
+}
+.hs-pill-bg {
+  paint-order: stroke;
+  transition:
+    stroke-width var(--mo-1, 120ms) var(--mo-ease, ease-out),
+    stroke var(--mo-1, 120ms) var(--mo-ease, ease-out);
+}
+.hs-pill.is-selected {
+  transform: translateY(-2px);
+}
+.hs-pill.is-selected .hs-pill-bg {
+  stroke: var(--brand-accent, #635bf1);
+  stroke-width: 2;
+  stroke-dasharray: none;
+  filter: drop-shadow(0 2px 3px rgb(7 8 28 / 0.28));
+}
+.hs-pill.is-kin .hs-pill-bg {
+  stroke: var(--brand-accent, #635bf1);
+  stroke-width: 1;
+  stroke-dasharray: none;
+}
+.hs-pill.is-selected:focus-visible .hs-pill-bg {
+  stroke: var(--ink, #07081c);
+}
+
+/* Everything that is not the selection steps back; the un-dim is slower than the dim. */
+.hs.has-selection .hs-pill:not(.is-selected):not(.is-kin) {
+  opacity: var(--dim-text, 0.7);
+}
+.hs.has-selection .hs-pill:not(.is-selected):not(.is-kin):hover,
+.hs.has-selection .hs-pill:not(.is-selected):not(.is-kin):focus-visible {
+  opacity: 1;
+}
+.hs.has-selection .hs-dot:not(.is-selected) {
+  opacity: var(--dim-mark, 0.42);
+}
+
+/* Lanes: a clickable label, a lifted focus lane, the others dimmed. */
+.hs-lane {
+  transition: opacity var(--mo-2, 200ms) var(--mo-ease, ease-out);
+}
+.hs-lane-hit {
+  fill: transparent;
+  cursor: pointer;
+}
+.hs-lane-label {
+  transition: fill var(--mo-1, 120ms) var(--mo-ease, ease-out);
+}
+.hs-lane[role="button"] .hs-lane-label,
+.hs-lane-hit + .hs-lane-label {
+  cursor: pointer;
+}
+.hs-lane:hover .hs-lane-label,
+.hs-lane:focus-visible .hs-lane-label {
+  fill: var(--brand-accent, #635bf1);
+  text-decoration: underline;
+}
+.hs-lane:focus-visible .hs-lane-hit {
+  stroke: var(--ink, #07081c);
+  stroke-width: 1.5;
+  rx: 3;
+}
+.hs-lane.is-focus .hs-lane-label {
+  font-weight: 600;
+  fill: var(--ink, #07081c);
+}
+.hs-lane.is-focus .hs-lane-line {
+  opacity: 0.8;
+  stroke: var(--ink-2, #1d204e);
+}
+/* The ribbon and the line step back; the label stays readable because it is a control. */
+.hs.has-unit .hs-lane:not(.is-focus) .hs-ribbon,
+.hs.has-unit .hs-lane:not(.is-focus) .hs-lane-line {
+  opacity: var(--dim-mark, 0.42);
+}
+.hs-ribbon,
+.hs-lane-line {
+  transition: opacity var(--mo-2, 200ms) var(--mo-ease, ease-out);
+}
+.hs.has-unit .hs-lane:not(.is-focus) .hs-lane-label {
+  font-weight: 400;
+  fill: var(--ink-3, #5c6080);
+}
+
+/* The playhead eases per tick when the parent positions it with a transform; linear while playing. */
+.hs-playhead {
+  transition: transform var(--mo-2, 200ms) var(--mo-ease, ease-out);
+}
+.hs.is-playing .hs-playhead {
+  transition-timing-function: linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hs-pill.is-selected {
+    transform: none;
+  }
+  .hs-pill,
+  .hs-lane,
+  .hs-playhead {
+    transition: none;
+  }
+}

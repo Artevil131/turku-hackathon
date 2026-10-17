@@ -1,5 +1,5 @@
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { writeHashParams } from "../../url.ts";
+import { subscribeHash, writeHashParams } from "../../url.ts";
 import { Assistant } from "./assistant/Assistant.tsx";
 import { type BoardState, boardFromUrl, boardToParams, type FeedProps } from "./board.ts";
 import { applyFilters } from "./feed/model.ts";
@@ -28,10 +28,10 @@ export function ResearchBoard(props: Props) {
   const onChange = useCallback((patch: Partial<BoardState>) => setState((s) => ({ ...s, ...patch })), []);
   useEffect(() => writeHashParams(boardToParams(state)), [state]);
   // A link followed inside the app (or the back button) changes the hash without remounting.
+  // Also when another component (the timeline's pills and lanes) writes `inc=` or `unit=` through url.ts.
   useEffect(() => {
     const onHash = () => setState(boardFromUrl());
-    addEventListener("hashchange", onHash);
-    return () => removeEventListener("hashchange", onHash);
+    return subscribeHash(onHash);
   }, []);
 
   const { load, incidents, retry } = useIncidents(client, asOf);

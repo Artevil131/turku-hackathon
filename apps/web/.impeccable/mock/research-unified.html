@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Research view mock</title>
+<meta name="description" content="Static mock of the unified researcher view: selected state, the signal card and the events strip. No build, no data; figures are the E1 planted event." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Bricolage+Grotesque:wght@600&display=swap" rel="stylesheet" />
+<style>
+/* Tokens copied from apps/web/src/styles.css so the mock reads like the app. */
+:root {
+  color-scheme: light;
+  --brand-accent: #635bf1; --brand-accent-soft: #ecebfc; --brand-accent-ink: #fff; --brand-accent-line: #c6c4ed;
+  --chassis: #f8f8f8; --glass-1: #fff;
+  --ink: #07081c; --ink-2: #1d204e; --ink-3: #5c6080; --line: #e4e6ee; --line-strong: #aebecb;
+  --live: var(--brand-accent); --live-soft: var(--brand-accent-soft); --live-ink: #fff;
+  --st-alert: #d0004b; --st-alert-bg: #fde3e9; --st-watch: #94590a; --st-watch-bg: #fdf3e2; --st-ok: #17784a;
+  --font-ui: "Inter", "Segoe UI", system-ui, sans-serif; --font-display: "Bricolage Grotesque", "Inter", system-ui, sans-serif;
+  --t-xs: 12px; --t-s: 13px; --t-m: 15px; --t-l: 22px;
+  --radius-panel: 10px; --radius-control: 6px; --control-h: 28px; --pop-shadow: 0 4px 16px rgb(7 8 28 / 0.12);
+  --mo-1: 120ms; --mo-2: 200ms; --mo-3: 320ms; --mo-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --dim-mark: 0.42; --dim-text: 0.7;
+  --ph-esbl: var(--brand-accent); --ph-mrsa: var(--ink-2); --ph-vre: var(--st-watch); --ph-cpe: var(--st-alert);
+}
+@media (prefers-reduced-motion: reduce) { :root { --mo-1: 0ms; --mo-2: 0ms; --mo-3: 0ms; } }
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; font: 400 var(--t-s)/1.45 var(--font-ui); color: var(--ink); background: var(--chassis); -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; }
+button { font: inherit; color: inherit; cursor: pointer; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--live); outline-offset: 2px; }
+::selection { background: var(--live); color: #fff; }
+abbr.gloss { text-decoration: underline dotted; text-decoration-color: var(--ink-3); text-underline-offset: 2px; cursor: help; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* Page frame */
+.console { display: grid; grid-template-rows: auto auto minmax(0, 1fr); gap: 8px; height: 100%; padding: 8px 12px; }
+.topbar { display: flex; align-items: center; gap: 16px; height: 48px; padding: 0 8px 0 16px; border: 1px solid var(--line); border-radius: var(--radius-panel); background: #fff; }
+.mark-name { font-family: var(--font-display); font-weight: 600; font-size: var(--t-l); line-height: 1; }
+.seg { display: inline-flex; padding: 2px; gap: 2px; border-radius: var(--radius-control); background: var(--chassis); border: 1px solid var(--line); }
+.seg button { border: 0; background: none; height: 22px; padding: 0 10px; border-radius: 4px; color: var(--ink-2); font-size: var(--t-s); font-weight: 500; white-space: nowrap; transition: background-color var(--mo-1) var(--mo-ease), color var(--mo-1) var(--mo-ease); }
+.seg button[aria-pressed="true"] { background: var(--live); color: var(--live-ink); }
+.top-tools { margin-left: auto; display: flex; gap: 8px; }
+.icon-btn { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--line); background: #fff; color: var(--ink-2); }
+.icon-btn svg { width: 16px; height: 16px; }
+
+/* Timeline band */
+.timeline { position: relative; display: grid; grid-template-columns: 236px minmax(0, 1fr) auto; grid-template-rows: auto minmax(0, 1fr) auto; gap: 4px 16px; min-height: 236px; padding: 10px 14px 8px; border: 1px solid var(--line); border-radius: var(--radius-panel); background: linear-gradient(180deg, #fff 0%, color-mix(in oklab, var(--brand-accent) 4%, #fff) 100%); box-shadow: 0 1px 0 rgb(7 8 28 / 0.03), 0 10px 24px -16px rgb(7 8 28 / 0.22); }
+.tl-left { grid-column: 1; grid-row: 1 / 4; display: flex; flex-direction: column; justify-content: center; gap: 8px; min-width: 0; }
+.tl-title { display: flex; align-items: baseline; gap: 6px; margin: 0; font-family: var(--font-display); font-size: var(--t-m); font-weight: 600; line-height: 20px; white-space: nowrap; }
+.tl-title-unit { color: var(--brand-accent); }
+.tl-title-clear { display: inline-grid; place-items: center; width: 20px; height: 20px; border: 0; border-radius: 4px; background: none; color: var(--ink-3); transition: color var(--mo-1), background-color var(--mo-1); }
+.tl-title-clear:hover { color: var(--ink); background: var(--brand-accent-soft); }
+.tl-readout { font-family: var(--font-display); font-size: var(--t-l); font-weight: 600; line-height: 28px; white-space: nowrap; }
+.tl-ctl { display: flex; align-items: center; gap: 4px; }
+.tl-btn { display: inline-grid; place-items: center; min-width: 28px; height: 28px; padding: 0 6px; border: 1px solid var(--line); border-radius: 6px; background: #fff; color: var(--ink-2); }
+.tl-btn svg { width: 16px; height: 16px; }
+.tl-play { background: var(--brand-accent); border-color: var(--brand-accent); color: #fff; }
+.tl-back svg { transform: scaleX(-1); }
+.tl-ctl-groups { display: flex; flex-direction: column; gap: 4px; }
+.tl-ctl-group { display: inline-flex; align-items: center; gap: 6px; }
+.tl-ctl-label { width: 42px; font-size: var(--t-xs); font-weight: 600; color: var(--ink-3); }
+.tl-ctl-group .seg button { height: 22px; padding: 0 8px; font-size: var(--t-xs); }
+.tl-quality { display: inline-flex; align-items: center; gap: 6px; font-size: var(--t-xs); color: var(--st-ok); font-weight: 500; }
+.tl-quality svg { width: 14px; height: 14px; }
+
+.hs { grid-column: 2; grid-row: 1 / 3; position: relative; min-width: 0; align-self: center; }
+.hs-svg { display: block; width: 100%; height: auto; overflow: visible; }
+.hs-svg-compact { display: none; }
+.hs-dot { fill: var(--ink-2); } .hs-dot[data-kind="sentinel"] { fill: var(--st-alert); } .hs-dot[data-kind="trend"] { fill: var(--brand-accent); } .hs-dot[data-kind="data"] { fill: #fff; stroke: var(--ink-2); }
+.hs-dot.is-selected { stroke: var(--brand-accent); stroke-width: 2; paint-order: stroke; }
+.hs.has-selection .hs-dot:not(.is-selected) { opacity: var(--dim-mark); }
+.tl-legend { grid-column: 2; grid-row: 3; margin: 0; font-size: var(--t-xs); line-height: 1.4; color: var(--ink-3); max-width: 72ch; }
+.tl-legend b { font-weight: 600; color: var(--ink-2); }
+
+/* Weekly band (SVG) */
+.hs-legend { font: 500 11px var(--font-ui); fill: var(--ink-2); }
+.hs-axis-text, .hs-ylab { font: 500 11px var(--font-ui); fill: var(--ink-3); }
+.hs-yaxis, .hs-base, .hs-tick { stroke: var(--line-strong); stroke-width: 1; }
+.hs-grid { stroke: var(--line-strong); stroke-dasharray: 1 3; opacity: 0.8; }
+.hs-line { fill: none; stroke-width: 1.6; stroke-linejoin: round; }
+.hs-ln-esbl { stroke: var(--ph-esbl); } .hs-ln-mrsa { stroke: var(--ph-mrsa); stroke-dasharray: 6 2.5; }
+.hs-ln-vre { stroke: var(--ph-vre); stroke-dasharray: 1.5 2.5; stroke-linecap: round; } .hs-ln-cpe { stroke: var(--ph-cpe); stroke-dasharray: 7 2 1.5 2; }
+.hs-cult { fill: none; stroke: var(--ink); stroke-width: 1; stroke-dasharray: 3 2; }
+.hs-lane-line { stroke: var(--line-strong); stroke-width: 1; opacity: 0.4; }
+.hs-lane-label { font: 500 11px var(--font-ui); fill: var(--ink-2); }
+.hs-ribbon { fill: var(--ink-2); }
+.hs-today { stroke: var(--brand-accent); stroke-width: 3; }
+.hs-today-bg { fill: var(--brand-accent); } .hs-today-text { font: 700 11px var(--font-ui); fill: #fff; }
+.hs-pill { cursor: pointer; outline: none; transition: transform var(--mo-2) var(--mo-ease), opacity var(--mo-1) var(--mo-ease); }
+.hs-pill-bg { filter: drop-shadow(0 1px 1.5px rgb(7 8 28 / 0.25)); paint-order: stroke; transition: stroke-width var(--mo-1) var(--mo-ease), stroke var(--mo-1) var(--mo-ease); }
+.hs-pill-text { font: 600 11px var(--font-ui); fill: #fff; pointer-events: none; }
+.hs-pill-glyph { fill: #fff; }
+.hs-pill[data-kind="cluster"] .hs-pill-bg { fill: var(--ink-2); }
+.hs-pill[data-kind="sentinel"] .hs-pill-bg { fill: var(--st-alert); }
+.hs-pill[data-kind="trend"] .hs-pill-bg { fill: var(--brand-accent); }
+.hs-pill[data-kind="data"] .hs-pill-bg { fill: #fff; stroke: var(--ink-2); stroke-dasharray: 2 1.5; stroke-width: 1; }
+.hs-pill[data-kind="data"] .hs-pill-text { fill: var(--ink); }
+.hs-pill:hover .hs-pill-bg { stroke: var(--brand-accent); stroke-width: 2; stroke-dasharray: none; }
+.hs-pill.is-selected { transform: translateY(-2px); }
+.hs-pill.is-selected .hs-pill-bg { stroke: var(--brand-accent); stroke-width: 2; stroke-dasharray: none; filter: drop-shadow(0 2px 3px rgb(7 8 28 / 0.28)); }
+.hs-pill.is-kin .hs-pill-bg { stroke: var(--brand-accent); stroke-width: 1; stroke-dasharray: none; }
+.hs.has-selection .hs-pill:not(.is-selected):not(.is-kin) { opacity: var(--dim-text); }
+.hs.has-selection .hs-pill:not(.is-selected):not(.is-kin):hover { opacity: 1; }
+.hs-lane { transition: opacity var(--mo-2) var(--mo-ease); cursor: pointer; outline: none; }
+.hs-lane-hit { fill: transparent; }
+.hs-lane:hover .hs-lane-label { fill: var(--brand-accent); text-decoration: underline; }
+.hs-lane.is-focus .hs-lane-label { font-weight: 600; fill: var(--ink); }
+.hs-lane.is-focus .hs-lane-line { opacity: 0.8; stroke: var(--ink-2); }
+.hs.has-unit .hs-lane:not(.is-focus) :is(.hs-ribbon, .hs-lane-line) { opacity: var(--dim-mark); }
+.hs.has-unit .hs-lane:not(.is-focus) .hs-lane-label { fill: var(--ink-3); }
+.hs-read { position: absolute; z-index: 5; left: 46%; top: 60%; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; box-shadow: var(--pop-shadow); font-size: var(--t-xs); white-space: nowrap; pointer-events: none; }
+.hs-read b { font-weight: 600; }
+
+/* Events strip */
+.tl-events { grid-column: 3; grid-row: 1 / 4; display: flex; flex-direction: column; gap: 4px; align-self: center; width: 372px; min-width: 0; }
+.tl-events-label { margin: 0; font-size: var(--t-xs); font-weight: 600; color: var(--ink-3); }
+.tl-events-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; margin: 0; padding: 0; list-style: none; }
+.tl-ev { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "code when unit" "name name name" "what what what"; gap: 1px 6px; width: 100%; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: #fff; text-align: left; color: var(--ink); transition: border-color var(--mo-1) var(--mo-ease), background-color var(--mo-1) var(--mo-ease), box-shadow var(--mo-1) var(--mo-ease), opacity var(--mo-2) var(--mo-ease); }
+.tl-ev:hover { border-color: var(--line-strong); }
+.tl-ev-code { grid-area: code; display: inline-flex; align-items: center; gap: 3px; font-size: var(--t-xs); font-weight: 600; color: var(--ink-2); }
+.tl-ev-when { grid-area: when; font-size: var(--t-xs); color: var(--ink-3); white-space: nowrap; }
+.tl-ev-unit { grid-area: unit; font-size: var(--t-xs); font-weight: 600; color: var(--ink-2); }
+.tl-ev-name { grid-area: name; font-size: var(--t-s); font-weight: 600; line-height: 1.3; }
+.tl-ev-what { grid-area: what; font-size: var(--t-xs); line-height: 1.35; color: var(--ink-2); }
+.tl-ev.is-current { border-color: var(--brand-accent); background: var(--brand-accent-soft); box-shadow: 0 0 0 1px var(--brand-accent); }
+.tl-ev.is-past .tl-ev-code::before { content: ""; width: 5px; height: 8px; margin-right: 2px; border-right: 1.5px solid var(--st-ok); border-bottom: 1.5px solid var(--st-ok); transform: translateY(-1px) rotate(45deg); }
+.tl-events.has-selection .tl-ev:not(.is-current) .tl-ev-name { font-weight: 500; color: var(--ink-2); }
+.tl-events.has-selection .tl-ev:not(.is-current) .tl-ev-what { color: var(--ink-3); }
+
+/* Board */
+.board { display: grid; grid-template-columns: 340px minmax(0, 1fr) 360px; gap: 8px; min-height: 0; }
+.ws-col { display: flex; flex-direction: column; gap: 8px; min-height: 0; min-width: 0; }
+.panel { display: flex; flex-direction: column; min-height: 0; border: 1px solid var(--line); border-radius: var(--radius-panel); background: #fff; overflow: hidden; }
+.panel-head { display: flex; align-items: center; gap: 6px; padding: 10px 12px 8px; border-bottom: 1px solid var(--line); }
+.panel-head h2 { margin: 0; font-size: var(--t-m); font-weight: 600; }
+.panel-head .asof { margin-left: auto; font-size: var(--t-xs); color: var(--ink-2); }
+.info { display: inline-grid; place-items: center; width: 20px; height: 20px; border: 0; border-radius: 4px; background: none; color: var(--ink-3); }
+.info svg { width: 14px; height: 14px; }
+.ws-handle { display: inline-flex; gap: 2px; margin-left: 4px; color: var(--line-strong); }
+.ws-handle i { width: 3px; height: 3px; border-radius: 50%; background: currentColor; }
+
+/* Feed */
+.feed-count { font-size: var(--t-s); color: var(--ink-2); font-weight: 400; }
+.feed-filters { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--line); }
+.feed-chip { display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 8px; border: 1px solid var(--line-strong); border-radius: 6px; background: #fff; color: var(--ink-2); font-size: var(--t-xs); }
+.feed-chip[aria-pressed="true"] { background: var(--live); border-color: var(--live); color: #fff; }
+.feed-unitbar { display: flex; align-items: center; justify-content: space-between; margin: 8px 12px 0; padding: 4px 8px; border-radius: 6px; background: var(--brand-accent-soft); font-size: var(--t-s); font-weight: 500; }
+.link { padding: 0; border: 0; background: none; color: var(--live); font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
+.feed-list { flex: 1; margin: 0; padding: 0; list-style: none; overflow-y: auto; }
+.feed-list > li + li { border-top: 1px solid var(--line); }
+.feed-row { position: relative; display: flex; flex-direction: column; gap: 4px; width: 100%; min-height: 52px; padding: 8px 12px; border: 0; border-left: 3px solid transparent; background: none; text-align: left; color: var(--ink); transition: background-color var(--mo-1) var(--mo-ease), border-color var(--mo-1) var(--mo-ease); }
+.feed-row:hover { background: var(--chassis); }
+.feed-row[aria-current="true"] { background: var(--brand-accent-soft); border-left-color: var(--live); }
+.feed-row.is-kin::before { content: ""; position: absolute; left: 3px; top: 50%; width: 6px; height: 6px; margin-top: -3px; border-radius: 50%; background: var(--live); }
+.feed-row-top, .feed-row-bottom { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.feed-row-bottom { justify-content: space-between; }
+.feed-kind { display: inline-flex; color: var(--ink-2); transition: opacity var(--mo-2), color var(--mo-2); }
+.feed-row[data-kind="sentinel"] .feed-kind { color: var(--st-alert); }
+.feed-row[data-kind="data"] .feed-kind { color: var(--ink-3); }
+.feed-glyph { width: 16px; height: 16px; }
+.feed-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--t-s); font-weight: 600; transition: color var(--mo-2); }
+.feed-date { font-size: var(--t-xs); color: var(--ink-2); transition: color var(--mo-2); }
+.sp-line { display: flex; gap: 4px; align-items: center; font-size: var(--t-xs); color: var(--ink-2); white-space: nowrap; transition: color var(--mo-2); }
+.sp-origin { padding: 0 5px; border-radius: 4px; background: var(--ink-2); color: #fff; font-weight: 600; }
+.sp-chip { padding: 0 5px; border: 1px solid var(--line-strong); border-radius: 4px; background: #fff; }
+.sp-trail { border-style: dashed; }
+.feed-surp { display: inline-flex; align-items: center; gap: 4px; transition: opacity var(--mo-2); }
+.feed-bar { display: inline-block; width: 40px; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.feed-bar i { display: block; height: 100%; background: var(--ink-2); }
+.feed-bar i[data-rule="true"] { background: var(--st-alert); }
+.feed-surp-n { min-width: 22px; font-size: var(--t-xs); text-align: right; color: var(--ink-2); }
+.feed.has-selection .feed-row:not([aria-current="true"]):not(.is-kin) :is(.feed-name, .feed-date, .sp-line) { color: var(--ink-3); }
+.feed.has-selection .feed-row:not([aria-current="true"]):not(.is-kin) :is(.feed-kind, .feed-bar) { opacity: 0.5; }
+.feed.has-selection .feed-row:not([aria-current="true"]):not(.is-kin) .feed-surp-n { color: var(--ink-3); }
+
+/* Map */
+.geo-caption { display: flex; align-items: flex-start; gap: 4px; margin: 0; padding: 8px 12px 0; font-size: var(--t-xs); line-height: 1.4; color: var(--ink-2); max-width: 72ch; }
+.geo-stage { position: relative; flex: 1; min-height: 0; padding: 6px 12px 8px; }
+.geo-svg { display: block; width: 100%; height: 100%; max-height: 300px; }
+.geo-county { stroke: #fff; stroke-width: 1.2; cursor: pointer; transition: fill var(--mo-2) var(--mo-ease), fill-opacity var(--mo-2) var(--mo-ease), stroke-width var(--mo-1) var(--mo-ease); }
+.geo-fill-s0 { fill: #f1f1f6; } .geo-fill-s1 { fill: color-mix(in oklab, var(--brand-accent) 9%, #f1f1f6); }
+.geo-fill-s2 { fill: color-mix(in oklab, var(--brand-accent) 20%, #f1f1f6); } .geo-fill-s3 { fill: color-mix(in oklab, var(--brand-accent) 34%, #f1f1f6); }
+.geo-fill-s4 { fill: color-mix(in oklab, var(--brand-accent) 80%, #1d204e); }
+.geo-county.is-focus { stroke: var(--ink); stroke-width: 2.5; }
+.geo.has-selection .geo-county:not(.is-focus) { fill-opacity: 0.7; }
+.geo-glyph { stroke-width: 2; paint-order: stroke; transition: opacity var(--mo-2) var(--mo-ease), stroke-width var(--mo-1) var(--mo-ease); }
+.geo-glyph-strong { fill: var(--ink); stroke: #fff; stroke-width: 1.5; }
+.geo-glyph-weak { fill: #fff; stroke: var(--ink); }
+.geo-halo { fill: none; stroke: var(--live); stroke-width: 2; opacity: 0; transition: opacity var(--mo-1) var(--mo-ease); }
+.geo-halo.is-selected { opacity: 1; }
+.geo.has-selection .geo-glyph:not(.is-selected):not(.is-kin) { opacity: var(--dim-mark); }
+.geo-hosp { fill: var(--ink-2); stroke: #fff; stroke-width: 1.5; }
+.geo-hosp-label { font: 600 11px var(--font-ui); fill: var(--ink-2); }
+.geo-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 6px 12px 10px; border-top: 1px solid var(--line); font-size: var(--t-xs); color: var(--ink-2); }
+.geo-legend ul { display: flex; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.geo-swatch { display: inline-block; width: 16px; height: 12px; border: 1px solid var(--line); border-radius: 2px; vertical-align: -2px; margin-right: 4px; }
+.geo-swatch.geo-fill-s0 { background: #f1f1f6; } .geo-swatch.geo-fill-s2 { background: color-mix(in oklab, var(--brand-accent) 20%, #f1f1f6); } .geo-swatch.geo-fill-s4 { background: color-mix(in oklab, var(--brand-accent) 80%, #1d204e); }
+.geo-faint { color: var(--ink-3); }
+
+/* Patient flow */
+.hnet-stage { flex: 1; min-height: 0; padding: 6px 12px 10px; }
+.hnet-svg { display: block; width: 100%; height: auto; }
+.hnet-tube { fill: none; stroke: var(--ink-3); stroke-opacity: 0.32; stroke-linecap: round; transition: stroke var(--mo-2), stroke-opacity var(--mo-2); }
+.hnet-tube[data-active="true"] { stroke: var(--live); stroke-opacity: 0.85; }
+.hnet-node { cursor: pointer; transition: opacity var(--mo-2) var(--mo-ease); }
+.hnet-box { fill: #fff; stroke: var(--line-strong); stroke-width: 2; transition: stroke var(--mo-1), stroke-width var(--mo-1); }
+.hnet-node[data-lit="true"] .hnet-box { stroke: var(--st-watch); stroke-width: 5; }
+.hnet-node[data-selected="true"] .hnet-box { stroke: var(--live); stroke-width: 5; }
+.hnet-node[data-selected="true"][data-lit="true"] .hnet-box { stroke: var(--st-watch); }
+.hnet-ring { fill: none; stroke: var(--live); stroke-width: 4; opacity: 0; transition: opacity var(--mo-1); }
+.hnet-node[data-selected="true"] .hnet-ring { opacity: 1; }
+.hnet-node.is-kin .hnet-ring { opacity: 1; stroke-width: 2; }
+.hnet-code { font: 700 22px var(--font-ui); fill: var(--ink); }
+.hnet-name { font: 500 12px var(--font-ui); fill: var(--ink-2); }
+.hnet-pill { fill: var(--ink-2); } .hnet-pill-text { font: 600 11px var(--font-ui); fill: #fff; }
+.hnet.has-selection .hnet-node:not([data-selected="true"]):not(.is-kin) { opacity: var(--dim-text); }
+.hnet.has-selection .hnet-node:hover { opacity: 1; }
+.hnet.has-selection .hnet-tube:not([data-active="true"]) { stroke-opacity: 0.12; }
+
+/* Signal card */
+.sig-body { display: flex; flex: 1; flex-direction: column; gap: 14px; min-height: 0; padding: 12px; overflow-y: auto; }
+.sig-kind { display: inline-flex; align-items: center; gap: 6px; font-size: var(--t-xs); font-weight: 600; color: var(--ink-2); }
+.sig-kind svg { width: 16px; height: 16px; }
+.sig-title { margin: 2px 0 0; font-size: var(--t-m); font-weight: 600; line-height: 1.3; text-wrap: balance; }
+.sig-where { margin: 2px 0 0; font-size: var(--t-xs); color: var(--ink-2); }
+.sig-bars { display: flex; flex-direction: column; gap: 6px; }
+.sig-bar { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; align-items: center; gap: 8px; font-size: var(--t-xs); }
+.sig-bar-label { color: var(--ink-2); }
+.sig-bar-track { height: 10px; border: 1px solid var(--line); border-radius: 3px; background: var(--chassis); }
+.sig-bar-track i { display: block; height: 100%; min-width: 2px; transition: width var(--mo-3) var(--mo-ease); }
+.sig-bar[data-tone="obs"] i { background: var(--ink-2); }
+.sig-bar[data-tone="usual"] i { border: 1px dashed var(--ink-2); background: var(--line); }
+.sig-bar-value { font-weight: 600; white-space: nowrap; }
+.sig-bar-value small { font-weight: 400; color: var(--ink-2); font-size: inherit; }
+.sig-surprise { display: flex; align-items: baseline; gap: 8px; }
+.sig-num { font-family: var(--font-display); font-size: var(--t-l); font-weight: 600; line-height: 1; }
+.sig-surprise-label { font-size: var(--t-xs); color: var(--ink-2); }
+.sig-how { display: flex; flex-direction: column; gap: 4px; }
+.sig-how-head { display: flex; align-items: center; gap: 4px; margin: 0; font-size: var(--t-s); font-weight: 600; }
+.sig-how-text { margin: 0; font-size: var(--t-xs); line-height: 1.5; max-width: 62ch; }
+.sig-how-text b { font-weight: 600; }
+.sig-reach { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; font-size: var(--t-xs); color: var(--ink-2); }
+.sig-reach-label { font-weight: 600; }
+.sig-reach .sp-arrow { color: var(--ink-3); }
+.sig-isolates { border-top: 1px solid var(--line); padding-top: 8px; }
+.sig-isolates > summary { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: var(--t-s); font-weight: 600; list-style: none; }
+.sig-isolates > summary::-webkit-details-marker { display: none; }
+.sig-isolates > summary::before { content: ""; width: 6px; height: 6px; border-right: 1.6px solid currentColor; border-bottom: 1.6px solid currentColor; transform: rotate(-45deg); transition: transform var(--mo-1) var(--mo-ease); }
+.sig-isolates[open] > summary::before { transform: rotate(45deg); }
+.sig-iso { margin: 6px 0 0; padding: 0; list-style: none; font-size: var(--t-xs); }
+.sig-iso li { display: grid; grid-template-columns: 70px 1fr auto; gap: 8px; padding: 4px 0; border-top: 1px solid var(--line); }
+.sig-iso li span:last-child { color: var(--ink-2); }
+.sig-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 8px 12px 12px; border-top: 1px solid var(--line); }
+.sig-primary, .sig-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 28px; padding: 0 10px; border: 1px solid var(--line-strong); border-radius: 6px; background: #fff; color: var(--ink); font-size: var(--t-s); font-weight: 500; text-decoration: none; transition: border-color var(--mo-1), background-color var(--mo-1); }
+.sig-primary { grid-column: 1 / -1; border-color: var(--live); background: var(--live); color: #fff; font-weight: 600; }
+.sig-btn:hover { border-color: var(--live); }
+
+/* Phone */
+@media (max-width: 760px) {
+  .console { height: auto; padding: 0 0 12px; gap: 8px; }
+  .topbar { height: auto; flex-wrap: wrap; gap: 8px 12px; padding: 8px 12px; border-radius: 0; border-width: 0 0 1px; }
+  .topbar .seg { order: 3; width: 100%; }
+  .topbar .seg button { flex: 1; }
+  .timeline { position: sticky; top: 0; z-index: 20; grid-template-columns: 1fr; grid-template-rows: auto; gap: 8px; min-height: 0; padding: 8px 12px; border-radius: 0; border-width: 0 0 1px; }
+  .tl-left { grid-column: 1; grid-row: auto; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; }
+  .tl-left .tl-title { grid-column: 2; }
+  .tl-left .tl-readout { grid-column: 3; font-size: var(--t-m); }
+  .tl-left .tl-ctl-groups, .tl-left .tl-quality, .tl-left .tl-ctl .tl-btn:not(.tl-play) { display: none; }
+  .tl-strip-open { grid-column: 1 / -1; }
+  .hs { grid-column: 1; grid-row: auto; }
+  .hs-svg { display: none; }
+  .hs-svg-compact { display: block; width: 100%; height: auto; }
+  .hs-read { display: none; }
+  .tl-legend { display: none; }
+  .tl-events { grid-column: 1; grid-row: auto; width: auto; }
+  .tl-events-list { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 4px; scrollbar-width: none; }
+  .tl-events-list > li { flex: 0 0 min(72vw, 260px); scroll-snap-align: start; }
+  .tl-ev { min-height: 44px; }
+  .board { grid-template-columns: 1fr; padding: 0 12px; }
+  .ws-col-mid { order: 3; }
+  .ws-col-right { order: 2; }
+  .panel { min-height: 0; overflow: visible; }
+  .feed-list { max-height: 360px; }
+  .sig-body { overflow: visible; }
+  .geo-svg { max-height: 240px; }
+  .feed-row { min-height: 56px; }
+  .sig-primary, .sig-btn { height: 40px; }
+}
+@media (min-width: 761px) and (max-width: 1180px) {
+  .board { grid-template-columns: 300px minmax(0, 1fr); }
+  .ws-col-right { grid-column: 1 / -1; }
+  .timeline { grid-template-columns: 236px minmax(0, 1fr); }
+  .tl-events { grid-column: 1 / -1; grid-row: 4; width: auto; }
+  .tl-events-list { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+</style>
+</head>
+<body>
+<div class="console">
+  <header class="topbar">
+    <span class="mark-name">AEI</span>
+    <div class="seg" role="tablist" aria-label="Section">
+      <button type="button" aria-pressed="false">Home</button>
+      <button type="button" aria-pressed="false">Doctor</button>
+      <button type="button" aria-pressed="true">Research</button>
+    </div>
+    <div class="top-tools">
+      <button type="button" class="icon-btn" aria-label="Settings"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4"/></svg></button>
+    </div>
+  </header>
+
+  <!-- Timeline band: title, two control groups, nine lanes with a selected pill, the legend in words, the events strip. -->
+  <section class="timeline" aria-label="Replay timeline">
+    <div class="tl-left">
+      <div class="tl-ctl">
+        <button type="button" class="tl-btn tl-play" aria-label="Play"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 2.5v11l9-5.5z"/></svg></button>
+        <button type="button" class="tl-btn tl-back" aria-label="Skip to start"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M3 2.5v11l8-5.5zM12 2.5h1.5v11H12z"/></svg></button>
+        <button type="button" class="tl-btn" aria-label="Skip to end"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M3 2.5v11l8-5.5zM12 2.5h1.5v11H12z"/></svg></button>
+      </div>
+      <h1 class="tl-title">Tyks <span aria-hidden="true">·</span> <span class="tl-title-unit">Urology</span> <button type="button" class="tl-title-clear" aria-label="Show all units">×</button></h1>
+      <b class="tl-readout num">9 Jun 2025</b>
+      <div class="tl-ctl-groups">
+        <div class="tl-ctl-group"><span class="tl-ctl-label">Step</span><div class="seg"><button type="button" aria-pressed="true">day</button><button type="button" aria-pressed="false">week</button><button type="button" aria-pressed="false">month</button></div></div>
+        <div class="tl-ctl-group" title="normal: one day every two seconds"><span class="tl-ctl-label">Speed</span><div class="seg"><button type="button" aria-pressed="false">slow</button><button type="button" aria-pressed="true">normal</button><button type="button" aria-pressed="false">fast</button></div></div>
+      </div>
+      <span class="tl-quality"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 8.5 3.2 3L13 4.5"/></svg>Data checks passed</span>
+    </div>
+
+    <div class="hs has-selection has-unit">
+      <svg class="hs-svg" viewBox="0 0 760 200" role="img" aria-label="Weekly resistant finds and cultures by unit, 2025. The ESBL E. coli cluster in Urology is selected.">
+        <g class="hs-legend-row">
+          <text class="hs-legend" x="48" y="11"><tspan fill="var(--ph-esbl)">■</tspan> ESBL</text>
+          <text class="hs-legend" x="100" y="11"><tspan fill="var(--ph-mrsa)">■</tspan> MRSA</text>
+          <text class="hs-legend" x="154" y="11"><tspan fill="var(--ph-vre)">■</tspan> VRE</text>
+          <text class="hs-legend" x="200" y="11"><tspan fill="var(--ph-cpe)">■</tspan> CPE</text>
+          <text class="hs-legend" x="250" y="11">┄ cultures/wk</text>
+          <text class="hs-legend" x="700" y="11" text-anchor="end">patients per week</text>
+        </g>
+        <line class="hs-yaxis" x1="48" x2="48" y1="20" y2="70"/>
+        <text class="hs-ylab" x="42" y="24" text-anchor="end">8</text>
+        <text class="hs-ylab" x="42" y="72" text-anchor="end">0</text>
+        <line class="hs-grid" x1="45" x2="700" y1="20" y2="20"/>
+        <line class="hs-base" x1="48" x2="700" y1="70" y2="70"/>
+        <path class="hs-cult" d="M48 40 L120 44 L190 38 L260 42 L330 46 L400 36 L470 40 L540 44 L610 38 L700 42"/>
+        <path class="hs-line hs-ln-esbl" d="M48 66 L100 64 L150 62 L200 65 L250 64 L300 62 L350 60 L400 52 L430 44 L460 30 L490 28 L520 26 L550 30 L580 52 L610 62 L650 64 L700 64"/>
+        <path class="hs-line hs-ln-mrsa" d="M48 68 L150 67 L250 68 L350 66 L450 67 L550 68 L650 67 L700 67"/>
+        <path class="hs-line hs-ln-vre" d="M48 69 L250 69 L400 68 L560 69 L700 69"/>
+        <g class="hs-lanes">
+          <!-- Nine unit lanes; lane groups are the clickable labels. -->
+          <g class="hs-lane" role="button" tabindex="0" aria-pressed="false" aria-label="Focus ED"><rect class="hs-lane-hit" x="0" y="80" width="48" height="12"/><line class="hs-lane-line" x1="48" x2="700" y1="86" y2="86"/><path class="hs-ribbon" d="M48 86 L200 85 L300 86 L400 84.5 L500 86 L600 85 L700 86 L700 86 Z"/><text class="hs-lane-label" x="42" y="90" text-anchor="end">ED</text></g>
+          <g class="hs-lane" role="button" tabindex="0" aria-pressed="false" aria-label="Focus MED-A"><rect class="hs-lane-hit" x="0" y="92" width="48" height="12"/><line class="hs-lane-line" x1="48" x2="700" y1="98" y2="98"/><path class="hs-ribbon" d="M48 98 L150 96.5 L250 98 L350 97 L450 98 L550 96 L650 98 L700 98 Z"/><text class="hs-lane-label" x="42" y="102" text-anchor="end">MED-A</text></g>
+          <g class="hs-lane" role="button" tabindex="0" aria-pressed="false" aria-label="Focus MED-B"><rect class="hs-lane-hit" x="0" y="104" width="48" height="12"/><line class="hs-lane-line" x1="48" x2="700" y1="110" y2="110"/><path class="hs-ribbon" d="M48 110 L200 109 L400 110 L500 108.5 L700 110 Z"/><text class="hs-lane-label" x="42" y="114" text-anchor="end">MED-B</text></g>
+          <g class="hs-lane" role="button" tabindex="0" aria-pressed="false" aria-label="Focus SURG"><rect class="hs-lane-hit" x="0" y="116" width="48" height="12"/><line class="hs-lane-line" x1="48" x2="700" y1="122" y2="122"/><path class="hs-ribbon" d="M48 122 L250 121 L450 122 L600 120.5 L700 122 Z"/><text class="hs-lane-label" x="42" y="126" text-anchor="end">SURG</text></g>
+          <g class="hs-lane is-focus" role="button" tabindex="0" aria-pressed="true" aria-label="Focus URO, focused"><rect class="hs-lane-hit" x="0" y="128" width="48" height="12"/><line class="hs-lane-line" x1="48" x2="700" y1="134" y2="134"/><path class="hs-ribbon" d="M48 134 L350 133.5 L400 132 L430 129 L460 126 L490 125.5 L520 125 L550 126 L580 130 L610 133 L700 134 Z"/><text class="hs-lane-label" x="42" y="138" text-anchor="end">URO</text></g>
+          <g class="hs-lane" role="button" tabindex="0" aria-pressed="false" aria-label="Focus ICU"><rect class="hs-lane-hit" x="0" y="140" width="48" height="12"/><line class="hs-lane-line" x1="48" x2="700" y1="146" y2="146"/><path class="hs-ribbon" d="M48 146 L300 145 L500 146 L700 146 Z"/><text class="hs-lane-label" x="42" y="150" text-anchor="end">ICU</text></g>
+          <g class="hs-lane" role="button" tabindex="0" aria-pressed="false" aria-label="Focus GER"><rect class="hs-lane-hit" x="0" y="152" width="48" height="12"/><line class="hs-lane-line" x1="48" x2="700" y1="158" y2="158"/><path class="hs-ribbon" d="M48 158 L200 157 L400 158 L560 156.5 L700 158 Z"/><text class="hs-lane-label" x="42" y="162" text-anchor="end">GER</text></g>
+          <g class="hs-lane" role="button" tabindex="0" aria-pressed="false" aria-label="Focus PHC-N"><rect class="hs-lane-hit" x="0" y="164" width="48" height="12"/><line class="hs-lane-line" x1="48" x2="700" y1="170" y2="170"/><path class="hs-ribbon" d="M48 170 L350 169 L700 170 Z"/><text class="hs-lane-label" x="42" y="174" text-anchor="end">PHC-N</text></g>
+          <g class="hs-lane" role="button" tabindex="0" aria-pressed="false" aria-label="Focus PHC-S"><rect class="hs-lane-hit" x="0" y="176" width="48" height="12"/><line class="hs-lane-line" x1="48" x2="700" y1="182" y2="182"/><path class="hs-ribbon" d="M48 182 L300 181 L700 182 Z"/><text class="hs-lane-label" x="42" y="186" text-anchor="end">PHC-S</text></g>
+          <!-- Pills: the selected one rings and lifts, its kin keeps a thin ring, the rest dims. -->
+          <g class="hs-pill" data-kind="sentinel" role="button" tabindex="0" aria-label="MRSA, ICU, first in 180 days"><rect class="hs-pill-bg" x="150" y="139" width="54" height="13" rx="2.5"/><path class="hs-pill-glyph" d="M155 141.5l3.5 6h-7z"/><text class="hs-pill-text" x="162" y="149">MRSA new</text></g>
+          <g class="hs-pill" data-kind="cluster" role="button" tabindex="0" aria-label="VRE, Geriatrics, 3 patients in 4 weeks, usual 0.6"><rect class="hs-pill-bg" x="250" y="151" width="62" height="13" rx="2.5"/><text class="hs-pill-text" x="254" y="161">VRE 3 · 0.6</text></g>
+          <g class="hs-pill is-kin" data-kind="cluster" role="button" tabindex="0" aria-label="ESBL E. coli, Urology, 3 patients in 4 weeks, usual 0.2, week before"><rect class="hs-pill-bg" x="402" y="127" width="64" height="13" rx="2.5"/><text class="hs-pill-text" x="406" y="137">ESBL 3 · 0.2</text></g>
+          <g class="hs-pill is-selected" data-kind="cluster" role="button" tabindex="0" aria-pressed="true" aria-label="ESBL E. coli, Urology, 5 patients in 4 weeks, usual 0.2, selected"><rect class="hs-pill-bg" x="472" y="127" width="64" height="13" rx="2.5"/><text class="hs-pill-text" x="476" y="137">ESBL 5 · 0.2</text></g>
+          <g class="hs-pill" data-kind="data" role="button" tabindex="0" aria-label="Health centre South, no samples this week"><rect class="hs-pill-bg" x="600" y="175" width="66" height="13" rx="2.5"/><text class="hs-pill-text" x="604" y="185">no samples</text></g>
+          <g class="hs-pill" data-kind="trend" role="button" tabindex="0" aria-label="Trend, TMP in urinary E. coli"><rect class="hs-pill-bg" x="640" y="79" width="52" height="13" rx="2.5"/><text class="hs-pill-text" x="644" y="89">TMP trend</text></g>
+        </g>
+        <!-- Axis -->
+        <line class="hs-tick" x1="100" x2="100" y1="190" y2="194"/><text class="hs-axis-text" x="103" y="199">Feb</text>
+        <line class="hs-tick" x1="240" x2="240" y1="190" y2="194"/><text class="hs-axis-text" x="243" y="199">Mar</text>
+        <line class="hs-tick" x1="380" x2="380" y1="190" y2="194"/><text class="hs-axis-text" x="383" y="199">May</text>
+        <line class="hs-tick" x1="520" x2="520" y1="190" y2="194"/><text class="hs-axis-text" x="523" y="199">Jun</text>
+        <line class="hs-tick" x1="660" x2="660" y1="190" y2="194"/><text class="hs-axis-text" x="663" y="199">Jul</text>
+        <line class="hs-today hs-playhead" x1="700" x2="700" y1="0" y2="190"/>
+        <rect class="hs-today-bg" x="664" y="187" width="36" height="14" rx="3"/><text class="hs-today-text" x="695" y="198" text-anchor="end">Today</text>
+      </svg>
+      <!-- Phone: the compact stream with signal dots; the lanes live in the bottom sheet. -->
+      <svg class="hs-svg-compact" viewBox="0 0 760 76" role="img" aria-label="Weekly resistant finds, compact. The selected signal is ringed.">
+        <line class="hs-base" x1="8" x2="740" y1="50" y2="50"/>
+        <path class="hs-cult" d="M8 24 L120 28 L190 22 L260 26 L330 30 L400 20 L470 24 L540 28 L610 22 L740 26"/>
+        <path class="hs-line hs-ln-esbl" d="M8 46 L100 44 L150 42 L200 45 L250 44 L300 42 L350 40 L400 32 L430 24 L460 10 L490 8 L520 6 L550 10 L580 32 L610 42 L650 44 L740 44"/>
+        <path class="hs-line hs-ln-mrsa" d="M8 48 L150 47 L250 48 L350 46 L450 47 L550 48 L650 47 L740 47"/>
+        <circle class="hs-dot" data-kind="sentinel" cx="177" cy="58" r="4"/>
+        <circle class="hs-dot" cx="281" cy="58" r="4"/>
+        <circle class="hs-dot" cx="434" cy="58" r="4"/>
+        <circle class="hs-dot is-selected" cx="504" cy="58" r="5"/>
+        <circle class="hs-dot" data-kind="data" cx="633" cy="58" r="4"/>
+        <circle class="hs-dot" data-kind="trend" cx="666" cy="58" r="4"/>
+        <text class="hs-axis-text" x="100" y="74">Feb</text><text class="hs-axis-text" x="240" y="74">Mar</text><text class="hs-axis-text" x="380" y="74">May</text><text class="hs-axis-text" x="520" y="74">Jun</text><text class="hs-axis-text" x="660" y="74">Jul</text>
+        <line class="hs-today" x1="740" x2="740" y1="0" y2="64"/>
+      </svg>
+      <!-- Depth 1: the hover / focus line. -->
+      <div class="hs-read" role="tooltip"><b>ESBL E. coli · Urology</b> · 5 patients in 4 weeks, usual 0.2</div>
+    </div>
+    <p class="tl-legend"><b>Lanes:</b> each unit's resistant finds a week. A <b>pill</b> is a signal; its number is observed against usual, so <span class="num">7 · 1.4</span> means seven patients where 1.4 were expected. Lane labels focus a unit.</p>
+
+    <div class="tl-events has-selection" role="group" aria-label="Events">
+      <p class="tl-events-label">Events</p>
+      <ul class="tl-events-list">
+        <li><button type="button" class="tl-ev is-current is-past"><span class="tl-ev-code">E1</span><span class="tl-ev-when num">Jun 2025</span><span class="tl-ev-unit">URO</span><span class="tl-ev-name">ESBL <i>E. coli</i> cluster</span><span class="tl-ev-what">5 a week against 0.2 usual</span></button></li>
+        <li><button type="button" class="tl-ev"><span class="tl-ev-code">E3</span><span class="tl-ev-when num">Dec 2025</span><span class="tl-ev-unit">PHC-S</span><span class="tl-ev-name">No samples for a week</span><span class="tl-ev-what">0 cultures, usual 52; a data problem</span></button></li>
+        <li><button type="button" class="tl-ev"><span class="tl-ev-code">E2</span><span class="tl-ev-when num">Mar 2026</span><span class="tl-ev-unit">ICU</span><span class="tl-ev-name">First MRSA, then 13 in a month</span><span class="tl-ev-what">sentinel, then cluster</span></button></li>
+        <li><button type="button" class="tl-ev"><span class="tl-ev-code">E4</span><span class="tl-ev-when num">2023 → 2026</span><span class="tl-ev-unit">Hospital</span><span class="tl-ev-name">TMP and TZP resistance rising</span><span class="tl-ev-what">15 % → 20 % over three years</span></button></li>
+      </ul>
+    </div>
+  </section>
+
+  <main class="board">
+    <!-- Column 1: signals feed -->
+    <div class="ws-col">
+      <section class="panel feed has-selection" aria-labelledby="feed-title">
+        <header class="panel-head"><h2 id="feed-title">Signals <span class="feed-count">· 6</span></h2><span class="ws-handle" aria-hidden="true"><i></i><i></i><i></i></span><span class="asof num">to 9 Jun 2025</span></header>
+        <div class="feed-filters">
+          <button type="button" class="feed-chip" aria-pressed="true">Sentinel 1</button>
+          <button type="button" class="feed-chip" aria-pressed="true">Cluster 3</button>
+          <button type="button" class="feed-chip" aria-pressed="true">Trend 1</button>
+          <button type="button" class="feed-chip" aria-pressed="true">Data 1</button>
+        </div>
+        <p class="feed-unitbar"><span>Urology only</span><button type="button" class="link">Show all</button></p>
+        <ul class="feed-list">
+          <li><button type="button" class="feed-row" data-kind="cluster" aria-current="true">
+            <span class="feed-row-top"><span class="feed-kind"><svg class="feed-glyph" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 5a1.6 1.6 0 1 0 .01 0 M11 4a1.6 1.6 0 1 0 .01 0 M8 11a1.6 1.6 0 1 0 .01 0 M12 11.5a1.2 1.2 0 1 0 .01 0"/></svg></span><span class="feed-name"><abbr class="gloss" title="extended-spectrum beta-lactamase">ESBL</abbr> E. coli in Urology</span><span class="feed-date num">9 Jun</span></span>
+            <span class="feed-row-bottom"><span class="sp-line"><span class="sp-origin">URO</span><span>→</span><span class="sp-chip">MED-A</span><span class="sp-chip">SURG</span><span class="sp-chip sp-trail">GER</span></span><span class="feed-surp"><span class="feed-bar"><i style="width:78%"></i></span><span class="feed-surp-n num">4.7</span></span></span>
+          </button></li>
+          <li><button type="button" class="feed-row is-kin" data-kind="cluster">
+            <span class="feed-row-top"><span class="feed-kind"><svg class="feed-glyph" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 5a1.6 1.6 0 1 0 .01 0 M11 4a1.6 1.6 0 1 0 .01 0 M8 11a1.6 1.6 0 1 0 .01 0 M12 11.5a1.2 1.2 0 1 0 .01 0"/></svg></span><span class="feed-name">Same ESBL profile in Urology</span><span class="feed-date num">2 Jun</span></span>
+            <span class="feed-row-bottom"><span class="sp-line"><span class="sp-origin">URO</span></span><span class="feed-surp"><span class="feed-bar"><i style="width:55%"></i></span><span class="feed-surp-n num">3.3</span></span></span>
+          </button></li>
+          <li><button type="button" class="feed-row" data-kind="sentinel">
+            <span class="feed-row-top"><span class="feed-kind"><svg class="feed-glyph" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.5 15 14H1z M8 6v4 M8 11.8v.4"/></svg></span><span class="feed-name">First <abbr class="gloss" title="methicillin-resistant S. aureus">MRSA</abbr> in Intensive care</span><span class="feed-date num">3 Mar</span></span>
+            <span class="feed-row-bottom"><span class="sp-line"><span class="sp-origin">ICU</span><span>→</span><span class="sp-chip">SURG</span></span><span class="feed-surp"><span class="feed-bar"><i data-rule="true" style="width:100%"></i></span><span class="feed-surp-n">rule</span></span></span>
+          </button></li>
+          <li><button type="button" class="feed-row" data-kind="cluster">
+            <span class="feed-row-top"><span class="feed-kind"><svg class="feed-glyph" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 5a1.6 1.6 0 1 0 .01 0 M11 4a1.6 1.6 0 1 0 .01 0 M8 11a1.6 1.6 0 1 0 .01 0 M12 11.5a1.2 1.2 0 1 0 .01 0"/></svg></span><span class="feed-name"><abbr class="gloss" title="vancomycin-resistant enterococcus">VRE</abbr> in Geriatrics</span><span class="feed-date num">14 Apr</span></span>
+            <span class="feed-row-bottom"><span class="sp-line"><span class="sp-origin">GER</span></span><span class="feed-surp"><span class="feed-bar"><i style="width:40%"></i></span><span class="feed-surp-n num">2.4</span></span></span>
+          </button></li>
+          <li><button type="button" class="feed-row" data-kind="trend">
+            <span class="feed-row-top"><span class="feed-kind"><svg class="feed-glyph" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 12 6 7.5l3 3L14.5 4 M10.5 4h4v4"/></svg></span><span class="feed-name"><abbr class="gloss" title="trimethoprim">TMP</abbr> resistance rising, urinary E. coli</span><span class="feed-date num">12 mo</span></span>
+            <span class="feed-row-bottom"><span class="sp-line"><span class="sp-chip">hospital</span></span><span class="feed-surp"><span class="feed-bar"><i style="width:48%"></i></span><span class="feed-surp-n num">2.9</span></span></span>
+          </button></li>
+          <li><button type="button" class="feed-row" data-kind="data">
+            <span class="feed-row-top"><span class="feed-kind"><svg class="feed-glyph" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M8 1.5a6.5 6.5 0 1 0 .01 0 M3.4 12.6 12.6 3.4"/></svg></span><span class="feed-name">Health centre South: 0 samples, usual 52</span><span class="feed-date num">14 Dec</span></span>
+            <span class="feed-row-bottom"><span class="sp-line"><span class="sp-origin">PHC-S</span></span><span class="feed-surp"><span class="feed-bar"><i style="width:70%"></i></span><span class="feed-surp-n num">4.2</span></span></span>
+          </button></li>
+        </ul>
+      </section>
+    </div>
+
+    <!-- Column 2: map and patient flow -->
+    <div class="ws-col ws-col-mid">
+      <section class="panel geo has-selection" aria-labelledby="geo-title">
+        <header class="panel-head"><h2 id="geo-title">Map</h2><span class="ws-handle" aria-hidden="true"><i></i><i></i><i></i></span><span class="asof">June 2025</span></header>
+        <p class="geo-caption"><span>THL notified cases per county, June 2025. Colour: cases per 100 000 a year. Dots: county signals, filled when the signal survives correction.</span><button type="button" class="info" aria-label="Source and method"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M8 7v4.5M8 4.8v.4"/></svg></button></p>
+        <div class="geo-stage">
+          <!-- Schematic counties, not real geometry: enough to show the focused county, the halo and the dim. -->
+          <svg class="geo-svg" viewBox="0 0 320 300" role="img" aria-label="Schematic map: Southwest Finland focused, Tyks marked; other counties dimmed.">
+            <path class="geo-county geo-fill-s1" d="M120 20 L210 10 L250 60 L220 110 L150 100 L110 60 Z"/>
+            <path class="geo-county geo-fill-s2" d="M30 90 L110 60 L150 100 L140 160 L70 170 L30 130 Z"/>
+            <path class="geo-county geo-fill-s0" d="M150 100 L220 110 L260 160 L230 200 L160 190 L140 160 Z"/>
+            <path class="geo-county geo-fill-s3" d="M230 200 L260 160 L300 190 L290 250 L240 260 Z"/>
+            <path class="geo-county geo-fill-s2" d="M160 190 L230 200 L240 260 L190 285 L130 260 L130 220 Z"/>
+            <path class="geo-county is-focus geo-fill-s4" d="M30 180 L70 170 L140 160 L130 220 L130 260 L80 275 L30 240 Z"/>
+            <g class="geo-sigs">
+              <circle cx="185" cy="60" r="5" class="geo-glyph geo-glyph-weak"/>
+              <circle cx="265" cy="222" r="5" class="geo-glyph geo-glyph-strong"/>
+              <circle cx="85" cy="110" r="5" class="geo-glyph geo-glyph-weak"/>
+              <circle cx="78" cy="220" r="9" class="geo-halo is-selected"/>
+              <circle cx="78" cy="220" r="5" class="geo-glyph geo-glyph-strong is-selected"/>
+            </g>
+            <circle cx="78" cy="220" r="3" class="geo-hosp"/>
+            <text class="geo-hosp-label" x="90" y="214">Tyks</text>
+          </svg>
+        </div>
+        <div class="geo-legend"><span>Cases per 100 000 a year</span><ul><li><span class="geo-swatch geo-fill-s0"></span>0–2</li><li><span class="geo-swatch geo-fill-s2"></span>5–10</li><li><span class="geo-swatch geo-fill-s4"></span>20+</li></ul><span class="geo-faint">THL, open data, CC BY 4.0</span></div>
+      </section>
+
+      <section class="panel hnet has-selection" aria-labelledby="hnet-title">
+        <header class="panel-head"><h2 id="hnet-title">Patient flow</h2><span class="ws-handle" aria-hidden="true"><i></i><i></i><i></i></span><span class="asof">where this signal's patients go next</span></header>
+        <div class="hnet-stage">
+          <svg class="hnet-svg" viewBox="0 0 640 170" role="img" aria-label="Units as boxes. Urology is selected and lit; the units it reaches are ringed; the rest dimmed.">
+            <g class="hnet-tubes">
+              <path class="hnet-tube" data-active="true" d="M150 70 C 230 70, 230 40, 300 40" stroke-width="6"/>
+              <path class="hnet-tube" data-active="true" d="M150 70 C 230 70, 230 100, 300 100" stroke-width="4"/>
+              <path class="hnet-tube" data-active="true" d="M400 100 C 450 100, 450 130, 500 130" stroke-width="3"/>
+              <path class="hnet-tube" d="M400 40 C 450 40, 450 20, 500 20" stroke-width="5"/>
+              <path class="hnet-tube" d="M50 140 C 150 140, 150 100, 300 100" stroke-width="4"/>
+            </g>
+            <g class="hnet-node" data-selected="true" data-lit="true"><rect class="hnet-ring" x="46" y="38" width="108" height="64" rx="12"/><rect class="hnet-box" x="50" y="42" width="100" height="56" rx="10"/><text class="hnet-code" x="100" y="66" text-anchor="middle">URO</text><text class="hnet-name" x="100" y="84" text-anchor="middle">Urology</text><rect class="hnet-pill" x="56" y="104" width="88" height="18" rx="9"/><text class="hnet-pill-text" x="100" y="117" text-anchor="middle">ESBL 5 · 0.2</text></g>
+            <g class="hnet-node is-kin"><rect class="hnet-ring" x="296" y="8" width="108" height="64" rx="12"/><rect class="hnet-box" x="300" y="12" width="100" height="56" rx="10"/><text class="hnet-code" x="350" y="36" text-anchor="middle">MED-A</text><text class="hnet-name" x="350" y="54" text-anchor="middle">Internal medicine A</text></g>
+            <g class="hnet-node is-kin"><rect class="hnet-ring" x="296" y="68" width="108" height="64" rx="12"/><rect class="hnet-box" x="300" y="72" width="100" height="56" rx="10"/><text class="hnet-code" x="350" y="96" text-anchor="middle">SURG</text><text class="hnet-name" x="350" y="114" text-anchor="middle">Surgery</text></g>
+            <g class="hnet-node is-kin"><rect class="hnet-ring" x="496" y="98" width="108" height="64" rx="12"/><rect class="hnet-box" x="500" y="102" width="100" height="56" rx="10"/><text class="hnet-code" x="550" y="126" text-anchor="middle">GER</text><text class="hnet-name" x="550" y="144" text-anchor="middle">Geriatrics</text></g>
+            <g class="hnet-node"><rect class="hnet-box" x="500" y="2" width="100" height="46" rx="10"/><text class="hnet-code" x="550" y="24" text-anchor="middle">ICU</text><text class="hnet-name" x="550" y="40" text-anchor="middle">Intensive care</text></g>
+            <g class="hnet-node"><rect class="hnet-box" x="0" y="112" width="100" height="46" rx="10"/><text class="hnet-code" x="50" y="134" text-anchor="middle">ED</text><text class="hnet-name" x="50" y="150" text-anchor="middle">Emergency</text></g>
+          </svg>
+        </div>
+      </section>
+    </div>
+
+    <!-- Column 3: the signal card -->
+    <div class="ws-col ws-col-right">
+      <section class="panel sig" data-kind="cluster" aria-labelledby="sig-title">
+        <header class="panel-head"><h2 id="sig-title">Signal</h2><span class="ws-handle" aria-hidden="true"><i></i><i></i><i></i></span><button type="button" class="info" style="margin-left:auto" aria-label="What a signal is"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M8 7v4.5M8 4.8v.4"/></svg></button></header>
+        <div class="sig-body">
+          <div>
+            <span class="sig-kind"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 5a1.6 1.6 0 1 0 .01 0 M11 4a1.6 1.6 0 1 0 .01 0 M8 11a1.6 1.6 0 1 0 .01 0 M12 11.5a1.2 1.2 0 1 0 .01 0"/></svg>Cluster</span>
+            <h3 class="sig-title"><abbr class="gloss" title="extended-spectrum beta-lactamase">ESBL</abbr> <i>E. coli</i> in Urology</h3>
+            <p class="sig-where">5 patients, <span class="num">2 Jun – 29 Jun 2025</span> · fired <span class="num">9 Jun</span> · ESBL (extended-spectrum beta-lactamase)</p>
+          </div>
+          <div class="sig-bars">
+            <div class="sig-bar" data-tone="obs"><span class="sig-bar-label">Observed</span><span class="sig-bar-track" aria-hidden="true"><i style="width:100%"></i></span><b class="sig-bar-value num">5 <small>patients</small></b></div>
+            <div class="sig-bar" data-tone="usual"><span class="sig-bar-label">Usual</span><span class="sig-bar-track" aria-hidden="true"><i style="width:4%"></i></span><b class="sig-bar-value num">0.2 <small>usual</small></b></div>
+          </div>
+          <div class="sig-surprise"><b class="sig-num num" style="--sig-n:4.7">4.7</b><span class="sig-surprise-label">surprise · 1 in 50 000 by chance</span><button type="button" class="info" aria-label="How surprise is scaled"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M8 7v4.5M8 4.8v.4"/></svg></button></div>
+          <div class="sig-how">
+            <h4 class="sig-how-head">How we calculate it <button type="button" class="info" aria-label="Open the Poisson figure"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M8 7v4.5M8 4.8v.4"/></svg></button></h4>
+            <p class="sig-how-text">We count distinct patients with this profile in the last 28 days on this unit (<b>5</b>) and compare with what the unit's own last year predicts (<b>0.2</b>). The chance of 5 or more by luck is <b>1 in 50 000</b>.</p>
+          </div>
+          <div class="sig-reach"><span class="sig-reach-label">Reaches</span><span class="sp-origin">URO</span><span class="sp-arrow">→</span><span class="sp-chip">MED-A</span><span class="sp-chip">SURG</span><span class="sp-chip sp-trail">GER</span><span class="geo-faint">also, by trail</span></div>
+          <details class="sig-isolates">
+            <summary>Isolates behind it (5)</summary>
+            <ul class="sig-iso">
+              <li><span class="num">2 Jun</span><span>Urine · E. coli · ESBL</span><span>day 4</span></li>
+              <li><span class="num">4 Jun</span><span>Urine · E. coli · ESBL</span><span>day 2</span></li>
+              <li><span class="num">5 Jun</span><span>Urine · E. coli · ESBL</span><span>day 6</span></li>
+              <li><span class="num">8 Jun</span><span>Blood · E. coli · ESBL</span><span>day 3</span></li>
+              <li><span class="num">9 Jun</span><span>Urine · E. coli · ESBL</span><span>day 1</span></li>
+            </ul>
+          </details>
+        </div>
+        <footer class="sig-actions">
+          <button type="button" class="sig-primary">Go to this day · 9 Jun 2025</button>
+          <button type="button" class="sig-btn">Show on map</button>
+          <a class="sig-btn" href="#method">Method</a>
+        </footer>
+      </section>
+    </div>
+  </main>
+</div>
+</body>
+</html>

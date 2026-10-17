@@ -509,3 +509,51 @@
     font-size: 1.0625rem;
   }
 }
+
+/* ---------- Selection and unit focus (research-unified.md §2, §7) ---------- */
+
+.hnet-node {
+  transition: opacity var(--mo-2, 200ms) var(--mo-ease, ease-out);
+}
+.hnet-box,
+.hnet-ring {
+  transition:
+    stroke var(--mo-1, 120ms) var(--mo-ease, ease-out),
+    stroke-width var(--mo-1, 120ms) var(--mo-ease, ease-out),
+    opacity var(--mo-1, 120ms) var(--mo-ease, ease-out);
+}
+.hnet-tube {
+  transition:
+    stroke var(--mo-2, 200ms) var(--mo-ease, ease-out),
+    stroke-opacity var(--mo-2, 200ms) var(--mo-ease, ease-out);
+}
+
+/* Kin: a unit the selected signal reaches. */
+.hnet-node.is-kin .hnet-ring {
+  opacity: 1;
+  stroke-width: 2;
+  stroke-dasharray: none;
+}
+
+/* Dimmed: nodes that are neither selected, focused nor reached; tubes that touch none of them. */
+.hnet.has-selection .hnet-node:not([data-selected="true"]):not([data-focus="true"]):not(.is-kin),
+.hnet.has-unit .hnet-node:not([data-selected="true"]):not([data-focus="true"]):not(.is-kin) {
+  opacity: var(--dim-text, 0.7);
+}
+.hnet.has-selection .hnet-node:hover,
+.hnet.has-unit .hnet-node:hover {
+  opacity: 1;
+}
+.hnet.has-selection .hnet-tube:not([data-active="true"]),
+.hnet.has-unit .hnet-tube:not([data-active="true"]) {
+  stroke-opacity: 0.12;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hnet-node,
+  .hnet-box,
+  .hnet-ring,
+  .hnet-tube {
+    transition: none;
+  }
+}
