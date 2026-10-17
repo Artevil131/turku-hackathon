@@ -29,6 +29,7 @@ record disagree, the record wins. Add a row when an experiment closes.
 | [0020](0020-county-forecasts/) | Does a rolling Poisson GLM beat persistence on THL county counts one month ahead? | accepted | Yes, as a 24-month rolling mean: log skill +0.40 (0.31 to 0.48); VRE's skill mostly persistence's floor (review) | Python |
 | [0021](0021-naming-step/) | Can every alert be named into ENGINE.md's five kinds by rule? | accepted | Yes: all 50,521 signals named; D7 0.974 (0.966 to 0.980) for the live set; D-034 grouping reproduces | Python |
 | [0022](0022-ensemble/) | Does combining the live set and the CUSUM raise D5? | accepted | Not at 5 episodes a year (held out 0.966 / 0.772 against 0.960 / 0.817); a post-hoc stack is above at 3 a year | Python |
+| [0023](0023-beta-binomial-tail/) | Does the Beta-binomial predictive tail beat the Poisson tail for profile and phenotype excess? | accepted | No, do not ship: D5 rare 0.925 and common ESBL 0.760 at best against 0.920 and 0.750 at 3.01 episodes a year (intervals ±0.06); m has no effect, the discount lowers both | Python |
 
 Experiments run with `uv run python experiments/NNNN-slug/<script>.py`
 from the repository root (D-024; 0001 to 0007 were ported from TypeScript

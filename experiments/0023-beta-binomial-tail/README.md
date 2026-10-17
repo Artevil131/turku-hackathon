@@ -1,5 +1,5 @@
 ---
-status: proposed    # proposed, then accepted, rejected or superseded
+status: accepted    # proposed, then accepted, rejected or superseded
 by: Claude Code, operated by Artem
 data: [synthetic_microbiology_dataset, seed 2026, as received 2026-10-09]
 parent: 0016
@@ -131,8 +131,133 @@ writes `out/results.md`, `out/metrics.json` (the year-1 choice, through
 
 ## Result
 
-Filled in at close.
+`uv run python experiments/0023-beta-binomial-tail/run.py` ran in 974 s wall
+(942 s CPU; measured). The 10-trial dry run predicted about 17 minutes; the
+plan's 30 to 40 minute estimate was high, so no cut was made: 200 trials per
+cell, seed 2026 only, seeds 2027 to 2030 unused. Everything below is
+measured or computed by that run; `out/results.md` has every table,
+`out/metrics.json` the year-1 pick, `out/metrics-live.json` the live set rerun
+through the same code, `out/metrics-organism-parent.json` the secondary
+profile variant, `out/grid.json` the year-1 tables and D5 curves.
+
+**Headline, D5 at k = 4, the loosest level with at most 5 episodes a year
+(Wilson 95 %).** Every row lands on level 3 (3.01 episodes a year, 6 episodes)
+except the δ = 0.95 rows (2.01, 4 episodes).
+
+| row | rare | common ESBL | episodes a year |
+|---|---|---|---|
+| live set, Poisson tail | 0.920 [0.874, 0.950] | 0.750 [0.686, 0.805] | 3.01 |
+| Beta-binomial, δ = 1 (m = 5, 10, 20 identical) | 0.925 [0.880, 0.954] | 0.760 [0.696, 0.814] | 3.01 |
+| Beta-binomial, δ = 0.98 (year-1 pick, m = 20) | 0.915 [0.868, 0.946] | 0.735 [0.670, 0.791] | 3.01 |
+| Beta-binomial, δ = 0.95 | 0.905 [0.856, 0.938] | 0.725 [0.659, 0.782] | 2.01 |
+
+At equal noise, read off the D5 curve (linear between levels): at 5 episodes
+a year the live set reads 0.960 and 0.836, the best variant (δ = 1) 0.949 and
+0.815, δ = 0.98 0.939 and 0.799, δ = 0.95 0.921 and 0.773. At the live set's
+own 3.01 a year the δ = 1 variant reads 0.925 and 0.760 (a gain of 0.005 and
+0.010, far inside the intervals). The curves cross and re-cross within 0.03
+everywhere from 2 to 40 episodes a year (`out/results.md`).
+
+**m does nothing.** The three prior strengths give the same numbers to the
+last digit in every D5 row and curve. The 50-isolate floor is the smallest
+baseline the tests ever use, so a + b is at least 50 + m, and m = 5 to 20
+changes the Beta-binomial's variance factor 1 + (n − 1) / (a + b + 1) by at
+most a few per cent (derived); the tail moves less than the harness's
+resolution.
+
+**The discount costs.** δ = 0.98 and 0.95 lower both rates by 0.01 to 0.03
+at every noise level and are the only settings that differ from δ = 1; at
+δ = 0.95 the level-3 row has fewer episodes (2.01) only because the next
+level up (10) is above 5 a year, so the cut falls lower on a curve that is
+below the live set's everywhere (0.91 and 0.72 against 0.92 and 0.75 at
+3 a year).
+
+**Year-1 pick.** On the tuning year no setting, the live set included,
+reaches 5 episodes a year (the floor is 7.98 a year, 4 episodes in the half
+year, at every strict level), so the plan's rule had no operating row; see
+deviations. At the live set's shipped-level year-1 noise (13.97 a year) the
+live set detects 32 of 40 rare and 35 of 40 common ESBL clusters; the pick is
+m = 20, δ = 0.98 (30 and 35; the δ = 1 settings drop to 26 and 29 because
+their noise leaves them at level 0.3). The pick reads 0.915 and 0.735 on the
+scoring period.
+
+**Every part, live against the pick (200 trials per cell).** D2 at k = 4:
+rare 0.890 against 0.875, common ESBL 0.610 against 0.585, two-unit 0.240
+against 0.200, common resistant 0.005 and 0.005, wild type 0.000 and 0.000
+(all within the intervals, which are ±0.05 to 0.07). D2 at k = 3, rare: 0.615
+against 0.550. D1: E1, E2, E3 as live (E1 corrected 5 days, E2 and E3 not
+found by either); E4 is found at 2026-06-07 against 2026-05-10 (the trend
+test, which leaves out isolates of detected clusters, so a different cluster
+set moves it). D4: 3.52 episodes a year against 4.52 (cluster 0.00 against
+1.00: one live episode fewer, sentinel 1.51 and data 2.01 unchanged); alerts a
+week 0.067 against 0.087; D6 0.012 both; D7 0.974 both; I1 16 alerts in 13
+incidents against 18 in 15. The secondary profile variant (parent one level up,
+the organism's share across specimens) gives the same D5, a rare k = 3 of
+0.585 against 0.550 and nothing else different.
+
+**Checks (all passed).** The tail against a direct sum of the pmf over 300
+random (n, y, a, b): absolute error at most 1.1e-12 (scipy's `betabinom.sf`
+has that floor; the alphas used are at least 1e-6, so it never decides a
+signal); against the binomial as m → 10^7, relative difference 0.004. The
+focused path against the full run on the real data: 3 cases, 62 signals, no
+differences, at δ = 0.98 and 0.95. The trial fast path against the same
+detector run on all the data: 40 trials each, no differences at levels 1 and
+3 (the live set shows the same 1 to 3 differing trials at the loosest level
+100, where the harness's focus leaves out other specimens of the organism;
+checked on the live set too, 60 trials, 1 differing, so it is the harness's,
+not the tail's). `check_causal` on 2025-03-31, 2025-12-31 and 2026-06-30:
+causal, at δ = 0.98 and 0.95.
+
+**Deviations from plan.**
+
+- Year-1 selection: the plan's rule (loosest level with at most 5 episodes a
+  year) has no row, because the tuning year's noise floor is 7.98 a year for
+  every setting, the live set too (the first months have less than 365 days of
+  baseline). The rule used: the loosest level whose year-1 noise is at most
+  the live set's at its shipped alphas, 13.97 a year; ties and order as
+  planned. The scoring-period headline keeps the 5 a year cut.
+- Levels: the plan extended the sweep by 300 and 1000; it was dropped after a
+  trial check found the harness's focused trials miss other-specimen signals
+  at levels that loose (identically for the live set), so the sweep is the live
+  set's, 100 down to 0.01. No headline reads above level 3.
+- The live set is rerun here, not read from the baseline rows; it reproduces
+  `live-set-retuned-year1` (0.92 and 0.75 at 3.01 a year).
+- Profile excess's primary parent is the stratum itself, as the brief reads,
+  so the mean is the live mean and only the tail differs; the organism-level
+  parent is the secondary variant.
+- The data directory is a symlink to the main checkout's `data/` (git-ignored);
+  nothing in it changed.
 
 ## Interpretation
 
-Filled in at close.
+**Do not ship.** At the same noise the Beta-binomial predictive tail does not
+beat the Poisson tail: the best variant (δ = 1) is +0.005 rare and +0.010
+common ESBL at 3 episodes a year and −0.011 and −0.021 at 5 a year, every
+difference far inside the 200-trial intervals (±0.05 to 0.07), and no
+variant meets the success rule's 0.92 and 0.80. The discounted variants are
+below the live set on both rates at every noise level, the pick (m = 20,
+δ = 0.98) by 0.005 and 0.015 at the headline and by 0.02 and 0.04 at 5 a
+year. The plan's direction, a gain of at most 5 points with fewer episodes,
+is half right: no gain, as feared, and the episodes a year fell only by one
+(cluster 1.00 to 0.00, one episode in two years).
+
+Why: the hypothesis needs a thin baseline, and the live tests rarely have
+one. The 50-isolate floor and a 365-day baseline give a + b of hundreds to
+tens of thousands, so the predictive is the Poisson to within the sampling
+noise; m, which acts only on thin baselines, changes nothing at all. Where
+the baseline would be thin the test does not run (the floor) or the
+observed-count minimum (3 or 2) already stops it. The strongest alternative
+explanation is that the harness injects clusters of the live set's own
+detectable size into rich strata; a stratum with 5 to 20 baseline isolates
+would show the widening, but D-020's floor excludes it, and relaxing the
+floor is a different experiment (live detector on thin strata, with the
+Beta-binomial as the guard that makes it safe).
+
+What it means for the decision: ENGINE.md A3's Poisson tail with the +½/+1
+smoothing stays (D-044 unchanged). The record can say the Poisson is a sound
+shortcut here (it matches the predictive to within noise) for the strata the
+live set tests, which is the sentence to cite if the Beta-binomial comes up
+again. Next, if the question matters: lower the 50-isolate floor and the
+minimum observed count together on thin strata and score the live Poisson
+against the Beta-binomial there, at equal noise; one seed here, held-out
+seeds 2027 to 2030 untouched, so the finding is a screening result.
