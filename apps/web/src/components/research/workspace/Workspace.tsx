@@ -19,6 +19,7 @@ import {
   clampRect,
   compactLayout,
   defaultLayout,
+  fillLayout,
   fitLayout,
   focusLayout,
   isChartId,
@@ -240,7 +241,7 @@ export function Workspace({
   }, [areaW, animate]);
 
   const commit = (next: Layout, moved?: string) => {
-    const c = compactLayout(fitLayout(next), moved);
+    const c = fillLayout(compactLayout(fitLayout(next), moved), moved);
     setSaved(c);
     saveLayout(c);
     return c;

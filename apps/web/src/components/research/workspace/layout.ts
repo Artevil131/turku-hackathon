@@ -159,6 +159,29 @@ export function compactLayout(layout: Layout, moved?: string): Layout {
   return next;
 }
 
+/**
+ * Neighbours take the empty columns: every open window (except the one just moved or sized, which keeps the
+ * size the researcher gave it) grows sideways into free columns on its rows until it meets another window or
+ * the board's edge. Rows are untouched, so the reading order stays what the researcher laid out.
+ */
+export function fillLayout(layout: Layout, moved?: string): Layout {
+  const open = allIds(layout).filter((id) => winOf(layout, id).open);
+  let next = layout;
+  // Left to right, so a window on the left fills first and the one on the right takes what remains.
+  for (const id of [...open].sort((a, b) => winOf(next, a).x - winOf(next, b).x)) {
+    if (id === moved) continue;
+    const w = winOf(next, id);
+    const sameRows = open
+      .filter((o) => o !== id)
+      .map((o) => winOf(next, o))
+      .filter((o) => o.y < w.y + w.h && w.y < o.y + o.h);
+    const right = Math.min(COLS, ...sameRows.filter((o) => o.x >= w.x + w.w).map((o) => o.x));
+    const left = Math.max(0, ...sameRows.filter((o) => o.x + o.w <= w.x).map((o) => o.x + o.w));
+    if (left !== w.x || right - left !== w.w) next = setWin(next, id, { ...w, x: left, w: right - left });
+  }
+  return next;
+}
+
 /** The layout as it must be drawn: every window inside the board. */
 export function fitLayout(layout: Layout): Layout {
   let next = layout;

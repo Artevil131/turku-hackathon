@@ -6,6 +6,7 @@ import {
   COLS,
   compactLayout,
   defaultLayout,
+  fillLayout,
   fitLayout,
   focusLayout,
   parseLayout,
@@ -118,5 +119,30 @@ describe("chart windows in the layout", () => {
     const p = withCharts(presetLayout("map"), layout);
     expect(p.charts[id]).toBeDefined();
     expect(p.order).toContain(id);
+  });
+});
+
+describe("neighbours take the empty columns", () => {
+  it("grows a window sideways into free columns up to the next window, and leaves the moved one alone", () => {
+    let l = defaultLayout();
+    for (const id of ["graph", "math", "assistant", "grid", "reproduce"] as const) l = patchWin(l, id, { open: false });
+    // Signals at 0–4 and the map at 6–10 on the same rows: a free column between them and two at the right edge.
+    l = patchWin(l, "signals", { x: 0, y: 0, w: 4, h: 20, open: true });
+    l = patchWin(l, "map", { x: 6, y: 0, w: 4, h: 20, open: true });
+    const filled = fillLayout(l, "map");
+    expect(filled.wins.signals).toMatchObject({ x: 0, w: 6 });
+    expect(filled.wins.map).toMatchObject({ x: 6, w: 4 });
+    const both = fillLayout(l);
+    expect(both.wins.signals).toMatchObject({ x: 0, w: 6 });
+    expect(both.wins.map).toMatchObject({ x: 6, w: COLS - 6 });
+  });
+  it("does not grow across a window on other rows' columns unless the rows overlap", () => {
+    let l = defaultLayout();
+    for (const id of ["graph", "math", "assistant", "grid", "reproduce", "map"] as const) l = patchWin(l, id, { open: false });
+    l = patchWin(l, "signals", { x: 0, y: 0, w: 4, h: 10, open: true });
+    l = patchWin(l, "graph", { x: 8, y: 12, w: 4, h: 10, open: true });
+    const f = fillLayout(l);
+    expect(f.wins.signals).toMatchObject({ x: 0, w: COLS });
+    expect(f.wins.graph).toMatchObject({ x: 0, w: COLS });
   });
 });
