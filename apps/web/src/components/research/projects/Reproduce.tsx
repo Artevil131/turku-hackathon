@@ -84,6 +84,11 @@ export function ReproduceHost({ locale, projectId, language }: { locale: Locale;
       iframe.tabIndex = visible && projectId ? 0 : -1;
       iframe.style.pointerEvents = dragging || root.querySelector('[data-dragging="true"]') ? "none" : "auto";
       if (!rect || !slot) return;
+      // Stack with the window that holds the slot: windows are raised by z-index, and a fixed lower one left the
+      // frame behind its own window's background, so the window showed empty. Later in the DOM, an equal z wins.
+      const host = slot.closest<HTMLElement>(".ws-win");
+      const z = host ? getComputedStyle(host).zIndex : "auto";
+      iframe.style.zIndex = z === "auto" ? "" : z;
       const origin = root.getBoundingClientRect();
       iframe.style.left = `${rect.left - origin.left + root.scrollLeft}px`;
       iframe.style.top = `${rect.top - origin.top + root.scrollTop}px`;
