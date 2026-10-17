@@ -6,7 +6,7 @@ import { createPortal } from "react-dom";
 import { type LiveAlerts, useAlertsSinceStart } from "../alertsSince.ts";
 import type { Connection } from "../live.ts";
 import { currentHospitalName, siteWards } from "../sites.ts";
-import { hashPage, patchHashParams, sharedQuery, useHashParam } from "../url.ts";
+import { onProjectPage, patchHashParams, sharedQuery, useHashParam } from "../url.ts";
 import { EventsStrip } from "./EventsStrip.tsx";
 import { Gloss } from "./Gloss.tsx";
 import { compactDate, dayNumber, isoFromDay } from "./hero/geometry.ts";
@@ -211,20 +211,20 @@ export function Timeline({
   const incidents = useMemo(() => groupIncidents(alerts), [alerts]);
   const pickIncident = (key: string) => {
     setSheet(false);
-    if (hashPage() === "research") setInc(key);
-    else location.hash = `research?inc=${encodeURIComponent(key)}${sharedQuery().replace("?", "&")}`;
+    if (onProjectPage()) setInc(key);
+    else location.hash = `project?inc=${encodeURIComponent(key)}${sharedQuery().replace("?", "&")}`;
   };
   // "n more in the list": the full list is the Signals window. Elsewhere, go to the research page;
   // there, raise it, flash it once (it may already be in view) and focus its first row.
   const openList = () => {
     setSheet(false);
-    if (hashPage() !== "research") {
-      location.hash = `research${sharedQuery()}`;
+    if (!onProjectPage()) {
+      location.hash = `project${sharedQuery()}`;
       return;
     }
     const win = document.getElementById("ws-win-signals");
     if (!win) {
-      document.getElementById("ws-tray-button")?.click();
+      document.querySelector<HTMLElement>("[data-add-window]")?.click();
       return;
     }
     win.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });

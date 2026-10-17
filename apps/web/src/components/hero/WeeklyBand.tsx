@@ -15,7 +15,7 @@ import {
   useState,
 } from "react";
 import { allWards, currentSite, isMulti, siteWards } from "../../sites.ts";
-import { hashPage, sharedQuery } from "../../url.ts";
+import { onProjectPage, sharedQuery } from "../../url.ts";
 import {
   bandPath,
   compactDate,
@@ -428,8 +428,8 @@ const StaticLayer = memo(function StaticLayer({
     // A merged pill already ringed for an older member keeps that member when pressed again.
     const target = p.members.find((m) => incidentKey(m) === selected) ?? p.a;
     const key = incidentKey(target);
-    if (onSelect && hashPage() === "research") onSelect(key);
-    else location.hash = `research?inc=${encodeURIComponent(key)}${sharedQuery().replace("?", "&")}`;
+    if (onSelect && onProjectPage()) onSelect(key);
+    else location.hash = `project?inc=${encodeURIComponent(key)}${sharedQuery().replace("?", "&")}`;
   };
   const pressLane = (ward: WardCode) => onFocusUnit?.(ward === focusUnit ? null : ward);
   return (

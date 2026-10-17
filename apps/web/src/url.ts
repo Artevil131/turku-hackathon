@@ -13,6 +13,12 @@ export function hashPage(): string {
   return location.hash.slice(1).split("?")[0] ?? "";
 }
 
+/** Whether the current page is a project view (the research board; "research" is the old name of the route). */
+export function onProjectPage(): boolean {
+  const page = hashPage();
+  return page === "project" || page === "research";
+}
+
 export function hashParams(): URLSearchParams {
   const query = location.hash.split("?")[1];
   return new URLSearchParams(query ?? "");
