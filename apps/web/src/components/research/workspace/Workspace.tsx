@@ -1151,7 +1151,6 @@ function WindowPicker({
           </svg>
           <span className="ws-picker-text">
             <strong>{t(locale, `pick_${id}` as "pick_signals")}</strong>
-            <small>{t(locale, `pick_${id}_sub` as "pick_signals_sub")}</small>
           </span>
           {count(id) ? <span className="ws-picker-n">{count(id)}</span> : null}
         </button>
