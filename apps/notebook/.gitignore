@@ -1,0 +1,4 @@
+build/
+.venv/
+.jupyterlite.doit.db
+dist/
