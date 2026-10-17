@@ -462,6 +462,10 @@ D-045 settles D6 separately: the county forecast ships. Its integration
 with the regional data and region view remains to be implemented; the
 analysis in Part D5 is not a claim that it already runs.
 
-Left for later as team calls (D-044): A4 selective-testing flag; B1, B4
-prior strengths; B6 prior-resistance annotation; B11 reliability label;
-C8 linked-unit tests; F3 persistent storage.
+D-046 settles the calls D-044 left for later: no separate
+selective-testing flag beyond the existing untested gate (A4); M = 30 and
+M_π = 100 for the Beta-binomial analysis code (B1, B4); no patient-history
+adjustment or annotation (B6); the reliability label is the level with its
+count and the 30-result floor (B11); no linked-unit detector (C8); memory
+storage for the demo, persistence left to pilot planning (F3). Only A2's
+wording, asked of the organisers, remains open.

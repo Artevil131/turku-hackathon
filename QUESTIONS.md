@@ -5,6 +5,11 @@ to decide. Each item has a proposal; answering "accept" moves it to
 DECISIONS.md, anything else replaces the proposal. Numbering is stable so
 answers can refer to it.
 
+**Status (2026-10-17):** D-044 and D-046 settle every item in A to F;
+only A2's onset wording, asked of the organisers, and the questions to
+the judges and organiser in G remain open. The tables below keep the
+original proposals for the record.
+
 ## A. Counting
 
 | # | Question | Proposal |
