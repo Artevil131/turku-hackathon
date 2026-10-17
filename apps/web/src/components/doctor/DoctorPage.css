@@ -41,7 +41,7 @@
 
 .doctor-main {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr);
   gap: 8px;
   max-width: 1600px;
   margin: 0 auto;
@@ -115,7 +115,7 @@
     overflow: hidden;
   }
   .doctor-main {
-    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr);
     height: 100%;
     min-height: 0;
   }
@@ -297,4 +297,57 @@
   .dp-panel {
     border: 0;
   }
+}
+
+/* The guide's words for a first-choice row (D-047), and the national line (D-048). */
+.dt-guide,
+.dt-national {
+  border-top: 1px solid var(--d-line);
+  padding-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--d-ink-2);
+}
+
+.dt-guide h4 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--d-s);
+  font-weight: 600;
+}
+
+.dt-guide p,
+.dt-national p {
+  margin: 0;
+}
+
+.dt-national small {
+  color: var(--d-ink-3);
+  font-size: var(--d-xs);
+}
+
+.dt-prior {
+  margin: 0;
+  color: var(--d-alert);
+  font-weight: 600;
+}
+
+/* The Patient panel (D-050): the findings, newest first, and the guide's carrier rule. */
+.pt-findings {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-weight: 600;
+  color: var(--d-alert);
+}
+
+.pt-rule {
+  margin: 4px 0 0;
+  color: var(--d-ink-2);
 }

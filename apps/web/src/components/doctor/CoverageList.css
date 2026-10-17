@@ -514,3 +514,56 @@
   display: block;
   color: var(--d-ink-2);
 }
+
+/* The guide beside the data (D-047): a labelled marker on first-choice rows and its line under the header. */
+.cl-guide {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  height: 16px;
+  padding: 0 5px;
+  border: 1px solid var(--d-acc);
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--d-acc);
+  background: var(--d-acc-soft);
+}
+
+.cl-guide-sum {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--d-line);
+  font-size: var(--d-xs);
+  color: var(--d-ink-2);
+}
+
+.cl-guide-sum p,
+.cl-guide-sum ul {
+  margin: 0;
+}
+
+.cl-guide-sum ul {
+  padding-left: 1.1em;
+  margin: 4px 0;
+}
+
+.cl-guide-sum a {
+  color: var(--d-acc);
+  text-underline-offset: 3px;
+}
+
+/* The patient's prior finding on a row (D-050): words, under the row like the borderline hint. */
+.cl-prior {
+  grid-column: 1 / -1;
+  color: var(--d-alert);
+  font-size: var(--d-xs);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+@media print {
+  .cl-guide-sum {
+    display: none;
+  }
+}
