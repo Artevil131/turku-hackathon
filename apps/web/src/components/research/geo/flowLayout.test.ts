@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bandPath, groupFlows, layoutFlow, OTHERS } from "./flowLayout.ts";
+import { bandOpacity, bandPath, flowMatrix, groupFlows, layoutFlow, OTHERS, shadeStep } from "./flowLayout.ts";
 
 const flows = [
   { unit: "MED-B", patients: 4 },
@@ -95,5 +95,44 @@ describe("bandPath", () => {
   it("is a closed cubic ribbon and swaps axes when vertical", () => {
     expect(bandPath(0, 10, 20, 100, 30, 40)).toBe("M0.0,10.0 C50.0,10.0 50.0,30.0 100.0,30.0 L100.0,40.0 C50.0,40.0 50.0,20.0 0.0,20.0 Z");
     expect(bandPath(0, 10, 20, 100, 30, 40, true).startsWith("M10.0,0.0 C10.0,50.0")).toBe(true);
+  });
+});
+
+describe("bandOpacity and shadeStep", () => {
+  it("ramps from light to strong, the largest strongest", () => {
+    expect(bandOpacity(100, 100, 0.1, 0.6)).toBeCloseTo(0.6, 10);
+    expect(bandOpacity(1, 100, 0.1, 0.6)).toBeGreaterThan(0.1);
+    expect(bandOpacity(1, 100, 0.1, 0.6)).toBeLessThan(bandOpacity(30, 100, 0.1, 0.6));
+    expect(bandOpacity(5, 0, 0.1, 0.6)).toBe(0.1);
+  });
+  it("shades cells in steps, none for no patients", () => {
+    expect(shadeStep(0, 10)).toBe(0);
+    expect(shadeStep(1, 100)).toBe(1);
+    expect(shadeStep(100, 100)).toBe(7);
+    expect(shadeStep(50, 100)).toBe(4);
+  });
+});
+
+describe("flowMatrix", () => {
+  const codes = ["ED", "ICU", "SURG"] as const;
+  it("adds repeated pairs, blanks the diagonal and totals rows and columns", () => {
+    const m = flowMatrix(
+      [
+        { from: "ED", to: "ICU", patients: 3 },
+        { from: "ED", to: "ICU", patients: 2 },
+        { from: "ICU", to: "ICU", patients: 9 },
+        { from: "ICU", to: "SURG", patients: 4 },
+        { from: "GER", to: "ED", patients: 7 },
+      ],
+      codes,
+    );
+    expect(m.n).toEqual([
+      [0, 5, 0],
+      [0, 0, 4],
+      [0, 0, 0],
+    ]);
+    expect(m.max).toBe(5);
+    expect(m.rowTotal).toEqual([5, 4, 0]);
+    expect(m.colTotal).toEqual([0, 5, 4]);
   });
 });

@@ -155,3 +155,43 @@ export function bandPath(a: number, a0: number, a1: number, b: number, b0: numbe
   const p = (x: number, y: number) => (vertical ? `${f(y)},${f(x)}` : `${f(x)},${f(y)}`);
   return `M${p(a, a0)} C${p(m, a0)} ${p(m, b0)} ${p(b, b0)} L${p(b, b1)} C${p(m, b1)} ${p(m, a1)} ${p(a, a1)} Z`;
 }
+
+/**
+ * Fill opacity of a band by its patients: one ramp for the whole view, the
+ * largest band strongest (`hi`), the smallest light (`lo`). Square-root easing,
+ * so a band of a few patients is still visible beside a band of a hundred.
+ */
+export function bandOpacity(patients: number, max: number, lo: number, hi: number): number {
+  if (!(max > 0)) return lo;
+  const t = Math.min(1, Math.max(0, patients / max));
+  return lo + (hi - lo) * Math.sqrt(t);
+}
+
+/** Shade step of a matrix cell, 0 for no patients, else 1..steps by patients over the largest cell. */
+export function shadeStep(patients: number, max: number, steps = 7): number {
+  if (!(patients > 0) || !(max > 0)) return 0;
+  return Math.min(steps, Math.max(1, Math.ceil((patients / max) * steps)));
+}
+
+export interface FlowMatrix {
+  /** n[i][j]: patients from codes[i] to codes[j]; the diagonal stays 0. */
+  n: number[][];
+  max: number;
+  rowTotal: number[];
+  colTotal: number[];
+}
+
+/** The flows as a square matrix over `codes` (rows from, columns to); repeated pairs add up, other units are ignored. */
+export function flowMatrix(flows: readonly { from: WardCode; to: WardCode; patients: number }[], codes: readonly WardCode[]): FlowMatrix {
+  const at = new Map(codes.map((c, i) => [c, i]));
+  const n = codes.map(() => codes.map(() => 0));
+  for (const f of flows) {
+    const i = at.get(f.from);
+    const j = at.get(f.to);
+    if (i === undefined || j === undefined || i === j || !(f.patients > 0)) continue;
+    (n[i] as number[])[j] = ((n[i] as number[])[j] as number) + f.patients;
+  }
+  const rowTotal = n.map((r) => r.reduce((s, x) => s + x, 0));
+  const colTotal = codes.map((_, j) => n.reduce((s, r) => s + (r[j] as number), 0));
+  return { n, max: Math.max(0, ...n.flat()), rowTotal, colTotal };
+}
