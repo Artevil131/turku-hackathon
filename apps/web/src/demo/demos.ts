@@ -88,7 +88,7 @@ export const DEMOS: readonly DemoSpec[] = [
     mode: "continuous",
     // The planted Urology ESBL cluster is caught on the 4 June batch: the demo opens on that signal.
     clockAt: "2025-06-04",
-    board: "unit=URO&ph=esbl",
+    board: "unit=URO",
     layout: reserveEvidence(
       gridLayout({
         answer: { x: 0, y: 0, w: 12, h: 9 },
