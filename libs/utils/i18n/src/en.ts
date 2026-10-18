@@ -10,6 +10,7 @@ import { failsTogetherEn } from "./surfaces/failsTogether.ts";
 import { feedEn } from "./surfaces/feed.ts";
 import { glossaryEn } from "./surfaces/glossary.ts";
 import { gridEn } from "./surfaces/grid.ts";
+import { guideEn } from "./surfaces/guide.ts";
 import { homeEn } from "./surfaces/home.ts";
 import { introEn } from "./surfaces/intro.ts";
 import { mapEn } from "./surfaces/map.ts";
@@ -283,6 +284,7 @@ export const en = {
   ...mapEn,
   ...demoEn,
   ...tourEn,
+  ...guideEn,
   ...homeEn,
   ...introEn,
   ...cardEn,

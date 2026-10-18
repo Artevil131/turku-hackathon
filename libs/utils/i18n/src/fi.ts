@@ -11,6 +11,7 @@ import { failsTogetherFi } from "./surfaces/failsTogether.ts";
 import { feedFi } from "./surfaces/feed.ts";
 import { glossaryFi } from "./surfaces/glossary.ts";
 import { gridFi } from "./surfaces/grid.ts";
+import { guideFi } from "./surfaces/guide.ts";
 import { homeFi } from "./surfaces/home.ts";
 import { introFi } from "./surfaces/intro.ts";
 import { mapFi } from "./surfaces/map.ts";
@@ -285,6 +286,7 @@ export const fi: Record<keyof typeof en, string> = {
   ...mapFi,
   ...demoFi,
   ...tourFi,
+  ...guideFi,
   ...homeFi,
   ...introFi,
   ...cardFi,

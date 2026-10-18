@@ -1024,21 +1024,3 @@
   background: var(--chassis);
   color: var(--ink);
 }
-
-/* Hidden reset at the foot of Settings: nearly invisible until hovered or focused. */
-.settings-reset {
-  align-self: flex-start;
-  margin-top: 3rem;
-  padding: 0.25rem 0.5rem;
-  font-size: 0.7rem;
-  color: inherit;
-  background: none;
-  border: 0;
-  opacity: 0.06;
-  cursor: default;
-}
-.settings-reset:hover,
-.settings-reset:focus-visible {
-  opacity: 0.6;
-  cursor: pointer;
-}

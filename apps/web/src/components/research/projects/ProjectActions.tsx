@@ -2,6 +2,7 @@ import type { AeiClient, Project } from "@aei/contract";
 import { figurePngFile, figureSvgFile, toCsvFiles, toDocx, toJson, toLatex, toMarkdown, toPython, toResearchPackage } from "@aei/export";
 import { type Locale, t } from "@aei/i18n";
 import { useEffect, useState } from "react";
+import { GUIDE_EVENT } from "../../../demo/tour/adaptive.ts";
 import { downloadFile } from "../../../downloadFile.ts";
 import { useShell } from "../../../shell/context.ts";
 import { launchTemplate } from "../../../shell/launch.ts";
@@ -43,6 +44,7 @@ export const ICONS = {
   reproduce: "M4.5 12a7.5 7.5 0 0 1 13-5.1M19.5 12a7.5 7.5 0 0 1-13 5.1M17.5 3.5v3.6h-3.6M6.5 20.5v-3.6h3.6",
   windows: "M3.5 4.5h17v15h-17zM9.5 4.5v15M9.5 11h11",
   add: "M12 5v14M5 12h14",
+  guide: "M8 5.5v13l10.5-6.5z",
 };
 export const SidebarIcon = ({ name }: { name: keyof typeof ICONS }) => <Icon d={ICONS[name]} />;
 
@@ -234,6 +236,18 @@ export function ProjectActions({
           <SidebarIcon name="reproduce" />
         </span>
         <span className="sb-label">{t(locale, "reproduceAction")}</span>
+      </button>
+      <button
+        type="button"
+        className="sb-item"
+        data-guide
+        title={t(locale, "tourGdButtonTip")}
+        onClick={() => dispatchEvent(new Event(GUIDE_EVENT))}
+      >
+        <span className="sb-icon">
+          <SidebarIcon name="guide" />
+        </span>
+        <span className="sb-label">{t(locale, "tourGdButton")}</span>
       </button>
       {status === "pmError" || (status && !busy) ? (
         <p className="sb-status" role={status === "exportError" || status === "pmError" ? "alert" : "status"}>

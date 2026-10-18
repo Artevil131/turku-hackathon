@@ -2,6 +2,7 @@ import type { Flow, Project } from "@aei/contract";
 import { formatDate, type Locale, t } from "@aei/i18n";
 import { Fragment, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CommandField } from "./components/command/CommandField.tsx";
+import { DocsPage } from "./components/docs/DocsPage.tsx";
 import { doctorParamsToWindow } from "./components/doctor/filters.ts";
 import { useMedia } from "./components/doctor/useMedia.ts";
 import { PAGE_VERSION } from "./components/research/notebook/model.ts";
@@ -13,19 +14,21 @@ import { Sidebar, tabName } from "./components/shell/Sidebar.tsx";
 import { type Audience, storedAudience } from "./components/start/audience.ts";
 import { StartPage } from "./components/start/StartPage.tsx";
 import { applyPlan } from "./demo/applyPlan.ts";
+import { DEMOS, type DemoId, type DemoSpec } from "./demo/demos.ts";
+import { FillOverlay } from "./demo/FillOverlay.tsx";
 import { copy } from "./demo/fillCopy.ts";
 import { nudgeOff } from "./demo/nudge.ts";
-import { DEMOS, type DemoId, type DemoSpec, type TourId } from "./demo/demos.ts";
-import { FillOverlay } from "./demo/FillOverlay.tsx";
 import type { FillPlan } from "./demo/openDemo.ts";
 import { openDemo } from "./demo/openDemo.ts";
 import { Performance } from "./demo/perform/Performance.tsx";
 import { SHOWCASE_FILLS, showcaseScreenplay } from "./demo/perform/scripts.ts";
+import { GUIDE_EVENT } from "./demo/tour/adaptive.ts";
+import type { TourKind } from "./demo/tour/steps.ts";
 import { DemoTour } from "./demo/tour/Tour.tsx";
 import { useLive } from "./live.ts";
 import { FlowsContext } from "./relations.ts";
 import { type Shell, ShellContext, type Slots, SlotsContext } from "./shell/context.ts";
-import { launchTemplate } from "./shell/launch.ts";
+import { launchTemplate, launchWindow, takeFresh } from "./shell/launch.ts";
 import { closeTab, type DocTab, loadTabs, PROJECT_PAGE, patchTab, saveTabs, tabKey, upsertTab } from "./shell/tabs.ts";
 import {
   alertsOf,
@@ -57,8 +60,8 @@ const NO_FLOWS: readonly Flow[] = [];
 // [data-theme="dark"]; switch this (or add a toggle) to bring them back.
 const THEME: "light" | "dark" = "light";
 
-type Page = "home" | "project" | "data" | "settings" | "intro";
-const PAGES: readonly Page[] = ["home", "project", "data", "settings", "intro"];
+type Page = "home" | "project" | "data" | "settings" | "docs" | "intro";
+const PAGES: readonly Page[] = ["home", "project", "data", "settings", "docs", "intro"];
 
 function stored<T extends string>(key: string, fallback: T, valid: (v: string) => boolean): T {
   try {
@@ -144,7 +147,15 @@ export function App() {
   const [drawer, setDrawer] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   // The guided tour offered when a demo file opens; leaving the project ends it.
-  const [tour, setTour] = useState<{ demo: TourId; key: number } | null>(null);
+  const [tour, setTour] = useState<{ demo: TourKind; key: number } | null>(null);
+  // The short tour of whatever windows are open: offered once for a project or view you just made (a demo has its own tour),
+  // and on demand from "Guide" in the sidebar. It never replaces the full presentation while that plays.
+  const guided = useRef(new Set<string>());
+  const offerGuide = useCallback(() => setTour((cur) => (cur?.demo === "overview" ? cur : { demo: "adaptive", key: Date.now() })), []);
+  useEffect(() => {
+    addEventListener(GUIDE_EVENT, offerGuide);
+    return () => removeEventListener(GUIDE_EVENT, offerGuide);
+  }, [offerGuide]);
   // First visit: the full tour is offered once; "Not now" leaves a way back on the start page and in the sidebar.
   // biome-ignore lint/correctness/useExhaustiveDependencies: only on first load
   useEffect(() => {
@@ -343,6 +354,7 @@ export function App() {
     () => ({
       openProject: (project: Project) => {
         const isDemo = DEMOS.some((d) => t(locale, d.titleKey) === project.name);
+        if (takeFresh(project.id) && !isDemo) offerGuide();
         if (!isDemo && project.mode !== "frozen") toNow();
         const open = tabsRef.current.find((tab) => tab.project === project.id);
         setTabs((all) =>
@@ -356,6 +368,10 @@ export function App() {
       },
       openView: (quick, params) => {
         toNow();
+        if (quick && !guided.current.has(quick)) {
+          guided.current.add(quick);
+          offerGuide();
+        }
         const search = new URLSearchParams(params);
         if (quick) search.set("quick", quick);
         const hospital = hashParams().get(HOSPITAL_PARAM);
@@ -376,7 +392,7 @@ export function App() {
         setTabs((all) => patchTab(all, key, { name: project.name, frozen: project.mode === "frozen", asOf: project.asOf ?? null, drift }));
       },
     }),
-    [go, close, navigate, locale, toNow],
+    [go, close, navigate, locale, toNow, offerGuide],
   );
   useEffect(() => {
     if (!notice) return;
@@ -392,7 +408,9 @@ export function App() {
         ? t(locale, "shellData")
         : page === "settings"
           ? t(locale, "settings")
-          : t(locale, "shellHome");
+          : page === "docs"
+            ? t(locale, "shellDocs")
+            : t(locale, "shellHome");
   useEffect(() => {
     document.title = page === "home" ? t(locale, "appName") : `${title} · ${t(locale, "appName")}`;
   }, [page, title, locale]);
@@ -571,6 +589,16 @@ export function App() {
                       {page === "data" ? (
                         <DataPage client={client} liveClient={live.client} locale={locale} asOf={live.clock?.asOf ?? null} />
                       ) : null}
+                      {page === "docs" ? (
+                        <DocsPage
+                          locale={locale}
+                          onShow={(kind, title) => {
+                            launchWindow(client, locale, kind, title)
+                              .then(shell.openProject)
+                              .catch(() => setNotice(t(locale, "docsError")));
+                          }}
+                        />
+                      ) : null}
                       {page === "settings" ? <Settings locale={locale} onLocale={setLocale} onShowcase={startShowcase} /> : null}
                     </Suspense>
                   </Fragment>
@@ -638,7 +666,7 @@ export function App() {
                 reducedMotion={reducedMotion}
                 onClose={() => {
                   // Any dismiss, of the full tour or of a demo's offer, is remembered.
-                  store("yl.welcomed", "1");
+                  if (tour.demo !== "adaptive") store("yl.welcomed", "1");
                   setTour(null);
                 }}
               />

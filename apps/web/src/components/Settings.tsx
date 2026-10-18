@@ -1,6 +1,7 @@
 import { type Locale, siteName, t } from "@aei/i18n";
 import { useSites } from "../sites.ts";
 import { InfoButton } from "./Info.tsx";
+import "./settings.css";
 
 // Settings: things a user sets once: the language, the hospital, the Start-as preset (which also sets the
 // density). The data checks moved to Data.
@@ -20,80 +21,92 @@ export function Settings({ locale, onLocale, onShowcase }: Props) {
         {t(locale, "settings")}
       </h1>
 
-      <fieldset className="field setting">
-        <legend className="field-label">{t(locale, "language")}</legend>
-        <div className="choice-row">
-          {(
-            [
-              ["fi", "Suomi"],
-              ["en", "English"],
-            ] as [Locale, string][]
-          ).map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              className="choice"
-              aria-pressed={locale === value}
-              onClick={() => onLocale(value)}
-              lang={value}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      </fieldset>
-
-      {multi ? (
-        <fieldset className="field setting">
-          <legend className="field-label">
-            {t(locale, "siteLabel")}
-            <InfoButton locale={locale}>{t(locale, "siteSettingHint")}</InfoButton>
-          </legend>
-          <div className="choice-row">
-            {[...sites.map((s) => s.id), null].map((id) => (
-              <button key={id ?? "all"} type="button" className="choice" aria-pressed={site === id} onClick={() => setSite(id)}>
-                {id === null ? t(locale, "siteAll") : siteName(locale, id)}
+      <div className="settings-group">
+        <div className="setting" role="group" aria-labelledby="setting-lang">
+          <span className="setting-label" id="setting-lang">
+            {t(locale, "language")}
+          </span>
+          <div className="seg">
+            {(
+              [
+                ["fi", "Suomi"],
+                ["en", "English"],
+              ] as [Locale, string][]
+            ).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                className="choice"
+                aria-pressed={locale === value}
+                onClick={() => onLocale(value)}
+                lang={value}
+              >
+                {label}
               </button>
             ))}
           </div>
-        </fieldset>
-      ) : null}
+        </div>
 
-      <div className="field setting">
-        <span className="field-label">{t(locale, "shellData")}</span>
-        <a className="btn" href="#data?section=quality">
-          {t(locale, "dataQuality")}
-        </a>
+        {multi ? (
+          <div className="setting" role="group" aria-labelledby="setting-site">
+            <span className="setting-label" id="setting-site">
+              {t(locale, "siteLabel")}
+              <InfoButton locale={locale}>{t(locale, "siteSettingHint")}</InfoButton>
+            </span>
+            <div className="seg">
+              {[...sites.map((s) => s.id), null].map((id) => (
+                <button key={id ?? "all"} type="button" className="choice" aria-pressed={site === id} onClick={() => setSite(id)}>
+                  {id === null ? t(locale, "siteAll") : siteName(locale, id)}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </div>
 
-      <div className="field setting">
-        <a className="btn" href="#intro">
-          {t(locale, "homeIntro")}
-        </a>
+      <div className="settings-group">
+        <div className="setting">
+          <span className="setting-label">{t(locale, "shellData")}</span>
+          <a className="btn" href="#data?section=quality">
+            {t(locale, "dataQuality")}
+          </a>
+        </div>
+
+        <div className="setting">
+          <span className="setting-label">{t(locale, "homeIntro")}</span>
+          <a className="btn" href="#intro" aria-label={t(locale, "homeIntro")}>
+            ▶
+          </a>
+        </div>
+
+        {onShowcase ? (
+          <div className="setting">
+            <span className="setting-label">
+              {t(locale, "demoShowcase")}
+              <InfoButton locale={locale}>{t(locale, "demoShowcaseHint")}</InfoButton>
+            </span>
+            <button type="button" className="btn" data-showcase onClick={onShowcase}>
+              {t(locale, "demoShowcaseStart")} · 2 min
+            </button>
+          </div>
+        ) : null}
       </div>
 
-      {onShowcase ? (
-        <div className="field setting">
-          <span className="field-label">
-            {t(locale, "demoShowcase")}
-            <InfoButton locale={locale}>{t(locale, "demoShowcaseHint")}</InfoButton>
-          </span>
-          <button type="button" className="btn" data-showcase onClick={onShowcase}>
-            {t(locale, "demoShowcaseStart")} · 2 min
+      <div className="settings-group settings-danger">
+        <div className="setting">
+          <span className="setting-label">{t(locale, "settingsReset")}</span>
+          <button type="button" className="btn settings-reset" onClick={() => resetAsFirstVisit(t(locale, "settingsResetConfirm"))}>
+            {t(locale, "settingsResetAction")}
           </button>
         </div>
-      ) : null}
-
-      <button type="button" className="settings-reset" onClick={resetAsFirstVisit}>
-        reset
-      </button>
+      </div>
     </section>
   );
 }
 
 // Hidden dev control: forget everything this browser remembers and reload at the start page.
-function resetAsFirstVisit() {
-  if (!window.confirm("Forget everything stored in this browser and reload as a first-time visitor?")) return;
+function resetAsFirstVisit(confirmText: string) {
+  if (!window.confirm(confirmText)) return;
   try {
     localStorage.clear();
     sessionStorage.clear();

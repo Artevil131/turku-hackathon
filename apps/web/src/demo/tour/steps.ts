@@ -6,6 +6,8 @@ import type { TourId } from "../demos.ts";
 // its caption, so a changed screen degrades to a narrated slideshow instead of breaking.
 
 export type TourKey = `tour${string}`;
+/** A tour: a demo file's hand-written one, the full presentation, or the adaptive one that reads the open windows (adaptive.ts). */
+export type TourKind = TourId | "adaptive";
 export type Target = string | (() => Element | null);
 
 export interface TourStep {

@@ -55,6 +55,11 @@ export function templateLayout(template: Template): Layout {
   // Treat a patient is a quick view, not a project: the coverage list comes first and the timeline stays out of its way.
   return gridLayout(OPEN[template], template === "patient" ? "none" : "top");
 }
+/** A project holding one window across the board, under the timeline: what the Docs page opens to show a window kind. */
+export function windowJson(kind: WinId): Record<string, unknown> {
+  const open = kind === "timeline" ? {} : { [kind]: { x: 0, y: 0, w: 12, h: kind === "notebook" ? 56 : 36 } };
+  return JSON.parse(serializeLayout(gridLayout(open)));
+}
 export function templateJson(template: Template): Record<string, unknown> {
   return JSON.parse(serializeLayout(templateLayout(template)));
 }

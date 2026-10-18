@@ -9,7 +9,7 @@ import { SitePicker } from "../SitePicker.tsx";
 import { PHONE } from "./Menu.tsx";
 import "./shell.css";
 
-export type ShellPage = "home" | "project" | "data" | "settings";
+export type ShellPage = "home" | "project" | "data" | "settings" | "docs";
 
 const Svg = ({ d }: { d: string }) => (
   <svg
@@ -28,6 +28,7 @@ const Svg = ({ d }: { d: string }) => (
 );
 const HOME = "M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H5a1 1 0 0 1-1-1z";
 const DATA = "M12 4c4.4 0 8 1.3 8 3s-3.6 3-8 3-8-1.3-8-3 3.6-3 8-3ZM4 7v5c0 1.7 3.6 3 8 3s8-1.3 8-3V7M4 12v5c0 1.7 3.6 3 8 3s8-1.3 8-3v-5";
+const BOOK = "M5 5.5A1.5 1.5 0 0 1 6.5 4H19v14.5H6.5A1.5 1.5 0 0 0 5 20ZM5 20a1.5 1.5 0 0 0 1.5 1.5H19M9 8h6";
 const SEARCH = "M10.5 17a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13ZM15.5 15.5 20 20";
 const GLOBE = "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18ZM3 12h18M12 3c-2.8 2.6-2.8 15.4 0 18M12 3c2.8 2.6 2.8 15.4 0 18";
 /** The two languages, each named in itself. */
@@ -95,7 +96,7 @@ export function Sidebar({
   onDemo: (demo: DemoSpec, replay?: boolean) => void;
   /** Starts the full presentation. */
   onTour: () => void;
-  onPage: (page: "data" | "settings") => void;
+  onPage: (page: "data" | "settings" | "docs") => void;
   onLocale: (locale: Locale) => void;
   setActionsSlot: (el: HTMLElement | null) => void;
   setWindowsSlot: (el: HTMLElement | null) => void;
@@ -343,6 +344,19 @@ export function Sidebar({
                 <Svg d={DATA} />
               </span>
               <span className="sb-label">{t(locale, "shellData")}</span>
+            </button>
+            <button
+              type="button"
+              className="sb-item"
+              data-page-docs
+              aria-current={page === "docs" ? "page" : undefined}
+              onClick={() => onPage("docs")}
+              title={t(locale, "shellDocs")}
+            >
+              <span className="sb-icon">
+                <Svg d={BOOK} />
+              </span>
+              <span className="sb-label">{t(locale, "shellDocs")}</span>
             </button>
           </section>
         </div>

@@ -2,7 +2,8 @@ import { type Locale, t } from "@aei/i18n";
 import { type CSSProperties, useEffect, useRef, useState } from "react";
 import type { Template } from "../../components/research/workspace/templates.ts";
 import type { TourId } from "../demos.ts";
-import { type Target, type TourStep, tourFor } from "./steps.ts";
+import { adaptiveSteps } from "./adaptive.ts";
+import { type Target, type TourKind, type TourStep, tourFor } from "./steps.ts";
 import "./tour.css";
 
 // The guided tour of a demo file: first a small offer, then a drawn cursor that walks the real screen. It points at
@@ -85,7 +86,7 @@ function controller() {
 
 export interface DemoTourProps {
   locale: Locale;
-  demo: TourId;
+  demo: TourKind;
   reducedMotion: boolean;
   onClose: () => void;
 }
@@ -100,16 +101,21 @@ export function DemoTour({ locale, demo, reducedMotion, onClose }: DemoTourProps
   // After a while on a filled demo the question changes: not "take the tour?" but "start your own, empty?".
   const [suggestEmpty, setSuggestEmpty] = useState(false);
   useEffect(() => {
-    if (phase !== "offer" || demo === "overview") return;
+    if (phase !== "offer" || demo === "overview" || demo === "adaptive") return;
     const timer = setTimeout(() => setSuggestEmpty(true), EMPTY_AFTER_MS);
     return () => clearTimeout(timer);
   }, [phase, demo]);
   const startEmpty = () => {
-    if (demo === "overview") return;
+    if (demo === "overview" || demo === "adaptive") return;
     onClose();
     location.hash = `#home?start=${TEMPLATE_OF[demo]}`;
   };
-  const [steps] = useState<TourStep[]>(() => tourFor(demo, locale));
+  // The adaptive tour reads the open windows when it starts, not when it is offered: the project may still be loading.
+  const [steps, setSteps] = useState<TourStep[]>(() => (demo === "adaptive" ? [] : tourFor(demo, locale)));
+  const play = () => {
+    if (demo === "adaptive") setSteps(adaptiveSteps());
+    setPhase("play");
+  };
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const [cursor, setCursor] = useState<{ x: number; y: number; ms: number; shown: boolean }>(() => ({
@@ -270,6 +276,8 @@ export function DemoTour({ locale, demo, reducedMotion, onClose }: DemoTourProps
     setPaused(false);
   };
 
+  const offerKey = (part: "Title" | "Body") =>
+    (demo === "overview" ? `tourOvOffer${part}` : demo === "adaptive" ? `tourGdOffer${part}` : `tourOffer${part}`) as "tourOfferTitle";
   if (phase === "offer")
     return (
       <div className="tour-offer" role="dialog" aria-labelledby="tour-offer-title" aria-describedby="tour-offer-body">
@@ -292,7 +300,7 @@ export function DemoTour({ locale, demo, reducedMotion, onClose }: DemoTourProps
               <button type="button" className="btn btn-primary" onClick={startEmpty}>
                 {t(locale, "tourEmptyStart")}
               </button>
-              <button type="button" className="btn" onClick={() => setPhase("play")}>
+              <button type="button" className="btn" onClick={play}>
                 {t(locale, "tourOfferPlay")}
               </button>
             </div>
@@ -300,10 +308,10 @@ export function DemoTour({ locale, demo, reducedMotion, onClose }: DemoTourProps
         ) : (
           <>
             <p className="tour-kicker">{t(locale, "tourLabel")}</p>
-            <h2 id="tour-offer-title">{t(locale, demo === "overview" ? "tourOvOfferTitle" : "tourOfferTitle")}</h2>
-            <p id="tour-offer-body">{t(locale, demo === "overview" ? "tourOvOfferBody" : "tourOfferBody")}</p>
+            <h2 id="tour-offer-title">{t(locale, offerKey("Title"))}</h2>
+            <p id="tour-offer-body">{t(locale, offerKey("Body"))}</p>
             <div className="tour-actions">
-              <button ref={playButton} type="button" className="btn btn-primary" onClick={() => setPhase("play")}>
+              <button ref={playButton} type="button" className="btn btn-primary" onClick={play}>
                 {t(locale, demo === "overview" ? "tourOvOfferPlay" : "tourOfferPlay")}
               </button>
               <button type="button" className="btn" onClick={onClose}>
@@ -315,7 +323,7 @@ export function DemoTour({ locale, demo, reducedMotion, onClose }: DemoTourProps
       </div>
     );
 
-  const step = steps[Math.min(index, steps.length - 1)] as TourStep;
+  const step = (steps[Math.min(index, steps.length - 1)] ?? { say: "tourGdIntro" }) as TourStep;
   const total = steps.length;
   const cardLow = !spot || spot.y + spot.h < innerHeight - 260;
   const spotStyle: CSSProperties | undefined = spot

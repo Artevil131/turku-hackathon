@@ -1,0 +1,96 @@
+/* ---------- Settings: grouped rows, label left, control right ---------- */
+
+.settings {
+  display: grid;
+  gap: 20px;
+  align-content: start;
+  max-width: 640px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 20px;
+  overflow: auto;
+}
+
+.settings-group {
+  display: grid;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--glass-1);
+}
+
+.setting {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  min-width: 0;
+  margin: 0;
+  padding: 12px 16px;
+  border: 0;
+}
+
+.setting + .setting {
+  border-top: 1px solid var(--line);
+}
+
+.setting-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  font-size: var(--t-s);
+  font-weight: 500;
+  color: var(--ink);
+}
+
+/* Segmented control: the existing .choice buttons joined into one track. */
+.seg {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control);
+  background: var(--glass-3);
+}
+
+.seg .choice {
+  border: 0;
+  background: transparent;
+}
+
+.seg .choice:hover {
+  background: var(--glass-1);
+}
+
+.seg .choice[aria-pressed="true"] {
+  background: var(--live);
+  color: var(--live-ink);
+}
+
+/* Danger area: separated, destructive control tinted by the alert token. */
+.settings-danger {
+  border-color: var(--st-alert, var(--line-strong));
+}
+
+.settings-reset:hover,
+.settings-reset:focus-visible {
+  border-color: var(--st-alert, var(--live));
+  color: var(--st-alert, var(--ink));
+}
+
+@media (max-width: 520px) {
+  .settings {
+    padding: 12px;
+  }
+
+  .seg {
+    width: 100%;
+  }
+
+  .seg .choice {
+    flex: 1 1 auto;
+  }
+}

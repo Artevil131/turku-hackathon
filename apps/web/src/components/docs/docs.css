@@ -1,0 +1,65 @@
+/* Docs page: one card per window kind, in a grid that drops to one column on a phone. */
+.docs {
+  display: grid;
+  gap: 16px;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 12px 16px 32px;
+  color: var(--ink, #07081c);
+  font-size: var(--t-s, 13px);
+}
+
+.docs-top h1 {
+  margin: 0;
+  font-family: var(--brand-font-display, inherit);
+  font-size: var(--t-l, 22px);
+  font-weight: 600;
+}
+
+.docs-top p {
+  max-width: 62ch;
+  margin: 4px 0 8px;
+  color: var(--ink-3, #6f7292);
+}
+
+.docs-method {
+  color: var(--brand-accent, #635bf1);
+  font-weight: 600;
+}
+
+.docs-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.docs-win {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  background: var(--glass-3, #fff);
+  border: 1px solid var(--line, #e4e6ee);
+  border-radius: 10px;
+}
+
+.docs-win h2 {
+  margin: 0;
+  font-size: var(--t-m, 15px);
+  font-weight: 600;
+}
+
+.docs-win p {
+  margin: 0;
+}
+
+.docs-win ol {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--ink-3, #6f7292);
+}
+
+.docs-win .btn {
+  align-self: flex-start;
+  margin-top: auto;
+}
