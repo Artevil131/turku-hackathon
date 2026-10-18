@@ -78,7 +78,6 @@ html {
 .ws-frame {
   animation: appear var(--mo-3) var(--mo-ease) both;
 }
-.ws-float-bar,
 .ws-toolbar,
 .ws-dock,
 .ws-traydock {
