@@ -1,4 +1,5 @@
 import { type Locale, siteName, t } from "@aei/i18n";
+import { FILL_MODES, type FillMode } from "../App.tsx";
 import { useSites } from "../sites.ts";
 import { InfoButton } from "./Info.tsx";
 import "./settings.css";
@@ -9,11 +10,16 @@ import "./settings.css";
 interface Props {
   locale: Locale;
   onLocale: (l: Locale) => void;
+  /** When a demo file fills itself in on opening. */
+  fill: FillMode;
+  onFill: (mode: FillMode) => void;
   /** Starts the two-minute product showcase (a drawn cursor walks the whole product, for a screen recording). */
   onShowcase?: () => void;
 }
 
-export function Settings({ locale, onLocale, onShowcase }: Props) {
+const FILL_KEY = { first: "settingsFillFirst", always: "settingsFillAlways", never: "settingsFillNever" } as const;
+
+export function Settings({ locale, onLocale, fill, onFill, onShowcase }: Props) {
   const { sites, site, multi, setSite } = useSites();
   return (
     <section className="settings glass" aria-labelledby="settings-title">
@@ -62,6 +68,20 @@ export function Settings({ locale, onLocale, onShowcase }: Props) {
             </div>
           </div>
         ) : null}
+
+        <div className="setting" role="group" aria-labelledby="setting-fill">
+          <span className="setting-label" id="setting-fill">
+            {t(locale, "settingsFill")}
+            <InfoButton locale={locale}>{t(locale, "settingsFillHint")}</InfoButton>
+          </span>
+          <div className="seg">
+            {FILL_MODES.map((mode) => (
+              <button key={mode} type="button" className="choice" aria-pressed={fill === mode} onClick={() => onFill(mode)}>
+                {t(locale, FILL_KEY[mode])}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       <div className="settings-group">

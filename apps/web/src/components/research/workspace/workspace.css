@@ -57,6 +57,20 @@
   background: color-mix(in oklab, #fff 72%, var(--chassis, #f8f8f8));
 }
 /* One line at the top of a window: what it answers for the selected signal. */
+/* Every window names itself the same way: one heading of one size at its top, so Notebook, Signals, Map and
+   the rest read as sections of the same desk. Each window's own stylesheet set a different size before. */
+#feed-title,
+#history-title,
+.nb-h,
+.ugrid-title,
+.ug-title,
+.geo-title,
+.map-title,
+.sig:not(.sig-layer) #sig-title {
+  margin: 0;
+  font: 600 var(--t-l) / 1.2 var(--font-display);
+  letter-spacing: -0.01em;
+}
 .ws-lead {
   flex: 0 0 auto;
   margin: 0;
@@ -549,7 +563,8 @@
    The project controls reuse .ws-tray-button with text; here that class is an icon square, so the
    text variant is given the segmented look. */
 .ws-toolbar {
-  gap: 12px;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 .ws-toolbar .project-controls {
   margin-left: auto;
@@ -579,6 +594,10 @@
 .ws-toolbar .ws-tool-open:hover {
   background: var(--brand-accent-soft, #ecebfc);
   color: var(--ink);
+}
+.ws-toolbar .ws-tool-open {
+  height: 32px;
+  border-radius: 999px;
 }
 .ws-toolbar .ws-tool-open[aria-pressed="true"] {
   background: var(--brand-accent, #635bf1);
@@ -655,7 +674,7 @@
 }
 
 /* The visible way to make a window, at the end of the toolbar row. */
-.ws-toolbar .ws-add-open {
+.ws-add-open {
   min-height: 32px;
   padding: 0 12px;
   border: 1px solid var(--live);
@@ -665,10 +684,12 @@
   font: inherit;
   font-size: var(--t-s);
   font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
   cursor: pointer;
 }
-.ws-toolbar .ws-add-open:hover,
-.ws-toolbar .ws-add-open:focus-visible {
+.ws-add-open:hover,
+.ws-add-open:focus-visible {
   background: var(--live);
   color: #fff;
 }
@@ -697,6 +718,14 @@
 }
 .timeline[data-variant="window"] {
   overflow-y: auto;
+}
+
+/* Narrow screens have no toolbar: the Add button sits alone above the stack. */
+.ws-narrow-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
 /* The ⓘ of a window: always visible, left of the focus and close marks. */
@@ -779,7 +808,7 @@
 /* The data's "today": a chip with the date and whether it moves; open, a month with the day marked. */
 .ws-date {
   position: relative;
-  margin-left: 8px;
+  margin-left: 2px;
 }
 /* Open, the chip's month must float over the windows below the toolbar. */
 .ws-date[open] {
@@ -792,9 +821,9 @@
 .ws-date-chip {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  height: var(--control-h);
-  padding: 0 10px 0 9px;
+  gap: 6px;
+  height: 32px;
+  padding: 0 9px;
   border: 1px solid var(--line-strong);
   border-radius: 10px;
   background: var(--glass-1);
@@ -896,18 +925,20 @@
   font-size: var(--t-xs);
 }
 .ws-find {
-  margin-left: 8px;
+  margin-left: 2px;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  height: var(--control-h);
-  padding: 0 10px;
+  gap: 6px;
+  height: 32px;
+  padding: 0 9px;
   border: 1px solid var(--line-strong);
   border-radius: 10px;
   background: var(--glass-3);
   color: var(--ink-2);
   font: inherit;
   font-size: var(--t-s);
+  white-space: nowrap;
+  flex-shrink: 0;
   cursor: pointer;
 }
 .ws-find:hover,

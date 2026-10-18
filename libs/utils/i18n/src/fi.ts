@@ -215,6 +215,12 @@ export const fi: Record<keyof typeof en, string> = {
   roleDoctor: "Lääkäri",
   roleResearch: "Tutkimus",
   settings: "Asetukset",
+  settingsFill: "Esimerkit täyttävät itsensä",
+  settingsFillFirst: "Ensimmäisellä kerralla",
+  settingsFillAlways: "Joka kerta",
+  settingsFillNever: "Ei koskaan",
+  settingsFillHint:
+    "Esimerkkitiedosto voi avautua tyhjänä ja täyttää itsensä: piirretty käsi käyttää näyttöä niin kuin kyseinen ammattilainen tekisi. Sen jälkeen esimerkki avautuu valmiina ja käsi osoittaa, mihin katsoa.",
   roleSetting: "Aloitusnäkymä",
   roleSettingHint: "Etusivu merkitsee viimeksi käyttämäsi näkymän.",
   forgetRole: "Unohda viimeisin näkymä",

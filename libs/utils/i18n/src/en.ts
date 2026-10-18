@@ -213,6 +213,12 @@ export const en = {
   roleDoctor: "Doctor",
   roleResearch: "Research",
   settings: "Settings",
+  settingsFill: "Demo files fill themselves in",
+  settingsFillFirst: "The first time",
+  settingsFillAlways: "Every time",
+  settingsFillNever: "Never",
+  settingsFillHint:
+    "A demo file can open empty and fill itself in, a drawn hand working the screen the way that professional would. Afterwards a demo opens finished, with the hand pointing at where to look.",
   roleSetting: "Starting view",
   roleSettingHint: "Home marks the view you used last.",
   forgetRole: "Forget my last view",

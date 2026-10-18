@@ -18,6 +18,7 @@ import { TemplateArt } from "./TemplateArt.tsx";
 import "../home/home.css";
 import "../research/SignalFeed.css";
 import "./start.css";
+import { POINT_EVENT } from "../../demo/Pointer.tsx";
 import { hashParams } from "../../url.ts";
 
 function ago(locale: Locale, date: string) {
@@ -123,8 +124,12 @@ export function StartPage({
       const d = DEMOS.find((x) => x.id === action.id);
       if (d) onDemo(d);
     } else if (action.kind === "template") void launch(action.template);
-    else if (action.kind === "view") shell.openView(action.template, action.params);
-    else location.hash = action.href.slice(1);
+    else {
+      if (action.kind === "view") shell.openView(action.template, action.params);
+      else location.hash = action.href.slice(1);
+      // A question chip: the hand points at the answer once it is on screen (demo/Pointer.tsx).
+      dispatchEvent(new CustomEvent(POINT_EVENT));
+    }
   };
   // "Start empty" from a demo's tour lands here with ?start=<template>: the project opens at once.
   // biome-ignore lint/correctness/useExhaustiveDependencies: runs once on arrival; launch is recreated every render
@@ -202,7 +207,7 @@ export function StartPage({
                 <span>{t(locale, "startAskPlaceholder")}</span>
                 <kbd>/</kbd>
               </button>
-              <div className="start-ask-chips">
+              <div className="start-ask-chips" onMouseDown={(e) => e.preventDefault()}>
                 {CHIPS[role].map((c) => (
                   <button type="button" key={c.label} onClick={() => run(c.action)}>
                     {t(locale, c.label)}

@@ -45,3 +45,13 @@ Checked in the browser (map with the ESBL signal selected at normal and focus si
 
 Checked in the browser: the control demo replayed with the new columns. Not checked on screen: the new picker order and weights (typecheck and tests only), the tool result cards after the cut.
 
+Branch `ux/judge-fixes` (merged into `ux/usability-loop`):
+
+| Tag | Change | Why |
+|---|---|---|
+| `ux-loop-9` | Search understands compound queries across ward, organism, drug, specimen, severity, phenotype ("urology e. coli", "icu blood severe meropenem", "med-a esbl"); a drug opens its row selected, an organism is highlighted in the unit context | judge: "how could the user even quicker access the results of a specific query of interest?" |
+| `ux-loop-10` | Doctor list: the unit's last 28 days beside the annual share on every row ("last 28 d: 36 of 45 (80 %)", percentage only from 30 results, dash for pairs); the 4 weeks / 1 year toggle removed. No flag or arrow (D-044 B10 kept) | challenge brief: four weeks against the year |
+| `ux-loop-11` | Sidebar: "Treat a patient" under Home. Signal window: the plain-words sentence open under the numbers, the method one closed fold, no decision codes on screen | judge: cluttered; the human reading was hidden under the formula |
+| `ux-loop-12` | Workspace: floating bottom-left buttons gone, Add a window / Tools / Filter in the toolbar; Map and Graph open six columns wide; signal filters as one Filter button in the toolbar, chips stay in the list | judge: cluttered / small |
+| `ux-loop-13` | A demo fills itself in only the first time it opens (Settings: the first time, every time, never); afterwards the drawn hand points at the first window, no lock, no tour offer | user: "it shouldn't appear every time" |
+| `ux-loop-14` | After a question (search result, a question chip) the drawn hand points at the answer: the drug's selected row, the highlighted organism, the doctor's headline, or the first window. The doctor's answer states its data: "Results up to 12 May 2025, the last 365 days, Urology." Every window carries one heading of one size (Notebook, Signals, Map, Patient flow…). Start page centred on wide screens, demo cards share the row, no automatic tour popup on a first visit | user: "cursor showing the answer when you have a question", "some basic data like time so doctors know it is relevant", "make it more clear what each section is", "why is it so uneven" |

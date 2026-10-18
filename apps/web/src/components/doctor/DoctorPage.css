@@ -421,7 +421,12 @@
   background: none;
   color: var(--live);
   font: inherit;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+}
+.dr-change-date:hover,
+.dr-change-date:focus-visible {
   text-decoration: underline;
   text-underline-offset: 3px;
-  cursor: pointer;
 }

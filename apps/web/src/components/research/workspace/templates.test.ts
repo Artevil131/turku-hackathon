@@ -9,7 +9,7 @@ describe("project template layouts", () => {
   it.each(TEMPLATES)("builds a parseable %s layout that keeps every window reachable", (template) => {
     const layout = templateLayout(template);
     expect(parseLayout(serializeLayout(layout))).not.toBeNull();
-    expect(templateJson(template)).toMatchObject({ v: 3 });
+    expect(templateJson(template)).toMatchObject({ v: 4 });
     expect(Object.keys(layout.wins).sort()).toEqual([...WIN_IDS].sort());
   });
   it("opens the outbreak evidence together and keeps blank genuinely blank", () => {

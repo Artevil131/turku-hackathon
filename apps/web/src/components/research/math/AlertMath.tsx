@@ -13,7 +13,6 @@ import {
   phenotypeName,
   specimenName,
   t,
-  wardName,
 } from "@aei/i18n";
 import { fillSnippet, type Method, methodOf, type SnippetValues } from "@aei/method";
 import { formatNum } from "@aei/viz";
@@ -270,13 +269,6 @@ export function AlertMath({
               {title}
             </h3>
           )}
-          <p className="sig-where">{whereLine(locale, inc, win)}</p>
-          {/* The board hands the doctor's view its ward: one click, the case already set to this unit. */}
-          {inc.ward ? (
-            <a className="sig-pivot" href={`#doctor?unit=${encodeURIComponent(inc.ward)}`}>
-              {t(locale, "cardTreatHere", { unit: wardName(locale, inc.ward as never) })}
-            </a>
-          ) : null}
         </div>
 
         <Numbers locale={locale} alert={lead} kind={inc.kind} perYear={usualPerYear} />

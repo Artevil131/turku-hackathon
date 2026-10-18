@@ -9,6 +9,7 @@ import { CoverageWindow } from "../doctor/CoverageWindow.tsx";
 import { Timeline } from "../Timeline.tsx";
 import { AnswerWindow } from "./answer/AnswerWindow.tsx";
 import { Assistant } from "./assistant/Assistant.tsx";
+import { BoardFilters, filterCounts } from "./BoardFilters.tsx";
 import { type BoardState, boardFromUrl, boardToParams, type FeedProps } from "./board.ts";
 import { ChartForm } from "./charts/ChartForm.tsx";
 import { ChartWindow } from "./charts/ChartWindow.tsx";
@@ -149,6 +150,7 @@ export function ResearchBoard(props: Props) {
     () => applyFilters(incidents, { unit: state.unit, kinds: state.kinds, phenotype: state.phenotype }),
     [incidents, state.unit, state.kinds, state.phenotype],
   );
+  const counts = useMemo(() => filterCounts(incidents, state), [incidents, state]);
   // The named incident, else the newest one in the list; the list never leaves the math panel blank.
   // A signal the URL names that is not among those up to the clock is kept, not swapped for another: the panels say so.
   const outside = load.status === "ready" && state.incident !== null && !incidents.some((i) => i.key === state.incident);
@@ -380,6 +382,7 @@ export function ResearchBoard(props: Props) {
         />
       </InSlot>
       <Workspace
+        toolbarExtra={<BoardFilters locale={locale} state={state} onChange={onChange} counts={counts} />}
         clock={asOf}
         projectId={project.id}
         project={project.response?.project}

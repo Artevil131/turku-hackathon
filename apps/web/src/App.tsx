@@ -20,6 +20,7 @@ import { copy } from "./demo/fillCopy.ts";
 import { nudgeOff } from "./demo/nudge.ts";
 import type { FillPlan } from "./demo/openDemo.ts";
 import { openDemo } from "./demo/openDemo.ts";
+import { POINT_EVENT, Pointer } from "./demo/Pointer.tsx";
 import { Performance } from "./demo/perform/Performance.tsx";
 import { SHOWCASE_FILLS, showcaseScreenplay } from "./demo/perform/scripts.ts";
 import { GUIDE_EVENT } from "./demo/tour/adaptive.ts";
@@ -63,6 +64,9 @@ const THEME: "light" | "dark" = "light";
 
 type Page = "home" | "project" | "data" | "settings" | "docs" | "intro";
 const PAGES: readonly Page[] = ["home", "project", "data", "settings", "docs", "intro"];
+
+export const FILL_MODES = ["first", "always", "never"] as const;
+export type FillMode = (typeof FILL_MODES)[number];
 
 function stored<T extends string>(key: string, fallback: T, valid: (v: string) => boolean): T {
   try {
@@ -157,13 +161,24 @@ export function App() {
     addEventListener(GUIDE_EVENT, offerGuide);
     return () => removeEventListener(GUIDE_EVENT, offerGuide);
   }, [offerGuide]);
-  // First visit: the full tour is offered once; "Not now" leaves a way back on the start page and in the sidebar.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: only on first load
-  useEffect(() => {
-    if (page === "home" && stored("yl.welcomed", "", () => true) === "" && offerOnce()) setTour({ demo: "overview", key: Date.now() });
-  }, []);
+  // The full tour is not pushed on a first visit any more: the start page's "Take the tour" card and the sidebar offer it.
   // A demo filling itself in: the screen is locked until it is done (or skipped); a full play then offers the tour, a skip does not.
   const [filling, setFilling] = useState<{ demo: DemoId; plan: FillPlan; key: number } | null>(null);
+  // When a demo fills itself in: the first time each demo opens (default), every time, or never. Without the
+  // fill a pointer shows where to look instead, and the tour is not offered again.
+  const [fillMode, setFillModeState] = useState<FillMode>(() => stored("yl.demoFill", "first", (v) => FILL_MODES.includes(v as FillMode)));
+  const setFillMode = (mode: FillMode) => {
+    setFillModeState(mode);
+    store("yl.demoFill", mode);
+  };
+  const filledDemos = () =>
+    new Set(
+      stored("yl.demoFilled", "", () => true)
+        .split(",")
+        .filter(Boolean),
+    );
+  const markFilled = (demo: DemoId) => store("yl.demoFilled", [...filledDemos().add(demo)].join(","));
+  const [pointer, setPointer] = useState<number | null>(null);
   const startTour = () => {
     setPage("home");
     history.pushState(null, "", "#home");
@@ -219,6 +234,16 @@ export function App() {
   toNowRef.current = toNow;
   const lastKey = useRef(`${pageFromHash()}|${tabKey(location.hash)}`);
   const reducedMotion = usePrefersReducedMotion();
+  // A question asked (search, a chip): the hand points at its answer, unless a demo is filling itself in anyway.
+  const pointable = useRef({ filling: false, reducedMotion: false });
+  pointable.current = { filling: filling !== null, reducedMotion };
+  useEffect(() => {
+    const onPoint = () => {
+      if (!pointable.current.filling && !pointable.current.reducedMotion) setPointer(Date.now());
+    };
+    addEventListener(POINT_EVENT, onPoint);
+    return () => removeEventListener(POINT_EVENT, onPoint);
+  }, []);
 
   // The selected hospital (D-051): one source of truth, in the URL as `hospital`, remembered, the home site by
   // default. Everything below reads it: the client asks for that hospital and the live data is cut to it.
@@ -435,7 +460,8 @@ export function App() {
     // The full tour opens demo files itself and keeps playing, so those open already filled; any other demo fills itself in first.
     // The showcase rebuilds every file it opens and takes the fill-in of SHOWCASE_FILLS into its own hands.
     const inShow = showing.current;
-    const fill = inShow ? SHOWCASE_FILLS.includes(demo.id) : tour?.demo !== "overview" && !reducedMotion;
+    const wanted = replay || fillMode === "always" || (fillMode === "first" && !filledDemos().has(demo.id));
+    const fill = inShow ? SHOWCASE_FILLS.includes(demo.id) : tour?.demo !== "overview" && !reducedMotion && wanted;
     openDemo(client, locale, demo, { fill, replay: replay || inShow })
       .then(({ project, plan }) => {
         shell.openProject(project);
@@ -450,7 +476,7 @@ export function App() {
         if (plan && replay)
           dispatchEvent(new CustomEvent(PAGE_EVENT, { detail: { slot: plan.slot, page: { v: PAGE_VERSION, cells: [] } } }));
         if (plan) setFilling({ demo: demo.id, plan, key: Date.now() });
-        else if (offerOnce()) setTour((current) => (current?.demo === "overview" ? current : { demo: demo.id, key: Date.now() }));
+        else if (tour?.demo !== "overview" && !reducedMotion) setPointer(Date.now());
       })
       .catch(() => setNotice(t(locale, "demoOpenError")));
   };
@@ -600,7 +626,9 @@ export function App() {
                           }}
                         />
                       ) : null}
-                      {page === "settings" ? <Settings locale={locale} onLocale={setLocale} onShowcase={startShowcase} /> : null}
+                      {page === "settings" ? (
+                        <Settings locale={locale} onLocale={setLocale} fill={fillMode} onFill={setFillMode} onShowcase={startShowcase} />
+                      ) : null}
                     </Suspense>
                   </Fragment>
                 </main>
@@ -628,6 +656,7 @@ export function App() {
                 locale={locale}
                 plan={filling.plan}
                 onDone={(how) => {
+                  markFilled(filling.demo);
                   // A finished fill never offers a tour: the guide stays one click away (Guide, Demo tour).
                   // After a full play, once the board has settled, the story moves on by itself: the clock steps a month every two seconds, so the
                   // timeline and the signals keep changing while the viewer looks (Artem, 2026-10-18). A skip leaves it paused.
@@ -655,6 +684,7 @@ export function App() {
                 }}
               />
             ) : null}
+            {pointer !== null && page === "project" ? <Pointer key={pointer} onDone={() => setPointer(null)} /> : null}
             {handoff !== null ? (
               <p className="handoff" role="status">
                 {copy(locale, "handoff")}

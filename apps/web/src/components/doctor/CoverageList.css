@@ -716,74 +716,111 @@
 .dr-answer-head {
   margin: 0;
   color: var(--ink);
-  font-size: 24px;
-  font-weight: 600;
-  line-height: 1.3;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
   max-width: 48ch;
 }
 .dr-answer-line {
-  margin: 0;
+  margin: -2px 0 0;
   color: var(--ink);
-  font-size: var(--t-m);
-  line-height: 1.5;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.45;
 }
 .dr-answer-low {
   color: var(--ink-3);
 }
-/* The all-organisms comparison: one quiet grey line under the sentence. */
+/* The all-organisms comparison: one quiet grey line under the sentence, dividing the primary verdict from the rest of the list. */
 .dr-answer-compare {
-  margin: 0;
-  color: var(--ink-3);
+  margin: -2px 0 2px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-2);
   font-size: var(--t-s);
   line-height: 1.4;
   font-variant-numeric: tabular-nums;
 }
-/* The rest of the list as pills: a name and its share each, scanned in one look. */
+/* The rest of the list as aligned 2-column rows (label on the left, compact clinical badges on the right). */
 .dr-answer-pills {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 8px;
-  margin: 6px 0 0;
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  align-items: baseline;
+  gap: 6px 12px;
+  margin: 4px 0 0;
 }
 .dr-answer-pills-lead {
   color: var(--ink-2);
-  font-size: var(--t-s);
+  font-size: var(--t-xs);
   font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  line-height: 26px;
+  white-space: nowrap;
+}
+.dr-answer-pills.dr-answer-low .dr-answer-pills-lead {
+  color: var(--ink-3);
 }
 .dr-answer-pills ul {
-  display: contents;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 .dr-answer-pills li {
-  padding: 4px 12px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--glass-1);
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 3px 10px;
+  border: 1px solid color-mix(in oklab, var(--st-ok, #17784a) 26%, var(--line));
+  border-radius: 7px;
+  background: color-mix(in oklab, var(--st-ok, #17784a) 6%, var(--glass-1, #fff));
   color: var(--ink);
-  font-size: var(--t-m);
+  font-size: var(--t-s);
+  line-height: 1.35;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 .dr-answer-pills li b {
-  font-weight: 600;
+  font-weight: 700;
+  color: var(--st-ok, #17784a);
 }
 .dr-answer-pills.dr-answer-low li {
+  border-color: var(--line);
+  background: color-mix(in oklab, var(--ink-3) 5%, transparent);
   color: var(--ink-3);
-  background: transparent;
 }
 .dr-answer-pills.dr-answer-low li b {
+  font-weight: 600;
   color: var(--ink-2);
 }
+.dr-answer-pivot,
+.sig-pivot {
+  color: var(--live);
+  font-weight: 500;
+  text-decoration: none;
+  font-size: var(--t-s);
+  white-space: nowrap;
+}
+.dr-answer-pivot:hover,
+.sig-pivot:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 .dr-answer-when {
-  margin: 2px 0 0;
+  margin: 8px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
   color: var(--ink-2);
   font-size: var(--t-s);
   line-height: 1.4;
 }
 .dr-answer-note {
-  margin: 4px 0 0;
+  margin: -2px 0 0;
   color: var(--ink-3);
   font-size: var(--t-xs);
 }
@@ -862,29 +899,35 @@
 }
 @container coverage (min-width: 960px) {
   .dr-top {
-    grid-template-columns: minmax(0, 1.25fr) minmax(340px, 0.75fr);
+    grid-template-columns: minmax(0, 1.15fr) minmax(360px, 0.85fr);
     align-items: stretch;
   }
-  /* Beside the taller case panel the answer sits in the middle of its column, not stranded at the top. */
+  /* Beside the case panel, the answer sits in its own matching card frame with balanced vertical rhythm. */
   .dr-top .dr-answer {
-    border-bottom: 0;
-    align-content: center;
-    padding-block: 28px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 12px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--glass-1, #fff);
+    padding: 22px 26px;
   }
 }
 .dr-case {
   display: grid;
-  gap: 12px;
+  gap: 8px;
   align-content: start;
-  padding: 16px;
+  padding: 14px 16px;
   border: 1px solid var(--line);
   border-radius: 14px;
   background: var(--glass-1, #fff);
 }
 .dr-case-title {
   margin: 0;
-  font-size: var(--t-m);
+  font-size: var(--t-s);
   font-weight: 700;
+  color: var(--ink-2);
 }
 .dr-case .rs {
   padding: 0;
@@ -894,11 +937,11 @@
 .dr-case .rs[data-wide] .rs-body {
   flex-direction: column;
   align-items: stretch;
-  gap: 10px;
+  gap: 8px;
 }
 .dr-case .rs[data-wide] .rs-group {
   display: grid;
-  grid-template-columns: 96px minmax(0, 1fr);
+  grid-template-columns: 88px minmax(0, 1fr);
   align-items: center;
   gap: 8px;
 }
@@ -908,20 +951,25 @@
 .dr-case .rs-select,
 .dr-case .rs-input {
   width: 100%;
-  height: 36px;
+  height: 32px;
 }
 .dr-case .rs-choice {
-  min-height: 36px;
+  min-height: 32px;
 }
 .dr-case .syn {
   flex-direction: column;
   align-items: stretch;
-  gap: 6px;
+  gap: 4px;
+}
+.dr-case .syn-pill {
+  min-height: 28px;
+  padding: 0 9px;
+  font-size: var(--t-xs, 12px);
 }
 .rs-more-wide {
-  margin-top: 12px;
+  margin-top: 8px;
   border-top: 1px solid var(--line);
-  padding-top: 10px;
+  padding-top: 8px;
 }
 .rs-more-wide summary {
   display: flex;

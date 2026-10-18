@@ -79,7 +79,7 @@ describe("research incident feed", () => {
   });
   it("shows an active filter as a removable chip and keeps the groups consistent with it", () => {
     const html = render({ ...state, unit: "MED-A" });
-    expect(html).toContain("Filter · 1");
+    expect(html).not.toContain("feed-filter");
     expect(html).toContain('aria-label="Remove Internal medicine A"');
     expect(html).toContain("Earlier · 1");
     expect(html).not.toContain("This week");

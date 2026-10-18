@@ -206,6 +206,7 @@ const PICK_ORDER: readonly WinId[] = [
   "coverage",
   "answer",
   "signals",
+  "history",
   "math",
   "assistant",
   "timeline",
@@ -257,6 +258,7 @@ export function Workspace({
   chartContent,
   chartMenu,
   rail,
+  toolbarExtra,
   revealRail,
   clock = null,
 }: {
@@ -292,6 +294,8 @@ export function Workspace({
   chartMenu?: (done: () => void) => ReactNode;
   /** The tool rail, docked on the left of the board; the toolbar's Tools button, T and a double-click on the empty board toggle it. */
   rail?: ReactNode;
+  /** Controls the project adds to the toolbar (the board's filters); on a narrow screen they stand above the stack beside Add. */
+  toolbarExtra?: ReactNode;
   /** Each new value shows the rail (the card's "Open in Tools" sends the slice there). */
   revealRail?: number;
 }) {
@@ -355,7 +359,7 @@ export function Workspace({
       pendingSave.current = { id: project.id, layout };
       if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(flush, 1000);
-    } else if (!projectId) saveLayout(layout);
+    } else if (!projectId && hashParams().get("quick") !== "patient") saveLayout(layout);
   };
   // Another project (or none) in the same tab: save the old one's last change, then load the new one's layout.
   // The patient quick view and the board share no layout: a switch between them re-seeds too.
@@ -912,6 +916,33 @@ export function Workspace({
     height: r.h * ROW_PX,
   });
 
+  // "Add a window" and the Tools toggle: in the toolbar on a wide screen, the one Add button above the stack on a narrow one.
+  const addButton = (
+    <button
+      type="button"
+      className="ws-add-open"
+      data-add-window
+      onClick={(e) => {
+        const b = e.currentTarget.getBoundingClientRect();
+        setPicker({ x: b.left, y: b.bottom + 6, at: {} });
+      }}
+    >
+      + {t(locale, "wsEmptyAdd")}
+    </button>
+  );
+  const toolsButton = rail ? (
+    <button
+      type="button"
+      className="ws-tool-open"
+      aria-pressed={railOpen}
+      aria-keyshortcuts="T"
+      title={`${t(locale, railOpen ? "toolsRailHide" : "toolsRailShow")} · T`}
+      onClick={() => toggleRail()}
+    >
+      {t(locale, "toolsWindow")}
+    </button>
+  ) : null;
+
   return (
     <div
       className="ws"
@@ -921,36 +952,19 @@ export function Workspace({
       data-focus={focused !== null}
       data-selection={primary !== null}
     >
+      {wide ? null : <div className="ws-tray-row">{tray}</div>}
       {wide ? null : (
-        <div className="ws-tray-row">
-          {tray}
-          <button
-            type="button"
-            className="ws-add-open"
-            data-add-window
-            onClick={(e) => {
-              const b = e.currentTarget.getBoundingClientRect();
-              setPicker({ x: b.left, y: b.bottom + 6, at: {} });
-            }}
-          >
-            + {t(locale, "wsEmptyAdd")}
-          </button>
+        <div className="ws-narrow-bar">
+          {addButton}
+          {toolbarExtra}
         </div>
       )}
       {wide ? (
         <div className="ws-toolbar">
           {focusBar ?? layouts}
-          <button
-            type="button"
-            className="ws-add-open"
-            data-add-window
-            onClick={(e) => {
-              const b = e.currentTarget.getBoundingClientRect();
-              setPicker({ x: b.left, y: b.bottom + 6, at: {} });
-            }}
-          >
-            + {t(locale, "wsEmptyAdd")}
-          </button>
+          {addButton}
+          {toolsButton}
+          {toolbarExtra}
         </div>
       ) : null}
       {rail ? (

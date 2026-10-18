@@ -3,6 +3,7 @@ import { type Locale, type MessageKey, t } from "@aei/i18n";
 import { type KeyboardEvent, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { type AnswerCache, AnswerPreview } from "./AnswerPreview.tsx";
 import "./command.css";
+import { POINT_EVENT } from "../../demo/Pointer.tsx";
 import { buildEntries, type Group, type Result, search } from "./match.ts";
 
 // The top bar's search and command field: a combobox over units, antibiotics,
@@ -201,6 +202,8 @@ export function CommandField({ locale, alerts, asOf = null, client }: Props) {
     writeRecent(next);
     close();
     go(r.href);
+    // The answer to a typed question is pointed at (demo/Pointer.tsx).
+    dispatchEvent(new CustomEvent(POINT_EVENT));
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
