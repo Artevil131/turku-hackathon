@@ -87,6 +87,20 @@ function researcher(locale: Locale): Screenplay {
       { do: "click", at: "[data-write-note]", wait: ".nb-note-edit", must: true },
       { do: "type", at: last(".nb-note-edit"), text: copy(locale, "researcherQuestion") },
       { do: "think", ms: 300 },
+      // The signal the question is about, before any cutting: the first row of the Signals window opens its card in the
+      // pane (seen, expected, by chance), "how we calculate it" stands open with the formula, then back to the list.
+      {
+        do: "click",
+        at: inWin("signals", ".feed-row .feed-row-main"),
+        wait: inWin("signals", ".feed-pane-card .sig-tiles"),
+        timeout: 8000,
+      },
+      { do: "think", ms: 500 },
+      { do: "look", at: inWin("signals", ".feed-pane-card .sig-tiles"), ms: 2500, timeout: 1500 },
+      { do: "look", at: inWin("signals", ".feed-pane-card .sig-how[open] .sig-formula"), ms: 2500, timeout: 1500 },
+      { do: "look", at: inWin("signals", ".feed-pane-card .math-poisson"), ms: 2000, timeout: 1500 },
+      { do: "click", at: inWin("signals", ".feed-pane-card .sig-back"), wait: inWin("signals", ".feed-list"), timeout: 4000 },
+      { do: "think", ms: 400 },
       // A slice: the frame every analysis below will read.
       { do: "click", at: "[data-add-more]", wait: ".nb-menu", mark: true, must: true },
       { do: "click", at: '.nb-menu [data-add="slice"]', wait: added(".nb-sentence") },

@@ -99,7 +99,8 @@ describe("the showcase screenplay", () => {
     // The estimate overshoots a real run (it budgets every wait in full); the lock's safety timeout is sized from it.
     const seconds = estimateMs(beats) / 1000;
     expect(seconds).toBeGreaterThan(120);
-    expect(seconds).toBeLessThan(320);
+    // A real run is about 150 s; the budget above it is the waits the estimate counts in full.
+    expect(seconds).toBeLessThan(340);
     // Held long enough to speak over: the last beat is the final frame.
     expect(beats.at(-1)).toEqual({ do: "outro", ms: 4000 });
   });
