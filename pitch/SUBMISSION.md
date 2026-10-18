@@ -1,44 +1,63 @@
-# Hackathon Submission Description & Pitch Narrative
+# Submission: agar
 
-> **Note:** This text is structured in the exact cadence and persuasive arc of your winning **L1NX** submission, updated for **agar**.
+## Punchline
 
----
+agar: the right antibiotic for doctors, live outbreak alerts for infection control, and a notebook that does the statistics for researchers. All from one live lab feed.
 
-Our project is created to solve **Tyks Laboratories’** specific challenge – the blindness and dangerous slowness of once-a-year hospital resistance reporting. Current antimicrobial surveillance is too slow and too coarse. Hospitals compile resistance tables once a year, averaged across the entire institution, while an individual patient's culture takes 48 to 72 hours to grow. Because an infection worsens in hours and resistant clones spread across a ward in days, a year-old hospital-wide PDF is already obsolete at the bedside. If a five-drug-resistant ESBL *E. coli* strain appears in four patients on the Urology ward inside three weeks, a hospital-wide annual report hides the spike in the average. Under the old method, your clinicians are still prescribing from last year’s spreadsheet while the resistant clone is already spreading from bed to bed.
+## Description
 
-**OUR SOLUTION:** **agar** is a real-time, working clinical and epidemiological platform built to fix this problem. By ingesting live laboratory results (HL7 v2.5.1) and running measured statistical detectors in milliseconds, **agar** makes ward-level empirical antibiotic selection and outbreak detection as fast and effortless as possible.
+Our project is created to solve Tyks Laboratories' and Mylab's specific challenge – antibiotic resistance reported too late and too coarsely. Today the hospital's resistance report is compiled once a year, as one number for the whole hospital. But a patient's first antibiotic is chosen before their culture grows, two to three days before the lab knows which bacterium it is. The doctor chooses it from that yearly report. On Monday, 12 May, a patient on Internal medicine A needs an antibiotic now. On the same ward, seven patients have grown ESBL bacteria that resist many common antibiotics, where 1.4 is usual. In a hospital-wide yearly average those seven patients disappear. Under the old method, the doctor prescribes from last year's table while a resistant clone moves from bed to bed.
 
-Our system combines these in one, easy-to-use platform:
+**OUR SOLUTION:** agar is a real-time, working platform that turns the results a laboratory already sends into answers for everyone who acts on them. It reads lab results as they arrive (HL7 v2.5.1, FHIR or CSV), keeps every number current ward by ward, and raises what is unusual without anyone having to look for it. It is not a dashboard: every user builds their own workspace from windows they add and link.
 
-**Ward-Specific Empirical Coverage:** Live antibiotic rankings tailored to the doctor’s exact unit, specimen site (Urine, Blood, Wound), and clinical severity—computed strictly on deduplicated first-isolate patient episodes (CLSI M39).
+**For doctors, in one click:**
 
-**Three-Zone Clinical Readiness:** Automatically divides antibiotics into three actionable tiers based on clinical severity thresholds (**80% for mild**, **90% for severe/sepsis**):
-- **START WITH (Green ✓):** Clears the efficacy threshold with Narrow / WHO Access antibiotics ranked first to preserve broad-spectrum reserves.
-- **ALSO GOOD ENOUGH (✓):** Proven alternatives when the first-line agent is contraindicated.
-- **NOT A FIRST CHOICE (✕):** Below the safety threshold on this ward—flagged with exact Wilson 95% confidence intervals.
+**The Right First Antibiotic:** For the doctor's own ward, specimen (urine, blood, wound) and severity, agar ranks the antibiotics by how many patients they covered, against an 80 % bar for mild and 90 % for severe infection. "Start with mecillinam, covers 97 %", with the alternatives beside it.
 
-**28-Day Ward Pulse Beside 365-Day Baseline:** Every antibiotic row pairs the stable 365-day ward coverage with the unit’s raw **last 28 days (`k / n` and `%`)**, exposing sudden local shifts right next to the annual baseline.
+**Last 4 Weeks Beside the Year:** Every antibiotic shows the last four weeks next to the whole year, exactly as the brief asks, with 4 weeks, 90 days, a year or any custom period one click away.
 
-**Compound Instant Search:** Type natural clinical shorthand—`"urology e. coli"`, `"icu blood severe meropenem"`, or `"med-a esbl"`—and jump straight to a pre-filtered bedside answer or ward signal in seconds.
+**When Nothing Is Enough:** When no single antibiotic clears the bar, as for a severe blood infection in the ICU, agar suggests the pair that does.
 
-**Measured Clone & Cluster Detection:** Built-in Poisson profile-excess and phenotype detectors benchmarked against **200 planted synthetic outbreaks**—catching 4-patient resistant clone clusters **89% of the time** with a **6-day median delay** and ~1 cluster alert per year.
+**Honest Small Numbers:** Counted on each patient's first isolate. Below 30 results agar says so and falls back to the ward type, then the hospital, instead of showing a noisy percentage.
 
-**Cross-Ward Patient Transfer Graph:** Maps shared resistant isolates and patient movements across all 9 hospital and primary-care units (`ER`, `ICU`, `MED-A`, `MED-B`, `SURG`, `URO`, `GER`, `HC-N`, `HC-S`) to trace transmission corridors.
+**Type, Don't Click:** "urology e. coli" or "icu blood severe" opens the answer.
 
-**Regional, National & European Surveillance Radar:** Connects local hospital wards to live **THL national register signals** across Finnish counties (with Benjamini-Hochberg false-discovery control across 8,250 county-months) and **ECDC European baselines**.
+**For infection control, watching every ward live:**
 
-**Automated Lab Data-Hygiene Monitor:** Runs **15 continuous quality checks** on every incoming batch—catching 3-day ward sampling dropouts in **93% of trials**, duplicate isolates, and EUCAST intrinsic-resistance anomalies before bad data can corrupt clinical advice.
+**Signals Found For You:** Clusters of the same resistant bacterium, an ESBL or MRSA rise above a ward's usual, a resistant organism new to a unit, rising trends and sampling gaps. Each signal says how unlikely it is by chance ("1 in 35,148") and how it was calculated.
 
-**But that’s not all. agar is built to be an all-in-one reproducible research workbench:**
+**One Live Picture:** A timeline of every ward with replay, a unit grid, patient flow showing which wards share patients, and a map of THL's national register for the whole of Finland.
 
-**A Modular Research Canvas:** A multi-window workspace where epidemiologists combine interactive timelines, ward maps, transfer graphs, and plain-language mathematical explanations in one view.
+**Data Checks:** 15 plausibility checks on every incoming batch, so a ward that stops sending samples shows as a data problem, not as resistance falling.
 
-**Continuous & Frozen Research Projects:** Pin any ward, phenotype, or time window into a persistent project—keep it **Continuous** for live ward surveillance, or **Freeze** a snapshot so numbers never shift under a paper in progress.
+**But that's not all. agar is built to be a full research notebook:**
 
-**Interactive Notebook Sandbox:** Pin any signal, cohort slice, detector test, or comparison chart directly into a structured analytical notebook alongside clinical hypotheses.
+**No More Spreadsheets:** The question, the slice of data, each analysis and its chart live in one notebook, next to the live timeline and signals.
 
-**1-Click Reproducible Science Bundle Export:** Download any finding as a self-contained, peer-review-ready bundle containing the exact filtered `CSV`, zero-dependency base-R script (`analysis.R`), Python pipeline (`analysis.py` + `.ipynb`), and publication-ready LaTeX methods (`method.tex`).
+**Statistics, Done For You:** Pick a slice of the data, and agar gives the rate, a comparison of two periods, the share over time or a Bayesian estimate, each with its uncertainty, its formula and the Python or R code to reproduce it.
 
-**agar** delivers ward-level antibiotic intelligence in seconds, on any browser or iPhone, for maximum clinical access. Live HL7 stream, measured outbreak detection, shared epidemiological picture. No year-old PDFs, no black-box guesses, no delays.
+**Frozen Projects:** Keep a project live, or freeze it on a date so the numbers never change under a paper in progress.
 
-**Speed is a treatment. agar puts it at the bedside.**
+**One-Click Export:** The filtered data, R and Python scripts, a Jupyter notebook, LaTeX methods and the chart, in one bundle, or reproduced straight in the browser.
+
+**Built for the lab's own systems:** Results come in as HL7, the format the laboratory system already sends. Every visitor's projects stay in their own browser, and the public demo accepts no uploads, so no one sees anyone else's work.
+
+**We measured it.** We planted 200 four-patient outbreaks per scenario into the three-year dataset. agar found 89 % of them (95 % CI 84–93 %), a median of 6 days after the first case, at about 4.5 alerts a year, and none of 8 methods from the surveillance literature beat it by the criteria we set before testing. All four test events in the data were caught; the ICU MRSA on day 0. Built and tested on the organisers' synthetic dataset; Finnish and English.
+
+**Technologies:** TypeScript, React, Vite and Node.js (web app and live API), HL7 v2.5.1 ingest, Python (pandas, NumPy, SciPy, statsmodels) for analysis and our `aei` package, JupyterLite, R and LaTeX export, THL open data, llama.cpp for optional natural-language search, Docker with nginx. Built with Claude, Gemini and VS Code.
+
+agar delivers ward-level antibiotic advice in seconds, on any browser. Live lab data, measured alerts, reproducible research. No yearly PDFs, no black boxes, no delays.
+
+**Speed is a treatment. agar puts it on the ward.**
+
+## The rest of the form
+
+- **Project name:** agar
+- **Challenge:** Antibiotic efficacy indicator (AEI), Tyks Laboratories × Mylab
+- **Technologies used:** see the Technologies line above
+- **Video:** `pitch/agar-video-final.mp4` (1:58), uploaded to YouTube as Public
+- **Demo:** https://agar.aapolipponen.com
+- **Source code:** https://github.com/Artevil131/turku-hackathon (public)
+- **Credited:** yes
+- **Pitch deck (PDF):** `pitch/agar pitch.pdf`
+- **Phone numbers and Discord usernames:** the team's own

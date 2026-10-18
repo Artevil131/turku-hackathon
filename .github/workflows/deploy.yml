@@ -1,4 +1,4 @@
-# Deploys every push to main to https://yourlab.aapolipponen.com. The job only opens an SSH connection to the OCI
+# Deploys every push to main to https://agar.aapolipponen.com (yourlab.aapolipponen.com redirects there). The job only opens an SSH connection to the OCI
 # host with a key whose authorized_keys entry forces `aei-deploy` (deploy/autodeploy), so the key can run that one
 # deploy and nothing else. Setup and secrets: deploy/autodeploy/README.md. It does not wait for `check`.
 name: deploy
@@ -34,8 +34,8 @@ jobs:
       - name: Check the public site
         run: |
           for i in $(seq 1 12); do
-            code=$(curl -s -o /dev/null -w '%{http_code}' https://yourlab.aapolipponen.com/api/clock || true)
-            [ "$code" = 200 ] && { echo "yourlab answers 200"; exit 0; }
+            code=$(curl -s -o /dev/null -w '%{http_code}' https://agar.aapolipponen.com/api/clock || true)
+            [ "$code" = 200 ] && { echo "agar answers 200"; exit 0; }
             sleep 5
           done
-          echo "yourlab answered $code"; exit 1
+          echo "agar answered $code"; exit 1
