@@ -27,7 +27,9 @@ export function CodeCellBody({
   onChange: (patch: Partial<CodeCell>) => void;
   onReproduce: (lang: Lang) => void;
 }) {
-  const { id, lang, code, edited } = cell;
+  const { id, lang, edited } = cell;
+  // The untouched prefill is drawn from the analysis above each time, so a saved notebook picks up today's snippet.
+  const code = !edited && above ? codeFor(above, lang) : cell.code;
   const [copyState, copy] = useCopy();
   const [sent, setSent] = useState(false);
   const k = useKernel();
