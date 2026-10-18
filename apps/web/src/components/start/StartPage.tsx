@@ -207,9 +207,10 @@ export function StartPage({
                 <span>{t(locale, "startAskPlaceholder")}</span>
                 <kbd>/</kbd>
               </button>
-              <div className="start-ask-chips" onMouseDown={(e) => e.preventDefault()}>
+              <div className="start-ask-chips">
+                {/* Pressing a chip keeps focus in the field, so the chips card stays open until the click lands. */}
                 {CHIPS[role].map((c) => (
-                  <button type="button" key={c.label} onClick={() => run(c.action)}>
+                  <button type="button" key={c.label} onMouseDown={(e) => e.preventDefault()} onClick={() => run(c.action)}>
                     {t(locale, c.label)}
                   </button>
                 ))}
