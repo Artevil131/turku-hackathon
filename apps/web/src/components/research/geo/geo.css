@@ -240,14 +240,14 @@
 .geo-ref {
   stroke: var(--geo-ink3);
   stroke-width: 0.8;
-  stroke-opacity: 0.28;
+  stroke-opacity: 0.16;
   stroke-dasharray: 4 4;
 }
 .geo-ref[data-uni="true"] {
   stroke-width: 1;
 }
 .geo-ref[data-tyks="true"] {
-  stroke-opacity: 0.35;
+  stroke-opacity: 0.2;
 }
 .geo-hosp {
   fill: var(--geo-ink2);
@@ -262,7 +262,7 @@
   stroke-width: 2;
 }
 .geo-hosp-label {
-  font-size: 19px;
+  font-size: 13px;
   font-weight: 600;
   fill: var(--geo-ink);
   paint-order: stroke;
@@ -1067,4 +1067,53 @@
 .ug-dir-row {
   display: flex;
   justify-content: space-between;
+}
+
+/* The hospital signal's chip on the map: beside Tyks, joined to it by a dashed line. */
+.geo-callout-svg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.geo-callout-line {
+  fill: none;
+  stroke: var(--st-alert);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 3;
+}
+.geo-callout {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100% - 16px);
+  padding: 6px 10px;
+  border: 1.5px solid var(--st-alert);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.geo-callout:hover,
+.geo-callout:focus-visible {
+  background: var(--st-alert-bg);
+}
+.geo-callout-text {
+  display: grid;
+  line-height: 1.25;
+  font-size: var(--t-xs);
+  color: var(--ink-3);
+}
+.geo-callout-text strong {
+  color: var(--ink);
+  font-size: var(--t-s);
+}
+.geo-anchor[data-signal] {
+  stroke: var(--st-alert);
+  stroke-width: 2.5;
+}
+.geo-callout .geo-glyph-strong {
+  fill: var(--st-alert);
 }

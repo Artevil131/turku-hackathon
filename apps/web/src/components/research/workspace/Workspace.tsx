@@ -196,6 +196,33 @@ const GROWS_NOT = new Set<string>(["notebook", "timeline", "signals", "assistant
 const MAX_GROW_ROWS = 60;
 
 /** Companion windows (the signal explained, map, patient flow, assistant) open beside the first window, not under everything. */
+/** The picker lists windows by what a researcher reaches for: the answer, the evidence, time and place, then the workbench. */
+const PICK_ORDER: readonly WinId[] = [
+  "coverage",
+  "answer",
+  "signals",
+  "math",
+  "assistant",
+  "timeline",
+  "grid",
+  "graph",
+  "map",
+  "notebook",
+  "reproduce",
+];
+/** "Title: what it shows": the title in bold, the rest in the secondary ink. */
+function PickName({ text }: { text: string }) {
+  const at = text.indexOf(": ");
+  return at < 0 ? (
+    <strong>{text}</strong>
+  ) : (
+    <span>
+      <strong>{text.slice(0, at)}</strong>
+      <span className="ws-pick-rest">{text.slice(at)}</span>
+    </span>
+  );
+}
+
 const SIDE_KINDS: ReadonlySet<WinId> = new Set<WinId>(["math", "map", "graph", "assistant"]);
 function sideSlot(layout: Layout, id: WinId): Partial<Rect> {
   const here = layout.wins[id];
@@ -1088,7 +1115,7 @@ function Tray({
       {shown ? (
         <div className="ws-pop" id="ws-tray-pop" role="group" aria-label={t(locale, "wsToolbar")}>
           <ul className="ws-pop-list">
-            {WIN_IDS.map((id) => (
+            {PICK_ORDER.map((id) => (
               <li key={id}>
                 <label className="ws-pop-row">
                   <input type="checkbox" checked={open(id)} data-toggle={id} onChange={() => onToggle(id)} />
@@ -1155,13 +1182,13 @@ function WindowPicker({
   return (
     <div className="ws-picker" ref={ref} role="menu" aria-label={t(locale, "wsEmptyAdd")} style={{ left, top }}>
       <p className="ws-picker-head">{t(locale, "wsEmptyAdd")}</p>
-      {WIN_IDS.map((id) => (
+      {PICK_ORDER.map((id) => (
         <button type="button" role="menuitem" key={id} data-add={id} onClick={() => onPick(id)}>
           <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
             <path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
           </svg>
           <span className="ws-picker-text">
-            <strong>{t(locale, `pick_${id}` as "pick_signals")}</strong>
+            <PickName text={t(locale, `pick_${id}` as "pick_signals")} />
           </span>
           {count(id) ? <span className="ws-picker-n">{count(id)}</span> : null}
         </button>

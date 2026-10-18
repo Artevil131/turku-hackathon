@@ -11,7 +11,7 @@ export const tourOvEn = {
   tourOvBoxTitle: "Take the tour",
   tourOvBoxNote: "Three minutes, the whole product",
   tourOvWelcome:
-    "YL turns the culture results a lab already sends into a live picture of antibiotic resistance. Today that picture is one report a year, hospital-wide.",
+    "agar turns the culture results a lab already sends into a live picture of antibiotic resistance. Today that picture is one report a year, hospital-wide.",
   tourOvAsk: "Start from a question. The box takes a ward, an organism or an antibiotic; the three below are one click.",
   tourOvDemos: "Three demo files, one per role, filled in as if they had been used for a while. We open two of them in a minute.",
   tourOvTemplates:
@@ -36,7 +36,7 @@ export const tourOvEn = {
     "The notebook keeps the exact slice of data, the analyses and the notes together, so the week's work can be read and rerun later.",
   tourOvDoctor:
     "Last, the doctor's view: ward, sample and severity preset. One line says what to start with and on how many results; the doctor decides.",
-  tourOvOutro: "That is YL. The demo files are in the sidebar, each with a deeper tour of its own; open one and change anything.",
+  tourOvOutro: "That is agar. The demo files are in the sidebar, each with a deeper tour of its own; open one and change anything.",
 };
 
 export const tourOvFi: Record<keyof typeof tourOvEn, string> = {
@@ -48,7 +48,7 @@ export const tourOvFi: Record<keyof typeof tourOvEn, string> = {
   tourOvBoxTitle: "Katso esittely",
   tourOvBoxNote: "Kolme minuuttia, koko tuote",
   tourOvWelcome:
-    "YL muuttaa laboratorion jo lähettämät viljelyvastaukset eläväksi kuvaksi antibioottiresistenssistä. Nykyisin se kuva on yksi raportti vuodessa, koko sairaalasta.",
+    "agar muuttaa laboratorion jo lähettämät viljelyvastaukset eläväksi kuvaksi antibioottiresistenssistä. Nykyisin se kuva on yksi raportti vuodessa, koko sairaalasta.",
   tourOvAsk:
     "Aloita kysymyksestä. Kenttään käy yksikkö, bakteeri tai antibiootti; kolme alla olevaa kysymystä aukeavat yhdellä napsautuksella.",
   tourOvDemos:
@@ -73,5 +73,5 @@ export const tourOvFi: Record<keyof typeof tourOvEn, string> = {
     "Muistio pitää tarkan aineistorajauksen, analyysit ja muistiinpanot yhdessä, joten viikon työn voi lukea ja ajaa uudelleen myöhemmin.",
   tourOvDoctor:
     "Lopuksi lääkärin näkymä: yksikkö, näyte ja vaikeusaste valmiina. Yksi rivi kertoo, millä aloittaa ja kuinka monen tuloksen varassa se on; lääkäri päättää.",
-  tourOvOutro: "Tämä on YL. Esimerkkitiedostot ovat sivupalkissa, kullakin oma tarkempi esittelynsä; avaa yksi ja muuta mitä vain.",
+  tourOvOutro: "Tämä on agar. Esimerkkitiedostot ovat sivupalkissa, kullakin oma tarkempi esittelynsä; avaa yksi ja muuta mitä vain.",
 };

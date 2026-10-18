@@ -1,3 +1,4 @@
+import { dayNumber } from "../../components/hero/geometry.ts";
 import { typingTimes } from "../fillScript.ts";
 import type { Clock } from "./clock.ts";
 import type { Target } from "./script.ts";
@@ -22,11 +23,15 @@ export function boxOf(el: Element | null): Box | null {
   if (!el?.isConnected || el.closest("[inert], [hidden], [aria-hidden='true']")) return null;
   const r = el.getBoundingClientRect();
   let [x0, y0, x1, y1] = [r.left, r.top, r.right, r.bottom];
+  // A fixed-positioned element (a popover inside a scrolling sidebar) escapes the clipping of the ancestors above it.
+  let escaped = getComputedStyle(el).position === "fixed";
   for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
     const o = getComputedStyle(p);
-    if (o.overflowX === "visible" && o.overflowY === "visible") continue;
-    const c = p.getBoundingClientRect();
-    [x0, y0, x1, y1] = [Math.max(x0, c.left), Math.max(y0, c.top), Math.min(x1, c.right), Math.min(y1, c.bottom)];
+    if (!escaped && (o.overflowX !== "visible" || o.overflowY !== "visible")) {
+      const c = p.getBoundingClientRect();
+      [x0, y0, x1, y1] = [Math.max(x0, c.left), Math.max(y0, c.top), Math.min(x1, c.right), Math.min(y1, c.bottom)];
+    }
+    if (o.position === "fixed") escaped = true;
   }
   [x0, y0, x1, y1] = [Math.max(x0, 0), Math.max(y0, 0), Math.min(x1, innerWidth), Math.min(y1, innerHeight)];
   return x1 - x0 < 4 || y1 - y0 < 4 ? null : { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
@@ -37,13 +42,15 @@ export function boxOf(el: Element | null): Box | null {
  * with `visible` false, one that merely exists (a result that has arrived, wherever the page put it).
  */
 export function until(target: Target, ms: number, clock: Clock, visible = true): Promise<Element | null> {
-  let scrolled = false;
+  let lastScroll = 0;
   return clock.waitFor(() => {
     const el = resolveTarget(target);
     if (el && (!visible || boxOf(el))) return el;
-    if (el?.isConnected && !scrolled && !el.closest("[inert], [hidden]")) {
-      scrolled = true;
-      el.scrollIntoView({ block: "nearest", inline: "nearest" });
+    // Out of view: bring it in, and again a moment later if the layout grew under it (a result arriving pushes it down).
+    const now = performance.now();
+    if (el?.isConnected && now - lastScroll > 200 && !el.closest("[inert], [hidden]")) {
+      lastScroll = now;
+      el.scrollIntoView({ block: "center", inline: "nearest", behavior: "instant" });
     }
     return null;
   }, ms);
@@ -73,9 +80,10 @@ export function setValue(el: Field, value: string): void {
 
 /**
  * Types `text` into a field at `cps`, with the pauses of typingTimes: the field's text advances every frame
- * (a native write, no render), and React is told about it a few times a second and at the end. Then the field is left.
+ * (a native write, no render), and React is told about it a few times a second and at the end. Then the field is left,
+ * unless `stay` (a search box whose list closes on blur keeps the focus).
  */
-export function typeText(el: Element | null, text: string, cps: number, clock: Clock): Promise<boolean> {
+export function typeText(el: Element | null, text: string, cps: number, clock: Clock, stay = false): Promise<boolean> {
   if (!isField(el) || el instanceof HTMLSelectElement) return Promise.resolve(false);
   const field = el;
   const proto = field instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
@@ -97,7 +105,7 @@ export function typeText(el: Element | null, text: string, cps: number, clock: C
       const elapsed = (now - t0) / 1000;
       let moved = false;
       // At most two characters a frame: after a slow frame the typing carries on rather than catching up in a burst.
-      for (let n = 0; n < 2 && k < total && (times[k + 1] ?? Number.POSITIVE_INFINITY) <= elapsed; n++) {
+      for (let n = 0; n < 8 && k < total && (times[k + 1] ?? Number.POSITIVE_INFINITY) <= elapsed; n++) {
         k++;
         moved = true;
       }
@@ -105,7 +113,7 @@ export function typeText(el: Element | null, text: string, cps: number, clock: C
       const next = base + text.slice(0, k);
       // A render of React's own could put the field back to what it last heard: the typed text is kept up every frame.
       if (moved || field.value !== next) {
-        if (k >= total || now - flushed > 90) {
+        if (k >= total || now - flushed > 400) {
           setValue(field, next);
           flushed = now;
         } else {
@@ -114,7 +122,7 @@ export function typeText(el: Element | null, text: string, cps: number, clock: C
         }
       }
       if (k >= total) {
-        leave(field);
+        if (!stay) leave(field);
         resolve(true);
         return false;
       }
@@ -152,28 +160,45 @@ export function bandWeeks(svg: Element | null): number | null {
 }
 
 /**
+ * The plot fractions (0 the band's first day, 1 its last) of two dates, read off the band's own axis (data-d0 and
+ * data-d1 on its baseline), or null when the band does not show them (the live timeline has moved on from them).
+ */
+export function bandFractions(svg: Element | null, from: string, to: string): [number, number] | null {
+  const base = svg?.querySelector(".hs-base");
+  const d0 = Number(base?.getAttribute("data-d0"));
+  const d1 = Number(base?.getAttribute("data-d1"));
+  if (!base || !(d1 > d0)) return null;
+  const f = (iso: string) => (dayNumber(iso) - d0) / (d1 - d0);
+  const [a, b] = [f(from), f(to)];
+  if (b < 0.02 || a > 0.98 || b - a < 0.02) return null;
+  return [Math.max(0, Math.min(1, a)), Math.max(0, Math.min(1, b))];
+}
+
+/**
  * Drags across a weekly band's plot from one fraction to another (0 the first week, 1 the clock), the way the
  * band's own range handler expects: pointerdown on its svg above the lanes, pointermoves on the window, pointerup.
- * `follow` gets each position so the drawn cursor can ride along. Resolves false when the svg has no band.
+ * `arrive` brings the drawn hand to the start first; `follow` gets each position so it rides along. Resolves false
+ * when the svg has no band.
  */
-export function dragBand(
+export async function dragBand(
   svg: Element | null,
   from: number,
   to: number,
   ms: number,
   clock: Clock,
+  arrive: (x: number, y: number) => Promise<void>,
   follow: (x: number, y: number) => void,
 ): Promise<boolean> {
   const base = svg instanceof SVGSVGElement ? svg.querySelector<SVGLineElement>(".hs-base") : null;
-  if (!base || !(svg instanceof SVGSVGElement)) return Promise.resolve(false);
+  if (!base || !(svg instanceof SVGSVGElement)) return false;
   const ctm = svg.getScreenCTM();
-  if (!ctm) return Promise.resolve(false);
+  if (!ctm) return false;
   const x1 = base.x1.baseVal.value;
   const x2 = base.x2.baseVal.value;
   const at = (f: number) => new DOMPoint(x1 + (x2 - x1) * f, base.y1.baseVal.value - 10).matrixTransform(ctm);
   const a = at(from);
   const b = at(to);
-  follow(a.x, a.y);
+  await arrive(a.x, a.y);
   svg.dispatchEvent(pointer("pointerdown", a.x, a.y));
   return new Promise((resolve) => {
     const t0 = performance.now();

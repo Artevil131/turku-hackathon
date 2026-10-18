@@ -84,24 +84,31 @@
 }
 .tour-offer {
   z-index: 400;
+  /* A small card in the bottom right corner: an invitation, not a dialog in the middle of the work. */
+  left: auto;
+  right: 16px;
+  bottom: 16px;
+  width: min(340px, calc(100vw - 32px));
+  transform: none;
+  padding: 14px 16px 12px;
   animation: tour-in 260ms ease-out;
 }
 .tour-offer h2 {
-  margin: 2px 0 6px;
+  margin: 2px 24px 4px 0;
   font-family: var(--font-display);
-  font-size: var(--t-l);
+  font-size: var(--t-m);
   line-height: 1.2;
 }
 .tour-offer p {
-  margin: 0 0 14px;
+  margin: 0 0 12px;
   color: var(--ink-2);
-  font-size: var(--t-m);
+  font-size: var(--t-s, 0.9rem);
   line-height: 1.5;
 }
 @keyframes tour-in {
   from {
     opacity: 0;
-    transform: translate(-50%, 10px);
+    transform: translateY(10px);
   }
 }
 

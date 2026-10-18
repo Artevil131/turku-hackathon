@@ -4,16 +4,21 @@ import { Fragment, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useS
 import { CommandField } from "./components/command/CommandField.tsx";
 import { doctorParamsToWindow } from "./components/doctor/filters.ts";
 import { useMedia } from "./components/doctor/useMedia.ts";
+import { PAGE_VERSION } from "./components/research/notebook/model.ts";
+import { PAGE_EVENT } from "./components/research/notebook/usePage.ts";
 import { projectHash } from "./components/research/projects/useProject.ts";
 import { SiteLine } from "./components/SitePicker.tsx";
 import { PHONE } from "./components/shell/Menu.tsx";
 import { Sidebar, tabName } from "./components/shell/Sidebar.tsx";
 import { type Audience, storedAudience } from "./components/start/audience.ts";
 import { StartPage } from "./components/start/StartPage.tsx";
+import { applyPlan } from "./demo/applyPlan.ts";
 import type { DemoId, DemoSpec, TourId } from "./demo/demos.ts";
 import { FillOverlay } from "./demo/FillOverlay.tsx";
 import type { FillPlan } from "./demo/openDemo.ts";
 import { openDemo } from "./demo/openDemo.ts";
+import { Performance } from "./demo/perform/Performance.tsx";
+import { SHOWCASE_FILLS, showcaseScreenplay } from "./demo/perform/scripts.ts";
 import { DemoTour } from "./demo/tour/Tour.tsx";
 import { useLive } from "./live.ts";
 import { FlowsContext } from "./relations.ts";
@@ -150,6 +155,14 @@ export function App() {
     history.pushState(null, "", "#home");
     setTour({ demo: "overview", key: Date.now() });
   };
+  // The two-minute showcase for a screen recording (Settings): the open tabs are closed and the hand walks the whole
+  // product from the start page. A demo file it opens is rebuilt (its layout, board and notebook as first made, the clock
+  // paused at its date); the files in SHOWCASE_FILLS open empty and the hand plays their own fill-in as part of the
+  // journey, with no second overlay and no tour offer. Escape stops it; the last empty notebook then snaps to its plan.
+  const [showcase, setShowcase] = useState<{ key: number } | null>(null);
+  const showing = useRef(false);
+  showing.current = showcase !== null;
+  const showcasePlan = useRef<FillPlan | null>(null);
   const [slots, setSlots] = useState<Slots>({ actions: null, windows: null });
   const setActionsSlot = useCallback((el: HTMLElement | null) => setSlots((s) => (s.actions === el ? s : { ...s, actions: el })), []);
   const setWindowsSlot = useCallback((el: HTMLElement | null) => setSlots((s) => (s.windows === el ? s : { ...s, windows: el })), []);
@@ -354,18 +367,43 @@ export function App() {
       </Suspense>
     );
 
-  const openDemoFile = (demo: DemoSpec) => {
+  const openDemoFile = (demo: DemoSpec, replay = false) => {
     // The full tour opens demo files itself and keeps playing, so those open already filled; any other demo fills itself in first.
-    const fill = tour?.demo !== "overview" && !reducedMotion;
-    openDemo(client, locale, demo, { fill })
+    // The showcase rebuilds every file it opens and takes the fill-in of SHOWCASE_FILLS into its own hands.
+    const inShow = showing.current;
+    const fill = inShow ? SHOWCASE_FILLS.includes(demo.id) : tour?.demo !== "overview" && !reducedMotion;
+    openDemo(client, locale, demo, { fill, replay: replay || inShow })
       .then(({ project, plan }) => {
         shell.openProject(project);
+        if (inShow) {
+          showcasePlan.current = plan;
+          if (plan) dispatchEvent(new CustomEvent(PAGE_EVENT, { detail: { slot: plan.slot, page: { v: PAGE_VERSION, cells: [] } } }));
+          return;
+        }
         // A "Take the tour?" left from a previous demo must not sit on the stage while this one plays.
         if (plan) setTour((current) => (current?.demo === "overview" ? current : null));
+        // A replay starts from an empty notebook: the open page holds its cells in memory, so it is told to let go of them.
+        if (plan && replay)
+          dispatchEvent(new CustomEvent(PAGE_EVENT, { detail: { slot: plan.slot, page: { v: PAGE_VERSION, cells: [] } } }));
         if (plan) setFilling({ demo: demo.id, plan, key: Date.now() });
         else setTour((current) => (current?.demo === "overview" ? current : { demo: demo.id, key: Date.now() }));
       })
       .catch(() => setNotice(t(locale, "demoOpenError")));
+  };
+  const startShowcase = () => {
+    if (showing.current) return;
+    setTour(null);
+    setFilling(null);
+    setNotice(null);
+    showcasePlan.current = null;
+    // A clean desk: no tabs from before, and the start page as the stage.
+    setTabs([]);
+    navigate("home");
+    setShowcase({ key: Date.now() });
+  };
+  const endShowcase = () => {
+    showcasePlan.current = null;
+    setShowcase(null);
   };
   return (
     <ShellContext.Provider value={shell}>
@@ -500,7 +538,7 @@ export function App() {
                       {page === "data" ? (
                         <DataPage client={client} liveClient={live.client} locale={locale} asOf={live.clock?.asOf ?? null} />
                       ) : null}
-                      {page === "settings" ? <Settings locale={locale} onLocale={setLocale} /> : null}
+                      {page === "settings" ? <Settings locale={locale} onLocale={setLocale} onShowcase={startShowcase} /> : null}
                     </Suspense>
                   </Fragment>
                 </main>
@@ -527,6 +565,20 @@ export function App() {
                   if (how !== "skipped") setTour({ demo: filling.demo, key: Date.now() });
                   setFilling(null);
                 }}
+              />
+            ) : null}
+            {showcase ? (
+              <Performance
+                key={showcase.key}
+                locale={locale}
+                screenplay={showcaseScreenplay(locale)}
+                stage=".start-page"
+                countdown={5}
+                skipButton={false}
+                onSkip={() => {
+                  if (showcasePlan.current) applyPlan(showcasePlan.current);
+                }}
+                onDone={endShowcase}
               />
             ) : null}
             {tour && (page === "project" || tour.demo === "overview") ? (

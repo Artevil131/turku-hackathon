@@ -65,7 +65,7 @@ export const en = {
   alertRisingTrend: "Rising resistance",
   alertDetector: "Statistical signal",
 
-  appName: "YL",
+  appName: "agar",
   appTagline: "Antibiotic efficacy indicator",
   askLabel: "Ask the data",
   askPlaceholder: "Ask about the data, e.g. ESBL E. coli in urine in Urology this month",

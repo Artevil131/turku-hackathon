@@ -86,11 +86,18 @@
 }
 
 .sb-mark-name {
+  display: inline-grid;
+  place-items: center;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 9px;
+  background: var(--brand-accent, #635bf1);
+  color: #fff;
   font-family: var(--font-display);
-  font-weight: 600;
+  font-weight: 700;
   font-size: var(--t-l);
   line-height: 1;
-  letter-spacing: 0.01em;
+  letter-spacing: 0;
 }
 
 .sb-collapse,
@@ -422,8 +429,23 @@
   padding: 12px 0 4px;
 }
 
+.sb-mark-short {
+  display: none;
+}
+
+.sidebar[data-rail] .sb-mark-full {
+  display: none;
+}
+
+.sidebar[data-rail] .sb-mark-short {
+  display: inline;
+}
+
 .sidebar[data-rail] .sb-mark-name {
-  font-size: var(--t-m);
+  min-width: 34px;
+  height: 28px;
+  padding: 0 6px;
+  font-size: var(--t-s);
 }
 
 .sidebar[data-rail] .sb-scroll {
@@ -934,6 +956,50 @@
   font-size: var(--t-xs);
 }
 
+/* Watch a demo fill in again: a quiet icon at the row's end, there when the row is hovered or focused. */
+.sb-demo-row {
+  position: relative;
+}
+.sb-replay {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: none;
+  color: var(--ink-3);
+  opacity: 0;
+  transform: translateY(-50%);
+  transition: opacity 120ms var(--mo-ease);
+  cursor: pointer;
+}
+.sb-replay svg {
+  width: 16px;
+  height: 16px;
+}
+.sb-demo-row:hover .sb-replay,
+.sb-replay:focus-visible {
+  opacity: 1;
+}
+.sb-replay:hover {
+  background: var(--chassis);
+  color: var(--ink);
+}
+.sb-replay:focus-visible {
+  outline: 2px solid var(--live);
+  outline-offset: 1px;
+}
+@media (hover: none) {
+  .sb-replay {
+    opacity: 0.6;
+  }
+}
+
 .sb-tour {
   color: var(--live);
 }
@@ -957,4 +1023,22 @@
 .viewbar-close:focus-visible {
   background: var(--chassis);
   color: var(--ink);
+}
+
+/* Hidden reset at the foot of Settings: nearly invisible until hovered or focused. */
+.settings-reset {
+  align-self: flex-start;
+  margin-top: 3rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.7rem;
+  color: inherit;
+  background: none;
+  border: 0;
+  opacity: 0.06;
+  cursor: default;
+}
+.settings-reset:hover,
+.settings-reset:focus-visible {
+  opacity: 0.6;
+  cursor: pointer;
 }

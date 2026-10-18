@@ -2,6 +2,11 @@
 
 export const demoEn = {
   demoFilling: "Filling in the demo…",
+  demoShowcase: "Product showcase",
+  demoShowcaseStart: "Play the showcase",
+  demoShowcaseHint:
+    "2 min. A cursor shows the whole product on the real screens, for a screen recording with your own voice-over: the demo files are reset, open tabs closed, the clock paused at 12 May 2025. Esc stops it.",
+  demoShowcaseCountdown: "Starts in {n}",
   answerNone: "Nothing unusual right now",
   answerNoneNote: "No open signals {where} as of this date.",
   answerEverywhere: "anywhere in the hospital",
@@ -42,6 +47,11 @@ export const demoEn = {
 
 export const demoFi: Record<keyof typeof demoEn, string> = {
   demoFilling: "Täytetään esimerkkiä…",
+  demoShowcase: "Tuote-esittely",
+  demoShowcaseStart: "Toista esittely",
+  demoShowcaseHint:
+    "2 min. Kursori näyttää koko tuotteen oikeilla näytöillä, ruutunauhoitusta ja omaa selostusta varten: esimerkkitiedostot nollataan, avoimet välilehdet suljetaan, kello pysäytetään 12.5.2025:een. Esc keskeyttää.",
+  demoShowcaseCountdown: "Alkaa {n} s kuluttua",
   answerNone: "Ei mitään epätavallista juuri nyt",
   answerNoneNote: "Ei avoimia signaaleja {where} tähän päivään mennessä.",
   answerEverywhere: "missään sairaalassa",

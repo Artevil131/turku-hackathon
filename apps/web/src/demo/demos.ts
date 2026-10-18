@@ -22,6 +22,8 @@ export interface DemoSpec {
   mode: "continuous" | "frozen";
   /** A frozen cut's date (before the replay clock's start of 12 May 2025, so it is always released). */
   asOf?: string;
+  /** The replay clock's date this story is told at: opening the demo pauses the clock there (the live clock runs on and would leave the story's signals behind). */
+  clockAt?: string;
   /** The board's hash query: the unit and filters the project opens with. */
   board: string;
   layout: Layout;
@@ -54,6 +56,18 @@ const analysis = (
   result: null,
 });
 
+/**
+ * The signal's evidence opens beside the Summary and the timeline when "Show the evidence" is pressed. Its closed place is
+ * reserved at the top right in the same columns as the signal list and the patient flow below it (7 to 12), so it opens as
+ * the head of that column: the notebook keeps its columns and no hole opens between them. Left as it was, it opened as a
+ * narrow column that pushed the signal list far down.
+ */
+function reserveEvidence(layout: Layout): Layout {
+  const top = layout.wins.answer;
+  const band = layout.wins.timeline.y + layout.wins.timeline.h - top.y;
+  return { ...layout, wins: { ...layout.wins, math: { x: 7, y: top.y, w: 5, h: band, open: false } } };
+}
+
 export const DEMOS: readonly DemoSpec[] = [
   {
     id: "clinician",
@@ -61,6 +75,7 @@ export const DEMOS: readonly DemoSpec[] = [
     titleKey: "demoClinicianTitle",
     blurbKey: "demoClinicianBlurb",
     mode: "continuous",
+    clockAt: "2025-05-12",
     board: "unit=MED-A&cov.unit=MED-A&cov.site=urine&cov.sev=mild",
     layout: gridLayout({ coverage: { x: 0, y: 0, w: 12, h: 40 } }, "none"),
     page: null,
@@ -71,14 +86,17 @@ export const DEMOS: readonly DemoSpec[] = [
     titleKey: "demoControlTitle",
     blurbKey: "demoControlBlurb",
     mode: "continuous",
+    clockAt: "2025-05-12",
     board: "unit=MED-A&ph=esbl",
-    layout: gridLayout({
-      answer: { x: 0, y: 0, w: 12, h: 9 },
-      // The notebook is where you write, so it is the widest and sits first; the evidence stacks beside it.
-      notebook: { x: 0, y: 9, w: 7, h: 56 },
-      signals: { x: 7, y: 9, w: 5, h: 28 },
-      graph: { x: 7, y: 37, w: 5, h: 28 },
-    }),
+    layout: reserveEvidence(
+      gridLayout({
+        answer: { x: 0, y: 0, w: 12, h: 9 },
+        // The notebook is where you write, so it is the widest and sits first; the evidence stacks beside it.
+        notebook: { x: 0, y: 9, w: 7, h: 56 },
+        signals: { x: 7, y: 9, w: 5, h: 28 },
+        graph: { x: 7, y: 37, w: 5, h: 28 },
+      }),
+    ),
     page: (locale, site) => {
       const s = slice(site, { from: "2025-02-17", to: "2025-05-11", unit: "MED-A", phenotype: "esbl" });
       return page([
@@ -96,6 +114,7 @@ export const DEMOS: readonly DemoSpec[] = [
     roleKey: "demoRoleResearcher",
     titleKey: "demoResearcherTitle",
     blurbKey: "demoResearcherBlurb",
+    clockAt: "2025-05-12",
     mode: "frozen",
     asOf: "2025-04-30",
     board: "unit=MED-A&ph=esbl",

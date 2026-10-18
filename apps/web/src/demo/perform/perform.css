@@ -27,10 +27,10 @@
   pointer-events: none;
   will-change: transform;
   transition:
-    transform 360ms cubic-bezier(0.2, 0.7, 0.2, 1),
-    width 360ms cubic-bezier(0.2, 0.7, 0.2, 1),
-    height 360ms cubic-bezier(0.2, 0.7, 0.2, 1),
-    opacity 260ms var(--mo-ease);
+    transform 200ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    width 200ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    height 200ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    opacity 160ms var(--mo-ease);
 }
 .pf-spot[data-shown] {
   opacity: 0.8;
@@ -44,14 +44,15 @@
   opacity: 0;
   pointer-events: none;
   will-change: transform;
-  transition: opacity 320ms var(--mo-ease);
-  filter: drop-shadow(0 2px 3px rgb(7 8 28 / 0.25));
+  transition: opacity 160ms var(--mo-ease);
 }
 .pf-cursor[data-shown] {
   opacity: 1;
 }
 .pf-cursor svg {
   display: block;
+  /* A static shadow inside the svg's own box: a live filter on a moving element is repainted every frame (slow in Safari). */
+  box-shadow: none;
   transform-origin: 4px 3px;
   transition: transform 140ms var(--mo-ease);
 }
@@ -67,7 +68,7 @@
   margin: -14px 0 0 -14px;
   border-radius: 50%;
   border: 1.5px solid var(--live);
-  animation: pf-ripple 420ms ease-out forwards;
+  animation: pf-ripple 300ms ease-out forwards;
 }
 @keyframes pf-ripple {
   from {
@@ -80,29 +81,141 @@
   }
 }
 
+/* Waiting on the app (a tool is computing): the ring breathes and the hand circles, so a long wait never looks like a freeze. */
+.pf-spot[data-busy] {
+  animation: pf-breathe 900ms ease-in-out infinite;
+}
+@keyframes pf-breathe {
+  50% {
+    box-shadow: 0 0 0 9px var(--live-glow);
+    opacity: 1;
+  }
+}
+
+/* The bracket over the chosen weeks: their dates, large, above a line that spans them. */
+.pf-bracket {
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 12px;
+  border: 2px solid var(--live);
+  border-top: 0;
+  border-radius: 0 0 4px 4px;
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform, width;
+  transition: opacity 180ms var(--mo-ease);
+}
+.pf-bracket[data-shown] {
+  opacity: 1;
+}
+.pf-bracket span {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--live);
+  box-shadow: var(--pop-shadow);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* The chosen weeks flash when the drag lets go. */
+@keyframes pf-flash {
+  0% {
+    opacity: 0.09;
+  }
+  30% {
+    opacity: 0.38;
+  }
+  100% {
+    opacity: 0.09;
+  }
+}
+html[data-perform] .hs-range.pf-flash {
+  animation: pf-flash 900ms ease-out;
+}
+/* Math writes itself: each symbol appears in the accent colour on its own beat (70 ms apart, set by Performance.tsx), then
+   settles to ink; the letters' values pop in after the last symbol, one by one. */
+@keyframes pf-token {
+  0% {
+    opacity: 0;
+    color: var(--live);
+  }
+  45% {
+    opacity: 1;
+    color: var(--live);
+  }
+}
+html[data-perform] math[data-typeset] :is(mi, mn, mo, mtext) {
+  animation: pf-token 420ms var(--mo-ease) var(--d, 0ms) both;
+}
+@keyframes pf-value {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.92);
+    background: var(--live-glow);
+  }
+  50% {
+    opacity: 1;
+    background: var(--live-glow);
+  }
+}
+html[data-perform] .nb-method .nb-letters > div {
+  animation: pf-value 520ms var(--mo-ease) both;
+  border-radius: 6px;
+}
+
+/* The countdown before a recorded show: one short line, bottom centre, gone before the hand appears. */
+.pf-count {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  transform: translate(-50%, 8px);
+  padding: 6px 16px;
+  border-radius: 999px;
+  background: var(--live);
+  box-shadow: var(--pop-shadow);
+  color: #fff;
+  font-size: var(--t-sm, 0.9rem);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 200ms var(--mo-ease),
+    transform 200ms var(--mo-ease);
+}
+.pf-count[data-shown] {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
 /* Skip: small and quiet in the bottom right corner, clear of the board's float bar, the popovers and the tour offer. */
 .pf-skip {
   position: fixed;
   right: 16px;
   bottom: 16px;
   z-index: 1;
-  min-height: 32px;
-  padding: 0 14px;
-  border: 1px solid var(--line);
+  min-height: 40px;
+  padding: 0 20px;
+  border: 1px solid var(--live);
   border-radius: 999px;
-  background: var(--glass-1);
+  background: var(--live);
   box-shadow: var(--pop-shadow);
-  color: var(--ink-2);
+  color: #fff;
   font: inherit;
-  font-size: var(--t-xs);
-  font-weight: 500;
+  font-size: var(--t-sm, 0.9rem);
+  font-weight: 600;
   cursor: pointer;
-  animation: pf-fade 400ms var(--mo-ease) 600ms both;
+  animation: pf-fade 200ms var(--mo-ease) both;
 }
-.pf-skip:hover,
-.pf-skip:focus-visible {
-  color: var(--ink);
-  border-color: var(--line-strong, var(--line));
+.pf-skip:hover {
+  filter: brightness(1.1);
 }
 .pf-skip:focus-visible {
   outline: 2px solid var(--live);
@@ -136,10 +249,10 @@ html[data-perform] .answer,
 html[data-perform] .dr-answer-head,
 html[data-perform] .dr-answer-line,
 html[data-perform] .dt {
-  animation: pf-in 480ms var(--mo-ease) both;
+  animation: pf-in 240ms var(--mo-ease) both;
 }
 html[data-perform] .nb-method {
-  animation: pf-in 560ms var(--mo-ease) 140ms both;
+  animation: pf-in 280ms var(--mo-ease) 60ms both;
 }
 /* A method opened: its constants fade in, its code arrives top to bottom. */
 @keyframes pf-unroll {
@@ -151,31 +264,39 @@ html[data-perform] .nb-method {
   }
 }
 html[data-perform] .nb-more[open] > :not(summary) {
-  animation: pf-in 420ms var(--mo-ease) both;
+  animation: pf-in 220ms var(--mo-ease) both;
 }
 html[data-perform] .nb-more[open] .nb-pre {
-  animation: pf-unroll 900ms cubic-bezier(0.4, 0, 0.3, 1) 120ms both;
+  animation: pf-unroll 420ms cubic-bezier(0.3, 0, 0.2, 1) 40ms both;
 }
 /* A chart draws itself left to right. */
-html[data-perform] .ch-fig {
-  animation: pf-draw 1100ms cubic-bezier(0.4, 0, 0.3, 1) 120ms both;
+html[data-perform] .ch-fig,
+html[data-perform] .nb-cell[data-kind="chart"] svg {
+  animation: pf-draw 600ms cubic-bezier(0.3, 0, 0.2, 1) 40ms both;
 }
 html[data-perform] .ch-read {
-  animation: pf-in 480ms var(--mo-ease) 900ms both;
+  animation: pf-in 240ms var(--mo-ease) 500ms both;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .pf-spot,
   .pf-cursor,
-  .pf-cursor svg {
+  .pf-cursor svg,
+  .pf-count {
     transition: none;
   }
   .pf-ripple,
   .pf-lock,
+  .pf-spot[data-busy],
+  .pf-bracket,
+  html[data-perform] math[data-typeset] :is(mi, mn, mo, mtext),
+  html[data-perform] .nb-method .nb-letters > div,
+  html[data-perform] .hs-range.pf-flash,
   html[data-perform] .nb-slot,
   html[data-perform] .nb-cell .tl-cell,
   html[data-perform] .nb-method,
   html[data-perform] .ch-fig,
+  html[data-perform] .nb-cell[data-kind="chart"] svg,
   html[data-perform] .ch-read,
   html[data-perform] .nb-more[open] > :not(summary),
   html[data-perform] .nb-more[open] .nb-pre,

@@ -5,25 +5,31 @@
 export type Target = string | (() => Element | null);
 
 export type Beat =
-  /** The cursor goes to it and rests there, as if reading it. */
-  | { do: "look"; at: Target; ms?: number }
-  /** The cursor goes to it and clicks it; `wait` is what should appear afterwards (a menu, a result). */
-  | { do: "click"; at: Target; wait?: Target; timeout?: number; mark?: boolean; must?: boolean }
-  /** The cursor goes to a text field and types `text`, at `cps` characters a second, then leaves the field. */
-  | { do: "type"; at: Target; text: string; cps?: number; must?: boolean }
+  /** The cursor goes to it and rests there, as if reading it; `timeout` bounds the wait for something that may not be there. */
+  | { do: "look"; at: Target; ms?: number; timeout?: number; orbit?: number }
+  /** The cursor goes to it, scans it (`turns` loops around its box, the ring on it meanwhile) and leaves it alone. */
+  | { do: "orbit"; at: Target; turns?: number; ms?: number; timeout?: number }
+  /** The cursor goes to it and clicks it; `wait` is what should appear afterwards (a menu, a result). `orbit`: loops around it first. */
+  | { do: "click"; at: Target; wait?: Target; timeout?: number; mark?: boolean; must?: boolean; orbit?: number }
+  /** The cursor goes to a text field and types `text`, at `cps` characters a second, then leaves the field (`stay`: keeps it focused, for a list that closes on blur). */
+  | { do: "type"; at: Target; text: string; cps?: number; must?: boolean; stay?: boolean; orbit?: number }
   /**
    * The cursor drags across a weekly band: the last `weeks` up to the clock, or from one fraction of the plot to
    * another (0 = the first week, 1 = the clock).
    */
-  | { do: "drag"; at: Target; weeks?: number; from?: number; to?: number; ms?: number }
+  | { do: "drag"; at: Target; dates?: [string, string]; weeks?: number; from?: number; to?: number; ms?: number }
+  /** The cursor goes to a formula, reads along it as its symbols appear one by one, then visits the values of its letters. */
+  | { do: "typeset"; at: Target; timeout?: number }
   /** The cursor goes to a select or input and sets it to `value`, as a choice made. */
-  | { do: "pick"; at: Target; value: string; must?: boolean }
+  | { do: "pick"; at: Target; value: string; must?: boolean; orbit?: number }
   /** Waits for something to appear (the real tool answering); on timeout the show goes on, unless `must`. */
   | { do: "wait"; for: Target; timeout?: number; must?: boolean }
   /** A human beat: a pause before a decision or after a result. */
   | { do: "think"; ms: number }
   /** The hand presses Escape: the menu or popover it opened closes. */
-  | { do: "escape" };
+  | { do: "escape" }
+  /** A chapter mark, free: announced with its time (the `aei:perform` event, the dev console) so a narration can be written against it. */
+  | { do: "scene"; name: string };
 
 export interface Pace {
   /** The hand's shortest and longest travel, ms; a move takes `min + 90 · log2(distance / 16 + 1)`, capped (hand.ts). */
@@ -45,12 +51,12 @@ export interface Screenplay {
 }
 
 export const PACE: Pace = {
-  min: 220,
-  max: 680,
-  dwell: 120,
-  press: 120,
-  cps: 40,
-  timeout: 6000,
+  min: 130,
+  max: 420,
+  dwell: 50,
+  press: 80,
+  cps: 95,
+  timeout: 2500,
 };
 
 // ---------- targets ----------

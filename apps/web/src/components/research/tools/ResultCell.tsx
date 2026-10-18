@@ -53,41 +53,37 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
 
 function Rate({ r, locale }: { r: RateResult; locale: Locale }) {
   const c = poissonInterval(r.count);
-  const first = t(locale, r.slice.firstOnly ? "toolsFirstYes" : "toolsFirstNo");
   return (
-    <>
-      <dl className="tl-nums">
-        <Row
-          label={t(locale, r.slice.phenotype ? "toolsRateCountPh" : "toolsRateCount", {
-            ph: r.slice.phenotype ? phenotypeName(r.slice.phenotype) : "",
-          })}
-        >
-          <b>{r.count}</b> <span className="tl-ci">{t(locale, "toolsCi", { range: span(c.lo, c.hi, (v) => num(v, locale)) })}</span>
-        </Row>
-        <Row label={t(locale, "toolsRatePerWeek")}>
-          <b>{num(r.perWeek, locale)}</b>{" "}
+    <dl className="tl-nums">
+      <Row
+        label={t(locale, r.slice.phenotype ? "toolsRateCountPh" : "toolsRateCount", {
+          ph: r.slice.phenotype ? phenotypeName(r.slice.phenotype) : "",
+        })}
+      >
+        <b>{r.count}</b> <span className="tl-ci">{t(locale, "toolsCi", { range: span(c.lo, c.hi, (v) => num(v, locale)) })}</span>
+      </Row>
+      <Row label={t(locale, "toolsRatePerWeek")}>
+        <b>{num(r.perWeek, locale)}</b>{" "}
+        <span className="tl-ci">
+          {t(locale, "toolsCi", { range: span(r.perWeekInterval.lo, r.perWeekInterval.hi, (v) => num(v, locale)) })}
+        </span>
+      </Row>
+      <Row label={t(locale, "toolsRatePer100")}>
+        <b>
+          {ok(r.per100Cultures) ? r.per100Cultures.toLocaleString(locale, { maximumFractionDigits: r.per100Cultures < 10 ? 2 : 1 }) : "–"}
+        </b>{" "}
+        <span className="tl-ci">{t(locale, "toolsRateCultures", { n: r.cultures })}</span>
+      </Row>
+      {r.share && (
+        <Row label={t(locale, "toolsRateShare", { ph: phenotypeName(r.slice.phenotype as never) })}>
+          <b>{pct(r.share.share, locale)}</b>{" "}
           <span className="tl-ci">
-            {t(locale, "toolsCi", { range: span(r.perWeekInterval.lo, r.perWeekInterval.hi, (v) => num(v, locale)) })}
+            {r.share.k}/{r.share.n} ·{" "}
+            {t(locale, "toolsCi", { range: span(r.share.interval.lo, r.share.interval.hi, (v) => pct(v, locale)) })}
           </span>
         </Row>
-        <Row label={t(locale, "toolsRatePer100")}>
-          <b>
-            {ok(r.per100Cultures) ? r.per100Cultures.toLocaleString(locale, { maximumFractionDigits: r.per100Cultures < 10 ? 2 : 1 }) : "–"}
-          </b>{" "}
-          <span className="tl-ci">{t(locale, "toolsRateCultures", { n: r.cultures })}</span>
-        </Row>
-        {r.share && (
-          <Row label={t(locale, "toolsRateShare", { ph: phenotypeName(r.slice.phenotype as never) })}>
-            <b>{pct(r.share.share, locale)}</b>{" "}
-            <span className="tl-ci">
-              {r.share.k}/{r.share.n} ·{" "}
-              {t(locale, "toolsCi", { range: span(r.share.interval.lo, r.share.interval.hi, (v) => pct(v, locale)) })}
-            </span>
-          </Row>
-        )}
-      </dl>
-      <p className="tl-method">{t(locale, "toolsMethodRate", { first })}</p>
-    </>
+      )}
+    </dl>
   );
 }
 
@@ -162,7 +158,6 @@ function Compare({ r, locale }: { r: CompareResult; locale: Locale }) {
           )}
         </Row>
       </dl>
-      <p className="tl-method">{t(locale, "toolsMethodCompare")}</p>
     </>
   );
 }
@@ -187,7 +182,6 @@ function Shares({ r, locale }: { r: SharesResult; locale: Locale }) {
           last: pct(known[known.length - 1]?.share ?? Number.NaN, locale),
         })}
       </p>
-      <p className="tl-method">{t(locale, "toolsMethodShares", { days: r.periodDays })}</p>
     </>
   );
 }
@@ -222,7 +216,6 @@ function Beta({ r, locale }: { r: BetaResult; locale: Locale }) {
         )}
       </dl>
       {dsc && <p className="tl-badge">{t(locale, "toolsBetaAccepted")}</p>}
-      <p className="tl-method">{t(locale, dsc ? "toolsMethodBetaDisc" : "toolsMethodBeta")}</p>
     </>
   );
 }
@@ -262,7 +255,6 @@ function Detector({ r, locale }: { r: DetectorResult; locale: Locale }) {
           </tbody>
         </table>
       )}
-      <p className="tl-method">{t(locale, r.detector === "profile" ? "toolsMethodProfile" : "toolsMethodPhenotype")}</p>
     </>
   );
 }
@@ -276,6 +268,7 @@ export function ResultCell({
   fresh = false,
   onToNotebook,
   removable = true,
+  inNotebook = false,
 }: {
   cell: Cell;
   locale: Locale;
@@ -290,6 +283,8 @@ export function ResultCell({
   onToNotebook?: (result: Cell["result"]) => void;
   /** Hides the × (the notebook cell has its own remove). */
   removable?: boolean;
+  /** In a notebook cell the method block sits right under the result, so the fold and Copy as Python are left out. */
+  inNotebook?: boolean;
 }) {
   const r = cell.result;
   const [copied, setCopied] = useState(false);
@@ -341,15 +336,19 @@ export function ResultCell({
       {r.kind === "shares" && <Shares r={r} locale={locale} />}
       {r.kind === "beta" && <Beta r={r} locale={locale} />}
       {r.kind === "detector" && <Detector r={r} locale={locale} />}
-      <details className="tl-cell-method">
-        <summary>{t(locale, "toolsMethodFold")}</summary>
-        <MethodBlock id={`cell-${cell.id}`} locale={locale} result={r} />
-      </details>
+      {inNotebook ? null : (
+        <details className="tl-cell-method">
+          <summary>{t(locale, "toolsMethodFold")}</summary>
+          <MethodBlock id={`cell-${cell.id}`} locale={locale} result={r} />
+        </details>
+      )}
       <footer className="tl-cell-foot">
-        <button type="button" className="btn tl-act" onClick={copy}>
-          <CopyIcon />
-          {copied ? t(locale, "toolsCopied") : t(locale, "toolsCopyPython")}
-        </button>
+        {inNotebook ? null : (
+          <button type="button" className="btn tl-act" onClick={copy}>
+            <CopyIcon />
+            {copied ? t(locale, "toolsCopied") : t(locale, "toolsCopyPython")}
+          </button>
+        )}
         <button type="button" className="btn tl-act" onClick={() => downloadFile(toCsv(cellTable(r)))}>
           <DownloadIcon />
           {t(locale, "toolsExportCsv")}

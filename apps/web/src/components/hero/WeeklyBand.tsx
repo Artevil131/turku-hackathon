@@ -3,6 +3,7 @@ import { bareWardCode, type WardCode } from "@aei/domain";
 import { type Locale, phenotypeName, siteName, t, wardName } from "@aei/i18n";
 import {
   type KeyboardEvent,
+  type MouseEvent,
   memo,
   type PointerEvent,
   type ReactNode,
@@ -100,6 +101,8 @@ interface Props {
   label: string;
   /** Compact strip only: a press on the band. */
   onActivate?: () => void;
+  /** A click on the weekly chart (not on a pill, lane or the chosen weeks): move the replay clock to the end of that week. */
+  onSeek?: (date: string) => void;
   /** The selected incident key (`alert.incident ?? alert.id`): its pill is ringed, the rest step back. */
   selected?: string | null;
   /** The selected incident's unit: the other pills there carry the kin mark. */
@@ -137,6 +140,9 @@ interface Model {
   rows: ViewRow[];
   full: ViewRow[];
   weekDays: number[];
+  /** The plot's first and last day (day numbers): x runs from the gutter to the right edge across them. */
+  d0: number;
+  d1: number;
   xOf: (day: number) => number;
   right: number;
   /** Stacked bands, bottom to top, or one line per visible phenotype when overlaid. */
@@ -344,6 +350,8 @@ function build(
   }
 
   return {
+    d0,
+    d1: dEnd,
     rows,
     full,
     weekDays: rows.map((r) => r.day),
@@ -449,7 +457,7 @@ const StaticLayer = memo(function StaticLayer({
   const pressLane = (ward: WardCode) => onFocusUnit?.(ward === focusUnit ? null : ward);
   return (
     <g>
-      <line className="hs-base" x1={L.gutter} x2={m.right} y1={L.base} y2={L.base} />
+      <line className="hs-base" x1={L.gutter} x2={m.right} y1={L.base} y2={L.base} data-d0={m.d0} data-d1={m.d1} />
       {m.stacked
         ? m.layers.map((l) => <path key={l.ph} d={l.d} className="hs-layer" style={{ fill: `url(#${id}-${l.ph})` }} />)
         : m.layers.map((l) => <path key={l.ph} d={l.d} className={`hs-line hs-ln-${l.ph}`} />)}
@@ -919,6 +927,16 @@ export function WeeklyBand(p: Props) {
     setHover(idx < 0 ? null : { idx, kbd: false });
   };
 
+  const onSeekClick = (e: MouseEvent) => {
+    if (compact || disabled || !p.onSeek || (e.target as Element).closest(".hs-pill, .hs-leg, .hs-lane, .hs-range-x")) return;
+    const idx = idxAt(e.clientX);
+    const row = idx < 0 ? undefined : m.rows[idx];
+    if (!row) return;
+    const date = row.last < asOf ? row.last : asOf;
+    if (p.range && date >= p.range.from && date <= p.range.to) return;
+    p.onSeek(date);
+  };
+
   const clearHover = useCallback(() => {
     cancelAnimationFrame(frame.current);
     frame.current = 0;
@@ -1025,6 +1043,8 @@ export function WeeklyBand(p: Props) {
           else if (selected && p.onClear) p.onClear();
         }}
         onPointerDown={onDown}
+        onClick={onSeekClick}
+        data-seek={p.onSeek && !compact && !disabled ? "" : undefined}
         onFocus={(e) => {
           const w = Number((e.target as Element).getAttribute("data-week") ?? "-1");
           if (w >= 0) setHover({ idx: w, kbd: true });

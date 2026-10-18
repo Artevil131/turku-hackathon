@@ -38,16 +38,16 @@ export type Script = readonly Step[];
 
 /** Default lengths, in seconds, when a beat names none. */
 export const PACE = {
-  rise: 0.5,
-  wipe: 0.9,
+  rise: 0.25,
+  wipe: 0.45,
   /** Characters per second: brisk, but each sentence still arrives as one. */
-  cps: 80,
-  field: 0.24,
-  show: 0.3,
-  press: 0.22,
-  think: 0.5,
-  numbers: 0.5,
-  draw: 1.0,
+  cps: 160,
+  field: 0.12,
+  show: 0.15,
+  press: 0.1,
+  think: 0.25,
+  numbers: 0.3,
+  draw: 0.6,
   /** A chart fetches its data before it can draw. */
   load: 0.4,
   pick: 0.28,

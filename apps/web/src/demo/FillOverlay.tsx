@@ -10,6 +10,8 @@ import { scriptFor } from "./fillScripts.ts";
 import type { FillPlan } from "./openDemo.ts";
 import { Clock } from "./perform/clock.ts";
 import { type Outcome, Performance } from "./perform/Performance.tsx";
+import { win as winTarget } from "./perform/script.ts";
+import { screenplayFor } from "./perform/scripts.ts";
 import "./fill.css";
 
 // A demo opens empty and fills itself in while the screen is locked. First choice: a performance (perform/), in
@@ -21,7 +23,18 @@ import "./fill.css";
 export function FillOverlay(props: { locale: Locale; plan: FillPlan; onDone: (how: Outcome) => void }) {
   const [mode, setMode] = useState<"perform" | "plain">(() => (demoOf(props.plan) ? "perform" : "plain"));
   const demo = demoOf(props.plan);
-  if (mode === "perform" && demo) return <Performance {...props} demo={demo} onFallback={() => setMode("plain")} />;
+  if (mode === "perform" && demo)
+    return (
+      <Performance
+        locale={props.locale}
+        screenplay={screenplayFor(demo, props.locale)}
+        // The board mounts a moment after the project opens: its first window is the stage.
+        stage={winTarget(props.plan.windows[0] ?? "")}
+        onDone={props.onDone}
+        onSkip={() => applyPlan(props.plan)}
+        onFallback={() => setMode("plain")}
+      />
+    );
   return <PlainFill {...props} />;
 }
 

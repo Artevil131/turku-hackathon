@@ -73,6 +73,25 @@
       ],
       "port": 8795,
       "autoPort": false
+    },
+    {
+      "name": "api-judge",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "cd ../turku-judge-fixes && AEI_PORT=8796 pnpm dev:api"
+      ],
+      "port": 8796,
+      "autoPort": false
+    },
+    {
+      "name": "web-judge",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "cd ../turku-judge-fixes && AEI_API_URL=http://localhost:8796 pnpm --filter @aei/web exec vite --port 5182 --strictPort"
+      ],
+      "port": 5182
     }
   ]
 }
