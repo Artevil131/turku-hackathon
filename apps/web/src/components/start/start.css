@@ -549,6 +549,10 @@
   max-height: 360px;
   overflow: auto;
 }
+.start-heading {
+  position: relative;
+  z-index: 30;
+}
 .start-heading-row {
   display: flex;
   align-items: center;
@@ -559,10 +563,18 @@
 }
 .start-heading-row h1 {
   margin: 0;
+  white-space: nowrap;
 }
 .start-actions {
   display: flex;
   gap: 8px;
+}
+@media (max-width: 760px) {
+  .start-ask {
+    order: 3;
+    flex-basis: 100%;
+    max-width: none;
+  }
 }
 .start-actions button {
   padding: 8px 14px;
@@ -793,14 +805,17 @@
 
 /* The question box: one big field and three questions that open their answer in one click. */
 .start-ask {
-  margin: 0 0 28px;
+  position: relative;
+  flex: 1 1 220px;
+  min-width: 220px;
+  max-width: 640px;
 }
 .start-ask-field {
   display: flex;
   align-items: center;
   gap: 12px;
   width: 100%;
-  min-height: 56px;
+  min-height: 48px;
   padding: 0 18px;
   border: 1px solid var(--line-strong, var(--line));
   border-radius: 999px;
@@ -818,6 +833,10 @@
 }
 .start-ask-field span {
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .start-ask-field kbd {
   padding: 1px 8px;
@@ -825,16 +844,42 @@
   border-radius: 6px;
   font-size: var(--t-xs);
 }
+/* Example questions slide down under the field when it is reached; they float, so nothing below moves. */
 .start-ask-chips {
-  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: max(100%, 380px);
+  z-index: 5;
+  display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--glass-1);
+  box-shadow: var(--pop-shadow);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px);
+  pointer-events: none;
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease,
+    visibility 0s linear 160ms;
 }
-/* Example questions stay out of sight until the field is reached. */
 .start-ask:focus-within .start-ask-chips,
 .start-ask:hover .start-ask-chips {
-  display: flex;
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  pointer-events: auto;
+  transition-delay: 0s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .start-ask-chips {
+    transition: none;
+  }
 }
 .start-ask-chips button {
   min-height: 36px;

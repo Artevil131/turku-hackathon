@@ -182,6 +182,35 @@ export function StartPage({
         <header className="start-heading">
           <div className="start-heading-row">
             <h1>{t(locale, "startHeading")}</h1>
+            <div className="start-ask" role="search">
+              <button type="button" className="start-ask-field" data-start-ask onClick={openSearch}>
+                <svg
+                  viewBox="0 0 24 24"
+                  width="20"
+                  height="20"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="11" cy="11" r="6.5" />
+                  <path d="m16 16 4.5 4.5" />
+                </svg>
+                <span>{t(locale, "startAskPlaceholder")}</span>
+                <kbd>/</kbd>
+              </button>
+              <div className="start-ask-chips">
+                {CHIPS[role].map((c) => (
+                  <button type="button" key={c.label} onClick={() => run(c.action)}>
+                    {t(locale, c.label)}
+                  </button>
+                ))}
+                <button type="button" className="start-ask-more" data-more-questions onClick={() => setMore(true)}>
+                  {t(locale, "qMoreOpen")}
+                </button>
+              </div>
+            </div>
             <div className="start-actions">
               {/* A new project asks first (name, template, scope): the one-click way is a template card below. */}
               <button
@@ -294,35 +323,6 @@ export function StartPage({
             </ScrollRow>
           )}
         </section>
-        <div className="start-ask" role="search">
-          <button type="button" className="start-ask-field" data-start-ask onClick={openSearch}>
-            <svg
-              viewBox="0 0 24 24"
-              width="20"
-              height="20"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-              aria-hidden="true"
-            >
-              <circle cx="11" cy="11" r="6.5" />
-              <path d="m16 16 4.5 4.5" />
-            </svg>
-            <span>{t(locale, "startAskPlaceholder")}</span>
-            <kbd>/</kbd>
-          </button>
-          <div className="start-ask-chips">
-            {CHIPS[role].map((c) => (
-              <button type="button" key={c.label} onClick={() => run(c.action)}>
-                {t(locale, c.label)}
-              </button>
-            ))}
-            <button type="button" className="start-ask-more" data-more-questions onClick={() => setMore(true)}>
-              {t(locale, "qMoreOpen")}
-            </button>
-          </div>
-        </div>
         <section id="start-demos" tabIndex={-1}>
           <h2>{t(locale, "demoSection")}</h2>
           <div className="start-demo-grid">
