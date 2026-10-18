@@ -120,10 +120,58 @@ function Notebook() {
   );
 }
 
+/** Unit monitoring: what is open now across the top, the notes and a live line beneath it. */
+function Monitor() {
+  return (
+    <>
+      <rect className="ta-win" x="8" y="4" width="144" height="18" rx="3" />
+      <rect className="ta-pill-alert" x="14" y="9" width="22" height="8" rx="2.5" />
+      <line className="ta-text" x1="42" x2="100" y1="13" y2="13" />
+      <rect className="ta-win" x="8" y="26" width="64" height="34" rx="3" />
+      <line className="ta-text" x1="14" x2="58" y1="36" y2="36" />
+      <line className="ta-text" x1="14" x2="48" y1="44" y2="44" />
+      <path className="ta-line" d="M82 52 L96 49 L110 51 L124 44 L138 46 L148 37" />
+      <circle className="ta-dot-alert" cx="148" cy="37" r="3.2" />
+    </>
+  );
+}
+
+/** Outbreak investigation: patients as linked nodes, the cluster in red. */
+function Network() {
+  const nodes = [
+    [34, 20],
+    [72, 12],
+    [110, 22],
+    [56, 44],
+    [96, 48],
+    [134, 40],
+  ] as const;
+  const links = [
+    [0, 1],
+    [1, 2],
+    [0, 3],
+    [1, 3],
+    [2, 4],
+    [3, 4],
+    [4, 5],
+    [2, 5],
+  ] as const;
+  return (
+    <>
+      {links.map(([a, b]) => (
+        <line key={`${a}-${b}`} className="ta-axis" x1={nodes[a][0]} y1={nodes[a][1]} x2={nodes[b][0]} y2={nodes[b][1]} />
+      ))}
+      {nodes.map(([x, y], i) => (
+        <circle key={`${x}-${y}`} className={i === 1 || i === 3 || i === 4 ? "ta-dot-alert" : "ta-dot"} cx={x} cy={y} r="4.2" />
+      ))}
+    </>
+  );
+}
+
 const TEMPLATE_ART: Record<Template, () => ReactElement> = {
   research: Notebook,
-  monitor: Lanes,
-  outbreak: Lanes,
+  monitor: Monitor,
+  outbreak: Network,
   antibiogram: Grid,
   patient: Coverage,
   regional: Trend,
