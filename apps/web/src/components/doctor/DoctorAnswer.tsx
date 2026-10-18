@@ -143,6 +143,14 @@ export function DoctorAnswer({
       {asOf && !loading && !failed ? (
         <p className="dr-answer-when">
           {t(locale, "drAnswerData", { date: formatDate(locale, asOf, "long"), unit: wardName(locale, filters.unit as never) })}
+          {" · "}
+          <button
+            type="button"
+            className="dr-change-date"
+            onClick={() => dispatchEvent(new CustomEvent("aei:open-window", { detail: "timeline" }))}
+          >
+            {t(locale, "drChangeDate")}
+          </button>
         </p>
       ) : null}
       <p className="dr-answer-note">{t(locale, "drAnswerNote")}</p>

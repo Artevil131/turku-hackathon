@@ -396,3 +396,14 @@
   min-height: 0;
   overflow: visible;
 }
+
+.dr-change-date {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--live);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}

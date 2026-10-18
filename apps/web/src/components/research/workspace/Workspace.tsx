@@ -535,6 +535,17 @@ export function Workspace({
     onOpened?.(id);
   };
   const toggle = (id: WinId) => (base.wins[id].open ? close(id) : open(id));
+  // Other panels ask for a window by name: the doctor's "Change date" opens the timeline.
+  const openRef = useRef(open);
+  openRef.current = open;
+  useEffect(() => {
+    const onAsk = (e: Event) => {
+      const id = (e as CustomEvent<WinId>).detail;
+      if (id) openRef.current(id);
+    };
+    addEventListener("aei:open-window", onAsk);
+    return () => removeEventListener("aei:open-window", onAsk);
+  }, []);
   // A new window of any kind, as often as the grid allows: where the researcher asked, else under the others.
   const add = (kind: WinId, at?: Partial<Rect>, between?: Between) => {
     const added = (between ? insertBetween(base, kind, between.a, between.b, between.axis) : null) ?? addWindow(base, kind, at);
