@@ -1,4 +1,5 @@
 import { fillTemplate, TOOL_METHODS, type ToolMethod } from "@aei/method";
+import { apiOrigin } from "../notebook/kernel.ts";
 import { type CellResult, pythonCall } from "./model.ts";
 
 // What each result was computed with: the registry's method for it, the formula's letters with this result's
@@ -90,7 +91,7 @@ export function lettersOf(r: CellResult): { show: [string, number | string][]; f
       };
     }
     case "detector": {
-      const fill = { ward: r.slice.unit, organism: r.slice.organism, from: r.slice.from, to: r.slice.to };
+      const fill = { api: apiOrigin(), ward: r.slice.unit, organism: r.slice.organism, from: r.slice.from, to: r.slice.to };
       return {
         show: [
           ["episodes", r.rows.length],

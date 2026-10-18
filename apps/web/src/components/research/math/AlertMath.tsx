@@ -30,6 +30,7 @@ import { type Incident, oneDecimal, shift, windowOf } from "../feed/model.ts";
 import { kindLabel, signalTitle } from "../feed/names.ts";
 import { SpanGroups } from "../feed/SpanChips.tsx";
 import type { Spans } from "../feed/spans.ts";
+import { apiOrigin } from "../notebook/kernel.ts";
 import type { Slice } from "../tools/model.ts";
 import { SignalAnalysis } from "./SignalAnalysis.tsx";
 import "./math.css";
@@ -488,7 +489,7 @@ export function MethodEntry({
   explain?: ReactNode;
 }) {
   const [lang, setLang] = useState<"py" | "r" | "ts">("py");
-  const code = lang === "ts" ? `${method.code.fn}()  // ${method.code.ts}` : fillSnippet(method, values, lang);
+  const code = lang === "ts" ? `${method.code.fn}()  // ${method.code.ts}` : fillSnippet(method, { api: apiOrigin(), ...values }, lang);
   const figure = a?.kind === "detector" && COUNT_DETECTORS.includes(a.detector) && a.p !== undefined && a.expected !== undefined;
   const note =
     lang === "r"

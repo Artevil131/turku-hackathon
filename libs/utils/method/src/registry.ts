@@ -36,7 +36,7 @@ export interface Method {
   decisions: string[];
   /**
    * A Python snippet for the notebook. The placeholders {ward}, {organism}, {from} and {to} are
-   * filled by `fillSnippet`. It reads the live set (`live_signals`) and keeps this detector's signals.
+   * filled by `fillSnippet`, plus {api} (the server `aei.connect` reads). It reads the live alerts and keeps this detector's.
    */
   snippet: string;
   /**
@@ -50,6 +50,7 @@ export interface Method {
 }
 
 export type SnippetKey =
+  | "api"
   | "ward"
   | "organism"
   | "from"
@@ -68,14 +69,16 @@ const { profileExcess, phenotypeExcess, samplingDrop, volumeJump, emptyRun, risi
 /** The baseline floor of the excess detectors: the code keeps it beside the test, not in LIVE_SETTINGS (detectors.ts). */
 const MIN_BASELINE_ISOLATES = 50;
 
-/** The Python line that keeps this detector's signals of the live set, filtered to the card's unit, organism and dates. */
+/** The Python that reads the live alerts through aei and keeps this detector's, filtered to the card's unit, organism and dates. */
 const liveSnippet = (detector: string, filter: string) =>
   [
-    "from aei.detect import live_signals",
-    "signals = [",
-    `    s for s in live_signals(records, cultures)`,
-    `    if s.detector == "${detector}"${filter}`,
-    "]",
+    "import aei",
+    'alerts = aei.connect("{api}").alerts()',
+    "signals = alerts[[",
+    `    s.kind == "detector" and s.detector == "${detector}"${filter}`,
+    "    for s in alerts.itertuples()",
+    "]]",
+    "signals",
   ].join("\n");
 
 const DATES = ` and "{from}" <= s.date <= "{to}"`;
@@ -307,11 +310,11 @@ export const METHODS: Record<MethodId, Method> = {
     code: { ts: "libs/utils/alerts/src/index.ts", fn: "cpeAlerts", py: "" },
     decisions: ["D-014"],
     snippet: [
-      "# CPE: every isolate is an alert on its sample date (D-014); no Python function yet, filter the records",
-      "cpe = [",
-      "    r for r in records",
-      '    if "cpe" in r.phenotypes and r.ward == "{ward}" and "{from}" <= r.sample_date <= "{to}"',
-      "]",
+      "# CPE: every isolate is an alert on its sample date (D-014); no Python function yet, filter the isolates",
+      "import aei",
+      'records = aei.connect("{api}").isolates(ward="{ward}", to="{to}", **{"from": "{from}"})',
+      'cpe = records[["cpe" in r.phenotypes.split(";") for r in records.itertuples()]]',
+      "cpe",
     ].join("\n"),
     r: [
       "# CPE is a rule, no test (D-014): the isolates it fires on",
@@ -338,11 +341,11 @@ export const METHODS: Record<MethodId, Method> = {
     code: { ts: "libs/utils/alerts/src/index.ts", fn: "newInUnitAlerts", py: "" },
     decisions: ["D-021", "D-034"],
     snippet: [
-      "# New in unit: first MRSA or VRE in 180 days (D-021); no Python function yet, filter the records",
-      "new = [",
-      "    r for r in records",
-      '    if ("mrsa" in r.phenotypes or "vre" in r.phenotypes) and r.ward == "{ward}" and "{from}" <= r.sample_date <= "{to}"',
-      "]",
+      "# New in unit: first MRSA or VRE in 180 days (D-021); no Python function yet, filter the isolates",
+      "import aei",
+      'records = aei.connect("{api}").isolates(ward="{ward}", to="{to}", **{"from": "{from}"})',
+      'new = records[[bool({"mrsa", "vre"} & set(r.phenotypes.split(";"))) for r in records.itertuples()]]',
+      "new",
     ].join("\n"),
     r: [
       `# New in unit is a rule, no test (D-021): MRSA or VRE on the unit, none in the ${NEW_IN_UNIT_DAYS} days before`,
@@ -363,7 +366,7 @@ export function methodOf(alert: { kind: string; detector?: string }): Method | n
 /** The notebook snippet with its placeholders filled; unknown placeholders stay as written. */
 export function fillSnippet(method: Method, values: SnippetValues, lang: "py" | "r" = "py"): string {
   return (lang === "r" ? method.r : method.snippet).replace(
-    /\{(ward|organism|from|to|testFrom|testTo|phenotype|profile|antibiotic|observed|expected)\}/g,
+    /\{(api|ward|organism|from|to|testFrom|testTo|phenotype|profile|antibiotic|observed|expected)\}/g,
     (_, key: SnippetKey) =>
       values[key] ??
       (key === "testFrom" ? values.from : key === "testTo" ? values.to : key === "observed" || key === "expected" ? "NA" : ""),
