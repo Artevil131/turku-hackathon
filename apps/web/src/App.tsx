@@ -13,6 +13,7 @@ import { Sidebar, tabName } from "./components/shell/Sidebar.tsx";
 import { type Audience, storedAudience } from "./components/start/audience.ts";
 import { StartPage } from "./components/start/StartPage.tsx";
 import { applyPlan } from "./demo/applyPlan.ts";
+import { copy } from "./demo/fillCopy.ts";
 import { nudgeOff } from "./demo/nudge.ts";
 import { DEMOS, type DemoId, type DemoSpec, type TourId } from "./demo/demos.ts";
 import { FillOverlay } from "./demo/FillOverlay.tsx";
@@ -162,6 +163,23 @@ export function App() {
   // journey, with no second overlay and no tour offer. Escape stops it; the last empty notebook then snaps to its plan.
   const [showcase, setShowcase] = useState<{ key: number } | null>(null);
   const showing = useRef(false);
+  // After a demo has filled itself in: a short line saying the screen is yours again, gone on the first touch or after a few seconds.
+  const [handoff, setHandoff] = useState<number | null>(null);
+  useEffect(() => {
+    if (handoff === null) return;
+    const end = () => setHandoff(null);
+    const timer = setTimeout(end, 6000);
+    const armed = setTimeout(() => {
+      addEventListener("pointerdown", end, { once: true });
+      addEventListener("keydown", end, { once: true });
+    }, 600);
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(armed);
+      removeEventListener("pointerdown", end);
+      removeEventListener("keydown", end);
+    };
+  }, [handoff]);
   showing.current = showcase !== null;
   const showcasePlan = useRef<FillPlan | null>(null);
   const [slots, setSlots] = useState<Slots>({ actions: null, windows: null });
@@ -579,8 +597,14 @@ export function App() {
                   // Played to the end, the guide is offered; skipped, the judge goes straight to the finished project.
                   if (how !== "skipped") setTour({ demo: filling.demo, key: Date.now() });
                   setFilling(null);
+                  setHandoff(Date.now());
                 }}
               />
+            ) : null}
+            {handoff !== null ? (
+              <p className="handoff" role="status">
+                {copy(locale, "handoff")}
+              </p>
             ) : null}
             {showcase ? (
               <Performance
