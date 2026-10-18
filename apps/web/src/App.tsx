@@ -596,6 +596,16 @@ export function App() {
                 onDone={(how?: "done" | "skipped") => {
                   // Played to the end, the guide is offered; skipped, the judge goes straight to the finished project.
                   if (how !== "skipped") setTour({ demo: filling.demo, key: Date.now() });
+                  // The filters that framed the story come off, so the Signals list shows everything in the chosen period.
+                  const params = hashParams();
+                  if (["unit", "ph", "kind"].some((k) => params.has(k))) {
+                    // The timeline keeps looking at the unit the story was about.
+                    const unit = params.get("unit");
+                    if (unit && !params.has("focus")) params.set("focus", unit);
+                    for (const k of ["unit", "ph", "kind"]) params.delete(k);
+                    history.replaceState(null, "", `#${PROJECT_PAGE}?${params}`);
+                    dispatchEvent(new HashChangeEvent("hashchange"));
+                  }
                   setFilling(null);
                   setHandoff(Date.now());
                 }}
