@@ -13,7 +13,7 @@ import { Sidebar, tabName } from "./components/shell/Sidebar.tsx";
 import { type Audience, storedAudience } from "./components/start/audience.ts";
 import { StartPage } from "./components/start/StartPage.tsx";
 import { applyPlan } from "./demo/applyPlan.ts";
-import type { DemoId, DemoSpec, TourId } from "./demo/demos.ts";
+import { DEMOS, type DemoId, type DemoSpec, type TourId } from "./demo/demos.ts";
 import { FillOverlay } from "./demo/FillOverlay.tsx";
 import type { FillPlan } from "./demo/openDemo.ts";
 import { openDemo } from "./demo/openDemo.ts";
@@ -168,6 +168,25 @@ export function App() {
   const setWindowsSlot = useCallback((el: HTMLElement | null) => setSlots((s) => (s.windows === el ? s : { ...s, windows: el })), []);
   const phone = useMedia(PHONE);
   const live = useLive();
+  const clockRef = useRef(live.clock);
+  clockRef.current = live.clock;
+  const liveClient = live.client;
+  // A demo parks the shared replay clock on its story's day; anything of your own answers about now (D-079), the
+  // newest day the data reaches if that is earlier than today.
+  const toNow = useCallback(() => {
+    const c = clockRef.current;
+    if (!c) return;
+    const today = new Date().toLocaleDateString("sv");
+    const now = today < c.end ? today : c.end;
+    if (c.asOf === now && !c.running) return;
+    void liveClient
+      .command({ action: "pause" })
+      .then(() => liveClient.command({ action: "seek", date: now }))
+      .catch(() => undefined);
+  }, [liveClient]);
+  const toNowRef = useRef(toNow);
+  toNowRef.current = toNow;
+  const lastKey = useRef(`${pageFromHash()}|${tabKey(location.hash)}`);
   const reducedMotion = usePrefersReducedMotion();
 
   // The selected hospital (D-051): one source of truth, in the URL as `hospital`, remembered, the home site by
@@ -261,7 +280,10 @@ export function App() {
         const hash = location.hash;
         setTabs((open) => upsertTab(open, hash));
         setActiveKey(tabKey(hash));
+        // Arriving at a view of your own (search, a link) that is not a saved project: answer about now, not a demo's day.
+        if (`${next}|${tabKey(hash)}` !== lastKey.current && !hashParams().get("project")) toNowRef.current();
       }
+      lastKey.current = `${next}|${tabKey(location.hash)}`;
       // Back and forward, or a pasted link, may name another hospital.
       if (isMulti()) {
         const s = validSite(hashParams().get(HOSPITAL_PARAM));
@@ -301,6 +323,8 @@ export function App() {
   const shell = useMemo<Shell>(
     () => ({
       openProject: (project: Project) => {
+        const isDemo = DEMOS.some((d) => t(locale, d.titleKey) === project.name);
+        if (!isDemo && project.mode !== "frozen") toNow();
         const open = tabsRef.current.find((tab) => tab.project === project.id);
         setTabs((all) =>
           patchTab(upsertTab(all, open?.hash ?? projectHash(project)), `p:${project.id}`, {
@@ -312,6 +336,7 @@ export function App() {
         go(open?.hash ?? projectHash(project));
       },
       openView: (quick, params) => {
+        toNow();
         const search = new URLSearchParams(params);
         if (quick) search.set("quick", quick);
         const hospital = hashParams().get(HOSPITAL_PARAM);
@@ -332,7 +357,7 @@ export function App() {
         setTabs((all) => patchTab(all, key, { name: project.name, frozen: project.mode === "frozen", asOf: project.asOf ?? null, drift }));
       },
     }),
-    [go, close, navigate, locale],
+    [go, close, navigate, locale, toNow],
   );
   useEffect(() => {
     if (!notice) return;

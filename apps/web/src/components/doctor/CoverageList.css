@@ -77,7 +77,7 @@
 .cl-cols,
 .cl-row {
   display: grid;
-  grid-template-columns: minmax(110px, 1fr) minmax(55px, 0.6fr) minmax(200px, 1.4fr) 64px 48px;
+  grid-template-columns: minmax(110px, 1fr) minmax(55px, 0.5fr) fit-content(560px) 64px 48px;
   align-items: center;
   column-gap: 8px;
 }
@@ -236,6 +236,7 @@
 /* Two figures, year then four weeks, each a number over its label. */
 .cl-figs {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: 2px 16px;
 }
@@ -256,6 +257,7 @@
 }
 .cl-pair {
   display: flex;
+  flex-wrap: wrap;
   gap: 2px 14px;
   padding-left: 14px;
   border-left: 1px solid var(--d-line);
@@ -389,7 +391,7 @@
 @container coverage (max-width: 1199px) {
   .cl-cols,
   .cl-row {
-    grid-template-columns: minmax(100px, 1fr) minmax(175px, 1.5fr) 62px 44px;
+    grid-template-columns: minmax(100px, 1fr) fit-content(560px) 62px 44px;
     column-gap: 6px;
   }
   .cl-plot,
