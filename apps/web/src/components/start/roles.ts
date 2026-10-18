@@ -131,16 +131,20 @@ export const MORE_QUESTIONS: Record<Role, Chip[]> = Object.fromEntries(
   ).map(([role, ids]) => [role, ids.flatMap((id) => QUESTION[id] ?? [])]),
 ) as Record<Role, Chip[]>;
 
-export const TEMPLATE_ORDER: Record<Role, Template[]> = {
-  clinician: ["patient", "antibiogram", "outbreak", "regional", "blank"],
-  control: ["outbreak", "antibiogram", "patient", "regional", "blank"],
-  stewardship: ["antibiogram", "regional", "patient", "outbreak", "blank"],
-  lab: ["antibiogram", "outbreak", "regional", "patient", "blank"],
-  researcher: ["blank", "regional", "outbreak", "antibiogram", "patient"],
-  surveillance: ["regional", "antibiogram", "outbreak", "patient", "blank"],
-  management: ["outbreak", "regional", "antibiogram", "patient", "blank"],
-  other: ["patient", "outbreak", "antibiogram", "regional", "blank"],
-};
+/** Research and Treat a patient, the two empty desks of the demo files, come first for everyone; the rest follow in the role's order. */
+const firstTwo = (rest: Template[]): Template[] => ["research", "patient", ...rest.filter((t) => t !== "research" && t !== "patient")];
+export const TEMPLATE_ORDER: Record<Role, Template[]> = Object.fromEntries(
+  Object.entries({
+    clinician: ["patient", "antibiogram", "outbreak", "regional", "blank"],
+    control: ["outbreak", "antibiogram", "patient", "regional", "blank"],
+    stewardship: ["antibiogram", "regional", "patient", "outbreak", "blank"],
+    lab: ["antibiogram", "outbreak", "regional", "patient", "blank"],
+    researcher: ["blank", "regional", "outbreak", "antibiogram", "patient"],
+    surveillance: ["regional", "antibiogram", "outbreak", "patient", "blank"],
+    management: ["outbreak", "regional", "antibiogram", "patient", "blank"],
+    other: ["patient", "outbreak", "antibiogram", "regional", "blank"],
+  }).map(([role, rest]) => [role, firstTwo(rest as Template[])]),
+) as Record<Role, Template[]>;
 
 /** The demo file each role starts from. */
 export const ROLE_DEMO: Record<Role, "clinician" | "control" | "researcher"> = {

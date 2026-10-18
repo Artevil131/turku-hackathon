@@ -91,7 +91,7 @@ export interface DemoTourProps {
 }
 
 /** The template a demo was built from: what "start empty" opens. */
-const TEMPLATE_OF: Record<Exclude<TourId, "overview">, Template> = { clinician: "patient", control: "outbreak", researcher: "blank" };
+const TEMPLATE_OF: Record<Exclude<TourId, "overview">, Template> = { clinician: "patient", control: "outbreak", researcher: "research" };
 /** How long the tour offer stands before it turns into the offer of an empty copy, ms. */
 const EMPTY_AFTER_MS = 45_000;
 

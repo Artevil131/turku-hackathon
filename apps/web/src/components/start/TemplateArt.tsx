@@ -121,6 +121,7 @@ function Notebook() {
 }
 
 const TEMPLATE_ART: Record<Template, () => ReactElement> = {
+  research: Notebook,
   outbreak: Lanes,
   antibiogram: Grid,
   patient: Coverage,

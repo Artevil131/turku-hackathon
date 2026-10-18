@@ -1,8 +1,9 @@
 import { baseLayout, type Layout, serializeLayout, WIN_IDS, type WinId, type WinState, withTimeline } from "./layout.ts";
 
-export const TEMPLATES = ["blank", "outbreak", "antibiogram", "regional", "patient"] as const;
+export const TEMPLATES = ["research", "patient", "blank", "outbreak", "antibiogram", "regional"] as const;
 export type Template = (typeof TEMPLATES)[number];
 export const TEMPLATE_KEYS = {
+  research: ["startResearch", "startResearchNote"],
   blank: ["startBlank", "startBlankNote"],
   outbreak: ["startOutbreak", "startOutbreakNote"],
   antibiogram: ["startAntibiogram", "startAntibiogramNote"],
@@ -14,6 +15,11 @@ export const QUICK_STARTS: readonly Template[] = ["patient"];
 
 /** Which windows each template opens, as grid rectangles (12 columns, 24 px rows). Every template also gets the timeline across the top. */
 const OPEN: Record<Template, Partial<Record<WinId, Partial<WinState>>>> = {
+  // The researcher demo's desk, empty: the notebook to write in with the signals beside it.
+  research: {
+    notebook: { x: 0, y: 0, w: 8, h: 56 },
+    signals: { x: 8, y: 0, w: 4, h: 56 },
+  },
   blank: {},
   outbreak: {
     answer: { x: 0, y: 0, w: 12, h: 9 },
