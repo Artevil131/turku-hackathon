@@ -131,7 +131,6 @@ export function DoctorAnswer({
                     : ""}
                 </small>
               </div>
-              <span className="dr-answer-compare-why">{t(locale, "drAnswerRankNote")}</span>
             </div>
           ) : null}
           {/* The rest of the list as pills; the table below has the bars and the details. */}
