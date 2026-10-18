@@ -12,7 +12,10 @@
       "!**/dist",
       "!apps/web/smoke-out",
       "!!.claude/worktrees",
-      "!benchmarks/**/*.json"
+      "!benchmarks/**/*.json",
+      "!apps/video/src/snapshot.json",
+      "!apps/web/public/samples",
+      "!**/.impeccable/hook.cache.json"
     ]
   },
   "formatter": {

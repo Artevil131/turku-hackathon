@@ -1,5 +1,5 @@
 import type { CountiesResponse, RegionalResponse, RegionalSeries, RegionalSignal, WeeklyResponse } from "@aei/contract";
-import { countyName, formatMonth, type Locale, t } from "@aei/i18n";
+import { countyName, formatMonth, type Locale, phenotypeName, t } from "@aei/i18n";
 import { addDaysIso } from "@aei/viz";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AsOf } from "../../AsOf.tsx";
@@ -20,6 +20,8 @@ import { useLoad } from "./useLoad.ts";
 // the separate unit graph shows Tyks's own (synthetic demo) data.
 
 const DEFAULT_GROUP = "MRSA carriage";
+/** Narrower than this the map is not drawn: its window shows the title and "Open larger". */
+const NARROW_PX = 190;
 const NATIONAL = "Finland (all counties)";
 /** The selected hospital's county (D-051); the home site's, Varsinais-Suomi, with one hospital or all. */
 const siteCounty = () => (allSites().find((s) => s.id === currentSite()) ?? homeSite()).county;
@@ -38,16 +40,36 @@ const SERIES_KEY = {
   "VRE blood/CSF": "mapSeriesVreBlood",
   "VRE carriage": "mapSeriesVreCarr",
 } as const;
-/** The THL series that matches a hospital signal: same phenotype, carriage, same organism where THL has it. */
-export function seriesForSignal(phenotypes: readonly string[], organism?: string): string | null {
+/**
+ * The THL series closest to a hospital signal, and what it was matched on: the signal's phenotype where it has one
+ * (carriage series, the organism where THL has it), else its organism (an E. coli profile cluster has no phenotype,
+ * and the ESBL E. coli series is the nearest national picture). Null when nothing is close.
+ */
+export function matchSeries(
+  phenotypes: readonly string[],
+  organism?: string,
+): { group: string; basis: "phenotype" | "organism"; phenotype?: string } | null {
   const kpn = organism?.includes("pneumoniae");
   if (phenotypes.includes("cpe"))
-    return organism?.includes("cloacae") ? "CPE carriage, E. cloacae" : kpn ? "CPE carriage, K. pneumoniae" : "CPE carriage, E. coli";
-  if (phenotypes.includes("esbl")) return kpn ? "ESBL carriage, K. pneumoniae" : "ESBL carriage, E. coli";
-  if (phenotypes.includes("mrsa")) return "MRSA carriage";
-  if (phenotypes.includes("vre")) return "VRE carriage";
+    return {
+      group: organism?.includes("cloacae") ? "CPE carriage, E. cloacae" : kpn ? "CPE carriage, K. pneumoniae" : "CPE carriage, E. coli",
+      basis: "phenotype",
+      phenotype: "cpe",
+    };
+  if (phenotypes.includes("esbl"))
+    return { group: kpn ? "ESBL carriage, K. pneumoniae" : "ESBL carriage, E. coli", basis: "phenotype", phenotype: "esbl" };
+  if (phenotypes.includes("mrsa")) return { group: "MRSA carriage", basis: "phenotype", phenotype: "mrsa" };
+  if (phenotypes.includes("vre")) return { group: "VRE carriage", basis: "phenotype", phenotype: "vre" };
+  if (!organism) return null;
+  if (organism.includes("coli")) return { group: "ESBL carriage, E. coli", basis: "organism" };
+  if (kpn || organism.includes("Klebsiella")) return { group: "ESBL carriage, K. pneumoniae", basis: "organism" };
+  if (organism.includes("cloacae")) return { group: "CPE carriage, E. cloacae", basis: "organism" };
+  if (organism.includes("Staphylococcus")) return { group: "MRSA carriage", basis: "organism" };
+  if (organism.includes("Enterococcus")) return { group: "VRE carriage", basis: "organism" };
   return null;
 }
+export const seriesForSignal = (phenotypes: readonly string[], organism?: string): string | null =>
+  matchSeries(phenotypes, organism)?.group ?? null;
 
 export interface MapSignal {
   phenotypes: readonly string[];
@@ -59,8 +81,16 @@ const seriesLabel = (locale: Locale, group: string) =>
   group in SERIES_KEY ? t(locale, SERIES_KEY[group as keyof typeof SERIES_KEY]) : group;
 
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
-const fmt = (locale: Locale, v: number, digits = 1) =>
-  new Intl.NumberFormat(locale === "fi" ? "fi-FI" : "en-GB", { maximumFractionDigits: digits }).format(v);
+const fmts = new Map<string, Intl.NumberFormat>();
+const fmt = (locale: Locale, v: number, digits = 1) => {
+  const key = `${locale}:${digits}`;
+  let f = fmts.get(key);
+  if (!f) {
+    f = new Intl.NumberFormat(locale === "fi" ? "fi-FI" : "en-GB", { maximumFractionDigits: digits });
+    fmts.set(key, f);
+  }
+  return f.format(v);
+};
 const fmtP = (locale: Locale, p: number) => (p < 0.001 ? `< ${fmt(locale, 0.001, 3)}` : fmt(locale, p, 3));
 
 /** Five steps: zero, then quarters of the non-zero county-months of the series. */
@@ -155,7 +185,8 @@ export function GeoMap({
   const TYKS_COUNTY = siteCounty();
   const [group, setGroup] = useState(DEFAULT_GROUP);
   // A selected signal switches the map to the THL series of the same phenotype; the select still overrides it.
-  const signalSeries = signal ? seriesForSignal(signal.phenotypes, signal.organism) : null;
+  const match = signal ? matchSeries(signal.phenotypes, signal.organism) : null;
+  const signalSeries = match?.group ?? null;
   useEffect(() => {
     if (signalSeries) setGroup(signalSeries);
   }, [signalSeries]);
@@ -194,6 +225,19 @@ export function GeoMap({
     }
   }, [chosen]);
 
+  // Too small to draw Finland: only the title and a way to a larger window (the squashed map said nothing).
+  const root = useRef<HTMLElement>(null);
+  const [narrow, setNarrow] = useState(false);
+  useEffect(() => {
+    const el = root.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const read = () => setNarrow(el.clientWidth > 0 && (el.clientWidth < NARROW_PX || (el.clientHeight > 0 && el.clientHeight < 140)));
+    read();
+    const ro = new ResizeObserver(read);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   const L: Layout = MAP_LAYOUT;
 
   const counties = useLoad<CountiesResponse>(() => client.counties(), [client], attempt);
@@ -205,13 +249,15 @@ export function GeoMap({
     [client, asOf, chosen === TYKS_COUNTY],
     attempt,
   );
+  // Keyed on the loaded features, not the load object (a new one each render), so the paths are drawn once.
+  const countyFeatures = counties.state === "ok" ? counties.data.features : null;
   const shapes: CountyShape[] = useMemo(() => {
-    if (counties.state !== "ok") return [];
-    return counties.data.features.map((f) => {
+    if (!countyFeatures) return [];
+    return countyFeatures.map((f) => {
       const [cx, cy] = centroidOf(f.geometry);
       return { name: f.properties.nimi, d: pathOf(f.geometry), cx, cy };
     });
-  }, [counties]);
+  }, [countyFeatures]);
 
   const data = regional.state === "ok" ? regional.data : null;
   const months = data?.months ?? [];
@@ -255,7 +301,11 @@ export function GeoMap({
   useEffect(() => {
     const el = stage.current;
     if (!el || typeof ResizeObserver === "undefined") return;
-    const read = () => setBox({ w: el.clientWidth, h: el.clientHeight });
+    const read = () => {
+      const w = el.clientWidth;
+      const h = el.clientHeight;
+      setBox((b) => (b && b.w === w && b.h === h ? b : { w, h }));
+    };
     read();
     const ro = new ResizeObserver(read);
     ro.observe(el);
@@ -333,8 +383,33 @@ export function GeoMap({
     .map((c) => ({ ...c, rate: rateAt(c.name), cases: casesAt(c.name) }))
     .sort((x, y) => (y.rate ?? -1) - (x.rate ?? -1) || x.name.localeCompare(y.name));
 
+  const closest = signal ? (
+    <p className="geo-closest geo-faint" data-match={match ? match.basis : "none"}>
+      {match
+        ? t(locale, match.basis === "phenotype" ? "mapClosestPhenotype" : "mapClosestOrganism", {
+            series: seriesLabel(locale, match.group),
+            phenotype: match.phenotype ? phenotypeName(match.phenotype as Parameters<typeof phenotypeName>[0]) : "",
+            organism: signal.organism ?? "",
+          })
+        : t(locale, "mapClosestNone", { series: seriesLabel(locale, group) })}
+    </p>
+  ) : null;
+
+  if (narrow)
+    return (
+      <section className="board-panel geo geo-narrow" ref={root} aria-labelledby="geo-title">
+        <h2 id="geo-title" className="geo-title" tabIndex={-1}>
+          {t(locale, "geoTitle")}
+        </h2>
+        <button type="button" className="geo-chip" onClick={() => dispatchEvent(new CustomEvent("aei:focus-window", { detail: "map" }))}>
+          {t(locale, "mapOpenLarger")}
+        </button>
+      </section>
+    );
+
   return (
     <section
+      ref={root}
       className={`board-panel geo${hasSelection ? " has-selection" : ""}`}
       aria-labelledby="geo-title"
       aria-busy={loading || updating}
@@ -365,6 +440,7 @@ export function GeoMap({
           </select>
         </label>
       </header>
+      {pane ? null : closest}
       {hasError ? (
         <div className="geo-state" role="alert">
           <span>{t(locale, "mapError")}</span>
@@ -403,6 +479,7 @@ export function GeoMap({
           headingRef={detailHeading}
           open={!pane.leaving}
         >
+          {closest}
           {fs && month ? (
             <>
               <p className="geo-card-figs">

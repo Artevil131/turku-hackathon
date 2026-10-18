@@ -4,11 +4,12 @@ import type { Syndrome } from "@aei/guideline";
 import { type Locale, t } from "@aei/i18n";
 import { AlertExplanation } from "../AlertExplanation.tsx";
 import { AlertTri } from "../Icons.tsx";
+import { span } from "./CoverageList.tsx";
 import { certaintyOf, type DoctorFilters, halfWidth, num, pct } from "./filters.ts";
 import { GuideDetails } from "./Guide.tsx";
 import { NationalLines } from "./National.tsx";
 import { priorText } from "./Patient.tsx";
-import { flagsOf, type Item, reasonOf, STANDING } from "./reason.ts";
+import { flagsOf, type Item, reasonOf, recentText, STANDING } from "./reason.ts";
 import { signalDate, type UnitSignal } from "./signals.ts";
 
 interface Props {
@@ -33,6 +34,8 @@ export function Details({ client, locale, filters, data, item, signals, syndrome
   const list = (orgs: { organism: string; share: number }[]) =>
     orgs.map((o) => `${shortOrganism(o.organism as never)} ${pct(o.share)}\u00a0%`).join(", ");
   const mine = row ? signals.filter((s) => "antibiotic" in s.alert && s.alert.antibiotic === row.antibiotic) : [];
+  const share = (s: { share: number | null; interval: [number, number] | null }) =>
+    s.share === null ? "–" : `${pct(s.share)}\u00a0%${s.interval ? ` (${pct(s.interval[0])}–${pct(s.interval[1])})` : ""}`;
   const gain = Math.round((item.pair?.gain ?? 0) * 100);
   return (
     <div className="dt">
@@ -63,19 +66,20 @@ export function Details({ client, locale, filters, data, item, signals, syndrome
         </span>
       </p>
       <ul className="dt-chips">
-        {row && row.basis === "spectrum" ? (
-          <li className="num">
-            {t(locale, "drAllOrg")}{" "}
-            {row.allOrganisms.share === null
-              ? "–"
-              : `${pct(row.allOrganisms.share)}\u00a0%${row.allOrganisms.interval ? ` (${pct(row.allOrganisms.interval[0])}–${pct(row.allOrganisms.interval[1])})` : ""}`}{" "}
-            · n {num(locale, row.coverage.counts.known)}
-          </li>
-        ) : null}
         {row ? (
-          <li className="num" title={t(locale, "drLabelRecent")}>
-            {t(locale, "drRecent", { covered: num(locale, row.coverage.recent.covered), known: num(locale, row.coverage.recent.known) })}
-          </li>
+          <>
+            {/* Both bases, each with its interval and n: the row shows only one of them. */}
+            <li className="num">
+              {t(locale, "drWithinSpectrum")} · {span(locale, filters.period)}: {share(row.coverage.spectrum)} · n{" "}
+              {num(locale, row.coverage.spectrum.counts.known)}
+            </li>
+            <li className="num">
+              {t(locale, "drAllOrg")} · {span(locale, filters.period)}: {share(row.coverage)} · n {num(locale, row.coverage.counts.known)}
+            </li>
+            <li className="num" title={t(locale, "drLabelRecent")}>
+              {t(locale, "drAllOrg")} · {recentText(locale, row.coverage.recent)}
+            </li>
+          </>
         ) : null}
         {flags?.notCovering.map((o) => (
           <li key={`n${o.organism}`}>

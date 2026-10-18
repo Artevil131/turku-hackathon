@@ -27,7 +27,7 @@ export const startEn = {
   startNew: "+ New project",
   startPackage: "Open package…",
   startSoon: "soon",
-  startHeading: "Your work, ready to continue",
+  startHeading: "Antibiotic resistance on your ward, updated with every culture: the last four weeks beside the year, deviations flagged.",
   startIntro: "Follow antibiotic resistance, investigate signals and reproduce every number from the same data cut.",
   startEmpty: "Start with a question",
   startEmptyNote: "Choose a template below and it opens straight away, or start a blank project. Your projects will appear here.",
@@ -145,7 +145,8 @@ export const startFi: Record<keyof typeof startEn, string> = {
   startNew: "+ Uusi projekti",
   startPackage: "Avaa paketti…",
   startSoon: "tulossa",
-  startHeading: "Jatka siitä, mihin jäit",
+  startHeading:
+    "Antibioottiresistenssi osastollasi päivittyy jokaisen viljelyn myötä: viimeiset neljä viikkoa vuoden rinnalla, poikkeamat merkittyinä.",
   startIntro: "Seuraa antibioottiresistenssiä, tutki signaaleja ja toista jokainen luku samasta aineistorajauksesta.",
   startEmpty: "Aloita kysymyksestä",
   startEmptyNote: "Valitse pohja alta, niin se aukeaa heti, tai aloita tyhjä projekti. Projektisi näkyvät tässä.",

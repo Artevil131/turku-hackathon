@@ -23,6 +23,7 @@ import { openDemo } from "./demo/openDemo.ts";
 import { Performance } from "./demo/perform/Performance.tsx";
 import { SHOWCASE_FILLS, showcaseScreenplay } from "./demo/perform/scripts.ts";
 import { GUIDE_EVENT } from "./demo/tour/adaptive.ts";
+import { offerOnce } from "./demo/tour/offer.ts";
 import type { TourKind } from "./demo/tour/steps.ts";
 import { DemoTour } from "./demo/tour/Tour.tsx";
 import { useLive } from "./live.ts";
@@ -159,7 +160,7 @@ export function App() {
   // First visit: the full tour is offered once; "Not now" leaves a way back on the start page and in the sidebar.
   // biome-ignore lint/correctness/useExhaustiveDependencies: only on first load
   useEffect(() => {
-    if (page === "home" && stored("yl.welcomed", "", () => true) === "") setTour({ demo: "overview", key: Date.now() });
+    if (page === "home" && stored("yl.welcomed", "", () => true) === "" && offerOnce()) setTour({ demo: "overview", key: Date.now() });
   }, []);
   // A demo filling itself in: the screen is locked until it is done (or skipped); a full play then offers the tour, a skip does not.
   const [filling, setFilling] = useState<{ demo: DemoId; plan: FillPlan; key: number } | null>(null);
@@ -354,7 +355,7 @@ export function App() {
     () => ({
       openProject: (project: Project) => {
         const isDemo = DEMOS.some((d) => t(locale, d.titleKey) === project.name);
-        if (takeFresh(project.id) && !isDemo) offerGuide();
+        if (takeFresh(project.id) && !isDemo && offerOnce()) offerGuide();
         if (!isDemo && project.mode !== "frozen") toNow();
         const open = tabsRef.current.find((tab) => tab.project === project.id);
         setTabs((all) =>
@@ -370,7 +371,7 @@ export function App() {
         toNow();
         if (quick && !guided.current.has(quick)) {
           guided.current.add(quick);
-          offerGuide();
+          if (offerOnce()) offerGuide();
         }
         const search = new URLSearchParams(params);
         if (quick) search.set("quick", quick);
@@ -449,7 +450,7 @@ export function App() {
         if (plan && replay)
           dispatchEvent(new CustomEvent(PAGE_EVENT, { detail: { slot: plan.slot, page: { v: PAGE_VERSION, cells: [] } } }));
         if (plan) setFilling({ demo: demo.id, plan, key: Date.now() });
-        else setTour((current) => (current?.demo === "overview" ? current : { demo: demo.id, key: Date.now() }));
+        else if (offerOnce()) setTour((current) => (current?.demo === "overview" ? current : { demo: demo.id, key: Date.now() }));
       })
       .catch(() => setNotice(t(locale, "demoOpenError")));
   };
@@ -621,9 +622,15 @@ export function App() {
                 key={filling.key}
                 locale={locale}
                 plan={filling.plan}
-                onDone={(how?: "done" | "skipped") => {
-                  // Played to the end, the guide is offered; skipped, the judge goes straight to the finished project.
-                  if (how !== "skipped") setTour({ demo: filling.demo, key: Date.now() });
+                onDone={(how) => {
+                  // A finished fill never offers a tour: the guide stays one click away (Guide, Demo tour).
+                  // After a full play the story moves on by itself: the clock steps a month at the normal speed, so the
+                  // timeline and the signals keep changing while the viewer looks (Artem, 2026-10-18). A skip leaves it paused.
+                  if (how === "done")
+                    liveClient
+                      .command({ action: "configure", daysPerTick: 30, tickMs: 2000 })
+                      .then(() => liveClient.command({ action: "play" }))
+                      .catch(() => undefined);
                   // The filters that framed the story come off, so the Signals list shows everything in the chosen period.
                   const params = hashParams();
                   if (["unit", "ph", "kind"].some((k) => params.has(k))) {

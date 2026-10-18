@@ -7,8 +7,11 @@ import {
   FINNISH_SYSTEMS,
   ingest,
   interpretation,
+  isIsoDate,
   isoWeek,
+  mapWard,
   parseFhirBundle,
+  parseHl7Batch,
   parseHl7Message,
   parseIsolateCsv,
 } from "./index.ts";
@@ -86,6 +89,66 @@ describe("HL7 v2 ORU^R01", () => {
     const msg = HL7.split("\r").slice(0, 5).concat("OBX|1|CWE|4851^U -BaktVi^1.2.246.537.6.3|1|NEG^Ei kasvua^L||||||F").join("\r");
     const r = parseHl7Message(msg);
     expect(r.cultures[0]).toEqual(expect.objectContaining({ result: "negative", nIsolates: 0 }));
+  });
+
+  it("refuses a collection or admission day that does not exist instead of storing it", () => {
+    const badSample = parseHl7Message(HL7.replaceAll("20250604081500", "20251399081500"));
+    expect(badSample.cultures).toEqual([]);
+    expect(badSample.warnings.join(" ")).toMatch(/no real collection date .*"20251399081500"/);
+    const badAdmission = parseHl7Message(HL7.replace("|20250529", "|20250230"));
+    expect(badAdmission.cultures).toEqual([]);
+    expect(badAdmission.warnings.join(" ")).toMatch(/PV1-44 admission date "20250230" is not a real date/);
+  });
+
+  it("reads a birth date given to the year or month only", () => {
+    for (const birth of ["1948", "194803"]) {
+      const r = parseHl7Message(HL7.replace("19480312", birth));
+      expect(r.patients).toEqual([expect.objectContaining({ birthYear: 1948 })]);
+    }
+  });
+
+  it("puts a child OBR's results on the isolate OBR-26 names, whatever its OBX-4 says", () => {
+    const two = HL7.replace(
+      "OBX|2|CWE|ESBL^ESBL^L|1|POS^Positive^L||||||F",
+      "OBX|2|CWE|4851^U -BaktVi^1.2.246.537.6.3|2|56415008^Klebsiella pneumoniae^http://snomed.info/sct||||||F",
+    ).replace("^1^Escherichia coli|||", "^2^Klebsiella pneumoniae|||");
+    const r = parseHl7Message(two);
+    expect(r.isolates.map((i) => i.organism)).toEqual(["Escherichia coli", "Klebsiella pneumoniae"]);
+    expect(r.susceptibility.every((s) => s.isolateId === "C2025-0042-2")).toBe(true);
+  });
+
+  it("numbers organisms that leave OBX-4 empty instead of overwriting one with the next", () => {
+    const msg = HL7.split("\r")
+      .slice(0, 5)
+      .concat(
+        "OBX|1|CWE|4851^U -BaktVi^1.2.246.537.6.3||7640-22^Escherichia coli^1.2.246.537.6.241||||||F",
+        "OBX|2|CWE|4851^U -BaktVi^1.2.246.537.6.3||56415008^Klebsiella pneumoniae^http://snomed.info/sct||||||F",
+      )
+      .join("\r");
+    expect(parseHl7Message(msg).isolates.map((i) => i.organism)).toEqual(["Escherichia coli", "Klebsiella pneumoniae"]);
+  });
+
+  it("gives each PATIENT_RESULT group its own patient and keeps the last of a repeated culture", () => {
+    const lines = HL7.split("\r");
+    const second = lines
+      .slice(1, 5)
+      .map((l) =>
+        l.replace("PSEUDO-7731", "PSEUDO-8000").replace("|M|", "|F|").replace("URO^", "ICU^").replaceAll("C2025-0042", "C2025-0043"),
+      );
+    const r = parseHl7Message([...lines.slice(0, 7), ...second, lines[5], lines[6]?.replace("POS^", "NEG^")].join("\r"));
+    expect(r.cultures.map((c) => [c.cultureId, c.patientId, c.ward])).toEqual([
+      ["C2025-0042", "PSEUDO-7731", "URO"],
+      ["C2025-0043", "PSEUDO-8000", "ICU"],
+    ]);
+    const twice = parseHl7Message([...lines.slice(0, 7), lines[3], lines[4], lines[5]].join("\r"));
+    expect(twice.cultures).toHaveLength(1);
+    expect(twice.isolates[0]?.phenotypes).toEqual([]);
+    expect(twice.warnings.join(" ")).toMatch(/appears twice/);
+  });
+
+  it("skips blank lines between segments in a batch", () => {
+    const batch = `${HL7.split("\r").slice(0, 4).join("\n")}\n\n${HL7.split("\r").slice(4).join("\n")}\n\n${HL7.replaceAll("C2025-0042", "C2025-0099")}`;
+    expect(parseHl7Batch(batch).flatMap((r) => r.cultures.map((c) => c.cultureId))).toEqual(["C2025-0042", "C2025-0099"]);
   });
 });
 
@@ -187,6 +250,30 @@ describe("FHIR R4 Bundle", () => {
     expect(r.isolates[0]).toEqual(expect.objectContaining({ organism: "Staphylococcus aureus", phenotypes: ["mrsa"] }));
     expect(Object.fromEntries(r.susceptibility.map((s) => [s.antibiotic, s.result]))).toEqual({ FOX: "R", VAN: "S" });
   });
+
+  it("refuses a collection day that does not exist", () => {
+    const r = parseFhirBundle(JSON.parse(JSON.stringify(FHIR).replace("2026-03-03T07:40", "2026-02-30T07:40")));
+    expect(r.cultures).toEqual([]);
+    expect(r.warnings.join(" ")).toMatch(/no real collection date/);
+  });
+
+  it("reports null entries and results instead of throwing", () => {
+    expect(parseFhirBundle({ resourceType: "Bundle", entry: { resource: {} } }).warnings.join(" ")).toMatch(/not an array/);
+    const withNulls = JSON.parse(JSON.stringify(FHIR));
+    withNulls.entry.push(null);
+    withNulls.entry[3].resource.result.push(null);
+    const r = parseFhirBundle(withNulls);
+    expect(r.cultures).toHaveLength(1);
+    expect(r.warnings.join(" ")).toMatch(/entry null is not an object.*result null not in the bundle/);
+  });
+
+  it("keeps the last of a culture reported twice in one bundle", () => {
+    const twice = JSON.parse(JSON.stringify(FHIR));
+    const report = twice.entry[3];
+    twice.entry.push({ fullUrl: "urn:uuid:rep2", resource: { ...report.resource, id: "rep2", result: [] } });
+    const r = parseFhirBundle(twice);
+    expect(r.cultures).toEqual([expect.objectContaining({ cultureId: "C2026-0777", result: "negative" })]);
+  });
 });
 
 describe("flat isolate export", () => {
@@ -208,6 +295,36 @@ describe("flat isolate export", () => {
       "CIP:S",
       "NIT:S",
     ]);
+  });
+
+  it("skips rows with no patient id or a date that does not exist, and does not guess a year", () => {
+    const csv = [
+      "patient_id,sex,birth_date,culture_id,sample_date,ward,specimen,admission_date",
+      ",F,1950-01-01,C1,2026-01-10,GER,urine,",
+      "P2,F,1950-01-01,C2,2025-13-01,GER,urine,",
+      "P3,F,1950-01-01,C3,2025-02-30,GER,urine,",
+      "P4,F,01.03.1948,C4,2026-01-10,GER,urine,",
+      "P5,F,1950-01-01,C5,2026-01-10,GER,urine,2026-01-32",
+      "P6,F,1950-01-01,C6,2026-01-10,GER,urine,2026-01-08",
+    ].join("\n");
+    const r = parseIsolateCsv(csv);
+    expect(r.cultures.map((c) => [c.cultureId, c.admissionDate])).toEqual([["C6", "2026-01-08"]]);
+    expect(r.warnings).toEqual([
+      "row 2: skipped, no usable patient id",
+      'row 3: skipped, no usable date "2025-13-01" (YYYY-MM-DD)',
+      'row 4: skipped, no usable date "2025-02-30" (YYYY-MM-DD)',
+      'row 5: skipped, no usable birth year "01.03.1948" (YYYY or YYYY-MM-DD)',
+      'row 6: skipped, no usable admission date "2026-01-32" (YYYY-MM-DD)',
+    ]);
+  });
+
+  it("reads a semicolon-separated export", () => {
+    const r = parseIsolateCsv(
+      ["patient_id;sex;birth_year;culture_id;sample_date;ward;specimen", "P1;F;1950;C1;2026-01-10;GER;urine"].join("\n"),
+    );
+    expect(r.warnings).toEqual([]);
+    expect(r.cultures.map((c) => c.cultureId)).toEqual(["C1"]);
+    expect(detectFormat("patient_id;sex\nP1;F")).toBe("csv");
   });
 });
 
@@ -235,6 +352,12 @@ describe("helpers", () => {
     );
     expect([...organisms].sort()).toEqual([...ORGANISMS].sort());
     expect([...antibiotics].sort()).toEqual(ANTIBIOTICS.map((a) => a.code).sort());
+  });
+
+  it("accepts only real calendar days and looks codes up without the prototype", () => {
+    expect(["2025-02-28", "2024-02-29"].every(isIsoDate)).toBe(true);
+    expect(["2025-02-30", "2025-13-01", "2025-1-01", "20250101", 20250101, null].some(isIsoDate)).toBe(false);
+    expect(mapWard(DEFAULT_CODE_MAPS, [{ code: "constructor" }, { code: "toString" }])).toBeUndefined();
   });
 
   it("computes ISO weeks like the dataset", () => {

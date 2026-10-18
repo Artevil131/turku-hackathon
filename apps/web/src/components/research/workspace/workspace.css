@@ -172,6 +172,13 @@
 .ws-close {
   position: absolute;
   touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+/* While a window is moved or sized, no text anywhere on the board is selected by the drag. */
+.ws:has(.ws-win[data-dragging="true"]) {
+  user-select: none;
+  -webkit-user-select: none;
 }
 .ws-grip {
   top: 0;
@@ -721,6 +728,15 @@
 @media (max-width: 760px) {
   .ws-float-bar {
     left: 16px;
+  }
+}
+.ws-float-bar[hidden] {
+  display: none;
+}
+/* Phones: the buttons would sit on top of what is being read; the tray row above the board has the same actions. */
+@media (max-width: 767px) {
+  .ws-float-bar {
+    display: none;
   }
 }
 

@@ -77,6 +77,8 @@ export const cardEn = {
   cardGoToDayHere: "The clock is already on this day",
   cardShowMap: "Show on map",
   cardMethod: "Method",
+  cardOutside:
+    "Selected signal is outside this window: it is not among the signals up to this date. The selection is kept, and returns when the clock reaches it.",
   cardEmpty: "Pick a signal: a pill on the timeline, a row in the list, a unit on the flow or a dot on the map.",
   cardFired: "fired {date}",
   cardRegistryFormula: "Formula",
@@ -188,6 +190,8 @@ export const cardFi: Record<keyof typeof cardEn, string> = {
   cardGoToDayHere: "Kello on jo tässä päivässä",
   cardShowMap: "Näytä kartalla",
   cardMethod: "Menetelmä",
+  cardOutside:
+    "Valittu signaali on tämän ikkunan ulkopuolella: se ei kuulu tähän päivään mennessä nähtyihin signaaleihin. Valinta säilyy ja palaa, kun kello saavuttaa sen.",
   cardEmpty: "Valitse signaali: merkki aikajanalta, rivi listasta, yksikkö virtauksesta tai piste kartalta.",
   cardFired: "hälytti {date}",
   cardRegistryFormula: "Kaava",

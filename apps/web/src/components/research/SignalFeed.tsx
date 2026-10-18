@@ -32,6 +32,8 @@ interface Props extends FeedProps {
   layer?: boolean;
   /** Back from the card layer: clears the selection. */
   onBack?: () => void;
+  /** The URL names a signal that is not among those up to the clock: kept, not replaced by another. */
+  outside?: boolean;
 }
 
 const GROUP_KEY: Record<TimeGroup, "feedGroupWeek" | "feedGroupMonth" | "feedGroupEarlier"> = {
@@ -59,6 +61,7 @@ export function SignalFeed(props: Props) {
     card,
     layer = false,
     onBack,
+    outside = false,
   } = props;
   const rootRef = useRef<HTMLElement>(null);
 
@@ -213,6 +216,14 @@ export function SignalFeed(props: Props) {
                   />
                 ) : null}
               </div>
+            ) : null}
+            {outside ? (
+              <p className="feed-outside" role="status">
+                {t(locale, "feedOutside")}{" "}
+                <button type="button" className="link" onClick={() => onChange({ incident: null })}>
+                  {t(locale, "feedOutsideClear")}
+                </button>
+              </p>
             ) : null}
             {active.length > 0 ? (
               <ul className="feed-active" aria-label={t(locale, "feedFilters")}>

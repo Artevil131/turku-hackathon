@@ -91,8 +91,13 @@ export function createProjectStore(dir?: string): ProjectStore {
         : [...memory.keys()];
       return ids
         .flatMap((id) => {
-          const project = store.get(id);
-          return project ? [project] : [];
+          // A file that cannot be read (permissions, a directory named *.json) is skipped like one that does not parse.
+          try {
+            const project = store.get(id);
+            return project ? [project] : [];
+          } catch {
+            return [];
+          }
         })
         .sort((a, b) => compare(b.updatedAt, a.updatedAt) || compare(a.id, b.id));
     },

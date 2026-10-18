@@ -54,6 +54,8 @@ export function DoctorAnswer({
   const clears = singles.filter((i) => i.standing === "clears");
   const below = singles.filter((i) => i.standing === "below");
   const first = clears[0] ?? null;
+  // No single drug clears: the first ranked combination takes the headline in the same shape, with the reason beside it.
+  const pair = !first ? (items.find((i) => i.pair !== null && (i.standing === "clears" || i.standing === "borderline")) ?? null) : null;
   const chips = [
     wardName(locale, filters.unit as never),
     specimenName(locale, filters.site).toLowerCase(),
@@ -136,6 +138,25 @@ export function DoctorAnswer({
           {/* The rest of the list as pills; the table below has the bars and the details. */}
           {clears.length > 1 ? <Pills items={clears.slice(1)} lead={t(locale, "drAnswerAlsoShort")} /> : null}
           {below.length ? <Pills items={below} lead={t(locale, "drAnswerBelowShort")} muted /> : null}
+        </>
+      ) : pair ? (
+        <>
+          <p className="dr-answer-nosingle">{t(locale, "drAnswerNoSingle", { bar })}</p>
+          <p className="dr-answer-head">
+            {t(locale, "drAnswerStart", { name: "\u0000" })
+              .split("\u0000")
+              .flatMap((part, i) =>
+                i === 0
+                  ? [part]
+                  : [
+                      <span key="name" className={pair.standing === "clears" ? "dr-good" : undefined}>
+                        {pair.name}
+                      </span>,
+                      part,
+                    ],
+              )}
+          </p>
+          <p className="dr-answer-line">{t(locale, "drAnswerPairCovers", { share: pct(pair.share ?? 0), n: num(locale, pair.n) })}</p>
         </>
       ) : (
         <p className="dr-answer-head">{t(locale, "drAnswerNone", { bar })}</p>

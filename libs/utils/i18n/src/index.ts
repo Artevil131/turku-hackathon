@@ -127,14 +127,30 @@ export function phenotypeName(code: Phenotype): string {
   return code.toUpperCase();
 }
 
+// Building an Intl formatter costs far more than using one, and lists and charts format hundreds of values per
+// render, so each formatter is made once per locale and style.
+const formatters = new Map<string, Intl.DateTimeFormat | Intl.NumberFormat>();
+function cached<F extends Intl.DateTimeFormat | Intl.NumberFormat>(key: string, make: () => F): F {
+  let f = formatters.get(key);
+  if (!f) {
+    f = make();
+    formatters.set(key, f);
+  }
+  return f as F;
+}
+
 export function formatDate(locale: Locale, iso: string, style: "short" | "long" = "short"): string {
   const date = new Date(`${iso}T00:00:00Z`);
-  return new Intl.DateTimeFormat(locale === "fi" ? "fi-FI" : "en-GB", {
-    timeZone: "UTC",
-    day: "numeric",
-    month: style === "long" ? "long" : "short",
-    ...(style === "long" ? { year: "numeric" } : {}),
-  }).format(date);
+  return cached(
+    `date:${locale}:${style}`,
+    () =>
+      new Intl.DateTimeFormat(locale === "fi" ? "fi-FI" : "en-GB", {
+        timeZone: "UTC",
+        day: "numeric",
+        month: style === "long" ? "long" : "short",
+        ...(style === "long" ? { year: "numeric" } : {}),
+      }),
+  ).format(date);
 }
 
 /** The numeric date used in panel headers and figures: 12.5.2025 (day.month.year, no leading zeros). */
@@ -144,13 +160,19 @@ export function formatDateNumeric(iso: string): string {
 }
 
 export function formatPercent(locale: Locale, value: number): string {
-  return new Intl.NumberFormat(locale === "fi" ? "fi-FI" : "en-GB", { maximumFractionDigits: 0 }).format(value);
+  return cached(`percent:${locale}`, () => new Intl.NumberFormat(locale === "fi" ? "fi-FI" : "en-GB", { maximumFractionDigits: 0 })).format(
+    value,
+  );
 }
 
 export function formatMonth(locale: Locale, iso: string, withYear = false): string {
-  return new Intl.DateTimeFormat(locale === "fi" ? "fi-FI" : "en-GB", {
-    timeZone: "UTC",
-    month: withYear ? "long" : "short",
-    ...(withYear ? { year: "numeric" } : {}),
-  }).format(new Date(`${iso}T00:00:00Z`));
+  return cached(
+    `month:${locale}:${withYear}`,
+    () =>
+      new Intl.DateTimeFormat(locale === "fi" ? "fi-FI" : "en-GB", {
+        timeZone: "UTC",
+        month: withYear ? "long" : "short",
+        ...(withYear ? { year: "numeric" } : {}),
+      }),
+  ).format(new Date(`${iso}T00:00:00Z`));
 }

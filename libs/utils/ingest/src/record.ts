@@ -53,6 +53,13 @@ export interface IngestResult {
 
 export const emptyResult = (): IngestResult => ({ patients: [], cultures: [], isolates: [], susceptibility: [], warnings: [] });
 
+/** A real calendar day as YYYY-MM-DD; "2025-13-01", "2025-02-30" and non-strings are not. */
+export function isIsoDate(value: unknown): value is IsoDate {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const d = new Date(`${value}T00:00:00Z`);
+  return Number.isFinite(d.getTime()) && d.toISOString().slice(0, 10) === value;
+}
+
 /** ISO 8601 year and week of a date. */
 export function isoWeek(date: IsoDate): { year: number; week: number } {
   const d = new Date(`${date}T00:00:00Z`);

@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>agar — Pitch Deck Prototype (L1NX Style)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root {
+    --bg: #0b0b0b;
+    --bg-wave: #111111;
+    --fg: #f0f0f0;
+    --muted: #9a9a9a;
+    --red: #e62e2d;
+    --green: #2ec4b6;
+    --font-mono: 'Courier Prime', 'Courier New', Courier, monospace;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html, body {
+    background: #050505;
+    color: var(--fg);
+    font-family: var(--font-mono);
+    height: 100%;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Deck stage */
+  .stage {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .slide {
+    width: 1920px;
+    height: 1080px;
+    background: var(--bg);
+    position: relative;
+    display: none;
+    overflow: hidden;
+    transform-origin: center center;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.85);
+    user-select: text;
+  }
+
+  .slide.active {
+    display: flex;
+  }
+
+  /* Subtle organic dark wave background matching the L1NX PDF without gradient banding */
+  .slide::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: #0b0b0b;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .slide-inner {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 135px 170px;
+  }
+
+  .slide-inner.center {
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .slide-inner.left-middle {
+    justify-content: center;
+    align-items: flex-start;
+    padding-left: 310px;
+    padding-right: 220px;
+  }
+
+  /* Typography matching L1NX slides 1:1 */
+  .quote-line {
+    font-size: 50px;
+    font-style: italic;
+    letter-spacing: 0.02em;
+    line-height: 1.3;
+    color: var(--fg);
+    white-space: nowrap;
+  }
+
+  .top-headline {
+    font-size: 52px;
+    line-height: 1.3;
+    letter-spacing: 0.01em;
+    text-align: center;
+    width: 100%;
+    margin-top: 10px;
+    margin-bottom: 195px;
+  }
+
+  .bullet-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 78px;
+    padding-left: 65px;
+    max-width: 1620px;
+  }
+
+  .bullet-list li {
+    font-size: 40px;
+    line-height: 1.32;
+    position: relative;
+    letter-spacing: -0.01em;
+  }
+
+  .bullet-list li::before {
+    content: "•";
+    position: absolute;
+    left: -48px;
+    top: 0;
+    color: var(--fg);
+  }
+
+  .section-caps {
+    font-size: 64px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .dramatic-left {
+    font-size: 62px;
+    line-height: 1.32;
+    max-width: 1320px;
+  }
+
+  .brand-giant {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 210px;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    color: #e6e6e6;
+    line-height: 1;
+  }
+
+  .brand-sub {
+    margin-top: 32px;
+    font-size: 32px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .platform-title {
+    font-size: 48px;
+    text-align: center;
+    width: 100%;
+    margin-bottom: 140px;
+  }
+
+  .numbered-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 44px;
+    padding-left: 60px;
+    max-width: 1560px;
+  }
+
+  .numbered-list li {
+    font-size: 48px;
+    line-height: 1.34;
+    display: flex;
+    align-items: flex-start;
+    gap: 28px;
+  }
+
+  .numbered-list .num {
+    min-width: 64px;
+    flex-shrink: 0;
+  }
+
+  .team-title {
+    font-size: 156px;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+  }
+
+  .team-grid {
+    margin-top: 64px;
+    display: flex;
+    gap: 48px;
+    font-size: 28px;
+    color: var(--muted);
+  }
+
+  .thanks-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 164px;
+    line-height: 1.18;
+    font-weight: 400;
+    letter-spacing: 0.03em;
+  }
+
+  .red {
+    color: var(--red);
+  }
+
+  /* Slide 8 Map Box (Joensuu equivalent for Tyks Ward Outbreak) */
+  .map-frame {
+    width: 1600px;
+    height: 900px;
+    border: 1px solid #262626;
+    position: relative;
+    overflow: hidden;
+    background: #141c18;
+    box-shadow: 0 12px 50px rgba(0,0,0,0.7);
+  }
+
+  /* Editable outline when Edit Mode is on */
+  body.edit-mode [contenteditable="true"] {
+    outline: 1px dashed rgba(230, 46, 45, 0.35);
+    outline-offset: 6px;
+    border-radius: 4px;
+    cursor: text;
+  }
+  body.edit-mode [contenteditable="true"]:focus {
+    outline: 2px solid var(--red);
+    background: rgba(255,255,255,0.03);
+  }
+
+  /* Floating prototype control bar (hidden on print/PDF) */
+  .proto-bar {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    background: rgba(18, 18, 18, 0.92);
+    border: 1px solid #333;
+    border-radius: 10px;
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 13px;
+    color: #ddd;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    transition: opacity 0.2s;
+  }
+
+  body.presenting .proto-bar,
+  body.presenting .slide-thumbs {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .proto-bar button, .proto-bar input {
+    background: #252525;
+    color: #fff;
+    border: 1px solid #444;
+    border-radius: 6px;
+    padding: 6px 11px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .proto-bar button:hover {
+    background: #333;
+    border-color: #666;
+  }
+
+  .proto-bar button.active {
+    background: var(--red);
+    border-color: var(--red);
+    color: #fff;
+    font-weight: 600;
+  }
+
+  .proto-bar input {
+    width: 110px;
+    cursor: text;
+  }
+
+  .proto-sep {
+    width: 1px;
+    height: 20px;
+    background: #333;
+  }
+
+  /* Speaker notes drawer */
+  .notes-drawer {
+    position: fixed;
+    bottom: 72px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(860px, 92vw);
+    background: rgba(15, 15, 15, 0.95);
+    border: 1px solid #333;
+    border-radius: 10px;
+    padding: 14px 18px;
+    z-index: 9998;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #ccc;
+    display: none;
+  }
+  .notes-drawer.open {
+    display: block;
+  }
+  .notes-drawer strong {
+    color: #fff;
+    display: block;
+    margin-bottom: 4px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--red);
+  }
+
+  /* Print / PDF styles: every slide becomes a full 1920x1080 page */
+  @media print {
+    @page {
+      size: 1920px 1080px;
+      margin: 0;
+    }
+    html, body {
+      width: 1920px;
+      height: auto;
+      overflow: visible !important;
+      background: #0b0b0b !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    .proto-bar, .notes-drawer, .cold-open-hint {
+      display: none !important;
+    }
+    [contenteditable="true"] {
+      outline: none !important;
+    }
+    .stage {
+      display: block !important;
+      width: 1920px !important;
+      height: auto !important;
+    }
+    .slide {
+      display: flex !important;
+      transform: none !important;
+      page-break-after: always;
+      break-after: page;
+      box-shadow: none !important;
+    }
+  }
+</style>
+</head>
+<body class="edit-mode">
+
+<div class="stage" id="stage">
+
+  <!-- SLIDE 1: Cold Open (matches L1NX Slide 1) -->
+  <section class="slide active" data-notes="Cold open. Step on stage in silence, pause 2 seconds, then press Right Arrow to drop the opening quote.">
+    <div class="slide-inner center">
+      <div class="cold-open-hint" contenteditable="true" style="font-size:24px; color:#2b2b2b; letter-spacing:0.15em;">[ COLD OPEN — PRESS → TO BEGIN ]</div>
+    </div>
+  </section>
+
+  <!-- SLIDE 2: Opening Quote (matches L1NX Slide 2: "SPEED OF ACTION IS ITSELF A WEAPON") -->
+  <section class="slide" data-notes="Say slowly: 'In an infection—and in an outbreak—speed of action is itself a treatment. Every hour a patient waits on the wrong antibiotic, mortality climbs.'">
+    <div class="slide-inner center">
+      <p class="quote-line" contenteditable="true">“SPEED OF DIAGNOSIS IS ITSELF A TREATMENT”</p>
+    </div>
+  </section>
+
+  <!-- SLIDE 3: Progressive Build 1 (matches L1NX Slide 3) -->
+  <section class="slide" data-notes="State the status quo plainly: 'Today, hospital resistance reports are compiled once a year.'">
+    <div class="slide-inner">
+      <h1 class="top-headline" contenteditable="true">Hospital resistance reports take <span class="red">12 months.</span></h1>
+    </div>
+  </section>
+
+  <!-- SLIDE 4: Progressive Build 2 (matches L1NX Slide 4) -->
+  <section class="slide" data-notes="'Static PDFs. Hospital-wide averages. Blind to what is happening on your specific ward right now.'">
+    <div class="slide-inner">
+      <h1 class="top-headline" contenteditable="true">Hospital resistance reports take <span class="red">12 months.</span></h1>
+      <ul class="bullet-list">
+        <li contenteditable="true">Static PDFs. Hospital-wide averages. Manual spreadsheets.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- SLIDE 5: Progressive Build 3 (matches L1NX Slide 5) -->
+  <section class="slide" data-notes="'Meanwhile, a patient's blood or urine culture takes 48 hours. By the time the annual report is ready, the ward's resistance picture has already changed.'">
+    <div class="slide-inner">
+      <h1 class="top-headline" contenteditable="true">Hospital resistance reports take <span class="red">12 months.</span></h1>
+      <ul class="bullet-list">
+        <li contenteditable="true">Static PDFs. Hospital-wide averages. Manual spreadsheets.</li>
+        <li contenteditable="true">By the time the report is ready, the ward has changed.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- SLIDE 6: Progressive Build 4 (matches L1NX Slide 6) -->
+  <section class="slide" data-notes="Punch the human cost: 'And when a septic patient arrives at 3 AM, human lives depend on empirical choices made from information that arrives months too late.'">
+    <div class="slide-inner">
+      <h1 class="top-headline" contenteditable="true">Hospital resistance reports take <span class="red">12 months.</span></h1>
+      <ul class="bullet-list">
+        <li contenteditable="true">Static PDFs. Hospital-wide averages. Manual spreadsheets.</li>
+        <li contenteditable="true">By the time the report is ready, the ward has already changed.</li>
+        <li contenteditable="true">Human <span class="red">lives depend</span> on empirical choices that arrive too late.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- SLIDE 7: THE COST OF BEING SLOW (matches L1NX Slide 7) -->
+  <section class="slide" data-notes="Pause for 2 seconds on this title before revealing the Urology ward outbreak scenario.">
+    <div class="slide-inner center">
+      <h1 class="section-caps" contenteditable="true">THE COST OF BEING SLOW</h1>
+    </div>
+  </section>
+
+  <!-- SLIDE 8: Tactical Outbreak Map (matches L1NX Slide 8 Joensuu Map with 4 Red Diamonds) -->
+  <section class="slide" data-notes="'Look at Tyks Urology in June. Four patients in three weeks contract an identical 5-drug-resistant ESBL E. coli clone—where only 0.2 cases are expected. Under the old annual hospital average, this outbreak is invisible. Doctors keep prescribing failing antibiotics while the clone spreads down the hall.'">
+    <div class="slide-inner center" style="padding: 90px;">
+      <div class="map-frame" id="outbreak-map">
+        <svg viewBox="0 0 1600 900" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="waterGrad" cx="20%" cy="75%" r="65%">
+              <stop offset="0%" stop-color="#5d7f89" />
+              <stop offset="100%" stop-color="#486670" />
+            </radialGradient>
+            <pattern id="grid" width="80" height="80" patternUnits="userSpaceOnUse">
+              <path d="M 80 0 L 0 0 0 80" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+            </pattern>
+            <filter id="drop" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000" flood-opacity="0.65"/>
+            </filter>
+          </defs>
+
+          <!-- Muted topographical/GIS background matching L1NX Slide 8 palette -->
+          <rect width="1600" height="900" fill="#5e7d5a" />
+          <!-- Forest / urban land patches -->
+          <path d="M0,0 L1600,0 L1600,900 L520,900 C480,720 430,550 280,450 C140,360 0,380 0,380 Z" fill="#547451" />
+          <path d="M260,340 C420,310 560,390 610,540 C660,690 590,820 530,900 L1050,900 C1120,700 1040,460 890,320 C740,180 480,150 260,340 Z" fill="#778c6d" opacity="0.65" />
+          <path d="M350,360 C460,360 540,440 560,560 C580,680 520,760 470,790 C420,820 340,650 350,360 Z" fill="#9ea792" opacity="0.55" />
+
+          <!-- Aura River & Archipelago water body (Southwest Turku) -->
+          <path d="M0,410 C150,415 290,460 365,575 C440,690 465,810 475,900 L0,900 Z" fill="url(#waterGrad)" />
+          <path d="M365,575 C520,440 740,310 1050,120 L1090,145 C770,340 550,470 395,605 Z" fill="#567680" opacity="0.85" />
+
+          <!-- Grid overlay -->
+          <rect width="1600" height="900" fill="url(#grid)" />
+
+          <!-- Major highway / hospital ring roads (matching L1NX pink/orange road lines) -->
+          <path d="M0,365 C220,375 390,420 480,535 C565,645 615,780 650,900" fill="none" stroke="#c86d71" stroke-width="5" />
+          <path d="M445,495 C490,340 535,180 570,0" fill="none" stroke="#c86d71" stroke-width="4.5" />
+          <path d="M480,535 C740,475 960,555 1350,625" fill="none" stroke="#d49b6a" stroke-width="4" />
+          <path d="M530,610 C780,605 1040,635 1600,720" fill="none" stroke="#5d695e" stroke-width="2.5" />
+
+          <!-- Geographic & Ward Labels -->
+          <text x="505" y="42" fill="#2c352d" font-family="sans-serif" font-weight="700" font-size="22">Raunistula</text>
+          <text x="470" y="325" fill="#2c352d" font-family="sans-serif" font-weight="600" font-size="21">Kupittaa</text>
+          <text x="150" y="490" fill="#2c352d" font-family="sans-serif" font-weight="600" font-size="20">Iso-Heikkilä</text>
+          <text x="385" y="518" fill="#1e241f" font-family="sans-serif" font-weight="700" font-size="28">Turku / Tyks</text>
+          <text x="225" y="835" fill="#37515a" font-family="sans-serif" font-style="italic" font-size="28">Aurajoki</text>
+          <text x="955" y="775" fill="#2c352d" font-family="sans-serif" font-weight="600" font-size="20">Lauste</text>
+          <text x="1420" y="785" fill="#2c352d" font-family="sans-serif" font-weight="600" font-size="20">Piikkiö</text>
+
+          <!-- Highway shield -->
+          <rect x="518" y="595" width="38" height="62" rx="6" fill="#d9a5b3" stroke="#5f3b44" stroke-width="2" />
+          <text x="537" y="623" text-anchor="middle" fill="#3b1d24" font-family="sans-serif" font-weight="700" font-size="20">1</text>
+          <text x="537" y="648" text-anchor="middle" fill="#3b1d24" font-family="sans-serif" font-weight="700" font-size="20">0</text>
+
+          <!-- Tyks Hospital Campus Perimeter Box -->
+          <rect x="980" y="340" width="410" height="390" rx="14" fill="rgba(11,11,11,0.28)" stroke="rgba(230,46,45,0.55)" stroke-width="2.5" stroke-dasharray="10 6" />
+          <text x="1005" y="378" fill="#f0f0f0" font-family="'Courier Prime', monospace" font-weight="700" font-size="22">TYKS UROLOGY &amp; MED-A WARDS</text>
+
+          <!-- 4 Red Outbreak Diamonds (Direct visual callback to L1NX Slide 8!) -->
+          <!-- Diamond 1: Patient 1 -->
+          <g transform="translate(1110, 470)" filter="url(#drop)">
+            <circle cx="-22" cy="-78" r="6.5" fill="#0b0b0b"/>
+            <circle cx="0" cy="-78" r="6.5" fill="#0b0b0b"/>
+            <circle cx="22" cy="-78" r="6.5" fill="#0b0b0b"/>
+            <polygon points="0,-62 66,0 0,62 -66,0" fill="#c95b5b" stroke="#111" stroke-width="4"/>
+            <line x1="-46" y1="-43" x2="46" y2="43" stroke="#111" stroke-width="3"/>
+            <line x1="46" y1="-43" x2="-46" y2="43" stroke="#111" stroke-width="3"/>
+            <text x="0" y="90" text-anchor="middle" fill="#fff" font-family="'Courier Prime', monospace" font-size="18" font-weight="700">Pt #1 · ESBL</text>
+          </g>
+
+          <!-- Diamond 2: Patient 2 -->
+          <g transform="translate(1245, 515)" filter="url(#drop)">
+            <circle cx="-22" cy="-78" r="6.5" fill="#0b0b0b"/>
+            <circle cx="0" cy="-78" r="6.5" fill="#0b0b0b"/>
+            <circle cx="22" cy="-78" r="6.5" fill="#0b0b0b"/>
+            <polygon points="0,-62 66,0 0,62 -66,0" fill="#c95b5b" stroke="#111" stroke-width="4"/>
+            <line x1="-46" y1="-43" x2="46" y2="43" stroke="#111" stroke-width="3"/>
+            <line x1="46" y1="-43" x2="-46" y2="43" stroke="#111" stroke-width="3"/>
+            <text x="0" y="90" text-anchor="middle" fill="#fff" font-family="'Courier Prime', monospace" font-size="18" font-weight="700">Pt #2 · Day 6</text>
+          </g>
+
+          <!-- Diamond 3: Patient 3 -->
+          <g transform="translate(1115, 610)" filter="url(#drop)">
+            <circle cx="-22" cy="-78" r="6.5" fill="#0b0b0b"/>
+            <circle cx="0" cy="-78" r="6.5" fill="#0b0b0b"/>
+            <circle cx="22" cy="-78" r="6.5" fill="#0b0b0b"/>
+            <polygon points="0,-62 66,0 0,62 -66,0" fill="#c95b5b" stroke="#111" stroke-width="4"/>
+            <line x1="-46" y1="-43" x2="46" y2="43" stroke="#111" stroke-width="3"/>
+            <line x1="46" y1="-43" x2="-46" y2="43" stroke="#111" stroke-width="3"/>
+            <text x="0" y="90" text-anchor="middle" fill="#fff" font-family="'Courier Prime', monospace" font-size="18" font-weight="700">Pt #3 · Day 11</text>
+          </g>
+
+          <!-- Diamond 4: Patient 4 -->
+          <g transform="translate(1250, 655)" filter="url(#drop)">
+            <circle cx="-22" cy="-78" r="6.5" fill="#0b0b0b"/>
+            <circle cx="0" cy="-78" r="6.5" fill="#0b0b0b"/>
+            <circle cx="22" cy="-78" r="6.5" fill="#0b0b0b"/>
+            <polygon points="0,-62 66,0 0,62 -66,0" fill="#c95b5b" stroke="#111" stroke-width="4"/>
+            <line x1="-46" y1="-43" x2="46" y2="43" stroke="#111" stroke-width="3"/>
+            <line x1="46" y1="-43" x2="-46" y2="43" stroke="#111" stroke-width="3"/>
+            <text x="0" y="90" text-anchor="middle" fill="#fff" font-family="'Courier Prime', monospace" font-size="18" font-weight="700">Pt #4 · Day 18</text>
+          </g>
+
+          <!-- Top-left tactical HUD callout -->
+          <rect x="36" y="36" width="660" height="145" rx="8" fill="rgba(11,11,11,0.86)" stroke="#333" stroke-width="1.5" />
+          <text x="62" y="82" fill="#e62e2d" font-family="'Courier Prime', monospace" font-weight="700" font-size="25">HIDDEN OUTBREAK: UROLOGY WARD (JUNE)</text>
+          <text x="62" y="120" fill="#f0f0f0" font-family="'Courier Prime', monospace" font-size="22">4 patients · Identical 5-drug resistant E. coli</text>
+          <text x="62" y="154" fill="#9a9a9a" font-family="'Courier Prime', monospace" font-size="20">Expected: 0.2 cases  |  Annual PDF Report: BLIND</text>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 9: The Turn (matches L1NX Slide 9: "The enemy doesn't wait for your intelligence picture to be ready...") -->
+  <section class="slide" data-notes="Deliver quietly: 'Resistant bacteria don't wait for your annual report to be ready...'">
+    <div class="slide-inner left-middle">
+      <p class="dramatic-left" contenteditable="true">
+        The <span class="red">bacteria don't wait</span> for your<br/>
+        annual resistance report to be<br/>
+        ready...
+      </p>
+    </div>
+  </section>
+
+  <!-- SLIDE 10: Product Reveal (matches L1NX Slide 10) -->
+  <section class="slide" data-notes="Reveal the platform name. Pause, then click to the 3-pillar summary before switching to the live demo.">
+    <div class="slide-inner center">
+      <h1 class="brand-giant brand-name" contenteditable="true">agar</h1>
+      <p class="brand-sub" contenteditable="true">Antibiotic Efficacy Indicator &amp; AMR Workbench</p>
+    </div>
+  </section>
+
+  <!-- SLIDE 11: 3-Point Platform Summary (matches L1NX Slide 11) -->
+  <section class="slide" data-notes="Summarize the 3 pillars in 15 seconds, then alt-tab straight into the live app for the 60-second demo!">
+    <div class="slide-inner">
+      <h2 class="platform-title" contenteditable="true"><span class="brand-name">agar</span> Platform</h2>
+      <ol class="numbered-list">
+        <li>
+          <span class="num">1.</span>
+          <span contenteditable="true">Streams live HL7 lab data across 9 wards &amp; THL national feeds</span>
+        </li>
+        <li>
+          <span class="num">2.</span>
+          <span contenteditable="true">Ward treatment rankings &amp; outbreak detection in seconds rather than a year</span>
+        </li>
+        <li>
+          <span class="num">3.</span>
+          <span contenteditable="true">All-in-one reproducible workbench with 1-click R, Python &amp; LaTeX export</span>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- SLIDE 12: The Team (matches L1NX Slide 12) -->
+  <section class="slide" data-notes="Introduce the team briefly.">
+    <div class="slide-inner center">
+      <h1 class="team-title" contenteditable="true">The Team</h1>
+      <div class="team-grid" contenteditable="true">
+        <span>Clinical &amp; Statistical Engine</span>
+        <span>·</span>
+        <span>Full-Stack &amp; HL7 Pipeline</span>
+        <span>·</span>
+        <span>Workbench &amp; UX</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 13: THANK YOU! (matches L1NX Slide 13) -->
+  <section class="slide" data-notes="End on THANK YOU! and open the floor to judges' questions.">
+    <div class="slide-inner center">
+      <h1 class="thanks-title" contenteditable="true">THANK<br/>YOU!</h1>
+    </div>
+  </section>
+
+</div>
+
+<!-- Speaker Notes Drawer -->
+<div class="notes-drawer" id="notes-drawer">
+  <strong>Speaker Note</strong>
+  <div id="notes-text"></div>
+</div>
+
+<!-- Interactive Prototype Toolbar (Hidden when printing/exporting PDF) -->
+<div class="proto-bar" id="proto-bar">
+  <button type="button" id="prev-btn" title="Previous Slide (←)">◀</button>
+  <span id="slide-counter" style="min-width: 58px; text-align: center; font-weight: 600;">1 / 13</span>
+  <button type="button" id="next-btn" title="Next Slide (→)">▶</button>
+  <div class="proto-sep"></div>
+  <button type="button" id="edit-btn" class="active" title="Click any text on any slide to edit it directly">✎ Edit Text: ON</button>
+  <label style="display:flex; align-items:center; gap:6px;">
+    <span>Name:</span>
+    <input type="text" id="brand-input" value="agar" title="Change product name across all slides" />
+  </label>
+  <button type="button" id="notes-btn" title="Toggle Speaker Notes (N)">Notes</button>
+  <div class="proto-sep"></div>
+  <button type="button" id="present-btn" title="Fullscreen Present Mode (F)">⛶ Present</button>
+  <button type="button" id="save-html-btn" title="Download your edited HTML deck">⬇ Save Edited HTML</button>
+  <button type="button" id="print-btn" title="Save / Print as PDF">⬇ Save PDF</button>
+</div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const counter = document.getElementById('slide-counter');
+  const notesDrawer = document.getElementById('notes-drawer');
+  const notesText = document.getElementById('notes-text');
+  let idx = 0;
+
+  function fitStage() {
+    const scale = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+    slides.forEach(s => {
+      s.style.transform = `scale(${scale})`;
+    });
+  }
+  window.addEventListener('resize', fitStage);
+  fitStage();
+
+  function showSlide(n) {
+    idx = (n + slides.length) % slides.length;
+    slides.forEach((s, i) => s.classList.toggle('active', i === idx));
+    counter.textContent = `${idx + 1} / ${slides.length}`;
+    notesText.textContent = slides[idx].getAttribute('data-notes') || '';
+  }
+  showSlide(0);
+
+  document.getElementById('prev-btn').onclick = () => showSlide(idx - 1);
+  document.getElementById('next-btn').onclick = () => showSlide(idx + 1);
+
+  const editBtn = document.getElementById('edit-btn');
+  let editing = true;
+  editBtn.onclick = () => {
+    editing = !editing;
+    document.body.classList.toggle('edit-mode', editing);
+    document.querySelectorAll('[contenteditable]').forEach(el => {
+      el.setAttribute('contenteditable', editing ? 'true' : 'false');
+    });
+    editBtn.textContent = editing ? '✎ Edit Text: ON' : '✎ Edit Text: OFF';
+    editBtn.classList.toggle('active', editing);
+  };
+
+  const brandInput = document.getElementById('brand-input');
+  brandInput.addEventListener('input', () => {
+    const val = brandInput.value || 'agar';
+    document.querySelectorAll('.brand-name').forEach(el => {
+      el.textContent = val;
+    });
+  });
+
+  const notesBtn = document.getElementById('notes-btn');
+  notesBtn.onclick = () => {
+    notesDrawer.classList.toggle('open');
+    notesBtn.classList.toggle('active', notesDrawer.classList.contains('open'));
+  };
+
+  document.getElementById('present-btn').onclick = () => {
+    document.body.classList.toggle('presenting');
+    if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    }
+  };
+
+  document.getElementById('print-btn').onclick = () => window.print();
+
+  document.getElementById('save-html-btn').onclick = () => {
+    const blob = new Blob(['<!DOCTYPE html>\n' + document.documentElement.outerHTML], { type: 'text/html' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'pitch-deck-edited.html';
+    a.click();
+  };
+
+  window.addEventListener('keydown', (e) => {
+    const activeEl = document.activeElement;
+    const isTyping = activeEl && (activeEl.tagName === 'INPUT' || (editing && activeEl.isContentEditable));
+    if (e.key === 'Escape') {
+      document.body.classList.remove('presenting');
+      if (activeEl) activeEl.blur();
+      return;
+    }
+    if (isTyping) return;
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+      e.preventDefault();
+      showSlide(idx + 1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+      e.preventDefault();
+      showSlide(idx - 1);
+    } else if (e.key.toLowerCase() === 'n') {
+      notesBtn.click();
+    } else if (e.key.toLowerCase() === 'f') {
+      document.getElementById('present-btn').click();
+    }
+  });
+</script>
+</body>
+</html>

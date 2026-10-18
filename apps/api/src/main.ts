@@ -53,7 +53,7 @@ import {
 import { defeatedBy } from "@aei/eucast";
 import { packageFiles, projectBundle } from "@aei/export";
 import { antibioticName, phenotypeName, registerSites, registerWards, specimenName, t, wardName } from "@aei/i18n";
-import { asResult, type CodeMaps, DEFAULT_CODE_MAPS, detectFormat, extendCodeMaps, ingest, mergeResults } from "@aei/ingest";
+import { asResult, type CodeMaps, DEFAULT_CODE_MAPS, detectFormat, extendCodeMaps, ingest, isIsoDate, mergeResults } from "@aei/ingest";
 import { isProjectId, matchesScope, type Project, type ProjectInput, parseProjectInput } from "@aei/projects";
 import { createProjectStore, fingerprintRows, newProjectId } from "@aei/projects/node";
 import { checkRows, type Finding, summarize } from "@aei/quality";
@@ -383,10 +383,22 @@ function sendCached(res: ServerResponse, body: string) {
   res.end(body);
 }
 
+/** The largest request body read; a larger one is refused with 413. */
+const MAX_BODY_BYTES = 20 * 1024 * 1024;
+class BodyTooLarge extends Error {}
+
+// Bytes are joined before decoding, so a UTF-8 character split across chunks (ä, ö) stays whole.
 async function readText(req: IncomingMessage): Promise<string> {
-  let body = "";
-  for await (const chunk of req) body += chunk;
-  return body;
+  const tooLarge = () => new BodyTooLarge(`request body over ${MAX_BODY_BYTES / 1024 / 1024} MB`);
+  if (Number(req.headers["content-length"]) > MAX_BODY_BYTES) throw tooLarge();
+  const chunks: Buffer[] = [];
+  let size = 0;
+  for await (const chunk of req as AsyncIterable<Buffer>) {
+    size += chunk.length;
+    if (size > MAX_BODY_BYTES) throw tooLarge();
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks).toString("utf8");
 }
 
 async function readJson(req: IncomingMessage): Promise<unknown> {
@@ -422,8 +434,11 @@ function ingestPayload(body: string, contentType: string, from: ConnectedSite = 
   const quality: Finding[] = checkRows(result, { asOf: new Date().toISOString().slice(0, 10), wards: registry.wards });
   if (!result.cultures.length) return { status: 422, body: { format, accepted: 0, warnings: result.warnings, quality } };
   const before = new Set(state.alerts.upTo(datasetEnd).map((a) => a.id));
-  dataset = mergeResults(asResult(dataset), result);
-  state = derive(dataset);
+  // Derived first: if it throws, the request fails and the old dataset and state stay in place.
+  const next = mergeResults(asResult(dataset), result);
+  const nextState = derive(next);
+  dataset = next;
+  state = nextState;
   coverages.clear();
   alertsCache.clear();
   regionalCache.clear();
@@ -484,6 +499,7 @@ function quality(site: string = registry.home.id): QualityResponse {
   return cached;
 }
 
+// The command is checked here: a bad date or speed stored in the clock would throw on every later timer tick and stop the server.
 function runCommand(command: ClockCommand) {
   switch (command.action) {
     case "play":
@@ -491,11 +507,17 @@ function runCommand(command: ClockCommand) {
     case "pause":
       return clock.pause();
     case "step":
+      if (command.days !== undefined && !Number.isInteger(command.days)) throw new Error("days must be an integer");
       return clock.step(command.days);
     case "seek":
+      if (!isIsoDate(command.date)) throw new Error("date must be an ISO date (YYYY-MM-DD)");
       return clock.seek(command.date);
     case "configure":
-      return clock.configure(command);
+      if (command.tickMs !== undefined && !(Number.isFinite(command.tickMs) && command.tickMs > 0))
+        throw new Error("tickMs must be a positive number");
+      if (command.daysPerTick !== undefined && !(Number.isInteger(command.daysPerTick) && command.daysPerTick > 0))
+        throw new Error("daysPerTick must be a positive integer");
+      return clock.configure({ tickMs: command.tickMs, daysPerTick: command.daysPerTick });
     default:
       throw new Error(`unknown action ${(command as { action: string }).action}`);
   }
@@ -664,9 +686,13 @@ export const server = createServer(async (req, res) => {
         return send(res, 400, { error: "level must be unit, ward type or hospital" });
       const replayDay = clock.state().asOf;
       const asOfParam = url.searchParams.get("asOf");
-      if (asOfParam !== null && !(/^\d{4}-\d{2}-\d{2}$/.test(asOfParam) && new Date(`${asOfParam}T00:00:00Z`).toISOString().startsWith(asOfParam)))
+      if (
+        asOfParam !== null &&
+        !(/^\d{4}-\d{2}-\d{2}$/.test(asOfParam) && new Date(`${asOfParam}T00:00:00Z`).toISOString().startsWith(asOfParam))
+      )
         return send(res, 400, { error: "asOf must be an ISO date (YYYY-MM-DD)" });
-      if (asOfParam !== null && asOfParam > replayDay) return send(res, 400, { error: `asOf must not be after the replay date ${replayDay}` });
+      if (asOfParam !== null && asOfParam > replayDay)
+        return send(res, 400, { error: `asOf must not be after the replay date ${replayDay}` });
       const asOf = asOfParam ?? replayDay;
       // Only released records up to the requested day (never after the replay date), so nothing leaks in.
       const key = JSON.stringify([asOf, ward, specimen, sex, ageGroup, onset, days, levelParam]);
@@ -758,14 +784,17 @@ export const server = createServer(async (req, res) => {
       return sendCached(res, body);
     }
     if (url.pathname === ROUTES.national) {
-      if (!existsSync(config.nationalFile))
-        return send(res, 404, { error: "No national data; run `uv run python scripts/fetch_finres.py`" });
+      // No file is not an error: 204 tells the client there is no national line (a 404 would be logged as a failed request).
+      if (!existsSync(config.nationalFile)) {
+        res.writeHead(204, { "cache-control": "no-store" });
+        return res.end();
+      }
       return send(res, 200, JSON.parse(readFileSync(config.nationalFile, "utf8")) as NationalResponse);
     }
     if (url.pathname === ROUTES.weekly) {
       const asOf = clock.state().asOf;
       const from = url.searchParams.get("from") || datasetStart;
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(from)) return send(res, 400, { error: "from must be YYYY-MM-DD" });
+      if (!isIsoDate(from)) return send(res, 400, { error: "from must be YYYY-MM-DD" });
       const { site = registry.home.id, error } = siteParam(url);
       if (error) return send(res, 400, { error });
       const key = `${asOf}|${from}|${site}`;
@@ -844,6 +873,13 @@ export const server = createServer(async (req, res) => {
     }
     send(res, 404, { error: `no route ${url.pathname}` });
   } catch (error) {
+    // After the head went out (a stream, a file), a JSON error cannot follow; writeHead would throw and stop the server.
+    if (res.headersSent) return void res.end();
+    if (error instanceof BodyTooLarge) {
+      // The rest of the body is not read; closing the connection stops the upload.
+      res.setHeader("connection", "close");
+      return send(res, 413, { error: error.message });
+    }
     send(res, error instanceof LlmError ? 502 : 400, { error: error instanceof LlmError ? "The assistant is unavailable" : String(error) });
   }
 });

@@ -77,6 +77,16 @@ export function ResearchBoard(props: Props) {
   const drift = !!project.response?.drift;
   // The sidebar names this tab and marks it frozen from what the server says.
   useEffect(() => shell.describe({ project: current, drift }), [shell, current, drift]);
+  // A frozen project answers about its own day: opening it (also after a reload, or after another project moved the shared
+  // clock to now) parks the replay clock on its as-of date, once. Scrubbing the timeline afterwards is the researcher's own.
+  const pinned = useRef<string | null>(null);
+  useEffect(() => {
+    if (current?.mode !== "frozen" || !current.asOf || asOf === null || pinned.current === current.id) return;
+    pinned.current = current.id;
+    if (asOf === current.asOf) return;
+    command?.({ action: "pause" });
+    command?.({ action: "seek", date: current.asOf });
+  }, [current, asOf, command]);
   const gone = useCallback(() => {
     if (project.id) shell.projectGone(project.id, current?.name ?? null);
   }, [shell, project.id, current?.name]);
@@ -139,9 +149,11 @@ export function ResearchBoard(props: Props) {
     [incidents, state.unit, state.kinds, state.phenotype],
   );
   // The named incident, else the newest one in the list; the list never leaves the math panel blank.
+  // A signal the URL names that is not among those up to the clock is kept, not swapped for another: the panels say so.
+  const outside = load.status === "ready" && state.incident !== null && !incidents.some((i) => i.key === state.incident);
   const selected = useMemo(
-    () => incidents.find((i) => i.key === state.incident && shown.includes(i)) ?? shown[0] ?? null,
-    [incidents, shown, state.incident],
+    () => (outside ? null : (incidents.find((i) => i.key === state.incident && shown.includes(i)) ?? shown[0] ?? null)),
+    [incidents, shown, state.incident, outside],
   );
   const relationsOf = useRelations(client, asOf, shown);
   const spansOf = useCallback((i: (typeof incidents)[number]) => computeSpans(i, incidents, relationsOf(i)), [incidents, relationsOf]);
@@ -222,7 +234,7 @@ export function ResearchBoard(props: Props) {
       onOpenTools={openTools}
       explain={explain}
       onBack={layer ? back : undefined}
-      empty={loading ? "loading" : "pick"}
+      empty={loading ? "loading" : outside ? "outside" : "pick"}
     />
   );
 
@@ -252,6 +264,7 @@ export function ResearchBoard(props: Props) {
         card={card(true)}
         layer={explicit}
         onBack={back}
+        outside={outside}
       />
     ),
     reproduce: (

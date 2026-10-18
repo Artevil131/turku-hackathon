@@ -107,14 +107,27 @@ export function useRelations(client: AeiClient, asOf: string | null, incidents: 
     const mine = asked.current;
     const todo = days.filter((d) => !mine.days.has(d));
     for (const d of todo) mine.days.add(d);
-    // At most three requests at a time; each result lands as it arrives.
+    // At most three requests at a time. Results land together every 50 ms rather than one by one: each landing
+    // re-renders the whole board, and a clock step asks for about ten windows.
     let next = 0;
+    const landed = new Map<number, RelationsResponse>();
+    let flush: ReturnType<typeof setTimeout> | null = null;
+    const land = () => {
+      flush = null;
+      if (asked.current !== mine || !landed.size) return;
+      const batch = [...landed];
+      landed.clear();
+      setCache((c) => new Map([...c, ...batch]));
+    };
     const worker = async () => {
       while (next < todo.length && asked.current === mine) {
         const d = todo[next++] as number;
         const r = await client.relations({ days: d }).catch(() => null);
         if (!r) mine.days.delete(d);
-        else if (asked.current === mine) setCache((c) => new Map(c).set(d, r));
+        else if (asked.current === mine) {
+          landed.set(d, r);
+          if (!flush) flush = setTimeout(land, 50);
+        }
       }
     };
     for (let w = 0; w < 3; w++) void worker();

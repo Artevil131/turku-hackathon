@@ -47,10 +47,11 @@ export function until(target: Target, ms: number, clock: Clock, visible = true):
     const el = resolveTarget(target);
     if (el && (!visible || boxOf(el))) return el;
     // Out of view: bring it in, and again a moment later if the layout grew under it (a result arriving pushes it down).
+    // Smoothly: an instant scroll is a cut in a screen recording, the page and the hand jumping together.
     const now = performance.now();
-    if (el?.isConnected && now - lastScroll > 200 && !el.closest("[inert], [hidden]")) {
+    if (el?.isConnected && now - lastScroll > 400 && !el.closest("[inert], [hidden]")) {
       lastScroll = now;
-      el.scrollIntoView({ block: "center", inline: "nearest", behavior: "instant" });
+      el.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
     }
     return null;
   }, ms);

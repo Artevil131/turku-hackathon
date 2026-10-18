@@ -1,4 +1,3 @@
-import JSZip from "jszip";
 import type { ExportBundle, ExportFile } from "./bundle.ts";
 import { methodsNumbers, toMethodsParagraph } from "./methods.ts";
 import { type NotebookTarget, pythonAnalysis, pythonNotebook, rAnalysis, rNotebook } from "./notebooks.ts";
@@ -87,6 +86,7 @@ export function packageFiles(
 export async function toResearchPackage(bundle: ExportBundle): Promise<ExportFile> {
   const report = await toDocx(bundle);
   const name = slug(bundle.title);
+  const { default: JSZip } = await import("jszip");
   const zip = new JSZip();
   for (const file of packageFiles(bundle, { docx: report.data as Uint8Array, target: "desktop" }))
     zip.file(`${name}/${file.path}`, file.data);

@@ -1,6 +1,6 @@
 import type { Alert } from "@aei/contract";
 import { describe, expect, it } from "vitest";
-import { linePath, monotoneSegments, pillLabel, weekIndex } from "./geometry.ts";
+import { linePath, monotoneSegments, pillLabel, pillTip, pillWords, weekIndex } from "./geometry.ts";
 
 describe("monotoneSegments", () => {
   it("never overshoots the data", () => {
@@ -65,5 +65,22 @@ describe("pillLabel", () => {
   it("leaves a lone count without a separator", () => {
     const rising: Alert = { kind: "detector", detector: "rising-trend", ward: "URO", date: "2025-06-07" } as Alert;
     expect(pillLabel("en", rising)).toBe("trend ↗");
+  });
+});
+
+describe("pillWords", () => {
+  const det = (extra: Partial<Alert>) =>
+    ({ kind: "detector", ward: "URO", date: "2025-06-07", observed: 2, expected: 0, ...extra }) as Alert;
+  it("says in words what the short label counts", () => {
+    expect(pillWords("en", det({ detector: "phenotype-excess", phenotype: "esbl" }))).toBe("ESBL: 2 seen, 0 usual");
+    expect(pillWords("en", det({ detector: "sampling-drop", observed: 39, expected: 70 }))).toBe("Sampling: 39 cultures, 70 usual");
+    expect(pillWords("en", det({ detector: "rising-trend", ward: null }))).toMatch(/^Rising trend/);
+    expect(pillWords("fi", det({ detector: "phenotype-excess", phenotype: "esbl" }))).toBe("ESBL: 2 havaittu, 0 tavallinen");
+  });
+  it("heads a merged pill with how many signals it holds", () => {
+    const a = det({ detector: "phenotype-excess", phenotype: "esbl", id: "a" } as Partial<Alert>);
+    const tip = pillTip("en", [a, a, a]);
+    expect(tip.split("\n")[0]).toBe("3 signals close together in time");
+    expect(tip.split("\n")).toHaveLength(4);
   });
 });

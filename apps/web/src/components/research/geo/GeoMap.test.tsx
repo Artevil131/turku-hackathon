@@ -3,7 +3,7 @@ import type { Locale } from "@aei/i18n";
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { PanelProps } from "../board.ts";
-import { GeoMap } from "./GeoMap.tsx";
+import { GeoMap, matchSeries } from "./GeoMap.tsx";
 import { UnitGraph } from "./UnitGraph.tsx";
 import { useLoad } from "./useLoad.ts";
 
@@ -64,5 +64,20 @@ describe("map source labels and initial county", () => {
     expect(html).toContain(
       locale === "fi" ? "Tyks · sairaalan oma aineisto (demossa synteettinen)" : "Tyks · hospital&#x27;s own data (synthetic in the demo)",
     );
+  });
+});
+
+describe("matchSeries", () => {
+  it("matches the phenotype first, the organism where THL has it", () => {
+    expect(matchSeries(["esbl"], "Klebsiella pneumoniae")).toMatchObject({ group: "ESBL carriage, K. pneumoniae", basis: "phenotype" });
+    expect(matchSeries(["mrsa"])).toMatchObject({ group: "MRSA carriage", basis: "phenotype" });
+  });
+  it("falls back to the organism for a signal with no phenotype (an E. coli profile cluster)", () => {
+    expect(matchSeries([], "Escherichia coli")).toMatchObject({ group: "ESBL carriage, E. coli", basis: "organism" });
+    expect(matchSeries([], "Staphylococcus aureus")?.group).toBe("MRSA carriage");
+  });
+  it("is null when nothing is close", () => {
+    expect(matchSeries([], "Proteus mirabilis")).toBeNull();
+    expect(matchSeries([])).toBeNull();
   });
 });

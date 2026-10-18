@@ -12,7 +12,7 @@ import {
   mapSpecimen,
   mapWard,
 } from "./codes.ts";
-import { addCulture, type CultureInput, emptyResult, type IngestResult } from "./record.ts";
+import { addCulture, type CultureInput, emptyResult, type IngestResult, isIsoDate } from "./record.ts";
 
 // A flat isolate export (D-035), the WHONET-style file labs already produce
 // for surveillance: one row per isolate, culture and patient columns, an
@@ -44,10 +44,17 @@ export interface CsvOptions {
   guideline?: string;
 }
 
+/** The field separator of a flat export: a semicolon (spreadsheets in a Finnish locale) when the header has more of them than commas. */
+export function csvDelimiter(text: string): "," | ";" {
+  const header = text.replace(/^﻿/, "").split(/\r?\n/, 1)[0] ?? "";
+  const count = (c: string) => header.split(c).length - 1;
+  return count(";") > count(",") ? ";" : ",";
+}
+
 export function parseIsolateCsv(text: string, options: CsvOptions = {}): IngestResult {
   const maps = options.maps ?? DEFAULT_CODE_MAPS;
   const out = emptyResult();
-  const rows = parseCsv(text);
+  const rows = parseCsv(text, csvDelimiter(text));
   if (!rows.length) return out;
   const headers = Object.keys(rows[0] ?? {});
   const norm = (h: string) => h.toLowerCase().replace(/[^a-z0-9_]/g, "");
@@ -78,17 +85,27 @@ export function parseIsolateCsv(text: string, options: CsvOptions = {}): IngestR
     const cultureId = get("culture");
     const sexRaw = get("sex").toUpperCase();
     const sex: Sex | undefined = sexRaw.startsWith("F") || sexRaw === "N" ? "F" : sexRaw.startsWith("M") ? "M" : undefined;
-    const birthYear = Number(get("birthYear") || get("birthDate").slice(0, 4));
+    // A birth year as four digits, else the year of an ISO birth date; "01.03.1948" is not read as a year.
+    const birthYear = get("birthYear")
+      ? /^\d{4}$/.test(get("birthYear"))
+        ? Number(get("birthYear"))
+        : 0
+      : isIsoDate(get("birthDate").slice(0, 10))
+        ? Number(get("birthDate").slice(0, 4))
+        : 0;
     const ward = mapWard(maps, [{ code: get("ward") }]);
     const specimen = mapSpecimen(maps, [{ code: get("specimen") }]);
     const sampleDate = get("date").slice(0, 10);
+    const admissionDate = get("admission").slice(0, 10);
     const problems = [
+      !get("patient") && "patient id",
       !cultureId && "culture id",
       !sex && `sex "${get("sex")}"`,
-      !birthYear && "birth year",
+      !birthYear && `birth year "${get("birthYear") || get("birthDate")}" (YYYY or YYYY-MM-DD)`,
       !ward && `ward "${get("ward")}"`,
       !specimen && `specimen "${get("specimen")}"`,
-      !/^\d{4}-\d{2}-\d{2}$/.test(sampleDate) && `date "${get("date")}"`,
+      !isIsoDate(sampleDate) && `date "${get("date")}" (YYYY-MM-DD)`,
+      admissionDate && !isIsoDate(admissionDate) && `admission date "${get("admission")}" (YYYY-MM-DD)`,
     ].filter(Boolean);
     if (problems.length || !sex || !ward || !specimen) {
       out.warnings.push(`row ${line}: skipped, no usable ${problems.join(", ")}`);
@@ -103,7 +120,7 @@ export function parseIsolateCsv(text: string, options: CsvOptions = {}): IngestR
         birthYear,
         sampleDate,
         ward,
-        admissionDate: get("admission").slice(0, 10) || null,
+        admissionDate: admissionDate || null,
         specimen,
         isolates: [],
         ...(options.guideline ? { guideline: options.guideline } : {}),

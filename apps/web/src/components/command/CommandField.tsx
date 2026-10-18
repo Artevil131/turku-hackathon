@@ -200,7 +200,12 @@ export function CommandField({ locale, alerts, asOf = null }: Props) {
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    // "/" is the shortcut that opens this field, never a character of a search: pressed in the empty field (after Esc
+    // cleared it, say) it keeps the focus and types nothing.
+    if (e.key === "/" && !query && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      e.preventDefault();
+      input.current?.select();
+    } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
       e.preventDefault();
       if (!results.length) return;
       const step = e.key === "ArrowDown" ? 1 : -1;

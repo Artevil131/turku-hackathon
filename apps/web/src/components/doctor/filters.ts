@@ -14,6 +14,11 @@ export type AgeGroup = "any" | AgeBand;
 export type Period = 365 | 90 | 28;
 export const PERIOD_VALUES: readonly Period[] = [28, 90, 365];
 
+/** What the row's figure is counted on: the antibiotic's own spectrum, or every organism that grew. */
+export type Basis = "own" | "all";
+/** The basis the answer card judges on: own spectrum for a mild case, everything for a severe one. */
+export const basisFor = (sev: Severity): Basis => (sev === "severe" ? "all" : "own");
+
 export interface DoctorFilters {
   unit: WardCode;
   site: Specimen;
@@ -26,6 +31,8 @@ export interface DoctorFilters {
   period: Period;
   /** The guide's syndrome the doctor chose (D-047), or null. Marks the guide's first choice; never filters or reorders. */
   syn: SyndromeId | null;
+  /** The basis the list's figures are shown on when the doctor chose one (`judge=own|all`); null follows the severity. Display only: the query ignores it. */
+  judge: Basis | null;
 }
 
 export const DEFAULT_UNIT: WardCode = "MED-A";
@@ -37,6 +44,7 @@ export const DEFAULTS: Omit<DoctorFilters, "unit"> = {
   sev: "mild",
   period: 365,
   syn: null,
+  judge: null,
 };
 export const SITES: readonly Specimen[] = ["urine", "blood", "wound"];
 /** The bar a severity is judged against, in percent (D-026, D-027), from the contract. */
@@ -106,6 +114,7 @@ export function chooseSyndrome(f: DoctorFilters, syndrome: Syndrome | null): Doc
 export function patchFilters(f: DoctorFilters, patch: Partial<DoctorFilters>): DoctorFilters {
   const next = { ...f, ...patch };
   if (!("syn" in patch) && patch.site !== undefined && patch.site !== f.site) next.syn = null;
+  if (!("judge" in patch) && patch.sev !== undefined && patch.sev !== f.sev) next.judge = null;
   return next;
 }
 
@@ -131,7 +140,7 @@ export const focusOrg = (v: string | null): string | null => ORGANISMS.find((o) 
 /** Carries legacy doctor deep links into a workspace without borrowing its filter names. */
 export function doctorParamsToWindow(params: URLSearchParams): Record<string, string> {
   const result: Record<string, string> = {};
-  for (const key of ["unit", "site", "sex", "age", "onset", "sev", "period", "syn"]) {
+  for (const key of ["unit", "site", "sex", "age", "onset", "sev", "period", "syn", "judge"]) {
     const value = params.get(key);
     if (value !== null) result[`cov.${key}`] = value;
   }
@@ -149,6 +158,7 @@ export function filtersFromUrl(params: URLSearchParams): DoctorFilters {
   const sex = params.get("sex");
   const sev = params.get("sev");
   const age = params.get("age");
+  const judge = params.get("judge");
   return {
     unit: unit && knownWard(unit) && inSite(unit) ? unit : (readStoredUnit() ?? defaultUnit()),
     site: SITES.find((s) => s === site) ?? DEFAULTS.site,
@@ -158,6 +168,7 @@ export function filtersFromUrl(params: URLSearchParams): DoctorFilters {
     sev: sev === "severe" ? "severe" : "mild",
     period: PERIOD_VALUES.find((p) => String(p) === params.get("period")) ?? 365,
     syn: syndromeOf(params.get("syn"))?.id ?? null,
+    judge: judge === "own" || judge === "all" ? judge : null,
   };
 }
 
@@ -172,6 +183,7 @@ export function filtersToParams(f: DoctorFilters): Record<string, string | null>
     sev: f.sev === "mild" ? null : f.sev,
     period: f.period === 365 ? null : String(f.period),
     syn: f.syn,
+    judge: f.judge,
   };
 }
 
@@ -210,7 +222,15 @@ export function halfWidth(interval: [number, number] | null): number | null {
 export const pct = (x: number): number => Math.round(x * 100);
 
 /** A count in the locale's digits and grouping (Finnish groups with a no-break space). */
-export const num = (locale: string, n: number): string => new Intl.NumberFormat(locale).format(n);
+const numFormats = new Map<string, Intl.NumberFormat>();
+export const num = (locale: string, n: number): string => {
+  let f = numFormats.get(locale);
+  if (!f) {
+    f = new Intl.NumberFormat(locale);
+    numFormats.set(locale, f);
+  }
+  return f.format(n);
+};
 
 export type Row = CoverageResponse["suggestions"][number];
 

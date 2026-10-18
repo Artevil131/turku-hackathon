@@ -16,6 +16,7 @@ import { FailsTogether } from "./FailsTogether.tsx";
 import "./DoctorPage.css";
 import {
   barOf,
+  basisFor,
   chooseSyndrome,
   coverageQuery,
   type DoctorFilters,
@@ -247,12 +248,21 @@ export function CoverageWindow({
     }
     setFilters((f) => patchFilters(f, patch));
   }, []);
+  // The choice is kept only when it differs from what the severity defaults to, so the common link stays short.
+  const onJudge = useCallback(
+    (judge: "own" | "all") => onChange({ judge: judge === basisFor(filters.sev) ? null : judge }),
+    [onChange, filters.sev],
+  );
   const syndrome = useMemo(() => syndromeOf(filters.syn) ?? null, [filters.syn]);
   const onSyndrome = useCallback((s: Syndrome | null) => setFilters((f) => chooseSyndrome(f, s)), []);
   // Figures from a different query are never shown under the new filters; only a clock tick keeps the old list while it refreshes.
   const current = data && data.key === key ? data.response : null;
   const feeders = useMemo(() => previousUnits(flows, filters.unit, 3).map((p) => p.ward), [flows, filters.unit]);
-  const signals = useMemo(() => unitSignals(alerts, filters.unit, feeders, locale), [alerts, filters.unit, feeders, locale]);
+  const fresh = useMemo(() => unitSignals(alerts, filters.unit, feeders, locale), [alerts, filters.unit, feeders, locale]);
+  // The alerts backlog is a new array on every clock tick; the same signals in it keep their identity, so the list below holds.
+  const lastSignals = useRef(fresh);
+  const signals = JSON.stringify(fresh) === JSON.stringify(lastSignals.current) ? lastSignals.current : fresh;
+  lastSignals.current = signals;
 
   const patientFindings = patient?.response ?? null;
   const status2 = current ? status : status === "error" ? "error" : "loading";
@@ -270,12 +280,23 @@ export function CoverageWindow({
       surfaceRef.current?.querySelector<HTMLElement>(`[data-row="${CSS.escape(item.id)}"]`)?.scrollIntoView({ block: "center" }),
     );
   }, [focus.ab, item]);
-  const pickRow = (id: string | null) => {
-    fromLink.current = false;
-    setSelected(id);
-    setFocus((f) => (f.ab ? { ...f, ab: null } : f));
-    if (focus.ab) writeHashParam(embedded ? "cov.ab" : "ab", null);
-  };
+  const focusAsked = focus.ab;
+  const pickRow = useCallback(
+    (id: string | null) => {
+      fromLink.current = false;
+      setSelected(id);
+      setFocus((f) => (f.ab ? { ...f, ab: null } : f));
+      if (focusAsked) writeHashParam(embedded ? "cov.ab" : "ab", null);
+    },
+    [focusAsked, embedded],
+  );
+  const onRetry = useCallback(() => setAttempt((a) => a + 1), []);
+  // Stable elements, so the memoised list below re-renders only when its own data changes.
+  const source = useMemo(() => <DataQuality client={client} locale={locale} />, [client, locale]);
+  const compare = useMemo(
+    () => <CompareBar client={client} locale={locale} filters={filters} asOf={asOf} onPeriod={(period) => onChange({ period })} />,
+    [client, locale, filters, asOf, onChange],
+  );
   const closeSheet = () => {
     const id = selected;
     setSelected(null);
@@ -310,7 +331,7 @@ export function CoverageWindow({
             {/* Wide: the case sits beside the answer, always open. Narrow: it waits behind "Edit case". */}
             <div className="dr-case" data-open={editing || wide || undefined}>
               <h2 className="dr-case-title">{t(locale, "drCaseTitle")}</h2>
-              <SyndromePicker locale={locale} value={filters.syn} onPick={onSyndrome} />
+              <SyndromePicker locale={locale} value={filters.syn} onPick={onSyndrome} compact={!wide} />
               <RecordStrip
                 locale={locale}
                 wide={wide}
@@ -324,7 +345,7 @@ export function CoverageWindow({
           </div>
           <div className="doctor-body">
             <CoverageList
-              source={<DataQuality client={client} locale={locale} />}
+              source={source}
               locale={locale}
               filters={filters}
               asOf={asOf}
@@ -333,12 +354,11 @@ export function CoverageWindow({
               signals={signals}
               selected={item ? item.id : null}
               onSelect={pickRow}
-              onRetry={() => setAttempt((a) => a + 1)}
+              onRetry={onRetry}
               syndrome={syndrome}
               patient={patientFindings}
-              compare={
-                <CompareBar client={client} locale={locale} filters={filters} asOf={asOf} onPeriod={(period) => onChange({ period })} />
-              }
+              compare={compare}
+              onJudge={onJudge}
             />
             <aside className="dp-side" aria-label={t(locale, "drInUnit")}>
               <UnitContext

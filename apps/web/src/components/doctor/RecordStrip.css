@@ -279,3 +279,10 @@
   flex-wrap: wrap;
   height: auto;
 }
+
+.rs-onset-note {
+  margin: 0;
+  color: var(--ink-3, #5b6076);
+  font-size: var(--t-xs, 0.8rem);
+  line-height: 1.4;
+}

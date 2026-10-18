@@ -61,7 +61,7 @@ function keys(c: Coding): string[] {
 }
 
 function lookup<T>(map: Record<string, T>, codings: readonly Coding[]): T | undefined {
-  for (const c of codings) for (const k of keys(c)) if (k in map) return map[k];
+  for (const c of codings) for (const k of keys(c)) if (Object.hasOwn(map, k)) return map[k];
   return undefined;
 }
 

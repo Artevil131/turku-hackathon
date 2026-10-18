@@ -529,8 +529,8 @@ export interface AeiClient {
    * Resolves with the server's answer and its HTTP status, also for 401, 415 and 422, which carry a reason.
    */
   ingest(body: string, contentType: string, token?: string): Promise<{ status: number; body: IngestResponse }>;
-  /** Finres national reference (D-048); 404 when the server has no file. */
-  national(): Promise<NationalResponse>;
+  /** Finres national reference (D-048); null when the server has no file (it answers 204). */
+  national(): Promise<NationalResponse | null>;
   /** The patient's prior resistant findings (D-050); 400 without an id, an empty list for an unknown one. */
   patientFindings(id: string): Promise<PatientFindingsResponse>;
   /** Opens the live stream; returns a function that closes it. */
@@ -613,7 +613,10 @@ export function createAeiClient(options: AeiClientOptions): AeiClient {
       }
       return { status: res.status, body: parsed };
     },
-    national: () => json<NationalResponse>(ROUTES.national),
+    national: async () => {
+      const res = await request(ROUTES.national);
+      return res.status === 204 ? null : ((await res.json()) as NationalResponse);
+    },
     patientFindings: (id) => json<PatientFindingsResponse>(withQuery(ROUTES.patientFindings, { id })),
     live(onEvent, onError) {
       const source = new ES(url(ROUTES.live));

@@ -49,3 +49,6 @@ xcuserdata/
 # backup demo videos (scripts/record_demo.mjs)
 /demo-*.mp4
 # smoke-test screenshots and report (apps/web/scripts/smoke.mjs)
+
+# screen recordings for the pitch, too large for git
+pitch/*.mov

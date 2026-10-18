@@ -64,7 +64,7 @@ export const winOf = (l: Layout, id: string): WinState =>
 /** Smallest size of each window, in columns and rows. */
 export const MIN_SIZE: Record<WinId, { w: number; h: number }> = {
   signals: { w: 3, h: 8 },
-  map: { w: 3, h: 8 },
+  map: { w: 3, h: 14 },
   graph: { w: 3, h: 7 },
   math: { w: 3, h: 6 },
   assistant: { w: 3, h: 5 },
@@ -101,7 +101,7 @@ export function defaultLayout(): Layout {
 }
 
 /** Rows of the timeline window every project starts with, across the top of the board. */
-export const TIMELINE_ROWS = 11;
+export const TIMELINE_ROWS = 12;
 
 /**
  * Opens the timeline across the top of the board and moves every other open window down below it. `bottom` puts it
@@ -138,8 +138,8 @@ export function baseLayout(): Layout {
     signals: { x: 0, y: 0, w: 4, h: 40, open: true },
     // The notebook in the centre, as tall as Signals: the page the researcher works on, visible from the start.
     notebook: { x: 4, y: 0, w: 5, h: 40, open: true },
-    map: { x: 9, y: 0, w: 3, h: 20, open: true },
-    graph: { x: 9, y: 20, w: 3, h: 20, open: true },
+    map: { x: 9, y: 0, w: 3, h: 26, open: true },
+    graph: { x: 9, y: 26, w: 3, h: 16, open: true },
     math: { x: 9, y: 22, w: 3, h: 14, open: false },
     assistant: { x: 9, y: 36, w: 3, h: 8, open: false },
     grid: { x: 0, y: 0, w: 12, h: 30, open: false },
@@ -147,7 +147,7 @@ export function baseLayout(): Layout {
     // The doctor's patient coverage: an ordinary window, closed until opened from the Windows menu or a template.
     coverage: { x: 0, y: 0, w: 6, h: 30, open: false },
     // The replay timeline: a window of the project, opened by the templates and from the Windows menu.
-    timeline: { x: 0, y: 0, w: 12, h: 11, open: false },
+    timeline: { x: 0, y: 0, w: 12, h: 12, open: false },
     // The one-sentence summary: closed by default, opened first in the templates and demo files.
     answer: { x: 0, y: 0, w: 12, h: 9, open: false },
   };
@@ -408,6 +408,29 @@ export function addWindow(layout: Layout, kind: WinId, at?: Partial<Rect>): { la
   const id = `${COPY_PREFIX}${kind}:${n}`;
   const next: Layout = { ...layout, copies: { ...layout.copies, [id]: { ...rect, open: true, kind } }, order: [...layout.order, id] };
   return { layout: raise(next, id), id };
+}
+
+/**
+ * Where a new window of `kind` goes when nobody said: the top-most, left-most free place that starts within the first
+ * `visibleRows` rows (so it is on screen without scrolling), else just under the timeline (or the top of the board),
+ * where the compaction that follows makes room by pushing the others down. Never the bottom of a long board.
+ */
+export function nearTop(layout: Layout, kind: WinId, visibleRows: number): { x: number; y: number } {
+  const size = DEFAULT_SIZE[kind];
+  const min = MIN_SIZE[kind];
+  const w = clamp(size.w, min.w, COLS);
+  const h = Math.max(min.h, size.h);
+  const open = allIds(layout)
+    .map((id) => winOf(layout, id))
+    .filter((o) => o.open);
+  const last = Math.max(0, Math.floor(visibleRows) - 6);
+  for (let y = 0; y <= last; y++)
+    for (let x = 0; x <= COLS - w; x++) {
+      const r = { x, y, w, h };
+      if (!open.some((o) => overlaps(r, o))) return { x, y };
+    }
+  const tl = layout.wins.timeline;
+  return { x: 0, y: tl.open ? tl.y + tl.h : 0 };
 }
 
 /**

@@ -28,6 +28,13 @@ export type Beat =
   | { do: "think"; ms: number }
   /** The hand presses Escape: the menu or popover it opened closes. */
   | { do: "escape" }
+  /** From here on the hand moves at this pace (a demo's own fill-in inside the showcase keeps the demo's pace). */
+  | { do: "pace"; pace: Pace }
+  /**
+   * The closing frame: the screen fades to white while the app's wordmark glides from the sidebar to the centre and
+   * settles there, larger; then it holds `ms` (the fade and the glide take OUTRO_MS before that).
+   */
+  | { do: "outro"; ms: number }
   /** A chapter mark, free: announced with its time (the `aei:perform` event, the dev console) so a narration can be written against it. */
   | { do: "scene"; name: string };
 
@@ -100,4 +107,18 @@ export const pill =
     if (selected) return selected;
     const plain = document.querySelectorAll(`${win(id)} .hs-pill:not([data-kind="sentinel"]):not([data-kind="data"])`);
     return plain[plain.length - 1] ?? document.querySelector(`${win(id)} .hs-pill`);
+  };
+
+/**
+ * A cluster pill on a band: the one dated `iso` (the day it fired, as its label says it, d.m.yyyy in both languages)
+ * when the band shows it, else the latest cluster pill. Never a sampling or data note.
+ */
+export const clusterPill =
+  (id: string, iso: string): Target =>
+  () => {
+    const [y, m, d] = iso.split("-").map(Number);
+    const day = `${d}.${m}.${y}`;
+    const pills = [...document.querySelectorAll<SVGGElement>(`${win(id)} .hs-pill[data-kind="cluster"]`)];
+    const dated = pills.find((p) => (p.getAttribute("aria-label") ?? "").includes(day));
+    return dated ?? pills.sort((a, b) => Number(b.dataset.week) - Number(a.dataset.week))[0] ?? null;
   };

@@ -38,6 +38,7 @@ import {
   loadLayout,
   MAX_ROWS,
   MIN_SIZE,
+  nearTop,
   type Preset,
   parseLayout,
   patchWin,
@@ -395,7 +396,10 @@ export function Workspace({
       setAreaW(r.width);
       const scroller = el.closest<HTMLElement>(".page") ?? document.documentElement;
       const top = r.top - scroller.getBoundingClientRect().top + scroller.scrollTop;
-      setViewRows(Math.max(12, Math.floor((scroller.clientHeight - top - 12) / ROW_PX)));
+      // The project page grows with the board (the document scrolls), so its own height is not a viewport: capped by
+      // the window, or the board's height would feed back into it and grow every frame.
+      const viewH = Math.min(scroller.clientHeight, window.innerHeight);
+      setViewRows(Math.max(12, Math.floor((viewH - top - 12) / ROW_PX)));
     };
     measure();
     window.addEventListener("resize", measure);
@@ -407,6 +411,10 @@ export function Workspace({
       window.removeEventListener("resize", measure);
     };
   }, []);
+  // The layout the grow measurement reads, kept in a ref so the observer below is built once per `wide`, not per render.
+  const baseRef = useRef(base);
+  baseRef.current = base;
+  const measureGrowRef = useRef<(() => void) | null>(null);
   useLayoutEffect(() => {
     if (!wide || typeof ResizeObserver !== "function") return;
     const root = areaRef.current;
@@ -415,7 +423,7 @@ export function Workspace({
       const next: Record<string, number> = {};
       for (const win of root.querySelectorAll<HTMLElement>(".ws-win[data-win]")) {
         const id = win.dataset.win ?? "";
-        if (GROWS_NOT.has(kindOf(base, id) ?? id)) continue;
+        if (GROWS_NOT.has(kindOf(baseRef.current, id) ?? id)) continue;
         const frame = win.querySelector<HTMLElement>(".ws-frame");
         const body = win.querySelector<HTMLElement>(".ws-body");
         if (!frame || !body || body.scrollHeight <= body.clientHeight + 1) continue;
@@ -428,21 +436,44 @@ export function Workspace({
         return changed ? merged : prev;
       });
     };
-    measure();
     const ro = new ResizeObserver(measure);
-    for (const body of root.querySelectorAll(".ws-body")) {
-      ro.observe(body);
-      for (const child of Array.from(body.children)) ro.observe(child);
-    }
-    return () => ro.disconnect();
-  });
+    const watched = new WeakSet<Element>();
+    // Observe every window body and its children once; windows added, removed or re-rendered change the DOM, which re-syncs.
+    const watch = () => {
+      for (const body of root.querySelectorAll(".ws-body")) {
+        for (const el of [body, ...Array.from(body.children)])
+          if (!watched.has(el)) {
+            watched.add(el);
+            ro.observe(el);
+          }
+      }
+    };
+    measureGrowRef.current = measure;
+    measure();
+    watch();
+    const mo = new MutationObserver(() => {
+      watch();
+      measure();
+    });
+    mo.observe(root, { childList: true, subtree: true });
+    return () => {
+      measureGrowRef.current = null;
+      mo.disconnect();
+      ro.disconnect();
+    };
+  }, [wide]);
   // A narrower or wider board reflows the content, so what was needed is measured again.
-  useEffect(() => setNeeded({}), [areaW]);
-  // Position changes animate, but not the first placement.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the width is the trigger, not a value the effect reads
+  useEffect(() => {
+    setNeeded({});
+    measureGrowRef.current?.();
+  }, [areaW]);
+  // Position changes animate, but not the first placement: nor the file's own layout, which lands a few frames after the
+  // board mounts (a glide from the default layout reflows every window's content on screen).
   useEffect(() => {
     if (areaW <= 0 || animate) return;
-    const raf = requestAnimationFrame(() => setAnimate(true));
-    return () => cancelAnimationFrame(raf);
+    const timer = setTimeout(() => setAnimate(true), 400);
+    return () => clearTimeout(timer);
   }, [areaW, animate]);
 
   const commit = (next: Layout, moved?: string) => {
@@ -544,17 +575,30 @@ export function Workspace({
   // Other panels ask for a window by name: the doctor's "Change date" opens the timeline.
   const openRef = useRef(open);
   openRef.current = open;
+  // A window too small to show its content asks for the whole board ("Open larger").
+  const focusRef = useRef(setFocusTo);
+  focusRef.current = setFocusTo;
   useEffect(() => {
     const onAsk = (e: Event) => {
       const id = (e as CustomEvent<WinId>).detail;
       if (id) openRef.current(id);
     };
+    const onLarger = (e: Event) => {
+      const id = (e as CustomEvent<WinId>).detail;
+      if (id) focusRef.current(id);
+    };
     addEventListener("aei:open-window", onAsk);
-    return () => removeEventListener("aei:open-window", onAsk);
+    addEventListener("aei:focus-window", onLarger);
+    return () => {
+      removeEventListener("aei:open-window", onAsk);
+      removeEventListener("aei:focus-window", onLarger);
+    };
   }, []);
   // A new window of any kind, as often as the grid allows: where the researcher asked, else under the others.
   const add = (kind: WinId, at?: Partial<Rect>, between?: Between) => {
-    const added = (between ? insertBetween(base, kind, between.a, between.b, between.axis) : null) ?? addWindow(base, kind, at);
+    // No place asked for (the floating button, the toolbar): near the top, where it is seen, not under a long board.
+    const place = at?.y === undefined && !between ? { ...nearTop(base, kind, viewRows), ...at } : at;
+    const added = (between ? insertBetween(base, kind, between.a, between.b, between.axis) : null) ?? addWindow(base, kind, place);
     commit(added.layout, added.id);
     focusAfter.current = `ws-win-${added.id}`;
     if (focus) setFocusTo(added.id);
@@ -629,13 +673,22 @@ export function Workspace({
           const left = Math.max(A.x, B.x) * colW;
           const right = Math.min(A.x + A.w, B.x + B.w) * colW;
           if (Math.abs(py - y) <= NEAR && px >= left && px <= right)
-            return { x: (left + right) / 2, y, at: { x: A.x, y: B.y, w: cols }, side: "between-y", between: { a, b, axis: "y" as const } };
+            // At B's left corner (its grip starts 28 px in), not the middle of the line, where the grip is.
+            return {
+              x: Math.min(right - 14, Math.max(left + 14, B.x * colW + 14)),
+              y,
+              at: { x: A.x, y: B.y, w: cols },
+              side: "between-y",
+              between: { a, b, axis: "y" as const },
+            };
         }
       }
     return null;
   };
   const onAreaMove = (e: PointerEvent<HTMLDivElement>) => {
     if (!wide || focused || dragging || picker) return;
+    // Over a window's move grip the + stays away: it would cover the grip it sits on the line of.
+    if ((e.target as Element).closest?.(".ws-grip")) return setHint(null);
     const c = cellAt(e);
     const next = c ? findHint(c.px, c.py) : null;
     setHint((h) => (h?.x === next?.x && h?.y === next?.y && h?.side === next?.side ? h : next));
@@ -743,6 +796,7 @@ export function Workspace({
     if (e.button !== 0 || !areaRef.current) return;
     if ((e.target as HTMLElement).closest("button") && kind === "move") return;
     e.preventDefault();
+    getSelection()?.removeAllRanges();
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     focusWin(id);
     const w = winOf(base, id);
@@ -841,6 +895,8 @@ export function Workspace({
   const copyIds = Object.keys(layout.copies);
   const ids: readonly string[] = wide ? [...WIN_IDS, ...copyIds, ...chartIds] : [...STACK_ORDER, ...copyIds, ...chartIds];
   const tray = <Tray locale={locale} open={(id) => base.wins[id].open} onToggle={toggle} onReset={reset} chartMenu={chartMenu} />;
+  // The quick Treat-a-patient view and a maximised coverage window carry their own "+ Add a window" in the header.
+  const hideFloat = (!projectId && hashParams().get("quick") === "patient") || focused === "coverage";
   const roleOf = (id: string): "primary" | "answer" | "quiet" | undefined =>
     primary === null ? undefined : id === primary ? "primary" : answers.includes((kindOf(base, id) ?? id) as WinId) ? "answer" : "quiet";
   const place = (r: Rect): CSSProperties => ({
@@ -928,6 +984,10 @@ export function Workspace({
               } as CSSProperties)
             : undefined;
           const drags = (kind: Drag["kind"]) => ({
+            // The pointer-down default is not what starts a text selection; the mouse-down's is.
+            onMouseDown: (e: React.MouseEvent) => {
+              if (e.button === 0 && !(e.target as HTMLElement).closest("button")) e.preventDefault();
+            },
             onPointerDown: (e: PointerEvent) => begin(e, kind, id),
             onPointerMove: move,
             onPointerUp: end,
@@ -1027,7 +1087,7 @@ export function Workspace({
       </div>
       {wide ? <div className="ws-traydock">{tray}</div> : null}
       {/* The two things you reach for most, bottom left of the project screen and always in view: add a window, the tools. */}
-      <div className="ws-float-bar">
+      <div className="ws-float-bar" hidden={hideFloat}>
         <button
           type="button"
           className="ws-add-float"

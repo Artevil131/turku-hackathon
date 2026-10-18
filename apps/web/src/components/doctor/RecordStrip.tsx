@@ -116,17 +116,28 @@ export function RecordStrip({ locale, filters, onChange, patientId = "", onPatie
       />
     </Group>
   );
+  // Hospital onset is judged against one bar whatever the severity (D-049): the buttons then carry no number, and one line says why.
   const severity = (
-    <Group label={tr("drSeverity")} inline>
-      <Choices<Severity>
-        options={[
-          ["mild", t(locale, "drSevMild", { bar: barOf(null, { sev: "mild", onset: filters.onset }) })],
-          ["severe", t(locale, "drSevSevere", { bar: barOf(null, { sev: "severe", onset: filters.onset }) })],
-        ]}
-        value={filters.sev}
-        onPick={(v) => onChange({ sev: v })}
-      />
-    </Group>
+    <>
+      <Group label={tr("drSeverity")} inline>
+        <Choices<Severity>
+          options={[
+            ["mild", filters.onset ? tr("drSevMildShort") : t(locale, "drSevMild", { bar: barOf(null, { sev: "mild", onset: false }) })],
+            [
+              "severe",
+              filters.onset ? tr("drSevSevereShort") : t(locale, "drSevSevere", { bar: barOf(null, { sev: "severe", onset: false }) }),
+            ],
+          ]}
+          value={filters.sev}
+          onPick={(v) => onChange({ sev: v })}
+        />
+      </Group>
+      {filters.onset ? (
+        <p className="rs-onset-note" role="note">
+          {t(locale, "drOnsetNote", { bar: barOf(null, { sev: "severe", onset: true }) })}
+        </p>
+      ) : null}
+    </>
   );
   const age = (
     <Group label={tr("drAge")}>

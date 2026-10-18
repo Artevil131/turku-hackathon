@@ -1,7 +1,7 @@
 import type { Locale } from "@aei/i18n";
 import type { DemoId } from "../demos.ts";
 import { copy } from "../fillCopy.ts";
-import { added, type Beat, inWin, last, PACE, pill, type Screenplay, win } from "./script.ts";
+import { added, type Beat, clusterPill, inWin, last, PACE, type Pace, pill, type Screenplay, win } from "./script.ts";
 
 // One screenplay per demo file. The drawn cursor works the real screen in the order that professional would, so a
 // viewer learns the order of work by watching. Every beat carries a line saying what the viewer sees or learns.
@@ -11,7 +11,7 @@ import { added, type Beat, inWin, last, PACE, pill, type Screenplay, win } from 
  * The tool rail: the hand opens Statistics, picks an analysis, runs it on the selected signal's data, reads the
  * result in the inspector beside the rail and closes it again. The same tools the notebook's + menu adds as cells.
  */
-const useTool = (id: "rate" | "compare" | "shares" | "beta" | "detector"): Beat[] => [
+const toolBeats = (id: "rate" | "compare" | "shares" | "beta" | "detector"): Beat[] => [
   { do: "click", at: '.ws-rail-btn[data-tool="stats"]', wait: ".ws-rail-menu" },
   { do: "think", ms: 300 },
   { do: "click", at: `.ws-rail-menu [data-tool="${id}"]`, wait: ".ws-inspector:not([hidden]) .tl-run" },
@@ -49,9 +49,8 @@ function control(locale: Locale): Screenplay {
       { do: "click", at: '.nb-menu [data-add="shares"]', wait: added(".nb-run") },
       { do: "think", ms: 350 },
       { do: "click", at: added(".nb-run"), wait: added(".tl-cell"), timeout: 10000 },
-      // The numbers are read; then the method behind them is opened: the formula and the code that reproduce it.
+      // The numbers are read; then the method under them (shown with every notebook result): the formula, then the code.
       { do: "think", ms: 600 },
-      { do: "click", at: added(".tl-cell-method > summary"), wait: added(".nb-more > summary") },
       { do: "typeset", at: added(".nb-formula") },
       { do: "think", ms: 300 },
       { do: "click", at: added(".nb-more > summary"), wait: added(".nb-pre") },
@@ -64,7 +63,7 @@ function control(locale: Locale): Screenplay {
       { do: "click", at: added(".nb-run"), wait: added(".tl-cell"), timeout: 10000 },
       { do: "think", ms: 600 },
       // A tool from the rail, on the signal's own data: the usual rate, read in the inspector.
-      ...useTool("rate"),
+      ...toolBeats("rate"),
       // The to-do note closes the morning: what to ask the ward, when to re-read.
       { do: "click", at: "[data-write-note]", wait: last(".nb-note-edit") },
       { do: "type", at: last(".nb-note-edit"), text: copy(locale, "controlTodo") },
@@ -117,8 +116,7 @@ function researcher(locale: Locale): Screenplay {
       { do: "think", ms: 250 },
       { do: "click", at: added(".nb-run"), wait: added(".tl-cell"), timeout: 10000 },
       { do: "think", ms: 700 },
-      // The method opened: the formula sits typeset, the Python that reproduces the number unrolls under it.
-      { do: "click", at: added(".tl-cell-method > summary"), wait: added(".nb-more > summary") },
+      // The method under the result: the formula sits typeset, the Python that reproduces the number unrolls under it.
       { do: "typeset", at: added(".nb-formula") },
       { do: "think", ms: 300 },
       { do: "click", at: added(".nb-more > summary"), wait: added(".nb-pre") },
@@ -128,7 +126,7 @@ function researcher(locale: Locale): Screenplay {
       { do: "click", at: added("[data-add-chart]"), wait: '.nb-cell[data-kind="chart"] svg', timeout: 8000 },
       { do: "look", at: last('.nb-cell[data-kind="chart"] svg'), ms: 1600 },
       // Then the rail: the same Beta estimate is one of its tools, run on the slice without a cell.
-      ...useTool("beta"),
+      ...toolBeats("beta"),
     ],
   };
 }
@@ -173,86 +171,112 @@ function clinician(): Screenplay {
  * 12 May 2025 by the demo files, so every number on screen is the app's own. A `scene` beat marks each chapter; its time
  * is logged. `must` only where the journey cannot go on without it; anything else missing is skipped and the show goes on.
  */
-export const SHOWCASE_SCENES = ["problem", "doctor", "search", "timeline", "map", "quality", "research", "export", "end"] as const;
+export const SHOWCASE_SCENES = [
+  "problem",
+  "doctor",
+  "search",
+  "timeline",
+  "anomaly",
+  "map",
+  "quality",
+  "research",
+  "export",
+  "end",
+] as const;
 export type ShowcaseScene = (typeof SHOWCASE_SCENES)[number];
 /** The demo files the showcase opens empty, to play their own fill-in on the way through. */
 export const SHOWCASE_FILLS: readonly DemoId[] = ["clinician", "researcher"];
 
+/** Calmer than the demos between the fills: a slower hand, patient waits for the server. */
+const SHOWCASE_PACE: Pace = { ...PACE, min: 200, max: 600, dwell: 120, press: 100, cps: 60, timeout: 6000 };
+
 function showcase(locale: Locale): Screenplay {
   const scene = (name: ShowcaseScene): Beat => ({ do: "scene", name });
   const answered = `${win("coverage")} .dr-answer:not([aria-busy])`;
+  /** The signal card a pill opens (in the Signals window's layer, or the Signal window). */
+  const card = ".sig";
   const short = 1500;
-  /** A demo's own beats, a little brisker than written so the whole stays two minutes; the researcher's timeline cell is left out. */
-  const fillOf = (id: DemoId): Beat[] => {
-    const beats = rawScreenplayFor(id, locale).beats;
-    const trimmed = id === "researcher" ? withoutTimelineCell(withoutToolsRail(beats)) : beats;
-    return trimmed.map((b) =>
-      b.do === "think"
-        ? { ...b, ms: b.ms * 0.6 }
-        : b.do === "look"
-          ? { ...b, ms: (b.ms ?? 1000) * 0.7 }
-          : b.do === "drag"
-            ? { ...b, ms: Math.min(b.ms ?? 900, 1200) }
-            : b,
-    );
-  };
+  /**
+   * A demo file's fill-in exactly as its replay button plays it (`screenplayFor`: the same beats, pauses and scaling),
+   * at the demos' own pace; the showcase's pace resumes afterwards.
+   */
+  const fillOf = (id: DemoId): Beat[] => [
+    { do: "pace", pace: PACE },
+    ...screenplayFor(id, locale).beats,
+    { do: "pace", pace: SHOWCASE_PACE },
+  ];
   const exported = () => document.querySelector(".sb-pop-status, .project-error");
   return {
     // Calmer than the demos: a slower hand, patient waits for the server; notes typed quickly enough to watch.
-    pace: { ...PACE, min: 200, max: 600, dwell: 120, press: 100, cps: 60, timeout: 6000 },
+    pace: SHOWCASE_PACE,
     beats: [
       // ----- 1. The problem. The start page holds while the voice sets it up: a report a year against cultures in 48 to 72 hours.
       scene("problem"),
-      { do: "look", at: ".start-heading h1", ms: 3000 },
+      { do: "look", at: ".start-heading h1", ms: 4000 },
       { do: "orbit", at: ".start-ask", turns: 1 },
-      { do: "look", at: "#start-demos h2", ms: 1200 },
+      { do: "look", at: "#start-demos h2", ms: 2200 },
       // ----- 2. The doctor. The hand travels to the Doctor card, scans it, opens it; the file's own performance plays:
       // the answer card, then the case changed to the intensive care unit, a blood culture, severe; details on a row.
       scene("doctor"),
       { do: "click", at: '.start-demo[data-demo="clinician"]', orbit: 1.5, wait: answered, timeout: 20000, must: true },
       { do: "think", ms: 700 },
-      { do: "look", at: ".dr-answer-compare", ms: 2400 },
-      { do: "look", at: ".dr-answer-pills", ms: 1400 },
       ...fillOf("clinician"),
+      // The details stay on screen while the voice says why this antibiotic is good enough.
+      { do: "look", at: "#dr-details", ms: 3500, timeout: short },
       // ----- 3. Compound search: the sidebar's Search, a ward and an organism in one line, the list opens pre-filled.
       scene("search"),
       { do: "click", at: "[data-search]", orbit: 1, wait: ".cmd[data-expanded] .cmd-input", must: true },
       { do: "type", at: ".cmd-input", text: copy(locale, "showcaseSearch"), cps: 14, stay: true },
       { do: "wait", for: ".cmd-option", timeout: 5000 },
-      { do: "think", ms: 1400 },
+      { do: "think", ms: 2200 },
       { do: "click", at: ".cmd-option", wait: answered, timeout: 15000 },
       { do: "think", ms: 800 },
-      { do: "look", at: ".dr-answer-head", ms: 2400 },
+      { do: "look", at: ".dr-answer-head", ms: 3000 },
       { do: "orbit", at: ".uc-orgs", turns: 1 },
       // ----- 4. The timeline and a signal: the infection-control file; every unit's weeks, a pill where a count left its usual.
       scene("timeline"),
       { do: "click", at: '.sb-demo[data-demo="control"]', orbit: 1, wait: `${win("answer")} .answer-sentence`, timeout: 20000, must: true },
       { do: "think", ms: 600 },
-      { do: "look", at: inWin("answer", ".answer-sentence"), ms: 3000 },
+      { do: "look", at: inWin("answer", ".answer-sentence"), ms: 3800 },
       { do: "orbit", at: inWin("timeline", ".hs-svg"), turns: 1 },
-      { do: "click", at: pill("timeline"), wait: ".hs-pill.is-selected" },
-      { do: "think", ms: 800 },
+      { do: "look", at: inWin("signals", ".feed-list"), ms: 2800, timeout: short },
+      // ----- 5. An anomaly and the maths behind it: the Urology E. coli profile cluster of 4 June 2025 picked on the band,
+      // its card (seen 4, expected 0.2, 1 in 35,148 by chance), the Poisson tail formula with this signal's numbers, the
+      // bars of that tail, the counts behind it.
+      scene("anomaly"),
+      { do: "click", at: clusterPill("timeline", "2025-06-04"), wait: `${card} .sig-tiles`, timeout: 8000 },
+      { do: "think", ms: 600 },
+      { do: "look", at: `${card} .sig-tiles`, ms: 2500, timeout: short },
+      // "How we calculate it" stands open in the card's layer; folded (the Signal window), the hand opens it.
+      {
+        do: "click",
+        at: () => document.querySelector(`${card} .sig-how:not([open]) > summary`),
+        wait: `${card} .sig-how[open]`,
+        timeout: 300,
+      },
+      { do: "look", at: `${card} .sig-how[open] .sig-formula`, ms: 3000, timeout: short },
+      { do: "look", at: `${card} .math-poisson`, ms: 3000, timeout: short },
+      { do: "look", at: `${card} .sig-counts`, ms: 3000, timeout: short },
       { do: "escape" },
-      { do: "look", at: inWin("signals", ".feed-list"), ms: 2000, timeout: short },
-      // ----- 5. Across the country and between wards: the THL county map, then the patient flow around the unit.
+      // ----- 6. Across the country and between wards: the THL county map, then the patient flow around the unit.
       scene("map"),
       { do: "click", at: '[data-preset="map"]', wait: inWin("map", ".geo-svg"), timeout: 12000 },
       { do: "think", ms: 700 },
       { do: "look", at: inWin("map", ".geo-title"), ms: 1400, timeout: short },
-      { do: "orbit", at: inWin("map", ".geo-svg"), turns: 1.25 },
+      { do: "orbit", at: inWin("map", ".geo-svg"), turns: 1.5 },
       { do: "look", at: inWin("map", ".geo-faint"), ms: 1400, timeout: short },
       { do: "click", at: '[data-preset="default"]', wait: inWin("graph", ".ug-svg"), timeout: 12000 },
-      { do: "think", ms: 500 },
+      { do: "think", ms: 800 },
       { do: "look", at: inWin("graph", ".ug-title"), ms: 1200, timeout: short },
       { do: "orbit", at: inWin("graph", ".ug-svg"), turns: 1 },
-      // ----- 6. The data behind every number: fifteen checks over every row, their findings listed.
+      // ----- 7. The data behind every number: fifteen checks over every row, their findings listed.
       scene("quality"),
       { do: "click", at: "[data-page-data]", orbit: 1, wait: ".data-page", timeout: 8000, must: true },
       { do: "click", at: "#data-tab-quality", wait: ".quality-checks", timeout: 12000 },
       { do: "think", ms: 600 },
       { do: "look", at: ".quality-results > p", ms: 2200, timeout: short },
-      { do: "orbit", at: ".quality-checks", turns: 1 },
-      // ----- 7. The research workbench: the researcher's file opens empty and its own performance plays: the question,
+      { do: "orbit", at: ".quality-checks", turns: 1.5 },
+      // ----- 8. The research workbench: the researcher's file opens empty and its own performance plays: the question,
       // the slice cut on the timeline, the Beta estimate run, its formula and Python, a chart. The project is frozen.
       scene("research"),
       {
@@ -266,30 +290,23 @@ function showcase(locale: Locale): Screenplay {
       { do: "think", ms: 500 },
       { do: "look", at: ".project-frozen", ms: 1400, timeout: short },
       ...fillOf("researcher"),
-      // ----- 8. One click: the research package (data, scripts, notebook, methods) downloads.
+      // The inspector closed, the notebook holds still: the chart the analysis drew.
+      { do: "look", at: last('.nb-cell[data-kind="chart"] svg'), ms: 3500, timeout: short },
+      // ----- 9. One click: the research package (data, scripts, notebook, methods) downloads.
       scene("export"),
       { do: "click", at: "#pm-export", orbit: 1, wait: ".project-export-options", must: true },
       { do: "think", ms: 500 },
       { do: "click", at: ".project-export-options button", wait: exported, timeout: 15000 },
-      { do: "think", ms: 2000 },
+      { do: "think", ms: 3600 },
       { do: "escape" },
-      // ----- 9. The last frame holds, then the hand leaves.
+      // ----- 10. Home, then the outro: white, the wordmark in the centre, held for the voice to close.
       scene("end"),
-      { do: "think", ms: 3000 },
+      { do: "click", at: ".sb-home", wait: ".start-page", timeout: 8000 },
+      // The start page keeps the scroll of the page before it: the hand brings its headline back to the top.
+      { do: "look", at: ".start-heading h1", ms: 1200, timeout: short },
+      { do: "outro", ms: 4000 },
     ],
   };
-}
-
-/** The researcher demo without its visit to the Tools rail at the end (the showcase has shown the tools by then). */
-function withoutToolsRail(beats: Beat[]): Beat[] {
-  const i = beats.findIndex((b) => b.do === "click" && b.at === '.ws-rail-btn[data-tool="stats"]');
-  return i < 0 ? beats : beats.slice(0, i);
-}
-
-/** The researcher demo without the three beats that pin the timeline into the page (the + menu, the Timeline entry, the look at it). */
-function withoutTimelineCell(beats: Beat[]): Beat[] {
-  const i = beats.findIndex((b) => b.do === "click" && b.at === '.nb-menu [data-add="timeline"]');
-  return i < 1 ? beats : [...beats.slice(0, i - 1), ...beats.slice(i + 2)];
 }
 
 export const showcaseScreenplay = (locale: Locale): Screenplay => showcase(locale);

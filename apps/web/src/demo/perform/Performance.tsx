@@ -17,6 +17,9 @@ import "./perform.css";
 /** Beyond the screenplay's own estimate, the lock never holds longer than this. */
 const GRACE_MS = 15_000;
 
+/** The outro's fade to white and the wordmark's glide to the centre, ms (perform.css runs them at this length). */
+export const OUTRO_MS = 1200;
+
 /** How long each symbol of a formula takes to appear; the hand reads along at the same speed (perform.css). */
 const TOKEN_MS = 45;
 
@@ -35,12 +38,13 @@ export function estimateMs(beats: readonly Beat[]): number {
   let ms = 0;
   for (const b of beats) {
     if (b.do === "think") ms += b.ms;
-    else if (b.do === "scene") ms += 0;
+    else if (b.do === "scene" || b.do === "pace") ms += 0;
     else if (b.do === "orbit") ms += (b.ms ?? 2400) + 1200;
     else if (b.do === "look") ms += (b.ms ?? 1000) + 800 + (b.orbit ? 2400 : 0);
     else if (b.do === "type") ms += (b.text.length / (b.cps ?? 36)) * 1000 + 1800;
     else if (b.do === "drag") ms += (b.ms ?? 900) + 2200;
     else if (b.do === "typeset") ms += 3500;
+    else if (b.do === "outro") ms += OUTRO_MS + b.ms;
     else if (b.do === "wait") ms += b.timeout ?? 6000;
     else ms += 1400 + ((b as { timeout?: number }).timeout ?? 0) / 2 + ((b as { orbit?: number }).orbit ? 2400 : 0);
   }
@@ -97,7 +101,9 @@ export function Performance(props: PerformanceProps) {
   // biome-ignore lint/correctness/useExhaustiveDependencies: one show per mount; the parent keys a new one
   useEffect(() => {
     const clock = new Clock();
-    const { pace, beats } = latest.current.screenplay;
+    const { beats } = latest.current.screenplay;
+    // The pace in force: a `pace` beat changes it mid-show.
+    let pace = latest.current.screenplay.pace;
     const { stage, countdown = 0 } = latest.current;
     const html = document.documentElement;
     const cursorEl = cursor.current;
@@ -113,6 +119,7 @@ export function Performance(props: PerformanceProps) {
       spot.current?.removeAttribute("data-shown");
       countEl.current?.removeAttribute("data-shown");
       html.removeAttribute("data-perform");
+      html.classList.remove("perform-outro");
       if (how === "skipped") {
         pressEscape();
         latest.current.onSkip?.();
@@ -170,6 +177,25 @@ export function Performance(props: PerformanceProps) {
     typeset(document.body);
 
     // ----- the hand and the ring: written straight to the DOM, never through React state -----
+    // Both live in the top layer (manual popovers), so a menu the app opens there (the sidebar's Export) does not cover
+    // the hand: whenever a popover or dialog opened since the last look, they are shown again, which puts them above it.
+    const overlays = [spot.current, cursorEl].filter((el): el is HTMLDivElement => !!el && typeof el.showPopover === "function");
+    for (const el of overlays) el.showPopover();
+    const under = new WeakSet<Element>();
+    const raise = () => {
+      if (!overlays.length) return;
+      let fresh = false;
+      for (const el of document.querySelectorAll(":popover-open, dialog[open]")) {
+        if (overlays.includes(el as HTMLDivElement) || under.has(el)) continue;
+        under.add(el);
+        fresh = true;
+      }
+      if (!fresh) return;
+      for (const el of overlays) {
+        if (el.matches(":popover-open")) el.hidePopover();
+        el.showPopover();
+      }
+    };
     const hand = new Hand(cursorEl, clock, innerWidth * 0.55, innerHeight * 0.4);
     let ringed: Element | null = null;
     let lastBox: Box | null = null;
@@ -265,6 +291,7 @@ export function Performance(props: PerformanceProps) {
      * The ring appears as the hand arrives; with `turns`, the hand scans the element before it rests.
      */
     const moveTo = async (el: Element, aim: "centre" | "start" = "centre", turns = 0) => {
+      raise();
       hand.show();
       if (!inView(el)) el.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
       const goal = (): Point | null => {
@@ -349,6 +376,7 @@ export function Performance(props: PerformanceProps) {
           stamp("clicked");
           if (beat.wait) await waiting(beat.wait, beat.timeout ?? pace.timeout, beat.must);
           stamp("answered");
+          raise();
           // What the click caused gets two frames to paint before the hand moves on.
           await clock.wait(32);
           ring(null);
@@ -438,7 +466,34 @@ export function Performance(props: PerformanceProps) {
         case "escape":
           pressEscape();
           return clock.wait(100);
+        case "outro": {
+          // The wordmark is drawn again above the white curtain, where the sidebar's sits; the sidebar is untouched.
+          ring(null);
+          hand.hide();
+          const mark = document.querySelector(".sb-mark-name");
+          const r = mark?.getBoundingClientRect();
+          const lock = cursorEl.parentElement;
+          if (mark && r && r.width > 0 && lock) {
+            const logo = document.createElement("div");
+            logo.className = "pf-outro-logo";
+            logo.setAttribute("aria-hidden", "true");
+            logo.appendChild(mark.cloneNode(true));
+            const scale = Math.min(4, (innerWidth * 0.3) / r.width);
+            logo.style.setProperty("--x0", `${r.left}px`);
+            logo.style.setProperty("--y0", `${r.top}px`);
+            logo.style.setProperty("--x1", `${(innerWidth - r.width * scale) / 2}px`);
+            logo.style.setProperty("--y1", `${(innerHeight - r.height * scale) / 2}px`);
+            logo.style.setProperty("--s", String(scale));
+            lock.appendChild(logo);
+            void logo.offsetWidth;
+          }
+          html.classList.add("perform-outro");
+          return clock.wait(OUTRO_MS + beat.ms);
+        }
         case "scene":
+          return;
+        case "pace":
+          pace = beat.pace;
           return;
       }
     };
@@ -500,6 +555,7 @@ export function Performance(props: PerformanceProps) {
       for (const type of ["keydown", "keyup", "keypress"]) window.removeEventListener(type, swallow, true);
       window.removeEventListener("wheel", swallow, true);
       html.removeAttribute("data-perform");
+      html.classList.remove("perform-outro");
       if (!ended) {
         ended = true;
         clock.stop();
@@ -509,12 +565,13 @@ export function Performance(props: PerformanceProps) {
 
   return (
     <div className="pf-lock" role="status" aria-live="polite" onContextMenu={(e) => e.preventDefault()}>
-      <div ref={spot} className="pf-spot" aria-hidden="true" />
+      <div className="pf-curtain" aria-hidden="true" />
+      <div ref={spot} className="pf-spot" aria-hidden="true" popover="manual" />
       <div ref={bracketEl} className="pf-bracket" aria-hidden="true">
         <span />
       </div>
       <div ref={countEl} className="pf-count" />
-      <div ref={cursor} className="pf-cursor" aria-hidden="true">
+      <div ref={cursor} className="pf-cursor" aria-hidden="true" popover="manual">
         <svg viewBox="0 0 24 24" width="26" height="26">
           <path
             d="M4 2.5l15 9.2-6.6 1.4 3.9 7.2-2.7 1.4-3.9-7.2-4.7 4.8z"

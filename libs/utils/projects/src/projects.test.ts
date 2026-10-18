@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { IsolateRecord } from "@aei/domain";
@@ -159,6 +159,13 @@ describe.each(["memory", "files"])("project store: %s", (kind) => {
         writeFileSync(join(dir, "projects", "shape.json"), "{}");
         writeFileSync(join(dir, "projects", "foreign.json"), JSON.stringify(project));
         expect(createProjectStore(dir).list()).toHaveLength(2);
+        // An unreadable file is skipped too, not a failure of the whole list (root reads it anyway).
+        if (process.getuid?.() !== 0) {
+          writeFileSync(join(dir, "projects", "locked.json"), JSON.stringify({ ...project, id: "locked" }));
+          chmodSync(join(dir, "projects", "locked.json"), 0o000);
+          expect(createProjectStore(dir).list()).toHaveLength(2);
+          chmodSync(join(dir, "projects", "locked.json"), 0o600);
+        }
         expect(readdirSync(join(dir, "projects")).some((name) => name.endsWith(".tmp"))).toBe(false);
       } else expect(createProjectStore().list()).toEqual([]);
       for (const id of ["../outside", "UPPER", ""]) {

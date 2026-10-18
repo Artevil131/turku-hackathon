@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { coverage, suggest, suggestCombinations } from "../../../../../libs/utils/coverage/src/index.ts";
 import { CoverageList, itemsOf } from "./CoverageList.tsx";
 import { Details } from "./Details.tsx";
+import { DoctorAnswer } from "./DoctorAnswer.tsx";
 import {
   barOf,
   chooseSyndrome,
@@ -77,24 +78,81 @@ describe("doctor list disclosure", () => {
     );
     const html = list(data);
     const row = html.slice(html.indexOf('data-row="MEC"'), html.indexOf("</button>", html.indexOf('data-row="MEC"')));
-    // The year's figure leads; the basis and the all-organism share follow in small print.
-    expect(row).toMatch(/95\u00a0%<\/b><small>kattavuusalueella · vuosi/);
-    expect(row).toMatch(/75\u00a0%<\/b><small>kaikki bakteerit · vuosi · n 190/);
+    // One big figure, the own-spectrum share of the year; the all-organism share and both n are in the details.
+    expect(row).toMatch(/<b>95\u00a0%<\/b>/);
+    expect(row).not.toContain("75\u00a0%");
+    expect(row).not.toContain("n 190");
+    expect(row).toContain("kattavuusalueella · vuosi");
+    expect(row).toContain("kaikki bakteerit");
     expect(row).toContain("Tiedot");
     expect(html).not.toContain('class="info-btn cl-info"');
     expect(itemsOf(data, "fi").singles.map((item) => item.id)).toEqual(data.suggestions.map((item) => item.antibiotic));
-    expect(list(data, "en")).toContain("within spectrum");
-    expect(list(data, "en")).toContain("all organisms");
-    expect(list(data, "en")).toContain("· year");
+    expect(list(data, "en")).toContain("within spectrum · year");
     expect(list(data, "en")).toContain("not the chance treatment works");
+  });
+  it("switches the row's figure, plot and basis with the judge-on toggle", () => {
+    const data = response(
+      Array.from({ length: 190 }, (_, i) =>
+        record(i, i < 150 ? { results: { MEC: i < 143 ? "S" : "R" } } : { organism: "Enterococcus faecalis", results: {} }),
+      ),
+    );
+    const bold = (html: string) => rowOf(html, "MEC").match(/<b>(\d+)\u00a0%<\/b>/)?.[1];
+    const point = (html: string) => rowOf(html, "MEC").match(/class="cl-point" style="left:([\d.]+)%/)?.[1];
+    const pressed = (html: string) =>
+      [...html.matchAll(/<button type="button" aria-pressed="(true|false)">([^<]+)<\/button>/g)].map((m) => `${m[2]}=${m[1]}`);
+    const on = { onJudge: () => {} };
+    // Mild defaults to the antibiotic's own spectrum.
+    const own = list(data, "en", on);
+    expect(pressed(own)).toEqual(["its own spectrum=true", "everything that grows here=false"]);
+    expect(bold(own)).toBe("95");
+    // Everything that grows here: the figure and the dot move to the all-organism share; the tick stays on the judged basis.
+    const all = renderToStaticMarkup(
+      <CoverageList
+        locale="en"
+        filters={{ ...filters, sev: "mild", judge: "all" }}
+        asOf={data.asOf}
+        status="ready"
+        data={data}
+        signals={[]}
+        selected={null}
+        onSelect={() => {}}
+        onRetry={() => {}}
+        onJudge={() => {}}
+      />,
+    );
+    expect(pressed(all)).toEqual(["its own spectrum=false", "everything that grows here=true"]);
+    expect(bold(all)).toBe("75");
+    expect(point(all)).not.toBe(point(own));
+    expect(all).toContain("Tick and colour stay judged on its own spectrum");
+    expect(own).not.toContain("Tick and colour stay judged");
+    // Severe starts on everything, the basis the answer card judges on.
+    const severe = response(
+      Array.from({ length: 65 }, (_, i) => record(i, { specimen: "blood", results: { CIP: i < 60 ? "S" : "R" } })),
+      "severe",
+    );
+    expect(pressed(list(severe, "en", on))).toEqual(["its own spectrum=false", "everything that grows here=true"]);
+  });
+  it("shows the last four weeks on the row as a count, k / n", () => {
+    const data = response(
+      Array.from({ length: 60 }, (_, i) =>
+        record(i, { sampleDate: i < 20 ? "2026-06-20" : "2026-06-01", results: { MEC: i < 18 || i >= 20 ? "S" : "R" } }),
+      ),
+    );
+    const row = rowOf(list(data, "en"), "MEC").replace(/<[^>]+>/g, "");
+    expect(row).toMatch(/last 4 weeks \(all organisms\) 18 \/ 20/);
+    expect(row.match(/%/g)).toHaveLength(1);
   });
   it("explains a borderline row and its interval without a popover", () => {
     const data = response(
       Array.from({ length: 65 }, (_, i) => record(i, { specimen: "blood", results: { CIP: i < 60 ? "S" : "R" } })),
       "severe",
     );
-    expect(list(data)).toContain("92\u00a0%</b><small>kaikki bakteerit · vuosi · 83–97\u00a0%");
-    expect(list(data)).toContain("rajaa arvioidaan 95\u00a0%:n välin alapään mukaan, ja se on 83\u00a0%.");
+    expect(list(data)).toContain("<b>92\u00a0%</b>");
+    expect(list(data)).toContain("kaikki bakteerit · vuosi");
+    // The interval and the sentence about it live in the details, not in the row.
+    const row = rowOf(list(data), "CIP");
+    expect(row).not.toContain("83–97");
+    expect(row).not.toContain("rajaa arvioidaan");
   });
   it("leads with the first API-ranked pair when no severe single clears", () => {
     const data = response(
@@ -160,6 +218,16 @@ describe("age group and onset filters (D-047)", () => {
     expect(filtersToParams({ ...filters, age: "veryOld", onset: true })).toMatchObject({ age: "veryOld", onset: "hospital" });
     expect(filtersToParams(filters)).toMatchObject({ age: null, onset: null });
   });
+  it("states the single hospital-onset bar once instead of two severity numbers", () => {
+    vi.stubGlobal("window", { matchMedia: () => ({ matches: true }) });
+    const on = renderToStaticMarkup(<RecordStrip locale="en" filters={{ ...filters, onset: true }} onChange={() => {}} />);
+    expect(on).toContain("Hospital onset: judged against 90\u00a0% whatever the severity.");
+    expect(on).toMatch(/data-value="mild"[^>]*>mild</);
+    expect(on).toMatch(/data-value="severe"[^>]*>severe</);
+    const off = renderToStaticMarkup(<RecordStrip locale="en" filters={filters} onChange={() => {}} />);
+    expect(off).not.toContain('role="note"');
+    expect(off).toMatch(/data-value="mild"[^>]*>mild 80/);
+  });
   it("shows age group and onset in the collapsed phone summary", () => {
     vi.stubGlobal("window", { matchMedia: () => ({ matches: false }) });
     const html = renderToStaticMarkup(<RecordStrip locale="fi" filters={{ ...filters, age: "older", onset: true }} onChange={() => {}} />);
@@ -172,7 +240,7 @@ describe("age group and onset filters (D-047)", () => {
     expect(html).not.toContain("disabled");
     expect(html).not.toContain("not applied");
     expect(html).toMatch(/aria-pressed="true"[^>]*>65\+/);
-    expect(html).toMatch(/aria-pressed="true"[^>]*>Day 3\+/);
+    expect(html).toMatch(/aria-pressed="true"[^>]*>Inpatient day 3\+/);
   });
   it("says when the server dropped a filter to keep the unit's own data", () => {
     // 40 isolates on the unit, 10 of them 65+: the age group is dropped, the unit kept.
@@ -254,6 +322,13 @@ describe("syndrome chooser (D-047)", () => {
     expect(patchFilters(chosen, { site: "urine" }).syn).toBe("pyelonephritis");
     expect(patchFilters(chosen, { site: "blood" }).syn).toBeNull();
   });
+  it("collapses the chips behind one control when compact", () => {
+    const html = renderToStaticMarkup(<SyndromePicker locale="en" value={null} onPick={() => {}} compact />);
+    expect(html).toContain("Syndrome: choose");
+    expect(html).not.toContain("syn-chip");
+    const chosen = renderToStaticMarkup(<SyndromePicker locale="en" value="pyelonephritis" onPick={() => {}} compact />);
+    expect(chosen).toContain("Syndrome: Pyelonephritis");
+  });
   it("renders one chip per syndrome grouped by specimen, the chosen one pressed", () => {
     const html = renderToStaticMarkup(<SyndromePicker locale="en" value="pyelonephritis" onPick={() => {}} />);
     expect(html.match(/class="syn-chip"/g)).toHaveLength(guide().syndromes.length);
@@ -334,6 +409,27 @@ const details = (data: CoverageResponse, id: string, national: NationalResponse 
   );
 };
 
+describe("details keep what the row dropped", () => {
+  it("gives both bases with interval and n, the year and the last four weeks", () => {
+    const data = response(
+      Array.from({ length: 190 }, (_, i) =>
+        record(i, {
+          sampleDate: i < 20 ? "2026-06-20" : "2026-06-01",
+          ...(i < 150 ? { results: { MEC: i < 143 ? "S" : "R" } } : { organism: "Enterococcus faecalis", results: {} }),
+        }),
+      ),
+    );
+    const item = itemsOf(data, "en").singles.find((i) => i.id === "MEC");
+    if (!item) throw new Error("fixture must carry mecillinam");
+    const text = renderToStaticMarkup(
+      <Details client={{} as never} locale="en" filters={filters} data={data} item={item} signals={[]} />,
+    ).replace(/<[^>]+>/g, "");
+    expect(text).toMatch(/within spectrum · year: 95\u00a0% \(\d+–\d+\) · n 150/);
+    expect(text).toMatch(/all organisms · year: 75\u00a0% \(\d+–\d+\) · n 190/);
+    expect(text).toMatch(/all organisms · 4 wk: .*\/ 20/);
+  });
+});
+
 describe("national line (D-048)", () => {
   it("gives Finres's genus figure with its source, and no difference sentence under 10 points", () => {
     const html = details(urine(), "NIT", NATIONAL);
@@ -393,5 +489,43 @@ describe("patient's prior finding (D-050)", () => {
   });
   it("never puts the patient id in the URL", () => {
     expect(Object.keys(filtersToParams(filters))).not.toContain("patient");
+  });
+});
+
+describe("answer card wording and combination headline", () => {
+  const card = (data: CoverageResponse, bar = 90) =>
+    renderToStaticMarkup(
+      <DoctorAnswer
+        locale="en"
+        filters={{ ...filters, site: "blood", sev: "severe" }}
+        items={[...itemsOf(data, "en").singles, ...itemsOf(data, "en").pairs]}
+        bar={bar}
+        loading={false}
+        failed={false}
+        editing={false}
+        onEdit={() => {}}
+      />,
+    );
+  it("heads the answer with the first combination when no single drug clears", () => {
+    const data = response(
+      Array.from({ length: 65 }, (_, i) =>
+        record(i, {
+          specimen: "blood",
+          ...(i < 45 ? { results: { MEM: "S" } } : { organism: "Staphylococcus aureus", results: { FOX: "R", VAN: "S" } }),
+        }),
+      ),
+      "severe",
+    );
+    const html = card(data);
+    expect(html).toContain("No single antibiotic clears the 90 % bar for this case; a combination does.");
+    expect(html).toContain("Start with");
+    expect(html).toContain("Together they cover 100 % of the likely bacteria");
+    expect(html).not.toContain("Look at the combinations below");
+  });
+  it("labels the headline and the all-organisms box as different bases", () => {
+    const html = card(urine(), 80);
+    expect(html).toContain("within its intended spectrum");
+    expect(html).toContain("Across all organisms grown here");
+    expect(html).toContain("Also works (within spectrum)");
   });
 });

@@ -48,7 +48,12 @@ it("fetches the national route", async () => {
       return new Response(JSON.stringify(response), { status: 200 });
     },
   });
-  expect((await client.national()).year).toBe(2025);
+  expect((await client.national())?.year).toBe(2025);
   expect(requests).toEqual([ROUTES.national]);
   expect(ROUTES.national).toBe("/api/national");
+});
+
+it("reads a 204 from the national route as no national data", async () => {
+  const client = createAeiClient({ baseUrl: "", fetch: async () => new Response(null, { status: 204 }) });
+  expect(await client.national()).toBeNull();
 });

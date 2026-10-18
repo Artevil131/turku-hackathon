@@ -1,4 +1,3 @@
-import JSZip from "jszip";
 import type { ExportFile, ExportTable } from "./bundle.ts";
 import { csv, markdown, markdownTable, slug } from "./text.ts";
 
@@ -47,6 +46,7 @@ export function pageMarkdown(page: Page): string {
 
 export async function toPageZip(page: Page): Promise<ExportFile> {
   const name = `${slug(page.title)}-${page.asOf}`;
+  const { default: JSZip } = await import("jszip");
   const zip = new JSZip();
   zip.file(`${name}/${name}.md`, pageMarkdown(page));
   let n = 0;

@@ -30,6 +30,7 @@ import {
   pillKind,
   pillLabel,
   pillLine,
+  pillTip,
   pillWidth,
   runs,
   SURPRISE_CAP,
@@ -63,19 +64,22 @@ interface Layout {
   lanesEnd: number;
 }
 /** The full band: nine lanes make 150 px, so the expanded timeline stays about 160 px tall; fewer lanes make it shorter. */
-const fullLayout = (n: number, roomy = false): Layout => {
+const fullLayout = (n: number, roomy = false, hospitalRow = false): Layout => {
   // A roomy band (the timeline window, which has the height to spare) draws taller lanes and bigger pills.
   const pitch = roomy ? 16 : 10;
-  const lanesEnd = 47 + n * pitch;
+  const pill = roomy ? 14 : 10;
+  // Signals of the whole hospital have no lane: they get a row of their own under the legend, so no pill covers it.
+  const row = hospitalRow ? pill + 3 : 0;
+  const lanesEnd = 47 + row + n * pitch;
   return {
     gutter: roomy ? 52 : 46,
     height: lanesEnd + 13,
     legend: 14,
-    top: 17,
-    base: 44,
-    lanes: 47,
+    top: 17 + row,
+    base: 44 + row,
+    lanes: 47 + row,
     pitch,
-    pill: roomy ? 14 : 10,
+    pill,
     axis: lanesEnd + 11,
     lanesEnd,
   };
@@ -180,6 +184,7 @@ function build(
   layers: Layers,
   locale: Locale,
   compact: boolean,
+  reserve: number,
 ): Model {
   const dEnd = dayNumber(asOf) + 1;
   const span = Math.max(7, dEnd - d0);
@@ -312,7 +317,8 @@ function build(
       if (a.ward && lane < 0) continue;
       const label = narrow ? "" : pillLabel(locale, a);
       const w = pillWidth(label, pillKind(a) === "sentinel");
-      const edge = Math.max(L.gutter + w, Math.min(xOf(dayNumber(a.date) + 0.5) + 3, right - 1));
+      // Signals of the whole hospital sit in the row under the legend, where the Layers button is: keep clear of it.
+      const edge = Math.max(L.gutter + w, Math.min(xOf(dayNumber(a.date) + 0.5) + 3, lane < 0 ? right - reserve : right - 1));
       const stack = lanesAlerts.get(lane) ?? [];
       stack.push({ members: [a], right: edge, w, label });
       while (stack.length > 1) {
@@ -341,7 +347,7 @@ function build(
           members: g.members,
           kind,
           x: g.right - g.w,
-          y: lane < 0 ? 1 : L.lanes + lane * L.pitch + (L.pitch - L.pill) / 2,
+          y: lane < 0 ? L.legend + 1 : L.lanes + lane * L.pitch + (L.pitch - L.pill) / 2,
           w: g.w,
           label: g.label,
           s: ss.length ? Math.max(...ss) : null,
@@ -592,7 +598,7 @@ const StaticLayer = memo(function StaticLayer({
           data-count={p.members.length > 1 ? p.members.length : undefined}
           role="button"
           tabIndex={disabled ? -1 : 0}
-          aria-label={p.members.map((x) => pillLine(locale, x)).join("; ")}
+          aria-label={pillTip(locale, p.members).replaceAll("\n", "; ")}
           data-week={weekIndex(m.weekDays, dayNumber(p.a.date))}
           onClick={() => open(p)}
           onKeyDown={(e) => {
@@ -603,7 +609,7 @@ const StaticLayer = memo(function StaticLayer({
             }
           }}
         >
-          <title>{`${p.members.map((x) => pillLine(locale, x)).join("\n")}\n${t(locale, "tlOpenIncident")}`}</title>
+          <title>{`${pillTip(locale, p.members)}\n${t(locale, "tlOpenIncident")}`}</title>
           <rect className="hs-pill-hit" x={p.x - 2} y={p.y - 1} width={p.w + 4} height={L.pill + 2} />
           <rect className="hs-pill-bg" x={p.x} y={p.y} width={p.w} height={L.pill} rx={L.pill > 10 ? 4 : 2.5} />
           {p.kind === "sentinel" ? <path className="hs-pill-glyph" d={`M${p.x + 5} ${p.y + (L.pill - 6) / 2}l3.5 6h-7z`} /> : null}
@@ -858,21 +864,22 @@ export function WeeklyBand(p: Props) {
   const win = useMemo(() => windowRows(rawRows, layers.window), [rawRows, layers.window]);
   const rows = useMemo(() => viewRows(win, layers), [win, layers]);
   const wards = useMemo(() => Object.keys(weekly?.units ?? {}).filter((c) => layers.units[c] !== false), [weekly, layers.units]);
+  const shownAlerts = useMemo(() => alerts.filter((a) => layers.kinds[pillKind(a)]), [alerts, layers.kinds]);
+  const hospitalRow = useMemo(() => shownAlerts.some((a) => !a.ward && a.date <= asOf), [shownAlerts, asOf]);
   const L = useMemo(
-    () => (compact ? SMALL : fullLayout(weekly ? wards.length : siteWards().length, roomy)),
-    [compact, roomy, weekly, wards.length],
+    () => (compact ? SMALL : fullLayout(weekly ? wards.length : siteWards().length, roomy, hospitalRow)),
+    [compact, roomy, weekly, wards.length, hospitalRow],
   );
   const d0 = windowStart(start, win[0], layers.window);
-  const shownAlerts = useMemo(() => alerts.filter((a) => layers.kinds[pillKind(a)]), [alerts, layers.kinds]);
-  const m = useMemo(
-    () => build(L, width, d0, asOf, rows, shownAlerts, wards, layers, locale, compact),
-    [L, width, d0, asOf, rows, shownAlerts, wards, layers, locale, compact],
-  );
-  const summary = useMemo(() => summaryText(locale, win, asOf, layers), [locale, win, asOf, layers]);
   const control = !compact && onLayers !== undefined;
   const withLabel = width >= 520;
   // The Layers button plus the 24 px ⓘ beside it, so the legend never runs under either.
   const reserve = control ? 28 + (withLabel ? 30 + t(locale, "tlLayers").length * 6.2 : 30) : 0;
+  const m = useMemo(
+    () => build(L, width, d0, asOf, rows, shownAlerts, wards, layers, locale, compact, reserve),
+    [L, width, d0, asOf, rows, shownAlerts, wards, layers, locale, compact, reserve],
+  );
+  const summary = useMemo(() => summaryText(locale, win, asOf, layers), [locale, win, asOf, layers]);
   const onToggle = useCallback(
     (k: LineKey) => onLayers?.({ ...layers, lines: { ...layers.lines, [k]: !layers.lines[k] } }),
     [layers, onLayers],

@@ -84,10 +84,10 @@
 }
 .tour-offer {
   z-index: 400;
-  /* A small card in the bottom right corner: an invitation, not a dialog in the middle of the work. */
-  left: auto;
-  right: 16px;
-  bottom: 16px;
+  /* A small card in the bottom left, clear of the answer and the headline: an invitation, not a dialog in the middle of the work. */
+  left: 252px;
+  right: auto;
+  bottom: 72px;
   width: min(340px, calc(100vw - 32px));
   transform: none;
   padding: 14px 16px 12px;
@@ -104,6 +104,12 @@
   color: var(--ink-2);
   font-size: var(--t-s, 0.9rem);
   line-height: 1.5;
+}
+@media (max-width: 900px) {
+  .tour-offer {
+    left: 16px;
+    bottom: 16px;
+  }
 }
 @keyframes tour-in {
   from {

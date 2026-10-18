@@ -1,6 +1,6 @@
 import { once } from "node:events";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
-import { createServer, type Server } from "node:http";
+import { createServer, request, type Server } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createAeiClient, type ProjectInput } from "@aei/contract";
@@ -451,6 +451,21 @@ describe("county geometry route", () => {
   });
 });
 
+describe("national reference route", () => {
+  it("answers 204 (no national line, no failed request) without the file and 200 with it", async () => {
+    const file = join(dir, "finres.json");
+    vi.stubEnv("AEI_NATIONAL", file);
+    const base = await startApi();
+    const none = await fetch(`${base}/api/national`);
+    expect(none.status).toBe(204);
+    expect(await none.text()).toBe("");
+    await writeFile(file, JSON.stringify({ year: 2025, cells: [] }));
+    const some = await fetch(`${base}/api/national`);
+    expect(some.status).toBe(200);
+    expect(((await some.json()) as { year: number }).year).toBe(2025);
+  });
+});
+
 // Tiny synthetic fixtures and a local fake model only: no dataset sweep or paid calls.
 describe("assistant HTTP routes", () => {
   it("disables Ask, filters inclusive ages/sex, and explains released alerts without AI", async () => {
@@ -566,5 +581,65 @@ describe("data checks", () => {
     expect(sent.quality.map((f: { check: string }) => f.check)).toEqual(["intrinsic-susceptible"]);
     const after = await (await fetch(`${base}/api/quality`)).json();
     expect(after.summary).toEqual([expect.objectContaining({ check: "intrinsic-susceptible", severity: "suspect", count: 1 })]);
+  });
+});
+
+describe("clock commands", () => {
+  it("refuses a date or speed that would break later ticks, and keeps the clock where it was", async () => {
+    const base = await startApi();
+    const post = (body: unknown) => fetch(`${base}/api/clock`, { method: "POST", body: JSON.stringify(body) });
+    for (const bad of [
+      { action: "seek", date: "2025-99-99" },
+      { action: "seek", date: 20250301 },
+      { action: "seek" },
+      { action: "step", days: "x" },
+      { action: "configure", daysPerTick: "x" },
+      { action: "configure", daysPerTick: 0 },
+      { action: "configure", tickMs: -5 },
+    ])
+      expect((await post(bad)).status).toBe(400);
+    expect(await (await fetch(`${base}/api/clock`)).json()).toMatchObject({ asOf: "2025-05-01", tickMs: 2000, daysPerTick: 1 });
+    expect((await post({ action: "seek", date: "2025-03-01" })).status).toBe(200);
+    expect((await post({ action: "step", days: 2 })).status).toBe(200);
+    expect((await (await fetch(`${base}/api/clock`)).json()).asOf).toBe("2025-03-03");
+  });
+});
+
+describe("ingest body", () => {
+  // Sends a body in the given byte chunks, with an optional declared length.
+  const postChunks = (base: string, chunks: Buffer[], length?: number) =>
+    new Promise<{ status: number; body: string }>((resolve, reject) => {
+      const req = request(
+        `${base}/api/ingest`,
+        { method: "POST", headers: { "content-type": "text/csv", ...(length ? { "content-length": length } : {}) } },
+        (res) => {
+          const parts: Buffer[] = [];
+          res.on("data", (c: Buffer) => parts.push(c));
+          res.on("end", () => resolve({ status: res.statusCode ?? 0, body: Buffer.concat(parts).toString("utf8") }));
+        },
+      );
+      req.on("error", reject);
+      for (const c of chunks) req.write(c);
+      req.end();
+    });
+
+  it("keeps a UTF-8 character split across chunks, and refuses a body over 20 MB", async () => {
+    const base = await startApi();
+    const bytes = Buffer.from("patient_id,sex,birth_year,culture_id,sample_date,ward,specimen\np9,F,1950,c9,2025-05-02,Kärki,urine\n");
+    const split = bytes.indexOf(Buffer.from("ä")) + 1; // between the two bytes of ä
+    const sent = await postChunks(base, [bytes.subarray(0, split), bytes.subarray(split)]);
+    expect(sent.status).toBe(422);
+    expect(JSON.parse(sent.body).warnings.join(" ")).toContain('ward "Kärki"');
+    expect((await postChunks(base, [Buffer.from("x")], 21 * 1024 * 1024)).status).toBe(413);
+  });
+
+  it("refuses a culture dated on a day that does not exist and keeps ingesting afterwards", async () => {
+    const base = await startApi();
+    const post = (body: string) => fetch(`${base}/api/ingest`, { method: "POST", headers: { "content-type": "text/csv" }, body });
+    const head = "patient_id,sex,birth_year,culture_id,sample_date,ward,specimen,organism";
+    expect((await post(`${head}\np9,F,1950,c9,2025-02-30,ICU,urine,Escherichia coli`)).status).toBe(422);
+    const ok = await post(`${head}\np9,F,1950,c9,2025-05-02,ICU,urine,Escherichia coli`);
+    expect(ok.status).toBe(200);
+    expect((await ok.json()).accepted).toBe(1);
   });
 });

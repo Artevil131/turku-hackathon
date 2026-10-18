@@ -6,6 +6,11 @@ export const mapEn = {
   mapQuantity:
     "THL notified cases from the communicable disease register: a different quantity from the % susceptible (%S) in the hospital's own isolates.",
   mapGroup: "Series",
+  mapOpenLarger: "Open larger",
+  mapClosestPhenotype: "National series closest to this signal: {series} (same phenotype: {phenotype}).",
+  mapClosestOrganism:
+    "National series closest to this signal: {series} (same organism: {organism}; THL has no series for the signal's exact profile).",
+  mapClosestNone: "No THL series matches this signal's organism; the map keeps {series}.",
   mapMonth: "Month",
   mapMonthShown: "Month shown: {month}",
   mapBrowseHint: "Browse THL months here, independent of the replay clock. The replay shows {month}.",
@@ -128,6 +133,11 @@ export const mapFi: Record<keyof typeof mapEn, string> = {
   mapTitle: "Ilmoitetut tapaukset hyvinvointialueittain",
   mapQuantity: "THL:n tartuntatautirekisterin ilmoitetut tapaukset: eri suure kuin sairaalan omien löydösten herkkyysosuus (%S).",
   mapGroup: "Sarja",
+  mapOpenLarger: "Avaa suurempana",
+  mapClosestPhenotype: "Signaalia lähin valtakunnallinen sarja: {series} (sama fenotyyppi: {phenotype}).",
+  mapClosestOrganism:
+    "Signaalia lähin valtakunnallinen sarja: {series} (sama bakteeri: {organism}; THL:llä ei ole sarjaa signaalin tarkalle profiilille).",
+  mapClosestNone: "Mikään THL:n sarja ei vastaa tämän signaalin bakteeria; kartta pitää sarjan {series}.",
   mapMonth: "Kuukausi",
   mapMonthShown: "Näytettävä kuukausi: {month}",
   mapBrowseHint: "Selaa THL:n kuukausia tässä, toiston kellosta riippumatta. Toisto näyttää kuukauden {month}.",

@@ -12,7 +12,7 @@ import {
   mapSpecimen,
   mapWard,
 } from "./codes.ts";
-import { addCulture, type CultureInput, emptyResult, type IngestResult, type IsolateInput } from "./record.ts";
+import { addCulture, type CultureInput, emptyResult, type IngestResult, type IsolateInput, isIsoDate } from "./record.ts";
 
 // HL7 v2.5.1 ORU^R01 microbiology results (D-035), the message hospital lab
 // systems send inside the hospital. Read, per culture (a parent OBR):
@@ -99,44 +99,64 @@ export function parseHl7Message(message: string, options: Hl7Options = {}): Inge
   // Antibiotic names in LOINC displays come as "Ampicillin [Susceptibility] by ...".
   const antibioticCodings = (v: string): Coding[] =>
     coding(v).flatMap((c) => [c, { display: c.display?.split("[")[0]?.split(" by ")[0]?.trim() }]);
+  // A DTM's day as YYYY-MM-DD; null when it has no day or the day is not a real one ("20251399").
   const date = (v: string) => {
     const s = comp(v, 1);
-    return s.length >= 8 ? `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}` : null;
+    const iso = `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
+    return s.length >= 8 && isIsoDate(iso) ? iso : null;
   };
+  const badDate = (v: string) => comp(v, 1).length >= 8 && !date(v);
 
   const msh = segments.find((s) => s.name === "MSH");
   const type = field(msh, 9);
   if (type && !comp(type, 1).startsWith("ORU")) out.warnings.push(`message type ${type} is not ORU; read anyway`);
-  const pid = segments.find((s) => s.name === "PID");
-  const pv1 = segments.find((s) => s.name === "PV1");
-  const patientId = comp(field(pid, 3), 1);
-  const birth = date(field(pid, 7));
-  const sexCode = comp(field(pid, 8), 1).toUpperCase();
-  const sex: Sex | undefined = sexCode === "F" || sexCode === "M" ? sexCode : undefined;
-  const location = field(pv1, 3);
-  const ward: WardCode | undefined = mapWard(maps, [
-    { code: comp(location, 1) },
-    { display: comp(location, 1) },
-    { code: comp(location, 4) },
-  ]);
-  const admission = date(field(pv1, 44));
-  if (!patientId) out.warnings.push("PID-3 patient id missing");
-  if (!birth) out.warnings.push("PID-7 birth date missing");
-  if (!sex) out.warnings.push(`PID-8 sex "${sexCode}" is not F or M`);
-  if (!ward) out.warnings.push(`PV1-3 location "${comp(location, 1)}" maps to no unit (add it to the ward map)`);
+  // The patient of a PATIENT_RESULT group: its PID and the PV1 after it.
+  const readPatient = (pid: Segment | undefined, pv1: Segment | undefined) => {
+    const patientId = comp(field(pid, 3), 1);
+    // DTM precision may stop at the year ("1948") or month ("194803"); only the year is used.
+    const birthRaw = comp(field(pid, 7), 1);
+    const birthYear = /^\d{4}/.test(birthRaw) && !badDate(field(pid, 7)) ? Number(birthRaw.slice(0, 4)) : null;
+    const sexCode = comp(field(pid, 8), 1).toUpperCase();
+    const sex: Sex | undefined = sexCode === "F" || sexCode === "M" ? sexCode : undefined;
+    const location = field(pv1, 3);
+    const ward: WardCode | undefined = mapWard(maps, [
+      { code: comp(location, 1) },
+      { display: comp(location, 1) },
+      { code: comp(location, 4) },
+    ]);
+    const admission = date(field(pv1, 44));
+    const badAdmission = badDate(field(pv1, 44));
+    if (!patientId) out.warnings.push("PID-3 patient id missing");
+    if (!birthYear) out.warnings.push(birthRaw ? `PID-7 birth date "${birthRaw}" is not a real date` : "PID-7 birth date missing");
+    if (!sex) out.warnings.push(`PID-8 sex "${sexCode}" is not F or M`);
+    if (!ward) out.warnings.push(`PV1-3 location "${comp(location, 1)}" maps to no unit (add it to the ward map)`);
+    if (badAdmission) out.warnings.push(`PV1-44 admission date "${comp(field(pv1, 44), 1)}" is not a real date`);
+    return { patientId, birthYear, sex, ward, admission, badAdmission };
+  };
 
-  // Cultures: each parent OBR with the segments up to the next parent OBR.
-  type Group = { obr: Segment; spm?: Segment; obx: { seg: Segment; defaultSub: string }[] };
+  // Cultures: each parent OBR with the segments up to the next parent OBR, under the PID / PV1 before it.
+  type Group = { obr: Segment; spm?: Segment; obx: { seg: Segment; defaultSub: string }[]; patient: ReturnType<typeof readPatient> };
   const groups: Group[] = [];
   let current: Group | undefined;
   let childSub = "";
+  let pid: Segment | undefined;
+  let pv1: Segment | undefined;
+  let patient: ReturnType<typeof readPatient> | undefined;
   for (const s of segments) {
-    if (s.name === "OBR") {
+    if (s.name === "PID") {
+      pid = s;
+      pv1 = undefined;
+      patient = undefined;
+    } else if (s.name === "PV1") {
+      pv1 = s;
+      patient = undefined;
+    } else if (s.name === "OBR") {
       if (field(s, 29) && current) {
         childSub = comp(field(s, 26), 2) || comp(field(s, 26), 1);
         continue;
       }
-      current = { obr: s, obx: [] };
+      patient ??= readPatient(pid, pv1);
+      current = { obr: s, obx: [], patient };
       childSub = "";
       groups.push(current);
     } else if (s.name === "SPM" && current) current.spm = s;
@@ -144,13 +164,19 @@ export function parseHl7Message(message: string, options: Hl7Options = {}): Inge
   }
   if (!groups.length) out.warnings.push("no OBR segment: no culture in the message");
 
+  // A culture id twice in one message: the last one is kept, as a later message would replace it.
+  const cultures = new Map<string, CultureInput>();
   for (const g of groups) {
+    const { patientId, birthYear, sex, ward, admission, badAdmission } = g.patient;
     const cultureId = comp(field(g.obr, 3), 1) || comp(field(g.obr, 2), 1);
     const sampleDate = date(field(g.spm, 17)) ?? date(field(g.obr, 7));
     const specimenField = g.spm ? field(g.spm, 4) : field(g.obr, 15);
     const specimen: Specimen | undefined = mapSpecimen(maps, coding(specimenField));
     if (!cultureId) out.warnings.push("OBR-3 / OBR-2 order number missing");
-    if (!sampleDate) out.warnings.push(`culture ${cultureId}: no collection date (SPM-17 or OBR-7)`);
+    if (!sampleDate)
+      out.warnings.push(
+        `culture ${cultureId}: no real collection date (SPM-17 "${comp(field(g.spm, 17), 1)}", OBR-7 "${comp(field(g.obr, 7), 1)}")`,
+      );
     if (!specimen)
       out.warnings.push(`culture ${cultureId}: specimen "${comp(specimenField, 1)} ${comp(specimenField, 2)}" maps to nothing`);
 
@@ -159,7 +185,8 @@ export function parseHl7Message(message: string, options: Hl7Options = {}): Inge
     let noGrowth = false;
     let mixed = false;
     for (const { seg, defaultSub } of g.obx) {
-      const sub = field(seg, 4) || defaultSub || "1";
+      // In a child OBR, OBR-26 names the isolate; its OBX-4 numbers only the child's own observations.
+      let sub = defaultSub || field(seg, 4) || "1";
       const codeField = field(seg, 3);
       const value = field(seg, 5);
       const flag = comp(field(seg, 8), 1);
@@ -173,6 +200,14 @@ export function parseHl7Message(message: string, options: Hl7Options = {}): Inge
         return p;
       };
       if (organism && !sr) {
+        if (!defaultSub && !field(seg, 4)) {
+          // Organisms with no OBX-4 are numbered in order rather than all becoming isolate 1.
+          let n = 1;
+          while (isolates.has(String(n))) n++;
+          sub = String(n);
+        } else if (isolates.has(sub)) {
+          out.warnings.push(`culture ${cultureId}: two organisms under sub-id ${sub}; the later one is kept`);
+        }
         isolates.set(sub, { organism, phenotypes: [], results: {}, phenotypesSeen: new Set() });
       } else if (phenotype) {
         if (isPositive(comp(value, 1)) || isPositive(comp(value, 2))) bucket().phenotypes.add(phenotype);
@@ -197,12 +232,12 @@ export function parseHl7Message(message: string, options: Hl7Options = {}): Inge
       Object.assign(iso.results, p.results);
       for (const ph of p.phenotypes) iso.phenotypesSeen.add(ph);
     }
-    if (!cultureId || !sampleDate || !specimen || !patientId || !birth || !sex || !ward) continue;
+    if (!cultureId || !sampleDate || !specimen || !patientId || !birthYear || !sex || !ward || badAdmission) continue;
     const culture: CultureInput = {
       cultureId,
       patientId,
       sex,
-      birthYear: Number(birth.slice(0, 4)),
+      birthYear,
       sampleDate,
       ward,
       admissionDate: admission,
@@ -214,16 +249,18 @@ export function parseHl7Message(message: string, options: Hl7Options = {}): Inge
           : [...isolates.values()].map((i) => ({ organism: i.organism, phenotypes: [...i.phenotypesSeen], results: i.results })),
       ...(options.guideline ? { guideline: options.guideline } : {}),
     };
-    addCulture(out, culture);
+    if (cultures.has(cultureId)) out.warnings.push(`culture ${cultureId} appears twice in the message; the last one is kept`);
+    cultures.set(cultureId, culture);
   }
+  for (const c of cultures.values()) addCulture(out, c);
   return out;
 }
 
-/** Several messages in one text (blank lines or MLLP framing between them). */
+/** Several messages in one text, each starting at an MSH line; blank lines and MLLP framing are skipped. */
 export function parseHl7Batch(text: string, options: Hl7Options = {}): IngestResult[] {
   return text
     .replace(MLLP_FRAMING, "\n")
-    .split(/\n\s*\n|(?=^MSH)/m)
+    .split(/(?=^MSH)/m)
     .map((m) => m.trim())
     .filter((m) => m.startsWith("MSH"))
     .map((m) => parseHl7Message(m, options));

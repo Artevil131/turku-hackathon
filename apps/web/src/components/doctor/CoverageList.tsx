@@ -1,9 +1,9 @@
 import type { CoverageResponse, PatientFindingsResponse } from "@aei/contract";
 import type { Syndrome } from "@aei/guideline";
 import { antibioticName, type Locale, specimenName, t, wardName } from "@aei/i18n";
-import { cloneElement, isValidElement, type ReactNode, useMemo, useRef } from "react";
+import { cloneElement, isValidElement, memo, type ReactNode, useMemo, useRef } from "react";
 import "./CoverageList.css";
-import { BAR, barOf, type DoctorFilters, dmy, droppedFilters, num, pct } from "./filters.ts";
+import { BAR, type Basis, barOf, basisFor, type DoctorFilters, dmy, droppedFilters, num, pct } from "./filters.ts";
 import { GuideSummary, guideCodes } from "./Guide.tsx";
 import { priorText, withPrior } from "./Patient.tsx";
 import { InfoIcon, Popover } from "./Popover.tsx";
@@ -30,12 +30,14 @@ interface Props {
   patient?: PatientFindingsResponse | null;
   /** The timeframe control and the comparison under it (D-082). */
   compare?: ReactNode;
+  /** The doctor chose what the figures are counted on; without it the toggle is not drawn. */
+  onJudge?: (basis: Basis) => void;
 }
 
 const SKELETON = [0, 1, 2, 3, 4, 5];
 
 /** The window a figure covers, in a word or two: "year", "90 days", "4 wk". */
-const span = (locale: Locale, period: DoctorFilters["period"]) =>
+export const span = (locale: Locale, period: DoctorFilters["period"]) =>
   period === 365 ? t(locale, "drFigYear") : period === 28 ? t(locale, "drFigRecent") : t(locale, "drPeriodDays", { days: period });
 
 /** Position on the 50-100 % axis, as a percentage of the bar area; values below 50 sit at the left edge. */
@@ -72,7 +74,7 @@ export function itemsOf(
 }
 
 /** The forest plot: one row per antibiotic, its 95 % interval against the bar line, one glance per row. */
-export function CoverageList({
+export const CoverageList = memo(function CoverageList({
   locale,
   filters,
   asOf,
@@ -86,6 +88,7 @@ export function CoverageList({
   syndrome,
   patient,
   compare,
+  onJudge,
 }: Props) {
   const headRef = useRef<HTMLElement>(null);
   const bar = barOf(data, filters);
@@ -99,6 +102,10 @@ export function CoverageList({
   const all = [...singles, ...pairs];
   const date = data?.asOf ?? asOf;
   const guided = useMemo(() => guideCodes(syndrome), [syndrome]);
+  // The figures follow the doctor's choice; the tick and colour stay on what the server judged (own spectrum for mild, everything for severe).
+  const judged = basisFor(filters.sev);
+  const view: Basis = filters.judge ?? judged;
+  const basisName = (b: Basis) => t(locale, b === "own" ? "drJudgeOwn" : "drJudgeAll");
 
   const bestPair = filters.sev === "severe" && !singles.some((s) => s.standing === "clears") ? pairs[0] : null;
   const openPair = () => {
@@ -115,9 +122,12 @@ export function CoverageList({
 
   const renderItem = (item: Item) => {
     const st = STANDING[item.standing];
-    const assessable = item.standing !== "not assessable" && item.share !== null;
+    // A single antibiotic has both bases; a combination only the one over everything that grew.
+    const c = item.row ? (view === "own" ? item.row.coverage.spectrum : item.row.coverage) : null;
+    const share = c ? c.share : item.share;
+    const interval = c ? c.interval : item.interval;
+    const assessable = item.standing !== "not assessable" && share !== null;
     const isSel = selected === item.id;
-    const range = item.interval ? `${pct(item.interval[0])}–${pct(item.interval[1])}` : "";
     return (
       <li key={item.id} className="cl-li">
         <button
@@ -137,81 +147,36 @@ export function CoverageList({
           <span className="cl-plot" aria-hidden="true">
             <i className="cl-axis" />
             <i className="cl-tau" style={{ left: `${at(bar / 100)}%` }} />
-            {assessable && item.interval ? (
-              <i
-                className="cl-band"
-                style={{ left: `${at(item.interval[0])}%`, width: `max(4px, ${at(item.interval[1]) - at(item.interval[0])}%)` }}
-              />
+            {assessable && interval ? (
+              <i className="cl-band" style={{ left: `${at(interval[0])}%`, width: `max(4px, ${at(interval[1]) - at(interval[0])}%)` }} />
             ) : null}
-            {assessable && item.share !== null ? <i className="cl-point" style={{ left: `${at(item.share)}%` }} /> : null}
+            {assessable && share !== null ? <i className="cl-point" style={{ left: `${at(share)}%` }} /> : null}
           </span>
           <span className="cl-num num">
-            {/* The brief's comparison, the loudest thing in the row: the year the ranking rests on, the unit's last
-                four weeks beside it in the same shape (D-023; no flag between them, D-044). */}
-            <span className="cl-figs">
-              {/* The judged figure first: the year on the row's own basis (likely bacteria for a mild case). */}
-              <span className="cl-fig">
-                <b>{assessable && item.share !== null ? `${pct(item.share)}\u00a0%` : "–"}</b>
-                <small>
-                  {t(locale, item.row?.basis === "spectrum" ? "drWithinSpectrum" : "drAllOrgShort")} · {span(locale, filters.period)}
-                  {item.standing === "borderline" && range ? ` · ${range}\u00a0%` : ""} · n {num(locale, item.n)}
-                </small>
-              </span>
-              {/* Then the brief's pair on one basis, all organisms: the year and this unit's last four weeks. */}
-              <span className="cl-pair">
-                {item.row?.basis === "spectrum" ? (
-                  <span className="cl-fig cl-fig-quiet">
-                    <b>{item.row.allOrganisms.share === null ? "–" : `${pct(item.row.allOrganisms.share)}\u00a0%`}</b>
-                    <small>
-                      {t(locale, "drAllOrgShort")} · {span(locale, filters.period)} · n {num(locale, item.row.coverage.counts.known)}
-                    </small>
-                  </span>
-                ) : null}
-                <span className="cl-fig cl-fig-quiet">
-                  {item.recent && item.recent.known >= 30 ? (
-                    <>
-                      <b>{pct(item.recent.covered / item.recent.known)}&nbsp;%</b>
-                      <small>
-                        {t(locale, "drAllOrgShort")} · {t(locale, "drFigRecent")} · {num(locale, item.recent.covered)} /{" "}
-                        {num(locale, item.recent.known)}
-                      </small>
-                    </>
-                  ) : item.recent && item.recent.known > 0 ? (
-                    <>
-                      <b>
-                        {num(locale, item.recent.covered)} / {num(locale, item.recent.known)}
-                      </b>
-                      <small>
-                        {t(locale, "drAllOrgShort")} · {t(locale, "drFigRecent")}
-                      </small>
-                    </>
-                  ) : (
-                    <>
-                      <b>—</b>
-                      <small>
-                        {t(locale, "drAllOrgShort")} · {t(locale, "drFigRecent")}
-                      </small>
-                    </>
-                  )}
-                </span>
+            {/* One figure at full size, the year on the chosen basis, and under it the unit's last four weeks as a count
+                (D-023; no flag between them, D-044). Every other number is in the details. */}
+            <span className="cl-fig">
+              <b>{assessable && share !== null ? `${pct(share)}\u00a0%` : "–"}</b>
+              <span className="visually-hidden">
+                {" "}
+                {t(locale, item.row && view === "own" ? "drWithinSpectrum" : "drAllOrgShort")} · {span(locale, filters.period)}
               </span>
             </span>
+            <small className="cl-recent" title={t(locale, "drRecentContext")}>
+              {t(locale, "drLast4")} <span className="visually-hidden">({t(locale, "drAllOrgShort")}) </span>
+              {item.recent && item.recent.known > 0 ? `${num(locale, item.recent.covered)} / ${num(locale, item.recent.known)}` : "—"}
+            </small>
             {meta ? <span className="cl-secondary cl-basis">{meta}</span> : null}
           </span>
           <span className="cl-res" data-standing={item.standing} title={t(locale, st.long)}>
             <span className="cl-glyph" aria-hidden="true">
               {st.glyph}
             </span>
-            {t(locale, st.short)}
+            <span className="visually-hidden">{t(locale, st.long)}</span>
           </span>
           <span className="cl-details">
             {t(locale, "drDetails")} <span aria-hidden="true">{isSel ? "−" : "+"}</span>
           </span>
-          {item.standing === "borderline" ? (
-            <span className="cl-why">
-              {t(locale, item.interval ? "drBorderlineWhyLow" : "drBorderlineWhy", { bar, lo: item.interval ? pct(item.interval[0]) : "" })}
-            </span>
-          ) : null}
           {item.prior ? <span className="cl-prior">{priorText(locale, item.prior)}</span> : null}
         </button>
       </li>
@@ -318,26 +283,40 @@ export function CoverageList({
       ) : null}
 
       {data && cov && all.length > 0 ? (
-        <div className="cl-scroll">
-          <div className="cl-cols" aria-hidden="true">
-            <span>{t(locale, "drAntibioticCol")}</span>
-            <span className="cl-axis-head">
-              <b className="cl-tau-label" style={{ left: `${at(bar / 100)}%` }}>
-                {t(locale, "drBarName", { bar })}
-              </b>
-            </span>
-            <span className="cl-r" title={t(locale, "drRecentContext")}>
-              {t(locale, "drCovers")}
-              <small className="cl-recent-head"> · {t(locale, "drRecentHead")}</small>
-            </span>
-            <span>{t(locale, "drStandingCol")}</span>
+        <>
+          {singles.length > 0 && onJudge ? (
+            <div className="cl-judge">
+              <span id="cl-judge-label">{t(locale, "drJudgeOn")}</span>
+              <div className="cl-judge-seg" role="group" aria-labelledby="cl-judge-label">
+                {(["own", "all"] as const).map((b) => (
+                  <button key={b} type="button" aria-pressed={view === b} onClick={() => onJudge(b)}>
+                    {basisName(b)}
+                  </button>
+                ))}
+              </div>
+              {view !== judged ? <span className="cl-judge-note">{t(locale, "drJudgeNote", { basis: basisName(judged) })}</span> : null}
+            </div>
+          ) : null}
+          <div className="cl-scroll">
+            <div className="cl-cols" aria-hidden="true">
+              <span>{t(locale, "drAntibioticCol")}</span>
+              <span className="cl-axis-head">
+                <b className="cl-tau-label" style={{ left: `${at(bar / 100)}%` }}>
+                  {t(locale, "drBarName", { bar })}
+                </b>
+              </span>
+              <span className="cl-r" title={t(locale, "drRecentContext")}>
+                {t(locale, "drCovers")}
+              </span>
+              <span>{t(locale, "drStandingCol")}</span>
+            </div>
+            <ul className="cl-rows" aria-label={t(locale, "drCoverage")}>
+              {renderGroup(singles, firstBelow, t(locale, "drBelowDivider", { bar }))}
+              {pairs.length > 0 ? renderGroup(pairs, 0, t(locale, "drTwoTogether")) : null}
+            </ul>
+            <p className="cl-note">{t(locale, "drListNote")}</p>
           </div>
-          <ul className="cl-rows" aria-label={t(locale, "drCoverage")}>
-            {renderGroup(singles, firstBelow, t(locale, "drBelowDivider", { bar }))}
-            {pairs.length > 0 ? renderGroup(pairs, 0, t(locale, "drTwoTogether")) : null}
-          </ul>
-          <p className="cl-note">{t(locale, "drListNote")}</p>
-        </div>
+        </>
       ) : null}
       {data && cov ? (
         <PrintSheet
@@ -354,7 +333,7 @@ export function CoverageList({
       ) : null}
     </section>
   );
-}
+});
 
 /** The divider belongs to the first row below the bar rather than adding a fake list item. */
 function ListFragment({ divider, children }: { divider: string | null; children: ReactNode }) {

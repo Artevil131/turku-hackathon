@@ -221,8 +221,7 @@ export function coverage(records: readonly IsolateRecord[], q: CoverageQuery, wa
   const applied = passes(kept);
   const sexApplied = kept.includes("sex");
   const base = all.filter(applied);
-  const level =
-    q.level ?? (["unit", "ward type"] as Level[]).find((l) => base.filter(inLevel[l]).length >= minTested) ?? "hospital";
+  const level = q.level ?? (["unit", "ward type"] as Level[]).find((l) => base.filter(inLevel[l]).length >= minTested) ?? "hospital";
   const pool = base.filter(inLevel[level]);
   const recentFrom = addDays(q.asOf, 1 - RECENT_DAYS);
   const recentPool = firstIsolates(

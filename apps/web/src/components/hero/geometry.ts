@@ -180,10 +180,17 @@ export function surprise(a: Alert): number | null {
   return a.p <= 0 ? SURPRISE_CAP : Math.min(Math.max(-Math.log10(a.p), 0), SURPRISE_CAP);
 }
 
+// One formatter per locale and digit count: building one per label dominated the band's render.
+const numFormats = new Map<string, Intl.NumberFormat>();
 function num(locale: Locale, v: number): string {
-  return new Intl.NumberFormat(locale === "fi" ? "fi-FI" : "en-GB", {
-    maximumFractionDigits: Math.abs(v) < 10 && v % 1 !== 0 ? 1 : 0,
-  }).format(v);
+  const digits = Math.abs(v) < 10 && v % 1 !== 0 ? 1 : 0;
+  const key = `${locale}:${digits}`;
+  let f = numFormats.get(key);
+  if (!f) {
+    f = new Intl.NumberFormat(locale === "fi" ? "fi-FI" : "en-GB", { maximumFractionDigits: digits });
+    numFormats.set(key, f);
+  }
+  return f.format(v);
 }
 
 /** What caused the alert, in a few characters: "ESBL 7 · 1.4", "MRSA new", "no samples". */
@@ -207,6 +214,44 @@ export function pillLabel(locale: Locale, a: Alert): string {
     case "empty-run":
       return t(locale, "tlPillNoSamples");
   }
+}
+
+/** What a pill's short label means, in words: "ESBL: 2 seen, 0 usual", "Sampling: 39 cultures, 70 usual". */
+export function pillWords(locale: Locale, a: Alert): string {
+  if (a.kind === "cpe") return t(locale, "tlTipCpe");
+  if (a.kind === "new-in-unit") return t(locale, "tlTipNew", { name: phenotypeName(a.phenotype) });
+  if (a.kind === "carrier") return t(locale, "tlTipCarrier", { name: phenotypeName(a.phenotype) });
+  const seen = (label: string) => {
+    const name = label.charAt(0).toUpperCase() + label.slice(1);
+    return a.expected === undefined
+      ? t(locale, "tlTipSeenOnly", { name, observed: num(locale, a.observed) })
+      : t(locale, "tlTipSeen", { name, observed: num(locale, a.observed), expected: num(locale, a.expected) });
+  };
+  switch (a.detector) {
+    case "phenotype-excess":
+      return seen(a.phenotype ? phenotypeName(a.phenotype) : t(locale, "tlCluster"));
+    case "profile-excess":
+      return seen(t(locale, "tlPillProfile"));
+    case "resistance-shift":
+      return seen(t(locale, "tlPillTrend"));
+    case "rising-trend":
+      return t(locale, "tlTipTrend");
+    case "sampling-drop":
+    case "volume-jump":
+      return a.expected === undefined
+        ? t(locale, "tlTipSeenOnly", { name: t(locale, "tlPillSamples"), observed: num(locale, a.observed) })
+        : t(locale, "tlTipSampling", { observed: num(locale, a.observed), expected: num(locale, a.expected) });
+    case "empty-run":
+      return t(locale, "tlTipNoSamples");
+  }
+}
+
+/** The words of a pill, one line per signal; a merged pill starts with how many it holds. */
+export function pillTip(locale: Locale, members: readonly Alert[]): string {
+  const lines = members.map((x) =>
+    [pillWords(locale, x), x.ward ? wardName(locale, x.ward) : null, compactDate(x.date)].filter(Boolean).join(" · "),
+  );
+  return members.length > 1 ? [t(locale, "tlTipMany", { n: members.length }), ...lines].join("\n") : (lines[0] ?? "");
 }
 
 /** One line for assistive technology and the readout: label, unit, date, surprise. */

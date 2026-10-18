@@ -781,3 +781,14 @@
     transition: none;
   }
 }
+
+/* The URL names a signal that is not among those up to the clock: said plainly above the list. */
+.feed-outside {
+  margin: 0;
+  padding: 6px 8px;
+  border: 1px dashed var(--line-strong, var(--line));
+  border-radius: 6px;
+  background: var(--live-soft);
+  color: var(--ink-2, var(--ink));
+  font-size: var(--t-xs);
+}

@@ -11,7 +11,9 @@ import {
   fitLayout,
   focusLayout,
   insertBetween,
+  MIN_SIZE,
   makeRoom,
+  nearTop,
   parseLayout,
   patchWin,
   presetLayout,
@@ -250,5 +252,29 @@ describe("a window between two windows", () => {
     const c = compactLayout(r.layout, r.id);
     expect(c.wins.graph.y).toBeLessThan(c.wins.map.y);
     expect(c.wins.map.y).toBeGreaterThanOrEqual(c.wins.graph.y + c.wins.graph.h);
+  });
+});
+
+describe("nearTop", () => {
+  it("takes the top-most free place that is on screen", () => {
+    const l = patchWin(defaultLayout(), "notebook", { open: false });
+    // the notebook's old columns are free again, under the timeline
+    expect(nearTop(l, "math", 40)).toEqual({ x: 4, y: TIMELINE_ROWS });
+  });
+  it("goes under the timeline when nothing is free on screen, never to the bottom of a long board", () => {
+    const at = nearTop(defaultLayout(), "math", 40);
+    expect(at).toEqual({ x: 0, y: TIMELINE_ROWS });
+    const placed = addWindow(defaultLayout(), "math", at);
+    const c = compactLayout(placed.layout, placed.id);
+    expect(c.wins.math.y).toBe(TIMELINE_ROWS);
+  });
+});
+
+describe("the map in the default layout", () => {
+  it("is tall enough to draw Finland and never below its minimum", () => {
+    const m = defaultLayout().wins.map;
+    expect(m.h).toBeGreaterThanOrEqual(MIN_SIZE.map.h);
+    expect(m.h).toBeGreaterThanOrEqual(24);
+    expect(m.w).toBeGreaterThanOrEqual(3);
   });
 });

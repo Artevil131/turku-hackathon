@@ -1,15 +1,15 @@
-// Minimal RFC 4180 CSV parser: comma separator, optional double quotes,
+// Minimal RFC 4180 CSV parser: comma separator (or another one given), optional double quotes,
 // "" as an escaped quote, LF or CRLF line ends. Enough for the organiser's
 // files; not a general-purpose parser.
 
-export function parseCsv(text: string): Record<string, string>[] {
-  const rows = parseRows(text.replace(/^﻿/, ""));
+export function parseCsv(text: string, delimiter = ","): Record<string, string>[] {
+  const rows = parseRows(text.replace(/^﻿/, ""), delimiter);
   const header = rows.shift();
   if (!header) return [];
   return rows.filter((r) => !(r.length === 1 && r[0] === "")).map((r) => Object.fromEntries(header.map((name, i) => [name, r[i] ?? ""])));
 }
 
-function parseRows(text: string): string[][] {
+function parseRows(text: string, delimiter: string): string[][] {
   const rows: string[][] = [];
   let row: string[] = [];
   let field = "";
@@ -23,7 +23,7 @@ function parseRows(text: string): string[][] {
       } else if (c === '"') quoted = false;
       else field += c;
     } else if (c === '"') quoted = true;
-    else if (c === ",") {
+    else if (c === delimiter) {
       row.push(field);
       field = "";
     } else if (c === "\n" || c === "\r") {

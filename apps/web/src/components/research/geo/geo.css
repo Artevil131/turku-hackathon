@@ -83,8 +83,19 @@
 .geo-stage {
   position: relative;
   flex: 1 1 auto;
-  min-height: 0;
+  /* A map needs room to be a map: the window grows to fit it rather than squash Finland between the header and the legend. */
+  min-height: 260px;
   width: 100%;
+}
+.geo-closest {
+  margin: 4px 0 0;
+}
+/* Too small to draw: the title and a button that opens the window larger. */
+.geo-narrow {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
 }
 .geo-svg {
   display: block;

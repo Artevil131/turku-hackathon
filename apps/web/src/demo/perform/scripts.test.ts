@@ -13,18 +13,46 @@ describe("the showcase screenplay", () => {
     for (const locale of ["en", "fi"] as const) expect(scenesOf(showcaseScreenplay(locale).beats)).toEqual([...SHOWCASE_SCENES]);
   });
 
-  it("plays the doctor's and the researcher's own fill-in on the way, each after its file is opened", () => {
-    const { beats } = showcaseScreenplay("en");
-    const index = (pred: (b: Beat) => boolean) => beats.findIndex(pred);
-    const opensClinician = index((b) => b.do === "click" && b.at === '.start-demo[data-demo="clinician"]');
-    const firstClinicianBeat = index((b) => b.do === "pick" && b.at === ".rs-unit .rs-select");
-    const opensResearcher = index((b) => b.do === "click" && b.at === '.sb-demo[data-demo="researcher"]');
-    const firstResearcherBeat = index((b) => b.do === "type" && b.text.startsWith("## "));
-    expect(opensClinician).toBeGreaterThan(0);
-    expect(firstClinicianBeat).toBeGreaterThan(opensClinician);
-    expect(opensResearcher).toBeGreaterThan(firstClinicianBeat);
-    expect(firstResearcherBeat).toBeGreaterThan(opensResearcher);
+  it("plays the doctor's and the researcher's fill-in exactly as their replay buttons do, each after its file is opened", () => {
+    for (const locale of ["en", "fi"] as const) {
+      const { beats } = showcaseScreenplay(locale);
+      const sceneAt = (name: string) => beats.findIndex((b) => b.do === "scene" && b.name === name);
+      /** The beats of a scene between the demos' pace being switched on and off: the embedded fill. */
+      const embedded = (scene: string, next: string) => {
+        const part = beats.slice(sceneAt(scene), sceneAt(next));
+        const on = part.findIndex((b) => b.do === "pace" && b.pace === PACE);
+        const off = part.findIndex((b, i) => i > on && b.do === "pace");
+        expect(on).toBeGreaterThan(0);
+        expect(off).toBeGreaterThan(on);
+        return { prefix: part.slice(0, on), fill: part.slice(on + 1, off), suffix: part.slice(off + 1) };
+      };
+      // Targets made by `added()` and `last()` are fresh closures each time: compared by their source text.
+      const shape = (list: Beat[]) => JSON.stringify(list, (_k, v) => (typeof v === "function" ? `fn:${v.toString()}` : v));
+      const doctor = embedded("doctor", "search");
+      expect(shape(doctor.fill)).toBe(shape(screenplayFor("clinician", locale).beats));
+      // After the fill only a hold on what it left on screen, so the voice can finish (no further action).
+      expect(doctor.suffix.map((b) => b.do)).toEqual(["look"]);
+      // The prefix only opens the file: the scene mark, the card's click and a breath.
+      expect(doctor.prefix.map((b) => b.do)).toEqual(["scene", "click", "think"]);
+      const research = embedded("research", "export");
+      expect(shape(research.fill)).toBe(shape(screenplayFor("researcher", locale).beats));
+      expect(research.fill.length).toBe(screenplayFor("researcher", locale).beats.length);
+      expect(research.suffix.map((b) => b.do)).toEqual(["look"]);
+      expect(research.prefix.map((b) => b.do)).toEqual(["scene", "click", "think", "look"]);
+    }
     expect(SHOWCASE_FILLS).toEqual(["clinician", "researcher"]);
+  });
+
+  it("shows an anomaly and the maths behind it: the pill, the card's numbers, the formula, the Poisson bars, the counts", () => {
+    const { beats } = showcaseScreenplay("en");
+    const from = beats.findIndex((b) => b.do === "scene" && b.name === "anomaly");
+    const to = beats.findIndex((b) => b.do === "scene" && b.name === "map");
+    const part = beats.slice(from + 1, to);
+    expect(part[0]).toMatchObject({ do: "click", wait: ".sig .sig-tiles" });
+    const looked = part.flatMap((b) => (b.do === "look" && typeof b.at === "string" ? [b.at] : []));
+    expect(looked).toEqual([".sig .sig-tiles", ".sig .sig-how[open] .sig-formula", ".sig .math-poisson", ".sig .sig-counts"]);
+    // Each held long enough to say a sentence over.
+    for (const b of part) if (b.do === "look") expect(b.ms ?? 0).toBeGreaterThanOrEqual(2500);
   });
 
   it("scans the things it comes to before acting on them", () => {
@@ -63,7 +91,7 @@ describe("the showcase screenplay", () => {
     // travel, the typing and the app's own answers are the rest.
     const held =
       beats.reduce((s, b) => {
-        const orbit = "orbit" in b && b.orbit ? 1600 : 0;
+        const orbit = "orbit" in b && typeof b.orbit === "number" && b.orbit ? 1600 : 0;
         return s + (b.do === "think" ? b.ms : b.do === "look" ? (b.ms ?? 1000) + orbit : b.do === "orbit" ? (b.ms ?? 1600) : orbit);
       }, 0) / 1000;
     expect(held).toBeGreaterThan(55);
@@ -73,7 +101,7 @@ describe("the showcase screenplay", () => {
     expect(seconds).toBeGreaterThan(120);
     expect(seconds).toBeLessThan(320);
     // Held long enough to speak over: the last beat is the final frame.
-    expect(beats.at(-1)).toEqual({ do: "think", ms: 3000 });
+    expect(beats.at(-1)).toEqual({ do: "outro", ms: 4000 });
   });
 
   it("the demo screenplays still play faster than written", () => {

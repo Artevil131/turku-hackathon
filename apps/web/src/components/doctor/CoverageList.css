@@ -77,7 +77,7 @@
 .cl-cols,
 .cl-row {
   display: grid;
-  grid-template-columns: minmax(110px, 1fr) minmax(55px, 0.5fr) fit-content(560px) 64px 48px;
+  grid-template-columns: minmax(110px, 1fr) minmax(70px, 0.5fr) 148px 32px auto;
   align-items: center;
   column-gap: 8px;
 }
@@ -226,48 +226,69 @@
 }
 
 .cl-num {
-  text-align: right;
-  color: var(--d-ink-2);
-}
-
-.cl-num > span {
-  display: block;
-}
-/* Two figures, year then four weeks, each a number over its label. */
-.cl-figs {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 2px 16px;
-}
-.cl-fig {
   display: grid;
+  justify-items: end;
   gap: 1px;
   text-align: right;
+  color: var(--d-ink-2);
 }
+/* One figure at full size: the year on the chosen basis. The unit's last four weeks sit under it as a count. */
 .cl-fig b {
-  font-size: 18px;
-  line-height: 1.2;
+  font-size: 24px;
+  line-height: 1.1;
   font-variant-numeric: tabular-nums;
 }
-.cl-fig small {
+.cl-recent {
   color: var(--d-ink-3);
-  font-size: var(--d-s, 14px);
+  font-size: var(--d-xs);
   white-space: nowrap;
-}
-.cl-pair {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2px 14px;
-  padding-left: 14px;
-  border-left: 1px solid var(--d-line);
-}
-.cl-fig-quiet b {
-  color: var(--d-ink-2);
-  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 .cl-basis {
-  margin-top: 3px;
+  color: var(--d-ink-3);
+}
+
+/* The basis the figures are counted on, one switch above the table. */
+.cl-judge {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--d-line);
+  font-size: var(--d-xs);
+  color: var(--d-ink-2);
+}
+.cl-judge-seg {
+  display: inline-flex;
+  border: 1px solid var(--d-line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.cl-judge-seg button {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 0;
+  background: var(--d-panel);
+  color: var(--d-ink);
+  font: inherit;
+  cursor: pointer;
+}
+.cl-judge-seg button + button {
+  border-left: 1px solid var(--d-line);
+}
+.cl-judge-seg button[aria-pressed="true"] {
+  background: var(--d-acc-soft);
+  color: var(--d-acc);
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px var(--d-acc);
+}
+.cl-judge-seg button:focus-visible {
+  outline: 2px solid var(--d-acc);
+  outline-offset: -2px;
+}
+.cl-judge-note {
+  flex-basis: 100%;
   color: var(--d-ink-3);
 }
 
@@ -287,8 +308,10 @@
 .cl-glyph {
   display: inline-grid;
   place-items: center;
-  width: 16px;
-  font-weight: 600;
+  width: 24px;
+  font-size: 22px;
+  line-height: 1;
+  font-weight: 700;
 }
 
 .cl-res[data-standing="clears"] {
@@ -391,12 +414,8 @@
 @container coverage (max-width: 1199px) {
   .cl-cols,
   .cl-row {
-    grid-template-columns: minmax(100px, 1fr) fit-content(560px) 62px 44px;
+    grid-template-columns: minmax(90px, 1fr) minmax(56px, 0.4fr) 140px 28px auto;
     column-gap: 6px;
-  }
-  .cl-plot,
-  .cl-axis-head {
-    display: none;
   }
 }
 
@@ -436,17 +455,14 @@
   .cl-name {
     grid-column: 1;
   }
-  .cl-num {
-    grid-column: 1 / -1;
+  .cl-plot {
+    grid-column: 1;
     grid-row: 2;
-    text-align: left;
-    line-height: 1.6;
+    height: 32px;
   }
-  .cl-figs {
-    justify-content: flex-start;
-  }
-  .cl-fig {
-    text-align: left;
+  .cl-num {
+    grid-column: 2 / -1;
+    grid-row: 2;
   }
   .cl-res {
     grid-column: 2;
@@ -625,6 +641,9 @@
 /* The answer card at the top of the coverage window, and the case controls that wait behind "Change the case". */
 .dr-answer {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  min-width: 0;
   gap: 8px;
   padding: 20px 24px;
   border-bottom: 1px solid var(--line);
@@ -676,7 +695,9 @@
   grid-template-columns: auto auto;
   justify-content: start;
   gap: 2px 28px;
+  min-width: 0;
   width: fit-content;
+  max-width: 100%;
   margin: 6px 0 0;
   padding: 10px 14px 8px;
   border: 1px solid var(--line);
@@ -705,7 +726,12 @@
 .dr-answer-compare small {
   color: var(--ink-2);
   font-size: var(--t-s);
-  white-space: nowrap;
+}
+@media (max-width: 520px) {
+  .dr-answer-compare {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 2px 16px;
+  }
 }
 /* The rest of the list as pills: a name and its share each, scanned in one look. */
 .dr-answer-pills {
@@ -1082,4 +1108,12 @@
 .dr-case .syn-group {
   flex-wrap: wrap;
   row-gap: 6px;
+}
+
+/* The one-line reason a combination heads the answer: plain, not the green pill of a single drug that clears. */
+.dr-answer-nosingle {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--t-s);
+  line-height: 1.4;
 }

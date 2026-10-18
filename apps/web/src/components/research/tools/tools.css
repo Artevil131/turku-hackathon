@@ -145,9 +145,10 @@
   margin-right: 8px;
   border-radius: 50%;
   background: var(--live);
-  animation: tl-pulse 900ms ease-in-out infinite alternate;
+  animation: tl-wait-pulse 900ms ease-in-out infinite alternate;
 }
-@keyframes tl-pulse {
+/* Its own name: timeline.css has a tl-pulse too, and keyframes are global (the later file would win for both). */
+@keyframes tl-wait-pulse {
   from {
     opacity: 0.25;
   }

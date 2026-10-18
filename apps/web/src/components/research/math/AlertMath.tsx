@@ -53,7 +53,7 @@ interface Props {
   onChange: (patch: Partial<BoardState>) => void;
   acknowledge: (ids: string[]) => void;
   /** The list's own state, shown when nothing can be selected. */
-  empty: "loading" | "none" | "pick";
+  empty: "loading" | "none" | "pick" | "outside";
   /** The replay clock's date; "Go to this day" is disabled on it. */
   asOf?: string | null;
   /** The clock command (App's `live.command`); without it the day button is disabled. */
@@ -188,7 +188,9 @@ export function AlertMath({
           {back}
           <h2 id="sig-title">{t(locale, "cardTitle")}</h2>
         </header>
-        <p className="sig-empty">{empty === "loading" ? t(locale, "feedIsolatesLoading") : t(locale, "cardEmpty")}</p>
+        <p className="sig-empty" role={empty === "outside" ? "status" : undefined}>
+          {empty === "loading" ? t(locale, "feedIsolatesLoading") : t(locale, empty === "outside" ? "cardOutside" : "cardEmpty")}
+        </p>
       </aside>
     );
 

@@ -127,6 +127,7 @@ export function StartPage({
     else location.hash = action.href.slice(1);
   };
   // "Start empty" from a demo's tour lands here with ?start=<template>: the project opens at once.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs once on arrival; launch is recreated every render
   useEffect(() => {
     const wanted = hashParams().get("start");
     if (!wanted || !(TEMPLATES as readonly string[]).includes(wanted)) return;
@@ -238,9 +239,9 @@ export function StartPage({
           ) : projects === null ? (
             <div aria-busy="true" className="start-loading" />
           ) : projects.length === 0 ? (
-            // Nothing yet: the demo for this audience, which opens with its guided tour.
+            // Nothing yet: the researcher's demo, whose fill-in shows the most (Artem, 2026-10-18), whatever the audience.
             (() => {
-              const demo = DEMOS.find((d) => d.id === ROLE_DEMO[role]) ?? DEMOS.find((d) => d.id === "clinician");
+              const demo = DEMOS.find((d) => d.id === "researcher") ?? DEMOS.find((d) => d.id === ROLE_DEMO[role]);
               return demo ? (
                 <div className="start-empty">
                   <TemplateArt demo={demo.id} />
