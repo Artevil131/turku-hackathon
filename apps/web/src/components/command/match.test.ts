@@ -1,5 +1,5 @@
 import type { Alert } from "@aei/contract";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { buildEntries, normalize, recentAlerts, search } from "./match.ts";
 
 const alert = (over: Partial<Alert> & { id: string; date: string }): Alert =>
@@ -108,6 +108,25 @@ describe("compound queries", () => {
     expect(hrefs("icu blood severe")[0]).toBe("#doctor?unit=ICU&site=blood&sev=severe");
     expect(hrefs("med-a esbl")).toContain("#research?unit=MED-A&ph=esbl");
     expect(hrefs("pyelonephritis uro")[0]).toMatch(/^#doctor\?unit=URO&site=urine&syn=pyelonephritis/);
+  });
+
+  it("with a second hospital that also has a Urology, picks the selected hospital's ward", async () => {
+    // Fresh modules: the word tables are cached, and the live server loads two hospitals before the first search.
+    vi.resetModules();
+    const sites = await import("../../sites.ts");
+    sites.setRegistry({
+      sites: [
+        { id: "tyks", fi: "Tyks", en: "Tyks", county: "Varsinais-Suomen hyvinvointialue", home: true },
+        { id: "sata", fi: "Satasairaala", en: "Satasairaala", county: "Satakunnan hyvinvointialue" },
+      ],
+      wards: [
+        { code: "URO", site: "tyks", fi: "Urologia", en: "Urology", type: "in", institution: "hospital" },
+        { code: "sata/URO", site: "sata", fi: "Urologia", en: "Urology", type: "in", institution: "hospital" },
+      ],
+    } as never);
+    const m = await import("./match.ts");
+    const first = m.search(m.buildEntries("en", [], AS_OF), "urology e. coli").find((r) => r.group === "queries");
+    expect(first?.href).toMatch(/^#doctor\?unit=URO&org=Escherichia%20coli/);
   });
   it("labels the top result with what was understood", () => {
     expect(top("urology e. coli")[0]?.label).toBe("Doctor's list for Urology · Escherichia coli");

@@ -2,7 +2,7 @@ import type { Alert } from "@aei/contract";
 import { ANTIBIOTICS, ORGANISMS, PHENOTYPES, SPECIMENS } from "@aei/domain";
 import { guide, syndromeDefaults } from "@aei/guideline";
 import { formatDate, type Locale, type MessageKey, phenotypeName, specimenName, t, wardName } from "@aei/i18n";
-import { allWards, isMulti } from "../../sites.ts";
+import { allWards, inSite, isMulti } from "../../sites.ts";
 import { hashParams } from "../../url.ts";
 import { signalLabel } from "../doctor/signals.ts";
 
@@ -289,7 +289,7 @@ function bestOf(token: string, list: readonly Candidate[]): { value: string; sco
 let tables: Record<Exclude<Facet, "sev">, Candidate[]> | null = null;
 function lookup() {
   tables ??= {
-    unit: allWards().map((w) => ({ value: w.code, terms: norm([w.code, w.fi, w.en]) })),
+    unit: [],
     site: SPECIMENS.map((x) => ({ value: x.code, terms: norm([x.code, x.fi, x.en]) })),
     syn: guide().syndromes.map((x) => ({ value: x.id, terms: norm([x.id, x.name.fi, x.name.en]), rank: x.id.length })),
     ph: PHENOTYPES.map((p) => ({ value: p, terms: norm([p, ...both(PH_NAME[p])]) })),
@@ -300,6 +300,9 @@ function lookup() {
     }),
     ab: ANTIBIOTICS.map((a) => ({ value: a.code, terms: norm([a.code, a.fi, a.en, a.class]) })),
   };
+  // Units are read on every query: with several hospitals two wards share a name ("Urology"), and the selected
+  // hospital's ward wins the tie instead of making the word ambiguous.
+  tables.unit = allWards().map((w) => ({ value: w.code, terms: norm([w.code, w.fi, w.en]), rank: inSite(w.code) ? 0 : 1 }));
   return tables;
 }
 
