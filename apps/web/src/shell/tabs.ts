@@ -1,6 +1,6 @@
 // Open projects, like documents in Photoshop: each is a tab in the sidebar with its own URL (its project id and
-// view state in the hash). At most one tab has no project: a view started without saving (Treat a patient, a
-// link to a signal). No DOM access here except the remembered list in localStorage.
+// view state in the hash). At most two tabs have no project: the patient view started without saving (Treat a
+// patient) and one board view (a link to a signal). No DOM access here except the remembered list in localStorage.
 
 export const PROJECT_PAGE = "project";
 export const VIEW_KEY = "view";
@@ -24,9 +24,14 @@ export interface DocTab {
 
 const paramsOf = (hash: string) => new URLSearchParams(hash.split("?")[1] ?? "");
 
+/** The one project-less patient view (Treat a patient) is a tab of its own, apart from the project-less board. */
+export const PATIENT_KEY = "view:patient";
+
 export function tabKey(hash: string): string {
-  const id = paramsOf(hash).get("project");
-  return id ? `p:${id}` : VIEW_KEY;
+  const params = paramsOf(hash);
+  const id = params.get("project");
+  if (id) return `p:${id}`;
+  return params.get("quick") === "patient" ? PATIENT_KEY : VIEW_KEY;
 }
 
 export function tabFromHash(hash: string, previous?: DocTab): DocTab {

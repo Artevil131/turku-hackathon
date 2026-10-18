@@ -17,6 +17,8 @@ export const guideEn = {
   tourGdTry_timeline_1: "Click a pill to open its signal.",
   tourGdTry_timeline_2: "Click a unit's code to focus on it.",
 
+  tourGdWhat_history: "What was found before this month, month by month.",
+  tourGdTry_history_1: "Click a row to open its evidence in Signals.",
   tourGdWhat_signals: "Every signal found so far, newest first.",
   tourGdTry_signals_1: "Click a row to see its numbers.",
   tourGdTry_signals_2: "Filter by unit or kind at the top.",
@@ -79,6 +81,8 @@ export const guideFi: Record<keyof typeof guideEn, string> = {
   tourGdTry_timeline_1: "Napsauta kapselia avataksesi signaalin.",
   tourGdTry_timeline_2: "Napsauta yksikön koodia keskittyäksesi siihen.",
 
+  tourGdWhat_history: "Mitä löytyi ennen tätä kuuta, kuukausittain.",
+  tourGdTry_history_1: "Napsauta riviä nähdäksesi näytön Signaaleissa.",
   tourGdWhat_signals: "Kaikki löydetyt signaalit, uusin ensin.",
   tourGdTry_signals_1: "Napsauta riviä nähdäksesi luvut.",
   tourGdTry_signals_2: "Rajaa yksikön tai tyypin mukaan ylhäällä.",

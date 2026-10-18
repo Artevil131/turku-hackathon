@@ -57,6 +57,7 @@ import {
 } from "./layout.ts";
 import { templateLayout } from "./templates.ts";
 import "./workspace.css";
+import { DateChip } from "./DateChip.tsx";
 
 // The window workspace of the researcher page. At 1100 px and wider the
 // windows float on a 12-column grid with 24 px rows: drag the top edge to
@@ -90,6 +91,7 @@ const TITLE_KEY = {
   coverage: "boardCoverage",
   timeline: "boardTimeline",
   answer: "boardAnswer",
+  history: "boardHistory",
 } as const;
 
 /** What each window kind is, for its ⓘ. */
@@ -105,6 +107,7 @@ const GUIDE_KEY = {
   coverage: "guideCoverage",
   timeline: "guideTimeline",
   answer: "guideAnswer",
+  history: "guideHistory",
 } as const;
 
 /** A request to add a chart window: a new `key` adds `spec`. */
@@ -118,6 +121,7 @@ const STACK_ORDER: readonly WinId[] = [
   "answer",
   "timeline",
   "signals",
+  "history",
   "notebook",
   "math",
   "assistant",
@@ -254,10 +258,13 @@ export function Workspace({
   chartMenu,
   rail,
   revealRail,
+  clock = null,
 }: {
   /** The project open in this tab (null: the browser's own layout). */
   projectId?: string | null;
   project?: Project;
+  /** The replay clock's day: the data's "today", shown in the toolbar (a frozen project stands at its own day). */
+  clock?: string | null;
   client?: AeiClient;
   /** The project was deleted elsewhere: its layout save answered 404. */
   onGone?: () => void;
@@ -351,7 +358,8 @@ export function Workspace({
     } else if (!projectId) saveLayout(layout);
   };
   // Another project (or none) in the same tab: save the old one's last change, then load the new one's layout.
-  const identity = `${projectId ?? ""}:${project?.id ?? ""}`;
+  // The patient quick view and the board share no layout: a switch between them re-seeds too.
+  const identity = `${projectId ?? ""}:${project?.id ?? ""}:${hashParams().get("quick") ?? ""}`;
   const loadedIdentity = useRef(identity);
   useEffect(() => {
     if (loadedIdentity.current === identity) return;
@@ -747,6 +755,7 @@ export function Workspace({
           </button>
         ))}
       </div>
+      <DateChip locale={locale} date={project?.mode === "frozen" ? (project.asOf ?? clock) : clock} frozen={project?.mode === "frozen"} />
       <button
         type="button"
         className="ws-find"

@@ -440,7 +440,8 @@ export function GeoMap({
           </select>
         </label>
       </header>
-      {pane ? null : closest}
+      {/* The picture comes first; what it shows is said once, under it, with the ⓘ for the long reading. */}
+
       {hasError ? (
         <div className="geo-state" role="alert">
           <span>{t(locale, "mapError")}</span>
@@ -650,6 +651,24 @@ export function GeoMap({
             ) : null}
             {edgeMax > 0 ? <div className="geo-overlay-legend">{legendScale}</div> : null}
           </div>
+
+          {signal && signalSeries ? (
+            <div className="geo-signal" role="status">
+              <strong>{t(locale, "geoSignalHead", { series: seriesLabel(locale, signalSeries), unit: signal.ward ?? "" })}</strong>
+              <span>{t(locale, signalSeries === group ? "geoSignalBody" : "geoSignalOther", { county: TYKS_COUNTY })}</span>
+              {signalSeries !== group ? (
+                <button type="button" className="geo-chip" onClick={() => setGroup(signalSeries)}>
+                  {t(locale, "geoSignalShow")}
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+          <p className="geo-foot">
+            {month ? t(locale, "geoCaptionShort", { month: monthLong(month) }) : t(locale, "geoCaptionBare")}
+            <InfoButton locale={locale}>
+              {t(locale, "geoCaption", { month: month ? monthLong(month) : "–" })} {t(locale, "geoHowTo")} {t(locale, "geoCaptionSource")}
+            </InfoButton>
+          </p>
 
           {legendKeys}
 

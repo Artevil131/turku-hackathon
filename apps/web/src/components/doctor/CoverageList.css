@@ -291,6 +291,41 @@
   flex-basis: 100%;
   color: var(--d-ink-3);
 }
+/* Two figures, year then four weeks, each a number over its label. */
+.cl-figs {
+  display: flex;
+  justify-content: flex-end;
+  gap: 2px 16px;
+}
+.cl-fig {
+  display: grid;
+  gap: 1px;
+  text-align: right;
+}
+.cl-fig b {
+  font-size: var(--d-m, 16px);
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+.cl-fig small {
+  color: var(--d-ink-3);
+  font-size: var(--d-xs);
+  white-space: nowrap;
+}
+.cl-pair {
+  display: flex;
+  gap: 2px 14px;
+  padding-left: 14px;
+  border-left: 1px solid var(--d-line);
+}
+.cl-fig-quiet b {
+  color: var(--d-ink-2);
+  font-weight: 500;
+}
+.cl-basis {
+  margin-top: 3px;
+  color: var(--d-ink-3);
+}
 
 .cl-num b {
   color: var(--d-ink);
@@ -463,6 +498,12 @@
   .cl-num {
     grid-column: 2 / -1;
     grid-row: 2;
+  }
+  .cl-figs {
+    justify-content: flex-start;
+  }
+  .cl-fig {
+    text-align: left;
   }
   .cl-res {
     grid-column: 2;

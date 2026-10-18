@@ -522,3 +522,14 @@
 .sig-tile[data-hot] .sig-num {
   font-size: var(--t-l);
 }
+/* The hand-over to the doctor's view: a quiet link under the where-line. */
+.sig-pivot {
+  display: inline-block;
+  margin-top: 2px;
+  color: var(--live);
+  font-size: var(--t-s);
+  text-decoration: none;
+}
+.sig-pivot:hover {
+  text-decoration: underline;
+}

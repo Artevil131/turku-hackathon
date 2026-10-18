@@ -3,6 +3,7 @@
 export const boardEn = {
   boardPanels: "Centre views",
   boardFeed: "Signals",
+  boardHistory: "Past signals",
   boardGrid: "Unit grid",
   boardGeo: "Map",
   boardNetwork: "Hospital network",
@@ -31,6 +32,8 @@ export const boardEn = {
   wsClosed: "{title} closed. Reopen it from Windows.",
   wsPresets: "Layouts",
   pick_signals: "Signals: alerts and clusters",
+  pick_history: "Past signals",
+  pick_history_sub: "What was found before this month, by month",
   pick_signals_sub: "Newest outbreak signals, with evidence",
   pick_map: "Map: THL counties",
   pick_map_sub: "Resistance by county next to THL",
@@ -54,6 +57,13 @@ export const boardEn = {
   pick_answer_sub: "The answer in one card",
 
   wsFind: "Find a ward, signal or drug",
+  wsDateTitle: "Today in this data",
+  wsDateLiveTag: "replay clock",
+  wsDateFrozenTag: "frozen demo",
+  wsDateLive: "The replay clock stands at {date} and moves on as results arrive. The calendar on the wall says {today}.",
+  wsDateFrozen:
+    "This project is frozen at {date}: every number on the board is as of that day, and the data is synthetic. The calendar on the wall says {today}.",
+  wsDateFutureNote: "Muted days: no results yet.",
   wsDefault: "Default",
   wsMap: "Map",
   wsSignals: "Signals",
@@ -101,6 +111,7 @@ export const boardEn = {
 export const boardFi: Record<keyof typeof boardEn, string> = {
   boardPanels: "Näkymät",
   boardFeed: "Signaalit",
+  boardHistory: "Aiemmat signaalit",
   boardGrid: "Yksikköruudukko",
   boardGeo: "Kartta",
   boardNetwork: "Sairaalaverkosto",
@@ -129,6 +140,8 @@ export const boardFi: Record<keyof typeof boardEn, string> = {
   wsClosed: "{title} suljettu. Avaa se Ikkunat-valikosta.",
   wsPresets: "Asettelut",
   pick_signals: "Signaalit: hälytykset ja klusterit",
+  pick_history: "Aiemmat signaalit",
+  pick_history_sub: "Ennen tätä kuuta löydetty, kuukausittain",
   pick_signals_sub: "Uusimmat signaalit todisteineen",
   pick_map: "Kartta: THL:n maakunnat",
   pick_map_sub: "Resistenssi maakunnittain THL:n rinnalla",
@@ -152,6 +165,13 @@ export const boardFi: Record<keyof typeof boardEn, string> = {
   pick_answer_sub: "Vastaus yhdellä kortilla",
 
   wsFind: "Hae osasto, signaali tai lääke",
+  wsDateTitle: "Tämä päivä aineistossa",
+  wsDateLiveTag: "toistokello",
+  wsDateFrozenTag: "jäädytetty esimerkki",
+  wsDateLive: "Toistokello on päivässä {date} ja etenee tulosten saapuessa. Seinäkalenterissa on {today}.",
+  wsDateFrozen:
+    "Tämä projekti on jäädytetty päivään {date}: jokainen luku taululla on sen päivän tilanne, ja aineisto on synteettistä. Seinäkalenterissa on {today}.",
+  wsDateFutureNote: "Himmeät päivät: ei vielä tuloksia.",
   wsDefault: "Oletus",
   wsMap: "Kartta",
   wsSignals: "Signaalit",

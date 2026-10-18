@@ -156,6 +156,10 @@ export function DoctorAnswer({
           >
             {t(locale, "drChangeDate")}
           </button>
+          {" · "}
+          <a className="dr-answer-pivot" href={`#project?unit=${encodeURIComponent(filters.unit)}`}>
+            {t(locale, "drAnswerBoard")}
+          </a>
         </p>
       ) : null}
       <p className="dr-answer-note">{t(locale, "drAnswerNote")}</p>

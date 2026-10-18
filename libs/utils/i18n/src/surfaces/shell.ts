@@ -66,6 +66,7 @@ export const shellEn = {
   guideAnswer: 'The one thing to know right now. Read the sentence, then press "Show the evidence" to see why.',
   guideTimeline:
     "The whole period at a glance. Each row is a unit and each coloured pill is a signal. Press play to replay time, or click a pill to open that signal.",
+  guideHistory: "The signals found before this month, newest first, by month. Click one: its evidence opens in the Signals window.",
   guideSignals: "Every signal found so far, newest first. Click one to see its numbers. Filter by unit or kind at the top.",
   guideMath:
     'How a signal was calculated: what was seen, what was usual, and how surprising that is. Open "How we calculate it" for the formula.',
@@ -172,6 +173,7 @@ export const shellFi: Record<keyof typeof shellEn, string> = {
   guideAnswer: 'Tärkein asia juuri nyt. Lue lause ja paina "Näytä perustelut" nähdäksesi miksi.',
   guideTimeline:
     "Koko jakso yhdellä silmäyksellä. Jokainen rivi on yksikkö ja jokainen värillinen merkki signaali. Paina play toistaaksesi ajan tai napsauta merkkiä avataksesi signaalin.",
+  guideHistory: "Ennen tätä kuuta löydetyt signaalit, uusin ensin, kuukausittain. Napsauta: todisteet avautuvat Signaalit-ikkunaan.",
   guideSignals: "Kaikki löydetyt signaalit, uusin ensin. Napsauta nähdäksesi luvut. Rajaa yksikön tai tyypin mukaan ylhäällä.",
   guideMath:
     'Miten signaali laskettiin: mitä havaittiin, mikä on tavallista ja kuinka yllättävää se on. Avaa "Miten laskemme" nähdäksesi kaavan.',

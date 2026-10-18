@@ -38,6 +38,11 @@ export const GUIDE: Record<GuideKind, WindowGuide> = {
       { say: "tourGdTry_signals_2", at: ".feed-header" },
     ],
   },
+  history: {
+    title: "boardHistory",
+    what: "tourGdWhat_history",
+    tries: [{ say: "tourGdTry_history_1", at: ".history .feed-row" }],
+  },
   map: {
     title: "boardGeo",
     what: "tourGdWhat_map",
