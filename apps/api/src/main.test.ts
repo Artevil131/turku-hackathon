@@ -286,6 +286,12 @@ describe("research projects (D-057, D-058)", () => {
     const repinned = await client.updateProject(project.id, { ...frozen, asOf: "2025-05-01" });
     expect(repinned.project.fingerprint?.rows).toBe(2);
     expect((await client.project(project.id)).drift).toBe(false);
+    // Scrubbing the clock back before the cut must not stop a layout save; moving the cut ahead of the clock is still refused.
+    await client.command({ action: "seek", date: "2025-04-01" });
+    expect((await client.updateProject(project.id, { ...repinned.project, description: "Layout saved" })).project.description).toBe(
+      "Layout saved",
+    );
+    await expect(client.updateProject(project.id, { ...repinned.project, asOf: "2025-05-20" })).rejects.toMatchObject({ status: 400 });
     const continuous = await client.updateProject(project.id, input);
     expect(continuous.project.fingerprint).toBeUndefined();
     expect(await client.project(project.id)).toEqual(continuous);

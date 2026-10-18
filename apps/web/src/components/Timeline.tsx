@@ -207,6 +207,10 @@ export function Timeline({
     [clock, command, seek, seekingTo],
   );
 
+  // The Step choice (day, week, month) is also how far the back and forward buttons and the arrow keys move.
+  const unitDays = clock?.daysPerTick ?? 1;
+  const unitStep = STEPS.find((x) => x.daysPerTick === unitDays) ?? STEPS[0];
+  const unitName = t(locale, unitStep.key);
   // What the detectors have found up to the clock, newest first; a tile selects, it never seeks.
   const incidents = useMemo(() => groupIncidents(alerts), [alerts]);
   const pickIncident = (key: string) => {
@@ -279,10 +283,10 @@ export function Timeline({
         command({ action: clock.running ? "pause" : "play" });
       } else if (e.key === "ArrowLeft") {
         e.preventDefault();
-        stepBy(e.shiftKey ? -7 : -1);
+        stepBy(e.shiftKey ? -Math.max(7, unitDays) : -unitDays);
       } else if (e.key === "ArrowRight") {
         e.preventDefault();
-        stepBy(e.shiftKey ? 7 : 1);
+        stepBy(e.shiftKey ? Math.max(7, unitDays) : unitDays);
       } else if (e.key === "Home") {
         e.preventDefault();
         seek(clock.start);
@@ -293,7 +297,7 @@ export function Timeline({
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [ready, clock, command, stepBy, seek]);
+  }, [ready, clock, command, stepBy, seek, unitDays]);
 
   const running = ready && Boolean(clock?.running) && !atEnd;
   const readout = clock && shown ? compactDate(shown) : "–";
@@ -343,9 +347,9 @@ export function Timeline({
         data-stop={1}
         tabIndex={stepStop === 1 ? 0 : -1}
         disabled={!ready}
-        onClick={() => stepBy(-1)}
-        aria-label={t(locale, "tlStepBackDay")}
-        title={t(locale, "tlStepBackDay")}
+        onClick={() => stepBy(-unitDays)}
+        aria-label={t(locale, "tlBackBy", { step: unitName })}
+        title={t(locale, "tlBackBy", { step: unitName })}
       >
         <StepDay />
       </button>
@@ -355,9 +359,9 @@ export function Timeline({
         data-stop={2}
         tabIndex={stepStop === 2 ? 0 : -1}
         disabled={!ready || atEnd}
-        onClick={() => stepBy(1)}
-        aria-label={t(locale, "stepDay")}
-        title={t(locale, "stepDay")}
+        onClick={() => stepBy(unitDays)}
+        aria-label={t(locale, "tlForwardBy", { step: unitName })}
+        title={t(locale, "tlForwardBy", { step: unitName })}
       >
         <StepDay />
       </button>

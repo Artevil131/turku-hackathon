@@ -584,8 +584,9 @@ export const server = createServer(async (req, res) => {
       }
       if ((id === undefined && req.method === "POST") || (previous && req.method === "PUT")) {
         const input = parseProjectInput(await readJson(req));
-        // Rows after the replay clock are not released yet (D-058 cuts the live data, it does not see ahead).
-        if (input.asOf !== undefined && input.asOf > clock.state().asOf) {
+        // Rows after the replay clock are not released yet (D-058 cuts the live data, it does not see ahead). A cut the
+        // project already holds may stay when the clock is scrubbed back before it: saving its layout or notes is no new look ahead.
+        if (input.asOf !== undefined && input.asOf > clock.state().asOf && input.asOf !== previous?.asOf) {
           return send(res, 400, { error: `asOf ${input.asOf} is after the replay clock ${clock.state().asOf}` });
         }
         if (input.scope.site !== undefined && !registry.site(input.scope.site)) {
