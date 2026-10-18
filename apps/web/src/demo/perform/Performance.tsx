@@ -411,6 +411,13 @@ export function Performance(props: PerformanceProps) {
           if (!el) return;
           if (!(await moveTo(el))) return;
           ring(null);
+          // Weeks already marked on the band (a frozen project's own frame, a selected signal's window) would make the
+          // drag slide them along instead of drawing the frame: they are cleared first, as the band's own × does.
+          const marked = el.querySelector(".hs-range-x");
+          if (marked) {
+            marked.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+            await clock.wait(250);
+          }
           const ms = beat.ms ?? 900;
           // The frame the analysis is about, on the band's own axis; the last `weeks` up to the clock when the band no longer shows it.
           const dated = beat.dates ? bandFractions(el, beat.dates[0], beat.dates[1]) : null;

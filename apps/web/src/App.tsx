@@ -624,13 +624,17 @@ export function App() {
                 plan={filling.plan}
                 onDone={(how) => {
                   // A finished fill never offers a tour: the guide stays one click away (Guide, Demo tour).
-                  // After a full play the story moves on by itself: the clock steps a month at the normal speed, so the
+                  // After a full play, once the board has settled, the story moves on by itself: the clock steps a month every two seconds, so the
                   // timeline and the signals keep changing while the viewer looks (Artem, 2026-10-18). A skip leaves it paused.
                   if (how === "done")
-                    liveClient
-                      .command({ action: "configure", daysPerTick: 30, tickMs: 2000 })
-                      .then(() => liveClient.command({ action: "play" }))
-                      .catch(() => undefined);
+                    setTimeout(
+                      () =>
+                        liveClient
+                          .command({ action: "configure", daysPerTick: 30, tickMs: 2000 })
+                          .then(() => liveClient.command({ action: "play" }))
+                          .catch(() => undefined),
+                      2500,
+                    );
                   // The filters that framed the story come off, so the Signals list shows everything in the chosen period.
                   const params = hashParams();
                   if (["unit", "ph", "kind"].some((k) => params.has(k))) {
