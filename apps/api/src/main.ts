@@ -106,10 +106,10 @@ const config = {
   port: Number(env.AEI_PORT ?? 8787),
   stateDir: env.AEI_STATE_DIR || undefined,
   dataDir: resolve(env.AEI_DATA_DIR ?? "../../data/synthetic_microbiology_dataset"),
-  // Where the replay starts (D-015): by default three weeks before the
-  // Urology ESBL E. coli cluster of June 2025 (experiments/0001), so the
-  // demo shows a normal ward first and then the outbreak arriving.
-  startAt: env.AEI_REPLAY_START ?? "2025-05-12",
+  // Where the replay starts (D-079): today by default, clamped to the data's last sample date below, so an open
+  // project answers about now and the timeline is the way back. `AEI_REPLAY_START` pins another day (the demo
+  // films used 2025-05-12, three weeks before the Urology ESBL cluster, D-015).
+  startAt: env.AEI_REPLAY_START || undefined,
   tickMs: Number(env.AEI_TICK_MS ?? 2000),
   daysPerTick: Number(env.AEI_DAYS_PER_TICK ?? 1),
   // Load only results sampled up to this date; later ones can then arrive through /api/ingest.
@@ -186,6 +186,8 @@ function siteParam(url: URL): { site?: string; error?: string } {
 
 console.log(`[aei-api] loading ${config.dataDir}`);
 const full = await loadDataset(config.dataDir);
+/** The real calendar's day, UTC, as an ISO date. */
+const today = () => new Date().toISOString().slice(0, 10);
 const fullDates = full.cultures.map((c) => c.sampleDate).sort();
 const datasetStart = fullDates[0] ?? "";
 const datasetEnd = fullDates.at(-1) ?? "";
@@ -229,7 +231,7 @@ function relations(asOf: string, days: number, site?: string): RelationsResponse
 const clock = createReplayClock({
   start: datasetStart,
   end: datasetEnd,
-  asOf: config.loadUntil ?? config.startAt,
+  asOf: config.loadUntil ?? config.startAt ?? (datasetEnd && datasetEnd < today() ? datasetEnd : today()),
   tickMs: config.tickMs,
   daysPerTick: config.daysPerTick,
 });
