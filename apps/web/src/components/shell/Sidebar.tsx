@@ -301,7 +301,12 @@ export function Sidebar({
               </li>
               {DEMOS.map((demo) => (
                 <li key={demo.id} className="sb-demo-row">
-                  <button type="button" className="sb-item sb-demo" data-demo={demo.id} onClick={() => onDemo(demo)}>
+                  <button
+                    type="button"
+                    className="sb-item sb-demo"
+                    data-demo={demo.id}
+                    onClick={() => onDemo(demo)}
+                  >
                     <span className="sb-icon">
                       <Svg d={DEMO} />
                     </span>

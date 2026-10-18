@@ -2,6 +2,7 @@ import type { AeiClient, Project } from "@aei/contract";
 import { formatDate, type Locale, siteName, t, wardName } from "@aei/i18n";
 import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { DEMOS, type DemoSpec } from "../../demo/demos.ts";
+import { nudgeOn } from "../../demo/nudge.ts";
 import { useShell } from "../../shell/context.ts";
 import { launchTemplate } from "../../shell/launch.ts";
 import { DeleteProjectDialog } from "../research/projects/ProjectDialogs.tsx";
@@ -327,7 +328,14 @@ export function StartPage({
           <h2>{t(locale, "demoSection")}</h2>
           <div className="start-demo-grid">
             {DEMOS.map((demo) => (
-              <button type="button" className="start-demo" key={demo.id} data-demo={demo.id} onClick={() => onDemo(demo)}>
+              <button
+                type="button"
+                className="start-demo"
+                key={demo.id}
+                data-demo={demo.id}
+                data-nudge={demo.id === "researcher" && nudgeOn() ? "" : undefined}
+                onClick={() => onDemo(demo)}
+              >
                 <TemplateArt demo={demo.id} />
                 <strong>{t(locale, demo.roleKey)}</strong>
               </button>

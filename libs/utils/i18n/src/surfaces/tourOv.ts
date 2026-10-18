@@ -34,6 +34,7 @@ export const tourOvEn = {
     "The notebook keeps the exact slice of data, the analyses and the notes together, so the week's work can be read and rerun later.",
   tourOvDoctor:
     "Last, the doctor's view: ward, sample and severity preset. One line says what to start with and on how many results; the doctor decides.",
+  tourOvResearcher: "Last stop: the Researcher file, for working with the numbers yourself.",
   tourOvOutro: "That is agar. The demo files are in the sidebar, each with a deeper tour of its own; open one and change anything.",
 };
 
@@ -69,5 +70,6 @@ export const tourOvFi: Record<keyof typeof tourOvEn, string> = {
     "Muistio pitää tarkan aineistorajauksen, analyysit ja muistiinpanot yhdessä, joten viikon työn voi lukea ja ajaa uudelleen myöhemmin.",
   tourOvDoctor:
     "Lopuksi lääkärin näkymä: yksikkö, näyte ja vaikeusaste valmiina. Yksi rivi kertoo, millä aloittaa ja kuinka monen tuloksen varassa se on; lääkäri päättää.",
+  tourOvResearcher: "Viimeinen pysäkki: Tutkija-tiedosto, jossa käsittelet lukuja itse.",
   tourOvOutro: "Tämä on agar. Esimerkkitiedostot ovat sivupalkissa, kullakin oma tarkempi esittelynsä; avaa yksi ja muuta mitä vain.",
 };

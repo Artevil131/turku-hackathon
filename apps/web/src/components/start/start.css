@@ -963,3 +963,33 @@
 .start-tour:focus-visible {
   color: var(--live);
 }
+
+/* One arrow, left to right, in the gap between the sidebar and the Researcher demo, until any demo has been opened. */
+.start-page:has([data-nudge]) {
+  padding-left: 44px;
+}
+.start-demo[data-nudge] {
+  position: relative;
+}
+.start-demo[data-nudge]::before {
+  content: "\2192";
+  position: absolute;
+  top: 50%;
+  left: -34px;
+  color: var(--live);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+  transform: translateY(-50%);
+  animation: nudge-x 1.1s ease-in-out infinite;
+}
+@keyframes nudge-x {
+  50% {
+    transform: translate(6px, -50%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .start-demo[data-nudge]::before {
+    animation: none;
+  }
+}

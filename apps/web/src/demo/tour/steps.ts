@@ -171,6 +171,13 @@ function overview(): TourStep[] {
       wait: 15000,
       show: win("coverage"),
     },
+    {
+      say: "tourOvResearcher",
+      at: '.sb-demo[data-demo="researcher"]',
+      act: "click",
+      waitFor: '.nb-cell[data-kind="code"]',
+      wait: 15000,
+    },
     { say: "tourOvOutro" },
   ];
 }

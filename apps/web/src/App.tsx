@@ -13,6 +13,7 @@ import { Sidebar, tabName } from "./components/shell/Sidebar.tsx";
 import { type Audience, storedAudience } from "./components/start/audience.ts";
 import { StartPage } from "./components/start/StartPage.tsx";
 import { applyPlan } from "./demo/applyPlan.ts";
+import { nudgeOff } from "./demo/nudge.ts";
 import { DEMOS, type DemoId, type DemoSpec, type TourId } from "./demo/demos.ts";
 import { FillOverlay } from "./demo/FillOverlay.tsx";
 import type { FillPlan } from "./demo/openDemo.ts";
@@ -393,6 +394,7 @@ export function App() {
     );
 
   const openDemoFile = (demo: DemoSpec, replay = false) => {
+    nudgeOff();
     // The full tour opens demo files itself and keeps playing, so those open already filled; any other demo fills itself in first.
     // The showcase rebuilds every file it opens and takes the fill-in of SHOWCASE_FILLS into its own hands.
     const inShow = showing.current;
@@ -499,18 +501,6 @@ export function App() {
                       <h1 className="viewbar-title" title={active?.project ? undefined : t(locale, "shellUnsaved")}>
                         {active ? tabName(locale, active) : t(locale, "shellUntitled")}
                       </h1>
-                      {active ? (
-                        <button
-                          type="button"
-                          className="viewbar-close"
-                          data-close-view
-                          aria-label={t(locale, "shellCloseTab", { name: tabName(locale, active) })}
-                          title={t(locale, "shellCloseTab", { name: tabName(locale, active) })}
-                          onClick={() => close(active.key)}
-                        >
-                          ×
-                        </button>
-                      ) : null}
                       {active?.frozen ? (
                         <span className="project-frozen" role="status">
                           {t(locale, "projectFrozenBanner", { date: active.asOf ?? "" })}
