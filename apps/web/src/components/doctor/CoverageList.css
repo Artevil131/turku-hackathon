@@ -824,8 +824,11 @@
     grid-template-columns: minmax(0, 1.25fr) minmax(340px, 0.75fr);
     align-items: stretch;
   }
+  /* Beside the taller case panel the answer sits in the middle of its column, not stranded at the top. */
   .dr-top .dr-answer {
     border-bottom: 0;
+    align-content: center;
+    padding-block: 28px;
   }
 }
 .dr-case {
