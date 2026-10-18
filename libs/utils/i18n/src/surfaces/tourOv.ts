@@ -7,7 +7,7 @@ export const tourOvEn = {
   tourOvOfferBody: "Three minutes, on the real screens.",
   tourOvOfferPlay: "Play the tour",
   tourOvOfferSkip: "Not now",
-  tourOvBoxTitle: "Take the tour",
+  tourOvBoxTitle: "Demo tour (3 min)",
   tourOvWelcome:
     "agar turns the culture results a lab already sends into a live picture of antibiotic resistance. Today that picture is one report a year, hospital-wide.",
   tourOvAsk: "Start from a question. The box takes a ward, an organism or an antibiotic; the three below are one click.",
@@ -42,7 +42,7 @@ export const tourOvFi: Record<keyof typeof tourOvEn, string> = {
   tourOvOfferBody: "Kolme minuuttia, oikeilla näytöillä.",
   tourOvOfferPlay: "Näytä esittely",
   tourOvOfferSkip: "Ei nyt",
-  tourOvBoxTitle: "Katso esittely",
+  tourOvBoxTitle: "Esittelykierros (3 min)",
   tourOvWelcome:
     "agar muuttaa laboratorion jo lähettämät viljelyvastaukset eläväksi kuvaksi antibioottiresistenssistä. Nykyisin se kuva on yksi raportti vuodessa, koko sairaalasta.",
   tourOvAsk:
