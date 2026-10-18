@@ -239,6 +239,24 @@
   color: var(--d-ink-2);
 }
 
+.dt-table {
+  border-collapse: collapse;
+  font-size: var(--d-xs);
+  color: var(--d-ink-2);
+}
+
+.dt-table th {
+  font-weight: 500;
+  text-align: left;
+  padding: 2px 12px 2px 0;
+  white-space: nowrap;
+}
+
+.dt-table td {
+  padding: 2px 0;
+  white-space: nowrap;
+}
+
 .dt-chips {
   list-style: none;
   margin: 0;

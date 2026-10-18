@@ -689,49 +689,13 @@
 .dr-answer-low {
   color: var(--ink-3);
 }
-/* The comparison strip: one basis named once, the year and the four weeks as two cells under it. */
+/* The all-organisms comparison: one quiet grey line under the sentence. */
 .dr-answer-compare {
-  display: grid;
-  grid-template-columns: auto auto;
-  justify-content: start;
-  gap: 2px 28px;
-  min-width: 0;
-  width: fit-content;
-  max-width: 100%;
-  margin: 6px 0 0;
-  padding: 10px 14px 8px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-control);
-  background: var(--glass-1);
-}
-.dr-answer-compare-title {
-  grid-column: 1 / -1;
-  color: var(--ink-2);
+  margin: 0;
+  color: var(--ink-3);
   font-size: var(--t-s);
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-}
-.dr-answer-compare > div {
-  display: grid;
-  gap: 1px;
-}
-.dr-answer-compare b {
-  color: var(--ink);
-  font-size: 28px;
-  font-weight: 600;
-  line-height: 1.15;
+  line-height: 1.4;
   font-variant-numeric: tabular-nums;
-}
-.dr-answer-compare small {
-  color: var(--ink-2);
-  font-size: var(--t-s);
-}
-@media (max-width: 520px) {
-  .dr-answer-compare {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 2px 16px;
-  }
 }
 /* The rest of the list as pills: a name and its share each, scanned in one look. */
 .dr-answer-pills {
@@ -930,19 +894,6 @@
 }
 
 /* The answer: what works is the loudest thing on the card. */
-.dr-answer-kicker {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  width: fit-content;
-  margin: 0;
-  padding: 3px 12px;
-  border-radius: 999px;
-  background: color-mix(in oklab, var(--st-ok, #17784a) 14%, transparent);
-  color: var(--st-ok, #17784a);
-  font-size: var(--t-s);
-  font-weight: 700;
-}
 .dr-answer-head {
   font-size: 32px;
   letter-spacing: -0.01em;
@@ -1036,11 +987,6 @@
 .dr-answer-card [hidden],
 .dr-answer-case[hidden] {
   display: none;
-}
-.dr-answer-kicker {
-  background: var(--glass-1);
-  border: 1px solid var(--line);
-  color: var(--ink-2);
 }
 .dr-answer-head[data-good],
 .dr-answer-head {

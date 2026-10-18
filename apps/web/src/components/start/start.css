@@ -563,10 +563,7 @@
 }
 .start-heading-row h1 {
   margin: 0;
-  flex: 1 1 100%;
-  max-width: 44em;
-  line-height: 1.25;
-  text-wrap: balance;
+  white-space: nowrap;
 }
 .start-actions {
   display: flex;

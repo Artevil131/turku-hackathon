@@ -183,7 +183,7 @@ describe("doctor list disclosure", () => {
       ],
     };
     const summary = list(borderline).split('class="cl-pair-summary"')[1]?.split('class="cl-scroll"')[0];
-    expect(summary).toContain("arvio ylittää, väli ei");
+    expect(summary).toContain("aivan rajalla");
     expect(summary).toContain("83–97\u00a0%");
   });
 });
@@ -424,9 +424,11 @@ describe("details keep what the row dropped", () => {
     const text = renderToStaticMarkup(
       <Details client={{} as never} locale="en" filters={filters} data={data} item={item} signals={[]} />,
     ).replace(/<[^>]+>/g, "");
-    expect(text).toMatch(/within spectrum · year: 95\u00a0% \(\d+–\d+\) · n 150/);
-    expect(text).toMatch(/all organisms · year: 75\u00a0% \(\d+–\d+\) · n 190/);
-    expect(text).toMatch(/all organisms · 4 wk: .*\/ 20/);
+    expect(text).toMatch(/95\u00a0% of 150 first isolates were susceptible over the year, 95\u00a0% interval \d+ to \d+\u00a0%\./);
+    expect(text).toMatch(/Within its spectrum, year95\u00a0% \(\d+–\d+\) · n 150/);
+    expect(text).toMatch(/All organisms, year75\u00a0% \(\d+–\d+\) · n 190/);
+    expect(text).toMatch(/All organisms, last 4 weeks\d+ \/ 20/);
+    expect(text).not.toContain("±");
   });
 });
 
@@ -522,10 +524,11 @@ describe("answer card wording and combination headline", () => {
     expect(html).toContain("Together they cover 100 % of the likely bacteria");
     expect(html).not.toContain("Look at the combinations below");
   });
-  it("labels the headline and the all-organisms box as different bases", () => {
+  it("labels the headline and the all-organisms line as different bases", () => {
     const html = card(urine(), 80);
     expect(html).toContain("within its intended spectrum");
-    expect(html).toContain("Across all organisms grown here");
-    expect(html).toContain("Also works (within spectrum)");
+    expect(html).toContain("Across everything that grows here:");
+    expect(html).not.toContain("Works here");
+    expect(html).toContain("Also works</span>");
   });
 });

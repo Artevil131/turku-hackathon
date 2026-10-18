@@ -5,11 +5,11 @@ import { type Locale, t } from "@aei/i18n";
 import { AlertExplanation } from "../AlertExplanation.tsx";
 import { AlertTri } from "../Icons.tsx";
 import { span } from "./CoverageList.tsx";
-import { certaintyOf, type DoctorFilters, halfWidth, num, pct } from "./filters.ts";
+import { barOf, type DoctorFilters, num, pct } from "./filters.ts";
 import { GuideDetails } from "./Guide.tsx";
 import { NationalLines } from "./National.tsx";
 import { priorText } from "./Patient.tsx";
-import { flagsOf, type Item, reasonOf, recentText, STANDING } from "./reason.ts";
+import { flagsOf, type Item, reasonOf, STANDING } from "./reason.ts";
 import { signalDate, type UnitSignal } from "./signals.ts";
 
 interface Props {
@@ -24,12 +24,13 @@ interface Props {
   national?: NationalResponse | null;
 }
 
-/** Details on demand for the selected line: the reason, the flags, all-organism share and the last 28 days. */
+/**
+ * Details on demand for the selected line: one sentence with the share, its interval and the verdict, the data it
+ * rests on, then a three-line table of both bases and the last four weeks, and the flags.
+ */
 export function Details({ client, locale, filters, data, item, signals, syndrome, national = null }: Props) {
-  const level = certaintyOf(data.coverage.level);
   const st = STANDING[item.standing];
   const row = item.row;
-  const w = halfWidth(item.interval);
   const flags = row ? flagsOf(row) : null;
   const list = (orgs: { organism: string; share: number }[]) =>
     orgs.map((o) => `${shortOrganism(o.organism as never)} ${pct(o.share)}\u00a0%`).join(", ");
@@ -37,6 +38,33 @@ export function Details({ client, locale, filters, data, item, signals, syndrome
   const share = (s: { share: number | null; interval: [number, number] | null }) =>
     s.share === null ? "–" : `${pct(s.share)}\u00a0%${s.interval ? ` (${pct(s.interval[0])}–${pct(s.interval[1])})` : ""}`;
   const gain = Math.round((item.pair?.gain ?? 0) * 100);
+  const period = span(locale, filters.period);
+  const bar = barOf(data, filters);
+  // The sentence: the share and its interval in words, then what that means against the bar, then the data it rests on.
+  const figure =
+    item.share === null
+      ? null
+      : item.interval
+        ? t(locale, "drDetailShare", {
+            share: pct(item.share),
+            n: num(locale, item.n),
+            period,
+            lo: pct(item.interval[0]),
+            hi: pct(item.interval[1]),
+          })
+        : t(locale, "drDetailShareNoInterval", { share: pct(item.share), n: num(locale, item.n), period });
+  const verdict = !row
+    ? t(locale, gain === 1 ? "drGainOne" : "drGain", { gain })
+    : item.standing === "clears"
+      ? t(locale, "drDetailClears", { bar })
+      : item.standing === "borderline"
+        ? t(locale, "drDetailBorderline", { bar })
+        : item.standing === "below"
+          ? t(locale, "drDetailBelow", { bar })
+          : reasonOf(locale, row, data, filters);
+  const recent = row?.coverage.recent;
+  /** The data the figure rests on, in full words ("own unit data", "similar units' data (unit had too few)"). */
+  const basis = { unit: "drLevelUnit", "ward type": "drLevelWardType", hospital: "drLevelHospital" } as const;
   return (
     <div className="dt">
       <h3 className="dt-name">
@@ -48,39 +76,34 @@ export function Details({ client, locale, filters, data, item, signals, syndrome
           {t(locale, st.long)}
         </span>
       </h3>
-      <p className="dt-why">{row ? reasonOf(locale, row, data, filters) : t(locale, gain === 1 ? "drGainOne" : "drGain", { gain })}</p>
-      {item.prior ? <p className="dt-prior">{priorText(locale, item.prior)}</p> : null}
-      <p className="dt-fig num">
-        {item.share !== null ? (
-          <>
-            <b>{pct(item.share)}&nbsp;%</b>
-            {item.interval ? ` (${pct(item.interval[0])}–${pct(item.interval[1])})` : ""}
-            {" · "}
-          </>
-        ) : null}
-        n {num(locale, item.n)}
-        {w !== null ? ` · ${t(locale, "drWidth", { w })}` : ""}
-        {" · "}
-        <span title={t(locale, level.label)}>
-          <span aria-hidden="true">{level.glyph}</span> {t(locale, level.short)}
-        </span>
+      <p className="dt-why">
+        {figure ? `${figure} ` : ""}
+        {verdict} {t(locale, "drDetailBasedOn", { level: t(locale, basis[data.coverage.level]) })}
       </p>
+      {item.prior ? <p className="dt-prior">{priorText(locale, item.prior)}</p> : null}
+      {row ? (
+        <table className="dt-table num">
+          <tbody>
+            <tr>
+              <th scope="row">{t(locale, "drDetailWithin", { period })}</th>
+              <td>
+                {share(row.coverage.spectrum)} · n {num(locale, row.coverage.spectrum.counts.known)}
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">{t(locale, "drDetailAll", { period })}</th>
+              <td>
+                {share(row.coverage)} · n {num(locale, row.coverage.counts.known)}
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">{t(locale, "drDetailAll4wk")}</th>
+              <td>{recent ? `${num(locale, recent.covered)} / ${num(locale, recent.known)}` : "—"}</td>
+            </tr>
+          </tbody>
+        </table>
+      ) : null}
       <ul className="dt-chips">
-        {row ? (
-          <>
-            {/* Both bases, each with its interval and n: the row shows only one of them. */}
-            <li className="num">
-              {t(locale, "drWithinSpectrum")} · {span(locale, filters.period)}: {share(row.coverage.spectrum)} · n{" "}
-              {num(locale, row.coverage.spectrum.counts.known)}
-            </li>
-            <li className="num">
-              {t(locale, "drAllOrg")} · {span(locale, filters.period)}: {share(row.coverage)} · n {num(locale, row.coverage.counts.known)}
-            </li>
-            <li className="num" title={t(locale, "drLabelRecent")}>
-              {t(locale, "drAllOrg")} · {recentText(locale, row.coverage.recent)}
-            </li>
-          </>
-        ) : null}
         {flags?.notCovering.map((o) => (
           <li key={`n${o.organism}`}>
             <span aria-hidden="true">⊘</span> {t(locale, "drNotFor", { organism: shortOrganism(o.organism), share: pct(o.share) })}
