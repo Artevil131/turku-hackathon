@@ -1,6 +1,6 @@
 const KEY = "yl.demoOpened";
 
-/** The arrow on the Researcher demo shows until any demo file has been opened. */
+/** The arrow beside the Researcher demo shows until that demo has been opened. */
 export const nudgeOn = (): boolean => {
   try {
     return !localStorage.getItem(KEY);

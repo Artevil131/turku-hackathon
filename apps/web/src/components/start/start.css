@@ -964,7 +964,7 @@
   color: var(--live);
 }
 
-/* One arrow, left to right, in the gap between the sidebar and the Researcher demo, until any demo has been opened. */
+/* One arrow, left to right, in the gap between the sidebar and the Researcher demo, until the Researcher demo has been opened. */
 .start-page:has([data-nudge]) {
   padding-left: 44px;
 }

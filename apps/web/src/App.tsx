@@ -412,7 +412,7 @@ export function App() {
     );
 
   const openDemoFile = (demo: DemoSpec, replay = false) => {
-    nudgeOff();
+    if (demo.id === "researcher") nudgeOff();
     // The full tour opens demo files itself and keeps playing, so those open already filled; any other demo fills itself in first.
     // The showcase rebuilds every file it opens and takes the fill-in of SHOWCASE_FILLS into its own hands.
     const inShow = showing.current;
