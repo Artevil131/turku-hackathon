@@ -1,8 +1,9 @@
 .start-page {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
+  width: 100%;
   max-width: 1320px;
-  /* One column, centred: on a wide screen the page sits in the middle rather than hugging the sidebar. */
+  /* Fills the main area up to 1320px, centred beyond that. Without the width, the auto margins shrink the page to its content. */
   margin-inline: auto;
   gap: 32px;
   padding: 28px 12px 64px;
