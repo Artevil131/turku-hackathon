@@ -199,17 +199,15 @@ export function StartPage({
           <div className="start-heading-row">
             <h1>{t(locale, "startHeading")}</h1>
             <div className="start-actions">
-              <button type="button" className="start-primary" data-start-new disabled={!!launching} onClick={() => void launch("blank")}>
-                {t(locale, launching === "blank" ? "startLaunching" : "startNew")}
-              </button>
+              {/* A new project asks first (name, template, scope): the one-click way is a template card below. */}
               <button
                 type="button"
-                className="start-secondary"
-                data-start-customise
+                className="start-primary"
+                data-start-new
                 onClick={() => setCreating(templates[0] ?? "blank")}
                 title={t(locale, "startCustomiseHint")}
               >
-                {t(locale, "startCustomise")}
+                {t(locale, "startNew")}
               </button>
             </div>
           </div>
