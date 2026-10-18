@@ -14,11 +14,17 @@ server {
     proxy_read_timeout 1h;
   }
 
+  # Lab results reach the API on its private loopback port (scripts/send_lab_results.py), never through the public
+  # site: a file one visitor sends would otherwise join the data every visitor sees (Artem, 2026-10-18).
+  location = /api/ingest {
+    default_type application/json;
+    return 403 '{"error":"This public demo does not accept lab files. Checking a file on the Data page stays in your browser."}';
+  }
+
   location /api/ {
     proxy_pass http://${AEI_API_UPSTREAM};
     proxy_http_version 1.1;
     proxy_set_header Host $host;
-    client_max_body_size 20m; # lab batches posted to /api/ingest
     proxy_read_timeout 120s;
   }
 

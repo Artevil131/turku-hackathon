@@ -46,6 +46,11 @@ through the nginx proxy, the live stream unbuffered, three days of HL7
 posted to `/api/ingest` raising the Urology alert on 4 June, and the
 smoke tests (`SMOKE_URL=http://localhost:8080 pnpm smoke`) 13 of 13.
 
+Since 2026-10-18 the public site refuses `POST /api/ingest` (403, in
+`nginx.conf.template`), so a file one visitor sends cannot join the data
+every visitor sees. Lab results go to the API's loopback port instead
+(`127.0.0.1:8787`, the default of `scripts/send_lab_results.py`).
+
 The compose file passes the server's variables through: `AEI_REPLAY_START`,
 `AEI_LOAD_UNTIL` (load results up to a date, the rest can arrive through
 `/api/ingest`), `AEI_TICK_MS`, `AEI_DAYS_PER_TICK`, `AEI_GUIDELINE`,
