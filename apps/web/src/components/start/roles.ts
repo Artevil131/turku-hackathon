@@ -4,7 +4,8 @@ import type { Template } from "../research/workspace/templates.ts";
 // The professions the start page can be tailored to. A role only changes the order and the example questions:
 // every project, template and demo stays reachable for everyone.
 
-export const ROLES = ["clinician", "control", "stewardship", "lab", "researcher", "surveillance", "management"] as const;
+// "other": none of the seven; the page keeps its general order and a broad set of questions.
+export const ROLES = ["clinician", "control", "stewardship", "lab", "researcher", "surveillance", "management", "other"] as const;
 export type Role = (typeof ROLES)[number];
 export const ROLE_KEY = "aei.role";
 
@@ -16,6 +17,7 @@ export const ROLE_LABEL: Record<Role, MessageKey> = {
   researcher: "startResearcher",
   surveillance: "roleSurveillance",
   management: "roleManagement",
+  other: "roleOther",
 };
 
 /** What a question chip does when clicked. */
@@ -69,6 +71,11 @@ export const CHIPS: Record<Role, Chip[]> = {
     { label: "startAskQ1", action: RISING },
     { label: "chipRegionalTrends", action: { kind: "view", template: "regional" } },
   ],
+  other: [
+    { label: "startAskQ1", action: RISING },
+    { label: "startAskQ2", action: URINE },
+    { label: "startAskQ3", action: ESBL },
+  ],
 };
 
 const MRSA: ChipAction = { kind: "view", template: null, params: { ph: "mrsa" } };
@@ -117,6 +124,7 @@ export const MORE_QUESTIONS: Record<Role, Chip[]> = Object.fromEntries(
       ["researcher", ["blank", "esbl", "mrsa", "cpe", "trends", "map", "outbreak", "firstLine"]],
       ["surveillance", ["county", "trends", "map", "rising", "cpe", "mrsa", "vre", "firstLine"]],
       ["management", ["howWeDo", "rising", "trends", "outbreak", "compareWards", "county", "firstLine", "feed"]],
+      ["other", ["rising", "urine", "esbl", "firstLine", "outbreak", "map", "compareWards", "blank"]],
     ] as const
   ).map(([role, ids]) => [role, ids.flatMap((id) => QUESTION[id] ?? [])]),
 ) as Record<Role, Chip[]>;
@@ -129,6 +137,7 @@ export const TEMPLATE_ORDER: Record<Role, Template[]> = {
   researcher: ["blank", "regional", "outbreak", "antibiogram", "patient"],
   surveillance: ["regional", "antibiogram", "outbreak", "patient", "blank"],
   management: ["outbreak", "regional", "antibiogram", "patient", "blank"],
+  other: ["patient", "outbreak", "antibiogram", "regional", "blank"],
 };
 
 /** The demo file each role starts from. */
@@ -140,6 +149,7 @@ export const ROLE_DEMO: Record<Role, "clinician" | "control" | "researcher"> = {
   researcher: "researcher",
   surveillance: "researcher",
   management: "control",
+  other: "control",
 };
 
 export function storedRole(): Role | null {
