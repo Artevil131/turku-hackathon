@@ -70,6 +70,40 @@ function reserveEvidence(layout: Layout): Layout {
 
 export const DEMOS: readonly DemoSpec[] = [
   {
+    id: "researcher",
+    roleKey: "demoRoleResearcher",
+    titleKey: "demoResearcherTitle",
+    blurbKey: "demoResearcherBlurb",
+    clockAt: "2025-05-12",
+    mode: "frozen",
+    asOf: "2025-04-30",
+    board: "unit=MED-A&ph=esbl",
+    // A researcher's basic desk: the timeline to cut a period from, the notebook to write in, the signals beside it.
+    layout: gridLayout({
+      notebook: { x: 0, y: 0, w: 8, h: 56 },
+      signals: { x: 8, y: 0, w: 4, h: 56 },
+    }),
+    page: (locale, site) => {
+      const s = slice(site, { from: "2025-03-01", to: "2025-04-30", unit: "MED-A", phenotype: "esbl" });
+      return page([
+        note(t(locale, "demoNoteResearcherQuestion")),
+        sliceCell(s),
+        { id: newId(), kind: "timeline", window: { from: "2024-10-01", to: "2025-04-30" }, collapsed: true },
+        analysis("rate", s),
+        analysis("compare", s, { bMode: "previous" }),
+        analysis("beta", s),
+        analysis("detector", s, { detector: "phenotype" }),
+        { id: newId(), kind: "code", lang: "python", code: "", edited: false },
+        {
+          id: newId(),
+          kind: "chart",
+          spec: defaultSpec({ unit: "MED-A", window: { from: "2024-11-01", to: "2025-04-30" }, event: "phenotype:esbl", periodDays: 14 }),
+        },
+        note(t(locale, "demoNoteResearcherRead")),
+      ]);
+    },
+  },
+  {
     id: "clinician",
     roleKey: "demoRoleClinician",
     titleKey: "demoClinicianTitle",
@@ -107,40 +141,6 @@ export const DEMOS: readonly DemoSpec[] = [
         analysis("shares", s, { period: 7 }),
         analysis("detector", s, { detector: "phenotype" }),
         note(t(locale, "demoNoteControlNext")),
-      ]);
-    },
-  },
-  {
-    id: "researcher",
-    roleKey: "demoRoleResearcher",
-    titleKey: "demoResearcherTitle",
-    blurbKey: "demoResearcherBlurb",
-    clockAt: "2025-05-12",
-    mode: "frozen",
-    asOf: "2025-04-30",
-    board: "unit=MED-A&ph=esbl",
-    // A researcher's basic desk: the timeline to cut a period from, the notebook to write in, the signals beside it.
-    layout: gridLayout({
-      notebook: { x: 0, y: 0, w: 8, h: 56 },
-      signals: { x: 8, y: 0, w: 4, h: 56 },
-    }),
-    page: (locale, site) => {
-      const s = slice(site, { from: "2025-03-01", to: "2025-04-30", unit: "MED-A", phenotype: "esbl" });
-      return page([
-        note(t(locale, "demoNoteResearcherQuestion")),
-        sliceCell(s),
-        { id: newId(), kind: "timeline", window: { from: "2024-10-01", to: "2025-04-30" }, collapsed: true },
-        analysis("rate", s),
-        analysis("compare", s, { bMode: "previous" }),
-        analysis("beta", s),
-        analysis("detector", s, { detector: "phenotype" }),
-        { id: newId(), kind: "code", lang: "python", code: "", edited: false },
-        {
-          id: newId(),
-          kind: "chart",
-          spec: defaultSpec({ unit: "MED-A", window: { from: "2024-11-01", to: "2025-04-30" }, event: "phenotype:esbl", periodDays: 14 }),
-        },
-        note(t(locale, "demoNoteResearcherRead")),
       ]);
     },
   },

@@ -239,7 +239,7 @@ export function StartPage({
           ) : projects.length === 0 ? (
             // Nothing yet: the demo for this audience, which opens with its guided tour.
             (() => {
-              const demo = DEMOS.find((d) => d.id === ROLE_DEMO[role]) ?? DEMOS[0];
+              const demo = DEMOS.find((d) => d.id === ROLE_DEMO[role]) ?? DEMOS.find((d) => d.id === "clinician");
               return demo ? (
                 <div className="start-empty">
                   <TemplateArt demo={demo.id} />
