@@ -14,8 +14,10 @@ const DETECTOR_LABELS = {
   "profile-excess": "alertProfileExcess",
   "phenotype-excess": "alertPhenotypeExcess",
   "sampling-drop": "alertSamplingDrop",
+  "volume-jump": "alertVolumeJump",
   "empty-run": "alertEmptyRun",
   "rising-trend": "alertRisingTrend",
+  "resistance-shift": "alertResistanceShift",
 } as const;
 
 export function signalLabel(alert: Alert, locale: Locale): string {

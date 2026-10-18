@@ -32,6 +32,21 @@ export function poissonLower(k: number, mean: number): number {
   return Math.min(1, sum);
 }
 
+/** P(X ≥ k) for X ~ Binomial(n, p): the exact one-sided upper tail, summed term by term. */
+export function binomialUpper(k: number, n: number, p: number): number {
+  if (k <= 0) return 1;
+  if (k > n) return 0;
+  if (p <= 0) return 0;
+  if (p >= 1) return 1;
+  const logP = Math.log(p);
+  const logQ = Math.log1p(-p);
+  let sum = 0;
+  for (let x = k; x <= n; x++) {
+    sum += Math.exp(logFactorial(n) - logFactorial(x) - logFactorial(n - x) + x * logP + (n - x) * logQ);
+  }
+  return Math.min(1, sum);
+}
+
 /** Standard normal upper tail, P(Z ≥ z). */
 export function normalUpper(z: number): number {
   // Abramowitz and Stegun 7.1.26 on erfc, absolute error below 1.5e-7.

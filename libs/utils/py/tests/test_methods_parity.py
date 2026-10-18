@@ -38,6 +38,8 @@ const out = calls.map(({method, rows, cultures, options: o = {}, result, severit
     case 'profile_excess': return d.profileExcess(rows, {...d.LIVE_SETTINGS.profileExcess, ...o});
     case 'phenotype_excess': return d.phenotypeExcess(rows, ['esbl', 'mrsa', 'vre', 'cpe'], {...d.LIVE_SETTINGS.phenotypeExcess, ...o});
     case 'sampling_drop': return d.samplingDrop(rows, {...d.LIVE_SETTINGS.samplingDrop, ...o});
+    case 'volume_jump': return d.volumeJump(rows, {...d.LIVE_SETTINGS.volumeJump, ...o});
+    case 'resistance_shift': return d.resistanceShift(rows, {...d.LIVE_SETTINGS.resistanceShift, ...o});
     case 'empty_run': return d.emptyRun(rows, {...d.LIVE_SETTINGS.emptyRun, ...o});
     case 'rising_trend': return d.risingTrend(rows, d.SURVEILLANCE_PAIRS, {...d.LIVE_SETTINGS.risingTrend, ...o});
     case 'live_signals': return d.liveSignals(rows, cultures);
@@ -93,8 +95,26 @@ def cases():
     for method in ('profile_excess', 'phenotype_excess', 'rising_trend', 'cpe_alerts', 'new_in_unit_alerts'):
         for name, rows in iso_sets.items():
             out.append(dict(id=f'{method}-{name}', method=method, rows=rows))
-    for method in ('sampling_drop', 'empty_run'):
-        for name, rows in {'empty': [], 'single': [culture(0, 0)], 'seeded-gap': cultures,
+    # Resistance shift (D-080): a unit-year at about 10 % R, then a window; gates at 29/30 baseline and 2/3 window results.
+    def shift_rows(n_base, n_window, window_r=None):
+        rows = [isolate(10000 + i, int(i * 360 / max(n_base, 1)), results={'AMP': 'R' if i % 10 == 0 else 'S', 'CIP': 'S'}) for i in range(n_base)]
+        rows += [isolate(11000 + j, 380 + j, ward='URO', results={'AMP': 'R' if window_r is None or j < window_r else 'S', 'CIP': 'S'})
+            for j in range(n_window)]
+        return rows
+    shift_sets = {'shift-flagged': shift_rows(120, 8), 'shift-flat': shift_rows(120, 0) + [isolate(12000 + j, 380 + j * 5, results={'AMP': 'R' if j == 0 else 'S'}) for j in range(6)],
+        'shift-baseline29': shift_rows(29, 6), 'shift-baseline30': shift_rows(30, 6),
+        'shift-window2': shift_rows(120, 2), 'shift-window3': shift_rows(120, 3),
+        'shift-ties-sites': shift_rows(60, 6) + [{**r, 'ward': 'sata/URO', 'isolateId': 's' + r['isolateId'], 'patientId': 's' + r['patientId']} for r in shift_rows(60, 6)]}
+    for name, rows in {**iso_sets, **shift_sets}.items():
+        out.append(dict(id=f'resistance_shift-{name}', method='resistance_shift', rows=rows))
+    out.append(dict(id='resistance_shift-alpha0', method='resistance_shift', rows=shift_sets['shift-flagged'], options={'alpha': 0}))
+    out.append(dict(id='live-shift', method='live_signals', rows=shift_sets['shift-ties-sites'], cultures=[]))
+    # A resistant cluster inside the shift window: its isolates are left out of the live shift test from detection on.
+    out.append(dict(id='live-shift-cluster', method='live_signals', cultures=[],
+        rows=shift_rows(120, 0) + [isolate(13000 + j, 380 + j, results={'AMP': 'R', 'CIP': 'R'}, phenotypes=['esbl']) for j in range(6)]))
+    burst = cultures + [culture(5000 + day * 20 + j, day) for day in range(60, 67) for j in range(12)]
+    for method in ('sampling_drop', 'empty_run', 'volume_jump'):
+        for name, rows in {**({'burst': burst} if method == 'volume_jump' else {}), 'empty': [], 'single': [culture(0, 0)], 'seeded-gap': cultures,
             'zero-baseline': [culture(0, 0, 'MED-A'), culture(1, 80)],
             'ties': [culture(0, 0), culture(1, 0), culture(2, 80, 'MED-A')]}.items():
             out.append(dict(id=f'{method}-{name}', method=method, rows=rows))
@@ -240,6 +260,12 @@ def test_seeded_fixtures_exercise_every_statistical_detector(ts_results):
         assert ts_results[f'{name}-seeded'], name
     for name in ('sampling_drop', 'empty_run'):
         assert ts_results[f'{name}-seeded-gap'], name
+    assert ts_results['volume_jump-burst']
+    assert ts_results['resistance_shift-shift-flagged']
+    assert not ts_results['resistance_shift-shift-flat']
+    assert not ts_results['resistance_shift-shift-baseline29'] and ts_results['resistance_shift-shift-baseline30']
+    assert not ts_results['resistance_shift-shift-window2']
+    assert any(s['detector'] == 'resistance-shift' for s in ts_results['live-shift'])
     assert any(s.get('site') == 'sata' for s in ts_results['live-multisite'])
     assert ts_results['pair-gain-2-limit5']
     assert not ts_results['pair-gain-1-limit5']

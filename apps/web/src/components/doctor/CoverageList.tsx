@@ -28,9 +28,15 @@ interface Props {
   syndrome?: Syndrome | null;
   /** The patient's findings (D-050): affected rows are annotated and placed below the unaffected of their standing. */
   patient?: PatientFindingsResponse | null;
+  /** The timeframe control and the comparison under it (D-082). */
+  compare?: ReactNode;
 }
 
 const SKELETON = [0, 1, 2, 3, 4, 5];
+
+/** The window a figure covers, in a word or two: "year", "90 days", "4 wk". */
+const span = (locale: Locale, period: DoctorFilters["period"]) =>
+  period === 365 ? t(locale, "drFigYear") : period === 28 ? t(locale, "drFigRecent") : t(locale, "drPeriodDays", { days: period });
 
 /** Position on the 50-100 % axis, as a percentage of the bar area; values below 50 sit at the left edge. */
 const at = (share: number): number => Math.max(0, Math.min(100, (share - 0.5) * 200));
@@ -79,6 +85,7 @@ export function CoverageList({
   source,
   syndrome,
   patient,
+  compare,
 }: Props) {
   const headRef = useRef<HTMLElement>(null);
   const bar = barOf(data, filters);
@@ -146,7 +153,7 @@ export function CoverageList({
               <span className="cl-fig">
                 <b>{assessable && item.share !== null ? `${pct(item.share)}\u00a0%` : "–"}</b>
                 <small>
-                  {t(locale, item.row?.basis === "spectrum" ? "drWithinSpectrum" : "drAllOrgShort")} · {t(locale, "drFigYear")}
+                  {t(locale, item.row?.basis === "spectrum" ? "drWithinSpectrum" : "drAllOrgShort")} · {span(locale, filters.period)}
                   {item.standing === "borderline" && range ? ` · ${range}\u00a0%` : ""} · n {num(locale, item.n)}
                 </small>
               </span>
@@ -156,7 +163,7 @@ export function CoverageList({
                   <span className="cl-fig cl-fig-quiet">
                     <b>{item.row.allOrganisms.share === null ? "–" : `${pct(item.row.allOrganisms.share)}\u00a0%`}</b>
                     <small>
-                      {t(locale, "drAllOrgShort")} · {t(locale, "drFigYear")} · n {num(locale, item.row.coverage.counts.known)}
+                      {t(locale, "drAllOrgShort")} · {span(locale, filters.period)} · n {num(locale, item.row.coverage.counts.known)}
                     </small>
                   </span>
                 ) : null}
@@ -241,7 +248,9 @@ export function CoverageList({
           label={t(locale, "drInfo")}
           content={
             <>
-              <p>{t(locale, "drForestInfo", { period: t(locale, "drPeriodYear") })}</p>
+              <p>
+                {t(locale, "drForestInfo", { period: filters.period === 365 ? t(locale, "drPeriodYear") : span(locale, filters.period) })}
+              </p>
               <p>{t(locale, "drRecentContext")}</p>
               {ready ? droppedFilters(filters, cov).map((d) => <p key={d.long}>{t(locale, d.long, { bar })}</p>) : null}
               <p>
@@ -253,6 +262,7 @@ export function CoverageList({
           <InfoIcon />
         </Popover>
       </header>
+      {compare}
       {data && cov ? <GuideSummary locale={locale} syndrome={syndrome} singles={singles} bar={bar} /> : null}
 
       {/* The one disclaimer is in the answer card above; the data checks stay one click away. */}

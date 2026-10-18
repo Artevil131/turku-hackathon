@@ -4,6 +4,7 @@ import { chartsEn } from "./surfaces/charts.ts";
 import { commandEn } from "./surfaces/command.ts";
 import { connectEn } from "./surfaces/connect.ts";
 import { demoEn } from "./surfaces/demo.ts";
+import { detectorsEn } from "./surfaces/detectors.ts";
 import { doctorEn } from "./surfaces/doctor.ts";
 import { failsTogetherEn } from "./surfaces/failsTogether.ts";
 import { feedEn } from "./surfaces/feed.ts";
@@ -288,4 +289,5 @@ export const en = {
   ...commandEn,
   ...timelineEn,
   ...failsTogetherEn,
+  ...detectorsEn,
 } as const;

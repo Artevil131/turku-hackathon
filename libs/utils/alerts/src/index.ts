@@ -52,7 +52,7 @@ export interface CarrierAlert {
   confirmed: boolean;
 }
 
-/** The first signal of a detector episode: a cluster, a surge, a sampling drop or a rising trend (D-020). */
+/** The first signal of a detector episode: a cluster, a surge, a sampling drop or jump, a rising trend or a resistance shift (D-020, D-080, D-081). */
 export interface DetectorAlert {
   kind: "detector";
   /** Alerts about one event share it: the id of the event's first alert (D-034). */
@@ -247,7 +247,8 @@ export const INCIDENT_DAYS = 28;
  */
 export function groupIncidents<A extends Alert>(alerts: readonly A[]): A[] {
   const tags = (a: Alert): string[] => {
-    if (a.kind === "detector" && (a.detector === "sampling-drop" || a.detector === "empty-run")) return ["sampling"];
+    if (a.kind === "detector" && (a.detector === "sampling-drop" || a.detector === "volume-jump" || a.detector === "empty-run"))
+      return ["sampling"];
     const out: string[] = [];
     if ("organism" in a && a.organism) out.push(`org:${a.organism}`);
     if ("phenotype" in a && a.phenotype) {

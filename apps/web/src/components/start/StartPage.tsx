@@ -11,18 +11,7 @@ import { openSearch } from "../shell/Sidebar.tsx";
 import type { Audience } from "./audience.ts";
 import { MoreQuestions } from "./MoreQuestions.tsx";
 import { NewProjectDialog } from "./NewProjectDialog.tsx";
-import {
-  CHIPS,
-  type ChipAction,
-  MORE_QUESTIONS,
-  ROLE_DEMO,
-  ROLE_LABEL,
-  ROLES,
-  type Role,
-  storedRole,
-  storeRole,
-  TEMPLATE_ORDER,
-} from "./roles.ts";
+import { CHIPS, type ChipAction, MORE_QUESTIONS, ROLE_DEMO, type Role, storedRole, TEMPLATE_ORDER } from "./roles.ts";
 import { ShareDialog } from "./ShareDialog.tsx";
 import { TemplateArt } from "./TemplateArt.tsx";
 import "../home/home.css";
@@ -127,12 +116,7 @@ export function StartPage({
   onTour: () => void;
 }) {
   // The profession chosen on the page decides the order and the example questions; the audience preset is the fallback.
-  const [chosen, setChosen] = useState<Role | null>(storedRole);
-  const role: Role = chosen ?? audience;
-  const pick = (r: Role) => {
-    setChosen(r);
-    storeRole(r);
-  };
+  const role: Role = storedRole() ?? audience;
   const run = (action: ChipAction) => {
     if (action.kind === "demo") {
       const d = DEMOS.find((x) => x.id === action.id);
@@ -212,44 +196,6 @@ export function StartPage({
             </div>
           </div>
         </header>
-        <div className="start-role" data-first={chosen === null || undefined} role="group" aria-label={t(locale, "roleAsk")}>
-          <span className="start-role-label">{t(locale, "roleAsk")}</span>
-          {ROLES.map((r) => (
-            <button type="button" key={r} data-role={r} aria-pressed={chosen === r} onClick={() => pick(r)}>
-              {t(locale, ROLE_LABEL[r])}
-            </button>
-          ))}
-          {chosen === null ? <span className="start-role-note">{t(locale, "roleAskNote")}</span> : null}
-        </div>
-        <div className="start-ask" role="search">
-          <button type="button" className="start-ask-field" data-start-ask onClick={openSearch}>
-            <svg
-              viewBox="0 0 24 24"
-              width="20"
-              height="20"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-              aria-hidden="true"
-            >
-              <circle cx="11" cy="11" r="6.5" />
-              <path d="m16 16 4.5 4.5" />
-            </svg>
-            <span>{t(locale, "startAskPlaceholder")}</span>
-            <kbd>/</kbd>
-          </button>
-          <div className="start-ask-chips">
-            {CHIPS[role].map((c) => (
-              <button type="button" key={c.label} onClick={() => run(c.action)}>
-                {t(locale, c.label)}
-              </button>
-            ))}
-            <button type="button" className="start-ask-more" data-more-questions onClick={() => setMore(true)}>
-              {t(locale, "qMoreOpen")}
-            </button>
-          </div>
-        </div>
         <section id="start-recent" tabIndex={-1}>
           <h2>{t(locale, "startRecent")}</h2>
           {failed ? (
@@ -348,13 +294,38 @@ export function StartPage({
             </ScrollRow>
           )}
         </section>
+        <div className="start-ask" role="search">
+          <button type="button" className="start-ask-field" data-start-ask onClick={openSearch}>
+            <svg
+              viewBox="0 0 24 24"
+              width="20"
+              height="20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
+              <circle cx="11" cy="11" r="6.5" />
+              <path d="m16 16 4.5 4.5" />
+            </svg>
+            <span>{t(locale, "startAskPlaceholder")}</span>
+            <kbd>/</kbd>
+          </button>
+          <div className="start-ask-chips">
+            {CHIPS[role].map((c) => (
+              <button type="button" key={c.label} onClick={() => run(c.action)}>
+                {t(locale, c.label)}
+              </button>
+            ))}
+            <button type="button" className="start-ask-more" data-more-questions onClick={() => setMore(true)}>
+              {t(locale, "qMoreOpen")}
+            </button>
+          </div>
+        </div>
         <section id="start-demos" tabIndex={-1}>
           <h2>{t(locale, "demoSection")}</h2>
           <div className="start-demo-grid">
-            <button type="button" className="start-demo start-tour" data-tour onClick={onTour}>
-              <strong>{t(locale, "tourOvBoxTitle")}</strong>
-              <span>{t(locale, "tourOvBoxNote")}</span>
-            </button>
             {DEMOS.map((demo) => (
               <button type="button" className="start-demo" key={demo.id} data-demo={demo.id} onClick={() => onDemo(demo)}>
                 <TemplateArt demo={demo.id} />
@@ -362,6 +333,9 @@ export function StartPage({
               </button>
             ))}
           </div>
+          <button type="button" className="start-tour" data-tour onClick={onTour}>
+            {t(locale, "tourOvBoxTitle")}
+          </button>
         </section>
         <section id="start-templates" tabIndex={-1}>
           <h2>{t(locale, "startTemplates")}</h2>
@@ -379,16 +353,6 @@ export function StartPage({
                     <strong>{t(locale, launching === template ? "startLaunching" : TEMPLATE_KEYS[template][0])}</strong>
                     <span>{t(locale, TEMPLATE_KEYS[template][1])}</span>
                     {quick ? <small>{t(locale, "startQuickNote")}</small> : null}
-                  </button>
-                  <button
-                    type="button"
-                    className="start-template-custom"
-                    data-customise={template}
-                    aria-label={`${t(locale, "startCustomise")} ${t(locale, TEMPLATE_KEYS[template][0])}`}
-                    title={t(locale, "startCustomiseHint")}
-                    onClick={() => setCreating(template)}
-                  >
-                    {t(locale, "startCustomise")}
                   </button>
                 </div>
               );

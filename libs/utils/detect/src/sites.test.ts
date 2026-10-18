@@ -1,7 +1,7 @@
 import type { IsolateRecord } from "@aei/domain";
 import { addDays } from "@aei/replay";
 import { describe, expect, it } from "vitest";
-import { LIVE_SETTINGS, liveSignals, profileExcess } from "./index.ts";
+import { LIVE_SETTINGS, liveSignals, profileExcess, resistanceShift } from "./index.ts";
 
 // Statistics stay within a site (D-051): a unit is compared with the rest of its own hospital.
 
@@ -39,6 +39,17 @@ describe("liveSignals across sites", () => {
     expect(alone.some((s) => s.detector === "profile-excess" && s.ward === "URO")).toBe(true);
     const together = liveSignals([...home, ...sata], []).filter((s) => (s.ward === null ? !s.site : !s.ward.startsWith("sata/")));
     expect(together).toEqual(alone);
+  });
+
+  it("resistance shift is not run live (D-080), but flags a spread-out rise when called directly", () => {
+    expect(liveSignals(home, []).some((s) => s.detector === "resistance-shift")).toBe(false);
+    const spread = [
+      ...Array.from({ length: 365 }, (_, d) => rec(`g${d}`, addDays("2024-06-01", d))),
+      ...Array.from({ length: 28 }, (_, i) =>
+        rec(`gs${i}`, addDays("2025-06-01", i), { patientId: `q${i}`, results: { AMP: "R", CRO: i < 12 ? "R" : "S", CIP: "S" } }),
+      ),
+    ];
+    expect(resistanceShift(spread, LIVE_SETTINGS.resistanceShift).some((s) => s.antibiotic === "CRO")).toBe(true);
   });
 
   it("pooling the two hospitals would have hidden the cluster", () => {

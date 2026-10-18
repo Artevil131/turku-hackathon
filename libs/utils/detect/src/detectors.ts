@@ -1,7 +1,7 @@
 import type { AntibioticCode, Culture, IsoDate, IsolateRecord, Organism, Phenotype, SiteId, WardCode } from "@aei/domain";
 import { isIntrinsic } from "@aei/eucast";
 import { addDays, daysBetween } from "@aei/replay";
-import { cochranArmitageRising, poissonLower, poissonUpper } from "./stats.ts";
+import { binomialUpper, cochranArmitageRising, poissonLower, poissonUpper } from "./stats.ts";
 
 // Candidate deviation detectors (D-016). Each scans a whole history and
 // returns the days it would have signalled; the signal on day t uses only
@@ -9,7 +9,14 @@ import { cochranArmitageRising, poissonLower, poissonUpper } from "./stats.ts";
 // Thresholds are parameters; which detectors and thresholds the tool uses
 // is decided from experiments/0002.
 
-export type DetectorName = "profile-excess" | "phenotype-excess" | "sampling-drop" | "empty-run" | "rising-trend";
+export type DetectorName =
+  | "profile-excess"
+  | "phenotype-excess"
+  | "sampling-drop"
+  | "volume-jump"
+  | "empty-run"
+  | "rising-trend"
+  | "resistance-shift";
 
 export interface Signal {
   detector: DetectorName;
@@ -208,8 +215,13 @@ export interface DropOptions {
   alpha: number;
 }
 
-/** Cultures in a unit over the window against the window's share of the unit's baseline mean. Evaluated every day. */
-export function samplingDrop(cultures: readonly Culture[], o: DropOptions): Signal[] {
+/** Per unit and day: cultures over the window against the window's share of the unit's baseline mean; `tail` gives the p-value. */
+function cultureCountSignals(
+  cultures: readonly Culture[],
+  o: DropOptions,
+  detector: DetectorName,
+  tail: (observed: number, expected: number) => number,
+): Signal[] {
   if (cultures.length === 0) return [];
   const dates = cultures.map((c) => c.sampleDate).sort();
   const start = dates[0] as IsoDate;
@@ -230,11 +242,25 @@ export function samplingDrop(cultures: readonly Culture[], o: DropOptions): Sign
       const observed = sum(t + 1 - o.windowDays, t + 1);
       const baseline = sum(t + 1 - o.windowDays - o.baselineDays, t + 1 - o.windowDays);
       const expected = (baseline / o.baselineDays) * o.windowDays;
-      const p = poissonLower(observed, expected);
-      if (p < o.alpha) signals.push({ detector: "sampling-drop", key: ward, date: addDays(start, t), ward, observed, expected, p });
+      const p = tail(observed, expected);
+      if (p < o.alpha) signals.push({ detector, key: ward, date: addDays(start, t), ward, observed, expected, p });
     }
   }
   return signals;
+}
+
+/** Cultures in a unit over the window against the window's share of the unit's baseline mean (Poisson lower tail). Evaluated every day. */
+export function samplingDrop(cultures: readonly Culture[], o: DropOptions): Signal[] {
+  return cultureCountSignals(cultures, o, "sampling-drop", poissonLower);
+}
+
+/**
+ * The upper-tail twin of `samplingDrop` (D-081): the same windows against the
+ * same baseline, Poisson upper tail. A unit with no cultures in its baseline
+ * has expected 0 and is not tested (a jump from nothing has no rate to compare with).
+ */
+export function volumeJump(cultures: readonly Culture[], o: DropOptions): Signal[] {
+  return cultureCountSignals(cultures, o, "volume-jump", (observed, expected) => (expected > 0 ? poissonUpper(observed, expected) : 1));
 }
 
 // ---------- 4b. empty run ----------
@@ -346,6 +372,98 @@ export function risingTrend(records: readonly IsolateRecord[], pairs: readonly P
           organism: pair.organism,
           antibiotic: pair.antibiotic,
           observed: last.n ? last.events / last.n : 0,
+          p,
+        });
+      }
+    }
+  }
+  return signals;
+}
+
+// ---------- 7. resistance shift ----------
+
+export interface ShiftOptions {
+  windowDays: number;
+  baselineDays: number;
+  alpha: number;
+  /** Known results needed in the baseline. */
+  minBaseline: number;
+  /** Known results needed in the window. */
+  minWindow: number;
+  /** Leave an isolate out of the test made as of `asOf` (as `TrendOptions.exclude`). */
+  exclude?: (r: IsolateRecord, asOf: IsoDate) => boolean;
+}
+
+/**
+ * Per unit, specimen, organism and antibiotic (D-080): the resistant results
+ * of the last `windowDays` against the same unit's resistant share over the
+ * `baselineDays` before the window (window excluded, share smoothed by adding
+ * one half as in the excess detectors), one-sided exact binomial test.
+ * `observed` is the resistant count in the window, `expected` the window's
+ * known results times the baseline share. A result is known when the isolate
+ * has an S, I or R for the antibiotic and resistant when it is R, as in
+ * `risingTrend`. Evaluated on each day the stratum has a result.
+ */
+export function resistanceShift(records: readonly IsolateRecord[], o: ShiftOptions): Signal[] {
+  const strata = new Map<string, { r: IsolateRecord; antibiotic: AntibioticCode }[]>();
+  for (const r of [...records].sort(byDate)) {
+    for (const antibiotic of Object.keys(r.results) as AntibioticCode[]) {
+      const key = `${r.ward}|${r.specimen}|${r.organism}|${antibiotic}`;
+      const list = strata.get(key);
+      if (list) list.push({ r, antibiotic });
+      else strata.set(key, [{ r, antibiotic }]);
+    }
+  }
+  const signals: Signal[] = [];
+  for (const [key, items] of strata) {
+    const first = items[0] as { r: IsolateRecord; antibiotic: AntibioticCode };
+    const { antibiotic } = first;
+    const dates = items.map((x) => x.r.sampleDate);
+    const resistant = [0];
+    for (const x of items) resistant.push((resistant.at(-1) as number) + (x.r.results[antibiotic] === "R" ? 1 : 0));
+    for (let i = 0; i < items.length; i++) {
+      const date = dates[i] as IsoDate;
+      if (i + 1 < items.length && dates[i + 1] === date) continue; // one test per day
+      const from = addDays(date, 1 - o.windowDays);
+      const baseFrom = addDays(from, -o.baselineDays);
+      const w0 = lowerBound(dates, from);
+      const b0 = lowerBound(dates, baseFrom);
+      const w1 = i + 1;
+      let nWindow = w1 - w0;
+      let nBase = w0 - b0;
+      let kWindow = (resistant[w1] as number) - (resistant[w0] as number);
+      let kBase = (resistant[w0] as number) - (resistant[b0] as number);
+      // Leaving isolates out only lowers the counts, so these gates are necessary either way.
+      if (kWindow === 0 || nWindow < o.minWindow || nBase < o.minBaseline) continue;
+      if (o.exclude) {
+        const kept = (j: number) => !o.exclude?.((items[j] as { r: IsolateRecord }).r, date);
+        nWindow = kWindow = nBase = kBase = 0;
+        for (let j = b0; j < w1; j++) {
+          if (!kept(j)) continue;
+          const isR = (items[j] as { r: IsolateRecord }).r.results[antibiotic] === "R" ? 1 : 0;
+          if (j < w0) {
+            nBase++;
+            kBase += isR;
+          } else {
+            nWindow++;
+            kWindow += isR;
+          }
+        }
+        if (nWindow < o.minWindow || nBase < o.minBaseline) continue;
+      }
+      const expected = nWindow * ((kBase + PROFILE_SMOOTHING) / (nBase + 1));
+      const p = binomialUpper(kWindow, nWindow, (kBase + PROFILE_SMOOTHING) / (nBase + 1));
+      if (p < o.alpha) {
+        const r = (items[i] as { r: IsolateRecord }).r;
+        signals.push({
+          detector: "resistance-shift",
+          key,
+          date,
+          ward: r.ward,
+          organism: r.organism,
+          antibiotic,
+          observed: kWindow,
+          expected,
           p,
         });
       }

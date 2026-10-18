@@ -169,8 +169,13 @@ export type { AntibioticCoverage, CombinationSuggestion, Counts, CoverageResult,
  */
 export { barFor, ONSETS, THRESHOLDS } from "@aei/coverage";
 
-/** The doctor's coverage list (D-023). The server sets the as-of date from its clock. */
+/**
+ * The doctor's coverage list (D-023). The server sets the as-of date from its clock unless `asOf` asks for an
+ * earlier day; `level` forces the level (D-082) and never widens.
+ */
 export type CoverageQuery = Omit<GearCoverageQuery, "asOf" | "minTested"> & {
+  /** Describe the window ending this day instead of the replay date (D-082); never after the clock's date (400). */
+  asOf?: IsoDate;
   /** How suggestions are judged (D-026, D-027); "mild" when omitted. */
   severity?: Severity;
   /** The site `ward` belongs to; a bare ward code is then that site's unit (D-051). */

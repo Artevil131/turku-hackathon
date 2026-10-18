@@ -52,10 +52,12 @@ describe("the signal card", () => {
     expect(s).toContain("(5)");
     expect(s).toContain("(0.2)");
     expect(s).toContain("1 in 50,000");
-    expect(html).toContain(">4.7<");
-    expect(html).toContain("surprise · 1 in 50,000 by chance");
-    expect(html).toContain("5 patients");
-    expect(html).toContain("0.2 usual");
+    expect(html).toContain(">1 in 50,000<");
+    expect(html).toContain("by chance");
+    expect(html).toContain(">Seen<");
+    expect(html).toContain(">5 patients<");
+    expect(html).toContain(">Expected<");
+    expect(html).toContain(">0.2<");
     expect(html).toContain("Data behind it");
     expect(html).toContain('class="sig-btn" href="#method"');
   });
@@ -71,8 +73,8 @@ describe("the signal card", () => {
       previous: null,
     } as Alert);
     expect(sentence(html)).toBe("A rule, no test: the first MRSA on this inpatient unit in 180 days.");
-    expect(html).not.toContain("sig-bars");
-    expect(html).not.toContain("sig-surprise");
+    expect(html).toContain(">rule<");
+    expect(html).not.toContain("by chance");
     expect(sentence(card(cpe))).toContain("every CPE is an alert");
   });
 
@@ -117,7 +119,26 @@ describe("the signal card", () => {
   it("caps the odds under one in a million and speaks Finnish", () => {
     expect(oddsPhrase("en", 1e-9)).toBe("less than 1 in 1 000 000");
     expect(howSentence("fi", cluster)).toContain("viimeisten 28 päivän");
-    expect(card({ ...cluster, p: 1e-9 })).toContain("more than 1 in 1 000 000 by chance");
+    expect(card({ ...cluster, p: 1e-9 })).toContain(">less than 1 in 1 000 000<");
+  });
+
+  it("says too few results when the detector had no p, and never prints undefined for a trend", () => {
+    expect(card({ ...cluster, p: undefined })).toContain(">too few results<");
+    const trend = card({ kind: "detector", detector: "rising-trend", id: "t1", date: "2025-06-09", ward: null, observed: 0.2 } as Alert);
+    expect(trend).not.toContain("undefined");
+    expect(trend).toContain(">20 %<");
+    expect(
+      card({
+        kind: "detector",
+        detector: "rising-trend",
+        id: "t2",
+        date: "2025-06-09",
+        ward: null,
+        observed: 0.2,
+        expected: 0.1,
+        p: 0.01,
+      } as Alert),
+    ).toContain("10 % → 20 %");
   });
 
   it("disables the day button on the clock's day only", () => {

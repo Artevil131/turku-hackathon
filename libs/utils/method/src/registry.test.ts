@@ -9,8 +9,18 @@ const IDS = Object.keys(METHODS) as MethodId[];
 const value = (id: MethodId, name: string) => METHODS[id].constants.find((c) => c.name === name)?.value;
 
 describe("method registry", () => {
-  it("has all seven methods, each keyed by its id", () => {
-    expect(IDS.sort()).toEqual(["cpe", "empty-run", "new-in-unit", "phenotype-excess", "profile-excess", "rising-trend", "sampling-drop"]);
+  it("has all nine methods, each keyed by its id", () => {
+    expect(IDS.sort()).toEqual([
+      "cpe",
+      "empty-run",
+      "new-in-unit",
+      "phenotype-excess",
+      "profile-excess",
+      "resistance-shift",
+      "rising-trend",
+      "sampling-drop",
+      "volume-jump",
+    ]);
     for (const id of IDS) expect(METHODS[id].id).toBe(id);
   });
 
@@ -35,6 +45,9 @@ describe("method registry", () => {
     expect(value("sampling-drop", "window days")).toBe(LIVE_SETTINGS.samplingDrop.windowDays);
     expect(value("empty-run", "alpha")).toBe(LIVE_SETTINGS.emptyRun.alpha);
     expect(value("empty-run", "baseline days")).toBe(LIVE_SETTINGS.emptyRun.baselineDays);
+    expect(value("volume-jump", "alpha")).toBe(LIVE_SETTINGS.volumeJump.alpha);
+    expect(value("resistance-shift", "alpha")).toBe(LIVE_SETTINGS.resistanceShift.alpha);
+    expect(value("resistance-shift", "min baseline results")).toBe(LIVE_SETTINGS.resistanceShift.minBaseline);
     expect(value("rising-trend", "alpha")).toBe(LIVE_SETTINGS.risingTrend.alpha);
     expect(value("rising-trend", "min bins")).toBe(LIVE_SETTINGS.risingTrend.minBins);
     expect(value("rising-trend", "pairs watched")).toBe(SURVEILLANCE_PAIRS.length);

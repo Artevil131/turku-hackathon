@@ -20,8 +20,8 @@ from aei.dates import add_days as _add_days, days_between as _days_between
 from aei.domain import WARD_TYPE as _WARD_TYPE, by_site as _by_site
 
 __all__ = [
-    "profile_excess", "phenotype_excess", "sampling_drop", "empty_run",
-    "rising_trend", "live_signals", "cpe_alerts", "new_in_unit_alerts",
+    "profile_excess", "phenotype_excess", "sampling_drop", "volume_jump", "empty_run",
+    "rising_trend", "resistance_shift", "live_signals", "cpe_alerts", "new_in_unit_alerts",
     "coverage", "suggest", "suggest_combinations",
 ]
 
@@ -74,6 +74,18 @@ def sampling_drop(cultures, *, window_days=7, baseline_days=56, alpha=0.0001):
         baseline_days=baseline_days, alpha=alpha))
 
 
+def volume_jump(cultures, *, window_days=7, baseline_days=56, alpha=0.0001):
+    """Daily Poisson upper-tail test of cultures per unit: the twin of sampling_drop (D-081).
+
+    Culture dictionaries in; signals with observed culture count, expected
+    window count and p out. Defaults: 7-day window, preceding 56-day baseline,
+    p < 0.0001. A unit with no cultures in its baseline is not tested.
+    Scans only through the last supplied date.
+    """
+    return _signals(_detect.volume_jump(_records(cultures, _Culture), window_days=window_days,
+        baseline_days=baseline_days, alpha=alpha))
+
+
 def empty_run(cultures, *, baseline_days=56, alpha=0.001):
     """Consecutive empty days per unit, tested as exp(-daily_mean * run).
 
@@ -98,8 +110,23 @@ def rising_trend(records, pairs=None, *, bin_days=28, min_bins=13, alpha=0.001):
     return _signals(_detect.rising_trend(_records(records), pairs, bin_days=bin_days, min_bins=min_bins, alpha=alpha))
 
 
+def resistance_shift(records, *, window_days=28, baseline_days=365, alpha=0.01, min_baseline=30, min_window=3):
+    """Exact binomial excess of resistant results against the unit's own year (D-080).
+
+    IsolateRecord dictionaries in; signals with ward, organism, antibiotic,
+    observed resistant count in the window, expected and p out; the key
+    carries unit, specimen, organism and antibiotic. Defaults: 28-day window,
+    365-day baseline before it, baseline share smoothed by one half, >= 30
+    known results in the baseline, >= 3 in the window, p < 0.01. This raw
+    gear does not exclude clusters; live_signals leaves out isolates of an
+    already detected cluster.
+    """
+    return _signals(_detect.resistance_shift_binomial(_records(records), window_days=window_days,
+        baseline_days=baseline_days, alpha=alpha, min_baseline=min_baseline, min_window=min_window))
+
+
 def live_signals(records, cultures):
-    """Run all five statistical detectors at the app's fixed live settings.
+    """Run all seven statistical detectors at the app's fixed live settings.
 
     IsolateRecord and Culture dictionaries in; concatenated signal dictionaries
     out (not episodes or incident alerts). D-020/D-022/D-031/D-044: defaults
@@ -159,7 +186,7 @@ def _antibiotic_dict(c):
     return d
 
 
-def coverage(records, *, as_of, ward, specimen, sex=None, age_group=None, onset="any", window_days=365, min_tested=30, wards=None):
+def coverage(records, *, as_of, ward, specimen, sex=None, age_group=None, onset="any", window_days=365, min_tested=30, wards=None, level=None):
     """Annual first-isolate coverage list with Wilson intervals and fallback.
 
     IsolateRecord dictionaries in; CoverageResult dictionary out: query, level,
@@ -174,7 +201,7 @@ def coverage(records, *, as_of, ward, specimen, sex=None, age_group=None, onset=
     {code, type, ...}, default dataset units. Informs, does not prescribe.
     """
     r = _coverage.coverage(_records(records), as_of=as_of, ward=ward, specimen=specimen, sex=sex,
-        age_group=age_group, onset=onset, window_days=window_days, min_tested=min_tested, wards=wards, current_app=True)
+        age_group=age_group, onset=onset, window_days=window_days, min_tested=min_tested, wards=wards, current_app=True, level=level)
     return dict(query=r.query, level=r.level, isolates=r.isolates, sexApplied=r.sex_applied,
         ageGroupApplied=r.age_group_applied, onsetApplied=r.onset_applied,
         **{"from": r.from_}, organisms=[dict(organism=o, isolates=n, share=s) for o, n, s in r.organisms],

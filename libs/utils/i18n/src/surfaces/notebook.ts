@@ -73,7 +73,7 @@ export const notebookEn = {
   nbRemove: "Remove cell",
   nbToNotebook: "To notebook",
   nbAdded: "Added to the notebook",
-  nbPageTitle: "AEI notebook",
+  nbPageTitle: "agar notebook",
   nbCellOf: "Cell {n}: {what}",
 };
 
@@ -150,6 +150,6 @@ export const notebookFi: Record<keyof typeof notebookEn, string> = {
   nbRemove: "Poista solu",
   nbToNotebook: "Muistioon",
   nbAdded: "Lisätty muistioon",
-  nbPageTitle: "AEI-muistio",
+  nbPageTitle: "agar-muistio",
   nbCellOf: "Solu {n}: {what}",
 };

@@ -25,8 +25,10 @@ export function kindOf(alert: Alert): SignalKind | null {
     case "phenotype-excess":
       return "cluster";
     case "rising-trend":
+    case "resistance-shift":
       return "trend";
     case "sampling-drop":
+    case "volume-jump":
     case "empty-run":
       return "data";
   }

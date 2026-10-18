@@ -22,12 +22,12 @@ import { allSites, currentSite, homeSite } from "../../../sites.ts";
 import { AlertExplanation } from "../../AlertExplanation.tsx";
 import { InfoButton } from "../../Info.tsx";
 import { PoissonTail, SurpriseScale } from "../../math/index.ts";
-import type { BoardState } from "../board.ts";
+import type { BoardState, SignalKind } from "../board.ts";
 import { KindGlyph } from "../feed/glyphs.tsx";
 import { GlossedTitle } from "../feed/IncidentRow.tsx";
 import { IsolateTable, useIsolates } from "../feed/Isolates.tsx";
 import { type Incident, oneDecimal, shift, windowOf } from "../feed/model.ts";
-import { signalTitle, surpriseOf } from "../feed/names.ts";
+import { kindLabel, signalTitle } from "../feed/names.ts";
 import { SpanGroups } from "../feed/SpanChips.tsx";
 import type { Spans } from "../feed/spans.ts";
 import type { Slice } from "../tools/model.ts";
@@ -66,6 +66,8 @@ interface Props {
   onBack?: () => void;
   /** "Open in Tools": the Tools window takes this signal's slice and comes forward. */
   onOpenTools?: (slice: Slice) => void;
+  /** How often a rule alert of this kind usually fires on this unit in a year; the card shows it beside "rule". */
+  usualPerYear?: number;
 }
 
 /** The selected site's county (D-051), as the map keeps it. */
@@ -77,13 +79,6 @@ const numberLocale = (locale: Locale) => (locale === "fi" ? "fi-FI" : "en-GB");
 export function oddsPhrase(locale: Locale, p: number): string {
   if (p < 1e-6) return t(locale, "cardOddsCap");
   return t(locale, "cardOdds", { n: formatNum(Math.max(1, Math.round(1 / p)), numberLocale(locale)) });
-}
-
-/** The label after the surprise number: "surprise · 1 in 50 000 by chance". */
-export function surpriseLabel(locale: Locale, p: number): string {
-  const chance =
-    p < 1e-6 ? t(locale, "cardChanceCap") : t(locale, "cardChance", { n: formatNum(Math.max(1, Math.round(1 / p)), numberLocale(locale)) });
-  return `${t(locale, "cardSurprise")} · ${chance}`;
 }
 
 /** An expectation to one decimal; below 0.05 it would print as 0.0, so it says "less than 0.1". */
@@ -108,6 +103,10 @@ export function howDetail(locale: Locale, a: Alert): string {
       return t(locale, "cardDetailEmpty", { n: a.observed, expected });
     case "rising-trend":
       return t(locale, "cardDetailTrend", { days: LIVE_SETTINGS.risingTrend.binDays });
+    case "resistance-shift":
+      return t(locale, "cardDetailShift", { n: a.observed, expected });
+    case "volume-jump":
+      return t(locale, "cardDetailVolume", { n: a.observed, expected });
   }
 }
 
@@ -129,6 +128,10 @@ export function howSentence(locale: Locale, a: Alert): string {
       return t(locale, "cardHowEmpty", { n: a.observed, expected });
     case "rising-trend":
       return t(locale, "cardHowTrend", { days: LIVE_SETTINGS.risingTrend.binDays, to: `${Math.round(a.observed * 100)} %` });
+    case "resistance-shift":
+      return t(locale, "cardHowShift", { n: a.observed, expected, odds });
+    case "volume-jump":
+      return t(locale, "cardHowVolume", { n: a.observed, expected });
   }
 }
 
@@ -147,6 +150,7 @@ export function AlertMath({
   explain = 0,
   onBack,
   onOpenTools,
+  usualPerYear,
 }: Props) {
   const key = inc?.key ?? null;
   const how = useRef<HTMLDetailsElement | null>(null);
@@ -263,10 +267,10 @@ export function AlertMath({
               {title}
             </h3>
           )}
-          <p className="sig-where">{whereLine(locale, inc, win)}</p>
         </div>
 
-        <Numbers locale={locale} alert={lead} />
+        <Numbers locale={locale} alert={lead} kind={inc.kind} perYear={usualPerYear} />
+        <p className="sig-where">{whereLine(locale, inc, win)}</p>
 
         {/* The method stands open in the layer; the row's "Open calculation and explanation" opens it in the window too. */}
         <section className="sig-how-section" aria-labelledby={`sig-how-${inc.key}`}>
@@ -698,62 +702,71 @@ function DataBehind({
   );
 }
 
-/** Observed against usual on one scale, and the surprise as the one big number. Sentinels have neither. */
-function Numbers({ locale, alert: a }: { locale: Locale; alert: Alert }) {
-  if (a.kind !== "detector") return null;
+/**
+ * The card's three numbers, each one highlighted: seen, expected, and the chance of that by luck ("1 in N"), under the
+ * kind's coloured tag. Trends show "from X to Y"; rules show "rule" and the usual count a year instead of a test; a
+ * detector whose gates failed (it has no p) says "too few results" rather than a number.
+ */
+function Numbers({ locale, alert: a, kind, perYear }: { locale: Locale; alert: Alert; kind: SignalKind; perYear?: number }) {
+  if (a.kind === "carrier") return null;
+  const tag = (
+    <span className="sig-kind" data-kind={kind}>
+      {kindLabel(locale, kind)}
+    </span>
+  );
+  if (a.kind !== "detector") {
+    return (
+      <div className="sig-tiles" role="group" aria-label={t(locale, "cardRule")}>
+        {tag}
+        <Tile label={t(locale, "cardSeen")} value={t(locale, "cardPatientOne")} />
+        {perYear === undefined ? (
+          <Tile label="" value={t(locale, "cardRule")} />
+        ) : (
+          <Tile label={t(locale, "cardRule")} value={t(locale, "cardPerYear", { n: oneDecimal(locale, perYear) })} />
+        )}
+      </div>
+    );
+  }
   const trend = a.detector === "rising-trend";
-  const data = a.detector === "sampling-drop";
-  const obs = a.observed;
   const exp = a.expected;
-  const fmtObs = trend
-    ? `${Math.round(obs * 100)} %`
-    : data
-      ? t(locale, "cardCultures", { n: obs })
-      : t(locale, obs === 1 ? "cardPatientOne" : "cardPatients", { n: obs });
-  const fmtUsual =
-    exp === undefined
-      ? ""
-      : exp > 0 && exp < 0.05
-        ? t(locale, "cardUsualSmall")
-        : t(locale, "cardUsualValue", { n: oneDecimal(locale, exp) });
-  // A share is already on a 0 to 1 scale; counts are scaled to the larger of the two.
-  const max = trend ? 1 : Math.max(obs, exp ?? 0) || 1;
-  const s = surpriseOf(a);
-  // An empty run has two facts in two units (days without cultures, cultures per day): no shared bar.
-  const bars = a.detector !== "empty-run";
+  const pct = (x: number) => `${Math.round(x * 100)} %`;
+  const seen = trend
+    ? exp === undefined
+      ? pct(a.observed)
+      : t(locale, "cardFromTo", { from: pct(exp), to: pct(a.observed) })
+    : a.detector === "sampling-drop" || a.detector === "volume-jump"
+      ? t(locale, "cardCultures", { n: a.observed })
+      : a.detector === "empty-run"
+        ? t(locale, "cardDays", { n: a.observed })
+        : a.detector === "resistance-shift"
+          ? t(locale, "cardResults", { n: a.observed })
+          : t(locale, a.observed === 1 ? "cardPatientOne" : "cardPatients", { n: a.observed });
+  const chance =
+    a.p !== undefined ? (
+      <Tile label={t(locale, "cardByChance")} value={oddsPhrase(locale, a.p)} hot>
+        <InfoButton locale={locale} align="end" label={t(locale, "cardSurpriseInfo")}>
+          <SurpriseScale p={a.p} detector={a.detector} locale={locale} />
+        </InfoButton>
+      </Tile>
+    ) : trend ? null : (
+      <Tile label={t(locale, "cardByChance")} value={t(locale, "cardTooFew")} />
+    );
   return (
-    <>
-      {bars ? (
-        <div
-          className="sig-bars"
-          role="group"
-          aria-label={`${t(locale, "cardObserved")} ${fmtObs}${exp !== undefined ? `, ${t(locale, "cardUsual")} ${fmtUsual}` : ""}`}
-        >
-          <Bar label={t(locale, "cardObserved")} value={fmtObs} share={obs / max} tone="obs" />
-          {exp !== undefined ? <Bar label={t(locale, "cardUsual")} value={fmtUsual} share={exp / max} tone="usual" /> : null}
-        </div>
-      ) : null}
-      {s !== null && a.p !== undefined ? (
-        <div className="sig-surprise">
-          <b className="sig-num">{oneDecimal(locale, s)}</b>
-          <span className="sig-surprise-label">{surpriseLabel(locale, a.p)}</span>
-          <InfoButton locale={locale} align="end" label={t(locale, "cardSurpriseInfo")}>
-            <SurpriseScale p={a.p} detector={a.detector} locale={locale} />
-          </InfoButton>
-        </div>
-      ) : null}
-    </>
+    <div className="sig-tiles" role="group" aria-label={`${t(locale, "cardSeen")} ${seen}`}>
+      {tag}
+      <Tile label={t(locale, "cardSeen")} value={seen} />
+      {!trend && exp !== undefined ? <Tile label={t(locale, "cardExpected")} value={usualText(locale, exp)} /> : null}
+      {chance}
+    </div>
   );
 }
 
-function Bar({ label, value, share, tone }: { label: string; value: string; share: number; tone: "obs" | "usual" }) {
+function Tile({ label, value, hot, children }: { label: string; value: string; hot?: boolean; children?: ReactNode }) {
   return (
-    <div className="sig-bar" data-tone={tone}>
-      <span className="sig-bar-label">{label}</span>
-      <span className="sig-bar-track" aria-hidden="true">
-        <i style={{ width: `${Math.max(2, Math.round(share * 100))}%` }} />
-      </span>
-      <b className="sig-bar-value">{value}</b>
+    <div className="sig-tile" data-hot={hot || undefined}>
+      <span className="sig-tile-label">{label}</span>
+      <b className="sig-num">{value}</b>
+      {children}
     </div>
   );
 }

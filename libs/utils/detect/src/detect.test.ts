@@ -1,7 +1,20 @@
 import type { Culture, IsolateRecord } from "@aei/domain";
 import { addDays } from "@aei/replay";
 import { describe, expect, it } from "vitest";
-import { cochranArmitageRising, emptyRun, episodes, normalUpper, poissonLower, poissonUpper, risingTrend, samplingDrop } from "./index.ts";
+import {
+  binomialUpper,
+  cochranArmitageRising,
+  emptyRun,
+  episodes,
+  LIVE_SETTINGS,
+  normalUpper,
+  poissonLower,
+  poissonUpper,
+  resistanceShift,
+  risingTrend,
+  samplingDrop,
+  volumeJump,
+} from "./index.ts";
 
 describe("stats", () => {
   it("matches hand-computed values", () => {
@@ -10,6 +23,17 @@ describe("stats", () => {
     expect(poissonLower(0, 7)).toBeCloseTo(Math.exp(-7), 12);
     expect(normalUpper(1.959964)).toBeCloseTo(0.025, 5);
     expect(normalUpper(-1.959964)).toBeCloseTo(0.975, 5);
+  });
+
+  it("sums the exact binomial upper tail", () => {
+    // Binomial(5, 1/2): P(X >= 4) = (5 + 1) / 32; P(X >= 3) = 16 / 32.
+    expect(binomialUpper(4, 5, 0.5)).toBeCloseTo(6 / 32, 12);
+    expect(binomialUpper(3, 5, 0.5)).toBeCloseTo(0.5, 12);
+    // Binomial(10, 0.1): P(X >= 2) = 1 - 0.9^10 - 10 * 0.1 * 0.9^9 = 0.2639010709.
+    expect(binomialUpper(2, 10, 0.1)).toBeCloseTo(0.2639010709, 10);
+    expect(binomialUpper(0, 10, 0.1)).toBe(1);
+    expect(binomialUpper(11, 10, 0.1)).toBe(0);
+    expect(binomialUpper(1, 10, 0)).toBe(0);
   });
 
   it("survives a far tail of a tiny mean", () => {
@@ -131,5 +155,130 @@ describe("emptyRun", () => {
       [addDays("2025-10-01", 93), 4],
       [addDays("2025-10-01", 94), 5],
     ]);
+  });
+});
+
+const day0 = "2025-01-01";
+const SHIFT = LIVE_SETTINGS.resistanceShift;
+
+/** One E. coli result per day on URO for `days` days, resistant to CIP on days where `isR(d)`. */
+const dailyCip = (days: number, isR: (d: number) => boolean, extra: Partial<IsolateRecord> = {}) =>
+  Array.from({ length: days }, (_, d) => rec(`s${d}`, `S${d}`, addDays(day0, d), { results: { CIP: isR(d) ? "R" : "S" }, ...extra }));
+
+describe("resistanceShift", () => {
+  // 365 days at about 10 % resistant (every tenth day).
+  const baseline = (n: number) => dailyCip(n, (d) => d % 10 === 0);
+
+  it("signals a unit's resistant results far above its own year", () => {
+    // The last 28 days: ten resistant results in a row, where about three are expected.
+    const records = [
+      ...baseline(365),
+      ...dailyCip(28, (d) => d < 10).map((r, d) => ({ ...r, isolateId: `w${d}`, sampleDate: addDays(day0, 365 + d) })),
+    ];
+    const signals = resistanceShift(records, SHIFT);
+    expect(signals.length).toBeGreaterThan(0);
+    const first = signals[0];
+    expect(first?.detector).toBe("resistance-shift");
+    expect(first?.key).toBe("URO|urine|Escherichia coli|CIP");
+    expect(first?.antibiotic).toBe("CIP");
+    expect(first?.p).toBeLessThan(SHIFT.alpha);
+    expect((first?.observed ?? 0) > (first?.expected ?? 0)).toBe(true);
+  });
+
+  it("is quiet on a flat series", () => {
+    expect(resistanceShift(baseline(500), SHIFT)).toEqual([]);
+  });
+
+  it("needs 30 known results in the baseline", () => {
+    // 29 baseline results all susceptible, then a burst of resistant ones: the window would be extreme.
+    const burst = (n0: number) => [
+      ...Array.from({ length: n0 }, (_, i) => rec(`b${i}`, `B${i}`, addDays(day0, i * 10), { results: { CIP: "S" } })),
+      ...Array.from({ length: 6 }, (_, i) => rec(`r${i}`, `R${i}`, addDays(day0, 330 + i * 4), { results: { CIP: "R" } })),
+    ];
+    // Baseline for the last result (day 350) is days -43..., window days 323..350: 29 results before it.
+    const at30 = resistanceShift(burst(30), SHIFT);
+    expect(at30.length).toBeGreaterThan(0);
+    expect(resistanceShift(burst(29), SHIFT)).toEqual([]);
+  });
+
+  it("needs 3 known results in the window", () => {
+    const records = [
+      ...baseline(365),
+      rec("w0", "W0", addDays(day0, 400), { results: { CIP: "R" } }),
+      rec("w1", "W1", addDays(day0, 401), { results: { CIP: "R" } }),
+    ];
+    expect(resistanceShift(records, SHIFT).filter((s) => s.date >= addDays(day0, 400))).toEqual([]);
+  });
+
+  it("leaves out isolates the exclude callback names", () => {
+    const records = [
+      ...baseline(365),
+      ...Array.from({ length: 6 }, (_, i) => rec(`w${i}`, `W${i}`, addDays(day0, 370 + i), { results: { CIP: "R" } })),
+    ];
+    expect(resistanceShift(records, SHIFT).length).toBeGreaterThan(0);
+    const excluded = resistanceShift(records, { ...SHIFT, exclude: (r) => r.isolateId.startsWith("w") });
+    expect(excluded).toEqual([]);
+  });
+});
+
+describe("volumeJump", () => {
+  const culturesOn = (perDay: (d: number) => number, days: number): Culture[] => {
+    const out: Culture[] = [];
+    for (let d = 0; d < days; d++)
+      for (let i = 0; i < perDay(d); i++)
+        out.push({
+          cultureId: `C${d}-${i}`,
+          patientId: `P${d}-${i}`,
+          ageYears: 50,
+          sampleDate: addDays("2025-10-01", d),
+          isoYear: 2025,
+          isoWeek: 1,
+          ward: "ICU",
+          wardType: "in",
+          admissionDate: null,
+          specimen: "urine",
+          result: "negative",
+          nIsolates: 0,
+        });
+    return out;
+  };
+
+  it("signals a week of tripled volume and not normal weeks", () => {
+    const eps = episodes(
+      volumeJump(
+        culturesOn((d) => (d >= 90 && d < 97 ? 24 : 8), 120),
+        LIVE_SETTINGS.volumeJump,
+      ),
+    );
+    expect(eps).toHaveLength(1);
+    // 8 a day gives 56 a week; a day at 24 takes the 7-day count to 72, then 88, 104 ...
+    expect(eps[0]?.detector).toBe("volume-jump");
+    const first = eps[0]?.first.date as string;
+    expect(first >= addDays("2025-10-01", 90)).toBe(true);
+    expect(first <= addDays("2025-10-01", 96)).toBe(true);
+  });
+
+  it("is quiet at a steady volume and does not signal a drop", () => {
+    expect(
+      volumeJump(
+        culturesOn(() => 8, 120),
+        LIVE_SETTINGS.volumeJump,
+      ),
+    ).toEqual([]);
+    expect(
+      volumeJump(
+        culturesOn((d) => (d >= 90 && d < 97 ? 0 : 8), 120),
+        LIVE_SETTINGS.volumeJump,
+      ),
+    ).toEqual([]);
+  });
+
+  it("does not test a unit with nothing in its baseline", () => {
+    expect(
+      volumeJump(
+        culturesOn((d) => (d >= 70 ? 30 : 0), 120).filter((c) => c.sampleDate >= "2025-12-10"),
+        LIVE_SETTINGS.volumeJump,
+      ),
+    ).toEqual([]);
   });
 });

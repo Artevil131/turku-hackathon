@@ -8,6 +8,7 @@ import { previousUnits, useFlows } from "../../relations.ts";
 import { hashPage, hashParams, writeHashParam, writeHashParams } from "../../url.ts";
 import { AsOf } from "../AsOf.tsx";
 import { DataQuality } from "../DataQuality.tsx";
+import { CompareBar } from "./CompareBar.tsx";
 import { CoverageList, itemsOf, type ListStatus } from "./CoverageList.tsx";
 import { Details } from "./Details.tsx";
 import { DoctorAnswer } from "./DoctorAnswer.tsx";
@@ -335,6 +336,9 @@ export function CoverageWindow({
               onRetry={() => setAttempt((a) => a + 1)}
               syndrome={syndrome}
               patient={patientFindings}
+              compare={
+                <CompareBar client={client} locale={locale} filters={filters} asOf={asOf} onPeriod={(period) => onChange({ period })} />
+              }
             />
             <aside className="dp-side" aria-label={t(locale, "drInUnit")}>
               <UnitContext

@@ -588,7 +588,8 @@ export function App() {
                 demo={tour.demo}
                 reducedMotion={reducedMotion}
                 onClose={() => {
-                  if (tour.demo === "overview") store("yl.welcomed", "1");
+                  // Any dismiss, of the full tour or of a demo's offer, is remembered.
+                  store("yl.welcomed", "1");
                   setTour(null);
                 }}
               />

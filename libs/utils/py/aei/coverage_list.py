@@ -217,6 +217,7 @@ def coverage(
     codes: Sequence[str] | None = None,
     wards: Sequence[dict] | None = None,
     current_app: bool = False,
+    level: str | None = None,
 ) -> CoverageResult:
     """Coverage at the experiment's recorded settings by default (D-023/D-033/D-049).
 
@@ -284,8 +285,9 @@ def coverage(
         def applied(r):
             return (not sex_applied or r.sex == sex) and (not onset_applied or onset_of(r) == onset)
 
-    level = "hospital"
-    for lv in ("unit", "ward type"):
+    forced_level = level
+    level = forced_level or "hospital"
+    for lv in () if forced_level else ("unit", "ward type"):
         if sum(1 for r in base if in_level[lv](r)) >= min_tested:
             level = lv
             break
@@ -358,6 +360,7 @@ def coverage(
     query = {"asOf": as_of, "ward": ward, "specimen": specimen, "sex": sex, "onset": onset, "windowDays": window_days, "minTested": min_tested}
     if current_app:
         query["ageGroup"] = age_group
+        query["level"] = forced_level
     return CoverageResult(
         query=query,
         level=level,

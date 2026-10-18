@@ -659,9 +659,17 @@ export const server = createServer(async (req, res) => {
       const days = windowDays === null ? undefined : Number(windowDays);
       if (days !== undefined && (!Number.isInteger(days) || days < 1))
         return send(res, 400, { error: "windowDays must be a positive integer" });
-      const asOf = clock.state().asOf;
-      // Only released records, so nothing after the replay date leaks in.
-      const key = JSON.stringify([asOf, ward, specimen, sex, ageGroup, onset, days]);
+      const levelParam = url.searchParams.get("level");
+      if (levelParam !== null && levelParam !== "unit" && levelParam !== "ward type" && levelParam !== "hospital")
+        return send(res, 400, { error: "level must be unit, ward type or hospital" });
+      const replayDay = clock.state().asOf;
+      const asOfParam = url.searchParams.get("asOf");
+      if (asOfParam !== null && !(/^\d{4}-\d{2}-\d{2}$/.test(asOfParam) && new Date(`${asOfParam}T00:00:00Z`).toISOString().startsWith(asOfParam)))
+        return send(res, 400, { error: "asOf must be an ISO date (YYYY-MM-DD)" });
+      if (asOfParam !== null && asOfParam > replayDay) return send(res, 400, { error: `asOf must not be after the replay date ${replayDay}` });
+      const asOf = asOfParam ?? replayDay;
+      // Only released records up to the requested day (never after the replay date), so nothing leaks in.
+      const key = JSON.stringify([asOf, ward, specimen, sex, ageGroup, onset, days, levelParam]);
       let result = coverages.get(key);
       if (!result) {
         if (coverages.size > 500) coverages.clear();
@@ -675,6 +683,7 @@ export const server = createServer(async (req, res) => {
             ...(ageGroup ? { ageGroup } : {}),
             ...(onset ? { onset } : {}),
             ...(days ? { windowDays: days } : {}),
+            ...(levelParam ? { level: levelParam } : {}),
             onset: onset as Onset,
           },
           registry.wards,

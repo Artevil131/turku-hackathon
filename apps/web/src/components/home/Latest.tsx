@@ -34,8 +34,17 @@ export function latestSentence(locale: Locale, a: Alert): string {
     case "detector": {
       const expected = oneDecimal(locale, a.expected ?? 0);
       const organism = a.organism ? shortOrganism(a.organism) : "";
-      if (a.detector === "sampling-drop" || a.detector === "empty-run")
+      if (a.detector === "sampling-drop" || a.detector === "volume-jump" || a.detector === "empty-run")
         return t(locale, "homeLatestData", { unit, observed: a.observed, expected, date });
+      if (a.detector === "resistance-shift")
+        return t(locale, "detLatestShift", {
+          antibiotic: a.antibiotic ? antibioticName(locale, a.antibiotic) : "",
+          organism,
+          unit,
+          observed: a.observed,
+          expected,
+          date,
+        });
       if (a.detector === "rising-trend")
         return t(locale, "homeLatestTrend", {
           antibiotic: a.antibiotic ? antibioticName(locale, a.antibiotic) : "",

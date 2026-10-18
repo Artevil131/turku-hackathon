@@ -30,6 +30,8 @@ record disagree, the record wins. Add a row when an experiment closes.
 | [0021](0021-naming-step/) | Can every alert be named into ENGINE.md's five kinds by rule? | accepted | Yes: all 50,521 signals named; D7 0.974 (0.966 to 0.980) for the live set; D-034 grouping reproduces | Python |
 | [0022](0022-ensemble/) | Does combining the live set and the CUSUM raise D5? | accepted | Not at 5 episodes a year (held out 0.966 / 0.772 against 0.960 / 0.817); a post-hoc stack is above at 3 a year | Python |
 | [0023](0023-beta-binomial-tail/) | Does the Beta-binomial predictive tail beat the Poisson tail for profile and phenotype excess? | accepted | No, do not ship: D5 rare 0.925 and common ESBL 0.760 at best against 0.920 and 0.750 at 3.01 episodes a year (intervals ±0.06); m has no effect, the discount lowers both | Python |
+| [0024](0024-resistance-shift/) | Does the resistance-shift detector (D-080) stay within about 5 other episodes a year? | accepted | Refuted: 140 other episodes in 2.99 years (46.8 a year); E1 and E2 not signalled once clusters are excluded; a one-drug drift without a clone found in 27/40 at a 60 % flip | Python |
+| [0025](0025-volume-jump/) | Does the volume-jump detector (D-081) stay within about 1 other episode a year? | accepted | Yes: 0 episodes in 2.99 years; a week at 3 times the volume found in 40/40 (2 times: 28/40), no signal on 0007's gaps | Python |
 
 Experiments run with `uv run python experiments/NNNN-slug/<script>.py`
 from the repository root (D-024; 0001 to 0007 were ported from TypeScript

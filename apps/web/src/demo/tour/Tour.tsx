@@ -220,8 +220,11 @@ export function DemoTour({ locale, demo, reducedMotion, onClose }: DemoTourProps
   // Keys while playing. A click of your own on what the cursor points at does the step and moves the tour on;
   // clicks elsewhere are yours to make and leave the tour running.
   useEffect(() => {
-    if (phase === "offer") return;
     const key = (e: KeyboardEvent) => {
+      if (phase === "offer") {
+        if (e.key === "Escape") onClose();
+        return;
+      }
       const typing = (e.target as HTMLElement | null)?.closest("input, textarea, select, [contenteditable]");
       if (e.key === "Escape") onClose();
       else if (phase === "play" && !typing && e.key === " ") {

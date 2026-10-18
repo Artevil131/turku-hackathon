@@ -5,6 +5,7 @@ import { chartsFi } from "./surfaces/charts.ts";
 import { commandFi } from "./surfaces/command.ts";
 import { connectFi } from "./surfaces/connect.ts";
 import { demoFi } from "./surfaces/demo.ts";
+import { detectorsFi } from "./surfaces/detectors.ts";
 import { doctorFi } from "./surfaces/doctor.ts";
 import { failsTogetherFi } from "./surfaces/failsTogether.ts";
 import { feedFi } from "./surfaces/feed.ts";
@@ -290,4 +291,5 @@ export const fi: Record<keyof typeof en, string> = {
   ...commandFi,
   ...timelineFi,
   ...failsTogetherFi,
+  ...detectorsFi,
 };

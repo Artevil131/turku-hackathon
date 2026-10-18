@@ -1,0 +1,99 @@
+/* The timeframe control and what changed between the two frames. One highlighted kind of row: a marked change. */
+.cmp {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 12px;
+}
+.cmp-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.cmp-vs {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-2);
+  font-size: var(--t-s);
+}
+.cmp-tag {
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--st-watch-bg, #fdf3e2);
+  color: var(--st-watch, #94590a);
+  font-size: var(--t-xs);
+}
+.cmp-dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.cmp-frame {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.cmp-frame legend {
+  float: left;
+  margin-right: 6px;
+  padding: 0;
+  font-weight: 600;
+}
+.cmp-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--t-xs);
+}
+.cmp-note {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--t-s);
+}
+.cmp-rows {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.cmp-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 9ch 9ch 9ch;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  color: var(--ink-2);
+}
+.cmp-row small {
+  color: var(--ink-3);
+  font-size: var(--t-xs);
+}
+.cmp-row[data-marked] {
+  background: var(--live-soft);
+  color: var(--ink);
+}
+.cmp-row[data-marked] .cmp-diff {
+  font-weight: 700;
+}
+.cmp-row[data-marked][data-dir="-1"] .cmp-diff {
+  color: var(--st-alert);
+}
+.cmp-all {
+  justify-self: start;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--ink-3);
+  font: inherit;
+  font-size: var(--t-s);
+  text-decoration: underline;
+  cursor: pointer;
+}

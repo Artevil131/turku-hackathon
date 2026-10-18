@@ -8,7 +8,16 @@ import { ANTIBIOTICS } from "@aei/domain";
 // Formulas follow ENGINE.md A3; constants are read from the live settings, never retyped
 // (except where the code keeps a number out of the settings, marked below).
 
-export type MethodId = "profile-excess" | "phenotype-excess" | "sampling-drop" | "empty-run" | "rising-trend" | "cpe" | "new-in-unit";
+export type MethodId =
+  | "profile-excess"
+  | "phenotype-excess"
+  | "sampling-drop"
+  | "volume-jump"
+  | "empty-run"
+  | "rising-trend"
+  | "resistance-shift"
+  | "cpe"
+  | "new-in-unit";
 
 export interface Method {
   id: MethodId;
@@ -54,7 +63,7 @@ export type SnippetKey =
   | "expected";
 export type SnippetValues = Record<"ward" | "organism" | "from" | "to", string> & Partial<Record<SnippetKey, string>>;
 
-const { profileExcess, phenotypeExcess, samplingDrop, emptyRun, risingTrend } = LIVE_SETTINGS;
+const { profileExcess, phenotypeExcess, samplingDrop, volumeJump, emptyRun, risingTrend, resistanceShift } = LIVE_SETTINGS;
 
 /** The baseline floor of the excess detectors: the code keeps it beside the test, not in LIVE_SETTINGS (detectors.ts). */
 const MIN_BASELINE_ISOLATES = 50;
@@ -174,6 +183,32 @@ export const METHODS: Record<MethodId, Method> = {
       "ppois({observed}, {expected})  # P(Y <= y) on the card's y and mu, signal if < alpha",
     ].join("\n"),
   },
+  "volume-jump": {
+    id: "volume-jump",
+    name: { en: "Poisson upper tail", fi: "Poisson-jakauman yläpää" },
+    mathml:
+      '<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><mi>y</mi><mo>=</mo><msub><mi>c</mi><mn>7</mn></msub><mo>,</mo><mspace width="1em"/><mi>μ</mi><mo>=</mo><mn>7</mn><mo>·</mo><mfrac><msub><mi>c</mi><mn>56</mn></msub><mn>56</mn></mfrac><mo>,</mo><mspace width="1em"/><mi>P</mi><mo>(</mo><mi>Y</mi><mo>≥</mo><mi>y</mi><mo>∣</mo><mi>Y</mi><mo>∼</mo><mi mathvariant="normal">Poisson</mi><mo>(</mo><mi>μ</mi><mo>)</mo><mo>)</mo><mo>&lt;</mo><mi>α</mi></mrow></math>',
+    latex:
+      "y = c_{7},\\quad \\mu = 7\\cdot\\frac{c_{56}}{56},\\quad \\text{signal if } P(Y \\ge y \\mid Y\\sim\\mathrm{Poisson}(\\mu)) < \\alpha",
+    plain: {
+      en: "Cultures this unit sent in the last 7 days, against its usual week, the mean daily count over the 56 days before, times 7. A jump, where the sampling drop is a fall.",
+      fi: "Tämän osaston viimeisen 7 päivän viljelyt verrattuna tavalliseen viikkoon, eli 56 edellisen päivän keskiarvoon kerrottuna seitsemällä. Nousu; näytteenoton lasku on laskua.",
+    },
+    constants: [
+      { name: "window days", value: volumeJump.windowDays, decision: "D-081" },
+      { name: "baseline days", value: volumeJump.baselineDays, decision: "D-081" },
+      { name: "alpha", value: volumeJump.alpha, decision: "D-081" },
+    ],
+    code: { ts: "libs/utils/detect/src/detectors.ts", fn: "volumeJump", py: "aei.detect.volume_jump" },
+    decisions: ["D-081"],
+    snippet: liveSnippet("volume-jump", ` and s.ward == "{ward}"${DATES}`),
+    r: [
+      "# volume_jump has no R port (D-063); it counts all cultures, the package holds positive ones",
+      ...rCut(true),
+      "length(unique(x$cultureId))  # positive cultures in the window",
+      "ppois({observed} - 1, {expected}, lower.tail = FALSE)  # P(Y >= y) on the card's y and mu, signal if < alpha",
+    ].join("\n"),
+  },
   "empty-run": {
     id: "empty-run",
     name: { en: "Poisson gap probability", fi: "Poisson-tyhjän jakson todennäköisyys" },
@@ -226,6 +261,36 @@ export const METHODS: Record<MethodId, Method> = {
       'resistant <- tapply(x[["{antibiotic}"]] == "R", bin, sum)',
       "tested <- tapply(x$patientId, bin, length)",
       "prop.trend.test(resistant, tested)",
+    ].join("\n"),
+  },
+  "resistance-shift": {
+    id: "resistance-shift",
+    name: { en: "Exact binomial upper tail, the unit's own baseline", fi: "Tarkka binomijakauman yläpää, osaston oma perustaso" },
+    mathml:
+      '<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><mi>π</mi><mo>=</mo><mfrac><mrow><msub><mi>B</mi><mi>R</mi></msub><mo>+</mo><mfrac><mn>1</mn><mn>2</mn></mfrac></mrow><mrow><msub><mi>B</mi><mi>n</mi></msub><mo>+</mo><mn>1</mn></mrow></mfrac><mo>,</mo><mspace width="1em"/><mi>μ</mi><mo>=</mo><msub><mi>n</mi><mn>28</mn></msub><mi>π</mi><mo>,</mo><mspace width="1em"/><mi>P</mi><mo>(</mo><mi>Y</mi><mo>≥</mo><mi>y</mi><mo>∣</mo><mi>Y</mi><mo>∼</mo><mi mathvariant="normal">Binomial</mi><mo>(</mo><msub><mi>n</mi><mn>28</mn></msub><mo>,</mo><mi>π</mi><mo>)</mo><mo>)</mo><mo>&lt;</mo><mi>α</mi></mrow></math>',
+    latex:
+      "y = \\#\\{\\text{resistant results in the last 28 days}\\},\\quad \\pi = \\frac{B_R+\\tfrac12}{B_n+1},\\quad \\mu = n_{28}\\pi,\\quad \\text{signal if } P(Y \\ge y \\mid Y\\sim\\mathrm{Binomial}(n_{28},\\pi)) < \\alpha",
+    plain: {
+      en: "Resistant results for one drug in this unit, specimen and organism in the last 28 days, against this unit's own resistant share for that drug over the 365 days before.",
+      fi: "Yhden lääkkeen resistentit tulokset tässä osastossa, näytetyypissä ja bakteerissa viimeisen 28 päivän aikana, verrattuna osaston omaan resistenttien osuuteen tästä lääkkeestä edellisen 365 päivän ajalta.",
+    },
+    constants: [
+      { name: "window days", value: resistanceShift.windowDays, decision: "D-080" },
+      { name: "baseline days", value: resistanceShift.baselineDays, decision: "D-080" },
+      { name: "alpha", value: resistanceShift.alpha, decision: "D-080" },
+      { name: "min baseline results", value: resistanceShift.minBaseline, decision: "D-080" },
+      { name: "min window results", value: resistanceShift.minWindow, decision: "D-080" },
+    ],
+    code: { ts: "libs/utils/detect/src/detectors.ts", fn: "resistanceShift", py: "aei.detect.resistance_shift_binomial" },
+    decisions: ["D-080"],
+    snippet: liveSnippet("resistance-shift", ` and s.ward == "{ward}" and s.organism == "{organism}"${DATES}`),
+    r: [
+      "# resistance_shift has no R port (D-063): y recounted here, the tail needs the card's n and pi",
+      ...rCut(true),
+      'if (nzchar("{organism}")) x <- x[x$organism == AMR::as.mo("{organism}"), ]',
+      'x <- x[!is.na(x[["{antibiotic}"]]), ]',
+      'sum(x[["{antibiotic}"]] == "R")  # y, resistant results in the window',
+      "# expected = n * pi = {expected}; pbinom(y - 1, n, pi, lower.tail = FALSE), signal if < alpha",
     ].join("\n"),
   },
   cpe: {

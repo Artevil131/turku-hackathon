@@ -62,8 +62,8 @@
         "name": "minBaseline",
         "default": 50,
         "description": {
-          "en": "Minimum baseline isolates",
-          "fi": "Vertailuisolaattien vähimmäismäärä"
+          "en": "Minimum baseline isolates (resistance shift: known results)",
+          "fi": "Vertailuisolaattien vähimmäismäärä (resistenssin muutos: tunnetut tulokset)"
         },
         "decision": "D-020"
       },
@@ -149,8 +149,8 @@
         "name": "minBaseline",
         "default": 50,
         "description": {
-          "en": "Minimum baseline isolates",
-          "fi": "Vertailuisolaattien vähimmäismäärä"
+          "en": "Minimum baseline isolates (resistance shift: known results)",
+          "fi": "Vertailuisolaattien vähimmäismäärä (resistenssin muutos: tunnetut tulokset)"
         },
         "decision": "D-020"
       },
@@ -222,6 +222,57 @@
     "gear": {
       "module": "@aei/detect",
       "export": "samplingDrop"
+    }
+  },
+  {
+    "id": "volumeJump",
+    "kind": "detector",
+    "name": {
+      "en": "Sampling jump",
+      "fi": "Näytemäärän nousu"
+    },
+    "sentence": {
+      "en": "We compare a unit's culture count over {windowDays} days with its preceding {baselineDays}-day daily rate; Poisson upper-tail p < {alpha} signals a jump. A unit with no cultures in its baseline is not tested.",
+      "fi": "Vertaamme yksikön viljelymäärää {windowDays} päivältä edeltävän {baselineDays} päivän päivätahtiin; Poisson-ylähännän p < {alpha} merkitsee nousua. Yksikköä, jolla ei ole viljelyjä vertailujaksolla, ei testata."
+    },
+    "parameters": [
+      {
+        "name": "windowDays",
+        "default": 7,
+        "description": {
+          "en": "Observation window",
+          "fi": "Havaintoikkuna"
+        },
+        "unit": "days",
+        "decision": "D-081"
+      },
+      {
+        "name": "baselineDays",
+        "default": 56,
+        "description": {
+          "en": "Baseline preceding the window",
+          "fi": "Ikkunaa edeltävä vertailujakso"
+        },
+        "unit": "days",
+        "decision": "D-081"
+      },
+      {
+        "name": "alpha",
+        "default": 0.0001,
+        "description": {
+          "en": "Signal when the one-sided p value is below this",
+          "fi": "Signaali, kun yksisuuntainen p-arvo alittaa tämän"
+        },
+        "decision": "D-081"
+      }
+    ],
+    "inputs": ["Culture[]", "DropOptions"],
+    "output": "Signal[]",
+    "decisions": ["D-081"],
+    "experiments": ["0025"],
+    "gear": {
+      "module": "@aei/detect",
+      "export": "volumeJump"
     }
   },
   {
@@ -417,6 +468,84 @@
     }
   },
   {
+    "id": "resistanceShift",
+    "kind": "detector",
+    "name": {
+      "en": "Resistance shift",
+      "fi": "Resistenssin muutos"
+    },
+    "sentence": {
+      "en": "Per unit, specimen, organism and antibiotic we count resistant results in the last {windowDays} days (at least {minWindow} known results) and compare with the unit's own smoothed resistant share over the {baselineDays} days before the window (at least {minBaseline} known results). A signal requires exact binomial upper-tail p < {alpha}. Isolates of an already detected cluster are left out.",
+      "fi": "Laskemme yksikön, näytetyypin, bakteerin ja antibiootin resistentit tulokset viimeiseltä {windowDays} päivältä (vähintään {minWindow} tunnettua tulosta) ja vertaamme yksikön omaan tasoitettuun resistenttien osuuteen ikkunaa edeltäviltä {baselineDays} päivältä (vähintään {minBaseline} tunnettua tulosta). Signaali edellyttää tarkkaa binomin ylähännän p < {alpha}. Jo havaitun ryppään isolaatit jätetään pois."
+    },
+    "parameters": [
+      {
+        "name": "windowDays",
+        "default": 28,
+        "description": {
+          "en": "Observation window",
+          "fi": "Havaintoikkuna"
+        },
+        "unit": "days",
+        "decision": "D-080"
+      },
+      {
+        "name": "baselineDays",
+        "default": 365,
+        "description": {
+          "en": "Baseline preceding the window",
+          "fi": "Ikkunaa edeltävä vertailujakso"
+        },
+        "unit": "days",
+        "decision": "D-080"
+      },
+      {
+        "name": "alpha",
+        "default": 0.01,
+        "description": {
+          "en": "Signal when the one-sided p value is below this",
+          "fi": "Signaali, kun yksisuuntainen p-arvo alittaa tämän"
+        },
+        "decision": "D-080"
+      },
+      {
+        "name": "minBaseline",
+        "default": 30,
+        "description": {
+          "en": "Minimum baseline isolates (resistance shift: known results)",
+          "fi": "Vertailuisolaattien vähimmäismäärä (resistenssin muutos: tunnetut tulokset)"
+        },
+        "decision": "D-080"
+      },
+      {
+        "name": "minWindow",
+        "default": 3,
+        "description": {
+          "en": "Minimum known results in the window",
+          "fi": "Tunnettujen tulosten vähimmäismäärä ikkunassa"
+        },
+        "decision": "D-080"
+      },
+      {
+        "name": "smoothing",
+        "default": 0.5,
+        "description": {
+          "en": "Added successes in the baseline share (one total pseudo-isolate)",
+          "fi": "Vertailuosuuteen lisätyt onnistumiset (yhteensä yksi pseudoisolaatti)"
+        },
+        "decision": "D-080"
+      }
+    ],
+    "inputs": ["IsolateRecord[]", "ShiftOptions"],
+    "output": "Signal[]",
+    "decisions": ["D-080"],
+    "experiments": ["0024"],
+    "gear": {
+      "module": "@aei/detect",
+      "export": "resistanceShift"
+    }
+  },
+  {
     "id": "liveSignals",
     "kind": "detector",
     "name": {
@@ -424,14 +553,14 @@
       "fi": "Käytössä olevat tunnistimet"
     },
     "sentence": {
-      "en": "We run profile excess, phenotype excess, sampling drop, empty run and rising trend at their registered settings, separately by hospital; detected clusters are excluded causally from trends. Signals are not episode alerts.",
-      "fi": "Ajamme profiili- ja fenotyyppiryppäät, näytemäärän laskun, näytteettömän jakson ja nousevan trendin rekisteröidyillä asetuksilla sairaaloittain; jo havaitut ryppäät poistetaan trenditestistä ajallisesti. Signaalit eivät ole jaksohälytyksiä."
+      "en": "We run profile excess, phenotype excess, sampling drop, sampling jump, empty run, rising trend and resistance shift at their registered settings, separately by hospital; detected clusters are excluded causally from trends. Signals are not episode alerts.",
+      "fi": "Ajamme profiili- ja fenotyyppiryppäät, näytemäärän laskun ja nousun, näytteettömän jakson, nousevan trendin ja resistenssin muutoksen rekisteröidyillä asetuksilla sairaaloittain; jo havaitut ryppäät poistetaan trenditestistä ajallisesti. Signaalit eivät ole jaksohälytyksiä."
     },
     "parameters": [],
     "inputs": ["IsolateRecord[]", "Culture[]"],
     "output": "Signal[]",
-    "decisions": ["D-020", "D-031", "D-044", "D-051"],
-    "experiments": ["0002", "0007", "0009"],
+    "decisions": ["D-020", "D-031", "D-044", "D-051", "D-080", "D-081"],
+    "experiments": ["0002", "0007", "0009", "0024", "0025"],
     "gear": {
       "module": "@aei/detect",
       "export": "liveSignals"

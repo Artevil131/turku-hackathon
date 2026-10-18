@@ -111,6 +111,19 @@ def poisson_lower(k: int, mean: float) -> float:
     return min(1.0, float(special.pdtr(k, mean)))  # = stats.poisson.cdf(k, mean)
 
 
+def binomial_upper(k: int, n: int, p: float) -> float:
+    """P(X >= k) for X ~ Binomial(n, p), the exact one-sided upper tail."""
+    if k <= 0:
+        return 1.0
+    if k > n:
+        return 0.0
+    if p <= 0:
+        return 0.0
+    if p >= 1:
+        return 1.0
+    return min(1.0, float(special.bdtrc(k - 1, n, p)))  # = stats.binom.sf(k - 1, n, p)
+
+
 def fisher_mid_p_greater(a: int, b: int, c: int, d: int) -> float:
     """One-sided mid-p Fisher test that row (a, b) has a higher event share than row (c, d): P(X > a) + P(X = a) / 2."""
     return float(_fisher_mid_p(np.array([a]), np.array([b]), np.array([c]), np.array([d]))[0])
@@ -330,6 +343,42 @@ def sampling_drop(cultures: Sequence[Culture], *, window_days: int, baseline_day
     return signals
 
 
+# ---------- 4a. volume jump ----------
+
+
+def volume_jump(cultures: Sequence[Culture], *, window_days: int, baseline_days: int, alpha: float) -> list[Signal]:
+    """The upper-tail twin of `sampling_drop` (D-081): cultures in a unit over the window against the window's share of
+    the unit's baseline mean, Poisson upper tail, every day. A unit with no cultures in its baseline is not tested."""
+    if not cultures:
+        return []
+    dates = sorted(c.sample_date for c in cultures)
+    start, end = dates[0], dates[-1]
+    n_days = days_between(start, end) + 1
+    counts: dict[str, np.ndarray] = {}
+    for c in cultures:
+        arr = counts.get(c.ward)
+        if arr is None:
+            arr = counts[c.ward] = np.zeros(n_days, dtype=np.int64)
+        arr[days_between(start, c.sample_date)] += 1
+    signals = []
+    first = window_days + baseline_days - 1
+    if first >= n_days:
+        return []
+    t = np.arange(first, n_days)
+    for ward, arr in counts.items():
+        prefix = np.concatenate([[0], np.cumsum(arr)])
+        observed = prefix[t + 1] - prefix[t + 1 - window_days]
+        baseline = prefix[t + 1 - window_days] - prefix[t + 1 - window_days - baseline_days]
+        expected = (baseline / baseline_days) * window_days
+        testable = (expected > 0) & (observed > 0)
+        p = np.where(testable, np.minimum(1.0, special.pdtrc(np.maximum(observed - 1, 0), np.where(expected > 0, expected, 1.0))), 1.0)
+        for i in np.flatnonzero(p < alpha):
+            signals.append(
+                Signal("volume-jump", ward, add_days(start, int(t[i])), ward, int(observed[i]), expected=float(expected[i]), p=float(p[i]))
+            )
+    return signals
+
+
 # ---------- 4b. empty run ----------
 
 
@@ -364,6 +413,9 @@ def empty_run(cultures: Sequence[Culture], *, baseline_days: int, alpha: float) 
             if p < alpha:
                 signals.append(Signal("empty-run", ward, add_days(start, t), ward, run, expected=lam, p=p))
     return signals
+
+
+Exclude = Callable[[IsolateRecord, str], bool]
 
 
 # ---------- 5. resistance shift ----------
@@ -431,9 +483,89 @@ def resistance_shift(
     return signals
 
 
-# ---------- 6. rising trend ----------
+# ---------- 5b. resistance shift, exact binomial (D-080) ----------
 
-Exclude = Callable[[IsolateRecord, str], bool]
+
+def resistance_shift_binomial(
+    records: Sequence[IsolateRecord],
+    *,
+    window_days: int,
+    baseline_days: int,
+    alpha: float,
+    min_baseline: int,
+    min_window: int,
+    exclude: Exclude | None = None,
+) -> list[Signal]:
+    """The live resistance shift (mirrors `resistanceShift` in @aei/detect): per unit, specimen, organism and antibiotic,
+    the resistant results of the last `window_days` against the unit's own resistant share over the `baseline_days`
+    before the window, share smoothed by adding one half, one-sided exact binomial test, tested on each day the stratum
+    has a result. `observed` is the resistant count, `expected` the window's known results times the baseline share.
+    `exclude(r, as_of)` leaves an isolate out of the test made as of `as_of`; one with a `since(r)` method is
+    evaluated once per isolate. (`resistance_shift` above is experiment 0002's Fisher candidate, a different test.)"""
+    strata: dict[str, list[tuple[IsolateRecord, str]]] = {}
+    for r in _by_date(records):
+        for antibiotic in r.results:
+            strata.setdefault(f"{r.ward}|{r.specimen}|{r.organism}|{antibiotic}", []).append((r, antibiotic))
+    since = getattr(exclude, "since", None)
+    signals = []
+    for key, items in strata.items():
+        antibiotic = items[0][1]
+        dates = [r.sample_date for r, _ in items]
+        is_r = [1 if r.results[antibiotic] == "R" else 0 for r, _ in items]
+        resistant = [0]
+        for v in is_r:
+            resistant.append(resistant[-1] + v)
+        out_from = [since(r) for r, _ in items] if since is not None else None
+        for i, date in enumerate(dates):
+            if i + 1 < len(dates) and dates[i + 1] == date:
+                continue  # one test per day
+            start = add_days(date, 1 - window_days)
+            w0 = bisect_left(dates, start)
+            b0 = bisect_left(dates, add_days(start, -baseline_days))
+            w1 = i + 1
+            n_window, n_base = w1 - w0, w0 - b0
+            k_window, k_base = resistant[w1] - resistant[w0], resistant[w0] - resistant[b0]
+            # Leaving isolates out only lowers the counts, so these gates are necessary either way.
+            if k_window == 0 or n_window < min_window or n_base < min_baseline:
+                continue
+            if exclude is not None:
+                n_window = k_window = n_base = k_base = 0
+                for j in range(b0, w1):
+                    if out_from is not None:
+                        left_out = out_from[j] is not None and out_from[j] <= date
+                    else:
+                        left_out = exclude(items[j][0], date)
+                    if left_out:
+                        continue
+                    if j < w0:
+                        n_base += 1
+                        k_base += is_r[j]
+                    else:
+                        n_window += 1
+                        k_window += is_r[j]
+                if n_window < min_window or n_base < min_baseline:
+                    continue
+            share = (k_base + 0.5) / (n_base + 1)
+            p = binomial_upper(k_window, n_window, share)
+            if p < alpha:
+                r = items[i][0]
+                signals.append(
+                    Signal(
+                        "resistance-shift",
+                        key,
+                        date,
+                        r.ward,
+                        k_window,
+                        organism=r.organism,
+                        antibiotic=antibiotic,
+                        expected=n_window * share,
+                        p=p,
+                    )
+                )
+    return signals
+
+
+# ---------- 6. rising trend ----------
 
 
 def rising_trend(
@@ -553,8 +685,10 @@ LIVE_SETTINGS: dict[str, dict] = {
     "profile_excess": {"window_days": 28, "baseline_days": 365, "alpha": 0.0001, "min_observed": 3, "same_specimen": True},
     "phenotype_excess": {"window_days": 28, "baseline_days": 365, "alpha": 0.001, "min_observed": 2},
     "sampling_drop": {"window_days": 7, "baseline_days": 56, "alpha": 0.0001},
+    "volume_jump": {"window_days": 7, "baseline_days": 56, "alpha": 0.0001},
     "empty_run": {"baseline_days": 56, "alpha": 0.001},
     "rising_trend": {"bin_days": 28, "min_bins": 13, "alpha": 0.001},
+    "resistance_shift": {"window_days": 28, "baseline_days": 365, "alpha": 0.01, "min_baseline": 30, "min_window": 3},
 }
 
 
@@ -625,6 +759,8 @@ def _site_signals(records: Sequence[IsolateRecord], cultures: Sequence[Culture])
     return [
         *clusters,
         *sampling_drop(cultures, **LIVE_SETTINGS["sampling_drop"]),
+        *volume_jump(cultures, **LIVE_SETTINGS["volume_jump"]),
         *empty_run(cultures, **LIVE_SETTINGS["empty_run"]),
         *rising_trend(records, SURVEILLANCE_PAIRS, **LIVE_SETTINGS["rising_trend"], exclude=in_detected_cluster(clusters)),
+        *resistance_shift_binomial(records, **LIVE_SETTINGS["resistance_shift"], exclude=in_detected_cluster(clusters)),
     ]

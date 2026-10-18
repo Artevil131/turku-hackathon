@@ -98,6 +98,8 @@ Docstrings specify every parameter, default and result shape.
 - `methods.phenotype_excess`: ESBL/MRSA/VRE/CPE patient excess (D-020, D-044).
 - `methods.sampling_drop`: daily seven-day culture-count drop (D-020, D-044).
 - `methods.empty_run`: consecutive days without cultures (D-031, D-044).
+- `methods.volume_jump`: daily seven-day culture-count jump, the upper-tail twin of `sampling_drop` (D-081, provisional).
+- `methods.resistance_shift`: exact binomial excess of a unit's 28-day resistant results against its own year (D-080, provisional; `aei.detect.resistance_shift_binomial`).
 - `methods.rising_trend`: raw resistance trend over the 22 surveillance pairs (D-020, D-022, D-044).
 - `methods.live_signals`: the five detectors together, per hospital, excluding detected clusters from trends (D-022, D-051).
 - `methods.cpe_alerts`: one sentinel alert per CPE isolate (D-014).

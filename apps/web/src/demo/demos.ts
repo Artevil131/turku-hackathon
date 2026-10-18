@@ -86,8 +86,9 @@ export const DEMOS: readonly DemoSpec[] = [
     titleKey: "demoControlTitle",
     blurbKey: "demoControlBlurb",
     mode: "continuous",
-    clockAt: "2025-05-12",
-    board: "unit=MED-A&ph=esbl",
+    // The planted Urology ESBL cluster is caught on the 4 June batch: the demo opens on that signal.
+    clockAt: "2025-06-04",
+    board: "unit=URO&ph=esbl",
     layout: reserveEvidence(
       gridLayout({
         answer: { x: 0, y: 0, w: 12, h: 9 },
@@ -98,11 +99,11 @@ export const DEMOS: readonly DemoSpec[] = [
       }),
     ),
     page: (locale, site) => {
-      const s = slice(site, { from: "2025-02-17", to: "2025-05-11", unit: "MED-A", phenotype: "esbl" });
+      const s = slice(site, { from: "2025-03-12", to: "2025-06-03", unit: "URO", phenotype: "esbl" });
       return page([
         note(t(locale, "demoNoteControlHead")),
         sliceCell(s),
-        { id: newId(), kind: "timeline", window: { from: "2024-11-01", to: "2025-05-11" }, collapsed: true },
+        { id: newId(), kind: "timeline", window: { from: "2024-12-01", to: "2025-06-03" }, collapsed: true },
         analysis("shares", s, { period: 7 }),
         analysis("detector", s, { detector: "phenotype" }),
         note(t(locale, "demoNoteControlNext")),

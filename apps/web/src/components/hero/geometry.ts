@@ -199,7 +199,10 @@ export function pillLabel(locale: Locale, a: Alert): string {
       return `${t(locale, "tlPillProfile")} ${ratio}`;
     case "rising-trend":
       return `${t(locale, "tlPillTrend")} ↗`;
+    case "resistance-shift":
+      return `${t(locale, "tlPillTrend")} ${ratio}`;
     case "sampling-drop":
+    case "volume-jump":
       return `${t(locale, "tlPillSamples")} ${ratio}`;
     case "empty-run":
       return t(locale, "tlPillNoSamples");

@@ -42,7 +42,10 @@ export function openIncidents<T extends { key: string; date: string; members: re
 
 /** Informational ownership, not a clinical procedure or evidence that notification was sent. */
 export function incidentResponsibility(locale: Locale, members: readonly AlertFacts[]): string {
-  if (members.length > 0 && members.every((a) => a.detector === "sampling-drop" || a.detector === "empty-run"))
+  if (
+    members.length > 0 &&
+    members.every((a) => a.detector === "sampling-drop" || a.detector === "volume-jump" || a.detector === "empty-run")
+  )
     return t(locale, "feedNotifyData");
   if (incidentPriority(members) === "medium") return t(locale, "feedNotifyMedium");
   const ward = members.find((a) => alertPriority(a) === "high")?.ward;
@@ -71,6 +74,13 @@ export function alertEvidence(locale: Locale, a: AlertFacts): string {
       observed: a.observed === undefined ? observed : `${number(a.observed * 100)} %`,
       expected: a.expected === undefined ? expected : `${number(a.expected * 100)} %`,
     });
-  const key = a.detector === "empty-run" ? "feedEmptyCounts" : a.detector === "sampling-drop" ? "feedSamplingCounts" : "feedPatientCounts";
+  const key =
+    a.detector === "empty-run"
+      ? "feedEmptyCounts"
+      : a.detector === "sampling-drop" || a.detector === "volume-jump"
+        ? "feedSamplingCounts"
+        : a.detector === "resistance-shift"
+          ? "detEvidenceShift"
+          : "feedPatientCounts";
   return t(locale, key, { observed, expected, date });
 }

@@ -42,7 +42,7 @@ def test_every_public_method_default_matches_registry():
             elif default is None:
                 # None denotes an absent optional filter/window/ward registry,
                 # not a numerical method setting; these remain contextual inputs.
-                assert parameter.name in {"window", "wards", "sex", "age_group"}
+                assert parameter.name in {"window", "wards", "sex", "age_group", "level"}
                 assert parameter.name not in registered
             else:
                 if isinstance(default, tuple):

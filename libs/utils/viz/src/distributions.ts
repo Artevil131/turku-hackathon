@@ -33,13 +33,13 @@ export interface PoissonPlan {
 /**
  * What the live detector tests (D-020, D-031; ENGINE.md 3.2):
  * profile/phenotype excess: P(X ≥ observed | Poisson(expected));
- * sampling drop: P(X ≤ observed | Poisson(expected));
+ * sampling drop: P(X ≤ observed | Poisson(expected)); volume jump: P(X ≥ observed | Poisson(expected));
  * empty run: observed = run length L days, expected = λ per day, p = exp(−λL) = P(X = 0 | Poisson(λL)).
- * Returns null for detectors without a count (rising trend).
+ * Returns null for detectors without a count (rising trend, and resistance shift, whose tail is binomial: D-080).
  */
 export function poissonPlan(detector: string, observed: number, expected: number): PoissonPlan | null {
   let tail: TailKind;
-  if (detector === "profile-excess" || detector === "phenotype-excess") tail = "upper";
+  if (detector === "profile-excess" || detector === "phenotype-excess" || detector === "volume-jump") tail = "upper";
   else if (detector === "sampling-drop") tail = "lower";
   else if (detector === "empty-run") tail = "zero-run";
   else return null;

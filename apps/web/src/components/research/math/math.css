@@ -471,3 +471,54 @@
   max-width: 100%;
   height: auto;
 }
+
+/* The card's three numbers: seen, expected, chance. The chance is the highlighted one; the kind tag carries the colour. */
+.sig-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 8px;
+}
+.sig-kind {
+  flex-basis: 100%;
+  align-self: flex-start;
+  width: fit-content;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--live-soft);
+  color: var(--live);
+  font-size: var(--t-xs);
+  font-weight: 600;
+}
+.sig-kind[data-kind="cluster"] {
+  background: var(--st-alert-bg);
+  color: var(--st-alert);
+}
+.sig-kind[data-kind="sentinel"] {
+  background: var(--st-alert-bg);
+  color: var(--st-alert);
+}
+.sig-tile {
+  display: grid;
+  flex: 1 1 0;
+  min-width: 96px;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--glass-1);
+}
+.sig-tile[data-hot] {
+  border-color: var(--live);
+  background: var(--live-soft);
+}
+.sig-tile-label {
+  color: var(--ink-2);
+  font-size: var(--t-xs);
+}
+.sig-tile .sig-num {
+  font-size: var(--t-m);
+}
+.sig-tile[data-hot] .sig-num {
+  font-size: var(--t-l);
+}

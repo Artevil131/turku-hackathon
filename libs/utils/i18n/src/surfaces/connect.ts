@@ -4,7 +4,7 @@ export const connectEn = {
   connectNav: "Connect",
   connectTitle: "Connect data sources",
   connectLead:
-    "AEI reads laboratory results in the formats Finnish laboratory systems already send, and sets them beside open national data. Each source below is checked live from this server.",
+    "agar reads laboratory results in the formats Finnish laboratory systems already send, and sets them beside open national data. Each source below is checked live from this server.",
   connectNow: "Connected now",
   connectNext: "Ready to connect",
   connectStatusOn: "Connected",
@@ -53,7 +53,7 @@ export const connectFi: Record<keyof typeof connectEn, string> = {
   connectNav: "Yhdistä",
   connectTitle: "Yhdistä aineistolähteet",
   connectLead:
-    "AEI lukee laboratoriotulokset niissä muodoissa, joita suomalaiset laboratoriojärjestelmät jo lähettävät, ja asettaa ne avoimen kansallisen datan rinnalle. Jokaisen alla olevan lähteen tila tarkistetaan suoraan tältä palvelimelta.",
+    "agar lukee laboratoriotulokset niissä muodoissa, joita suomalaiset laboratoriojärjestelmät jo lähettävät, ja asettaa ne avoimen kansallisen datan rinnalle. Jokaisen alla olevan lähteen tila tarkistetaan suoraan tältä palvelimelta.",
   connectNow: "Yhdistetty nyt",
   connectNext: "Valmiina yhdistettäväksi",
   connectStatusOn: "Yhdistetty",

@@ -4,12 +4,10 @@
 
 export const tourOvEn = {
   tourOvOfferTitle: "Want the full tour?",
-  tourOvOfferBody:
-    "Three minutes. A cursor walks the real screens: where the data comes from, how it is checked, and what the doctor, infection control and the researcher each get.",
+  tourOvOfferBody: "Three minutes, on the real screens.",
   tourOvOfferPlay: "Play the tour",
   tourOvOfferSkip: "Not now",
   tourOvBoxTitle: "Take the tour",
-  tourOvBoxNote: "Three minutes, the whole product",
   tourOvWelcome:
     "agar turns the culture results a lab already sends into a live picture of antibiotic resistance. Today that picture is one report a year, hospital-wide.",
   tourOvAsk: "Start from a question. The box takes a ward, an organism or an antibiotic; the three below are one click.",
@@ -41,12 +39,10 @@ export const tourOvEn = {
 
 export const tourOvFi: Record<keyof typeof tourOvEn, string> = {
   tourOvOfferTitle: "Haluatko koko esittelyn?",
-  tourOvOfferBody:
-    "Kolme minuuttia. Kursori kulkee oikeiden näyttöjen läpi: mistä aineisto tulee, miten se tarkistetaan ja mitä lääkäri, infektioiden torjunta ja tutkija kukin saavat.",
+  tourOvOfferBody: "Kolme minuuttia, oikeilla näytöillä.",
   tourOvOfferPlay: "Näytä esittely",
   tourOvOfferSkip: "Ei nyt",
   tourOvBoxTitle: "Katso esittely",
-  tourOvBoxNote: "Kolme minuuttia, koko tuote",
   tourOvWelcome:
     "agar muuttaa laboratorion jo lähettämät viljelyvastaukset eläväksi kuvaksi antibioottiresistenssistä. Nykyisin se kuva on yksi raportti vuodessa, koko sairaalasta.",
   tourOvAsk:

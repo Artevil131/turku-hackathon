@@ -782,8 +782,9 @@ async function main() {
     )
       reasons.push("researcher preset did not promote blank");
     await click('.start-audience input[value="control"] + span');
-    // The details form is the optional path: "Customise…" beside a template.
-    await click('[data-customise="outbreak"]');
+    // The details form is the optional path: "+ New project" asks first, then the template is picked there.
+    await click("[data-start-new]");
+    await click('.start-template-choice input[value="outbreak"]');
     if (!(await waitIn(`!!document.querySelector('.start-create')`))) throw new Error("customise dialog missing");
     await screenshot(cdp, join(outDir, "start-create.png"));
     await click('.start-create button[type="submit"]');

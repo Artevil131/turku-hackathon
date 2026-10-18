@@ -283,4 +283,27 @@ describe("age group and onset (D-053)", () => {
     const r = coverage(records, { asOf: "2026-06-30", ward: "ICU", specimen: "urine", ageGroup: "veryOld", onset: "hospital" });
     expect([r.level, r.isolates, r.ageGroupApplied, r.onsetApplied]).toEqual(["ward type", 50, true, true]);
   });
+
+  it("describes an earlier window from the records of that day (D-082)", () => {
+    const records = [
+      ...Array.from({ length: 30 }, () => iso({ sampleDate: "2026-03-01" })),
+      ...Array.from({ length: 5 }, () => iso({ sampleDate: "2026-06-01", results: { CIP: "R" } })),
+    ];
+    const now = coverage(records, { asOf: "2026-06-30", ward: "URO", specimen: "urine" });
+    const earlier = coverage(records, { asOf: "2026-04-01", ward: "URO", specimen: "urine" });
+    expect([now.isolates, earlier.isolates]).toEqual([35, 30]);
+    expect(earlier.query.asOf).toBe("2026-04-01");
+    expect(earlier.antibiotics.find((a) => a.antibiotic === "CIP")?.share).toBe(1);
+  });
+
+  it("a forced level never widens: too few known results give a null share (D-082)", () => {
+    const records = [...Array.from({ length: 5 }, () => iso({})), ...Array.from({ length: 40 }, () => iso({ ward: "ICU" }))];
+    const free = coverage(records, { asOf: "2026-06-30", ward: "URO", specimen: "urine" });
+    expect([free.level, free.query.level]).toEqual(["ward type", null]); // URO and ICU share a ward type
+    const unit = coverage(records, { asOf: "2026-06-30", ward: "URO", specimen: "urine", level: "unit" });
+    expect([unit.level, unit.isolates, unit.query.level]).toEqual(["unit", 5, "unit"]);
+    expect(unit.antibiotics.find((a) => a.antibiotic === "CIP")?.share).toBeNull();
+    const hosp = coverage(records, { asOf: "2026-06-30", ward: "URO", specimen: "urine", level: "hospital" });
+    expect(hosp.isolates).toBe(45);
+  });
 });

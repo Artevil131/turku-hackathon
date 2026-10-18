@@ -27,7 +27,7 @@ export const homeEn = {
   homeLast: "Last",
   homeIntro: "Pitch intro",
   homeLead:
-    "AEI turns incoming lab results into a ward-level resistance view and an infection-control worklist, updated continuously instead of once a year.",
+    "agar turns incoming lab results into a ward-level resistance view and an infection-control worklist, updated continuously instead of once a year.",
   homeLatestTitle: "Latest open signal",
   homeLatestOpen: "Open this signal",
   homeLatestCluster:
@@ -69,7 +69,7 @@ export const homeFi: Record<keyof typeof homeEn, string> = {
   homeLast: "Viimeksi",
   homeIntro: "Esittelyanimaatio",
   homeLead:
-    "AEI muuttaa saapuvat laboratoriotulokset osastotason resistenssinäkymäksi ja infektiontorjunnan työlistaksi, ja päivittyy jatkuvasti, ei kerran vuodessa.",
+    "agar muuttaa saapuvat laboratoriotulokset osastotason resistenssinäkymäksi ja infektiontorjunnan työlistaksi, ja päivittyy jatkuvasti, ei kerran vuodessa.",
   homeLatestTitle: "Uusin avoin signaali",
   homeLatestOpen: "Avaa tämä signaali",
   homeLatestCluster:

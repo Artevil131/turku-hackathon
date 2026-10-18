@@ -148,7 +148,9 @@ describe("alert scope shared with the board", () => {
       ["profile-excess", "cluster"],
       ["phenotype-excess", "cluster"],
       ["rising-trend", "trend"],
+      ["resistance-shift", "trend"],
       ["sampling-drop", "data"],
+      ["volume-jump", "data"],
       ["empty-run", "data"],
     ] as const) {
       expect(alertInScope({ ...detector, detector: name }, { ...open, kinds: [kind] }, input.clock)).toBe(true);

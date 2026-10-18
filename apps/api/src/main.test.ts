@@ -416,6 +416,29 @@ describe("coverage route", () => {
   });
 });
 
+describe("coverage asOf and level (D-082)", () => {
+  it("refuses a malformed or future asOf, forces the level, and keys the cache by both", async () => {
+    const base = await startApi();
+    const q = `${base}/api/coverage?ward=ICU&specimen=urine`;
+    const now = await (await fetch(q)).json();
+    expect(now.coverage.query.level).toBeNull();
+    expect((await fetch(`${q}&asOf=2025-5-1`)).status).toBe(400);
+    expect((await fetch(`${q}&asOf=2025-02-30`)).status).toBe(400);
+    expect((await fetch(`${q}&asOf=yesterday`)).status).toBe(400);
+    const future = await fetch(`${q}&asOf=${new Date(Date.parse(now.asOf) + 86400000).toISOString().slice(0, 10)}`);
+    expect(future.status).toBe(400);
+    expect((await fetch(`${q}&level=ward`)).status).toBe(400);
+    const same = await (await fetch(`${q}&asOf=${now.asOf}`)).json();
+    expect(same.asOf).toBe(now.asOf);
+    const early = await (await fetch(`${q}&asOf=2025-04-01`)).json();
+    expect([early.asOf, early.coverage.query.asOf]).toEqual(["2025-04-01", "2025-04-01"]);
+    const hosp = await (await fetch(`${q}&level=hospital`)).json();
+    expect([hosp.coverage.level, hosp.coverage.query.level]).toEqual(["hospital", "hospital"]);
+    const unit = await (await fetch(`${q}&level=unit`)).json();
+    expect(unit.coverage.level).toBe("unit");
+  });
+});
+
 describe("county geometry route", () => {
   it("serves the polygons when the file exists and answers 404 without it", async () => {
     const file = join(dir, "counties.geojson");

@@ -35,6 +35,18 @@ const DETECTORS: Record<string, { summary: string; en: string; fi: string }> = {
     en: "On {date}, only {observed} cultures came from {ward} in 7 days, where about {expected} are usual.",
     fi: "{date}: osastolta {ward} tuli vain {observed} viljelyä 7 päivässä, kun tavallisesti niitä tulee noin {expected}.",
   },
+  "volume-jump": {
+    summary:
+      "Far more cultures than usual came from this unit in the last 7 days, for example a screening round or an outbreak work-up. It changes how many results the unit's figures rest on; it is not by itself an infection.",
+    en: "On {date}, {observed} cultures came from {ward} in 7 days, where about {expected} are usual.",
+    fi: "{date}: osastolta {ward} tuli {observed} viljelyä 7 päivässä, kun tavallisesti niitä tulee noin {expected}.",
+  },
+  "resistance-shift": {
+    summary:
+      "In the last 28 days this unit had more resistant results for one antibiotic, in one organism and specimen, than its own previous 365 days predict. This can mean a rise in resistance on the unit without one shared clone.",
+    en: "On {date}, {observed} {organism} results in {ward} were resistant to {antibiotic} in 28 days, where about {expected} were expected.",
+    fi: "{date}: osastolla {ward} {observed} {organism}-tulosta oli resistenttejä antibiootille {antibiotic} 28 päivän sisällä, kun odotettu määrä oli noin {expected}.",
+  },
   "empty-run": {
     summary:
       "No cultures at all have come from this unit for several days in a row, which its usual volume makes very unlikely. That is a data gap (a feed or sampling failure), not an infection.",

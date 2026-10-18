@@ -37,8 +37,8 @@ export function shortTitle(locale: Locale, a: Alert): string {
     case "carrier":
       return "";
     case "detector":
-      if (a.detector === "sampling-drop" || a.detector === "empty-run") return "";
-      if (a.detector === "rising-trend")
+      if (a.detector === "sampling-drop" || a.detector === "volume-jump" || a.detector === "empty-run") return "";
+      if (a.detector === "rising-trend" || a.detector === "resistance-shift")
         return t(locale, "feedTrendWhat", {
           antibiotic: a.antibiotic ? antibioticName(locale, a.antibiotic) : "",
           organism: a.organism ?? "",
@@ -62,7 +62,10 @@ export function measureLine(locale: Locale, a: Alert): string {
     case "rising-trend":
       return a.expected === undefined ? pct(a.observed) : `${pct(a.expected)} → ${pct(a.observed)}`;
     case "sampling-drop":
+    case "volume-jump":
       return t(locale, "feedMeasureCultures", { observed: a.observed, expected: usual });
+    case "resistance-shift":
+      return t(locale, "detMeasureShift", { observed: a.observed, expected: usual });
     case "empty-run":
       return t(locale, "feedMeasureEmptyRun", { observed: a.observed, expected: usual });
     default:

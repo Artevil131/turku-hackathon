@@ -74,6 +74,11 @@ export interface CoverageQuery {
   windowDays?: number;
   /** Isolates a level needs before it is used. Default 30 (CONTEXT.md). */
   minTested?: number;
+  /**
+   * Force every figure to come from this level (D-082). Never widens: with fewer than `minTested` known
+   * results the shares are null. Unset (the default) picks the level as D-033 says.
+   */
+  level?: Level;
 }
 
 export interface Counts {
@@ -119,7 +124,13 @@ export interface CombinationCoverage extends Share {
 }
 
 export interface CoverageResult {
-  query: Required<Omit<CoverageQuery, PatientFilter>> & { sex: Sex | null; ageGroup: AgeGroup | null; onset: Onset | null };
+  query: Required<Omit<CoverageQuery, PatientFilter | "level">> & {
+    sex: Sex | null;
+    ageGroup: AgeGroup | null;
+    onset: Onset | null;
+    /** The level the query forced (D-082), or null when it was chosen by the 30-isolate rule. */
+    level: Level | null;
+  };
   /** The level every figure comes from, and its pool of first isolates. */
   level: Level;
   isolates: number;
@@ -210,7 +221,8 @@ export function coverage(records: readonly IsolateRecord[], q: CoverageQuery, wa
   const applied = passes(kept);
   const sexApplied = kept.includes("sex");
   const base = all.filter(applied);
-  const level = (["unit", "ward type"] as Level[]).find((l) => base.filter(inLevel[l]).length >= minTested) ?? "hospital";
+  const level =
+    q.level ?? (["unit", "ward type"] as Level[]).find((l) => base.filter(inLevel[l]).length >= minTested) ?? "hospital";
   const pool = base.filter(inLevel[level]);
   const recentFrom = addDays(q.asOf, 1 - RECENT_DAYS);
   const recentPool = firstIsolates(
@@ -286,6 +298,7 @@ export function coverage(records: readonly IsolateRecord[], q: CoverageQuery, wa
       onset: q.onset ?? COVERAGE_DEFAULTS.onset,
       windowDays,
       minTested,
+      level: q.level ?? null,
     },
     level,
     isolates: pool.length,

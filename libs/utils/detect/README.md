@@ -3,11 +3,11 @@
 The deviation detectors the server runs live (D-020 to D-022, D-031).
 Each scans a whole history and returns the days it would have signalled;
 the signal on day t uses only samples up to t. Detectors only the
-experiments use (profile rule, resistance shift, trends by ward type)
+experiments use (profile rule, 0002's Fisher resistance shift, trends by ward type)
 live in Python alone (`aei.detect`, D-032).
 
-    profileExcess, phenotypeExcess, samplingDrop, emptyRun,
-    risingTrend                         // detectors, thresholds as options
+    profileExcess, phenotypeExcess, samplingDrop, volumeJump, emptyRun,
+    risingTrend, resistanceShift                         // detectors, thresholds as options
     episodes(signals)                   // signals with the same key within 28 days
     liveSignals(records, cultures)      // the live set, LIVE_SETTINGS over SURVEILLANCE_PAIRS
     clusterSignals(records)             // the profile and phenotype excess part of the live set

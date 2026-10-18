@@ -182,7 +182,8 @@ def test_live_set_at_level_one_is_the_shipped_set(full_signals, live, dataset):
     """The signals passing at level 1 are live_signals (same keys, dates, observed, p), plus new-in-unit."""
     records, cultures = dataset
     shipped = [s for s in full_signals if live.passes(s, 1.0)]
-    ref = live_signals(records, cultures)
+    # The harness's live set is D-020's; resistance-shift and volume-jump (D-080, D-081, provisional) are scored by 0024 and 0025.
+    ref = [s for s in live_signals(records, cultures) if s.detector not in ("resistance-shift", "volume-jump")]
     key = lambda s: (s.detector, s.key, s.date, s.observed)  # noqa: E731
     mine = sorted((s for s in shipped if s.detector != "new-in-unit"), key=key)
     theirs = sorted(ref, key=key)

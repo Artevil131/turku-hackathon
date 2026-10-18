@@ -28,7 +28,7 @@ export const demoEn = {
   demoClinicianTitle: "Empiric therapy at the bedside",
   demoClinicianBlurb:
     "A urinary tract infection on Internal medicine A: which antibiotics cover the likely organisms, with the ward's own signals beside it.",
-  demoControlTitle: "Weekly risk watch, Internal medicine A",
+  demoControlTitle: "Weekly risk watch, Urology",
   demoControlBlurb:
     "Left open all week: the timeline, the signal list, where the patients came from, and a notebook of what was checked and what to look at next.",
   demoResearcherTitle: "ESBL cluster on Internal medicine A",
@@ -36,7 +36,7 @@ export const demoEn = {
     "A frozen, reproducible analysis: the slice, notes, the rate, the weeks before, a Beta estimate, the detector, the Python and a chart.",
   demoNoteClinician: "",
   demoNoteControlHead:
-    "## Monday check\n\nThe ESBL cluster on Internal medicine A is the open signal. Seven patients since 2 April against about 1.4 usual. Patient flow shows the emergency department as the largest source of the unit's patients (28 %).",
+    "## Monday check\n\nThe ESBL cluster on Urology is the open signal: 4 patients in 4 weeks, about 0.2 expected. Patient flow shows where the unit's patients came from.",
   demoNoteControlNext:
     "## To do this week\n\n- Ask the ward whether contact precautions were in place from the first isolate.\n- Re-read the weekly rate on Thursday: a second week above usual makes it an outbreak.\n- Look at Geriatrics, where the sampling gap is still open.",
   demoNoteResearcherQuestion:
@@ -73,7 +73,7 @@ export const demoFi: Record<keyof typeof demoEn, string> = {
   demoClinicianTitle: "Empiirinen hoito potilaan luona",
   demoClinicianBlurb:
     "Virtsatieinfektio sisätaudit A -yksikössä: mitkä antibiootit kattavat todennäköiset bakteerit, yksikön omat signaalit vieressä.",
-  demoControlTitle: "Viikoittainen riskiseuranta, Sisätaudit A",
+  demoControlTitle: "Viikoittainen riskiseuranta, Urologia",
   demoControlBlurb:
     "Auki koko viikon: aikajana, signaalilista, mistä potilaat tulivat ja muistio siitä, mitä tarkistettiin ja mitä katsotaan seuraavaksi.",
   demoResearcherTitle: "ESBL-klusteri, Sisätaudit A",
@@ -81,7 +81,7 @@ export const demoFi: Record<keyof typeof demoEn, string> = {
     "Jäädytetty, toistettava analyysi: otanta, muistiinpanot, ilmaantuvuus, edelliset viikot, Beta-arvio, tunnistin, Python ja kuvaaja.",
   demoNoteClinician: "",
   demoNoteControlHead:
-    "## Maanantain tarkistus\n\nSisätaudit A:n ESBL-klusteri on avoin signaali. Seitsemän potilasta 2. huhtikuusta, tavallisesti noin 1,4. Potilasvirta näyttää päivystyksen yksikön suurimpana lähteenä (28 %).",
+    "## Maanantain tarkistus\n\nUrologian ESBL-klusteri on avoin signaali: 4 potilasta 4 viikossa, odotettu noin 0,2. Potilasvirta näyttää, mistä yksikön potilaat tulivat.",
   demoNoteControlNext:
     "## Tämän viikon tehtävät\n\n- Kysy osastolta, oliko kontaktieristys käytössä ensimmäisestä löydöksestä alkaen.\n- Lue viikkoilmaantuvuus uudelleen torstaina: toinen tavallista korkeampi viikko tekee siitä epidemian.\n- Katso Geriatriaa, jossa näytteenottoaukko on yhä auki.",
   demoNoteResearcherQuestion:

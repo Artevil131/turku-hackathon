@@ -10,7 +10,9 @@ import { inSite, knownWard, siteWards } from "../../sites.ts";
 /** "any" and D-019's groups (`AGE_GROUPS` in @aei/domain), in the order the strip shows them. */
 export const AGE_GROUPS: readonly AgeGroup[] = ["any", "child", "adult", "older", "veryOld"];
 export type AgeGroup = "any" | AgeBand;
-export type Period = 365 | 28;
+/** The window the list describes, in days: the last four weeks, 90 days or the year (D-082). */
+export type Period = 365 | 90 | 28;
+export const PERIOD_VALUES: readonly Period[] = [28, 90, 365];
 
 export interface DoctorFilters {
   unit: WardCode;
@@ -154,7 +156,7 @@ export function filtersFromUrl(params: URLSearchParams): DoctorFilters {
     age: age && isAgeGroup(age) ? age : DEFAULTS.age,
     onset: params.get("onset") === "hospital",
     sev: sev === "severe" ? "severe" : "mild",
-    period: params.get("period") === "28" ? 28 : 365,
+    period: PERIOD_VALUES.find((p) => String(p) === params.get("period")) ?? 365,
     syn: syndromeOf(params.get("syn"))?.id ?? null,
   };
 }
