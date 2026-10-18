@@ -20,6 +20,7 @@ import "../research/SignalFeed.css";
 import "./start.css";
 import { POINT_EVENT } from "../../demo/Pointer.tsx";
 import { hashParams } from "../../url.ts";
+import { CardMenu } from "./CardMenu.tsx";
 
 function ago(locale: Locale, date: string) {
   const minutes = Math.max(0, Math.floor((Date.now() - new Date(date).getTime()) / 60_000));
@@ -285,47 +286,38 @@ export function StartPage({
                     </div>
                     <time dateTime={project.updatedAt}>{t(locale, "startUpdated", { time: ago(locale, project.updatedAt) })}</time>
                   </div>
-                  <details className="start-card-menu">
-                    <summary aria-label={t(locale, "startMenu", { name: project.name })}>
-                      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
-                        <circle cx="4" cy="9" r="1" />
-                        <circle cx="9" cy="9" r="1" />
-                        <circle cx="14" cy="9" r="1" />
-                      </svg>
-                    </summary>
-                    <div>
-                      <button type="button" onClick={() => shell.openProject(project)}>
-                        {t(locale, "startOpen")}
-                      </button>
-                      <button type="button" onClick={() => setSharing(project)}>
-                        {t(locale, "startShare")}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={async () => {
-                          setBusy(true);
-                          setActionError(false);
-                          try {
-                            await client.createProject({
-                              ...project,
-                              name: t(locale, "startCopyName", { name: project.name }).slice(0, 200),
-                            });
-                            setRevision((n) => n + 1);
-                          } catch {
-                            setActionError(true);
-                          } finally {
-                            setBusy(false);
-                          }
-                        }}
-                      >
-                        {t(locale, "startDuplicate")}
-                      </button>
-                      <button type="button" onClick={() => setDeleting(project)}>
-                        {t(locale, "startDelete")}
-                      </button>
-                    </div>
-                  </details>
+                  <CardMenu label={t(locale, "startMenu", { name: project.name })}>
+                    <button type="button" onClick={() => shell.openProject(project)}>
+                      {t(locale, "startOpen")}
+                    </button>
+                    <button type="button" onClick={() => setSharing(project)}>
+                      {t(locale, "startShare")}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={async () => {
+                        setBusy(true);
+                        setActionError(false);
+                        try {
+                          await client.createProject({
+                            ...project,
+                            name: t(locale, "startCopyName", { name: project.name }).slice(0, 200),
+                          });
+                          setRevision((n) => n + 1);
+                        } catch {
+                          setActionError(true);
+                        } finally {
+                          setBusy(false);
+                        }
+                      }}
+                    >
+                      {t(locale, "startDuplicate")}
+                    </button>
+                    <button type="button" onClick={() => setDeleting(project)}>
+                      {t(locale, "startDelete")}
+                    </button>
+                  </CardMenu>
                 </article>
               ))}
             </ScrollRow>

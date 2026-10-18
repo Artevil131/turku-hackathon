@@ -10,6 +10,7 @@ import { kindLabel } from "./feed/names.ts";
 import type { Spans } from "./feed/spans.ts";
 import type { IncidentLoad } from "./feed/useIncidents.ts";
 import "./SignalFeed.css";
+import { scrollWithin } from "../scrollWithin.ts";
 
 // The researcher's signal list (signals-redesign.md): one line per signal, grouped by time
 // relative to the clock (this week, this month, earlier), one Filter button whose choices
@@ -123,7 +124,8 @@ export function SignalFeed(props: Props) {
   useEffect(() => {
     if (!selected || !state.incident) return;
     const id = requestAnimationFrame(() =>
-      rootRef.current?.querySelector<HTMLElement>('.feed-row[aria-current="true"]')?.scrollIntoView({ block: "nearest" }),
+      // Inside the list only: the page is the reader's to scroll (this runs again on each refetch while the clock plays).
+      scrollWithin(rootRef.current?.querySelector<HTMLElement>('.feed-row[aria-current="true"]')),
     );
     return () => cancelAnimationFrame(id);
   }, [filterKey, selected]);

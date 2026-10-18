@@ -3,12 +3,12 @@ import type { Syndrome } from "@aei/guideline";
 import { antibioticName, type Locale, specimenName, t, wardName } from "@aei/i18n";
 import { cloneElement, isValidElement, memo, type ReactNode, useMemo, useRef } from "react";
 import "./CoverageList.css";
-import { BAR, type Basis, barOf, basisFor, type DoctorFilters, dmy, droppedFilters, num, pct } from "./filters.ts";
+import { BAR, type Basis, barOf, basisFor, type DoctorFilters, dmy, droppedFilters, num, pct, periodName } from "./filters.ts";
 import { GuideSummary, guideCodes } from "./Guide.tsx";
 import { priorText, withPrior } from "./Patient.tsx";
 import { InfoIcon, Popover } from "./Popover.tsx";
 import { PrintSheet } from "./PrintSheet.tsx";
-import { type Item, STANDING } from "./reason.ts";
+import { type Item, nothingAssessable, STANDING, standingOn } from "./reason.ts";
 import type { UnitSignal } from "./signals.ts";
 
 export type ListStatus = "loading" | "error" | "ready";
@@ -100,9 +100,13 @@ export const CoverageList = memo(function CoverageList({
   const { singles, pairs } = useMemo(() => (data ? itemsOf(data, locale, patient) : { singles: [], pairs: [] }), [data, locale, patient]);
   const firstBelow = singles.findIndex((s) => s.standing !== "clears");
   const all = [...singles, ...pairs];
+  // No isolates, or nothing with enough results: the empty-state sentence, not a list of dashes.
+  const empty = !!cov && nothingAssessable(all, cov.isolates);
   const date = data?.asOf ?? asOf;
   const guided = useMemo(() => guideCodes(syndrome), [syndrome]);
-  // The figures follow the doctor's choice; the tick and colour stay on what the server judged (own spectrum for mild, everything for severe).
+  // The figure, the tick and its colour follow the doctor's choice (the same rule applied to the shown basis,
+  // `standingOn`); the order and the below-the-bar divider stay on what the server judged (own spectrum for mild,
+  // everything for severe), so the divider is drawn only on that basis.
   const judged = basisFor(filters.sev);
   const view: Basis = filters.judge ?? judged;
   const basisName = (b: Basis) => t(locale, b === "own" ? "drJudgeOwn" : "drJudgeAll");
@@ -121,12 +125,13 @@ export const CoverageList = memo(function CoverageList({
   const meta = cov && cov.level !== "unit" ? t(locale, cov.level === "ward type" ? "drLevelWardTypeShort" : "drLevelHospitalShort") : null;
 
   const renderItem = (item: Item) => {
-    const st = STANDING[item.standing];
+    const standing = standingOn(item, view, bar);
+    const st = STANDING[standing];
     // A single antibiotic has both bases; a combination only the one over everything that grew.
     const c = item.row ? (view === "own" ? item.row.coverage.spectrum : item.row.coverage) : null;
     const share = c ? c.share : item.share;
     const interval = c ? c.interval : item.interval;
-    const assessable = item.standing !== "not assessable" && share !== null;
+    const assessable = standing !== "not assessable" && share !== null;
     const isSel = selected === item.id;
     return (
       <li key={item.id} className="cl-li">
@@ -136,7 +141,7 @@ export const CoverageList = memo(function CoverageList({
           aria-controls={isSel ? "dr-details" : undefined}
           data-row={item.id}
           className="cl-row"
-          data-standing={item.standing}
+          data-standing={standing}
           data-selected={isSel ? "" : undefined}
           onClick={() => onSelect(isSel ? null : item.id)}
         >
@@ -168,7 +173,7 @@ export const CoverageList = memo(function CoverageList({
             </small>
             {meta ? <span className="cl-secondary cl-basis">{meta}</span> : null}
           </span>
-          <span className="cl-res" data-standing={item.standing} title={t(locale, st.long)}>
+          <span className="cl-res" data-standing={standing} title={t(locale, st.long)}>
             <span className="cl-glyph" aria-hidden="true">
               {st.glyph}
             </span>
@@ -213,9 +218,7 @@ export const CoverageList = memo(function CoverageList({
           label={t(locale, "drInfo")}
           content={
             <>
-              <p>
-                {t(locale, "drForestInfo", { period: filters.period === 365 ? t(locale, "drPeriodYear") : span(locale, filters.period) })}
-              </p>
+              <p>{t(locale, "drForestInfo", { period: periodName(locale, filters.period) })}</p>
               <p>{t(locale, "drRecentContext")}</p>
               {ready ? droppedFilters(filters, cov).map((d) => <p key={d.long}>{t(locale, d.long, { bar })}</p>) : null}
               <p>
@@ -278,11 +281,9 @@ export const CoverageList = memo(function CoverageList({
         </ul>
       ) : null}
 
-      {data && cov && all.length === 0 ? (
-        <p className="cl-state">{t(locale, "drEmpty", { site: site.toLowerCase(), date: dmy(data.asOf) })}</p>
-      ) : null}
+      {data && cov && empty ? <p className="cl-state">{t(locale, "drEmpty", { site: site.toLowerCase(), date: dmy(data.asOf) })}</p> : null}
 
-      {data && cov && all.length > 0 ? (
+      {data && cov && !empty ? (
         <>
           {singles.length > 0 && onJudge ? (
             <div className="cl-judge">
@@ -311,7 +312,7 @@ export const CoverageList = memo(function CoverageList({
               <span>{t(locale, "drStandingCol")}</span>
             </div>
             <ul className="cl-rows" aria-label={t(locale, "drCoverage")}>
-              {renderGroup(singles, firstBelow, t(locale, "drBelowDivider", { bar }))}
+              {renderGroup(singles, view === judged ? firstBelow : -1, t(locale, "drBelowDivider", { bar }))}
               {pairs.length > 0 ? renderGroup(pairs, 0, t(locale, "drTwoTogether")) : null}
             </ul>
             <p className="cl-note">{t(locale, "drListNote")}</p>

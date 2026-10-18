@@ -503,7 +503,8 @@ export interface AeiClient {
   createProject(input: ProjectInput): Promise<ProjectResponse>;
   updateProject(id: string, input: ProjectInput): Promise<ProjectResponse>;
   deleteProject(id: string): Promise<void>;
-  ask(text: string, lang: "en" | "fi"): Promise<AskResponse>;
+  /** `site` limits the units the question is read against to that hospital's; the home site's when omitted (D-051). */
+  ask(text: string, lang: "en" | "fi", site?: string): Promise<AskResponse>;
   /** The code's template by default; `wording: "model"` asks the AI to reword it (D-029). */
   explain(id: string, lang: "en" | "fi", wording?: ExplainWording): Promise<ExplainResponse>;
   coverage(query: CoverageQuery): Promise<CoverageResponse>;
@@ -573,11 +574,11 @@ export function createAeiClient(options: AeiClientOptions): AeiClient {
     deleteProject: async (id) => {
       await request(projectPath(id), { method: "DELETE" });
     },
-    ask: (text, lang) =>
+    ask: (text, lang, site) =>
       json<AskResponse>(ROUTES.ask, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ text, lang }),
+        body: JSON.stringify(site ? { text, lang, site } : { text, lang }),
       }),
     explain: (id, lang, wording) => json<ExplainResponse>(withQuery(ROUTES.explain, { id, lang, wording })),
     coverage: (query) => json<CoverageResponse>(withQuery(ROUTES.coverage, query)),

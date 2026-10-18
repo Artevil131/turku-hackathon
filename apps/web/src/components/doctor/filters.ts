@@ -14,6 +14,14 @@ export type AgeGroup = "any" | AgeBand;
 export type Period = 365 | 90 | 28;
 export const PERIOD_VALUES: readonly Period[] = [28, 90, 365];
 
+/** The window as a name, for "Period: last 12 months" (Finnish nominative "viimeiset 12 kuukautta"). */
+export const periodName = (locale: Locale, period: Period): string =>
+  t(locale, period === 365 ? "drPeriodYear" : period === 90 ? "drPeriod90" : "drPeriodMonth");
+
+/** The window inside a sentence, "in the last 12 months" (Finnish "viimeisten 12 kuukauden aikana"): never "last year". */
+export const periodDuring = (locale: Locale, period: Period): string =>
+  t(locale, period === 365 ? "drDuring365" : period === 90 ? "drDuring90" : "drDuring28");
+
 /** What the row's figure is counted on: the antibiotic's own spectrum, or every organism that grew. */
 export type Basis = "own" | "all";
 /** The basis the answer card judges on: own spectrum for a mild case, everything for a severe one. */

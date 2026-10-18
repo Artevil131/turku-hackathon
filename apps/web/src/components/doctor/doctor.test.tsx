@@ -1,5 +1,5 @@
 import type { CoverageResponse, NationalResponse, PatientFindingsResponse, Severity } from "@aei/contract";
-import type { IsolateRecord } from "@aei/domain";
+import type { AntibioticCode, IsolateRecord } from "@aei/domain";
 import { guide } from "@aei/guideline";
 import type { ComponentProps } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -123,8 +123,15 @@ describe("doctor list disclosure", () => {
     expect(pressed(all)).toEqual(["its own spectrum=false", "everything that grows here=true"]);
     expect(bold(all)).toBe("75");
     expect(point(all)).not.toBe(point(own));
-    expect(all).toContain("Tick and colour stay judged on its own spectrum");
-    expect(own).not.toContain("Tick and colour stay judged");
+    expect(all).toContain("The order stays judged on its own spectrum; the figure and its mark follow your choice.");
+    expect(own).not.toContain("The order stays judged");
+    // The mark follows the figure: 95 % within spectrum clears the 80 % bar, 75 % over everything does not.
+    const mark = (html: string) => rowOf(html, "MEC").match(/class="cl-res" data-standing="([^"]+)"/)?.[1];
+    expect(mark(own)).toBe("clears");
+    expect(mark(all)).toBe("below");
+    expect(rowOf(all, "MEC")).toContain('class="cl-row" data-standing="below"');
+    // The below-the-bar divider belongs to the judged basis only.
+    expect(all).not.toContain("data-divider");
     // Severe starts on everything, the basis the answer card judges on.
     const severe = response(
       Array.from({ length: 65 }, (_, i) => record(i, { specimen: "blood", results: { CIP: i < 60 ? "S" : "R" } })),
@@ -495,13 +502,18 @@ describe("patient's prior finding (D-050)", () => {
 });
 
 describe("answer card wording and combination headline", () => {
-  const card = (data: CoverageResponse, bar = 90) =>
+  const card = (
+    data: CoverageResponse,
+    bar = 90,
+    extra: { patient?: PatientFindingsResponse; period?: 28 | 90 | 365; locale?: "en" | "fi" } = {},
+  ) =>
     renderToStaticMarkup(
       <DoctorAnswer
-        locale="en"
-        filters={{ ...filters, site: "blood", sev: "severe" }}
-        items={[...itemsOf(data, "en").singles, ...itemsOf(data, "en").pairs]}
+        locale={extra.locale ?? "en"}
+        filters={{ ...filters, site: data.severity === "severe" ? "blood" : "urine", sev: data.severity, period: extra.period ?? 365 }}
+        items={[...itemsOf(data, extra.locale ?? "en", extra.patient).singles, ...itemsOf(data, extra.locale ?? "en", extra.patient).pairs]}
         bar={bar}
+        asOf={data.asOf}
         loading={false}
         failed={false}
         editing={false}
@@ -520,15 +532,97 @@ describe("answer card wording and combination headline", () => {
     );
     const html = card(data);
     expect(html).toContain("No single antibiotic clears the 90 % bar for this case; a combination does.");
-    expect(html).toContain("Start with");
-    expect(html).toContain("Together they cover 100 % of the likely bacteria");
+    expect(html).toMatch(/Highest coverage clearing the 90 % bar: <span class="dr-good">[^<]+ \+ [^<]+<\/span>/);
+    expect(html).toMatch(
+      /Together they cover 100 % \(95 % CI \d+–100\) of 65 first isolates of everything that grew, in the last 12 months\./,
+    );
     expect(html).not.toContain("Look at the combinations below");
+    expect(html).not.toContain("Start with");
   });
-  it("labels the headline and the all-organisms line as different bases", () => {
+  it("says a borderline combination is near the bar, not that it clears, and does not colour it good", () => {
+    const data = response(
+      Array.from({ length: 65 }, (_, i) =>
+        record(i, {
+          specimen: "blood",
+          ...(i < 45 ? { results: { MEM: "S" } } : { organism: "Staphylococcus aureus", results: { FOX: "R", VAN: "S" } }),
+        }),
+      ),
+      "severe",
+    );
+    const first = data.combinationSuggestions[0];
+    if (!first) throw new Error("fixture must include a pair");
+    const borderline = {
+      ...data,
+      combinationSuggestions: [
+        {
+          ...first,
+          standing: "borderline" as const,
+          coverage: { ...first.coverage, share: 0.92, interval: [0.83, 0.97] as [number, number] },
+        },
+      ],
+    };
+    const html = card(borderline);
+    expect(html).toContain("The best combination is near the bar but not clearly above it.");
+    expect(html).not.toContain("a combination does");
+    expect(html).toContain("Closest to the 90 % bar: <span>");
+    expect(html).not.toContain("dr-good");
+    expect(html).toContain("Together they cover 92 % (95 % CI 83–97) of 65 first isolates");
+  });
+  it("heads with the highest-coverage clearing drug, its interval and n, on the basis it was judged on", () => {
     const html = card(urine(), 80);
-    expect(html).toContain("within its intended spectrum");
+    // Mild: judged within the intended spectrum.
+    expect(html).toMatch(/Highest coverage clearing the 80 % bar: <span class="dr-good">[^<]+<\/span>/);
+    expect(html).toMatch(/Covers 100 % \(95 % CI \d+–100\) of 60 first isolates within its intended spectrum, in the last 12 months\./);
     expect(html).toContain("Across everything that grows here:");
-    expect(html).not.toContain("Works here");
-    expect(html).toContain("Also works</span>");
+    expect(html).toContain("in this unit&#x27;s last 4 weeks");
+    expect(html).toContain("Also clears the bar</span>");
+    // Pills carry n.
+    expect(html).toMatch(/<b>92\u00a0%<\/b> · n\u00a060/);
+    // Severe: judged over everything that grew.
+    const severe = response(
+      Array.from({ length: 65 }, (_, i) => record(i, { specimen: "blood", results: { MEM: "S", CIP: i < 64 ? "S" : "R" } })),
+      "severe",
+    );
+    const sev = card(severe);
+    expect(sev).toContain("first isolates of everything that grew");
+    expect(sev).not.toContain("within its intended spectrum");
+  });
+  it("names the chosen period, never 'last year'", () => {
+    expect(card(urine(), 80, { period: 90 })).toContain("in the last 90 days.");
+    const four = card(urine(), 80, { period: 28 });
+    expect(four).toContain("in the last 4 weeks.");
+    expect(four).not.toContain("this unit&#x27;s last 4 weeks");
+    const fi = card(urine(), 80, { locale: "fi" });
+    expect(fi).toContain("viimeisten 12 kuukauden aikana");
+    expect(fi).not.toContain("viime vuonna");
+    expect(card(urine(), 80)).not.toContain("last year");
+  });
+  it("skips a drug the patient's earlier finding defeats, and says why", () => {
+    const data = urine();
+    const top = itemsOf(data, "en").singles[0];
+    if (!top) throw new Error("fixture must have a first row");
+    const patient = { ...PATIENT, affects: { esbl: [top.id as AntibioticCode] } };
+    const html = card(data, 80, { patient });
+    expect(html).toContain(`${top.name} skipped: the patient&#x27;s earlier ESBL finding`);
+    expect(html).not.toContain(`<span class="dr-good">${top.name}</span>`);
+    expect(html).not.toMatch(new RegExp(`<li>${top.name} <b>`));
+    // Every clearing drug defeated: no headline drug, and no claim that none clears.
+    const clearing = itemsOf(data, "en")
+      .singles.filter((i) => i.standing === "clears")
+      .map((i) => i.id as AntibioticCode);
+    const all = card(data, 80, { patient: { ...PATIENT, affects: { esbl: clearing } } });
+    expect(all).toContain("Every antibiotic that clears the 80 % bar is one the patient&#x27;s earlier finding makes resistant.");
+    expect(all).not.toContain("dr-good");
+    expect(all).not.toContain("No single antibiotic clears");
+  });
+  it("shows the empty state, not 'look at the combinations', when nothing has results", () => {
+    const empty = response([], "severe");
+    expect(empty.coverage.isolates).toBe(0);
+    const html = card(empty);
+    expect(html).toContain("No antibiotic assessable for blood here on 30.6.2026: fewer than 30 results at any level.");
+    expect(html).not.toContain("combinations below");
+    const listed = list(empty, "en");
+    expect(listed).toContain("No antibiotic assessable for urine here");
+    expect(listed).not.toContain('class="cl-rows"');
   });
 });

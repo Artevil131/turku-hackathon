@@ -1,5 +1,6 @@
 import { type Locale, t } from "@aei/i18n";
-import { type ReactNode, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useId, useRef, useState } from "react";
+import { OnBody, useAnchored } from "./anchored.ts";
 import { Info as InfoIcon } from "./Icons.tsx";
 
 interface Props {
@@ -22,33 +23,9 @@ export function InfoButton({ locale, children, label, align = "start" }: Props) 
   const id = useId();
   const button = useRef<HTMLButtonElement>(null);
   const root = useRef<HTMLSpanElement>(null);
-  const pop = useRef<HTMLSpanElement>(null);
-  const [shift, setShift] = useState(0);
-
-  // Keeps the popover inside the viewport: measured unshifted, then moved sideways by the overflow.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: re-measure whenever the popover opens or its align changes
-  useLayoutEffect(() => {
-    if (!open) {
-      setShift(0);
-      return;
-    }
-    const place = () => {
-      const el = pop.current;
-      if (!el) return;
-      el.style.translate = "0 0";
-      const { left, right } = el.getBoundingClientRect();
-      const edge = 8;
-      const width = document.documentElement.clientWidth;
-      let dx = 0;
-      if (right > width - edge) dx = width - edge - right;
-      if (left + dx < edge) dx = edge - left;
-      el.style.translate = "";
-      setShift(Math.round(dx));
-    };
-    place();
-    addEventListener("resize", place);
-    return () => removeEventListener("resize", place);
-  }, [open, align]);
+  const pop = useRef<HTMLDivElement>(null);
+  // On <body>, placed next to the button, so a window's edge or the window below never cuts it off.
+  const place = useAnchored(open, button, pop, align);
 
   useEffect(() => {
     if (!open) return;
@@ -59,7 +36,8 @@ export function InfoButton({ locale, children, label, align = "start" }: Props) 
       button.current?.focus();
     };
     const onPointer = (e: PointerEvent) => {
-      if (root.current && !root.current.contains(e.target as Node)) setOpen(false);
+      const at = e.target as Node;
+      if (!root.current?.contains(at) && !pop.current?.contains(at)) setOpen(false);
     };
     document.addEventListener("keydown", onKey, true);
     document.addEventListener("pointerdown", onPointer);
@@ -84,16 +62,11 @@ export function InfoButton({ locale, children, label, align = "start" }: Props) 
         <InfoIcon />
       </button>
       {open ? (
-        <span
-          id={id}
-          ref={pop}
-          className="info-pop"
-          role="note"
-          data-align={align}
-          style={shift ? { translate: `${shift}px 0` } : undefined}
-        >
-          {children}
-        </span>
+        <OnBody>
+          <div id={id} ref={pop} className="info-pop" role="note" style={place}>
+            {children}
+          </div>
+        </OnBody>
       ) : null}
     </span>
   );

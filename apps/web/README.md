@@ -39,8 +39,6 @@ Pages (URL hash; each page keeps its view state in the hash, so any view is a li
   maximise and close controls appear at its top right on hover. Ready-made
   layouts sit in the toolbar; the layout is remembered in the browser.
 - **Settings** (`#settings`): language, remembered view, about the data.
-- **Intro** (`#intro`): the pitch opening, a terraced picture of county
-  pressure; not a working view.
 
 The replay timeline sits under the top bar on every working page. Its title
 names the hospital and the number of units, or the unit in focus. Step

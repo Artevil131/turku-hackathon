@@ -1272,11 +1272,13 @@ button {
   color: var(--live);
 }
 
+/* On <body>, placed in viewport coordinates by useAnchored (Info.tsx). */
 .info-pop {
-  position: absolute;
-  z-index: 60;
-  top: calc(100% + 4px);
-  left: 0;
+  position: fixed;
+  z-index: 450;
+  box-sizing: border-box;
+  max-height: var(--anchored-room, 70vh);
+  overflow-y: auto;
   width: max-content;
   max-width: min(320px, calc(100vw - 24px));
   overflow-wrap: anywhere;
@@ -1292,9 +1294,13 @@ button {
   text-align: left;
 }
 
-.info-pop[data-align="end"] {
-  left: auto;
-  right: 0;
+.info-pop p {
+  margin: 0;
+}
+
+.info-pop p + p {
+  margin-top: 4px;
+  color: var(--ink-3);
 }
 
 /* Hospital selector and the page's hospital line (D-051); shown only with more than one hospital. */
@@ -1678,4 +1684,21 @@ abbr.gloss {
   line-height: 1.5;
   color: var(--ink-2);
   max-width: 40ch;
+}
+
+/* The error boundary's page (ErrorBoundary.tsx): one sentence and Reload, centred. */
+.app-crash {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 12px;
+  min-height: 100dvh;
+  padding: 16px;
+  background: var(--chassis, #f7f7f9);
+  color: var(--ink);
+  text-align: center;
+}
+.app-crash p {
+  max-width: 44ch;
+  margin: 0;
 }

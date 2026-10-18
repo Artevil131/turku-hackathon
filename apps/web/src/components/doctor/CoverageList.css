@@ -902,11 +902,12 @@
     grid-template-columns: minmax(0, 1.15fr) minmax(360px, 0.85fr);
     align-items: stretch;
   }
-  /* Beside the case panel, the answer sits in its own matching card frame with balanced vertical rhythm. */
+  /* Beside the case panel, the answer sits in its own card frame, its lines stacked from the top at a fixed rhythm;
+     the card is as tall as what it says (the list follows right under it; DoctorPage.css lays out the columns). */
   .dr-top .dr-answer {
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: flex-start;
     gap: 12px;
     border: 1px solid var(--line);
     border-radius: 14px;
@@ -965,6 +966,30 @@
   min-height: 28px;
   padding: 0 9px;
   font-size: var(--t-xs, 12px);
+}
+/* The case card keeps the guide's syndromes compact, so the card (and the answer card it sets the height of) stays
+   about as tall as the answer: smaller chips, the specimen in a column of its own, the source on one quiet line. */
+.dr-case .syn-source {
+  display: block;
+}
+.dr-case .syn-row {
+  gap: 4px;
+}
+.dr-case .syn-group {
+  position: relative;
+  gap: 4px;
+  padding-left: 56px;
+}
+.dr-case .syn-site {
+  position: absolute;
+  top: 4px;
+  left: 0;
+  font-size: 13px;
+}
+.dr-case .syn-chip {
+  height: 26px;
+  padding: 0 9px;
+  font-size: 13px;
 }
 .rs-more-wide {
   margin-top: 8px;
@@ -1140,12 +1165,12 @@
 }
 .dr-case .syn-row {
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   overflow: visible;
 }
 .dr-case .syn-group {
   flex-wrap: wrap;
-  row-gap: 6px;
+  row-gap: 4px;
 }
 
 /* The one-line reason a combination heads the answer: plain, not the green pill of a single drug that clears. */

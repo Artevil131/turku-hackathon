@@ -15,7 +15,8 @@ services:
     user: ${AEI_API_USER:-node}
     environment:
       AEI_STATE_DIR: /state
-      AEI_REPLAY_START: ${AEI_REPLAY_START:-2025-05-12}
+      # Empty: the D-079 default (today, clamped to the data's last sample date); set a date to pin it.
+      AEI_REPLAY_START: ${AEI_REPLAY_START:-}
       AEI_LOAD_UNTIL: ${AEI_LOAD_UNTIL:-}
       AEI_TICK_MS: ${AEI_TICK_MS:-2000}
       AEI_DAYS_PER_TICK: ${AEI_DAYS_PER_TICK:-1}

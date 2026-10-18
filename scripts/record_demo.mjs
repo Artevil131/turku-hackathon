@@ -185,11 +185,10 @@ if (!severe.result?.value) console.error("no Severe control found");
 await sleep(7000);
 
 // 4. The region: the clock moves to 3 October 2025; Varsinais-Suomi's CPE E. coli signal of September.
-await fetch(`http://localhost:${API}/api/clock`, {
-  method: "POST",
-  headers: { "content-type": "application/json" },
-  body: JSON.stringify({ action: "seek", date: "2025-10-03" }),
-});
+// From the page, so the request carries the browser's visitor cookie: the server keeps a clock per browser (D-078).
+await js(
+  `fetch("/api/clock", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "seek", date: "2025-10-03" }) }).then((r) => r.status)`,
+);
 await send("Page.navigate", { url: `${base}/#timeline` });
 await sleep(5000);
 await js(

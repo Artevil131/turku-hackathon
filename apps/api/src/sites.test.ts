@@ -1,6 +1,6 @@
 import { once } from "node:events";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
-import type { Server } from "node:http";
+import { createServer, type Server } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -147,5 +147,41 @@ describe("a second hospital", () => {
     api = undefined;
     vi.resetModules();
     await expect(startApi({ sites: [SATA, SATA] })).rejects.toThrow(/duplicate id/);
+  });
+});
+
+describe("Ask by hospital", () => {
+  let model: Server | undefined;
+  afterEach(async () => {
+    await stop(model);
+    model = undefined;
+  });
+
+  it("reads the question against one hospital's units: the named site's, or the home site's", async () => {
+    const prompts: string[] = [];
+    model = createServer(async (req, res) => {
+      res.setHeader("content-type", "application/json");
+      if (req.method === "GET") return void res.end(JSON.stringify({ object: "list", data: [{ id: "local-test" }] }));
+      let raw = "";
+      for await (const chunk of req) raw += chunk;
+      prompts.push(JSON.parse(raw).messages[0].content);
+      res.end(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ ward: null, unmatched: [] }) } }] }));
+    }).listen(0);
+    await once(model, "listening");
+    const address = model.address();
+    if (!address || typeof address === "string") throw new Error("No listening address");
+    vi.stubEnv("AEI_LLM_URL", `http://127.0.0.1:${address.port}`);
+    vi.stubEnv("AEI_LLM_MODEL", "local-test");
+    const base = await startApi({ sites: [SATA] });
+    const ask = (body: object) =>
+      fetch(`${base}/api/ask`, { method: "POST", body: JSON.stringify({ text: "esbl in icu", lang: "en", ...body }) });
+    expect((await ask({})).status).toBe(200);
+    expect((await ask({ site: "sata" })).status).toBe(200);
+    expect((await ask({ site: "nowhere" })).status).toBe(400);
+    expect(prompts).toHaveLength(2);
+    expect(prompts[0]).toMatch(/^ {2}ICU: /m);
+    expect(prompts[0]).not.toContain("sata/ICU");
+    expect(prompts[1]).toContain("sata/ICU");
+    expect(prompts[1]).not.toMatch(/^ {2}(ICU|URO): /m);
   });
 });

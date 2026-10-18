@@ -26,7 +26,7 @@ export function QualityResult({ locale, data, expanded = false }: { locale: Loca
   if (!expanded)
     return (
       <a className="link" href="#data?section=quality">
-        {t(locale, "qualityLink", { n: fmt(n) })}
+        {n === 1 ? t(locale, "qualityLinkOne") : t(locale, "qualityLink", { n: fmt(n) })}
       </a>
     );
   return (

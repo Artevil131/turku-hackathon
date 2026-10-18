@@ -1,5 +1,5 @@
 import { guide, type Syndrome, type SyndromeId } from "@aei/guideline";
-import { type Locale, specimenName, t } from "@aei/i18n";
+import { formatDate, type Locale, specimenName, t } from "@aei/i18n";
 import { useState } from "react";
 import { SITES } from "./filters.ts";
 import "./SyndromePicker.css";
@@ -58,9 +58,20 @@ export function SyndromePicker({ locale, value, onPick, compact = false }: Props
         {open ? chips : null}
       </nav>
     );
+  // Where the list comes from, in view: the guide's own name links to the guide, so nobody wonders why these.
+  const [before = "", after = ""] = t(locale, "drSyndromeSource", { guide: "\u0000", date: formatDate(locale, g.date, "long") }).split(
+    "\u0000",
+  );
   return (
     <nav className="syn" aria-label={t(locale, "drSyndrome")} title={t(locale, "drSyndromeHint")}>
       <span className="syn-label">{t(locale, "drSyndrome")}</span>
+      <p className="syn-source">
+        {before}
+        <a href={g.url} target="_blank" rel="noreferrer">
+          {g.title}
+        </a>
+        {after}
+      </p>
       {chips}
     </nav>
   );

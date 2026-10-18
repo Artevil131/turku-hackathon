@@ -83,8 +83,15 @@ describe("research projects (D-057, D-058)", () => {
 
   it("keeps each visitor's projects apart and gives a new browser its cookie", async () => {
     const base = await startApi();
+    // A read without the cookie is a new visitor with no projects and sets none; the app's first clock read sets it.
     const first = await realFetch(`${base}/api/projects`);
-    expect(first.headers.get("set-cookie")).toMatch(/^aei_visitor=[a-f0-9]{32}; Path=\/; Max-Age=31536000; SameSite=Lax; HttpOnly$/);
+    expect(first.headers.get("set-cookie")).toBeNull();
+    expect(await first.json()).toEqual({ projects: [] });
+    const clock = await realFetch(`${base}/api/clock`);
+    expect(clock.headers.get("set-cookie")).toMatch(/^aei_visitor=[a-f0-9]{32}; Path=\/; Max-Age=31536000; SameSite=Lax; HttpOnly$/);
+    const write = await realFetch(`${base}/api/projects`, { method: "POST", body: JSON.stringify(input) });
+    expect(write.status).toBe(201);
+    expect(write.headers.get("set-cookie")).toMatch(/^aei_visitor=[a-f0-9]{32};/);
     const mine = createAeiClient({ baseUrl: base });
     const theirs = createAeiClient({ baseUrl: base, fetch: withVisitor("fedcba9876543210fedcba9876543210") });
     const { project } = await mine.createProject(input);
@@ -491,9 +498,13 @@ describe("assistant HTTP routes", () => {
     // Carrier arrivals are no longer alerts (D-022).
     expect((await fetch(`${base}/api/explain?id=carrier:c2:esbl&lang=en`)).status).toBe(404);
     expect((await fetch(`${base}/api/explain?id=cpe:i3&lang=en`)).status).toBe(404);
-    await fetch(`${base}/api/clock`, { method: "POST", body: JSON.stringify({ action: "seek", date: "2025-03-01" }) });
+    const cookie = { cookie: "aei_visitor=0123456789abcdef0123456789abcdef" };
+    expect((await fetch(`${base}/api/explain?id=cpe:i2&lang=en`, { headers: cookie })).status).toBe(200);
+    await fetch(`${base}/api/clock`, { method: "POST", headers: cookie, body: JSON.stringify({ action: "seek", date: "2025-03-01" }) });
     // Cache must not reveal an alert after rewinding past its release.
-    expect((await fetch(`${base}/api/explain?id=cpe:i2&lang=en`)).status).toBe(404);
+    expect((await fetch(`${base}/api/explain?id=cpe:i2&lang=en`, { headers: cookie })).status).toBe(404);
+    // Another browser's clock did not move.
+    expect((await fetch(`${base}/api/explain?id=cpe:i2&lang=en`)).status).toBe(200);
   });
   it("grounds parsing in metadata/replay time, caches explanations by language and maps upstream errors to 502", async () => {
     const requests: { messages: { content: string }[] }[] = [];
@@ -543,6 +554,9 @@ describe("assistant HTTP routes", () => {
     });
     expect(requests[0]?.messages[0]?.content).toContain("Teho-osasto");
     expect(requests[0]?.messages[0]?.content).toContain("2025-05-01");
+    expect(
+      (await fetch(`${base}/api/ask`, { method: "POST", body: JSON.stringify({ text: "older men", lang: "en", site: "nowhere" }) })).status,
+    ).toBe(400);
     // The template by default, without asking the model (D-029).
     const plain = await (await fetch(`${base}/api/explain?id=cpe:i2&lang=en`)).json();
     expect(plain).toMatchObject({ source: "template" });
@@ -591,9 +605,10 @@ describe("data checks", () => {
 });
 
 describe("clock commands", () => {
+  const cookie = { cookie: "aei_visitor=0123456789abcdef0123456789abcdef" };
   it("refuses a date or speed that would break later ticks, and keeps the clock where it was", async () => {
     const base = await startApi();
-    const post = (body: unknown) => fetch(`${base}/api/clock`, { method: "POST", body: JSON.stringify(body) });
+    const post = (body: unknown) => fetch(`${base}/api/clock`, { method: "POST", headers: cookie, body: JSON.stringify(body) });
     for (const bad of [
       { action: "seek", date: "2025-99-99" },
       { action: "seek", date: 20250301 },
@@ -604,10 +619,97 @@ describe("clock commands", () => {
       { action: "configure", tickMs: -5 },
     ])
       expect((await post(bad)).status).toBe(400);
-    expect(await (await fetch(`${base}/api/clock`)).json()).toMatchObject({ asOf: "2025-05-01", tickMs: 2000, daysPerTick: 1 });
+    expect(await (await fetch(`${base}/api/clock`, { headers: cookie })).json()).toMatchObject({
+      asOf: "2025-05-01",
+      tickMs: 2000,
+      daysPerTick: 1,
+    });
     expect((await post({ action: "seek", date: "2025-03-01" })).status).toBe(200);
     expect((await post({ action: "step", days: 2 })).status).toBe(200);
-    expect((await (await fetch(`${base}/api/clock`)).json()).asOf).toBe("2025-03-03");
+    expect((await (await fetch(`${base}/api/clock`, { headers: cookie })).json()).asOf).toBe("2025-03-03");
+  });
+});
+
+describe("a replay clock per visitor", () => {
+  const A = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+  const B = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+  const as = (visitor: string) => ({ cookie: `aei_visitor=${visitor}` });
+  const read = async (url: string, visitor?: string) => (await fetch(url, visitor ? { headers: as(visitor) } : {})).json();
+  const command = (base: string, visitor: string, body: unknown) =>
+    fetch(`${base}/api/clock`, { method: "POST", headers: as(visitor), body: JSON.stringify(body) });
+  /** An open live stream for one visitor; `text()` is everything received so far. */
+  function stream(base: string, visitor: string) {
+    let text = "";
+    const req = request(`${base}/api/live`, { headers: as(visitor) });
+    const opened = new Promise<void>((resolve, reject) => {
+      req.on("response", (res) => {
+        res.setEncoding("utf8");
+        res.on("data", (chunk: string) => {
+          text += chunk;
+        });
+        resolve();
+      });
+      req.on("error", reject);
+    });
+    req.end();
+    return { opened, text: () => text };
+  }
+
+  it("keeps two visitors' dates apart in every read, the stream included", async () => {
+    const base = await startApi();
+    expect((await command(base, A, { action: "seek", date: "2025-03-01" })).status).toBe(200);
+    expect((await command(base, B, { action: "seek", date: "2025-06-01" })).status).toBe(200);
+    expect((await read(`${base}/api/clock`, A)).asOf).toBe("2025-03-01");
+    expect((await read(`${base}/api/clock`, B)).asOf).toBe("2025-06-01");
+    // Routes that default to the clock's date read the visitor's own.
+    expect((await read(`${base}/api/isolates`, A)).records.map((r: { isolateId: string }) => r.isolateId)).toEqual(["i0", "i1"]);
+    expect((await read(`${base}/api/isolates`, B)).records).toHaveLength(4);
+    expect((await read(`${base}/api/alerts`, A)).asOf).toBe("2025-03-01");
+    expect((await read(`${base}/api/alerts`, B)).asOf).toBe("2025-06-01");
+    expect((await read(`${base}/api/weekly`, B)).asOf).toBe("2025-06-01");
+    expect((await read(`${base}/api/patient/findings?id=p2`, B)).findings).toHaveLength(1);
+    expect((await read(`${base}/api/patient/findings?id=p2`, A)).findings).toEqual([]);
+    expect((await fetch(`${base}/api/explain?id=cpe:i2&lang=en`, { headers: as(A) })).status).toBe(404);
+    expect((await fetch(`${base}/api/explain?id=cpe:i2&lang=en`, { headers: as(B) })).status).toBe(200);
+
+    const a = stream(base, A);
+    const b = stream(base, B);
+    await Promise.all([a.opened, b.opened]);
+    await vi.waitFor(() => expect(a.text()).toContain('"asOf":"2025-03-01"'));
+    await vi.waitFor(() => expect(b.text()).toContain('"asOf":"2025-06-01"'));
+    await command(base, A, { action: "step", days: 1 });
+    await vi.waitFor(() => expect(a.text()).toContain('"asOf":"2025-03-02"'));
+    expect(b.text()).not.toContain("2025-03-02");
+  });
+
+  it("answers a request without the cookie from a new clock's start, and gives it a cookie", async () => {
+    const base = await startApi();
+    await command(base, A, { action: "seek", date: "2025-03-01" });
+    const plain = await fetch(`${base}/api/clock`);
+    expect(plain.status).toBe(200);
+    expect(plain.headers.get("set-cookie")).toMatch(/^aei_visitor=[a-f0-9]{32};/);
+    expect(await plain.json()).toMatchObject({ asOf: "2025-05-01", running: false, tickMs: 2000, daysPerTick: 1 });
+    // Other reads set no cookie; a command without one moves only the new visitor's clock it is given.
+    const alerts = await fetch(`${base}/api/alerts`);
+    expect(alerts.headers.get("set-cookie")).toBeNull();
+    expect((await alerts.json()).asOf).toBe("2025-05-01");
+    const moved = await fetch(`${base}/api/clock`, { method: "POST", body: JSON.stringify({ action: "seek", date: "2025-06-01" }) });
+    expect((await moved.json()).asOf).toBe("2025-06-01");
+    expect((await read(`${base}/api/clock`)).asOf).toBe("2025-05-01");
+    expect((await read(`${base}/api/clock`, A)).asOf).toBe("2025-03-01");
+  });
+
+  it("moves every clock forward to results ingested after it, and new clocks start there", async () => {
+    const base = await startApi();
+    await command(base, A, { action: "seek", date: "2025-03-01" });
+    await command(base, B, { action: "seek", date: "2025-06-01" });
+    const csv =
+      "patient_id,sex,birth_year,culture_id,sample_date,ward,specimen,organism\np9,F,1950,c9,2025-05-20,ICU,urine,Escherichia coli";
+    const sent = await (await fetch(`${base}/api/ingest`, { method: "POST", headers: { "content-type": "text/csv" }, body: csv })).json();
+    expect(sent.asOf).toBe("2025-05-20");
+    expect((await read(`${base}/api/clock`, A)).asOf).toBe("2025-05-20");
+    expect((await read(`${base}/api/clock`, B)).asOf).toBe("2025-06-01");
+    expect((await read(`${base}/api/clock`)).asOf).toBe("2025-05-20");
   });
 });
 

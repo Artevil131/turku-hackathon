@@ -94,8 +94,8 @@ laboratory rows ──▶ ingest(day) ──▶ as-of table ──▶ estimate �
 - **Present**: the web app and the iOS app read the same estimate and
   signal interfaces. Doctor view: the list for a context. Researcher
   view: signal feed, unit grid over time, hospital network with
-  exposure, flat regional map. The terraced 3D surface is the pitch
-  intro only.
+  exposure, flat regional map. The terraced 3D pitch intro was removed
+  (2026-10-18).
 - **Distribute**: in the tool for the demo. For deployment, a push to
   infection control for sentinel and cluster signals, and a daily
   digest; the signal store already has what a message needs.

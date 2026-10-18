@@ -25,7 +25,6 @@ export const homeEn = {
   homeResearchWait: "Waiting for server",
   homeResearchOpen: "Open the signals",
   homeLast: "Last",
-  homeIntro: "Pitch intro",
   homeLead:
     "agar turns incoming lab results into a ward-level resistance view and an infection-control worklist, updated continuously instead of once a year.",
   homeLatestTitle: "Latest open signal",
@@ -67,7 +66,6 @@ export const homeFi: Record<keyof typeof homeEn, string> = {
   homeResearchWait: "Odotetaan palvelinta",
   homeResearchOpen: "Avaa signaalit",
   homeLast: "Viimeksi",
-  homeIntro: "Esittelyanimaatio",
   homeLead:
     "agar muuttaa saapuvat laboratoriotulokset osastotason resistenssinäkymäksi ja infektiontorjunnan työlistaksi, ja päivittyy jatkuvasti, ei kerran vuodessa.",
   homeLatestTitle: "Uusin avoin signaali",

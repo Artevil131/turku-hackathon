@@ -384,6 +384,11 @@ export function ResearchBoard(props: Props) {
       <Workspace
         toolbarExtra={<BoardFilters locale={locale} state={state} onChange={onChange} counts={counts} />}
         clock={asOf}
+        replay={{
+          clock: props.replay.clock,
+          ready: props.replay.connection === "open" && props.replay.clock !== null,
+          command: props.replay.command,
+        }}
         projectId={project.id}
         project={project.response?.project}
         client={client}

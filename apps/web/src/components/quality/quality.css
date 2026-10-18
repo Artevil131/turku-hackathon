@@ -58,11 +58,13 @@
   line-height: 16px;
 }
 
+/* On <body>, placed in viewport coordinates by useAnchored (QualityStatus.tsx); in the bottom sheet, in its flow. */
 .q-pop {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  z-index: 40;
+  position: fixed;
+  z-index: 450;
+  box-sizing: border-box;
+  max-height: var(--anchored-room, 70vh);
+  overflow-y: auto;
   width: max-content;
   min-width: 240px;
   max-width: min(340px, calc(100vw - 32px));

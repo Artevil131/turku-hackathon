@@ -25,7 +25,8 @@ export const commandEn = {
   cmdQueryDoctor: "Doctor's list for {what}",
   cmdQuerySignals: "Signals in {what}",
   cmdQuerySub: "Opens with your words filled in",
-  cmdPvStart: "Start with {name}",
+  cmdPvStart: "Highest coverage clearing the {bar} % bar: {name}",
+  cmdPvShare: "{share}\u00a0% (95\u00a0% CI {lo}–{hi}, n\u00a0{n})",
   cmdPvNone: "No single antibiotic clears the {bar} % bar",
   cmdPvNoRow: "No result for this drug",
   cmdPvFew: "too few results",
@@ -47,7 +48,6 @@ export const commandEn = {
   cmdPhCpe: "Carbapenemase-producing Enterobacterales",
   cmdAlertTitle: "{kind}, {unit}, {date}",
   cmdAlertSub: "Open in research",
-  cmdPageIntro: "Pitch intro",
   cmdPageSub: "Page",
 } as const;
 
@@ -76,7 +76,8 @@ export const commandFi = {
   cmdQueryDoctor: "Lääkärin lista: {what}",
   cmdQuerySignals: "Signaalit: {what}",
   cmdQuerySub: "Avautuu sanoillasi täytettynä",
-  cmdPvStart: "Aloita: {name}",
+  cmdPvStart: "Suurin kattavuus {bar} %:n rajan ylittävistä: {name}",
+  cmdPvShare: "{share}\u00a0% (95\u00a0%:n väli {lo}–{hi}, n\u00a0{n})",
   cmdPvNone: "Mikään yksittäinen antibiootti ei ylitä {bar} %:n rajaa",
   cmdPvNoRow: "Tälle lääkkeelle ei ole tulosta",
   cmdPvFew: "liian vähän tuloksia",
@@ -98,6 +99,5 @@ export const commandFi = {
   cmdPhCpe: "Karbapenemaasia tuottavat enterobakteerit",
   cmdAlertTitle: "{kind}, {unit}, {date}",
   cmdAlertSub: "Avaa tutkimuksessa",
-  cmdPageIntro: "Esittelysivu",
   cmdPageSub: "Sivu",
 } as const;

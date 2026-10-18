@@ -448,7 +448,11 @@
 .ws {
   flex-wrap: wrap;
 }
+/* The toolbar's fade-in makes it a stacking context of its own, so every menu in it (Filter, Tools, Add a window, the
+   date) would sit under the windows, which stack from 1 up (150 while dragged). Lifted above them, below the rail. */
 .ws-toolbar {
+  position: relative;
+  z-index: 160;
   flex: 1 0 100%;
   display: flex;
   align-items: center;
@@ -721,7 +725,10 @@
 }
 
 /* Narrow screens have no toolbar: the Add button sits alone above the stack. */
+/* As the toolbar: its Filter menu opens over the windows below. */
 .ws-narrow-bar {
+  position: relative;
+  z-index: 160;
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -810,12 +817,8 @@
   position: relative;
   margin-left: 2px;
 }
-/* Open, the chip's month must float over the windows below the toolbar. */
+/* Open, the chip's month floats over the toolbar's other controls (the toolbar itself sits above the windows). */
 .ws-date[open] {
-  z-index: 70;
-}
-.ws-toolbar:has(.ws-date[open]) {
-  position: relative;
   z-index: 70;
 }
 .ws-date-chip {
@@ -862,7 +865,7 @@
   z-index: 60;
   top: calc(100% + 6px);
   left: 0;
-  width: 300px;
+  width: min(320px, calc(100vw - 32px));
   padding: 14px 16px;
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -881,16 +884,96 @@
   margin: 2px 0 6px;
   font: 600 var(--t-l) / 1.2 var(--font-display);
 }
+/* The day and Play on one line: the button says what pressing it shows. */
+.ws-date-now {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ws-date-playbtn {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--live);
+  border-radius: 999px;
+  background: var(--live);
+  color: var(--live-ink, #fff);
+  font: inherit;
+  font-size: var(--t-s);
+  font-weight: 600;
+  cursor: pointer;
+}
+.ws-date-playbtn[aria-pressed="true"] {
+  background: var(--glass-1, #fff);
+  color: var(--live);
+}
+.ws-date-playbtn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.ws-date-playbtn:focus-visible,
+.ws-cal-nav:focus-visible,
+.ws-cal-day:focus-visible,
+.ws-cal-latest:focus-visible {
+  outline: 2px solid var(--live);
+  outline-offset: 2px;
+}
+/* While the clock plays, the chip's tag pulses gently so the moving date is noticed. */
+.ws-date-tag[data-running] {
+  animation: ws-date-pulse 1.6s ease-in-out infinite;
+}
+@keyframes ws-date-pulse {
+  50% {
+    background: color-mix(in oklab, var(--live) 28%, transparent);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ws-date-tag[data-running] {
+    animation: none;
+  }
+}
 .ws-date-why {
   margin: 0 0 12px;
   color: var(--ink-2);
   font-size: var(--t-s);
   line-height: 1.45;
 }
-.ws-cal-month {
+.ws-cal-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   margin: 0 0 6px;
+}
+.ws-cal-month {
+  flex: 1;
+  margin: 0;
   font-size: var(--t-s);
   font-weight: 600;
+}
+.ws-cal-nav {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--glass-1, #fff);
+  color: var(--ink-2);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+.ws-cal-nav:hover:not(:disabled) {
+  border-color: var(--live);
+  color: var(--live);
+}
+.ws-cal-nav:disabled {
+  opacity: 0.35;
+  cursor: default;
 }
 .ws-cal-grid {
   display: grid;
@@ -905,10 +988,27 @@
   padding-bottom: 2px;
 }
 .ws-cal-day {
-  height: 30px;
-  line-height: 30px;
+  height: 32px;
+  padding: 0;
+  border: 0;
   border-radius: 8px;
+  background: none;
+  color: var(--ink);
+  font: inherit;
   font-size: var(--t-s);
+  line-height: 32px;
+}
+button.ws-cal-day {
+  cursor: pointer;
+}
+button.ws-cal-day:hover:not(:disabled):not([data-today]) {
+  background: var(--live-soft, #ecebfc);
+  color: var(--live);
+}
+button.ws-cal-day:disabled {
+  color: var(--ink-3);
+  opacity: 0.3;
+  cursor: default;
 }
 .ws-cal-day[data-future] {
   color: var(--ink-3);
@@ -919,10 +1019,53 @@
   color: var(--live-ink, #fff);
   font-weight: 700;
 }
+.ws-cal-foot {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+}
 .ws-cal-note {
-  margin: 8px 0 0;
+  margin: 0;
   color: var(--ink-3);
   font-size: var(--t-xs);
+  line-height: 1.4;
+}
+.ws-cal-latest {
+  flex: none;
+  padding: 2px 4px;
+  border: 0;
+  background: none;
+  color: var(--live);
+  font: inherit;
+  font-size: var(--t-xs);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.ws-cal-latest:disabled {
+  color: var(--ink-3);
+  text-decoration: none;
+  cursor: default;
+}
+/* The replay's step and speed under the month, while the clock moves: label left, choices right. */
+.ws-date-play {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.ws-date-play .tl-ctl-group {
+  display: flex;
+  justify-content: space-between;
+}
+.ws-date-play .seg button {
+  height: 26px;
+  padding: 0 10px;
+  font-size: var(--t-xs, 12px);
 }
 .ws-find {
   margin-left: 2px;

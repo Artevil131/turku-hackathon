@@ -12,8 +12,7 @@
 // Per route and viewport it checks: no uncaught exception or console error, no /api request that failed or
 // answered 400 or more, exactly one visible main heading (h1) with text, the sidebar (nav.sidebar, a drawer on
 // phones) present, no horizontal page overflow, at least one visible control, and the page finished loading.
-// Old routes (#research, #workspace, #connect) must land on their new pages. The pitch intro (#intro) is full
-// screen, so it is checked without the sidebar.
+// Old routes (#research, #workspace, #connect) must land on their new pages.
 // Interactions cover navigation between the tabs, stepping the replay clock one day from the timeline, language
 // switching, opening a signal on the research page (its isolates appear), the search ("/" then "uro") and
 // eight concurrent tabs. Writes a PNG per check and report.md / report.json to
@@ -43,7 +42,7 @@ const apiPort = Number(opt("api-port", "8798"));
 const webPort = Number(opt("web-port", "5176"));
 const outDir = resolve(opt("out", join(WEB, "smoke-out")));
 const interactionGroup = opt("interactions", "all");
-const ROUTES = opt("routes", "start,project,research,workspace,data,connect,method,settings,intro").split(",");
+const ROUTES = opt("routes", "start,project,research,workspace,data,connect,method,settings").split(",");
 const INTERACTIONS = interactionGroup === "all" || interactionGroup === "doctor" ? [] : interactionGroup.split(",").filter(Boolean);
 // --desktop 1366x768 runs the desktop checks and interactions at a laptop-sized window instead of 1440x1000.
 const desktopSize = /^(\d+)x(\d+)$/.exec(opt("desktop", "1440x1000")) ?? ["", "1440", "1000"];
@@ -273,7 +272,7 @@ async function watching(cdp, body) {
 
 // "Busy" is any aria-busy region in the page: the pages mark their lists and panels while they fetch.
 const READY = `(() => {
-  const root = document.querySelector("main, .intro");
+  const root = document.querySelector("main");
   return !!root && !root.querySelector("[aria-busy=true]") && !!root.querySelector("h1")?.textContent.trim();
 })()`;
 
@@ -292,7 +291,7 @@ async function load(cdp, url, idle) {
 
 const CHECKS = `(() => {
   const vis = (el) => { const r = el.getBoundingClientRect(); const s = getComputedStyle(el); return r.width > 0 && r.height > 0 && s.visibility !== "hidden" && s.display !== "none"; };
-  const root = document.querySelector("main") ?? document.querySelector(".intro");
+  const root = document.querySelector("main");
   const h1s = [...(root ? root.querySelectorAll("h1") : [])].filter(vis);
   const controls = [...(root ? root.querySelectorAll("button, a[href], input, select, [role=radio], [role=tab]") : [])].filter(vis);
   return {
@@ -367,9 +366,7 @@ async function main() {
       const extra = [];
       if (!info.heading) extra.push("no visible main heading (h1)");
       if (info.headings > 1) extra.push(`${info.headings} visible h1 headings, expected one`);
-      if (route !== "intro") {
-        if (!info.sidebar) extra.push("sidebar (nav.sidebar) missing");
-      }
+      if (!info.sidebar) extra.push("sidebar (nav.sidebar) missing");
       if (info.busy) extra.push("still loading (aria-busy) after 25 s");
       if (info.overflow > 1) extra.push(`page ${info.overflow}px wider than the viewport`);
       if (info.controls === 0) extra.push("no visible control in the page");
@@ -391,6 +388,9 @@ async function main() {
 
   // ---------- interactions (desktop) ----------
   let cdp = null;
+  // Reads that must see what the browser sees (its own replay clock and projects, keyed by its visitor cookie;
+  // D-078, D-084) go through the page; Node's own fetch carries no cookie.
+  const pageApi = (path) => evaluate(cdp, `fetch(${JSON.stringify(path)}).then((r) => r.json())`);
   const interaction = async (name, body, viewport = VIEWPORTS[0]) => {
     if (interactionGroup === "doctor" && !name.startsWith("doctor-")) return;
     if (INTERACTIONS.length && !INTERACTIONS.includes(name)) return;
@@ -851,7 +851,7 @@ async function main() {
   await interaction("template-launch", async (idle, reasons) => {
     await en(idle);
     await load(cdp, urlOf("home"), idle);
-    const before = (await api("/api/projects")).projects.length;
+    const before = (await pageApi("/api/projects")).projects.length;
     const created = [];
     try {
       const launch = async () => {
@@ -872,7 +872,7 @@ async function main() {
       };
       const first = await launch();
       if (await evaluate(cdp, `!!document.querySelector('.project-dialog')`)) reasons.push("launching a template asked for details");
-      const project = (await api(`/api/projects/${encodeURIComponent(first)}`)).project;
+      const project = (await pageApi(`/api/projects/${encodeURIComponent(first)}`)).project;
       if (!/^Outbreak investigation \d+$/.test(project.name))
         reasons.push(`launched project is not named like "Outbreak investigation 1": ${project.name}`);
       if (project.mode !== "continuous") reasons.push("launched project is not continuous");
@@ -884,7 +884,7 @@ async function main() {
       await screenshot(cdp, join(outDir, "template-launched-desktop.png"));
       await goHome();
       const second = await launch();
-      const again = (await api(`/api/projects/${encodeURIComponent(second)}`)).project;
+      const again = (await pageApi(`/api/projects/${encodeURIComponent(second)}`)).project;
       if (again.name === project.name) reasons.push(`a second launch reused the name ${again.name}`);
       if ((await evaluate(cdp, `document.querySelectorAll('.sb-tab').length`)) < 2)
         reasons.push("two launched projects do not both show in the sidebar");
@@ -911,7 +911,7 @@ async function main() {
         reasons.push(
           `Treat a patient did not open the coverage list maximised in a project-less view: ${await evaluate(cdp, `location.hash + " | " + [...document.querySelectorAll(".sb-tab")].map(t => t.dataset.tab + (t.dataset.current ? "*" : "")).join() + " | " + [...document.querySelectorAll(".ws-win")].map(w => w.dataset.win).join()`)}`,
         );
-      if ((await api("/api/projects")).projects.length !== before + 2) reasons.push("Treat a patient created a project");
+      if ((await pageApi("/api/projects")).projects.length !== before + 2) reasons.push("Treat a patient created a project");
       await screenshot(cdp, join(outDir, "template-patient-desktop.png"));
       // Old links still work.
       for (const [from, to] of [
@@ -1015,7 +1015,7 @@ async function main() {
     await click(".settings button[lang='en']");
     if (!(await waitIn(`document.documentElement.lang === 'en'`))) throw new Error("English did not load");
     await cleanWorkspace(idle);
-    const clock = await api("/api/clock");
+    const clock = await pageApi("/api/clock");
     const listed = `!!document.querySelector('.project-list[aria-busy=false]')`;
     const smokeRow = `[...document.querySelectorAll('.project-list li')].find(li => li.querySelector('strong')?.textContent === 'Smoke project')`;
     const menu = async (item) => {
@@ -1072,7 +1072,7 @@ async function main() {
       )
         throw new Error("reloading did not keep the frozen project open");
       await idle();
-      const project = await api(`/api/projects/${encodeURIComponent(id)}`);
+      const project = await pageApi(`/api/projects/${encodeURIComponent(id)}`);
       const downloadDir = mkdtempSync(join(tmpdir(), "aei-smoke-downloads-"));
       const downloads = new Map();
       const progress = (m) => {
@@ -1412,7 +1412,8 @@ async function main() {
     }
   });
 
-  // Put the clock back where it was, for a shared running app.
+  // Put the clock back where it was. Each browser has its own clock now (D-084), so this only matters for an app
+  // that predates it; harmless otherwise.
   await fetch(`${base}/api/clock`, {
     method: "POST",
     headers: { "content-type": "application/json" },

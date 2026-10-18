@@ -5,8 +5,8 @@ import { barOf, coverageQuery, filtersFromUrl, num, pct } from "../doctor/filter
 import { recentText } from "../doctor/reason.ts";
 import { signalLabel } from "../doctor/signals.ts";
 
-// The live answer under a compound-query result in the palette: the doctor's
-// first choice (or the named drug) for "urology e. coli", the newest matching
+// The live answer under a compound-query result in the palette: the drug with
+// the highest coverage that clears the bar (or the named drug) for "urology e. coli", the newest matching
 // signal for "med-a esbl". It sits inside the option, so it is part of the
 // option's accessible name. Numbers come from the API; this file only picks
 // and phrases them.
@@ -39,7 +39,7 @@ export function pickSignal(alerts: readonly Alert[], href: string): Alert | null
   return hits.reduce<Alert | null>((best, a) => (!best || a.date > best.date ? a : best), null);
 }
 
-/** One line for a coverage response: the named drug's row, else the first choice. */
+/** One line for a coverage response: the named drug's row, else the highest-coverage drug that clears the bar. */
 export function coverageLine(locale: Locale, data: CoverageResponse, href: string): string {
   const filters = filtersFromUrl(paramsOf(href));
   const bar = barOf(data, filters);
@@ -48,9 +48,15 @@ export function coverageLine(locale: Locale, data: CoverageResponse, href: strin
   if (!row) return t(locale, ab ? "cmdPvNoRow" : "cmdPvNone", { bar });
   const name = antibioticName(locale, row.antibiotic);
   const n = row.basis === "spectrum" ? row.coverage.spectrum.counts.known : row.coverage.counts.known;
+  // Same wording as the doctor's answer card: the highest coverage among drugs that clear the bar, with the Wilson
+  // interval the standing rests on and n; never an order to start a drug.
   const parts = [
-    ab ? name : t(locale, "cmdPvStart", { name }),
-    row.share === null ? t(locale, "cmdPvFew") : `${pct(row.share)} % (n ${num(locale, n)})`,
+    ab ? name : t(locale, "cmdPvStart", { name, bar }),
+    row.share === null
+      ? t(locale, "cmdPvFew")
+      : row.interval
+        ? t(locale, "cmdPvShare", { share: pct(row.share), lo: pct(row.interval[0]), hi: pct(row.interval[1]), n: num(locale, n) })
+        : `${pct(row.share)} % (n ${num(locale, n)})`,
     row.standing === "below" ? t(locale, "cmdPvBelow", { bar }) : row.standing === "borderline" ? t(locale, "cmdPvBorderline") : null,
     recentText(locale, row.coverage.recent),
   ];

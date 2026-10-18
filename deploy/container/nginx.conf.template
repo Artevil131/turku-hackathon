@@ -4,7 +4,18 @@ server {
   server_name _;
   root /usr/share/nginx/html;
 
-  # Server-sent events: no buffering, long reads.
+  # Compress text: the built CSS and JavaScript, SVG, and the API's JSON (proxied responses included). HTML is always
+  # on the list. HTTP/1.0 too, because the host's nginx proxies here with HTTP/1.0 by default. The event stream is
+  # not on the list and gzip is off in its location: compressing it would hold events back until a buffer fills.
+  gzip on;
+  gzip_comp_level 5;
+  gzip_min_length 1024;
+  gzip_vary on;
+  gzip_proxied any;
+  gzip_http_version 1.0;
+  gzip_types text/css application/javascript text/javascript application/json application/x-ipynb+json image/svg+xml text/plain text/csv;
+
+  # Server-sent events: no buffering, no compression, long reads.
   location = /api/live {
     proxy_pass http://${AEI_API_UPSTREAM};
     proxy_http_version 1.1;
@@ -12,6 +23,7 @@ server {
     proxy_buffering off;
     proxy_cache off;
     proxy_read_timeout 1h;
+    gzip off;
   }
 
   # Lab results reach the API on its private loopback port (scripts/send_lab_results.py), never through the public

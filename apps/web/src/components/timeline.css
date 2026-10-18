@@ -79,8 +79,7 @@
 
 .tl-transport .tl-btn::after,
 .tl-seg::after,
-.tl-fold::after,
-.tl-info-btn::after {
+.tl-fold::after {
   content: "";
   position: absolute;
   inset: -9px 0;
@@ -220,53 +219,6 @@
   font-size: var(--t-xs, 12px);
   color: var(--st-alert, #d0004b);
   font-weight: 500;
-}
-
-.tl-info {
-  position: relative;
-  display: inline-flex;
-}
-
-.tl-info-btn {
-  position: relative;
-  display: inline-grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border: 0;
-  border-radius: 6px;
-  background: none;
-  color: var(--ink-3, #6f7292);
-}
-
-.tl-info-btn:hover,
-.tl-info-btn[aria-expanded="true"] {
-  color: var(--ink, #07081c);
-}
-
-.tl-pop {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  z-index: 40;
-  width: max-content;
-  max-width: 280px;
-  padding: 8px 12px;
-  border: 1px solid var(--line, #e4e6ee);
-  border-radius: 8px;
-  background: var(--glass-1, #fff);
-  box-shadow: var(--pop-shadow, 0 4px 16px rgb(7 8 28 / 0.12));
-  font-size: var(--t-s, 13px);
-  color: var(--ink, #07081c);
-}
-
-.tl-pop p {
-  margin: 0;
-}
-
-.tl-pop p + p {
-  margin-top: 4px;
-  color: var(--ink-3, #6f7292);
 }
 
 .tl-band-empty {

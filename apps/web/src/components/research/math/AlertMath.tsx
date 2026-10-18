@@ -252,9 +252,6 @@ export function AlertMath({
         <h2 id="sig-title" className={onBack ? "sig-title" : undefined} tabIndex={onBack ? -1 : undefined}>
           {onBack ? title : t(locale, "cardTitle")}
         </h2>
-        <InfoButton locale={locale} align="end">
-          {t(locale, "feedMathHelp")}
-        </InfoButton>
       </header>
 
       <div
@@ -746,8 +743,10 @@ function Numbers({ locale, alert: a, kind, perYear }: { locale: Locale; alert: A
   const chance =
     a.p !== undefined ? (
       <Tile label={t(locale, "cardByChance")} value={oddsPhrase(locale, a.p)} hot>
+        {/* The one ⓘ on the card: the window's own ⓘ says what the window is, this one how to read the surprise. */}
         <InfoButton locale={locale} align="end" label={t(locale, "cardSurpriseInfo")}>
           <SurpriseScale p={a.p} detector={a.detector} locale={locale} />
+          <span className="sig-surprise-note">{t(locale, "feedMathHelp")}</span>
         </InfoButton>
       </Tile>
     ) : trend ? null : (
@@ -766,9 +765,11 @@ function Numbers({ locale, alert: a, kind, perYear }: { locale: Locale; alert: A
 function Tile({ label, value, hot, children }: { label: string; value: string; hot?: boolean; children?: ReactNode }) {
   return (
     <div className="sig-tile" data-hot={hot || undefined}>
-      <span className="sig-tile-label">{label}</span>
+      <span className="sig-tile-label">
+        {label}
+        {children}
+      </span>
       <b className="sig-num">{value}</b>
-      {children}
     </div>
   );
 }

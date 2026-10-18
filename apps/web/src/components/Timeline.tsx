@@ -1,14 +1,13 @@
 import type { AeiClient, ClockCommand, ClockState } from "@aei/contract";
-import { isWardCode, type WardCode } from "@aei/domain";
+import type { WardCode } from "@aei/domain";
 import { type Locale, t, wardName } from "@aei/i18n";
-import { type KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { type KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { type LiveAlerts, useAlertsSinceStart } from "../alertsSince.ts";
 import type { Connection } from "../live.ts";
-import { currentHospitalName, siteWards } from "../sites.ts";
+import { currentHospitalName, knownWard, siteWards } from "../sites.ts";
 import { onProjectPage, patchHashParams, sharedQuery, useHashParam } from "../url.ts";
 import { EventsStrip } from "./EventsStrip.tsx";
-import { Gloss } from "./Gloss.tsx";
 import { compactDate, dayNumber, isoFromDay } from "./hero/geometry.ts";
 import { useLayers } from "./hero/layers.ts";
 import { unitOfIncident } from "./hero/selection.ts";
@@ -17,9 +16,11 @@ import { useWeekly } from "./hero/useWeekly.ts";
 import { WeeklyBand } from "./hero/WeeklyBand.tsx";
 import { Chevron, Pause, Play, StepDay, StepWeek } from "./Icons.tsx";
 import { InfoButton } from "./Info.tsx";
+import { PlaybackControls, STEPS } from "./PlaybackControls.tsx";
 import { QualityStatus } from "./quality/QualityStatus.tsx";
 import { useQuality } from "./quality/useQuality.ts";
 import { groupIncidents } from "./research/feed/model.ts";
+import { scrollWithin } from "./scrollWithin.ts";
 import "./timeline.css";
 
 interface TimelineProps {
@@ -59,18 +60,6 @@ function writeCollapsed(value: boolean) {
 
 const clampDate = (iso: string, start: string, end: string) => (iso < start ? start : iso > end ? end : iso);
 
-// Step (how far each tick moves) and speed (how often it ticks) are two controls; the clock takes them apart.
-const STEPS = [
-  { key: "tlStepByDay", daysPerTick: 1 },
-  { key: "tlStepByWeek", daysPerTick: 7 },
-  { key: "tlStepByMonth", daysPerTick: 30 },
-] as const;
-const SPEEDS = [
-  { key: "tlSpeedSlow", tickMs: 2000 },
-  { key: "tlSpeedNormal", tickMs: 1000 },
-  { key: "tlSpeedFast", tickMs: 500 },
-] as const;
-
 const IGNORED_TARGET = "input, textarea, select, [contenteditable], [role=dialog]";
 
 function useMediaQuery(query: string): boolean {
@@ -103,22 +92,6 @@ function roveFocus(e: ReactKeyboardEvent<HTMLElement>): HTMLElement | null {
   next?.focus();
   return next;
 }
-
-const Info = () => (
-  <svg
-    viewBox="0 0 24 24"
-    width="16"
-    height="16"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.5"
-    strokeLinecap="round"
-    aria-hidden="true"
-  >
-    <circle cx="12" cy="12" r="9" />
-    <path d="M12 11v5.5M12 7.5h.01" />
-  </svg>
-);
 
 export function Timeline({
   locale,
@@ -154,7 +127,8 @@ export function Timeline({
   // The selected signal and focused unit live in the URL hash, shared with the research board; selecting never moves the clock.
   const [inc, setInc] = useHashParam("inc");
   const [unit, setUnit] = useHashParam("unit");
-  const focusUnit: WardCode | null = unit && isWardCode(unit) ? unit : null;
+  // Any known unit, a connected hospital's too (sata/ED), not only the nine of the home dataset.
+  const focusUnit: WardCode | null = unit && knownWard(unit) ? unit : null;
   // The chosen weeks (`from`, `to`, both or neither) are what the research tools work on.
   const [fromParam] = useHashParam("from");
   const [toParam] = useHashParam("to");
@@ -170,9 +144,8 @@ export function Timeline({
     if (!inc) return;
     const scroller = rootRef.current?.querySelector<HTMLElement>(".hs:not([data-compact])");
     if (!scroller || scroller.scrollWidth <= scroller.clientWidth) return;
-    scroller
-      .querySelector(".hs-pill.is-selected")
-      ?.scrollIntoView({ inline: "center", block: "nearest", behavior: reducedMotion ? "auto" : "smooth" });
+    // Sideways inside the band only; scrollIntoView would also pull the page back on every new batch of alerts.
+    scrollWithin(scroller.querySelector(".hs-pill.is-selected"), "x", "center");
   }, [inc, alerts]);
   const quality = useQuality(client, clock?.asOf);
 
@@ -390,49 +363,8 @@ export function Timeline({
     </div>
   );
 
-  // Step and speed as two labelled segmented groups; the hover title says it in words.
   const stepNow = STEPS.find((s) => s.daysPerTick === clock?.daysPerTick);
-  const speedNow = SPEEDS.find((s) => s.tickMs === clock?.tickMs);
-  const hint = (speedKey: (typeof SPEEDS)[number]["key"], stepKey: (typeof STEPS)[number]["key"], ms: number) =>
-    t(locale, "tlSpeedHint", { speed: t(locale, speedKey), step: t(locale, stepKey), s: ms / 1000 });
-  const ctlGroups = (
-    <>
-      <div className="tl-ctl-group" role="group" aria-label={t(locale, "tlStep")}>
-        <span className="tl-ctl-label">{t(locale, "tlStep")}</span>
-        <div className="seg">
-          {STEPS.map((s) => (
-            <button
-              key={s.key}
-              type="button"
-              aria-pressed={stepNow?.key === s.key}
-              disabled={!ready}
-              title={hint(speedNow?.key ?? "tlSpeedNormal", s.key, speedNow?.tickMs ?? 1000)}
-              onClick={() => command({ action: "configure", daysPerTick: s.daysPerTick })}
-            >
-              {t(locale, s.key)}
-            </button>
-          ))}
-        </div>
-      </div>
-      <div className="tl-ctl-group" role="group" aria-label={t(locale, "tlSpeed")}>
-        <span className="tl-ctl-label">{t(locale, "tlSpeed")}</span>
-        <div className="seg">
-          {SPEEDS.map((s) => (
-            <button
-              key={s.key}
-              type="button"
-              aria-pressed={speedNow?.key === s.key}
-              disabled={!ready}
-              title={hint(s.key, stepNow?.key ?? "tlStepByDay", s.tickMs)}
-              onClick={() => command({ action: "configure", tickMs: s.tickMs })}
-            >
-              {t(locale, s.key)}
-            </button>
-          ))}
-        </div>
-      </div>
-    </>
-  );
+  const ctlGroups = <PlaybackControls locale={locale} clock={clock} ready={ready} command={command} />;
   // The folded line has room for one small control: the step; speed waits for the expanded view.
   const speed = (
     <select
@@ -488,7 +420,12 @@ export function Timeline({
     );
 
   const note = clock ? t(locale, "tlReplayNote", { from: compactDate(clock.start), to: compactDate(clock.end) }) : "";
-  const arrivals = lastArrivals ? t(locale, "tlArrivalsOn", { n: lastArrivals.count, date: compactDate(lastArrivals.to) }) : null;
+  const arrivals = lastArrivals
+    ? t(locale, lastArrivals.count === 1 ? "tlArrivalsOnOne" : "tlArrivalsOn", {
+        n: lastArrivals.count,
+        date: compactDate(lastArrivals.to),
+      })
+    : null;
   const status = offline ? (
     <span className="tl-reason" role="status">
       {t(locale, "offlineShort")}
@@ -627,12 +564,12 @@ export function Timeline({
         ) : null}
         <div className="tl-read">
           <b className="tl-readout num">{readout}</b>
-          <InfoPopover locale={locale}>
+          <InfoButton locale={locale} label={t(locale, "tlReplayLabel")}>
             <p>{note}</p>
             {arrivals ? <p>{arrivals}</p> : null}
             <p>{t(locale, "tlShortcuts")}</p>
             <p>{t(locale, "tlRangeHint")}</p>
-          </InfoPopover>
+          </InfoButton>
           {status}
           {collapsible ? (
             <button
@@ -656,84 +593,17 @@ export function Timeline({
       </div>
       <div className="tl-band-col">
         {band(false)}
-        <p className="tl-legend">
-          {t(locale, "tlLaneLegendShort")}
-          <InfoButton locale={locale}>
-            <GlossedLegend locale={locale} />
-          </InfoButton>
-          {variant ? (
+        {/* One explanation of the band: its legend row and the ⓘ beside Units & layers. Under it, only the way to the list. */}
+        {variant ? (
+          <p className="tl-legend">
             <button type="button" className="tl-signals-link" onClick={openList}>
               {t(locale, "tlSignalsLink", { n: incidents.length })}
             </button>
-          ) : null}
-        </p>
+          </p>
+        ) : null}
       </div>
       {variant ? null : eventsStrip()}
     </div>
-  );
-}
-
-/** The lane legend with its one glossary word ("usual", Finnish "tavalliseen") as a gloss; the rest is plain. */
-function GlossedLegend({ locale }: { locale: Locale }) {
-  const text = t(locale, "tlLaneLegend");
-  const m = (locale === "fi" ? /tavalliseen/ : /\busual\b/).exec(text);
-  if (!m) return <>{text}</>;
-  return (
-    <>
-      {text.slice(0, m.index)}
-      <Gloss term="usual" locale={locale}>
-        {m[0]}
-      </Gloss>
-      {text.slice(m.index + m[0].length)}
-    </>
-  );
-}
-
-/** An ⓘ button with a popover: Enter/Space/tap opens, Esc or an outside press closes, focus returns. */
-function InfoPopover({ locale, children }: { locale: Locale; children: React.ReactNode }) {
-  const [open, setOpen] = useState(false);
-  const id = useId();
-  const wrap = useRef<HTMLSpanElement>(null);
-  const button = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: PointerEvent) => {
-      if (!wrap.current?.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("pointerdown", onDown);
-    return () => document.removeEventListener("pointerdown", onDown);
-  }, [open]);
-  return (
-    // biome-ignore lint/a11y/noStaticElementInteractions: Esc closes the popover from anywhere inside it
-    <span
-      className="tl-info"
-      ref={wrap}
-      onKeyDown={(e) => {
-        if (e.key === "Escape" && open) {
-          e.stopPropagation();
-          setOpen(false);
-          button.current?.focus();
-        }
-      }}
-    >
-      <button
-        type="button"
-        ref={button}
-        className="tl-info-btn"
-        aria-expanded={open}
-        aria-controls={id}
-        aria-label={t(locale, "tlReplayLabel")}
-        title={t(locale, "tlReplayLabel")}
-        onClick={() => setOpen((o) => !o)}
-      >
-        <Info />
-      </button>
-      {open ? (
-        <div className="tl-pop" id={id} role="note">
-          {children}
-        </div>
-      ) : null}
-    </span>
   );
 }
 

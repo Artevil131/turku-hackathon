@@ -162,7 +162,12 @@ export function UnitGraph({ client, locale, asOf, state, onChange, reducedMotion
         ? t(locale, "netBandIn", { from: unit, to: centre ?? "", n: item.patients, share: pct(item.share) })
         : t(locale, "netBandOut", { from: centre ?? "", to: unit, n: item.patients, share: pct(item.share) }),
       wardName(locale, unit),
-      s ? t(locale, "netNodeSignals", { n: s.alerts.length, list: s.badges.map(badgeText).join("; ") }) : null,
+      s
+        ? t(locale, s.alerts.length === 1 ? "netNodeSignalsOne" : "netNodeSignals", {
+            n: s.alerts.length,
+            list: s.badges.map(badgeText).join("; "),
+          })
+        : null,
       t(locale, "netFlowRecentre"),
     ]
       .filter(Boolean)
@@ -403,7 +408,12 @@ export function UnitGraph({ client, locale, asOf, state, onChange, reducedMotion
               kindOf={(u) => glyphKind(signals.byUnit.get(u))}
               signalText={(u) => {
                 const sg = signals.byUnit.get(u);
-                return sg ? t(locale, "netNodeSignals", { n: sg.alerts.length, list: sg.badges.map(badgeText).join("; ") }) : null;
+                return sg
+                  ? t(locale, sg.alerts.length === 1 ? "netNodeSignalsOne" : "netNodeSignals", {
+                      n: sg.alerts.length,
+                      list: sg.badges.map(badgeText).join("; "),
+                    })
+                  : null;
               }}
               onPick={(u) => {
                 recentre(u);

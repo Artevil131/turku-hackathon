@@ -1,4 +1,5 @@
 import { type ReactNode, useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { OnBody } from "../anchored.ts";
 import "./Popover.css";
 
 interface Props {
@@ -16,7 +17,8 @@ const WIDTH = 288;
 
 /**
  * A button that opens a small popover: Enter, Space or a tap opens it, Esc or a click elsewhere closes it and
- * focus returns to the button. Never hover-only. Positioned `fixed` from the button, so scrolling lists do not clip it.
+ * focus returns to the button. Never hover-only. Positioned `fixed` from the button on <body>, so neither a scrolling
+ * list nor the transformed window around it clips or shifts it.
  */
 export function Popover({ children, content, label, className, title }: Props) {
   const [open, setOpen] = useState(false);
@@ -84,21 +86,23 @@ export function Popover({ children, content, label, className, title }: Props) {
         {children}
       </button>
       {open ? (
-        <div
-          ref={pop}
-          id={id}
-          className="pop"
-          role="group"
-          aria-label={label}
-          style={{
-            top: pos?.top ?? 0,
-            left: pos?.left ?? 0,
-            visibility: pos ? "visible" : "hidden",
-            width: Math.min(WIDTH, window.innerWidth - 16),
-          }}
-        >
-          {content}
-        </div>
+        <OnBody>
+          <div
+            ref={pop}
+            id={id}
+            className="pop"
+            role="group"
+            aria-label={label}
+            style={{
+              top: pos?.top ?? 0,
+              left: pos?.left ?? 0,
+              visibility: pos ? "visible" : "hidden",
+              width: Math.min(WIDTH, window.innerWidth - 16),
+            }}
+          >
+            {content}
+          </div>
+        </OnBody>
       ) : null}
     </>
   );

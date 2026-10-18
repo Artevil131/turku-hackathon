@@ -92,13 +92,6 @@ export function Settings({ locale, onLocale, fill, onFill, onShowcase }: Props) 
           </a>
         </div>
 
-        <div className="setting">
-          <span className="setting-label">{t(locale, "homeIntro")}</span>
-          <a className="btn" href="#intro" aria-label={t(locale, "homeIntro")}>
-            ▶
-          </a>
-        </div>
-
         {onShowcase ? (
           <div className="setting">
             <span className="setting-label">

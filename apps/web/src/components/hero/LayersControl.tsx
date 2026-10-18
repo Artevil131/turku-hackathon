@@ -1,5 +1,6 @@
 import { type Locale, phenotypeName, t, wardName } from "@aei/i18n";
-import { type ReactNode, useEffect, useId, useRef, useState } from "react";
+import { type KeyboardEvent, type ReactNode, useEffect, useId, useRef, useState } from "react";
+import { OnBody, useAnchored } from "../anchored.ts";
 import { InfoButton } from "../Info.tsx";
 import { PHENOTYPE_ORDER } from "./geometry.ts";
 import { DEFAULT_LAYERS, encodeLayers, type Layers, type LineKey, PILL_KINDS, WINDOWS, wardCodes } from "./layers.ts";
@@ -66,12 +67,14 @@ export function LayersControl({ locale, layers, onChange, withLabel, signalUnits
   const root = useRef<HTMLDivElement>(null);
   const button = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
+  const place = useAnchored(open, button, panel, "end");
 
   useEffect(() => {
     if (!open) return;
-    panel.current?.querySelector<HTMLElement>("input")?.focus();
+    panel.current?.querySelector<HTMLElement>("input")?.focus({ preventScroll: true });
     const onDown = (e: PointerEvent) => {
-      if (root.current && !root.current.contains(e.target as Node)) setOpen(false);
+      const at = e.target as Node;
+      if (!root.current?.contains(at) && !panel.current?.contains(at)) setOpen(false);
     };
     document.addEventListener("pointerdown", onDown);
     return () => document.removeEventListener("pointerdown", onDown);
@@ -82,6 +85,16 @@ export function LayersControl({ locale, layers, onChange, withLabel, signalUnits
   const setUnits = (on: boolean) => set({ units: Object.fromEntries(wardCodes().map((u) => [u, on])) });
   const changed = encodeLayers(layers) !== "";
   const label = t(locale, "tlLayers");
+  // The panel lives on <body>, so Tab past either end comes back to the button instead of leaving for the page's end.
+  const onPanelKey = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== "Tab" || !panel.current) return;
+    const all = [...panel.current.querySelectorAll<HTMLElement>("input, button")].filter((el) => !el.hasAttribute("disabled"));
+    const edge = e.shiftKey ? all[0] : all[all.length - 1];
+    if (document.activeElement !== edge) return;
+    e.preventDefault();
+    setOpen(false);
+    button.current?.focus();
+  };
 
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: Esc closes the popover from anywhere inside it
@@ -119,101 +132,111 @@ export function LayersControl({ locale, layers, onChange, withLabel, signalUnits
         {withLabel ? <span>{label}</span> : null}
       </button>
       {open ? (
-        <div className="ly-panel" id={id} ref={panel} role="dialog" aria-label={t(locale, "tlLayersLabel")}>
-          <fieldset className="ly-group">
-            <legend>{t(locale, "tlLyLines")}</legend>
-            {PHENOTYPE_ORDER.map((p) => (
-              <Chip key={p} type="checkbox" checked={layers.lines[p]} onChange={() => setLine(p)}>
-                {phenotypeName(p)}
+        <OnBody>
+          <div
+            className="ly-panel"
+            id={id}
+            ref={panel}
+            role="dialog"
+            aria-label={t(locale, "tlLayersLabel")}
+            style={place}
+            onKeyDown={onPanelKey}
+          >
+            <fieldset className="ly-group">
+              <legend>{t(locale, "tlLyLines")}</legend>
+              {PHENOTYPE_ORDER.map((p) => (
+                <Chip key={p} type="checkbox" checked={layers.lines[p]} onChange={() => setLine(p)}>
+                  {phenotypeName(p)}
+                </Chip>
+              ))}
+              <Chip type="checkbox" checked={layers.lines.cult} onChange={() => setLine("cult")}>
+                {t(locale, "tlLyCultures")}
               </Chip>
-            ))}
-            <Chip type="checkbox" checked={layers.lines.cult} onChange={() => setLine("cult")}>
-              {t(locale, "tlLyCultures")}
-            </Chip>
-          </fieldset>
+            </fieldset>
 
-          <fieldset className="ly-group">
-            <legend>{t(locale, "tlLyMetric")}</legend>
-            <Chip type="radio" name={`${id}-m`} checked={layers.metric === "count"} onChange={() => set({ metric: "count" })}>
-              {t(locale, "tlLyCount")}
-            </Chip>
-            <Chip type="radio" name={`${id}-m`} checked={layers.metric === "ratio"} onChange={() => set({ metric: "ratio" })}>
-              {t(locale, "tlLyRatio")}
-            </Chip>
-            {layers.metric === "ratio" ? <p className="ly-note">{t(locale, "tlLyRatioNote")}</p> : null}
-          </fieldset>
+            <fieldset className="ly-group">
+              <legend>{t(locale, "tlLyMetric")}</legend>
+              <Chip type="radio" name={`${id}-m`} checked={layers.metric === "count"} onChange={() => set({ metric: "count" })}>
+                {t(locale, "tlLyCount")}
+              </Chip>
+              <Chip type="radio" name={`${id}-m`} checked={layers.metric === "ratio"} onChange={() => set({ metric: "ratio" })}>
+                {t(locale, "tlLyRatio")}
+              </Chip>
+              {layers.metric === "ratio" ? <p className="ly-note">{t(locale, "tlLyRatioNote")}</p> : null}
+            </fieldset>
 
-          <fieldset className="ly-group">
-            <legend>{t(locale, "tlLyStacking")}</legend>
-            <Chip type="radio" name={`${id}-s`} checked={layers.stacked} onChange={() => set({ stacked: true })}>
-              {t(locale, "tlLyStacked")}
-            </Chip>
-            <Chip type="radio" name={`${id}-s`} checked={!layers.stacked} onChange={() => set({ stacked: false })}>
-              {t(locale, "tlLyOverlaid")}
-            </Chip>
-          </fieldset>
+            <fieldset className="ly-group">
+              <legend>{t(locale, "tlLyStacking")}</legend>
+              <Chip type="radio" name={`${id}-s`} checked={layers.stacked} onChange={() => set({ stacked: true })}>
+                {t(locale, "tlLyStacked")}
+              </Chip>
+              <Chip type="radio" name={`${id}-s`} checked={!layers.stacked} onChange={() => set({ stacked: false })}>
+                {t(locale, "tlLyOverlaid")}
+              </Chip>
+            </fieldset>
 
-          <fieldset className="ly-group">
-            <legend>
-              {t(locale, "tlLyUnits")}
-              <span className="ly-bulk">
-                <button type="button" onClick={() => setUnits(true)}>
-                  {t(locale, "tlLyAll")}
-                </button>
-                {signalUnits ? (
-                  <button
-                    type="button"
-                    onClick={() => set({ units: Object.fromEntries(wardCodes().map((u) => [u, signalUnits.includes(u)])) })}
-                  >
-                    {t(locale, "tlLySignals")}
+            <fieldset className="ly-group">
+              <legend>
+                {t(locale, "tlLyUnits")}
+                <span className="ly-bulk">
+                  <button type="button" onClick={() => setUnits(true)}>
+                    {t(locale, "tlLyAll")}
                   </button>
-                ) : null}
-                <button type="button" onClick={() => setUnits(false)}>
-                  {t(locale, "tlLyNone")}
-                </button>
-              </span>
-            </legend>
-            {wardCodes().map((u) => (
-              <Chip
-                key={u}
-                type="checkbox"
-                checked={layers.units[u] !== false}
-                onChange={() => set({ units: { ...layers.units, [u]: layers.units[u] === false } })}
-              >
-                <span title={wardName(locale, u)}>{u}</span>
-              </Chip>
-            ))}
-          </fieldset>
+                  {signalUnits ? (
+                    <button
+                      type="button"
+                      onClick={() => set({ units: Object.fromEntries(wardCodes().map((u) => [u, signalUnits.includes(u)])) })}
+                    >
+                      {t(locale, "tlLySignals")}
+                    </button>
+                  ) : null}
+                  <button type="button" onClick={() => setUnits(false)}>
+                    {t(locale, "tlLyNone")}
+                  </button>
+                </span>
+              </legend>
+              {wardCodes().map((u) => (
+                <Chip
+                  key={u}
+                  type="checkbox"
+                  checked={layers.units[u] !== false}
+                  onChange={() => set({ units: { ...layers.units, [u]: layers.units[u] === false } })}
+                >
+                  <span title={wardName(locale, u)}>{u}</span>
+                </Chip>
+              ))}
+            </fieldset>
 
-          <fieldset className="ly-group">
-            <legend>{t(locale, "tlLyKinds")}</legend>
-            {PILL_KINDS.map((k) => (
-              <Chip
-                key={k}
-                type="checkbox"
-                checked={layers.kinds[k]}
-                onChange={() => set({ kinds: { ...layers.kinds, [k]: !layers.kinds[k] } })}
-              >
-                {t(locale, KIND_KEY[k])}
-              </Chip>
-            ))}
-          </fieldset>
+            <fieldset className="ly-group">
+              <legend>{t(locale, "tlLyKinds")}</legend>
+              {PILL_KINDS.map((k) => (
+                <Chip
+                  key={k}
+                  type="checkbox"
+                  checked={layers.kinds[k]}
+                  onChange={() => set({ kinds: { ...layers.kinds, [k]: !layers.kinds[k] } })}
+                >
+                  {t(locale, KIND_KEY[k])}
+                </Chip>
+              ))}
+            </fieldset>
 
-          <fieldset className="ly-group">
-            <legend>{t(locale, "tlLyWindow")}</legend>
-            {WINDOWS.map((w) => (
-              <Chip key={w} type="radio" name={`${id}-w`} checked={layers.window === w} onChange={() => set({ window: w })}>
-                {w ? t(locale, "tlLyWeeks", { n: w }) : t(locale, "tlLyWholeHistory")}
-              </Chip>
-            ))}
-          </fieldset>
+            <fieldset className="ly-group">
+              <legend>{t(locale, "tlLyWindow")}</legend>
+              {WINDOWS.map((w) => (
+                <Chip key={w} type="radio" name={`${id}-w`} checked={layers.window === w} onChange={() => set({ window: w })}>
+                  {w ? t(locale, "tlLyWeeks", { n: w }) : t(locale, "tlLyWholeHistory")}
+                </Chip>
+              ))}
+            </fieldset>
 
-          {changed ? (
-            <button type="button" className="ly-reset" onClick={() => onChange(DEFAULT_LAYERS)}>
-              {t(locale, "tlLyReset")}
-            </button>
-          ) : null}
-        </div>
+            {changed ? (
+              <button type="button" className="ly-reset" onClick={() => onChange(DEFAULT_LAYERS)}>
+                {t(locale, "tlLyReset")}
+              </button>
+            ) : null}
+          </div>
+        </OnBody>
       ) : null}
     </div>
   );

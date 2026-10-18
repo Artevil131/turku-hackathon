@@ -355,7 +355,12 @@ export interface Suggestion {
 /** Share of the level's pool with no result for an antibiotic above which it is not assessed. */
 export const MAX_UNTESTED = 0.2;
 
-const standingOf = (share: number | null, interval: [number, number] | null, untested: number, threshold: number): Standing =>
+/**
+ * The standing of one share against the bar (D-026): "clears" when the whole 95 % interval is at or above it,
+ * "borderline" when only the estimate is, "below" otherwise; "not assessable" without a share or interval or when over
+ * a fifth of the pool is untested. Exported so a client can judge a row on the other basis with the same rule.
+ */
+export const standingOf = (share: number | null, interval: [number, number] | null, untested: number, threshold: number): Standing =>
   share === null || interval === null || untested > MAX_UNTESTED
     ? "not assessable"
     : interval[0] >= threshold

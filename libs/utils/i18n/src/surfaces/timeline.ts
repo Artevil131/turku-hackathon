@@ -29,10 +29,6 @@ export const timelineEn = {
   tlCultures: "Cultures",
   tlCulturesScale: "cultures/wk, own scale",
   tlCulturesShort: "cultures/wk",
-  tlPillLegend: "pill = a signal · seen · usual",
-  tlLaneLegend:
-    "Lanes: each unit's resistant finds a week. A pill is a signal; its numbers are seen against usual, so 7 · 1.4 means seven patients seen where 1.4 were usual.",
-  tlLaneLegendShort: "Lanes: resistant finds per unit and week · pill = a signal · seen · usual",
   tlTipSeen: "{name}: {observed} seen, {expected} usual",
   tlTipSeenOnly: "{name}: {observed} seen",
   tlTipSampling: "Sampling: {observed} cultures, {expected} usual",
@@ -72,6 +68,10 @@ export const timelineEn = {
   tlLyUnits: "Which units to show",
   tlLyAll: "All",
   tlLyNone: "None",
+  tlLyNoUnits: "No units shown.",
+  tlLyNoLines: "All lines are off.",
+  tlLyShowUnits: "Show all units",
+  tlLyShowLines: "Show all lines",
   tlLyKinds: "Signals",
   tlLyKindSentinel: "Sentinel",
   tlLyKindCluster: "Cluster",
@@ -95,7 +95,7 @@ export const timelineEn = {
   tlInfoCpe: "CPE · Enterobacterales that destroy carbapenems, the last-line beta-lactams; every case is an alert.",
   tlInfoCult: "Cultures per week · samples taken, on their own scale; a dip means fewer samples, not fewer infections.",
   tlInfoRatio: "Per 100 cultures · patients with the finding for every 100 cultures sampled that week.",
-  tlInfoLanes: "Unit lanes · each unit's weekly resistant finds; a pill names a signal, e.g. 7/1.4 = observed/usual.",
+  tlInfoLanes: "Unit lanes · each unit's weekly resistant finds; a pill names a signal; point at a week for seen and usual.",
 } as const;
 
 export const timelineFi: Record<keyof typeof timelineEn, string> = {
@@ -127,10 +127,6 @@ export const timelineFi: Record<keyof typeof timelineEn, string> = {
   tlCultures: "Viljelyt",
   tlCulturesScale: "viljelyt/vko, oma asteikko",
   tlCulturesShort: "viljelyt/vko",
-  tlPillLegend: "merkki = signaali · havaittu · tavallinen",
-  tlLaneLegend:
-    "Kaistat: yksikön resistentit löydökset viikossa. Merkki on signaali; sen luku on havaittu suhteessa tavalliseen, eli 7 · 1,4 tarkoittaa seitsemää potilasta, kun 1,4 oli odotettavissa.",
-  tlLaneLegendShort: "Kaistat: resistentit löydökset yksikköä ja viikkoa kohti · merkki = signaali · havaittu · tavallinen",
   tlTipSeen: "{name}: {observed} havaittu, {expected} tavallinen",
   tlTipSeenOnly: "{name}: {observed} havaittu",
   tlTipSampling: "Näytteenotto: {observed} viljelyä, {expected} tavallinen",
@@ -171,6 +167,10 @@ export const timelineFi: Record<keyof typeof timelineEn, string> = {
   tlLyUnits: "Mitkä yksiköt näytetään",
   tlLyAll: "Kaikki",
   tlLyNone: "Ei yhtään",
+  tlLyNoUnits: "Yksiköitä ei näytetä.",
+  tlLyNoLines: "Kaikki viivat on piilotettu.",
+  tlLyShowUnits: "Näytä kaikki yksiköt",
+  tlLyShowLines: "Näytä kaikki viivat",
   tlLyKinds: "Signaalit",
   tlLyKindSentinel: "Vartijatapaus",
   tlLyKindCluster: "Klusteri",
@@ -194,5 +194,6 @@ export const timelineFi: Record<keyof typeof timelineEn, string> = {
   tlInfoCpe: "CPE · karbapeneemit hajottavat enterobakteerit; jokainen löydös on hälytys.",
   tlInfoCult: "Viljelyt viikossa · otetut näytteet omalla asteikollaan; notko tarkoittaa vähemmän näytteitä, ei vähemmän infektioita.",
   tlInfoRatio: "100 viljelyä kohti · löydöksen potilaat jokaista viikon 100 viljelyä kohti.",
-  tlInfoLanes: "Yksikkökaistat · yksikön viikoittaiset resistentit löydökset; merkki nimeää signaalin, esim. 7/1,4 = havaittu/tavallinen.",
+  tlInfoLanes:
+    "Yksikkökaistat · yksikön viikoittaiset resistentit löydökset; merkki nimeää signaalin; osoita viikkoa nähdäksesi havaitun ja tavallisen.",
 };

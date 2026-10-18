@@ -315,10 +315,15 @@
   stroke-width: 1;
 }
 
+/* On <body>, placed by WeeklyBand in viewport coordinates; the phenotype colours come along (they live on .hs). */
 .hs-read {
-  position: absolute;
-  top: calc(100% + 8px);
-  z-index: 45;
+  --ph-esbl: var(--brand-accent, #635bf1);
+  --ph-mrsa: var(--ink-2, #1d204e);
+  --ph-vre: var(--st-watch, #94590a);
+  --ph-cpe: var(--st-alert, #d0004b);
+  position: fixed;
+  z-index: 450;
+  box-sizing: border-box;
   padding: 8px 10px;
   border: 1px solid var(--line, #e4e6ee);
   border-radius: 8px;
@@ -473,12 +478,13 @@
   border-radius: 50%;
   background: currentColor;
 }
+/* On <body>, placed in viewport coordinates by useAnchored, so no window clips it or covers it. */
 .ly-panel {
-  position: absolute;
-  top: 24px;
-  right: 0;
+  position: fixed;
+  z-index: 450;
+  box-sizing: border-box;
   width: min(300px, calc(100vw - 32px));
-  max-height: min(70vh, 460px);
+  max-height: min(70vh, 460px, var(--anchored-room, 100vh));
   overflow-y: auto;
   padding: 8px 10px 10px;
   border: 1px solid var(--line, #e4e6ee);
@@ -589,13 +595,6 @@
 /* The week readout sits below the popovers and menus, and flips when there is no room below. */
 .hs-read {
   z-index: 30;
-}
-.hs-read[data-place="above"] {
-  top: auto;
-  bottom: calc(100% + 8px);
-}
-.hs-read[data-place="inside"] {
-  top: 22px;
 }
 .hs-read-raw {
   color: var(--ink-3, #5c6080);
@@ -724,4 +723,42 @@
   .hs-playhead {
     transition: none;
   }
+}
+
+/* Every unit or every line switched off: one quiet line where they would be, and the way back. */
+.hs-none {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  box-sizing: border-box;
+  min-height: 24px;
+  margin: 0;
+  padding: 0 8px;
+  border: 1px dashed var(--line, #e4e6ee);
+  border-radius: 6px;
+  background: var(--glass-1, #fff);
+  color: var(--ink-3, #5c6080);
+  font: 400 12px / 1.3 var(--brand-font-ui, system-ui, sans-serif);
+  text-align: center;
+  pointer-events: none;
+}
+.hs-none button {
+  padding: 2px 4px;
+  border: 0;
+  background: none;
+  color: var(--live, #635bf1);
+  font: inherit;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  pointer-events: auto;
+}
+.hs-none button:focus-visible {
+  outline: 2px solid var(--live, #635bf1);
+  outline-offset: 1px;
+  border-radius: 3px;
 }

@@ -20,19 +20,28 @@ and response types, live event types, and a typed client.
 `createAeiClient({ baseUrl })` wraps them, with `live(onEvent)` for the
 stream. Any server, TypeScript today or Rust later, serves exactly this.
 
+Each browser has its own replay clock, keyed by the `aei_visitor` cookie
+(D-078): the clock routes, the stream and every route cut "up to the clock"
+read and move that browser's clock only. `GET /api/clock`, the stream, a clock
+command and a project write set the cookie when the request has none; a
+request without it reads a new clock's start state.
+
 Relies on: D-005, D-006, D-011 to D-014, D-037, D-038. Tests: `src/contract.test.ts`.
 
 ## Optional assistant
 
-- `POST /api/ask` with `{text: string, lang: "en" | "fi"}` returns
+- `POST /api/ask` with `{text: string, lang: "en" | "fi", site?: string}` returns
   `AskResponse {asOf, filters: IsolateQuery, ageGroup?, unmatched: string[]}`.
   `asOf` is the replay date used to resolve relative periods. No LLM: 503;
   upstream/model request failure: 502. No model-generated counts are returned.
+  The question is read against `site`'s units only (the home site's when
+  omitted; an unknown site is a 400), so two hospitals' same-named units do
+  not collide.
 - `GET /api/explain?id=<alert id>&lang=en|fi` returns
   `ExplainResponse {id, text, source: "model" | "template"}`. Only released
   alerts are available (unknown/unreleased ids: 404). Works without an LLM
   using a trusted bilingual template. Responses are cached by id and language.
-- `client.ask(text, lang)` and `client.explain(id, lang)` wrap these routes.
+- `client.ask(text, lang, site?)` and `client.explain(id, lang)` wrap these routes.
   HTTP failures throw `ApiError`, whose `status` supports recoverable UI states.
 
 Isolate sex filters use `F` or `M`; age bounds are inclusive years, including 0.

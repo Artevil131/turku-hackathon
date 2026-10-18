@@ -120,7 +120,10 @@ export function HospitalNetwork({ client, locale, asOf, state, onChange }: Panel
     return [
       t(locale, "netNodeAria", { unit: code, name: wardName(locale, code) }),
       s
-        ? t(locale, "netNodeSignals", { n: s.alerts.length, list: s.badges.map(badgeText).join("; ") })
+        ? t(locale, s.alerts.length === 1 ? "netNodeSignalsOne" : "netNodeSignals", {
+            n: s.alerts.length,
+            list: s.badges.map(badgeText).join("; "),
+          })
         : data
           ? t(locale, "netNodeNoSignals")
           : null,

@@ -60,7 +60,6 @@ const PAGES: { id: string; label: MessageKey; href: string; also?: MessageKey }[
   { id: "map", label: "boardMap", href: "#research?panel=map" },
   { id: "network", label: "boardNetwork", href: "#research?panel=network", also: "network" },
   { id: "grid", label: "boardGrid", href: "#research?panel=grid" },
-  { id: "intro", label: "cmdPageIntro", href: "#intro" },
   { id: "settings", label: "settings", href: "#settings" },
 ];
 

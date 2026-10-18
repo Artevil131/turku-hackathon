@@ -28,7 +28,7 @@ describe("weekIndex", () => {
 });
 
 describe("pillLabel", () => {
-  it("shows observed and usual with a middle dot, not a slash", () => {
+  it("names the kind only; the numbers are in the words", () => {
     const profile: Alert = {
       kind: "detector",
       detector: "profile-excess",
@@ -56,13 +56,14 @@ describe("pillLabel", () => {
       expected: 0.2,
       p: 0.01,
     } as Alert;
-    expect(pillLabel("en", profile)).toBe("profile 7 · 1.4");
-    expect(pillLabel("en", samples)).toBe("samples 39 · 70");
-    expect(pillLabel("en", esbl)).toBe("ESBL 3 · 0.2");
-    expect(pillLabel("fi", profile)).toBe("profiili 7 · 1,4");
+    expect(pillLabel("en", profile)).toBe("profile");
+    expect(pillLabel("en", samples)).toBe("samples");
+    expect(pillLabel("en", esbl)).toBe("ESBL");
+    expect(pillLabel("fi", profile)).toBe("profiili");
+    expect(pillWords("en", esbl)).toBe("ESBL: 3 seen, 0.2 usual");
   });
 
-  it("leaves a lone count without a separator", () => {
+  it("marks a rising trend with an arrow", () => {
     const rising: Alert = { kind: "detector", detector: "rising-trend", ward: "URO", date: "2025-06-07" } as Alert;
     expect(pillLabel("en", rising)).toBe("trend ↗");
   });

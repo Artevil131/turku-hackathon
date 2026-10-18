@@ -17,6 +17,7 @@ import {
 } from "react";
 import { allWards, currentSite, isMulti, siteWards } from "../../sites.ts";
 import { onProjectPage, sharedQuery } from "../../url.ts";
+import { OnBody } from "../anchored.ts";
 import {
   bandPath,
   compactDate,
@@ -40,7 +41,17 @@ import {
   weekRows,
 } from "./geometry.ts";
 import { LayersControl } from "./LayersControl.tsx";
-import { type Layers, type LineKey, type ViewRow, viewRows, windowRows, windowStart } from "./layers.ts";
+import {
+  DEFAULT_LAYERS,
+  type Layers,
+  LINE_KEYS,
+  type LineKey,
+  type ViewRow,
+  viewRows,
+  wardCodes,
+  windowRows,
+  windowStart,
+} from "./layers.ts";
 import { incidentKey, isKinPill, isSelectedPill } from "./selection.ts";
 import { type BandGeom, type BandRange, rangeSentence, rangeText, rangeX, snapRange, stretchRange, useBandRange } from "./useBandRange.ts";
 import "./WeeklyBand.css";
@@ -86,6 +97,16 @@ const fullLayout = (n: number, roomy = false, hospitalRow = false): Layout => {
 };
 const SMALL: Layout = { gutter: 0, height: 44, legend: 0, top: 3, base: 26, lanes: 0, pitch: 0, pill: 10, axis: 43, lanesEnd: 26 };
 const READ_W = 276;
+
+/** Measured width of a 12 px UI label, so legend items never run into each other; a generous guess where there is no canvas. */
+let measure: CanvasRenderingContext2D | null | undefined;
+function textW(text: string, weight = 500): number {
+  if (measure === undefined) measure = typeof document === "undefined" ? null : document.createElement("canvas").getContext("2d");
+  if (!measure) return text.length * 7.6;
+  const family = getComputedStyle(document.documentElement).getPropertyValue("--brand-font-ui").trim() || "system-ui, sans-serif";
+  measure.font = `${weight} 12px ${family}`;
+  return Math.ceil(measure.measureText(text).width);
+}
 
 interface Props {
   locale: Locale;
@@ -677,7 +698,7 @@ function Legend({
   layers: Layers;
   onToggle: (k: LineKey) => void;
 }) {
-  const items = PHENOTYPE_ORDER.map((p) => ({ k: p as LineKey, name: phenotypeName(p), w: 17 + phenotypeName(p).length * 6.6 }));
+  const items = PHENOTYPE_ORDER.map((p) => ({ k: p as LineKey, name: phenotypeName(p), w: 17 + textW(phenotypeName(p)) }));
   let x = L.gutter;
   const placed = items.map((it) => {
     const at = x;
@@ -686,13 +707,12 @@ function Legend({
   });
   const full = t(locale, "tlCulturesScale");
   const short = t(locale, "tlCulturesShort");
-  const room = right - x - 18;
-  const text = full.length * 6.2 <= room ? full : short.length * 6.2 <= room ? short : null;
-  const cultW = 17 + (text ? text.length * 6.2 : 0);
+  // The "per 100 cultures" tag at the right end takes its room first, so the cultures label never runs into it.
   const tag = layers.metric === "ratio" ? t(locale, "tlYRatio") : null;
-  const tagW = tag ? tag.length * 6.2 + 8 : 0;
-  const ratio = t(locale, "tlPillLegend");
-  const ratioNote = right - (x + cultW) - tagW - 24 >= ratio.length * 6.2 ? ratio : null;
+  const tagW = tag ? textW(tag, 600) + 12 : 0;
+  const room = right - x - 18 - tagW;
+  const text = textW(full) <= room ? full : textW(short) <= room ? short : null;
+  const cultW = 17 + (text ? textW(text) : 0);
   const toggle = (k: LineKey, name: string, at: number, w: number, swatch: ReactNode, label: string | null) => {
     const on = layers.lines[k];
     return (
@@ -743,11 +763,6 @@ function Legend({
       )}
       {/* No room for even the short label: leave the cultures toggle to the Layers menu rather than show a bare dash. */}
       {text ? toggle("cult", t(locale, "tlLyCultures"), x, cultW, <path className="hs-cult" d={`M${x} 7.5h13`} />, text) : null}
-      {ratioNote ? (
-        <text className="hs-legend" x={right - 8 - tagW} y={11} textAnchor="end">
-          {ratioNote}
-        </text>
-      ) : null}
       {tag ? (
         <text className="hs-legend hs-legend-tag" x={right - 8} y={11} textAnchor="end">
           {tag}
@@ -849,7 +864,9 @@ export function WeeklyBand(p: Props) {
   const readRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(600);
   const [hover, setHover] = useState<{ idx: number; kbd: boolean } | null>(null);
-  const [place, setPlace] = useState<"below" | "above" | "inside">("below");
+  // The readout floats on <body> in viewport coordinates, so the timeline window's edge never cuts it off and the
+  // window below never covers it: under the band, over it, or (with no room either way) inside it.
+  const [place, setPlace] = useState<{ top?: number; bottom?: number; left: number }>({ left: 0 });
 
   useEffect(() => {
     const el = wrap.current;
@@ -866,15 +883,18 @@ export function WeeklyBand(p: Props) {
   const wards = useMemo(() => Object.keys(weekly?.units ?? {}).filter((c) => layers.units[c] !== false), [weekly, layers.units]);
   const shownAlerts = useMemo(() => alerts.filter((a) => layers.kinds[pillKind(a)]), [alerts, layers.kinds]);
   const hospitalRow = useMemo(() => shownAlerts.some((a) => !a.ward && a.date <= asOf), [shownAlerts, asOf]);
+  // Every unit or every line switched off: the band keeps two lanes of room and says so, with the way back.
+  const noUnits = !compact && weekly != null && wards.length === 0;
+  const noLines = !compact && weekly != null && !LINE_KEYS.some((k) => layers.lines[k]);
   const L = useMemo(
-    () => (compact ? SMALL : fullLayout(weekly ? wards.length : siteWards().length, roomy, hospitalRow)),
-    [compact, roomy, weekly, wards.length, hospitalRow],
+    () => (compact ? SMALL : fullLayout(weekly ? Math.max(wards.length, noUnits ? 2 : 0) : siteWards().length, roomy, hospitalRow)),
+    [compact, roomy, weekly, wards.length, noUnits, hospitalRow],
   );
   const d0 = windowStart(start, win[0], layers.window);
   const control = !compact && onLayers !== undefined;
   const withLabel = width >= 520;
   // The Layers button plus the 24 px ⓘ beside it, so the legend never runs under either.
-  const reserve = control ? 28 + (withLabel ? 30 + t(locale, "tlLayers").length * 6.2 : 30) : 0;
+  const reserve = control ? 58 + (withLabel ? textW(t(locale, "tlLayers")) + 12 : 0) : 0;
   const m = useMemo(
     () => build(L, width, d0, asOf, rows, shownAlerts, wards, layers, locale, compact, reserve),
     [L, width, d0, asOf, rows, shownAlerts, wards, layers, locale, compact, reserve],
@@ -1018,7 +1038,15 @@ export function WeeklyBand(p: Props) {
     if (!r || !w) return;
     const box = w.getBoundingClientRect();
     const need = r.offsetHeight + 8;
-    setPlace(box.bottom + need <= window.innerHeight - 8 ? "below" : box.top - need >= 8 ? "above" : "inside");
+    const vh = window.innerHeight;
+    const left = Math.round(Math.min(box.left + readLeft, document.documentElement.clientWidth - READ_W - 8));
+    setPlace(
+      box.bottom + need <= vh - 8
+        ? { left, top: Math.round(box.bottom + 8) }
+        : box.top - need >= 8
+          ? { left, bottom: Math.round(vh - box.top + 8) }
+          : { left, top: Math.round(box.top + 22) },
+    );
   }, [hoverIdx]);
 
   return (
@@ -1118,6 +1146,29 @@ export function WeeklyBand(p: Props) {
       <span id={`${id}-sum`} className="visually-hidden">
         {summary}
       </span>
+      {noLines ? (
+        <p className="hs-none" style={{ left: L.gutter, top: L.top, height: L.base - L.top, width: Math.max(0, m.right - L.gutter) }}>
+          {t(locale, "tlLyNoLines")}
+          {onLayers ? (
+            <button type="button" onClick={() => onLayers({ ...layers, lines: { ...DEFAULT_LAYERS.lines } })}>
+              {t(locale, "tlLyShowLines")}
+            </button>
+          ) : null}
+        </p>
+      ) : null}
+      {noUnits ? (
+        <p
+          className="hs-none"
+          style={{ left: L.gutter, top: L.lanes, height: L.lanesEnd - L.lanes, width: Math.max(0, m.right - L.gutter) }}
+        >
+          {t(locale, "tlLyNoUnits")}
+          {onLayers ? (
+            <button type="button" onClick={() => onLayers({ ...layers, units: Object.fromEntries(wardCodes().map((u) => [u, true])) })}>
+              {t(locale, "tlLyShowUnits")}
+            </button>
+          ) : null}
+        </p>
+      ) : null}
       {control && onLayers ? (
         <LayersControl
           locale={locale}
@@ -1135,66 +1186,71 @@ export function WeeklyBand(p: Props) {
         />
       ) : null}
       {row && !compact ? (
-        <div
-          className="hs-read"
-          ref={readRef}
-          data-place={place}
-          style={{ left: readLeft, width: READ_W }}
-          role={hover?.kbd ? "status" : undefined}
-          aria-hidden={hover?.kbd ? undefined : true}
-        >
-          <div className="hs-read-head">
-            <b className="num">{t(locale, "tlWeekRange", { from: compactDate(row.date), to: compactDate(row.last) })}</b>
-            {row.partial ? <span className="hs-read-partial">{t(locale, "tlPartial", { to: compactDate(row.last) })}</span> : null}
-            {isMulti() ? (
-              <span className="hs-read-site">
-                {currentSite() === null ? t(locale, "siteAll") : siteName(locale, currentSite() as string)}
-              </span>
-            ) : null}
-          </div>
-          {row.hidden ? null : (
-            <>
-              <div className="hs-read-grid hs-read-ph">
-                {readPh.map((ph) => (
-                  <span key={ph} className="hs-read-item" title={layers.metric === "ratio" ? `${row.ph[ph]} / ${row.cultures}` : undefined}>
-                    <svg width="12" height="8" aria-hidden="true">
-                      <rect className={`hs-swatch ${PH_CLASS[ph]}`} width="12" height="8" style={{ fill: `url(#${id}-${ph})` }} />
-                    </svg>
-                    {phenotypeName(ph)} <b className="num">{fmtVal(row.v.ph[ph], layers)}</b>
-                    {layers.metric === "ratio" ? <span className="hs-read-raw num">({row.ph[ph]})</span> : null}
-                  </span>
-                ))}
-                {layers.lines.cult ? (
-                  <span className="hs-read-item hs-read-cult">
-                    {t(locale, "tlCultures")} <b className="num">{row.cultures}</b>
-                  </span>
-                ) : null}
-              </div>
-              <div className="hs-read-grid hs-read-units">
-                {allWards()
-                  .filter((w) => wards.includes(w.code) && row.v.units[w.code] !== undefined)
-                  .map((w) => (
-                    <span key={w.code} className="hs-read-item" title={wardName(locale, w.code)}>
-                      {currentSite() === null ? w.code : bareWardCode(w.code)}{" "}
-                      <b className="num">{fmtVal(row.v.units[w.code] ?? null, layers)}</b>
+        <OnBody>
+          <div
+            className="hs-read"
+            ref={readRef}
+            style={{ ...place, width: READ_W }}
+            role={hover?.kbd ? "status" : undefined}
+            aria-hidden={hover?.kbd ? undefined : true}
+          >
+            <div className="hs-read-head">
+              <b className="num">{t(locale, "tlWeekRange", { from: compactDate(row.date), to: compactDate(row.last) })}</b>
+              {row.partial ? <span className="hs-read-partial">{t(locale, "tlPartial", { to: compactDate(row.last) })}</span> : null}
+              {isMulti() ? (
+                <span className="hs-read-site">
+                  {currentSite() === null ? t(locale, "siteAll") : siteName(locale, currentSite() as string)}
+                </span>
+              ) : null}
+            </div>
+            {row.hidden ? null : (
+              <>
+                <div className="hs-read-grid hs-read-ph">
+                  {readPh.map((ph) => (
+                    <span
+                      key={ph}
+                      className="hs-read-item"
+                      title={layers.metric === "ratio" ? `${row.ph[ph]} / ${row.cultures}` : undefined}
+                    >
+                      <svg width="12" height="8" aria-hidden="true">
+                        <rect className={`hs-swatch ${PH_CLASS[ph]}`} width="12" height="8" style={{ fill: `url(#${id}-${ph})` }} />
+                      </svg>
+                      {phenotypeName(ph)} <b className="num">{fmtVal(row.v.ph[ph], layers)}</b>
+                      {layers.metric === "ratio" ? <span className="hs-read-raw num">({row.ph[ph]})</span> : null}
                     </span>
                   ))}
-              </div>
-            </>
-          )}
-          <div className="hs-read-alerts">
-            <span className="hs-read-label">{t(locale, "tlAlertsThisWeek")}</span>
-            {rowAlerts.length ? (
-              <ul>
-                {rowAlerts.map((a) => (
-                  <li key={a.id}>{pillLine(locale, a)}</li>
-                ))}
-              </ul>
-            ) : (
-              <span> {t(locale, "tlNoSignals")}</span>
+                  {layers.lines.cult ? (
+                    <span className="hs-read-item hs-read-cult">
+                      {t(locale, "tlCultures")} <b className="num">{row.cultures}</b>
+                    </span>
+                  ) : null}
+                </div>
+                <div className="hs-read-grid hs-read-units">
+                  {allWards()
+                    .filter((w) => wards.includes(w.code) && row.v.units[w.code] !== undefined)
+                    .map((w) => (
+                      <span key={w.code} className="hs-read-item" title={wardName(locale, w.code)}>
+                        {currentSite() === null ? w.code : bareWardCode(w.code)}{" "}
+                        <b className="num">{fmtVal(row.v.units[w.code] ?? null, layers)}</b>
+                      </span>
+                    ))}
+                </div>
+              </>
             )}
+            <div className="hs-read-alerts">
+              <span className="hs-read-label">{t(locale, "tlAlertsThisWeek")}</span>
+              {rowAlerts.length ? (
+                <ul>
+                  {rowAlerts.map((a) => (
+                    <li key={a.id}>{pillLine(locale, a)}</li>
+                  ))}
+                </ul>
+              ) : (
+                <span> {t(locale, "tlNoSignals")}</span>
+              )}
+            </div>
           </div>
-        </div>
+        </OnBody>
       ) : null}
     </div>
   );

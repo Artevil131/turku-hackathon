@@ -289,38 +289,43 @@
   top: 128px;
   right: 10px;
 }
-.start-card-menu summary {
-  cursor: pointer;
-  list-style: none;
+.start-card-menu-btn {
+  display: inline-grid;
+  place-items: center;
   padding: 4px;
+  border: 0;
   border-radius: 4px;
+  background: none;
+  color: inherit;
+  cursor: pointer;
 }
-.start-card-menu summary:hover {
+.start-card-menu-btn:hover,
+.start-card-menu-btn[aria-expanded="true"] {
   background: var(--live-soft);
 }
-.start-card-menu summary::-webkit-details-marker {
-  display: none;
-}
-.start-card-menu > div {
+/* On <body>, placed next to the "…" button by useAnchored (CardMenu.tsx), so the sideways row never clips it. */
+.start-card-pop {
   display: grid;
-  position: absolute;
-  z-index: 3;
-  right: 0;
+  position: fixed;
+  z-index: 450;
+  box-sizing: border-box;
   width: 144px;
+  max-height: var(--anchored-room, 70vh);
+  overflow-y: auto;
   background: var(--glass-1);
   border: 1px solid var(--line);
   box-shadow: var(--pop-shadow);
   padding: 4px;
   border-radius: var(--radius-control);
 }
-.start-card-menu button {
+.start-card-pop button {
   padding: 8px 12px;
   text-align: left;
   background: none;
   border: 0;
   color: var(--ink-2);
 }
-.start-card-menu button:hover {
+.start-card-pop button:hover {
   background: var(--live-soft);
 }
 .start-templates {

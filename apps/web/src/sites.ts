@@ -154,6 +154,8 @@ export function scopeClient(client: AeiClient, site: SiteId | null): AeiClient {
   return {
     ...client,
     coverage: (q) => client.coverage({ site, ...q }),
+    // Ask reads the question against this hospital's units only (D-085).
+    ask: (text, lang) => client.ask(text, lang, site ?? undefined),
     isolates: (q) => client.isolates({ site, ...q }),
     relations: (q) => client.relations({ site, ...q }),
     alerts: (q) => client.alerts({ site, ...q }),

@@ -31,13 +31,15 @@ export interface Layers {
 
 const allOn = <K extends string>(keys: readonly K[]) => Object.fromEntries(keys.map((k) => [k, true])) as Record<K, boolean>;
 
+// By default the band shows the last year, where pills have room, and leaves out the data-problem pills ("no samples",
+// "samples"): they are about the data, not resistance, and were half the clutter. Both are one click away in Layers.
 export const DEFAULT_LAYERS: Layers = {
   lines: allOn(LINE_KEYS),
   metric: "count",
   stacked: true,
   units: {},
-  kinds: allOn(PILL_KINDS),
-  window: 0,
+  kinds: { ...allOn(PILL_KINDS), data: false },
+  window: 52,
 };
 
 /** The short code; "" for the default. */
@@ -46,9 +48,11 @@ export function encodeLayers(l: Layers): string {
   for (const k of LINE_KEYS) if (!l.lines[k]) out.push(`-${k}`);
   if (l.metric === "ratio") out.push("r");
   if (!l.stacked) out.push("o");
-  if (l.window) out.push(`w${l.window}`);
+  // Window and kinds are written where they differ from the defaults: "w0" is the whole history, "+k:data" turns the
+  // data-problem pills back on.
+  if (l.window !== DEFAULT_LAYERS.window) out.push(`w${l.window}`);
   for (const [u, on] of Object.entries(l.units)) if (on === false) out.push(`-u:${u}`);
-  for (const k of PILL_KINDS) if (!l.kinds[k]) out.push(`-k:${k}`);
+  for (const k of PILL_KINDS) if (l.kinds[k] !== DEFAULT_LAYERS.kinds[k]) out.push(`${l.kinds[k] ? "+" : "-"}k:${k}`);
   return out.join(".");
 }
 
@@ -69,9 +73,9 @@ export function decodeLayers(code: string | null | undefined): Layers {
     } else if (tok.startsWith("-u:")) {
       const u = tok.slice(3);
       if (knownWard(u)) l.units[u] = false;
-    } else if (tok.startsWith("-k:")) {
+    } else if (tok.startsWith("-k:") || tok.startsWith("+k:")) {
       const k = tok.slice(3) as PillKind;
-      if (k in l.kinds) l.kinds[k] = false;
+      if (k in l.kinds) l.kinds[k] = tok.startsWith("+");
     } else if (tok.startsWith("-")) {
       const k = tok.slice(1) as LineKey;
       if (k in l.lines) l.lines[k] = false;

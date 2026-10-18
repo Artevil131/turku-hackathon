@@ -1,7 +1,8 @@
 import type { CoverageResponse } from "@aei/contract";
+import { standingOf } from "@aei/coverage";
 import type { IsoDate, Phenotype } from "@aei/domain";
 import { type Locale, type MessageKey, specimenName, t } from "@aei/i18n";
-import { barOf, type DoctorFilters, dmy, num, pct, type Row, rowN } from "./filters.ts";
+import { type Basis, barOf, type DoctorFilters, dmy, num, pct, type Row, rowN } from "./filters.ts";
 
 /** What the coverage list shows for each standing: glyph, one word, and the full phrase for `title`. */
 export const STANDING: Record<Row["standing"], { glyph: string; short: MessageKey; long: MessageKey }> = {
@@ -74,4 +75,28 @@ export interface Item {
 export interface Prior {
   phenotype: Phenotype;
   date: IsoDate;
+}
+
+/**
+ * The standing of a row on the basis its figure is shown on. The server judges a single antibiotic on one basis
+ * (own spectrum for mild, everything for severe, D-027); when the doctor shows the other basis, the same rule
+ * (`@aei/coverage` `standingOf`, D-026) is applied to that basis's share and interval, so the mark never contradicts
+ * the figure beside it. A combination has only the all-organism basis and keeps the server's standing.
+ */
+export function standingOn(item: Item, view: Basis, bar: number): Item["standing"] {
+  const row = item.row;
+  if (!row) return item.standing;
+  const judged: Basis = row.basis === "spectrum" ? "own" : "all";
+  if (view === judged) return item.standing;
+  const c = view === "own" ? row.coverage.spectrum : row.coverage;
+  const untested = row.coverage.untested.reduce((s, u) => s + u.share, 0);
+  return standingOf(c.share, c.interval, untested, bar / 100);
+}
+
+/**
+ * Nothing to judge for this case: no isolates in the pool, no rows, or every row not assessable for want of results
+ * (fewer than 30 at every level), which is what the empty-state sentence says.
+ */
+export function nothingAssessable(items: readonly Item[], isolates?: number): boolean {
+  return isolates === 0 || items.length === 0 || items.every((i) => i.standing === "not assessable" && i.share === null);
 }

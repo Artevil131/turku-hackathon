@@ -193,24 +193,26 @@ function num(locale: Locale, v: number): string {
   return f.format(v);
 }
 
-/** What caused the alert, in a few characters: "ESBL 7 · 1.4", "MRSA new", "no samples". */
+/**
+ * What caused the alert, in a word or two: "ESBL", "MRSA new", "profile", "no samples". The numbers (seen against
+ * usual) are not on the pill, where they read as a code; the week's readout and the pill's tooltip say them in words.
+ */
 export function pillLabel(locale: Locale, a: Alert): string {
   if (a.kind === "cpe") return phenotypeName("cpe");
   if (a.kind === "new-in-unit") return `${phenotypeName(a.phenotype)} ${t(locale, "tlPillNew")}`;
   if (a.kind === "carrier") return `${phenotypeName(a.phenotype)} ${t(locale, "tlPillCarrier")}`;
-  const ratio = a.expected === undefined ? num(locale, a.observed) : `${num(locale, a.observed)} · ${num(locale, a.expected)}`;
   switch (a.detector) {
     case "phenotype-excess":
-      return `${a.phenotype ? phenotypeName(a.phenotype) : t(locale, "tlCluster")} ${ratio}`;
+      return a.phenotype ? phenotypeName(a.phenotype) : t(locale, "tlCluster");
     case "profile-excess":
-      return `${t(locale, "tlPillProfile")} ${ratio}`;
+      return t(locale, "tlPillProfile");
     case "rising-trend":
       return `${t(locale, "tlPillTrend")} ↗`;
     case "resistance-shift":
-      return `${t(locale, "tlPillTrend")} ${ratio}`;
+      return t(locale, "tlPillTrend");
     case "sampling-drop":
     case "volume-jump":
-      return `${t(locale, "tlPillSamples")} ${ratio}`;
+      return t(locale, "tlPillSamples");
     case "empty-run":
       return t(locale, "tlPillNoSamples");
   }
@@ -254,9 +256,9 @@ export function pillTip(locale: Locale, members: readonly Alert[]): string {
   return members.length > 1 ? [t(locale, "tlTipMany", { n: members.length }), ...lines].join("\n") : (lines[0] ?? "");
 }
 
-/** One line for assistive technology and the readout: label, unit, date, surprise. */
+/** One line for assistive technology and the readout: what it counts in words, unit, date, surprise. */
 export function pillLine(locale: Locale, a: Alert): string {
-  const parts = [pillLabel(locale, a)];
+  const parts = [pillWords(locale, a)];
   if (a.ward) parts.push(wardName(locale, a.ward));
   parts.push(compactDate(a.date));
   const s = surprise(a);

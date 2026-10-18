@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addDays, createReleaseIndex, createReplayClock, daysBetween, type Scheduler } from "./index.ts";
+import { addDays, createClockPool, createReleaseIndex, createReplayClock, daysBetween, type Scheduler } from "./index.ts";
 
 function manualScheduler() {
   let fn: (() => void) | null = null;
@@ -45,6 +45,73 @@ describe("replay clock", () => {
     expect(clock.state().asOf).toBe("2026-01-01");
     clock.step(30);
     expect(clock.state().asOf).toBe("2026-01-10");
+  });
+});
+
+describe("clock pool", () => {
+  const options = { start: "2026-01-01", end: "2026-12-31", tickMs: 100, daysPerTick: 1 };
+
+  it("keeps one clock per key, so seeking one leaves the others", () => {
+    const pool = createClockPool({ create: () => createReplayClock(options), max: 10, idleMs: 1000 });
+    pool.get("a").seek("2026-03-01");
+    pool.get("b").seek("2026-07-01");
+    expect(pool.get("a").state().asOf).toBe("2026-03-01");
+    expect(pool.get("b").state().asOf).toBe("2026-07-01");
+    expect(pool.peek("c")).toBeUndefined();
+    expect(pool.size).toBe(2);
+  });
+
+  it("drops an idle clock and stops its timer, but not one that is held", () => {
+    let t = 0;
+    const timers = { a: manualScheduler(), b: manualScheduler() };
+    const evicted: string[] = [];
+    const pool = createClockPool({
+      create: (key) => createReplayClock({ ...options, scheduler: timers[key as "a" | "b"].scheduler }),
+      max: 10,
+      idleMs: 1000,
+      now: () => t,
+      onEvict: (key) => evicted.push(key),
+    });
+    pool.get("a").play();
+    pool.get("b").play();
+    const release = pool.hold("b");
+    expect(timers.a.active() && timers.b.active()).toBe(true);
+    t = 999;
+    expect(pool.sweep()).toEqual([]);
+    t = 1000;
+    expect(pool.sweep()).toEqual(["a"]);
+    expect(timers.a.active()).toBe(false);
+    expect(timers.b.active()).toBe(true);
+    expect(evicted).toEqual(["a"]);
+    // Released, b's idle time counts from the release.
+    t = 5000;
+    release();
+    t = 5999;
+    expect(pool.sweep()).toEqual([]);
+    t = 6000;
+    expect(pool.sweep()).toEqual(["b"]);
+    expect(timers.b.active()).toBe(false);
+    expect(pool.size).toBe(0);
+  });
+
+  it("drops the least recently used unheld clock past the cap", () => {
+    let t = 0;
+    const m = manualScheduler();
+    const pool = createClockPool({
+      create: () => createReplayClock({ ...options, scheduler: m.scheduler }),
+      max: 2,
+      idleMs: 1e9,
+      now: () => t++,
+    });
+    pool.hold("a");
+    pool.get("b").play();
+    pool.get("c");
+    expect(pool.entries().map(([key]) => key)).toEqual(["a", "c"]);
+    expect(m.active()).toBe(false);
+    // Every clock held: the least recently used goes anyway.
+    pool.hold("c");
+    pool.get("d");
+    expect(pool.entries().map(([key]) => key)).toEqual(["c", "d"]);
   });
 });
 

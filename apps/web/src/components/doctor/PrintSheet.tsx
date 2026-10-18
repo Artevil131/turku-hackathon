@@ -2,7 +2,7 @@ import type { CoverageResponse, PatientFindingsResponse } from "@aei/contract";
 import { shortOrganism } from "@aei/domain";
 import type { Syndrome } from "@aei/guideline";
 import { type Locale, specimenName, t, wardName } from "@aei/i18n";
-import { AGE_KEYS, BAR, barOf, certaintyOf, type DoctorFilters, dmy, droppedFilters, num, pct, sexWord } from "./filters.ts";
+import { AGE_KEYS, BAR, barOf, certaintyOf, type DoctorFilters, dmy, droppedFilters, num, pct, periodName, sexWord } from "./filters.ts";
 import { guideCodes, guideLines } from "./Guide.tsx";
 import { carrierLines, findingLines, priorText } from "./Patient.tsx";
 import { flagsOf, type Item, levelKey, reasonOf, recentText, STANDING } from "./reason.ts";
@@ -35,7 +35,7 @@ export function PrintSheet({ locale, filters, data, asOf, signals, singles, pair
     filters.age === "any" ? null : t(locale, "drPrintAge", { age: t(locale, AGE_KEYS[filters.age]) }),
     filters.onset ? t(locale, "drOnset").toLowerCase() : null,
     `${t(locale, filters.sev === "mild" ? "drSevMildShort" : "drSevSevereShort")}, ${t(locale, "drBarName", { bar: barOf(data, filters) })}`,
-    t(locale, "drPeriodYear"),
+    periodName(locale, filters.period),
     t(locale, "drPrintAsOf", { date: dmy(data.asOf) }),
   ]
     .filter(Boolean)

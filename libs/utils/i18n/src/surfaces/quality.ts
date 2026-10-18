@@ -4,6 +4,7 @@ const checksEn = {
   qualityLoading: "Loading data checks…",
   qualityError: "Data checks could not be loaded.",
   qualityLink: "Data checks: {n} findings — view checks",
+  qualityLinkOne: "Data checks: 1 finding — view checks",
   qualityTitle: "Data checks",
   qualityScope: "Checked: {patients} patients, {cultures} cultures, {isolates} isolates, {results} results.",
   qualityNote:
@@ -33,6 +34,7 @@ const checksFi: Record<keyof typeof checksEn, string> = {
   qualityLoading: "Ladataan aineiston tarkistuksia…",
   qualityError: "Aineiston tarkistuksia ei voitu ladata.",
   qualityLink: "Aineiston tarkistukset: {n} huomiota — näytä tarkistukset",
+  qualityLinkOne: "Aineiston tarkistukset: 1 huomio — näytä tarkistukset",
   qualityTitle: "Aineiston tarkistukset",
   qualityScope: "Tarkistettu: {patients} potilasta, {cultures} viljelyä, {isolates} isolaattia, {results} tulosta.",
   qualityNote:

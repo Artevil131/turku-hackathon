@@ -577,7 +577,25 @@ export function Performance(props: PerformanceProps) {
   }, []);
 
   return (
-    <div className="pf-lock" role="status" aria-live="polite" onContextMenu={(e) => e.preventDefault()}>
+    <div
+      className="pf-lock"
+      role="status"
+      aria-live="polite"
+      onContextMenu={(e) => e.preventDefault()}
+      onPointerDown={(e) => {
+        // A real press while the show runs (not a recording): the viewer takes over. The show skips to its end state
+        // and the press goes on to what lay under it, so the sidebar's Doctor opens on the first click, not after it.
+        if (!showSkip || !e.isTrusted || e.button !== 0 || (e.target as Element).closest(".pf-skip")) return;
+        const lock = e.currentTarget;
+        lock.style.pointerEvents = "none";
+        const under = document.elementFromPoint(e.clientX, e.clientY);
+        lock.style.pointerEvents = "";
+        e.preventDefault();
+        skip.current();
+        const target = under?.closest<HTMLElement>("a[href], button, summary, [role=button], [role=tab], label, select, input");
+        if (target) setTimeout(() => target.isConnected && !target.matches(":disabled") && target.click(), 60);
+      }}
+    >
       <div className="pf-curtain" aria-hidden="true" />
       <div ref={spot} className="pf-spot" aria-hidden="true" popover="manual" />
       <div ref={bracketEl} className="pf-bracket" aria-hidden="true">

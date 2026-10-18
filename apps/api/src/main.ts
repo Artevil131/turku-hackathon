@@ -58,7 +58,7 @@ import { isProjectId, matchesScope, type Project, type ProjectInput, parseProjec
 import { createProjectStore, fingerprintRows, newProjectId } from "@aei/projects/node";
 import { checkRows, type Finding, summarize } from "@aei/quality";
 import { countFlows, patientMoves, phenotypeTrails, trailLinks } from "@aei/relations";
-import { addDays, createReleaseIndex, createReplayClock } from "@aei/replay";
+import { addDays, type ClockState, createClockPool, createReleaseIndex, createReplayClock, type ReplayClock } from "@aei/replay";
 import {
   alertSite,
   authorize,
@@ -137,9 +137,20 @@ function visitorStore(visitor: string) {
   memoryStores.set(visitor, store);
   return store;
 }
-/** The request's visitor id from its cookie, or a new one, set on the response so the browser keeps it a year. */
+// A request without the cookie reads as a new visitor: no projects, and a new clock's start state.
+const noProjects = createProjectStore();
+/** The request's visitor id from its cookie, if it carries one; sets nothing. */
+function cookieVisitor(req: IncomingMessage): string | undefined {
+  return /(?:^|;\s*)aei_visitor=([a-f0-9]{32})(?:;|$)/.exec(req.headers.cookie ?? "")?.[1];
+}
+/**
+ * The request's visitor id from its cookie, or a new one, set on the response so the browser keeps it a year.
+ * Only requests that keep something for the visitor call this: GET /api/clock (the app's first, awaited read),
+ * the live stream, a clock command and a project write. Other reads use `cookieVisitor`, so the app's parallel
+ * first requests do not each set a different id and leave its stream on a clock the browser no longer names.
+ */
 function visitorOf(req: IncomingMessage, res: ServerResponse): string {
-  const found = /(?:^|;\s*)aei_visitor=([a-f0-9]{32})(?:;|$)/.exec(req.headers.cookie ?? "")?.[1];
+  const found = cookieVisitor(req);
   if (found) return found;
   const id = randomBytes(16).toString("hex");
   const secure = req.headers["x-forwarded-proto"] === "https" ? "; Secure" : "";
@@ -228,13 +239,26 @@ function relations(asOf: string, days: number, site?: string): RelationsResponse
   return { asOf, ...window, flows: touchingSite(flows, site, registry.siteOfWard), links: touchingSite(links, site, registry.siteOfWard) };
 }
 
-const clock = createReplayClock({
-  start: datasetStart,
-  end: datasetEnd,
-  asOf: config.loadUntil ?? config.startAt ?? (datasetEnd && datasetEnd < today() ? datasetEnd : today()),
-  tickMs: config.tickMs,
-  daysPerTick: config.daysPerTick,
-});
+// Each visitor has its own replay clock, keyed by the visitor cookie (D-078), so one visitor opening a demo or
+// changing the date moves no one else's. A clock is made on the visitor's first clock command or live stream;
+// until then, and for a request without the cookie, reads answer a new clock's start state. At most MAX_CLOCKS are
+// kept (least recently used dropped first), and one unused for CLOCK_IDLE_MS with no stream open is dropped and its
+// timer stopped.
+const MAX_CLOCKS = 500;
+const CLOCK_IDLE_MS = 30 * 60_000;
+// Results ingested after the start move every clock forward to them, as a live feed would; new clocks start there too.
+let ingestedUntil = "";
+/** A new clock: the configured start (D-079: today, clamped to the data's last sample date), paused. */
+function newClock(): ReplayClock {
+  const start = config.loadUntil ?? config.startAt ?? (datasetEnd && datasetEnd < today() ? datasetEnd : today());
+  return createReplayClock({
+    start: datasetStart,
+    end: datasetEnd,
+    asOf: ingestedUntil > start ? ingestedUntil : start,
+    tickMs: config.tickMs,
+    daysPerTick: config.daysPerTick,
+  });
+}
 
 // The static part of Meta; `ai` and `aiStatus` are added per request from the live status.
 const meta: Omit<Meta, "ai" | "aiStatus"> = {
@@ -247,21 +271,46 @@ const meta: Omit<Meta, "ai" | "aiStatus"> = {
   sites: registry.sites,
 };
 
-const streams = new Set<ServerResponse>();
-function broadcast(event: LiveEvent) {
+// Each visitor's open live streams (one per browser, shared by its tabs, but a second device has its own).
+const streams = new Map<string, Set<ServerResponse>>();
+function broadcast(visitor: string, event: LiveEvent) {
+  const open = streams.get(visitor);
+  if (!open?.size) return;
   const frame = `event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`;
-  for (const res of streams) res.write(frame);
+  for (const res of open) res.write(frame);
 }
 
-clock.subscribe((now, previous) => {
-  if (now.asOf > previous) {
-    broadcast({ type: "arrivals", from: previous, to: now.asOf, records: state.released.between(previous, now.asOf) });
-    const fresh = state.alerts.between(previous, now.asOf);
-    if (fresh.length) broadcast({ type: "alerts", from: previous, to: now.asOf, alerts: sortAlerts(fresh) });
-    broadcast({ type: "clock", clock: now });
-  } else if (now.asOf < previous) broadcast({ type: "reset", clock: now });
-  else broadcast({ type: "clock", clock: now });
+const clocks = createClockPool({
+  max: MAX_CLOCKS,
+  idleMs: CLOCK_IDLE_MS,
+  create(visitor) {
+    const clock = newClock();
+    clock.subscribe((now, previous) => {
+      if (!streams.get(visitor)?.size) return; // nobody listening: skip building the arrivals
+      if (now.asOf > previous) {
+        broadcast(visitor, { type: "arrivals", from: previous, to: now.asOf, records: state.released.between(previous, now.asOf) });
+        const fresh = state.alerts.between(previous, now.asOf);
+        if (fresh.length) broadcast(visitor, { type: "alerts", from: previous, to: now.asOf, alerts: sortAlerts(fresh) });
+        broadcast(visitor, { type: "clock", clock: now });
+      } else if (now.asOf < previous) broadcast(visitor, { type: "reset", clock: now });
+      else broadcast(visitor, { type: "clock", clock: now });
+    });
+    return clock;
+  },
+  // Only the cap drops a clock with a stream open; ending the stream lets the browser reconnect to a new clock.
+  onEvict(visitor) {
+    for (const res of streams.get(visitor) ?? []) res.end();
+    streams.delete(visitor);
+  },
 });
+setInterval(() => clocks.sweep(), 60_000).unref();
+
+/** The visitor's clock state, or a new clock's start state when it has no clock (yet). */
+function clockState(visitor: string | undefined): ClockState {
+  return (visitor ? clocks.peek(visitor)?.state() : undefined) ?? newClock().state();
+}
+/** The replay date a request reads at: its visitor's clock, without making one or setting the cookie. */
+const asOfOf = (req: IncomingMessage) => clockState(cookieVisitor(req)).asOf;
 
 function matches(r: IsolateRecord, q: IsolateQuery): boolean {
   return (
@@ -277,7 +326,7 @@ function matches(r: IsolateRecord, q: IsolateQuery): boolean {
   );
 }
 
-/** Frozen cuts do not seek the shared clock (D-058); site uses the same predicate as /api/isolates. */
+/** Frozen cuts do not seek the replay clock (D-058); site uses the same predicate as /api/isolates. */
 function projectFingerprint(input: ProjectInput) {
   return fingerprintRows(
     state.released
@@ -289,8 +338,7 @@ function projectFingerprint(input: ProjectInput) {
 const litePackages = new Map<string, { key: string; files: ReturnType<typeof packageFiles> }>();
 
 /** One package per saved project and replay date; ingestion invalidates corrected rows too. */
-function liteFiles(project: Project) {
-  const date = clock.state().asOf;
+function liteFiles(project: Project, date: string) {
   const key = JSON.stringify([project.id, project.updatedAt, date]);
   const cached = litePackages.get(project.id);
   if (cached?.key === key) return cached.files;
@@ -347,9 +395,8 @@ function liteModel(path: string, created: string, modified: string, file?: { pat
   };
 }
 
-/** Every site with its units, rows up to the clock and feed status (D-051). */
-function sites(): SitesResponse {
-  const asOf = clock.state().asOf;
+/** Every site with its units, rows up to the visitor's clock and feed status (D-051). */
+function sites(asOf: string): SitesResponse {
   const released = state.released.upTo(asOf);
   return {
     asOf,
@@ -409,10 +456,16 @@ async function readJson(req: IncomingMessage): Promise<unknown> {
  * Lab results from a laboratory system (D-035): HL7 v2 ORU^R01, a FHIR R4 Bundle
  * or a flat isolate export, detected from the content type or the payload. A
  * culture sent again replaces the earlier one (a corrected or final report).
- * New results are pushed to open clients; if they are dated after the clock, the
- * clock moves to them, as a live feed would.
+ * New results are pushed to open clients; if they are dated after a visitor's
+ * clock, that clock moves to them, as a live feed would, and new clocks start
+ * there. The response's `asOf` is the sender's clock (`visitor`).
  */
-function ingestPayload(body: string, contentType: string, from: ConnectedSite = registry.connection(registry.home.id) as ConnectedSite) {
+function ingestPayload(
+  body: string,
+  contentType: string,
+  from: ConnectedSite = registry.connection(registry.home.id) as ConnectedSite,
+  visitor?: string,
+) {
   const format = detectFormat(body, contentType);
   if (!format) {
     feeds.record(from.site.id, { format: null, accepted: 0, warnings: 0, unregistered: 0 });
@@ -453,15 +506,20 @@ function ingestPayload(body: string, contentType: string, from: ConnectedSite = 
       .map((c) => c.sampleDate)
       .sort()
       .at(-1) ?? "";
-  const asOf = clock.state().asOf;
-  if (latest > asOf) {
-    clock.seek(latest < datasetEnd ? latest : datasetEnd); // the subscription pushes arrivals and alerts
-  } else {
-    broadcast({ type: "arrivals", from: asOf, to: asOf, records: arrived });
-    const fresh = state.alerts.upTo(asOf).filter((a) => !before.has(a.id));
-    if (fresh.length) broadcast({ type: "alerts", from: asOf, to: asOf, alerts: sortAlerts(fresh) });
+  const target = latest < datasetEnd ? latest : datasetEnd;
+  if (target > ingestedUntil) ingestedUntil = target;
+  for (const [id, clock] of clocks.entries()) {
+    const asOf = clock.state().asOf;
+    if (latest > asOf) {
+      clock.seek(target); // the subscription pushes arrivals and alerts
+    } else {
+      broadcast(id, { type: "arrivals", from: asOf, to: asOf, records: arrived });
+      const fresh = state.alerts.upTo(asOf).filter((a) => !before.has(a.id));
+      if (fresh.length) broadcast(id, { type: "alerts", from: asOf, to: asOf, alerts: sortAlerts(fresh) });
+    }
   }
-  const newAlerts = state.alerts.upTo(clock.state().asOf).filter((a) => !before.has(a.id));
+  const asOf = clockState(visitor).asOf;
+  const newAlerts = state.alerts.upTo(asOf).filter((a) => !before.has(a.id));
   return {
     status: 200,
     body: {
@@ -470,7 +528,7 @@ function ingestPayload(body: string, contentType: string, from: ConnectedSite = 
       accepted: result.cultures.length,
       isolates: result.isolates.length,
       results: result.susceptibility.length,
-      asOf: clock.state().asOf,
+      asOf,
       newAlerts: newAlerts.map((a) => a.id),
       warnings: result.warnings,
       quality,
@@ -500,7 +558,7 @@ function quality(site: string = registry.home.id): QualityResponse {
 }
 
 // The command is checked here: a bad date or speed stored in the clock would throw on every later timer tick and stop the server.
-function runCommand(command: ClockCommand) {
+function runCommand(clock: ReplayClock, command: ClockCommand) {
   switch (command.action) {
     case "play":
       return clock.play();
@@ -534,7 +592,8 @@ export const server = createServer(async (req, res) => {
   try {
     if (url.pathname.startsWith("/api/lite/")) {
       if (req.method !== "GET") return send(res, 405, { error: "method not allowed" });
-      const projects = visitorStore(visitorOf(req, res));
+      const visitor = cookieVisitor(req);
+      const projects = visitor ? visitorStore(visitor) : noProjects;
       if (url.pathname === "/api/lite/contents/projects/all.json") {
         const all = projects.list();
         const timestamp = new Date().toISOString();
@@ -550,7 +609,7 @@ export const server = createServer(async (req, res) => {
       if (!match || !isProjectId(match[1])) return send(res, 404, { error: "unknown project path" });
       const project = projects.get(match[1]);
       if (!project) return send(res, 404, { error: "unknown project" });
-      const files = liteFiles(project);
+      const files = liteFiles(project, asOfOf(req));
       const path = `projects/${project.id}`;
       if (contents) {
         return send(res, 200, {
@@ -565,7 +624,9 @@ export const server = createServer(async (req, res) => {
       return void res.end(file.data);
     }
     if (url.pathname === ROUTES.projects || url.pathname.startsWith(`${ROUTES.projects}/`)) {
-      const projects = visitorStore(visitorOf(req, res));
+      // A read sets no cookie (a browser without one has no projects); a write gives the browser its id.
+      const visitor = req.method === "GET" ? cookieVisitor(req) : visitorOf(req, res);
+      const projects = visitor ? visitorStore(visitor) : noProjects;
       const id = url.pathname === ROUTES.projects ? undefined : decodeURIComponent(url.pathname.slice(ROUTES.projects.length + 1));
       if (id !== undefined && !isProjectId(id)) return send(res, 400, { error: "invalid project id" });
       if (id === undefined && req.method === "GET") return send(res, 200, { projects: projects.list() });
@@ -586,8 +647,9 @@ export const server = createServer(async (req, res) => {
         const input = parseProjectInput(await readJson(req));
         // Rows after the replay clock are not released yet (D-058 cuts the live data, it does not see ahead). A cut the
         // project already holds may stay when the clock is scrubbed back before it: saving its layout or notes is no new look ahead.
-        if (input.asOf !== undefined && input.asOf > clock.state().asOf && input.asOf !== previous?.asOf) {
-          return send(res, 400, { error: `asOf ${input.asOf} is after the replay clock ${clock.state().asOf}` });
+        const replayDay = clockState(visitor).asOf;
+        if (input.asOf !== undefined && input.asOf > replayDay && input.asOf !== previous?.asOf) {
+          return send(res, 400, { error: `asOf ${input.asOf} is after the replay clock ${replayDay}` });
         }
         if (input.scope.site !== undefined && !registry.site(input.scope.site)) {
           return send(res, 400, { error: `unknown site ${input.scope.site}` });
@@ -615,16 +677,22 @@ export const server = createServer(async (req, res) => {
     }
     if (url.pathname === ROUTES.ask && req.method === "POST") {
       if (!llm) return send(res, 503, { error: "AI is not configured" });
-      const body = (await readJson(req)) as { text?: unknown; lang?: unknown } | null;
+      const body = (await readJson(req)) as { text?: unknown; lang?: unknown; site?: unknown } | null;
       if (!body || typeof body.text !== "string" || !body.text.trim() || (body.lang !== "en" && body.lang !== "fi")) {
         return send(res, 400, { error: "text and lang (en or fi) are required" });
       }
-      const asOf = clock.state().asOf;
+      // One hospital's units only (the home site's when none is named): two sites' "Urology" would otherwise collide
+      // and the model could answer with the other hospital's unit (D-051).
+      const site = body.site ?? undefined;
+      if (site !== undefined && (typeof site !== "string" || !registry.site(site))) {
+        return send(res, 400, { error: `unknown site ${String(site)}` });
+      }
+      const asOf = asOfOf(req);
       const parsed = await parseQuestion(llm, {
         text: body.text,
         asOf,
         vocabulary: {
-          wards: meta.wards.map(({ code, en, fi }) => ({ code, en, fi })),
+          wards: registry.wardsOf(site ?? registry.home.id).map(({ code, en, fi }) => ({ code, en, fi })),
           organisms: [...meta.organisms],
           specimens: [...meta.specimens],
         },
@@ -643,7 +711,7 @@ export const server = createServer(async (req, res) => {
       // The template by default: small models write unreliable Finnish (experiments/0003, D-029).
       const wording = url.searchParams.get("wording") ?? "template";
       if (wording !== "template" && wording !== "model") return send(res, 400, { error: "wording must be template or model" });
-      const alert = state.alerts.upTo(clock.state().asOf).find((a) => a.id === id);
+      const alert = state.alerts.upTo(asOfOf(req)).find((a) => a.id === id);
       if (!alert) return send(res, 404, { error: "unknown alert" });
       const key = `${alert.id}:${lang}:${wording}`;
       let explanation = explanations.get(key);
@@ -685,7 +753,7 @@ export const server = createServer(async (req, res) => {
       const levelParam = url.searchParams.get("level");
       if (levelParam !== null && levelParam !== "unit" && levelParam !== "ward type" && levelParam !== "hospital")
         return send(res, 400, { error: "level must be unit, ward type or hospital" });
-      const replayDay = clock.state().asOf;
+      const replayDay = asOfOf(req);
       const asOfParam = url.searchParams.get("asOf");
       if (
         asOfParam !== null &&
@@ -729,7 +797,7 @@ export const server = createServer(async (req, res) => {
     if (url.pathname === ROUTES.patientFindings) {
       const id = url.searchParams.get("id")?.trim();
       if (!id) return send(res, 400, { error: "id is required" });
-      const asOf = clock.state().asOf;
+      const asOf = asOfOf(req);
       // Only released records, so nothing after the replay date leaks in (D-050).
       const findings = patientFindings(state.released.upTo(asOf), id, asOf);
       const affects: Partial<Record<Phenotype, AntibioticCode[]>> = {};
@@ -743,7 +811,7 @@ export const server = createServer(async (req, res) => {
         meta.specimens.map((x) => x.code),
       );
       if (!parsed.ok) return send(res, 400, { error: parsed.error });
-      const asOf = clock.state().asOf;
+      const asOf = asOfOf(req);
       // Only released records, so nothing after the replay date leaks in.
       const key = failsKey(asOf, parsed.query);
       let result = failsTogethers.get(key);
@@ -761,10 +829,10 @@ export const server = createServer(async (req, res) => {
       // The token names the sending site (D-051); no token is the home site unless it has one.
       const auth = authorize(registry, req.headers.authorization);
       if (!auth.ok) return send(res, auth.status, { error: auth.error });
-      const out = ingestPayload(await readText(req), req.headers["content-type"] ?? "", auth.site);
+      const out = ingestPayload(await readText(req), req.headers["content-type"] ?? "", auth.site, cookieVisitor(req));
       return send(res, out.status, out.body);
     }
-    if (url.pathname === ROUTES.sites) return send(res, 200, sites());
+    if (url.pathname === ROUTES.sites) return send(res, 200, sites(asOfOf(req)));
     if (url.pathname === ROUTES.quality) {
       const { site, error } = siteParam(url);
       return error ? send(res, 400, { error }) : send(res, 200, quality(site));
@@ -773,7 +841,7 @@ export const server = createServer(async (req, res) => {
       if (!existsSync(config.regionalFile))
         return send(res, 404, { error: "No regional data; run `uv run python scripts/fetch_thl_ttr.py`" });
       const query: RegionalQuery = { group: url.searchParams.get("group") ?? "", region: url.searchParams.get("region") ?? "" };
-      const asOf = clock.state().asOf;
+      const asOf = asOfOf(req);
       const key = JSON.stringify([asOf, query.group, query.region]);
       let body = regionalCache.get(key);
       if (body === undefined) {
@@ -793,7 +861,7 @@ export const server = createServer(async (req, res) => {
       return send(res, 200, JSON.parse(readFileSync(config.nationalFile, "utf8")) as NationalResponse);
     }
     if (url.pathname === ROUTES.weekly) {
-      const asOf = clock.state().asOf;
+      const asOf = asOfOf(req);
       const from = url.searchParams.get("from") || datasetStart;
       if (!isIsoDate(from)) return send(res, 400, { error: "from must be YYYY-MM-DD" });
       const { site = registry.home.id, error } = siteParam(url);
@@ -823,9 +891,11 @@ export const server = createServer(async (req, res) => {
       const aiStatus = await ai.settled().then(() => ai.status());
       return send(res, 200, { ...meta, ai: aiStatus === "ready", aiStatus } satisfies Meta);
     }
-    if (url.pathname === ROUTES.clock && req.method === "GET") return send(res, 200, clock.state());
+    // GET sets the cookie when missing: it is the app's first read, awaited before the stream opens (visitorOf).
+    if (url.pathname === ROUTES.clock && req.method === "GET") return send(res, 200, clockState(visitorOf(req, res)));
     if (url.pathname === ROUTES.clock && req.method === "POST") {
-      runCommand((await readJson(req)) as ClockCommand);
+      const clock = clocks.get(visitorOf(req, res));
+      runCommand(clock, (await readJson(req)) as ClockCommand);
       return send(res, 200, clock.state());
     }
     if (url.pathname === ROUTES.isolates) {
@@ -839,7 +909,7 @@ export const server = createServer(async (req, res) => {
         }
       }
       if (siteParam(url).error) return send(res, 400, { error: siteParam(url).error });
-      const asOf = clock.state().asOf;
+      const asOf = asOfOf(req);
       const to = q.to && q.to < asOf ? q.to : asOf;
       return send(res, 200, { asOf, records: state.released.upTo(to).filter((r) => matches(r, { ...q, to })) });
     }
@@ -848,10 +918,10 @@ export const server = createServer(async (req, res) => {
       if (!Number.isInteger(days) || days < 1) return send(res, 400, { error: "days must be a positive integer" });
       const { site, error } = siteParam(url);
       if (error) return send(res, 400, { error });
-      return send(res, 200, relations(clock.state().asOf, days, site));
+      return send(res, 200, relations(asOfOf(req), days, site));
     }
     if (url.pathname === ROUTES.alerts) {
-      const asOf = clock.state().asOf;
+      const asOf = asOfOf(req);
       const from = url.searchParams.get("from") ?? "";
       const { site, error } = siteParam(url);
       if (error) return send(res, 400, { error });
@@ -866,10 +936,19 @@ export const server = createServer(async (req, res) => {
       return sendCached(res, body);
     }
     if (url.pathname === ROUTES.live) {
+      // The visitor's own clock, kept while the stream is open (the cap aside).
+      const visitor = visitorOf(req, res);
+      const release = clocks.hold(visitor);
       res.writeHead(200, { "content-type": "text/event-stream", "cache-control": "no-cache", connection: "keep-alive" });
-      res.write(`event: clock\ndata: ${JSON.stringify({ type: "clock", clock: clock.state() })}\n\n`);
-      streams.add(res);
-      req.on("close", () => streams.delete(res));
+      res.write(`event: clock\ndata: ${JSON.stringify({ type: "clock", clock: clockState(visitor) })}\n\n`);
+      const mine = streams.get(visitor) ?? new Set<ServerResponse>();
+      streams.set(visitor, mine);
+      mine.add(res);
+      req.on("close", () => {
+        mine.delete(res);
+        if (!mine.size && streams.get(visitor) === mine) streams.delete(visitor);
+        release();
+      });
       return;
     }
     send(res, 404, { error: `no route ${url.pathname}` });
@@ -894,7 +973,9 @@ for (const signal of ["SIGTERM", "SIGINT"] as const)
   });
 
 server.listen(config.port, () => {
-  console.log(`[aei-api] ${state.records.length} isolates, ${datasetStart} to ${datasetEnd}; replay at ${clock.state().asOf}`);
+  console.log(
+    `[aei-api] ${state.records.length} isolates, ${datasetStart} to ${datasetEnd}; replay starts at ${clockState(undefined).asOf}`,
+  );
   console.log(`[aei-api] ${state.moves.length} unit moves, ${state.trails.length} carrier trails, ${state.alerts.size} alerts`);
   const findings = quality().summary.reduce((n, c) => n + c.count, 0);
   console.log(`[aei-api] data checks: ${findings ? `${findings} findings, see ${ROUTES.quality}` : "every check passed"}`);

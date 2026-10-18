@@ -117,7 +117,8 @@ nginx (`/etc/nginx/conf.d/yourlab.aapolipponen.com.conf`) proxies to the web
 container on 127.0.0.1:8097. It is public since 2026-10-17 (the basic auth was
 removed; `/etc/nginx/aei.htpasswd` is no longer used), and `/llm/` is limited
 to 20 requests a minute per visitor (burst 10) so the model on Myy cannot be
-flooded;
+flooded; it needs no gzip of its own, since the web container's nginx
+compresses text and JSON (not the event stream) and the host passes it through;
 haproxy on :443 passes TLS to it, the Let's Encrypt certificate renews by
 webroot (`/var/www/yourlab-acme`), and the DNS record is a DNS-only A record
 in Cloudflare.

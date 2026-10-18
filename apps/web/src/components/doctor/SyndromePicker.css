@@ -13,6 +13,23 @@
   white-space: nowrap;
 }
 
+/* Where the list comes from; shown where the picker has its own panel (the case card), not in the one-line strip. */
+.syn-source {
+  display: none;
+  margin: 0 0 2px;
+  color: var(--ink-3, #5c6080);
+  font-size: 12px;
+  line-height: 1.35;
+}
+.syn-source a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.syn-source a:hover {
+  color: var(--brand-accent, #635bf1);
+}
+
 .syn-row {
   display: flex;
   gap: 12px;

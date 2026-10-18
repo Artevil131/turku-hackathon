@@ -1,6 +1,7 @@
 import type { CheckSummary } from "@aei/contract";
 import { type Locale, type MessageKey, t } from "@aei/i18n";
 import { useEffect, useId, useRef, useState } from "react";
+import { OnBody, useAnchored } from "../anchored.ts";
 import { compactDate } from "../hero/geometry.ts";
 import { AlertTri, Check, Cross } from "../Icons.tsx";
 import "./quality.css";
@@ -19,11 +20,17 @@ export function QualityStatus({ locale, state }: { locale: Locale; state: Qualit
   const id = useId();
   const wrap = useRef<HTMLSpanElement>(null);
   const button = useRef<HTMLButtonElement>(null);
+  const pop = useRef<HTMLDivElement>(null);
+  // In the timeline's bottom sheet the list sits in the sheet's flow; elsewhere it floats on <body>, next to the
+  // button, so the window it lives in neither clips it nor covers it.
+  const inSheet = open && wrap.current?.closest(".tl-sheet") != null;
+  const place = useAnchored(open && !inSheet, button, pop, "start");
 
   useEffect(() => {
     if (!open) return;
     const onDown = (e: PointerEvent) => {
-      if (!wrap.current?.contains(e.target as Node)) setOpen(false);
+      const at = e.target as Node;
+      if (!wrap.current?.contains(at) && !pop.current?.contains(at)) setOpen(false);
     };
     document.addEventListener("pointerdown", onDown);
     return () => document.removeEventListener("pointerdown", onDown);
@@ -48,6 +55,41 @@ export function QualityStatus({ locale, state }: { locale: Locale; state: Qualit
   const n = total(data.summary);
   const clean = n === 0;
   const label = clean ? t(locale, "qPassed") : n === 1 ? t(locale, "qFindingsOne") : t(locale, "qFindings", { n: grouped(locale, n) });
+
+  const list = (
+    <div className="q-pop" id={id} role="note" ref={pop} style={inSheet ? undefined : place}>
+      <b className="q-title">{t(locale, "qTitle")}</b>
+      {clean ? (
+        <p className="q-none">
+          <Check width={14} height={14} /> {t(locale, "qNone")}
+        </p>
+      ) : (
+        <ul className="q-list">
+          {data.summary.map((c) => (
+            <li key={c.check}>
+              <span className="q-sev" data-sev={c.severity} title={t(locale, c.severity === "error" ? "qErrorHint" : "qSuspectHint")}>
+                {c.severity === "error" ? <Cross width={12} height={12} /> : <AlertTri width={12} height={12} />}
+                {t(locale, c.severity === "error" ? "qError" : "qSuspect")}
+              </span>
+              <span className="q-name">{t(locale, `qc-${c.check}` as MessageKey)}</span>
+              <span className="q-count num">{grouped(locale, c.count)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="q-meta">
+        {t(locale, "qChecked", {
+          patients: grouped(locale, data.checked.patients),
+          cultures: grouped(locale, data.checked.cultures),
+          isolates: grouped(locale, data.checked.isolates),
+          results: grouped(locale, data.checked.results),
+        })}
+      </p>
+      <p className="q-meta">
+        {t(locale, "qAsOf", { date: compactDate(asOf) })} · {t(locale, "qNote")}
+      </p>
+    </div>
+  );
 
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: Esc closes the popover from anywhere inside it
@@ -75,40 +117,7 @@ export function QualityStatus({ locale, state }: { locale: Locale; state: Qualit
         {clean ? <Check width={14} height={14} /> : <AlertTri width={14} height={14} />}
         <span className="q-label">{label}</span>
       </button>
-      {open ? (
-        <div className="q-pop" id={id} role="note">
-          <b className="q-title">{t(locale, "qTitle")}</b>
-          {clean ? (
-            <p className="q-none">
-              <Check width={14} height={14} /> {t(locale, "qNone")}
-            </p>
-          ) : (
-            <ul className="q-list">
-              {data.summary.map((c) => (
-                <li key={c.check}>
-                  <span className="q-sev" data-sev={c.severity} title={t(locale, c.severity === "error" ? "qErrorHint" : "qSuspectHint")}>
-                    {c.severity === "error" ? <Cross width={12} height={12} /> : <AlertTri width={12} height={12} />}
-                    {t(locale, c.severity === "error" ? "qError" : "qSuspect")}
-                  </span>
-                  <span className="q-name">{t(locale, `qc-${c.check}` as MessageKey)}</span>
-                  <span className="q-count num">{grouped(locale, c.count)}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-          <p className="q-meta">
-            {t(locale, "qChecked", {
-              patients: grouped(locale, data.checked.patients),
-              cultures: grouped(locale, data.checked.cultures),
-              isolates: grouped(locale, data.checked.isolates),
-              results: grouped(locale, data.checked.results),
-            })}
-          </p>
-          <p className="q-meta">
-            {t(locale, "qAsOf", { date: compactDate(asOf) })} · {t(locale, "qNote")}
-          </p>
-        </div>
-      ) : null}
+      {open ? inSheet ? list : <OnBody>{list}</OnBody> : null}
     </span>
   );
 }

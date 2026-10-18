@@ -16,15 +16,17 @@ const API = (process.env.AEI_URL ?? "http://localhost:8787").replace(/\/$/, "");
 const OUTBREAK_DAY = "2025-06-08";
 const REGION_DAY = "2025-10-03";
 
+// The server keeps a replay clock per visitor cookie (D-078), so every request here carries the same one.
+const visitor = { cookie: `aei_visitor=${crypto.randomUUID().replaceAll("-", "")}` };
 const get = async (path) => {
-  const res = await fetch(`${API}${path}`);
+  const res = await fetch(`${API}${path}`, { headers: visitor });
   if (!res.ok) throw new Error(`GET ${path}: ${res.status}`);
   return res.json();
 };
 const seek = (date) =>
   fetch(`${API}/api/clock`, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: { ...visitor, "content-type": "application/json" },
     body: JSON.stringify({ action: "seek", date }),
   });
 

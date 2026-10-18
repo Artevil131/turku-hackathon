@@ -54,7 +54,6 @@ import { hashPage, hashParams, sharedQuery, writeSharedParam } from "./url.ts";
 const ResearchBoard = lazy(() => import("./components/research/ResearchBoard.tsx").then((m) => ({ default: m.ResearchBoard })));
 const DataPage = lazy(() => import("./components/data-page/DataPage.tsx").then((m) => ({ default: m.DataPage })));
 const Settings = lazy(() => import("./components/Settings.tsx").then((m) => ({ default: m.Settings })));
-const PitchIntro = lazy(() => import("./components/intro/PitchIntro.tsx").then((m) => ({ default: m.PitchIntro })));
 
 const NO_FLOWS: readonly Flow[] = [];
 
@@ -62,8 +61,8 @@ const NO_FLOWS: readonly Flow[] = [];
 // [data-theme="dark"]; switch this (or add a toggle) to bring them back.
 const THEME: "light" | "dark" = "light";
 
-type Page = "home" | "project" | "data" | "settings" | "docs" | "intro";
-const PAGES: readonly Page[] = ["home", "project", "data", "settings", "docs", "intro"];
+type Page = "home" | "project" | "data" | "settings" | "docs";
+const PAGES: readonly Page[] = ["home", "project", "data", "settings", "docs"];
 
 export const FILL_MODES = ["first", "always", "never"] as const;
 export type FillMode = (typeof FILL_MODES)[number];
@@ -340,9 +339,11 @@ export function App() {
         if (`${next}|${tabKey(hash)}` !== lastKey.current && !hashParams().get("project")) toNowRef.current();
       }
       lastKey.current = `${next}|${tabKey(location.hash)}`;
-      // Back and forward, or a pasted link, may name another hospital.
-      if (isMulti()) {
-        const s = validSite(hashParams().get(HOSPITAL_PARAM));
+      // Back and forward, or a pasted link, may name another hospital. A link that names none (most in-app links:
+      // start-page chips, the search, "Signals on the board") keeps the hospital already chosen.
+      const named = hashParams().get(HOSPITAL_PARAM);
+      if (isMulti() && named !== null) {
+        const s = validSite(named);
         selectSite(s);
         setSiteState(s);
       }
@@ -440,20 +441,6 @@ export function App() {
   useEffect(() => {
     document.title = page === "home" ? t(locale, "appName") : `${title} · ${t(locale, "appName")}`;
   }, [page, title, locale]);
-
-  // The pitch intro is full screen, without the working tool's chrome.
-  if (page === "intro")
-    return (
-      <Suspense fallback={null}>
-        <PitchIntro
-          client={client}
-          locale={locale}
-          asOf={live.clock?.asOf ?? null}
-          onEnter={() => navigate("home")}
-          reducedMotion={reducedMotion}
-        />
-      </Suspense>
-    );
 
   const openDemoFile = (demo: DemoSpec, replay = false) => {
     if (demo.id === "researcher") nudgeOff();
@@ -658,13 +645,13 @@ export function App() {
                 onDone={(how) => {
                   markFilled(filling.demo);
                   // A finished fill never offers a tour: the guide stays one click away (Guide, Demo tour).
-                  // After a full play, once the board has settled, the story moves on by itself: the clock steps a month every two seconds, so the
-                  // timeline and the signals keep changing while the viewer looks (Artem, 2026-10-18). A skip leaves it paused.
+                  // After a full play, once the board has settled, the story moves on by itself (Artem, 2026-10-18): the clock steps one day
+                  // every two seconds, the default step (Aapo, 2026-10-18); the date chip and the timeline change it. A skip leaves it paused.
                   if (how === "done")
                     setTimeout(
                       () =>
                         liveClient
-                          .command({ action: "configure", daysPerTick: 30, tickMs: 2000 })
+                          .command({ action: "configure", daysPerTick: 1, tickMs: 2000 })
                           .then(() => liveClient.command({ action: "play" }))
                           .catch(() => undefined),
                       2500,

@@ -1,6 +1,6 @@
 .pop {
   position: fixed;
-  z-index: 40;
+  z-index: 450;
   padding: 10px 12px;
   border: 1px solid var(--line, #e4e6ee);
   border-radius: var(--brand-radius, 10px);

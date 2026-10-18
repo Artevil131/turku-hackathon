@@ -3,7 +3,7 @@
 
 export const tourClinEn = {
   tourClinIntro:
-    "A urinary tract infection on Internal medicine A, an antibiotic needed today, the culture days away. The card on top answers first: start with mecillinam, 97 % of the likely bacteria.",
+    "A urinary tract infection on Internal medicine A, an antibiotic needed today, the culture days away. The card on top answers first: of the drugs that clear the bar, mecillinam has the highest coverage, 97 % of first isolates. The doctor decides.",
   tourClinRecord:
     "The case is three choices: ward, sample, severity. Change ward, sample or severity opens them; the card and the list recalculate for that case.",
   tourClinRow:
@@ -33,7 +33,7 @@ export const tourClinEn = {
 
 export const tourClinFi: Record<keyof typeof tourClinEn, string> = {
   tourClinIntro:
-    "Virtsatieinfektio Sisätaudit A:lla, antibiootti tarvitaan tänään, viljely valmistuu vasta päivien päästä. Ylin kortti vastaa ensin: aloita mesillinaamilla, 97 % todennäköisistä bakteereista.",
+    "Virtsatieinfektio Sisätaudit A:lla, antibiootti tarvitaan tänään, viljely valmistuu vasta päivien päästä. Ylin kortti vastaa ensin: rajan ylittävistä lääkkeistä mesillinaamilla on suurin kattavuus, 97 % ensilöydöksistä. Lääkäri päättää.",
   tourClinRecord:
     "Tapaus on kolme valintaa: yksikkö, näyte, vaikeusaste. Ne avautuvat painikkeesta Muuta yksikköä, näytettä tai vaikeusastetta; kortti ja lista lasketaan uudelleen.",
   tourClinRow:

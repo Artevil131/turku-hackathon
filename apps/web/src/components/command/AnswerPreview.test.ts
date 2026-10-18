@@ -1,6 +1,8 @@
-import type { Alert } from "@aei/contract";
+import type { Alert, CoverageResponse } from "@aei/contract";
+import type { IsolateRecord } from "@aei/domain";
 import { describe, expect, it } from "vitest";
-import { pickSignal, queryFromHref, signalLine } from "./AnswerPreview.tsx";
+import { coverage, suggest } from "../../../../../libs/utils/coverage/src/index.ts";
+import { coverageLine, pickSignal, queryFromHref, signalLine } from "./AnswerPreview.tsx";
 
 const det = (over: Record<string, unknown>): Alert =>
   ({
@@ -44,5 +46,45 @@ describe("pickSignal", () => {
   it("is null when nothing matches", () => {
     expect(pickSignal(alerts, "#research?unit=ICU&ph=esbl")).toBeNull();
     expect(signalLine("en", [], "#research?unit=ICU&ph=esbl")).toBe("No open signal");
+  });
+});
+
+describe("coverageLine", () => {
+  const records = Array.from(
+    { length: 60 },
+    (_, i): IsolateRecord => ({
+      isolateId: `C${i}-1`,
+      cultureId: `C${i}`,
+      patientId: `P${i}`,
+      sampleDate: "2026-06-01",
+      admissionDate: null,
+      ward: "URO",
+      specimen: "urine",
+      organism: "Escherichia coli",
+      sex: "F",
+      ageYears: 60,
+      homeArea: "North",
+      phenotypes: [],
+      results: { MEC: "S", TMP: i < 40 ? "S" : "R" },
+    }),
+  );
+  const result = coverage(records, { asOf: "2026-06-30", ward: "URO", specimen: "urine" });
+  const data: CoverageResponse = {
+    asOf: "2026-06-30",
+    severity: "mild",
+    coverage: result,
+    suggestions: suggest(result, "mild"),
+    combinationSuggestions: [],
+  };
+  it("words the first clearing drug as the answer card does, with its interval and n, never as an order", () => {
+    const line = coverageLine("en", data, "#doctor?unit=URO&site=urine");
+    expect(line).toMatch(/^Highest coverage clearing the 80 % bar: mecillinam · 100\u00a0% \(95\u00a0% CI \d+–100, n\u00a060\)/);
+    expect(line).not.toContain("Start with");
+    expect(coverageLine("fi", data, "#doctor?unit=URO&site=urine")).toMatch(/^Suurin kattavuus 80 %:n rajan ylittävistä: /);
+  });
+  it("gives the named drug's own row with its interval", () => {
+    expect(coverageLine("en", data, "#doctor?unit=URO&site=urine&ab=TMP")).toMatch(
+      /^trimethoprim · 67\u00a0% \(95\u00a0% CI \d+–\d+, n\u00a060\) · below the 80 % bar/,
+    );
   });
 });

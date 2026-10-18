@@ -13,7 +13,6 @@ import { glossaryFi } from "./surfaces/glossary.ts";
 import { gridFi } from "./surfaces/grid.ts";
 import { guideFi } from "./surfaces/guide.ts";
 import { homeFi } from "./surfaces/home.ts";
-import { introFi } from "./surfaces/intro.ts";
 import { mapFi } from "./surfaces/map.ts";
 import { mathFi } from "./surfaces/math.ts";
 import { methodFi } from "./surfaces/method.ts";
@@ -70,6 +69,8 @@ export const fi: Record<keyof typeof en, string> = {
 
   appName: "agar",
   appTagline: "Antibioottien tehoindikaattori",
+  appCrash: "Sivulla tapahtui virhe, tai agarista tuli uusi versio. Uudelleenlataus korjaa sen.",
+  appReload: "Lataa uudelleen",
   askLabel: "Kysy aineistolta",
   askPlaceholder: "Kysy aineistosta, esim. ESBL E. coli virtsassa urologialla tässä kuussa",
   askPending: "Kysymykset omin sanoin ovat tulossa. Niihin vastaavaa mallia ei ole vielä valittu.",
@@ -264,6 +265,7 @@ export const fi: Record<keyof typeof en, string> = {
   tlOpen: "Avaa aikajana",
   tlClose: "Sulje",
   tlArrivalsOn: "{n} isolaattia saapui, {date}",
+  tlArrivalsOnOne: "1 isolaatti saapui, {date}",
   tlJumpLabel: "Siirry päivään",
   tlJumpGo: "Siirry",
   tlJumpRange: "Aineisto kattaa ajan {from}–{to}",
@@ -294,7 +296,6 @@ export const fi: Record<keyof typeof en, string> = {
   ...tourFi,
   ...guideFi,
   ...homeFi,
-  ...introFi,
   ...cardFi,
   ...commandFi,
   ...timelineFi,

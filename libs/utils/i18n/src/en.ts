@@ -12,7 +12,6 @@ import { glossaryEn } from "./surfaces/glossary.ts";
 import { gridEn } from "./surfaces/grid.ts";
 import { guideEn } from "./surfaces/guide.ts";
 import { homeEn } from "./surfaces/home.ts";
-import { introEn } from "./surfaces/intro.ts";
 import { mapEn } from "./surfaces/map.ts";
 import { mathEn } from "./surfaces/math.ts";
 import { methodEn } from "./surfaces/method.ts";
@@ -69,6 +68,8 @@ export const en = {
 
   appName: "agar",
   appTagline: "Antibiotic efficacy indicator",
+  appCrash: "Something went wrong on this page, or a new version of agar arrived. Reloading fixes it.",
+  appReload: "Reload",
   askLabel: "Ask the data",
   askPlaceholder: "Ask about the data, e.g. ESBL E. coli in urine in Urology this month",
   askPending: "Plain-language questions are on the way. The model that answers them is not chosen yet.",
@@ -262,6 +263,7 @@ export const en = {
   tlOpen: "Open timeline",
   tlClose: "Close",
   tlArrivalsOn: "{n} isolates arrived for {date}",
+  tlArrivalsOnOne: "1 isolate arrived for {date}",
   tlJumpLabel: "Jump to a date",
   tlJumpGo: "Go",
   tlJumpRange: "Dataset runs {from} to {to}",
@@ -292,7 +294,6 @@ export const en = {
   ...tourEn,
   ...guideEn,
   ...homeEn,
-  ...introEn,
   ...cardEn,
   ...commandEn,
   ...timelineEn,

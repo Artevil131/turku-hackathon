@@ -130,15 +130,35 @@
   outline-offset: 2px;
 }
 
-/* Wide: the answer and its case side by side, then the list and the context side by side. Nothing scrolls inside:
-   the window grows to its content. */
+/* Wide: two columns on one grid. Left, the answer and under it the list; right, the case and under it the context.
+   The answer is only as tall as what it says, so the list starts right under it instead of waiting for the taller
+   case card (the middle row is the flexible one, so the case's height never stretches the answer's row). Nothing
+   scrolls inside: the window grows to its content. */
 @container coverage (min-width: 960px) {
   .doctor-main {
-    grid-template-rows: auto auto;
-  }
-  .doctor-body {
-    grid-template-columns: minmax(0, 62fr) minmax(0, 38fr);
+    grid-template-columns: minmax(0, 62fr) minmax(360px, 38fr);
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas:
+      "answer case"
+      "list case"
+      "list side";
     align-items: start;
+  }
+  .doctor-main .dr-top,
+  .doctor-main .doctor-body {
+    display: contents;
+  }
+  .doctor-main .dr-answer {
+    grid-area: answer;
+  }
+  .doctor-main .dr-case {
+    grid-area: case;
+  }
+  .doctor-main .cl {
+    grid-area: list;
+  }
+  .doctor-main .dp-side {
+    grid-area: side;
   }
 }
 
