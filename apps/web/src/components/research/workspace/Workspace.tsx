@@ -90,6 +90,7 @@ const TITLE_KEY = {
   coverage: "boardCoverage",
   timeline: "boardTimeline",
   answer: "boardAnswer",
+  history: "boardHistory",
 } as const;
 
 /** What each window kind is, for its ⓘ. */
@@ -105,6 +106,7 @@ const GUIDE_KEY = {
   coverage: "guideCoverage",
   timeline: "guideTimeline",
   answer: "guideAnswer",
+  history: "guideHistory",
 } as const;
 
 /** A request to add a chart window: a new `key` adds `spec`. */
@@ -118,6 +120,7 @@ const STACK_ORDER: readonly WinId[] = [
   "answer",
   "timeline",
   "signals",
+  "history",
   "notebook",
   "math",
   "assistant",

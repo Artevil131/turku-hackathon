@@ -3,6 +3,7 @@
 export const boardEn = {
   boardPanels: "Centre views",
   boardFeed: "Signals",
+  boardHistory: "Past signals",
   boardGrid: "Unit grid",
   boardGeo: "Map",
   boardNetwork: "Hospital network",
@@ -31,6 +32,8 @@ export const boardEn = {
   wsClosed: "{title} closed. Reopen it from Windows.",
   wsPresets: "Layouts",
   pick_signals: "Alerts and clusters",
+  pick_history: "Past signals",
+  pick_history_sub: "What was found before this month, by month",
   pick_signals_sub: "Newest outbreak signals, with evidence",
   pick_map: "Finnish county map",
   pick_map_sub: "Resistance by county next to THL",
@@ -108,6 +111,7 @@ export const boardEn = {
 export const boardFi: Record<keyof typeof boardEn, string> = {
   boardPanels: "Näkymät",
   boardFeed: "Signaalit",
+  boardHistory: "Aiemmat signaalit",
   boardGrid: "Yksikköruudukko",
   boardGeo: "Kartta",
   boardNetwork: "Sairaalaverkosto",
@@ -136,6 +140,8 @@ export const boardFi: Record<keyof typeof boardEn, string> = {
   wsClosed: "{title} suljettu. Avaa se Ikkunat-valikosta.",
   wsPresets: "Asettelut",
   pick_signals: "Hälytykset ja klusterit",
+  pick_history: "Aiemmat signaalit",
+  pick_history_sub: "Ennen tätä kuuta löydetty, kuukausittain",
   pick_signals_sub: "Uusimmat signaalit todisteineen",
   pick_map: "Suomen maakuntakartta",
   pick_map_sub: "Resistenssi maakunnittain THL:n rinnalla",

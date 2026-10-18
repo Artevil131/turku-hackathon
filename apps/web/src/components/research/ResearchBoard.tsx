@@ -13,11 +13,12 @@ import { type BoardState, boardFromUrl, boardToParams, type FeedProps } from "./
 import { ChartForm } from "./charts/ChartForm.tsx";
 import { ChartWindow } from "./charts/ChartWindow.tsx";
 import type { ChartSpec } from "./charts/spec.ts";
-import { applyFilters, shift } from "./feed/model.ts";
+import { applyFilters, groupByTime, shift } from "./feed/model.ts";
 import { computeSpans, useRelations } from "./feed/spans.ts";
 import { useIncidents } from "./feed/useIncidents.ts";
 import { GeoMap } from "./geo/GeoMap.tsx";
 import { UnitGraph } from "./geo/UnitGraph.tsx";
+import { HistoryFeed } from "./HistoryFeed.tsx";
 import { AlertMath } from "./math/AlertMath.tsx";
 import type { SliceSources } from "./notebook/cells/SliceCell.tsx";
 import { appendResult, pageSlot, withSite } from "./notebook/model.ts";
@@ -239,6 +240,16 @@ export function ResearchBoard(props: Props) {
           onChange({ unit });
           setReveal({ id: "signals", key: `coverage-signals-${Date.now()}` });
         }}
+      />
+    ),
+    history: (
+      <HistoryFeed
+        locale={locale}
+        asOf={load.status === "ready" ? load.asOf : null}
+        incidents={load.status === "ready" ? groupByTime(incidents, load.asOf).earlier : []}
+        selected={explicit && selected ? selected.key : null}
+        spansOf={spansOf}
+        onSelect={(key) => onChange({ incident: key })}
       />
     ),
     signals: (

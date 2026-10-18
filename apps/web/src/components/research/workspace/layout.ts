@@ -22,6 +22,7 @@ export const WIN_IDS = [
   "coverage",
   "timeline",
   "answer",
+  "history",
 ] as const;
 export type WinId = (typeof WIN_IDS)[number];
 
@@ -74,6 +75,7 @@ export const MIN_SIZE: Record<WinId, { w: number; h: number }> = {
   coverage: { w: 4, h: 12 },
   timeline: { w: 4, h: 9 },
   answer: { w: 4, h: 7 },
+  history: { w: 3, h: 8 },
 };
 
 export const CHART_MIN_SIZE = { w: 4, h: 10 };
@@ -146,6 +148,8 @@ export function baseLayout(): Layout {
     reproduce: { x: 4, y: 0, w: 5, h: 14, open: false },
     // The doctor's patient coverage: an ordinary window, closed until opened from the Windows menu or a template.
     coverage: { x: 0, y: 0, w: 6, h: 30, open: false },
+    // Past signals: the record before this month, closed until asked for.
+    history: { x: 0, y: 40, w: 4, h: 24, open: false },
     // The replay timeline: a window of the project, opened by the templates and from the Windows menu.
     timeline: { x: 0, y: 0, w: 12, h: 11, open: false },
     // The one-sentence summary: closed by default, opened first in the templates and demo files.
@@ -155,7 +159,7 @@ export function baseLayout(): Layout {
     wins,
     copies: {},
     charts: {},
-    order: ["signals", "map", "graph", "math", "assistant", "grid", "reproduce", "notebook", "coverage", "timeline", "answer"],
+    order: ["signals", "map", "graph", "math", "assistant", "grid", "reproduce", "notebook", "coverage", "timeline", "answer", "history"],
   };
 }
 
@@ -382,6 +386,7 @@ export const DEFAULT_SIZE: Record<WinId, { w: number; h: number }> = {
   coverage: { w: 6, h: 24 },
   timeline: { w: COLS, h: TIMELINE_ROWS },
   answer: { w: COLS, h: 9 },
+  history: { w: 4, h: 24 },
 };
 
 /**
