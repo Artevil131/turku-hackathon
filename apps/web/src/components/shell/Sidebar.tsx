@@ -159,11 +159,10 @@ export function Sidebar({
             title={t(locale, "shellHome")}
             aria-label={`${t(locale, "appName")} · ${t(locale, "shellHome")}`}
           >
+            {/* Collapsing to the rail folds the rest of the name away; the first letter keeps its face, size and place. */}
             <span className="sb-mark-name">
-              <span className="sb-mark-full">{t(locale, "appName")}</span>
-              <span className="sb-mark-short" aria-hidden="true">
-                a
-              </span>
+              <span className="sb-mark-a">{t(locale, "appName").slice(0, 1)}</span>
+              <span className="sb-mark-rest">{t(locale, "appName").slice(1)}</span>
             </span>
           </button>
           {phone ? (

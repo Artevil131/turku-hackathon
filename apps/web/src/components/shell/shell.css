@@ -18,6 +18,18 @@
   grid-template-columns: var(--sb-rail) minmax(0, 1fr);
 }
 
+/* The sidebar eases between open and rail in step with the wordmark folding to its "a". */
+.app {
+  transition: grid-template-columns 220ms var(--mo-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app,
+  .sb-mark-rest {
+    transition: none;
+  }
+}
+
 .app-main {
   display: flex;
   flex-direction: column;
@@ -85,19 +97,30 @@
   color: var(--ink);
 }
 
+/* The wordmark: "agar" set in Fraunces, in the brand blue; the pitch deck uses the same mark. */
 .sb-mark-name {
-  display: inline-grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
   height: 32px;
-  padding: 0 12px;
-  border-radius: 9px;
-  background: var(--brand-accent, #635bf1);
-  color: #fff;
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: var(--t-l);
+  padding: 0 4px;
+  color: var(--brand-accent, #635bf1);
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 600;
+  font-size: 28px;
   line-height: 1;
-  letter-spacing: 0;
+  letter-spacing: -0.5px;
+}
+
+.sb-mark-rest {
+  display: inline-block;
+  max-width: 3em;
+  overflow: hidden;
+  /* Room for the g's descender inside the clip; both letters stay centred, so the baselines still line up. */
+  line-height: 1.6;
+  white-space: nowrap;
+  transition:
+    max-width 220ms var(--mo-ease),
+    opacity 160ms var(--mo-ease);
 }
 
 .sb-collapse,
@@ -426,26 +449,18 @@
   flex-direction: column;
   justify-content: center;
   height: auto;
-  padding: 12px 0 4px;
+  padding: 10px 0 4px;
 }
 
-.sb-mark-short {
-  display: none;
+/* The mark keeps the open sidebar's left inset, so the "a" does not move when the name folds away. */
+.sidebar[data-rail] .sb-mark {
+  align-self: stretch;
+  padding-left: 16px;
 }
 
-.sidebar[data-rail] .sb-mark-full {
-  display: none;
-}
-
-.sidebar[data-rail] .sb-mark-short {
-  display: inline;
-}
-
-.sidebar[data-rail] .sb-mark-name {
-  min-width: 34px;
-  height: 28px;
-  padding: 0 6px;
-  font-size: var(--t-s);
+.sidebar[data-rail] .sb-mark-rest {
+  max-width: 0;
+  opacity: 0;
 }
 
 .sidebar[data-rail] .sb-scroll {

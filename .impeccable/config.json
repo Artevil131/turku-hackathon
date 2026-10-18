@@ -11,6 +11,12 @@
         ],
         "createdAt": "2026-10-17T10:55:10.413Z",
         "reason": "Claude: the mock copies the app's existing .seg segmented control (2 px padding, styles.css) verbatim; the finding is about that incumbent pattern, not this session's work"
+      },
+      {
+        "rule": "overused-font",
+        "value": "fraunces",
+        "createdAt": "2026-10-18T04:54:27.043Z",
+        "reason": "user confirmed: Artem asked for the deck's Fraunces wordmark to become the site logo (2026-10-18)"
       }
     ]
   }

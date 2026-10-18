@@ -484,13 +484,19 @@ export function Performance(props: PerformanceProps) {
             const logo = document.createElement("div");
             logo.className = "pf-outro-logo";
             logo.setAttribute("aria-hidden", "true");
-            logo.appendChild(mark.cloneNode(true));
-            const scale = Math.min(4, (innerWidth * 0.3) / r.width);
+            // The copy is set at its final size and starts scaled down, so the settled frame is sharp text, not an enlarged bitmap.
+            const scale = Math.min(6, (innerWidth * 0.3) / r.width);
+            const css = getComputedStyle(mark);
+            const copy = mark.cloneNode(true) as HTMLElement;
+            copy.style.fontSize = `${Number.parseFloat(css.fontSize) * scale}px`;
+            copy.style.height = `${r.height * scale}px`;
+            copy.style.paddingInline = `${Number.parseFloat(css.paddingLeft) * scale}px`;
+            logo.appendChild(copy);
             logo.style.setProperty("--x0", `${r.left}px`);
             logo.style.setProperty("--y0", `${r.top}px`);
             logo.style.setProperty("--x1", `${(innerWidth - r.width * scale) / 2}px`);
             logo.style.setProperty("--y1", `${(innerHeight - r.height * scale) / 2}px`);
-            logo.style.setProperty("--s", String(scale));
+            logo.style.setProperty("--s0", String(1 / scale));
             lock.appendChild(logo);
             void logo.offsetWidth;
           }

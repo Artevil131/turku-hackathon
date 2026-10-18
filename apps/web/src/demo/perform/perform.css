@@ -209,12 +209,12 @@ html.perform-outro .pf-curtain {
   left: 0;
   top: 0;
   transform-origin: 0 0;
-  transform: translate(var(--x0), var(--y0));
+  transform: translate(var(--x0), var(--y0)) scale(var(--s0));
   pointer-events: none;
   transition: transform 1100ms cubic-bezier(0.45, 0, 0.2, 1) 100ms;
 }
 html.perform-outro .pf-outro-logo {
-  transform: translate(var(--x1), var(--y1)) scale(var(--s));
+  transform: translate(var(--x1), var(--y1));
 }
 
 /* The countdown before a recorded show: one short line, bottom centre, gone before the hand appears. */
