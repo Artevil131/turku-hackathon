@@ -1,6 +1,6 @@
 import type { ClockCommand, ClockState } from "@aei/contract";
 import { formatDate, type Locale, t } from "@aei/i18n";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Pause, Play } from "../../Icons.tsx";
 import { PlaybackControls } from "../../PlaybackControls.tsx";
 
@@ -47,6 +47,26 @@ export function DateChip({ locale, date, frozen, replay }: { locale: Locale; dat
   useEffect(() => {
     if (date) setView(monthOf(date));
   }, [date]);
+  // A <details> stays open until its summary is pressed again; this one also closes on Esc or a press outside.
+  const root = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    const onDown = (e: PointerEvent) => {
+      const el = root.current;
+      if (el?.open && !el.contains(e.target as Node)) el.open = false;
+    };
+    const onKey = (e: KeyboardEvent) => {
+      const el = root.current;
+      if (e.key !== "Escape" || !el?.open) return;
+      el.open = false;
+      el.querySelector<HTMLElement>("summary")?.focus();
+    };
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, []);
   if (!date) return null;
   const tag = LOCALE_TAG[locale];
   const live = replay && !frozen ? replay : null;
@@ -67,7 +87,7 @@ export function DateChip({ locale, date, frozen, replay }: { locale: Locale; dat
   const seek = (to: string) => live?.command({ action: "seek", date: to });
 
   return (
-    <details className="ws-date">
+    <details className="ws-date" ref={root}>
       <summary className="ws-date-chip" title={t(locale, "wsDateTitle")}>
         <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false">
           <rect x="1.5" y="2.5" width="13" height="12" rx="2" fill="none" stroke="currentColor" strokeWidth="1.4" />
