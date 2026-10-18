@@ -318,15 +318,21 @@ export function Workspace({
     pendingSave.current = null;
     if (!next || !client) return;
     saveQueue.current = saveQueue.current.then(async () => {
-      try {
-        // Read just before replacing, so a project-dialog edit or an earlier save is not overwritten by stale props.
-        const fresh = await client.project(next.id);
-        await client.updateProject(next.id, { ...fresh.project, layout: JSON.parse(serializeLayout(next.layout ?? defaultLayout())) });
-        setSaveFailed(false);
-      } catch (error) {
-        if (error instanceof ApiError && error.status === 404) onGone?.();
-        else setSaveFailed(true);
+      // A server that is briefly away (restarting, a dropped connection) is retried quietly; the notice shows only
+      // when the save still fails after a few tries.
+      for (const wait of [0, 2000, 5000, 10000]) {
+        if (wait) await new Promise((r) => setTimeout(r, wait));
+        try {
+          // Read just before replacing, so a project-dialog edit or an earlier save is not overwritten by stale props.
+          const fresh = await client.project(next.id);
+          await client.updateProject(next.id, { ...fresh.project, layout: JSON.parse(serializeLayout(next.layout ?? defaultLayout())) });
+          setSaveFailed(false);
+          return;
+        } catch (error) {
+          if (error instanceof ApiError && error.status === 404) return void onGone?.();
+        }
       }
+      setSaveFailed(true);
     });
   }, [client, onGone]);
   useEffect(
