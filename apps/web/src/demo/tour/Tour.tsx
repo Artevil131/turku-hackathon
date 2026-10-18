@@ -1,5 +1,6 @@
 import { type Locale, t } from "@aei/i18n";
 import { type CSSProperties, useEffect, useRef, useState } from "react";
+import type { Template } from "../../components/research/workspace/templates.ts";
 import type { TourId } from "../demos.ts";
 import { type Target, type TourStep, tourFor } from "./steps.ts";
 import "./tour.css";
@@ -89,8 +90,25 @@ export interface DemoTourProps {
   onClose: () => void;
 }
 
+/** The template a demo was built from: what "start empty" opens. */
+const TEMPLATE_OF: Record<Exclude<TourId, "overview">, Template> = { clinician: "patient", control: "outbreak", researcher: "blank" };
+/** How long the tour offer stands before it turns into the offer of an empty copy, ms. */
+const EMPTY_AFTER_MS = 45_000;
+
 export function DemoTour({ locale, demo, reducedMotion, onClose }: DemoTourProps) {
   const [phase, setPhase] = useState<Phase>("offer");
+  // After a while on a filled demo the question changes: not "take the tour?" but "start your own, empty?".
+  const [suggestEmpty, setSuggestEmpty] = useState(false);
+  useEffect(() => {
+    if (phase !== "offer" || demo === "overview") return;
+    const timer = setTimeout(() => setSuggestEmpty(true), EMPTY_AFTER_MS);
+    return () => clearTimeout(timer);
+  }, [phase, demo]);
+  const startEmpty = () => {
+    if (demo === "overview") return;
+    onClose();
+    location.hash = `#home?start=${TEMPLATE_OF[demo]}`;
+  };
   const [steps] = useState<TourStep[]>(() => tourFor(demo, locale));
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -262,17 +280,35 @@ export function DemoTour({ locale, demo, reducedMotion, onClose }: DemoTourProps
         >
           ×
         </button>
-        <p className="tour-kicker">{t(locale, "tourLabel")}</p>
-        <h2 id="tour-offer-title">{t(locale, demo === "overview" ? "tourOvOfferTitle" : "tourOfferTitle")}</h2>
-        <p id="tour-offer-body">{t(locale, demo === "overview" ? "tourOvOfferBody" : "tourOfferBody")}</p>
-        <div className="tour-actions">
-          <button ref={playButton} type="button" className="btn btn-primary" onClick={() => setPhase("play")}>
-            {t(locale, demo === "overview" ? "tourOvOfferPlay" : "tourOfferPlay")}
-          </button>
-          <button type="button" className="btn" onClick={onClose}>
-            {t(locale, demo === "overview" ? "tourOvOfferSkip" : "tourOfferSkip")}
-          </button>
-        </div>
+        {suggestEmpty ? (
+          <>
+            <p className="tour-kicker">{t(locale, "tourEmptyKicker")}</p>
+            <h2 id="tour-offer-title">{t(locale, "tourEmptyTitle")}</h2>
+            <p id="tour-offer-body">{t(locale, "tourEmptyBody")}</p>
+            <div className="tour-actions">
+              <button type="button" className="btn btn-primary" onClick={startEmpty}>
+                {t(locale, "tourEmptyStart")}
+              </button>
+              <button type="button" className="btn" onClick={() => setPhase("play")}>
+                {t(locale, "tourOfferPlay")}
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="tour-kicker">{t(locale, "tourLabel")}</p>
+            <h2 id="tour-offer-title">{t(locale, demo === "overview" ? "tourOvOfferTitle" : "tourOfferTitle")}</h2>
+            <p id="tour-offer-body">{t(locale, demo === "overview" ? "tourOvOfferBody" : "tourOfferBody")}</p>
+            <div className="tour-actions">
+              <button ref={playButton} type="button" className="btn btn-primary" onClick={() => setPhase("play")}>
+                {t(locale, demo === "overview" ? "tourOvOfferPlay" : "tourOfferPlay")}
+              </button>
+              <button type="button" className="btn" onClick={onClose}>
+                {t(locale, demo === "overview" ? "tourOvOfferSkip" : "tourOfferSkip")}
+              </button>
+            </div>
+          </>
+        )}
       </div>
     );
 

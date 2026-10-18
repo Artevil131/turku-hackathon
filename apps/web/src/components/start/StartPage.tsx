@@ -6,7 +6,7 @@ import { useShell } from "../../shell/context.ts";
 import { launchTemplate } from "../../shell/launch.ts";
 import { DeleteProjectDialog } from "../research/projects/ProjectDialogs.tsx";
 import { parseLayout } from "../research/workspace/layout.ts";
-import { QUICK_STARTS, TEMPLATE_KEYS, type Template } from "../research/workspace/templates.ts";
+import { QUICK_STARTS, TEMPLATE_KEYS, TEMPLATES, type Template } from "../research/workspace/templates.ts";
 import { openSearch } from "../shell/Sidebar.tsx";
 import type { Audience } from "./audience.ts";
 import { MoreQuestions } from "./MoreQuestions.tsx";
@@ -28,6 +28,7 @@ import { TemplateArt } from "./TemplateArt.tsx";
 import "../home/home.css";
 import "../research/SignalFeed.css";
 import "./start.css";
+import { hashParams } from "../../url.ts";
 
 function ago(locale: Locale, date: string) {
   const minutes = Math.max(0, Math.floor((Date.now() - new Date(date).getTime()) / 60_000));
@@ -136,9 +137,17 @@ export function StartPage({
     if (action.kind === "demo") {
       const d = DEMOS.find((x) => x.id === action.id);
       if (d) onDemo(d);
-    } else if (action.kind === "view") shell.openView(action.template, action.params);
+    } else if (action.kind === "template") void launch(action.template);
+    else if (action.kind === "view") shell.openView(action.template, action.params);
     else location.hash = action.href.slice(1);
   };
+  // "Start empty" from a demo's tour lands here with ?start=<template>: the project opens at once.
+  useEffect(() => {
+    const wanted = hashParams().get("start");
+    if (!wanted || !(TEMPLATES as readonly string[]).includes(wanted)) return;
+    history.replaceState(null, "", "#home");
+    void launch(wanted as Template);
+  }, []);
   const [projects, setProjects] = useState<Project[] | null>(null);
   const [failed, setFailed] = useState(false);
   const [revision, setRevision] = useState(0);

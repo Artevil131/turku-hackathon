@@ -23,6 +23,8 @@ export const ROLE_LABEL: Record<Role, MessageKey> = {
 /** What a question chip does when clicked. */
 export type ChipAction =
   | { kind: "demo"; id: "clinician" | "control" | "researcher" }
+  /** A new, empty project from a template: a question never opens a filled demo. */
+  | { kind: "template"; template: Template }
   | { kind: "view"; template: Template | null; params?: Record<string, string> }
   | { kind: "hash"; href: string };
 
@@ -33,12 +35,12 @@ export interface Chip {
 
 const ESBL: ChipAction = { kind: "view", template: null, params: { unit: "MED-A", ph: "esbl" } };
 const URINE: ChipAction = { kind: "view", template: "patient", params: { "cov.site": "urine" } };
-const RISING: ChipAction = { kind: "demo", id: "control" };
+const RISING: ChipAction = { kind: "template", template: "outbreak" };
 
 export const CHIPS: Record<Role, Chip[]> = {
   clinician: [
     { label: "startAskQ2", action: URINE },
-    { label: "chipMyWard", action: { kind: "view", template: "antibiogram" } },
+    { label: "chipMyWard", action: { kind: "template", template: "antibiogram" } },
     { label: "startAskQ1", action: RISING },
   ],
   control: [
@@ -47,7 +49,7 @@ export const CHIPS: Record<Role, Chip[]> = {
     { label: "chipSharedPatients", action: { kind: "hash", href: "#research?panel=network" } },
   ],
   stewardship: [
-    { label: "chipFirstLine", action: { kind: "view", template: "antibiogram" } },
+    { label: "chipFirstLine", action: { kind: "template", template: "antibiogram" } },
     { label: "chipCompareWards", action: { kind: "hash", href: "#research?panel=grid" } },
     { label: "startAskQ2", action: URINE },
   ],
@@ -57,19 +59,19 @@ export const CHIPS: Record<Role, Chip[]> = {
     { label: "startAskQ1", action: RISING },
   ],
   researcher: [
-    { label: "chipBlankNotebook", action: { kind: "view", template: "blank" } },
+    { label: "chipBlankNotebook", action: { kind: "template", template: "blank" } },
     { label: "startAskQ3", action: ESBL },
     { label: "chipRegionalMap", action: { kind: "hash", href: "#research?panel=map" } },
   ],
   surveillance: [
     { label: "chipCountyPicture", action: { kind: "hash", href: "#research?panel=map" } },
-    { label: "chipRegionalTrends", action: { kind: "view", template: "regional" } },
+    { label: "chipRegionalTrends", action: { kind: "template", template: "regional" } },
     { label: "startAskQ1", action: RISING },
   ],
   management: [
     { label: "chipHowWeDo", action: RISING },
     { label: "startAskQ1", action: RISING },
-    { label: "chipRegionalTrends", action: { kind: "view", template: "regional" } },
+    { label: "chipRegionalTrends", action: { kind: "template", template: "regional" } },
   ],
   other: [
     { label: "startAskQ1", action: RISING },
@@ -83,9 +85,9 @@ const VRE: ChipAction = { kind: "view", template: null, params: { ph: "vre" } };
 const CPE: ChipAction = { kind: "view", template: null, params: { ph: "cpe" } };
 const BLOOD: ChipAction = { kind: "view", template: "patient", params: { "cov.site": "blood" } };
 const WOUND: ChipAction = { kind: "view", template: "patient", params: { "cov.site": "wound" } };
-const OUTBREAK: ChipAction = { kind: "view", template: "outbreak" };
-const FIRST_LINE: ChipAction = { kind: "view", template: "antibiogram" };
-const REGIONAL: ChipAction = { kind: "view", template: "regional" };
+const OUTBREAK: ChipAction = { kind: "template", template: "outbreak" };
+const FIRST_LINE: ChipAction = { kind: "template", template: "antibiogram" };
+const REGIONAL: ChipAction = { kind: "template", template: "regional" };
 const MAP: ChipAction = { kind: "hash", href: "#research?panel=map" };
 const GRID: ChipAction = { kind: "hash", href: "#research?panel=grid" };
 
@@ -109,7 +111,7 @@ const QUESTION: Record<string, Chip> = {
   county: { label: "chipCountyPicture", action: MAP },
   trends: { label: "chipRegionalTrends", action: REGIONAL },
   howWeDo: { label: "chipHowWeDo", action: RISING },
-  blank: { label: "chipBlankNotebook", action: { kind: "view", template: "blank" } },
+  blank: { label: "chipBlankNotebook", action: { kind: "template", template: "blank" } },
   map: { label: "chipRegionalMap", action: MAP },
 };
 

@@ -3,6 +3,10 @@
 
 export const tourSharedEn = {
   tourOfferTitle: "Take the tour?",
+  tourEmptyKicker: "Your own",
+  tourEmptyTitle: "Start an empty one?",
+  tourEmptyBody: "The same windows as this demo, nothing filled in.",
+  tourEmptyStart: "Start empty",
   tourOfferBody:
     "A cursor drives the project: it opens windows, runs the tools and says what each number means. Click where it points to move faster.",
   tourOfferPlay: "Watch the tour",
@@ -27,6 +31,10 @@ export const tourSharedEn = {
 
 export const tourSharedFi: Record<keyof typeof tourSharedEn, string> = {
   tourOfferTitle: "Katsotko esittelyn?",
+  tourEmptyKicker: "Oma",
+  tourEmptyTitle: "Aloitetaanko tyhjästä?",
+  tourEmptyBody: "Samat ikkunat kuin tässä esimerkissä, ei mitään valmiiksi täytettynä.",
+  tourEmptyStart: "Aloita tyhjästä",
   tourOfferBody:
     "Kursori ajaa projektin: se avaa ikkunat, käyttää työkaluja ja kertoo, mitä kukin luku tarkoittaa. Klikkaa sitä, mihin se osoittaa, niin esittely etenee nopeammin.",
   tourOfferPlay: "Katso esittely",
