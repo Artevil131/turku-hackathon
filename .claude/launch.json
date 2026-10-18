@@ -92,6 +92,33 @@
         "cd ../turku-judge-fixes && AEI_API_URL=http://localhost:8796 pnpm --filter @aei/web exec vite --port 5182 --strictPort"
       ],
       "port": 5182
+    },
+    {
+      "name": "api-anomaly",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "AEI_PORT=8792",
+        "pnpm",
+        "dev:api"
+      ],
+      "port": 8792,
+      "autoPort": false
+    },
+    {
+      "name": "web-anomaly",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "AEI_API_URL=http://localhost:8792",
+        "pnpm",
+        "--filter",
+        "@aei/web",
+        "exec",
+        "vite",
+        "--port",
+        "5185",
+        "--strictPort"
+      ],
+      "port": 5185
     }
   ]
 }
