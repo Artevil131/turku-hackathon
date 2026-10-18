@@ -100,28 +100,29 @@ reaches the browser; every other `/llm` path is a 404. Without `AEI_LLM_URL`
 
 The stack runs on Aapo's OCI host (Oracle Linux 8, aarch64, docker compose)
 from a clone in `~/aei`, with the dataset and THL file uploaded under
-`~/aei/data`, the model served from Myy, and its settings in
-`~/aei/deploy/container/.env` (mode 600, git-ignored). Both ports are bound to
-127.0.0.1 there (web 8097, API 8796), so it is reached through SSH:
+`~/aei/data` and its settings in `~/aei/deploy/container/.env` (mode 600,
+git-ignored). Both ports are bound to 127.0.0.1 there (web 8097, API 8796), so
+it is reached through SSH:
 
     ssh -N -L 8097:127.0.0.1:8097 oci      # then http://localhost:8097
-    ssh oci 'cd aei && git pull && docker compose -p aei -f deploy/container/compose.yaml up -d --build'   # update
+    ssh oci 'cd aei && git pull && docker compose -p aei -f deploy/container/compose.yaml -f deploy/container/compose.oci.yaml up -d --build'   # update, by hand
 
-Checked on 2026-10-17: all routes answer through the proxy, the model
-answers at `/llm`, and `SMOKE_URL=http://localhost:8097 pnpm smoke` passes
-14 of 14.
+`compose.oci.yaml` lives on the host only: it puts the API's `/state` on a
+64 MB tmpfs volume, so anonymous visitors' projects cannot fill the host's disk
+(a reboot clears them).
 
-It is published as the demo at https://yourlab.aapolipponen.com (since
-2026-10-17; it replaced aei.aapolipponen.com, now removed). The host's
-nginx (`/etc/nginx/conf.d/yourlab.aapolipponen.com.conf`) proxies to the web
-container on 127.0.0.1:8097. It is public since 2026-10-17 (the basic auth was
-removed; `/etc/nginx/aei.htpasswd` is no longer used), and `/llm/` is limited
-to 20 requests a minute per visitor (burst 10) so the model on Myy cannot be
-flooded; it needs no gzip of its own, since the web container's nginx
+It is published as the demo at https://agar.aapolipponen.com (since
+2026-10-18; https://yourlab.aapolipponen.com redirects there). The host's
+nginx (`/etc/nginx/conf.d/agar.aapolipponen.com.conf`) proxies to the web
+container on 127.0.0.1:8097, caps request bodies at 1 MB and project saves
+(`/api/projects`, any method but GET) at 10 a minute per visitor (burst 10,
+256 KB each). It needs no gzip of its own, since the web container's nginx
 compresses text and JSON (not the event stream) and the host passes it through;
 haproxy on :443 passes TLS to it, the Let's Encrypt certificate renews by
 webroot (`/var/www/yourlab-acme`), and the DNS record is a DNS-only A record
 in Cloudflare.
 
-Every push to `main` deploys there automatically; see
-[autodeploy/README.md](autodeploy/README.md).
+Since the hackathon ended (2026-10-18) the demo runs without a language model
+(the Myy model and its Cloudflare tunnel, Access app and tokens are removed;
+`/llm` is a 404 and the AI questions show as off) and without autodeploy (see
+[autodeploy/README.md](autodeploy/README.md)).

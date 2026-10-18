@@ -1,4 +1,8 @@
-# Auto-deploy to yourlab.aapolipponen.com
+# Auto-deploy to yourlab.aapolipponen.com (retired)
+
+**Retired on 2026-10-18.** The deploy key is removed from the OCI host, so the
+workflow can no longer reach it; the demo at agar.aapolipponen.com is updated by
+hand (deploy/README.md). What follows is how it worked.
 
 Every push to `main` deploys to https://yourlab.aapolipponen.com through
 `.github/workflows/deploy.yml` (also runnable by hand: Actions → deploy → Run

@@ -1,5 +1,10 @@
 # myy-llm: the model behind the plain-language layer
 
+**Taken down on 2026-10-18.** The Cloudflare tunnel `aei-llm`, its DNS record,
+the Access app `AEI LLM` and both service tokens are deleted, and the public
+demo no longer has the model's settings. To bring it back, recreate them
+(below) and hand out new tokens.
+
 The optional AI layer (`@aei/ask`, D-017 to D-019) needs an
 OpenAI-compatible chat endpoint. For the hackathon that is a small model
 (Qwen3.5-4B or gemma-4-E4B, chosen by experiments/0003) served by llama.cpp
