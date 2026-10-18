@@ -38,8 +38,8 @@ const boxOf = (el: Element | null): Box | null => {
   return x1 - x0 < 4 || y1 - y0 < 4 ? null : { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
 };
 
-/** Reading time for a caption: about 3.5 words a second, at least 3.5 s. */
-const readMs = (text: string) => Math.max(3500, (text.split(/\s+/).length / 3.5) * 1000 + 700);
+/** Reading time for a caption: about 5 words a second, at least 2.5 s. */
+const readMs = (text: string) => Math.max(2500, (text.split(/\s+/).length / 5) * 1000 + 500);
 
 /** Types into a React-controlled textarea or input: the native setter, then the input event React listens for. */
 function setValue(el: HTMLTextAreaElement | HTMLInputElement, value: string) {
@@ -151,16 +151,16 @@ export function DemoTour({ locale, demo, reducedMotion, onClose }: DemoTourProps
     ctl.current = run;
     const moveTo = async (el: Element) => {
       el.scrollIntoView({ block: "nearest", inline: "nearest", behavior: reducedMotion ? "auto" : "smooth" });
-      await run.hold(reducedMotion ? 50 : 450);
+      await run.hold(reducedMotion ? 50 : 250);
       const b = boxOf(el);
       if (!b) return;
       const x = b.x + Math.min(b.w / 2, 60);
       const y = b.y + Math.min(b.h / 2, 24);
       setCursor((p) => {
-        const ms = reducedMotion ? 0 : Math.min(1100, 350 + Math.hypot(x - p.x, y - p.y) * 0.6);
+        const ms = reducedMotion ? 0 : Math.min(700, 250 + Math.hypot(x - p.x, y - p.y) * 0.4);
         return { x, y, ms, shown: true };
       });
-      await run.hold(reducedMotion ? 50 : 1000);
+      await run.hold(reducedMotion ? 50 : 750);
     };
     (async () => {
       for (let i = 0; i < steps.length; i++) {
@@ -179,7 +179,7 @@ export function DemoTour({ locale, demo, reducedMotion, onClose }: DemoTourProps
           // You clicked it yourself: nothing more to do here.
         } else if (el && step.act === "click") {
           setClicks((n) => n + 1);
-          await run.hold(180);
+          await run.hold(120);
           (el as HTMLElement).click();
         } else if (el && step.act === "type" && step.text && (el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement)) {
           el.focus();
@@ -187,7 +187,7 @@ export function DemoTour({ locale, demo, reducedMotion, onClose }: DemoTourProps
           for (let n = 1; n <= text.length; n += reducedMotion ? text.length : 7) {
             if (run.c.skip) break;
             setValue(el, text.slice(0, n));
-            await run.hold(22);
+            await run.hold(14);
           }
           setValue(el, text);
           el.blur();
@@ -205,7 +205,7 @@ export function DemoTour({ locale, demo, reducedMotion, onClose }: DemoTourProps
         run.c.skip = false;
         // A caption that carries on into the next step is read there, so this step only lingers a moment.
         const carriesOn = steps[i + 1]?.say === step.say;
-        await run.hold(carriesOn ? 1200 : readMs(t(locale, step.say as "tourClinIntro")));
+        await run.hold(carriesOn ? 800 : readMs(t(locale, step.say as "tourClinIntro")));
       }
       spotEl.current = null;
       setPhase("done");
