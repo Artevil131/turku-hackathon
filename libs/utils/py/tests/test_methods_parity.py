@@ -265,7 +265,7 @@ def test_seeded_fixtures_exercise_every_statistical_detector(ts_results):
     assert not ts_results['resistance_shift-shift-flat']
     assert not ts_results['resistance_shift-shift-baseline29'] and ts_results['resistance_shift-shift-baseline30']
     assert not ts_results['resistance_shift-shift-window2']
-    assert any(s['detector'] == 'resistance-shift' for s in ts_results['live-shift'])
+    assert not any(s['detector'] == 'resistance-shift' for s in ts_results['live-shift'])  # not run live (D-080)
     assert any(s.get('site') == 'sata' for s in ts_results['live-multisite'])
     assert ts_results['pair-gain-2-limit5']
     assert not ts_results['pair-gain-1-limit5']

@@ -1,9 +1,10 @@
 import { baseLayout, type Layout, serializeLayout, WIN_IDS, type WinId, type WinState, withTimeline } from "./layout.ts";
 
-export const TEMPLATES = ["research", "patient", "blank", "outbreak", "antibiogram", "regional"] as const;
+export const TEMPLATES = ["research", "patient", "monitor", "blank", "outbreak", "antibiogram", "regional"] as const;
 export type Template = (typeof TEMPLATES)[number];
 export const TEMPLATE_KEYS = {
   research: ["startResearch", "startResearchNote"],
+  monitor: ["startMonitor", "startMonitorNote"],
   blank: ["startBlank", "startBlankNote"],
   outbreak: ["startOutbreak", "startOutbreakNote"],
   antibiogram: ["startAntibiogram", "startAntibiogramNote"],
@@ -15,6 +16,13 @@ export const QUICK_STARTS: readonly Template[] = ["patient"];
 
 /** Which windows each template opens, as grid rectangles (12 columns, 24 px rows). Every template also gets the timeline across the top. */
 const OPEN: Record<Template, Partial<Record<WinId, Partial<WinState>>>> = {
+  // The continuous watch of a unit, empty: what is open now on top, the notebook to write in, the evidence beside it.
+  monitor: {
+    answer: { x: 0, y: 0, w: 12, h: 9 },
+    notebook: { x: 0, y: 9, w: 7, h: 56 },
+    signals: { x: 7, y: 9, w: 5, h: 28 },
+    graph: { x: 7, y: 37, w: 5, h: 28 },
+  },
   // The researcher demo's desk, empty: the notebook to write in with the signals beside it.
   research: {
     notebook: { x: 0, y: 0, w: 8, h: 56 },
@@ -27,7 +35,7 @@ const OPEN: Record<Template, Partial<Record<WinId, Partial<WinState>>>> = {
     graph: { x: 5, y: 9, w: 7, h: 36 },
   },
   antibiogram: { grid: { x: 0, y: 0, w: 6, h: 30 }, coverage: { x: 6, y: 0, w: 6, h: 30 } },
-  regional: { map: { x: 0, y: 0, w: 12, h: 36 } },
+  regional: { map: { x: 0, y: 0, w: 8, h: 36 }, signals: { x: 8, y: 0, w: 4, h: 36 } },
   patient: { coverage: { x: 0, y: 0, w: 12, h: 36 } },
 };
 

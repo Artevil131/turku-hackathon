@@ -131,8 +131,13 @@ export const MORE_QUESTIONS: Record<Role, Chip[]> = Object.fromEntries(
   ).map(([role, ids]) => [role, ids.flatMap((id) => QUESTION[id] ?? [])]),
 ) as Record<Role, Chip[]>;
 
-/** Research and Treat a patient, the two empty desks of the demo files, come first for everyone; the rest follow in the role's order. */
-const firstTwo = (rest: Template[]): Template[] => ["research", "patient", ...rest.filter((t) => t !== "research" && t !== "patient")];
+/** The three empty desks of the demo files (Research, Treat a patient, Unit monitoring) come first for everyone; Regional trends is no longer offered here; the rest follow in the role's order. */
+const firstTwo = (rest: Template[]): Template[] => [
+  "research",
+  "patient",
+  "monitor",
+  ...rest.filter((t) => !["research", "patient", "monitor", "regional"].includes(t)),
+];
 export const TEMPLATE_ORDER: Record<Role, Template[]> = Object.fromEntries(
   Object.entries({
     clinician: ["patient", "antibiogram", "outbreak", "regional", "blank"],

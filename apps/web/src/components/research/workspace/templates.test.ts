@@ -15,7 +15,11 @@ describe("project template layouts", () => {
   it("opens the outbreak evidence together and keeps blank genuinely blank", () => {
     expect(openIds("outbreak")).toEqual(["signals", "graph", "answer"]);
     expect(openIds("blank")).toEqual([]);
-    expect(openIds("regional")).toEqual(["map"]);
+    expect(openIds("regional")).toEqual(["signals", "map"]);
+  });
+  it("opens the empty desks of the researcher and the continuous demo", () => {
+    expect(openIds("research")).toEqual(["signals", "notebook"]);
+    expect(openIds("monitor")).toEqual(["signals", "graph", "notebook", "answer"]);
   });
   it("opens coverage for the patient and antibiogram templates", () => {
     expect(openIds("patient")).toEqual(["coverage"]);

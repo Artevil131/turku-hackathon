@@ -762,5 +762,5 @@ def _site_signals(records: Sequence[IsolateRecord], cultures: Sequence[Culture])
         *volume_jump(cultures, **LIVE_SETTINGS["volume_jump"]),
         *empty_run(cultures, **LIVE_SETTINGS["empty_run"]),
         *rising_trend(records, SURVEILLANCE_PAIRS, **LIVE_SETTINGS["rising_trend"], exclude=in_detected_cluster(clusters)),
-        *resistance_shift_binomial(records, **LIVE_SETTINGS["resistance_shift"], exclude=in_detected_cluster(clusters)),
+        # resistance_shift_binomial is not run live (D-080, experiments/0024), as in the TypeScript.
     ]
